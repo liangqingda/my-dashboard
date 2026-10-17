@@ -1,0 +1,4 @@
+# pnpm 10 的构建设置（允许原生模块执行 build scripts）
+onlyBuiltDependencies:
+  - '@parcel/watcher'
+  - 'unrs-resolver'

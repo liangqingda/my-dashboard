@@ -1,0 +1,33 @@
+.inner {
+  padding: 0 var(--app-space-lg);
+}
+
+.brand {
+  min-width: 0;
+}
+
+.brandMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--mantine-radius-md);
+  background: var(--app-accent-soft);
+  color: var(--app-accent);
+}
+
+.title {
+  font-size: 1.1rem;
+  white-space: nowrap;
+}
+
+.tagline {
+  color: var(--app-ink-faint);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.themeToggle {
+  color: var(--app-ink-soft);
+}

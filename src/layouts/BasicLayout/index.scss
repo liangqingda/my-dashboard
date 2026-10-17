@@ -1,0 +1,16 @@
+.app {
+  min-height: 100vh;
+}
+
+.header {
+  border-bottom: 1px solid var(--app-line);
+  background: var(--app-surface);
+}
+
+.navbar {
+  background: var(--app-surface-subtle);
+}
+
+.main {
+  background: var(--app-bg);
+}

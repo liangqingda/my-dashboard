@@ -1,0 +1,10 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--app-space-md);
+}
+
+.link {
+  border-radius: var(--mantine-radius-md);
+}
