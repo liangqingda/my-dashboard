@@ -13,7 +13,7 @@ import {
   IconRocket,
   IconServer,
 } from '@tabler/icons-react';
-import { Link, useNavigate } from 'react-router';
+import { Link } from 'react-router';
 
 import {
   isPrimaryBusy,
@@ -32,7 +32,6 @@ export type ServicesOverviewProps = {
 const ServicesOverview = ({ pollIntervalMs = 5000 }: ServicesOverviewProps) => {
   const { services, loading, agentOnline, busy, start, stop, restart, deploy } =
     useServices(pollIntervalMs);
-  const navigate = useNavigate();
 
   const runningCount = services.filter((service) => service.running).length;
 
@@ -74,13 +73,9 @@ const ServicesOverview = ({ pollIntervalMs = 5000 }: ServicesOverviewProps) => {
               event.stopPropagation();
             };
 
-            /** 整卡点击：可访问的 http 服务新标签打开，否则跳转服务管理页 */
+            /** 整卡点击：仅在可访问的 http 服务时生效，新标签打开服务 */
             const handleCardClick = () => {
-              if (canOpen) {
-                window.open(service.url ?? '', '_blank', 'noopener');
-              } else {
-                void navigate('/services');
-              }
+              window.open(service.url ?? '', '_blank', 'noopener');
             };
 
             const handleCardKeyDown = (event: React.KeyboardEvent) => {
@@ -109,12 +104,12 @@ const ServicesOverview = ({ pollIntervalMs = 5000 }: ServicesOverviewProps) => {
 
             return (
               <div
-                className={`${styles.card} ${styles.cardClickable}`}
+                className={`${styles.card} ${canOpen ? styles.cardClickable : ''}`}
                 key={service.id}
-                onClick={handleCardClick}
-                onKeyDown={handleCardKeyDown}
-                role="button"
-                tabIndex={0}
+                onClick={canOpen ? handleCardClick : undefined}
+                onKeyDown={canOpen ? handleCardKeyDown : undefined}
+                role={canOpen ? 'button' : undefined}
+                tabIndex={canOpen ? 0 : undefined}
               >
                 <div className={styles.cardHead}>
                   <Group className={styles.cardTitle} gap="xs" wrap="nowrap">
