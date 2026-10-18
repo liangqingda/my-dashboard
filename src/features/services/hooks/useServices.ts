@@ -1,12 +1,4 @@
-/**
- * 服务列表 Hook：轮询拉取所有服务状态，并提供启动 / 停止 / 重启动作。
- * 状态派生在渲染期完成，不在 effect 中更新派生值。
- *
- * 「执行中」状态（busy）区分动作并保持到服务到达目标状态：
- *   - 启动 / 重启：保持到 running 为 true（成功）或 build 为 fail（失败）
- *   - 停止：保持到 running 为 false
- * 这样按钮 loading 不会因接口瞬间返回而一闪而过，也不会两个按钮同时转圈。
- */
+/** 服务列表 Hook：首次加载服务状态，并提供刷新、启动、停止和重启动作。 */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { notifications } from '@mantine/notifications';
@@ -51,7 +43,7 @@ export type UseServicesResult = {
   stop: (id: string) => Promise<void>;
   /** 重启服务（编译失败时使用，先停后起） */
   restart: (id: string) => Promise<void>;
-  /** 重新部署服务（如部署到 CloudBase）；部署中状态由轮询的 deploying 字段驱动 */
+  /** 重新部署服务（如部署到 CloudBase）；部署中状态在刷新时更新 */
   deploy: (id: string) => Promise<void>;
 };
 
@@ -63,11 +55,8 @@ export const isPrimaryBusy = (busy: ServiceBusy, id: string): boolean =>
 export const isStopBusy = (busy: ServiceBusy, id: string): boolean =>
   busy?.id === id && busy.action === 'stop';
 
-/**
- * 订阅本机服务状态。
- * @param pollIntervalMs 轮询间隔，默认 3 秒
- */
-export function useServices(pollIntervalMs = 3000): UseServicesResult {
+/** 加载本机服务状态。 */
+export function useServices(): UseServicesResult {
   const [services, setServices] = useState<ServiceStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [agentOnline, setAgentOnline] = useState(false);
@@ -116,26 +105,6 @@ export function useServices(pollIntervalMs = 3000): UseServicesResult {
           });
         }
       });
-
-      // 目标服务到达终态后清除执行中标记
-      setBusy((current) => {
-        if (!current) {
-          return current;
-        }
-
-        const target = list.find((service) => service.id === current.id);
-
-        if (!target) {
-          return null;
-        }
-
-        const done =
-          current.action === 'stop'
-            ? !target.running
-            : target.running || target.build === 'fail';
-
-        return done ? null : current;
-      });
     } catch (err) {
       setAgentOnline(false);
       setError(err instanceof Error ? err.message : '无法连接本机服务 agent');
@@ -146,13 +115,11 @@ export function useServices(pollIntervalMs = 3000): UseServicesResult {
 
   useEffect(() => {
     const immediate = window.setTimeout(() => void refresh(), 0);
-    const timer = window.setInterval(() => void refresh(), pollIntervalMs);
 
     return () => {
       window.clearTimeout(immediate);
-      window.clearInterval(timer);
     };
-  }, [refresh, pollIntervalMs]);
+  }, [refresh]);
 
   const runAction = useCallback(
     async (id: string, action: ServiceAction) => {
@@ -187,11 +154,10 @@ export function useServices(pollIntervalMs = 3000): UseServicesResult {
           withCloseButton: true,
           autoClose: false,
         });
-        setBusy(null); // 接口报错，立即结束执行中状态
       }
 
-      // 立即刷新一次，让轮询尽快捕获新的服务状态并据此结束 busy
       await refresh();
+      setBusy(null);
     },
     [refresh, services],
   );
@@ -216,7 +182,7 @@ export function useServices(pollIntervalMs = 3000): UseServicesResult {
             autoClose: false,
           });
         }
-        // 部署为异步进程：最终成功/失败由轮询 deployOutcome 变化时提示
+        // 部署为异步进程：最终成功/失败在刷新时根据 deployOutcome 变化提示
       } catch (err) {
         notifications.show({
           title: '部署失败',

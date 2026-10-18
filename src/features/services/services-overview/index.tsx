@@ -24,14 +24,9 @@ import ServiceStatusPill from '@/features/services/service-status-pill';
 
 import styles from './index.scss';
 
-export type ServicesOverviewProps = {
-  /** 轮询间隔（毫秒），默认 5 秒 */
-  pollIntervalMs?: number;
-};
-
-const ServicesOverview = ({ pollIntervalMs = 5000 }: ServicesOverviewProps) => {
+const ServicesOverview = () => {
   const { services, loading, agentOnline, busy, start, stop, restart, deploy } =
-    useServices(pollIntervalMs);
+    useServices();
 
   const runningCount = services.filter((service) => service.running).length;
 

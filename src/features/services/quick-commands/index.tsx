@@ -1,7 +1,7 @@
 /**
  * 全局快捷命令卡片：展示 ~/.zshrc 中的别名与函数。
  * 数据由 agent 动态解析下发（GET /api/cli-commands），
- * 因此新增别名/函数后会自动出现，无需改前端代码。
+ * 页面加载时读取别名/函数，无需改前端代码。
  * 每行左右布局（命令 | 说明），点击命令可复制。
  */
 
@@ -25,9 +25,6 @@ const GROUP_LABEL: Record<string, string> = {
   redis: 'Redis',
   other: '其他函数',
 };
-
-/** 轮询间隔：让新增命令自动出现 */
-const POLL_MS = 20_000;
 
 /** 复制文本到剪贴板；优先 Clipboard API，失败回退 execCommand */
 const copyText = async (text: string): Promise<boolean> => {
@@ -99,11 +96,9 @@ const QuickCommands = () => {
     };
 
     void load();
-    const timer = setInterval(() => void load(), POLL_MS);
 
     return () => {
       alive = false;
-      clearInterval(timer);
     };
   }, []);
 

@@ -12,14 +12,9 @@ import ServiceRow from '@/features/services/service-row';
 
 import styles from './index.scss';
 
-export type ServicesManagerProps = {
-  /** 轮询间隔（毫秒），默认 3 秒 */
-  pollIntervalMs?: number;
-};
-
-const ServicesManager = ({ pollIntervalMs = 3000 }: ServicesManagerProps) => {
+const ServicesManager = () => {
   const { services, loading, agentOnline, error, busy, refresh, start, stop, restart, deploy } =
-    useServices(pollIntervalMs);
+    useServices();
 
   const runningCount = services.filter((service) => service.running).length;
   const stoppedCount = services.length - runningCount;
