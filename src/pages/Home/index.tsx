@@ -8,7 +8,9 @@ const Home = () => (
   <div className={styles.page}>
     <Stack gap="md">
       <Title order={2}>概览</Title>
-      <ServicesOverview />
+      <div className={styles.cards}>
+        <ServicesOverview />
+      </div>
     </Stack>
   </div>
 );

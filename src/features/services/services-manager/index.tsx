@@ -3,6 +3,7 @@ import { Group, Text } from '@mantine/core';
 import { useServices } from '@/features/services/hooks/useServices';
 import QuickCommands from '@/features/services/quick-commands';
 import ServiceConnection from '@/features/services/service-connection';
+import ServiceActivity from '@/features/services/service-activity';
 import ServiceRow from '@/features/services/service-row';
 
 import styles from './index.scss';
@@ -65,7 +66,10 @@ const ServicesManager = () => {
             />
           ))}
         </div>
-        <QuickCommands />
+        <div className={styles.sidebar}>
+          <QuickCommands />
+          <ServiceActivity />
+        </div>
       </div>
     </div>
   );

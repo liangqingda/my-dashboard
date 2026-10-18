@@ -215,7 +215,9 @@ test('stop failure never shows success and expired session is renewed', async ({
   await page
     .getByRole('button', { name: '停止 my-dashboard', exact: true })
     .click();
-  await expect(page.getByText('停止失败', { exact: true })).toBeVisible();
+  await expect(
+    page.getByText('服务仍在运行，请检查日志后重试', { exact: true }),
+  ).toBeVisible();
   await expect(page.getByText('「my-dashboard」停止成功')).toHaveCount(0);
   state.stopSucceeds = true;
   state.expireToken = true;
@@ -240,7 +242,12 @@ test('deployment completion releases button and reports result', async ({
   await expect(button).toBeEnabled();
   await expect(page.getByText(/最近部署成功/)).toBeVisible();
   expect(state.deploys).toBe(1);
+  await expect(page.getByRole('region', { name: '最近操作' })).toContainText(
+    '部署完成',
+  );
   await page.getByRole('link', { name: '概览', exact: true }).click();
+  await expect(page.getByRole('region', { name: '最近操作' })).toHaveCount(0);
+  await page.getByRole('link', { name: '服务管理 →', exact: true }).click();
   await expect(page.getByRole('region', { name: '最近操作' })).toContainText(
     '部署完成',
   );
@@ -299,8 +306,17 @@ for (const width of [320, 390, 768, 1024, 1440]) {
         page.getByRole('button', { name: '展开导航' }),
       ).toBeVisible();
       await expect(
-        page.getByRole('region', { name: '常用入口' }),
+        page.getByRole('region', { name: '本机服务概览' }),
       ).toBeVisible();
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      ).toBe(true);
+      await page.screenshot({
+        path: `test-results/home-${width}.png`,
+        fullPage: true,
+      });
       await page.getByRole('button', { name: '展开导航' }).click();
       await page.keyboard.press('Escape');
       await expect(
@@ -310,7 +326,7 @@ for (const width of [320, 390, 768, 1024, 1440]) {
   });
 }
 
-test('theme persists and overview exposes useful sections with named controls', async ({
+test('theme persists and overview shows all services in one compact card', async ({
   page,
 }) => {
   await mock(page);
@@ -337,9 +353,22 @@ test('theme persists and overview exposes useful sections with named controls', 
     fullPage: true,
   });
   await page.getByRole('link', { name: '概览', exact: true }).click();
-  await expect(page.getByRole('region', { name: '常用入口' })).toBeVisible();
-  await expect(page.getByRole('region', { name: '需要关注' })).toBeVisible();
-  await expect(page.getByRole('region', { name: '最近操作' })).toBeVisible();
+  const card = page.getByRole('region', { name: '本机服务概览' });
+  await expect(card).toBeVisible();
+  await expect(card.getByRole('listitem')).toHaveCount(4);
+  for (const id of ['my-dashboard', 'study-lab', 'postgres', 'redis']) {
+    await expect(card.getByText(id, { exact: true })).toBeVisible();
+  }
+  await expect(card).toContainText('3000');
+  await expect(card).toContainText('5432');
+  await expect(card).toContainText('6379');
+  const bounds = await card.boundingBox();
+  expect(bounds.width).toBeLessThanOrEqual(400);
+  expect(bounds.height).toBeLessThan(400);
+  await expect(page.getByRole('region', { name: '常用入口' })).toHaveCount(0);
+  await expect(page.getByRole('region', { name: '需要关注' })).toHaveCount(0);
+  await expect(page.getByRole('region', { name: '最近操作' })).toHaveCount(0);
+  await page.screenshot({ path: 'test-results/home-dark.png', fullPage: true });
   await page.getByRole('button', { name: '切换到亮色主题' }).click();
   await page.screenshot({
     path: 'test-results/home-desktop.png',

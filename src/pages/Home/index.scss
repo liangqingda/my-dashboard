@@ -1,3 +1,15 @@
 .page {
   padding: var(--app-space-lg);
 }
+
+.cards {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--app-space-md);
+}
+
+.cards > * {
+  flex: 0 1 400px;
+  min-width: 0;
+}
