@@ -21,9 +21,6 @@ const ACTION_LABEL: Record<ServiceAction, { title: string; doneText: string }> =
   restart: { title: '重启', doneText: '已重启' },
 };
 
-/** 快速返回的本地请求也保留可见的操作反馈。 */
-const MIN_ACTION_LOADING_MS = 500;
-
 /** 正在执行中的动作（区分服务与动作） */
 export type ServiceBusy = { id: string; action: ServiceAction } | null;
 
@@ -127,9 +124,6 @@ export function useServices(): UseServicesResult {
   const runAction = useCallback(
     async (id: string, action: ServiceAction) => {
       setBusy({ id, action });
-      const loadingFeedback = new Promise<void>((resolve) => {
-        window.setTimeout(resolve, MIN_ACTION_LOADING_MS);
-      });
 
       const serviceName = services.find((service) => service.id === id)?.name ?? id;
       const { title, doneText } = ACTION_LABEL[action];
@@ -162,7 +156,7 @@ export function useServices(): UseServicesResult {
         });
       }
 
-      await Promise.all([refresh(), loadingFeedback]);
+      await refresh();
       setBusy((current) =>
         current?.id === id && current.action === action ? null : current,
       );

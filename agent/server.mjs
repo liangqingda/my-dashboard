@@ -27,6 +27,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
+import { waitForStartup } from './wait-for-startup.mjs';
+
 const execFile = promisify(execFileCb);
 
 const AGENT_DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -322,6 +324,7 @@ async function startService(id) {
 
   try {
     await appendFile(entry.logPath, banner, 'utf8');
+    const logOffset = Buffer.byteLength(await readFile(entry.logPath));
     const logFd = openSync(entry.logPath, 'a');
     const child = spawn(cmd, args, {
       cwd: entry.config.cwd,
@@ -354,34 +357,25 @@ async function startService(id) {
     child.unref();
     entry.lastStartedAt = new Date().toISOString();
 
-    // 启动超时兜底：命令卡住且服务始终未被探测到，判定启动失败并清理进程树
-    entry.startTimer = setTimeout(() => {
-      void (async () => {
-        const alive = entry.child && entry.child.exitCode === null;
-        const pids = await detectPids(entry.config.detectPatterns);
-
-        if (alive && pids.length === 0) {
-          entry.lastOutcome = 'failed';
-          entry.lastExit = {
-            code: 'start-timeout',
-            signal: null,
-            at: new Date().toISOString(),
-            message: '启动超时：命令卡住且服务未就绪',
-          };
-          entry.child = null;
-          try {
-            await killTree(child.pid);
-          } catch {
-            /* 进程已退出 */
-          }
-        }
-      })();
-    }, START_TIMEOUT_MS);
+    entry.stopInitiatedAt = null;
+    try {
+      await waitForStartup({
+        child,
+        logPath: entry.logPath,
+        logOffset,
+        config: entry.config,
+        timeoutMs: START_TIMEOUT_MS,
+      });
+    } catch (error) {
+      entry.lastOutcome = 'failed';
+      await killTree(child.pid);
+      throw error;
+    }
 
     return { id, started: true, pid: child.pid };
   } catch (error) {
     const err = new Error(`启动 ${id} 失败: ${error.message}`);
-    err.status = 500;
+    err.status = 422;
     throw err;
   }
 }
