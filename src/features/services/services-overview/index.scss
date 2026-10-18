@@ -77,15 +77,6 @@
   flex-shrink: 0;
 }
 
-.cardUrl {
-  width: fit-content;
-  color: var(--app-ink-faint);
-  font-size: 0.82rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  text-decoration: none;
-  cursor: default;
-}
-
 /* 整卡可点击：hover 高亮提示 */
 .cardClickable {
   cursor: pointer;

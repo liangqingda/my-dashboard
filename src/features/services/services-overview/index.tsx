@@ -66,7 +66,6 @@ const ServicesOverview = ({ pollIntervalMs = 5000 }: ServicesOverviewProps) => {
             const stopLoading = isStopBusy(busy, service.id);
             const isHttpUrl = service.url?.startsWith('http') ?? false;
             const canOpen = isHttpUrl && service.running;
-            const urlText = service.url?.replace(/^https?:\/\//, '') ?? null;
 
             /** 阻止整卡点击冒泡（内部交互元素：GitHub 链接、操作按钮） */
             const stopClick = (event: React.MouseEvent) => {
@@ -139,12 +138,6 @@ const ServicesOverview = ({ pollIntervalMs = 5000 }: ServicesOverviewProps) => {
                     <ServiceStatusPill build={service.build} running={service.running} />
                   </Group>
                 </div>
-
-                {!canOpen && service.url && (
-                  <Text c="dimmed" className={styles.cardUrl} size="sm">
-                    {urlText}
-                  </Text>
-                )}
 
                 <Group
                   className={styles.cardActions}
