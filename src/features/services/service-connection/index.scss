@@ -2,3 +2,24 @@
   display: grid;
   gap: var(--app-space-sm);
 }
+
+.refreshButton[aria-disabled='true'] {
+  cursor: progress;
+  transform: none;
+}
+
+.refreshing {
+  animation: refresh-spin 1s linear infinite;
+}
+
+@keyframes refresh-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .refreshing {
+    animation: none;
+  }
+}

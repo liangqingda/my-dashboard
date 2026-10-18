@@ -6,6 +6,7 @@ import {
   IconRefresh,
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
+import { useDebouncedValue } from '@mantine/hooks';
 
 import { startAgent } from '@/features/services/api';
 import { useServices } from '@/features/services/hooks/useServices';
@@ -16,6 +17,7 @@ const ServiceConnection = () => {
   const { loading, refreshing, agentOnline, error, lastUpdated, refresh } =
     useServices();
   const [starting, setStarting] = useState(false);
+  const [showRefreshActivity] = useDebouncedValue(refreshing, 200);
 
   const connect = async () => {
     setStarting(true);
@@ -76,9 +78,17 @@ const ServiceConnection = () => {
             </Button>
           )}
           <Button
+            aria-busy={refreshing}
+            aria-disabled={starting || refreshing}
+            className={styles.refreshButton}
             disabled={starting}
-            leftSection={<IconRefresh size={14} />}
-            loading={refreshing}
+            leftSection={
+              <IconRefresh
+                aria-hidden="true"
+                className={showRefreshActivity ? styles.refreshing : undefined}
+                size={14}
+              />
+            }
             onClick={() => void refresh()}
             size="xs"
             variant="subtle"

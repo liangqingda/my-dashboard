@@ -39,6 +39,8 @@ async function mock(page) {
     tokens: 0,
     expireToken: false,
     logs: 0,
+    serviceRequests: 0,
+    serviceDelay: 0,
   };
   await page.route('**/api/**', async (route) => {
     const pathname = new URL(route.request().url()).pathname;
@@ -56,7 +58,13 @@ async function mock(page) {
       state.expireToken = false;
       return json({ code: 'INVALID_TOKEN' }, 403);
     }
-    if (pathname === '/api/services') return json(state.services);
+    if (pathname === '/api/services') {
+      state.serviceRequests++;
+      if (state.serviceDelay) {
+        await new Promise((resolve) => setTimeout(resolve, state.serviceDelay));
+      }
+      return json(state.services);
+    }
     if (pathname === '/api/cli-commands')
       return json({
         commands: [
@@ -97,6 +105,63 @@ async function mock(page) {
   await expect(page.getByText('共 4 个服务')).toBeVisible();
   return state;
 }
+
+test('repeated refreshes keep the button visible and merge in-flight requests', async ({
+  page,
+}) => {
+  const state = await mock(page);
+  const button = page.getByRole('button', { name: '刷新状态', exact: true });
+  await expect(button).toHaveAttribute('aria-busy', 'false');
+  const initialBounds = await button.boundingBox();
+  await button.evaluate((element) => {
+    let frame;
+    let minimumOpacity = 1;
+    const sample = () => {
+      let opacity = 1;
+      let node = element.querySelector('.mantine-Button-label');
+      while (node) {
+        opacity *= Number(getComputedStyle(node).opacity);
+        if (node === element) break;
+        node = node.parentElement;
+      }
+      minimumOpacity = Math.min(minimumOpacity, opacity);
+      frame = requestAnimationFrame(sample);
+    };
+    frame = requestAnimationFrame(sample);
+    window.stopRefreshObservation = () => {
+      cancelAnimationFrame(frame);
+      return minimumOpacity;
+    };
+  });
+
+  state.serviceDelay = 500;
+  const before = state.serviceRequests;
+  await button.click();
+  await expect(button).toHaveAttribute('aria-busy', 'true');
+  for (let index = 0; index < 5; index++) await button.dispatchEvent('click');
+  await expect(button).toHaveAttribute('aria-busy', 'false');
+  expect(state.serviceRequests).toBe(before + 1);
+  expect(await button.boundingBox()).toEqual(initialBounds);
+
+  state.serviceDelay = 0;
+  for (let index = 0; index < 5; index++) {
+    await button.click();
+    await expect(button).toHaveAttribute('aria-busy', 'false');
+  }
+  // Visibility changes use the same refresh path as background polling.
+  const beforeBackground = state.serviceRequests;
+  await page.evaluate(() =>
+    document.dispatchEvent(new Event('visibilitychange')),
+  );
+  await expect
+    .poll(() => state.serviceRequests)
+    .toBeGreaterThan(beforeBackground);
+  await expect(button).toHaveAttribute('aria-busy', 'false');
+  const minimumOpacity = await page.evaluate(() =>
+    window.stopRefreshObservation(),
+  );
+  expect(minimumOpacity).toBe(1);
+});
 
 test('keyboard log toggle stays on page and expanded logs update', async ({
   page,
