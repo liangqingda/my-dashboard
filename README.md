@@ -13,15 +13,21 @@
 ## 脚本
 
 ```bash
-pnpm dev        # 本地开发（默认端口 3000）
-pnpm agent      # 前台运行本机服务 agent（默认 127.0.0.1:8787）
-pnpm agent:bg   # 后台运行 agent（日志 /tmp/my-dashboard-agent.log）
-pnpm agent:stop # 停止 agent
-pnpm typecheck  # 类型检查
-pnpm lint       # ESLint
-pnpm build      # 类型检查 + 构建
-pnpm preview    # 预览构建产物
+pnpm dev              # 本地开发（默认端口 3000）
+pnpm agent            # 前台运行本机服务 agent（默认 127.0.0.1:8787）
+pnpm agent:bg         # 后台运行 agent（日志 /tmp/my-dashboard-agent.log）
+pnpm agent:stop       # 停止 agent
+pnpm typecheck        # 类型检查
+pnpm lint             # ESLint + 目录结构检查
+pnpm check:features   # 仅目录结构检查
+pnpm feature:new <名> # 生成一个 feature 模块（kebab-case）
+pnpm component:new <路径> # 生成合规组件（index.tsx + index.scss）
+pnpm build            # 类型检查 + 构建
+pnpm preview          # 预览构建产物
 ```
+
+`lint` 会在 ESLint 之后跑 `check:features`（目录结构检查）；提交代码前 pre-commit
+钩子会自动执行 `pnpm lint && pnpm typecheck`，不合规直接拦截提交。
 
 ## 本机服务 agent
 
@@ -54,7 +60,9 @@ POST /api/services/:id/stop    停止服务
 ## 目录结构
 
 ```
+.husky/               # git 提交钩子（pre-commit 跑 lint + typecheck）
 agent/                # 本机服务 agent（server.mjs、services.json、logs/）
+scripts/              # 工程脚本（结构检查、feature/组件脚手架）
 src/
   layouts/            # 布局（BasicLayout / Header / Sidebar）
   pages/              # 页面（各信息模块，如 Home / Services）
@@ -62,9 +70,15 @@ src/
   styles/             # 全局样式与 design tokens
 ```
 
-## 约定
+## 约定（由工具强制，不只靠自觉）
 
 - 路径别名：`@/*` → `src/*`
 - 新增组件时，同级放置 `index.tsx` + `index.scss`（CSS Module 类名自动 camelCase）
 - 组件目录使用 kebab-case 命名
+- `src/features/**`：目录一律 kebab-case；组件目录必须有 index.scss；不嵌套
+  `components/`（子组件直接放父组件目录）；跨模块一律用 `@/features/...` 别名，
+  禁止相对导入跨出模块
+- 新建 feature 用 `pnpm feature:new <名>`；新建组件用 `pnpm component:new <路径>`，
+  脚手架默认产出即合规
+- `pnpm check:features` 强制以上结构规则；pre-commit 钩子拦截不合规提交
 - 侧边栏导航在 `src/layouts/Sidebar/index.tsx` 的 `navItems` 中登记

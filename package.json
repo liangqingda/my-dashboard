@@ -12,8 +12,12 @@
     "agent:stop": "kill $(pgrep -f 'agent/server.mjs') 2>/dev/null && echo 'Agent stopped' || echo 'No agent running'",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.node.json --noEmit",
     "build": "tsc -p tsconfig.json && tsc -p tsconfig.node.json && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "lint": "eslint . && node scripts/check-features.mjs",
+    "check:features": "node scripts/check-features.mjs",
+    "feature:new": "node scripts/new-feature.mjs",
+    "component:new": "node scripts/new-component.mjs",
+    "preview": "vite preview",
+    "prepare": "husky"
   },
   "dependencies": {
     "@mantine/core": "^9.4.1",
@@ -31,6 +35,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
     "eslint": "^9.39.5",
+    "husky": "^9.1.7",
     "prettier": "^3.9.5",
     "sass": "^1.101.0",
     "typescript": "^6.0.3",
