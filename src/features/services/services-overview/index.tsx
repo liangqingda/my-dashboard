@@ -109,7 +109,7 @@ const ServicesOverview = ({ pollIntervalMs = 5000 }: ServicesOverviewProps) => {
 
             return (
               <div
-                className={styles.card}
+                className={`${styles.card} ${styles.cardClickable}`}
                 key={service.id}
                 onClick={handleCardClick}
                 onKeyDown={handleCardKeyDown}
