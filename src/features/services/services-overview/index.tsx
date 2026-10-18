@@ -151,6 +151,7 @@ const ServicesOverview = ({ pollIntervalMs = 5000 }: ServicesOverviewProps) => {
                 <Group
                   className={styles.cardActions}
                   gap="xs"
+                  justify="flex-end"
                   onClick={stopClick}
                   wrap="nowrap"
                 >
