@@ -186,16 +186,6 @@ const ServiceRow = ({ service, busy, onStart, onStop, onRestart, onDeploy }: Ser
                 </Button>
               </Tooltip>
             )}
-            {service.deployOutcome === 'success' && (
-              <Text c="dimmed" className={styles.deployOk} size="xs">
-                部署成功
-              </Text>
-            )}
-            {service.deployOutcome === 'failed' && (
-              <Text c="dimmed" className={styles.deployFail} size="xs">
-                部署失败
-              </Text>
-            )}
           </Group>
         </div>
       </div>

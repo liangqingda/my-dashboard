@@ -139,16 +139,6 @@ const ServicesOverview = ({ pollIntervalMs = 5000 }: ServicesOverviewProps) => {
                   </Group>
                   <Group gap="xs" wrap="nowrap">
                     <ServiceStatusPill build={service.build} running={service.running} />
-                    {service.deployOutcome === 'success' && (
-                      <Text c="dimmed" className={styles.deployOk} size="xs">
-                        部署成功
-                      </Text>
-                    )}
-                    {service.deployOutcome === 'failed' && (
-                      <Text c="dimmed" className={styles.deployFail} size="xs">
-                        部署失败
-                      </Text>
-                    )}
                   </Group>
                 </div>
 

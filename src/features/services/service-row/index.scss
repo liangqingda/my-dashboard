@@ -135,16 +135,6 @@
   cursor: default;
 }
 
-.deployOk {
-  color: var(--app-status-ok);
-  white-space: nowrap;
-}
-
-.deployFail {
-  color: var(--app-status-danger);
-  white-space: nowrap;
-}
-
 .log {
   margin-top: var(--app-space-sm);
   padding: var(--app-space-sm) var(--app-space-md);

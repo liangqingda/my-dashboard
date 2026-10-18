@@ -8,7 +8,8 @@
  * 这样按钮 loading 不会因接口瞬间返回而一闪而过，也不会两个按钮同时转圈。
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { notifications } from '@mantine/notifications';
 
 import {
   deployService as deployServiceApi,
@@ -20,6 +21,13 @@ import type { ServiceStatus } from '@/features/services/types';
 
 /** 可对服务执行的动作 */
 export type ServiceAction = 'start' | 'stop' | 'restart';
+
+/** 各动作的提示文案 */
+const ACTION_LABEL: Record<ServiceAction, { title: string; doneText: string }> = {
+  start: { title: '启动', doneText: '已启动' },
+  stop: { title: '停止', doneText: '已停止' },
+  restart: { title: '重启', doneText: '已重启' },
+};
 
 /** 正在执行中的动作（区分服务与动作） */
 export type ServiceBusy = { id: string; action: ServiceAction } | null;
@@ -65,6 +73,10 @@ export function useServices(pollIntervalMs = 3000): UseServicesResult {
   const [agentOnline, setAgentOnline] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<ServiceBusy>(null);
+  /** 各服务最近一次部署结果（用于检测终态变化，仅在本次会话内提示） */
+  const prevDeployOutcomeRef = useRef<
+    Record<string, ServiceStatus['deployOutcome'] | undefined>
+  >({});
 
   const refresh = useCallback(async () => {
     try {
@@ -73,6 +85,37 @@ export function useServices(pollIntervalMs = 3000): UseServicesResult {
       setServices(list);
       setAgentOnline(true);
       setError(null);
+
+      // 部署是异步进程：检测 deployOutcome 从非终态变为终态，用 message 提示结果
+      const prevOutcomes = prevDeployOutcomeRef.current;
+
+      list.forEach((service) => {
+        const prev = prevOutcomes[service.id];
+
+        prevOutcomes[service.id] = service.deployOutcome;
+
+        if (prev === undefined) {
+          return; // 首次加载仅建立基线，不提示
+        }
+
+        if (service.deployOutcome === 'success' && prev !== 'success') {
+          notifications.show({
+            title: '部署成功',
+            message: `「${service.name}」已部署到 CloudBase`,
+            color: 'teal',
+            withCloseButton: true,
+            autoClose: false,
+          });
+        } else if (service.deployOutcome === 'failed' && prev !== 'failed') {
+          notifications.show({
+            title: '部署失败',
+            message: `「${service.name}」部署失败，详见服务日志`,
+            color: 'red',
+            withCloseButton: true,
+            autoClose: false,
+          });
+        }
+      });
 
       // 目标服务到达终态后清除执行中标记
       setBusy((current) => {
@@ -115,6 +158,9 @@ export function useServices(pollIntervalMs = 3000): UseServicesResult {
     async (id: string, action: ServiceAction) => {
       setBusy({ id, action });
 
+      const serviceName = services.find((service) => service.id === id)?.name ?? id;
+      const { title, doneText } = ACTION_LABEL[action];
+
       try {
         if (action === 'start') {
           await startServiceApi(id);
@@ -125,15 +171,29 @@ export function useServices(pollIntervalMs = 3000): UseServicesResult {
           await stopServiceApi(id);
           await startServiceApi(id);
         }
+
+        notifications.show({
+          title,
+          message: `「${serviceName}」${doneText}`,
+          color: 'teal',
+          withCloseButton: true,
+          autoClose: false,
+        });
       } catch (err) {
-        setError(err instanceof Error ? err.message : `${action} 失败`);
+        notifications.show({
+          title: `${title}失败`,
+          message: err instanceof Error ? err.message : `「${serviceName}」${title}失败`,
+          color: 'red',
+          withCloseButton: true,
+          autoClose: false,
+        });
         setBusy(null); // 接口报错，立即结束执行中状态
       }
 
       // 立即刷新一次，让轮询尽快捕获新的服务状态并据此结束 busy
       await refresh();
     },
-    [refresh],
+    [refresh, services],
   );
 
   const start = useCallback((id: string) => runAction(id, 'start'), [runAction]);
@@ -142,15 +202,34 @@ export function useServices(pollIntervalMs = 3000): UseServicesResult {
 
   const deploy = useCallback(
     async (id: string) => {
+      const serviceName = services.find((service) => service.id === id)?.name ?? id;
+
       try {
-        await deployServiceApi(id);
+        const result = await deployServiceApi(id);
+
+        if (result.alreadyDeploying) {
+          notifications.show({
+            title: '部署中',
+            message: `「${serviceName}」已在部署中，请稍候`,
+            color: 'blue',
+            withCloseButton: true,
+            autoClose: false,
+          });
+        }
+        // 部署为异步进程：最终成功/失败由轮询 deployOutcome 变化时提示
       } catch (err) {
-        setError(err instanceof Error ? err.message : '部署失败');
+        notifications.show({
+          title: '部署失败',
+          message: err instanceof Error ? err.message : `「${serviceName}」部署失败`,
+          color: 'red',
+          withCloseButton: true,
+          autoClose: false,
+        });
       }
 
       await refresh();
     },
-    [refresh],
+    [refresh, services],
   );
 
   return {
