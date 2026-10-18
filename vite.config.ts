@@ -7,6 +7,8 @@ import { defineConfig, normalizePath } from 'vite';
 
 import type { Plugin } from 'vite';
 
+import { localAgent } from './scripts/vite/local-agent.js';
+
 const rootDir = fileURLToPath(new URL('.', import.meta.url));
 const srcDir = normalizePath(path.resolve(rootDir, 'src'));
 const scssExtension = '.scss';
@@ -90,7 +92,7 @@ export default defineConfig({
       localsConvention: 'camelCaseOnly',
     },
   },
-  plugins: [implicitScssModules(), react()],
+  plugins: [localAgent(rootDir), implicitScssModules(), react()],
   resolve: {
     alias: {
       '@': srcDir,

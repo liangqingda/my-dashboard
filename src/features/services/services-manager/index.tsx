@@ -3,9 +3,12 @@
  * 包含 agent 在线提示、汇总计数与各服务的启停列表。
  */
 
-import { Alert, Group, Text } from '@mantine/core';
-import { IconAlertCircle, IconReload } from '@tabler/icons-react';
+import { useState } from 'react';
+import { notifications } from '@mantine/notifications';
+import { Alert, Button, Group, Text } from '@mantine/core';
+import { IconAlertCircle, IconPlayerPlay, IconReload } from '@tabler/icons-react';
 
+import { startAgent } from '@/features/services/api';
 import { useServices } from '@/features/services/hooks/useServices';
 import QuickCommands from '@/features/services/quick-commands';
 import ServiceRow from '@/features/services/service-row';
@@ -16,30 +19,65 @@ const ServicesManager = () => {
   const { services, loading, agentOnline, error, busy, refresh, start, stop, restart, deploy } =
     useServices();
 
+  const [agentStarting, setAgentStarting] = useState(false);
+
+  const handleStartAgent = async () => {
+    setAgentStarting(true);
+
+    try {
+      await startAgent();
+      await refresh();
+    } catch (err) {
+      notifications.show({ title: 'agent 启动失败', message: err instanceof Error ? err.message : '请稍后重试', color: 'red' });
+    } finally {
+      setAgentStarting(false);
+    }
+  };
+
   const runningCount = services.filter((service) => service.running).length;
   const stoppedCount = services.length - runningCount;
   const autoStartCount = services.filter((service) => service.autoStart).length;
 
   return (
     <div className={styles.manager}>
-      {!agentOnline && (
+      {!loading && !agentOnline && (
         <Alert
           className={styles.alert}
           color="yellow"
           icon={<IconAlertCircle size={18} />}
-          title="本机服务 agent 未运行"
+          title="无法连接本机服务 agent"
           variant="light"
         >
           <Group align="center" gap="md" justify="space-between">
             <Text size="sm">
-              服务启停需本地 agent（agent/server.mjs）。请先在 my-dashboard 目录运行
-              <code className={styles.code}>pnpm agent:bg</code> 或
-              <code className={styles.code}>pnpm agent</code>，再点刷新。
+              {import.meta.env.DEV ? (
+                '服务管理暂不可用。点击「启动 agent」恢复连接；若已在运行，可尝试重新连接。'
+              ) : (
+                <>服务管理暂不可用。请在本机启动 agent（<code className={styles.code}>pnpm agent:bg</code>），再重新连接。</>
+              )}
             </Text>
-            <button className={styles.retry} onClick={() => void refresh()} type="button">
-              <IconReload size={14} />
-              刷新
-            </button>
+            <Group gap="xs">
+              {import.meta.env.DEV && (
+                <Button
+                  leftSection={<IconPlayerPlay size={14} />}
+                  loading={agentStarting}
+                  onClick={() => void handleStartAgent()}
+                  size="xs"
+                  variant="light"
+                >
+                  启动 agent
+                </Button>
+              )}
+              <Button
+                disabled={agentStarting}
+                leftSection={<IconReload size={14} />}
+                onClick={() => void refresh()}
+                size="xs"
+                variant="subtle"
+              >
+                重新连接
+              </Button>
+            </Group>
           </Group>
         </Alert>
       )}

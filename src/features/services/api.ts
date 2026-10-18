@@ -90,3 +90,7 @@ export const deployService = (id: string) =>
 /** 重启本地 agent；接口在新进程就绪后返回。 */
 export const restartAgent = () =>
   request<{ restarted: boolean }>('/agent/restart', { method: 'POST' });
+
+/** 通过开发服务器启动 agent，等待其就绪。 */
+export const startAgent = () =>
+  request<{ started: boolean }>('/agent/start', { method: 'POST' });
