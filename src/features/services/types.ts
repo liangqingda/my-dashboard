@@ -30,6 +30,24 @@ export type ServiceStatus = {
   cwd: string;
   /** 对外端口，可能为 null */
   port: number | null;
+  /** 主端口的展示标签（如"前端"），可选 */
+  portLabel: string | null;
+  /** 附加端口（如全栈服务的后端端口），用于展示 */
+  extraPorts: Array<{ port: number; label?: string }>;
+  /** 访问地址：http 链接或 localhost:port 端点，可能为 null */
+  url: string | null;
+  /** GitHub 远程仓库地址，可能为 null */
+  repo: string | null;
+  /** 是否开机自动启动（如 brew launchd / LaunchAgent 托管） */
+  autoStart: boolean;
+  /** 是否配置了部署命令（如部署到 CloudBase） */
+  canDeploy: boolean;
+  /** 是否正在部署中 */
+  deploying: boolean;
+  /** 最近一次部署结果：success / failed / null（未部署过或进行中） */
+  deployOutcome: 'success' | 'failed' | null;
+  /** 最近一次部署完成时间（ISO 8601） */
+  lastDeployAt: string | null;
   /** 进程是否在运行 */
   running: boolean;
   /** 匹配到的进程 pid 列表 */

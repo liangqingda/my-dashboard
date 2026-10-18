@@ -1,0 +1,78 @@
+.card {
+  padding: var(--app-space-md) var(--app-space-lg);
+  border: 1px solid var(--app-line);
+  border-radius: var(--mantine-radius-md);
+  background: var(--app-surface);
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--app-space-md);
+}
+
+.title {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.note {
+  color: var(--app-ink-faint);
+  font-size: 0.78rem;
+}
+
+.empty {
+  padding: var(--app-space-sm) 0;
+  color: var(--app-ink-faint);
+  font-size: 0.82rem;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-space-md);
+}
+
+.groupName {
+  margin-bottom: 6px;
+  color: var(--app-ink-soft);
+  font-size: 0.8rem;
+}
+
+/* 左右布局：命令 | 说明 | 复制图标 */
+.row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--app-space-md);
+  width: 100%;
+  padding: 6px var(--app-space-sm);
+  border: 0;
+  border-radius: var(--mantine-radius-sm);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.row:hover {
+  background: var(--app-surface-subtle);
+}
+
+.command {
+  color: var(--app-accent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.desc {
+  color: var(--app-ink-soft);
+  font-size: 0.85rem;
+}
+
+.copy {
+  display: inline-flex;
+  color: var(--app-ink-faint);
+}

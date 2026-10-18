@@ -43,6 +43,29 @@ export const fetchServiceLog = (id: string, lines = 80) =>
     `/services/${encodeURIComponent(id)}/log?lines=${lines}`,
   );
 
+/** 清空单个服务的日志文件 */
+export const clearServiceLog = (id: string) =>
+  request<{ id: string; cleared: boolean }>(
+    `/services/${encodeURIComponent(id)}/log/clear`,
+    { method: 'POST' },
+  );
+
+/** 全局 CLI 命令（来自 ~/.zshrc 的别名/函数） */
+export type CliCommand = {
+  /** 命令名 */
+  name: string;
+  /** 类型：alias 别名 / function 函数 */
+  type: 'alias' | 'function';
+  /** 一句话说明 */
+  desc: string;
+  /** 分组：alias / postgres / redis / other */
+  group: string;
+};
+
+/** 获取 ~/.zshrc 中的全局 CLI 命令（自动发现新增命令） */
+export const fetchCliCommands = () =>
+  request<{ commands: CliCommand[]; source: string }>('/cli-commands');
+
 /** 启动服务 */
 export const startService = (id: string) =>
   request<{ id: string; started?: boolean; alreadyRunning?: boolean }>(
@@ -54,5 +77,12 @@ export const startService = (id: string) =>
 export const stopService = (id: string) =>
   request<{ id: string; stopped?: boolean; remaining?: number[] }>(
     `/services/${encodeURIComponent(id)}/stop`,
+    { method: 'POST' },
+  );
+
+/** 重新部署服务（如构建并上传到 CloudBase） */
+export const deployService = (id: string) =>
+  request<{ id: string; deploying: boolean; alreadyDeploying?: boolean }>(
+    `/services/${encodeURIComponent(id)}/deploy`,
     { method: 'POST' },
   );

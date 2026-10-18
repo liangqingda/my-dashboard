@@ -17,6 +17,18 @@
   background: currentColor;
 }
 
+/* 紧凑模式：与"开机自启"小标签同行时使用 */
+.compact {
+  padding: 1px 7px;
+  font-size: 0.7rem;
+  gap: 4px;
+}
+
+.compact .dot {
+  width: 5px;
+  height: 5px;
+}
+
 .ok {
   color: var(--app-status-ok);
   background: var(--app-status-ok-soft);

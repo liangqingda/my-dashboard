@@ -1,29 +1,66 @@
 .row {
   padding: var(--app-space-md) var(--app-space-lg);
   border-bottom: 1px solid var(--app-line);
+  border-radius: var(--mantine-radius-sm);
 }
 
-.row:last-child {
-  border-bottom: 0;
+/* 可跳转服务的整行：可点击 + hover 高亮 + tooltip 提示 */
+.rowClickable {
+  cursor: pointer;
 }
 
-.head {
+.rowClickable:hover {
+  background: var(--app-surface-subtle);
+}
+
+.rowClickable:hover .name {
+  color: var(--app-accent-strong);
+}
+
+/* 顶部行：服务名（左）+ 操作按钮（右），同一水平带 */
+.topRow {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--app-space-md);
+}
+
+/* 描述行：占满整行宽度，不再被右侧按钮列挤窄 */
+.desc {
+  margin-top: 2px;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
-.title {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+/* 端口号：等宽字体、弱化色，紧跟描述后面 */
+.port {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8rem;
+  color: var(--app-ink-faint);
 }
 
 .name {
   font-size: 1rem;
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: var(--app-space-sm);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.autoStart {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--app-accent-soft);
+  color: var(--app-accent);
+  font-size: 0.7rem;
+  white-space: nowrap;
 }
 
 .right {
@@ -33,31 +70,35 @@
   flex-wrap: wrap;
 }
 
-.meta {
-  display: flex;
-  align-items: center;
-  gap: var(--app-space-lg);
-  flex-wrap: wrap;
-  margin-top: var(--app-space-sm);
+/* 服务信息区：可跳转页面时整块可点击，hover 用 tooltip 提示（由整行 .rowClickable 承担） */
+.endpoint {
   color: var(--app-ink-faint);
-  font-size: 0.78rem;
-  font-variant-numeric: tabular-nums;
+  font-size: 0.82rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-.cmd {
-  color: var(--app-ink-soft);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 320px;
+.repo {
+  display: inline-flex;
+  align-items: center;
+  color: var(--app-ink-faint);
+  cursor: pointer;
+}
+
+.repo:hover {
+  color: var(--app-accent-strong);
+}
+
+.logBar {
+  display: flex;
+  align-items: center;
+  gap: var(--app-space-sm);
+  margin-top: var(--app-space-sm);
 }
 
 .logToggle {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  margin-top: var(--app-space-sm);
   padding: 2px 0;
   background: transparent;
   color: var(--app-accent);
@@ -67,6 +108,41 @@
 
 .logToggle:hover {
   color: var(--app-accent-strong);
+}
+
+.clearLog {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--mantine-radius-sm);
+  background: transparent;
+  color: var(--app-ink-faint);
+  cursor: pointer;
+}
+
+.clearLog:hover:not(:disabled) {
+  color: var(--app-status-danger);
+  border-color: var(--app-line);
+  background: var(--app-surface-subtle);
+}
+
+.clearLog:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.deployOk {
+  color: var(--app-status-ok);
+  white-space: nowrap;
+}
+
+.deployFail {
+  color: var(--app-status-danger);
+  white-space: nowrap;
 }
 
 .log {

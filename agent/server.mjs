@@ -20,8 +20,9 @@
  */
 import { execFile as execFileCb, spawn } from 'node:child_process';
 import { openSync, closeSync } from 'node:fs';
-import { appendFile, mkdir, readFile } from 'node:fs/promises';
+import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import http from 'node:http';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
@@ -37,12 +38,15 @@ const HOST = process.env.AGENT_HOST || '127.0.0.1';
 const PORT = Number(process.env.AGENT_PORT || 8787);
 const DEFAULT_LINES = 60;
 
+/** 启动命令超时：命令卡住且服务始终未就绪时判定启动失败，避免无限等待 */
+const START_TIMEOUT_MS = Number(process.env.AGENT_START_TIMEOUT || 60_000);
+
 /** 默认服务清单：配置文件不存在或解析失败时的兜底 */
 const DEFAULT_SERVICES = [
   {
     id: 'my-dashboard',
     name: 'my-dashboard',
-    description: '个人工作台（Vite + React）',
+    description: '个人工作台',
     cwd: ROOT,
     port: 3000,
     startCmd: ['pnpm', 'dev'],
@@ -99,29 +103,45 @@ async function readTail(file, lines) {
   }
 }
 
+/** 正则转义：把标记文本中的特殊字符转义为字面量 */
+function escapeRegExp(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * 在文本中查找某个标记的“最后出现位置”。
+ * 按整词边界匹配：标记两侧不能紧贴字母/数字/下划线，
+ * 避免 `Errors/NotFound.tsx` 里的 "error"、`restarted` 里的 "started" 误命中。
+ */
+function lastMarkerIndex(text, marker) {
+  const re = new RegExp(`(?<![A-Za-z0-9_])${escapeRegExp(marker)}(?![A-Za-z0-9_])`, 'ig');
+  let last = -1;
+  for (const m of text.matchAll(re)) last = m.index;
+  return last;
+}
+
 /**
  * 根据日志尾部判定编译/启动状态。
- * 取所有 success/fail 标记在日志中的最后出现位置，按时间先后判定。
+ * 取所有 success/fail 标记在日志中的最后出现位置，按时间先后判定；
+ * 标记按整词匹配，防止路径/变量名里的片段误判为编译失败。
  */
 function classifyBuild(config, tail, running) {
   if (!running) return 'stopped';
 
-  const lower = tail.toLowerCase();
   let failIdx = -1;
   let okIdx = -1;
 
   for (const marker of config.failMarkers) {
-    const idx = lower.lastIndexOf(marker.toLowerCase());
+    const idx = lastMarkerIndex(tail, marker);
     if (idx > failIdx) failIdx = idx;
   }
   for (const marker of config.successMarkers) {
-    const idx = lower.lastIndexOf(marker.toLowerCase());
+    const idx = lastMarkerIndex(tail, marker);
     if (idx > okIdx) okIdx = idx;
   }
 
   if (failIdx > okIdx) return 'fail';
-  if (okIdx >= 0) return 'ok';
-  return 'starting';
+  return 'ok';
 }
 
 /** 递归终止进程及其全部子进程 */
@@ -199,10 +219,14 @@ async function init() {
     registry.set(config.id, {
       config,
       child: null,
+      startTimer: null,
       lastStartedAt: null,
       lastExit: null,
       lastOutcome: null,
       stopInitiatedAt: null,
+      deployChild: null,
+      deployState: null,
+      lastDeployAt: null,
       logPath: path.join(LOG_DIR, `${config.id}.log`),
     });
   }
@@ -227,11 +251,26 @@ async function getStatus(entry) {
     description: config.description ?? '',
     cwd: config.cwd,
     port: config.port ?? null,
+    portLabel: config.portLabel ?? null,
+    extraPorts: Array.isArray(config.extraPorts)
+      ? config.extraPorts.map((p) => (typeof p === 'number' ? { port: p } : p))
+      : [],
+    // url 显式给 null 表示不可访问的后端服务（数据库等），不自动拼 http 地址
+    url: config.url !== undefined ? config.url : (config.port ? `http://localhost:${config.port}` : null),
+    repo: config.repo ?? null,
+    autoStart: config.autoStart ?? false,
     running,
     pids,
     build,
     lastStartedAt,
     lastExit,
+    deploying: entry.deployState === 'running',
+    deployOutcome:
+      entry.deployState === 'success' || entry.deployState === 'failed'
+        ? entry.deployState
+        : null,
+    lastDeployAt: entry.lastDeployAt,
+    canDeploy: Array.isArray(config.deployCmd) && config.deployCmd.length > 0,
     log: tail,
     logLines: tail ? tail.split('\n').length : 0,
     startCmd: config.startCmd,
@@ -269,10 +308,13 @@ async function startService(id) {
       cwd: entry.config.cwd,
       detached: true,
       stdio: ['ignore', logFd, logFd],
+      env: { ...process.env, ...(entry.config.env ?? {}) },
     });
     closeSync(logFd);
 
     child.once('exit', (code, signal) => {
+      clearTimeout(entry.startTimer);
+      entry.startTimer = null;
       entry.lastExit = { code, signal, at: new Date().toISOString() };
       // 主动停止或正常退出视为 stopped；其余非零退出视为崩溃失败
       entry.lastOutcome =
@@ -280,6 +322,8 @@ async function startService(id) {
       entry.child = null;
     });
     child.once('error', (error) => {
+      clearTimeout(entry.startTimer);
+      entry.startTimer = null;
       entry.lastExit = { code: 'spawn-error', signal: null, at: new Date().toISOString(), message: error.message };
       entry.lastOutcome =
         entry.stopInitiatedAt !== null ? 'stopped' : 'failed';
@@ -291,12 +335,100 @@ async function startService(id) {
     child.unref();
     entry.lastStartedAt = new Date().toISOString();
 
+    // 启动超时兜底：命令卡住且服务始终未被探测到，判定启动失败并清理进程树
+    entry.startTimer = setTimeout(() => {
+      void (async () => {
+        const alive = entry.child && entry.child.exitCode === null;
+        const pids = await detectPids(entry.config.detectPatterns);
+
+        if (alive && pids.length === 0) {
+          entry.lastOutcome = 'failed';
+          entry.lastExit = {
+            code: 'start-timeout',
+            signal: null,
+            at: new Date().toISOString(),
+            message: '启动超时：命令卡住且服务未就绪',
+          };
+          entry.child = null;
+          try {
+            await killTree(child.pid);
+          } catch {
+            /* 进程已退出 */
+          }
+        }
+      })();
+    }, START_TIMEOUT_MS);
+
     return { id, started: true, pid: child.pid };
   } catch (error) {
     const err = new Error(`启动 ${id} 失败: ${error.message}`);
     err.status = 500;
     throw err;
   }
+}
+
+/** 重新部署服务（如构建并上传到 CloudBase）。一次性命令，输出写入服务日志。 */
+async function deployService(id) {
+  const entry = registry.get(id);
+
+  if (!entry) {
+    const err = new Error(`未知服务 "${id}"`);
+    err.status = 404;
+    throw err;
+  }
+
+  const cmd = entry.config.deployCmd;
+
+  if (!cmd || cmd.length === 0) {
+    const err = new Error(`服务 "${id}" 未配置部署命令（deployCmd）`);
+    err.status = 400;
+    throw err;
+  }
+
+  if (entry.deployState === 'running') {
+    return { id, deploying: true, alreadyDeploying: true };
+  }
+
+  const time = new Date().toLocaleTimeString();
+  await appendFile(entry.logPath, `\n===== [${time}] 重新部署开始 =====\n`, 'utf8');
+
+  const deployLogFd = openSync(entry.logPath, 'a');
+  entry.deployState = 'running';
+  entry.deployChild = spawn(cmd[0], cmd.slice(1), {
+    cwd: entry.config.cwd,
+    env: { ...process.env, ...(entry.config.env || {}) },
+    stdio: ['ignore', deployLogFd, deployLogFd],
+    detached: true,
+  });
+  entry.deployChild.unref();
+
+  const finishDeploy = (state) => {
+    entry.deployState = state;
+    entry.lastDeployAt = new Date().toISOString();
+    entry.deployChild = null;
+    try {
+      closeSync(deployLogFd);
+    } catch {
+      /* 已关闭 */
+    }
+  };
+
+  entry.deployChild.once('error', (error) => {
+    finishDeploy('failed');
+    appendFile(entry.logPath, `===== 部署失败：${error.message} =====\n`, 'utf8').catch(() => {});
+  });
+
+  entry.deployChild.once('exit', (code) => {
+    const state = code === 0 ? 'success' : 'failed';
+    finishDeploy(state);
+    appendFile(
+      entry.logPath,
+      `===== [${new Date().toLocaleTimeString()}] 部署${code === 0 ? '成功' : `失败（exit ${code}）`} =====\n`,
+      'utf8',
+    ).catch(() => {});
+  });
+
+  return { id, deploying: true };
 }
 
 /** 运行服务的自定义停止命令（如 pnpm stop:dev），带超时保护 */
@@ -337,6 +469,10 @@ async function stopService(id) {
 
   // 记录主动停止时刻，用于区分「正常停止」与「崩溃退出」
   entry.stopInitiatedAt = new Date().toISOString();
+
+  // 停止时取消尚未触发的启动超时
+  clearTimeout(entry.startTimer);
+  entry.startTimer = null;
 
   let pids = await detectPids(entry.config.detectPatterns);
   const childAlive = entry.child && entry.child.exitCode === null;
@@ -389,7 +525,108 @@ function parseServicesPath(pathname) {
   if (parts.length === 2) return { id: null, action: 'list' };
   if (parts.length === 3) return { id: parts[2], action: 'status' };
   if (parts.length === 4) return { id: parts[2], action: parts[3] };
+  // /api/services/:id/log/clear
+  if (parts.length === 5) return { id: parts[2], action: `${parts[3]}/${parts[4]}` };
   return { id: null, action: null };
+}
+
+/* ------------------------------------------------------------------ *
+ * 全局 CLI 命令解析：读取 ~/.zshrc，提取别名(alias)与函数(function)  *
+ * ------------------------------------------------------------------ */
+
+const ZSHRC = path.join(os.homedir(), '.zshrc');
+
+/** 根据别名取值推断一句说明 */
+function aliasDescription(value) {
+  if (/python3/.test(value)) return '运行 Python3';
+  if (/code\.app|visual studio|\/code(\s|$|")/i.test(value)) return '打开 VS Code';
+  return `别名 → ${value.replace(/^["']+|["']+$/g, '')}`;
+}
+
+/** 根据函数体推断一句说明 */
+function functionDescription(name, text) {
+  if (/redis-cli shutdown/.test(text)) return '停止 Redis';
+  if (/redis-server/.test(text)) return '启动 Redis';
+  if (/brew services/.test(text)) return '管理 Homebrew 服务';
+  return 'Shell 函数';
+}
+
+/** 推断命令归属分组：redis / postgres / alias / other */
+function groupFor(name, text) {
+  if (/redis/i.test(text)) return 'redis';
+  if (/brew services|postgres/i.test(text)) return 'postgres';
+  return 'other';
+}
+
+/**
+ * 解析 ~/.zshrc，产出可展示的命令条目。
+ * - alias name=value → 一条
+ * - 函数：若函数体内有 case "$1" 的 start/stop/restart/status 分支则展开为多条子命令；
+ *   否则整函数作为一条。
+ */
+async function parseCliCommands() {
+  let text;
+  try {
+    text = await readFile(ZSHRC, 'utf8');
+  } catch {
+    return [];
+  }
+
+  const lines = text.split('\n');
+  const out = [];
+  const aliasRe = /^alias\s+([A-Za-z0-9_\-]+)\s*=\s*(.+)$/;
+  const funcStartRe = /^([A-Za-z_][A-Za-z0-9_\-]*)\s*\(\s*\)\s*\{/;
+
+  let cur = null; // { name, body: string[] }
+  const flush = () => {
+    if (!cur) return;
+    const textBody = cur.body.join('\n');
+    const subs = ['start', 'stop', 'restart', 'status'].filter((s) =>
+      new RegExp(`\\b${s}\\b`).test(textBody),
+    );
+    if (subs.length > 1) {
+      const group = groupFor(cur.name, textBody);
+      for (const sub of subs) {
+        const desc =
+          group === 'postgres'
+            ? sub === 'status'
+              ? '查看 PostgreSQL 状态'
+              : `${sub === 'start' ? '启动' : sub === 'stop' ? '停止' : '重启'} PostgreSQL`
+            : `${cur.name} ${sub}`;
+        out.push({ name: `${cur.name} ${sub}`, type: 'function', desc, group });
+      }
+    } else {
+      out.push({
+        name: cur.name,
+        type: 'function',
+        desc: functionDescription(cur.name, textBody),
+        group: groupFor(cur.name, textBody),
+      });
+    }
+    cur = null;
+  };
+
+  for (const line of lines) {
+    if (cur) {
+      cur.body.push(line);
+      if (line.includes('}')) flush();
+      continue;
+    }
+    const a = line.match(aliasRe);
+    if (a) {
+      out.push({
+        name: a[1],
+        type: 'alias',
+        desc: aliasDescription(a[2]),
+        group: 'alias',
+      });
+      continue;
+    }
+    const f = line.match(funcStartRe);
+    if (f) cur = { name: f[1], body: [] };
+  }
+  flush();
+  return out;
 }
 
 const server = http.createServer(async (req, res) => {
@@ -413,6 +650,12 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && pathname === '/api/services') {
       const statuses = await Promise.all([...registry.values()].map(getStatus));
       sendJson(res, 200, statuses);
+      return;
+    }
+
+    if (req.method === 'GET' && pathname === '/api/cli-commands') {
+      const commands = await parseCliCommands();
+      sendJson(res, 200, { commands, source: ZSHRC });
       return;
     }
 
@@ -440,6 +683,17 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    if (parsed && parsed.action === 'log/clear' && req.method === 'POST') {
+      const entry = registry.get(parsed.id);
+      if (!entry) {
+        sendJson(res, 404, { message: `未知服务 "${parsed.id}"` });
+        return;
+      }
+      await writeFile(entry.logPath, '', 'utf8');
+      sendJson(res, 200, { id: parsed.id, cleared: true });
+      return;
+    }
+
     if (parsed && parsed.action === 'start' && req.method === 'POST') {
       sendJson(res, 200, await startService(parsed.id));
       return;
@@ -447,6 +701,11 @@ const server = http.createServer(async (req, res) => {
 
     if (parsed && parsed.action === 'stop' && req.method === 'POST') {
       sendJson(res, 200, await stopService(parsed.id));
+      return;
+    }
+
+    if (parsed && parsed.action === 'deploy' && req.method === 'POST') {
+      sendJson(res, 200, await deployService(parsed.id));
       return;
     }
 

@@ -36,13 +36,18 @@ export type ServiceStatusPillProps = {
   running: boolean;
   /** 额外类名 */
   className?: string;
+  /** 紧凑模式：与小标签（如"开机自启"）同行时使用 */
+  compact?: boolean;
 };
 
-const ServiceStatusPill = ({ build, running, className }: ServiceStatusPillProps) => {
+const ServiceStatusPill = ({ build, running, className, compact = false }: ServiceStatusPillProps) => {
   const { label, tone } = deriveView(build, running);
 
   return (
-    <span className={`${styles.pill} ${styles[tone]} ${className ?? ''}`} data-tone={tone}>
+    <span
+      className={`${styles.pill} ${compact ? styles.compact : ''} ${styles[tone]} ${className ?? ''}`}
+      data-tone={tone}
+    >
       <span aria-hidden="true" className={styles.dot} />
       {label}
     </span>

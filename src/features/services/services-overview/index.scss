@@ -86,32 +86,23 @@
   cursor: default;
 }
 
-/* 可跳转服务的名称信息区：整块可点击，hover 用 tooltip 提示 */
-.cardInfo {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--app-space-sm);
-  flex: 1;
-  min-width: 0;
-  padding: 0;
-  border: 0;
-  border-radius: var(--mantine-radius-sm);
-  background: transparent;
-  color: inherit;
-  text-align: left;
-}
-
-.cardInfo.canOpen {
+/* 整卡可点击：hover 高亮提示 */
+.cardClickable {
   cursor: pointer;
 }
 
-.cardInfo.canOpen:hover {
+.cardClickable:hover {
   background: var(--app-surface-subtle);
 }
 
-.cardInfo.canOpen:hover .cardName {
+.cardClickable:hover .cardName {
   color: var(--app-accent-strong);
+}
+
+/* 标题区：名称 + GitHub 图标 + 开机自启 同行 */
+.cardTitle {
+  flex: 1;
+  min-width: 0;
 }
 
 .cardRepo {
@@ -123,6 +114,16 @@
 
 .cardRepo:hover {
   color: var(--app-accent-strong);
+}
+
+.deployOk {
+  color: var(--app-status-ok);
+  white-space: nowrap;
+}
+
+.deployFail {
+  color: var(--app-status-danger);
+  white-space: nowrap;
 }
 
 .cardActions {

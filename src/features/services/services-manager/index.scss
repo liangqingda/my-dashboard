@@ -44,6 +44,11 @@
   font-variant-numeric: tabular-nums;
 }
 
+.autoStartCount {
+  color: var(--app-accent);
+  font-variant-numeric: tabular-nums;
+}
+
 .list {
   border: 1px solid var(--app-line);
   border-radius: var(--mantine-radius-md);
@@ -51,6 +56,29 @@
   overflow: hidden;
 }
 
+/* 服务行被 Tooltip 包裹成独立容器，保证整行占满宽度，且末行去掉底部边框 */
+.list > * {
+  display: block;
+}
+
+.list > *:last-child .row {
+  border-bottom: 0;
+}
+
 .empty {
   padding: var(--app-space-lg);
+}
+
+/* 左右布局：服务列表（左，自适应）| 快捷命令卡片（右，固定宽度） */
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 400px;
+  gap: var(--app-space-md);
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
 }

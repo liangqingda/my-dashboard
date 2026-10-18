@@ -2,9 +2,12 @@
   {
     "id": "my-dashboard",
     "name": "my-dashboard",
-    "description": "个人工作台（Vite + React，端口 3000）",
+    "description": "个人工作台",
     "cwd": "/Users/lqd/projects/my-dashboard",
     "port": 3000,
+    "url": "http://localhost:3000",
+    "repo": "https://github.com/liangqingda/my-dashboard",
+    "autoStart": true,
     "startCmd": ["pnpm", "dev"],
     "stopCmd": ["pnpm", "stop:dev"],
     "detectPatterns": [
@@ -24,11 +27,16 @@
   {
     "id": "study-lab",
     "name": "study-lab",
-    "description": "全栈学习工作台（pnpm monorepo，web 3000 / api 3001）",
+    "description": "全栈学习工作台",
     "cwd": "/Users/lqd/projects/study-lab",
     "port": 3001,
+    "portLabel": "前端",
+    "extraPorts": [{ "port": 3002, "label": "后端" }],
+    "url": "http://localhost:3001",
+    "repo": "https://github.com/liangqingda/study-lab",
     "startCmd": ["pnpm", "dev"],
     "stopCmd": ["pnpm", "dev:stop"],
+    "deployCmd": ["pnpm", "run", "deploy"],
     "detectPatterns": [
       "/Users/lqd/projects/study-lab/node_modules/",
       "/Users/lqd/projects/study-lab/apps/web/node_modules/",
@@ -43,6 +51,58 @@
       "typeerror",
       "cannot find",
       "stopped ("
+    ]
+  },
+  {
+    "id": "postgres",
+    "name": "postgres",
+    "description": "PostgreSQL 18",
+    "cwd": "/Users/lqd",
+    "port": 5432,
+    "url": null,
+    "env": { "HOMEBREW_NO_AUTO_UPDATE": "1", "HOMEBREW_NO_ANALYTICS": "1" },
+    "autoStart": true,
+    "startCmd": [
+      "/bin/zsh",
+      "-lc",
+      "exec /opt/homebrew/bin/brew services start postgresql@18"
+    ],
+    "stopCmd": [
+      "/bin/zsh",
+      "-lc",
+      "launchctl bootout gui/$(id -u)/sh.brew.postgresql@18 2>/dev/null; launchctl bootout gui/$(id -u)/homebrew.mxcl.postgresql@18 2>/dev/null; exec /opt/homebrew/bin/brew services stop postgresql@18"
+    ],
+    "detectPatterns": [
+      "/opt/homebrew/opt/postgresql@18/bin/postgres"
+    ],
+    "successMarkers": [
+      "successfully started",
+      "is already started",
+      "succeeded"
+    ],
+    "failMarkers": ["error", "failed", "denied", "could not"]
+  },
+  {
+    "id": "redis",
+    "name": "redis",
+    "description": "Redis",
+    "cwd": "/Users/lqd/projects/redis-workspace",
+    "port": 6379,
+    "url": null,
+    "startCmd": [
+      "/Users/lqd/projects/redis-workspace/bin/redis-server",
+      "/Users/lqd/projects/redis-workspace/redis.conf",
+      "--daemonize",
+      "yes"
+    ],
+    "stopCmd": ["/Users/lqd/projects/redis-workspace/bin/redis-cli", "shutdown"],
+    "detectPatterns": ["redis-server"],
+    "successMarkers": ["ready to accept connections", "connected"],
+    "failMarkers": [
+      "address already in use",
+      "cannot open",
+      "configuration file",
+      "no such file"
     ]
   }
 ]

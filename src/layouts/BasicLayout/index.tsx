@@ -25,7 +25,9 @@ const BasicLayout = ({ children }: BasicLayoutProps) => (
     <AppShell.Navbar className={styles.navbar}>
       <Sidebar />
     </AppShell.Navbar>
-    <AppShell.Main className={styles.main}>{children}</AppShell.Main>
+    <AppShell.Main className={styles.main}>
+      <div className={styles.content}>{children}</div>
+    </AppShell.Main>
   </AppShell>
 );
 

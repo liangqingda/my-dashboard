@@ -13,7 +13,7 @@ import {
   IconRocket,
   IconServer,
 } from '@tabler/icons-react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 
 import {
   isPrimaryBusy,
@@ -32,6 +32,7 @@ export type ServicesOverviewProps = {
 const ServicesOverview = ({ pollIntervalMs = 5000 }: ServicesOverviewProps) => {
   const { services, loading, agentOnline, busy, start, stop, restart, deploy } =
     useServices(pollIntervalMs);
+  const navigate = useNavigate();
 
   const runningCount = services.filter((service) => service.running).length;
 
@@ -68,6 +69,27 @@ const ServicesOverview = ({ pollIntervalMs = 5000 }: ServicesOverviewProps) => {
             const canOpen = isHttpUrl && service.running;
             const urlText = service.url?.replace(/^https?:\/\//, '') ?? null;
 
+            /** 阻止整卡点击冒泡（内部交互元素：GitHub 链接、操作按钮） */
+            const stopClick = (event: React.MouseEvent) => {
+              event.stopPropagation();
+            };
+
+            /** 整卡点击：可访问的 http 服务新标签打开，否则跳转服务管理页 */
+            const handleCardClick = () => {
+              if (canOpen) {
+                window.open(service.url ?? '', '_blank', 'noopener');
+              } else {
+                void navigate('/services');
+              }
+            };
+
+            const handleCardKeyDown = (event: React.KeyboardEvent) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                handleCardClick();
+              }
+            };
+
             // 主操作按钮：build fail → 重启；运行中 → 停止；已停止 → 启动
             let actionColor: 'teal' | 'gray' = 'teal';
             let actionIcon = <IconPlayerPlay size={15} stroke={2} />;
@@ -86,40 +108,24 @@ const ServicesOverview = ({ pollIntervalMs = 5000 }: ServicesOverviewProps) => {
             }
 
             return (
-              <div className={styles.card} key={service.id}>
+              <div
+                className={styles.card}
+                key={service.id}
+                onClick={handleCardClick}
+                onKeyDown={handleCardKeyDown}
+                role="button"
+                tabIndex={0}
+              >
                 <div className={styles.cardHead}>
-                  {canOpen ? (
-                    <Tooltip label={`打开 ${urlText}`} withArrow>
-                      <button
-                        className={`${styles.cardInfo} ${styles.canOpen}`}
-                        onClick={() => void window.open(service.url ?? '', '_blank', 'noopener')}
-                        type="button"
-                      >
-                        <Group gap="xs" wrap="nowrap">
-                          <Text className={styles.cardName} fw={600}>
-                            {service.name}
-                          </Text>
-                          {service.autoStart && (
-                            <span className={styles.cardAutoStart}>开机自启</span>
-                          )}
-                        </Group>
-                      </button>
-                    </Tooltip>
-                  ) : (
-                    <Group gap="xs" wrap="nowrap">
-                      <Text className={styles.cardName} fw={600}>
-                        {service.name}
-                      </Text>
-                      {service.autoStart && (
-                        <span className={styles.cardAutoStart}>开机自启</span>
-                      )}
-                    </Group>
-                  )}
-                  <Group gap="xs" wrap="nowrap">
+                  <Group className={styles.cardTitle} gap="xs" wrap="nowrap">
+                    <Text className={styles.cardName} fw={600}>
+                      {service.name}
+                    </Text>
                     {service.repo && (
                       <a
                         className={styles.cardRepo}
                         href={service.repo}
+                        onClick={stopClick}
                         rel="noreferrer"
                         target="_blank"
                         title="打开 GitHub 仓库"
@@ -127,7 +133,22 @@ const ServicesOverview = ({ pollIntervalMs = 5000 }: ServicesOverviewProps) => {
                         <IconBrandGithub size={15} />
                       </a>
                     )}
+                    {service.autoStart && (
+                      <span className={styles.cardAutoStart}>开机自启</span>
+                    )}
+                  </Group>
+                  <Group gap="xs" wrap="nowrap">
                     <ServiceStatusPill build={service.build} running={service.running} />
+                    {service.deployOutcome === 'success' && (
+                      <Text c="dimmed" className={styles.deployOk} size="xs">
+                        部署成功
+                      </Text>
+                    )}
+                    {service.deployOutcome === 'failed' && (
+                      <Text c="dimmed" className={styles.deployFail} size="xs">
+                        部署失败
+                      </Text>
+                    )}
                   </Group>
                 </div>
 
@@ -137,7 +158,12 @@ const ServicesOverview = ({ pollIntervalMs = 5000 }: ServicesOverviewProps) => {
                   </Text>
                 )}
 
-                <Group className={styles.cardActions} gap="xs" wrap="nowrap">
+                <Group
+                  className={styles.cardActions}
+                  gap="xs"
+                  onClick={stopClick}
+                  wrap="nowrap"
+                >
                   <Tooltip label={actionLabel} withArrow>
                     <Button
                       color={actionColor}

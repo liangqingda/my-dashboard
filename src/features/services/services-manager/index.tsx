@@ -7,6 +7,7 @@ import { Alert, Group, Text } from '@mantine/core';
 import { IconAlertCircle, IconReload } from '@tabler/icons-react';
 
 import { useServices } from '@/features/services/hooks/useServices';
+import QuickCommands from '@/features/services/quick-commands';
 import ServiceRow from '@/features/services/service-row';
 
 import styles from './index.scss';
@@ -17,11 +18,12 @@ export type ServicesManagerProps = {
 };
 
 const ServicesManager = ({ pollIntervalMs = 3000 }: ServicesManagerProps) => {
-  const { services, loading, agentOnline, error, busyId, refresh, start, stop } =
+  const { services, loading, agentOnline, error, busy, refresh, start, stop, restart, deploy } =
     useServices(pollIntervalMs);
 
   const runningCount = services.filter((service) => service.running).length;
   const stoppedCount = services.length - runningCount;
+  const autoStartCount = services.filter((service) => service.autoStart).length;
 
   return (
     <div className={styles.manager}>
@@ -70,25 +72,34 @@ const ServicesManager = ({ pollIntervalMs = 3000 }: ServicesManagerProps) => {
           <Text c="dimmed" size="sm">
             停止 {stoppedCount}
           </Text>
+          <Text className={styles.autoStartCount} size="sm">
+            开机自启 {autoStartCount}
+          </Text>
         </Group>
         {loading && <Text c="dimmed" size="sm">加载中…</Text>}
       </div>
 
-      <div className={styles.list}>
-        {!loading && services.length === 0 && (
-          <Text c="dimmed" className={styles.empty}>
-            暂无服务，可在 agent/services.json 中登记。
-          </Text>
-        )}
-        {services.map((service) => (
-          <ServiceRow
-            busy={busyId === service.id}
-            key={service.id}
-            onStart={start}
-            onStop={stop}
-            service={service}
-          />
-        ))}
+      <div className={styles.grid}>
+        <div className={styles.list}>
+          {!loading && services.length === 0 && (
+            <Text c="dimmed" className={styles.empty}>
+              暂无服务，可在 agent/services.json 中登记。
+            </Text>
+          )}
+          {services.map((service) => (
+            <ServiceRow
+              busy={busy}
+              key={service.id}
+              onDeploy={deploy}
+              onRestart={restart}
+              onStart={start}
+              onStop={stop}
+              service={service}
+            />
+          ))}
+        </div>
+
+        <QuickCommands />
       </div>
     </div>
   );
