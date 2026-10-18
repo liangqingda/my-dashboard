@@ -36,6 +36,8 @@ export type ServiceStatus = {
   extraPorts: Array<{ port: number; label?: string }>;
   /** 访问地址：http 链接或 localhost:port 端点，可能为 null */
   url: string | null;
+  /** 部署后的线上网页地址，可能为 null */
+  deployedUrl: string | null;
   /** GitHub 远程仓库地址，可能为 null */
   repo: string | null;
   /** 是否开机自动启动（如 brew launchd / LaunchAgent 托管） */

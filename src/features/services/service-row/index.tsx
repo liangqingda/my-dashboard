@@ -167,6 +167,20 @@ const ServiceRow = ({
               <IconBrandGithub aria-hidden="true" size={17} />
             </a>
           )}
+          {service.deployedUrl && (
+            <Button
+              aria-label={`访问 ${service.name} 线上网页`}
+              component="a"
+              href={service.deployedUrl}
+              leftSection={<IconExternalLink size={14} />}
+              rel="noreferrer"
+              size="xs"
+              target="_blank"
+              variant="light"
+            >
+              线上网页
+            </Button>
+          )}
           {service.running && service.build === 'fail' && (
             <Button
               aria-label={`重启 ${service.name}`}

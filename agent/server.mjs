@@ -183,6 +183,7 @@ async function getStatus(entry) {
         : config.port
           ? `http://localhost:${config.port}`
           : null,
+    deployedUrl: config.deployedUrl ?? null,
     repo: config.repo ?? null,
     autoStart: config.autoStart ?? false,
     running,

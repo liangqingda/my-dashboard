@@ -44,6 +44,7 @@
       }
     ],
     "url": "http://localhost:3001",
+    "deployedUrl": "https://lqd-test-d2gbk091xe6015603-1311332780.tcloudbaseapp.com/",
     "repo": "https://github.com/liangqingda/study-lab",
     "startCmd": [
       "pnpm",

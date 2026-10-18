@@ -12,6 +12,7 @@ const fixture = () =>
     portLabel: null,
     extraPorts: index === 1 ? [{ port: 3002, label: '后端' }] : [],
     url: index < 2 ? `http://localhost:${3000 + index}` : null,
+    deployedUrl: index === 1 ? 'https://study-lab.example.com/' : null,
     repo: index < 2 ? `https://github.com/example/${id}` : null,
     autoStart: index === 0,
     canDeploy: index === 1,
