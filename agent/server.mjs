@@ -18,7 +18,7 @@
  *   POST /api/services/:id/start   启动服务
  *   POST /api/services/:id/stop    停止服务
  */
-import { execFile as execFileCb, spawn } from 'node:child_process';
+import { execFile as execFileCb, fork, spawn } from 'node:child_process';
 import { openSync, closeSync } from 'node:fs';
 import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import http from 'node:http';
@@ -359,6 +359,7 @@ async function startService(id) {
 
     entry.stopInitiatedAt = null;
     try {
+      entry.starting = true;
       await waitForStartup({
         child,
         logPath: entry.logPath,
@@ -370,6 +371,8 @@ async function startService(id) {
       entry.lastOutcome = 'failed';
       await killTree(child.pid);
       throw error;
+    } finally {
+      entry.starting = false;
     }
 
     return { id, started: true, pid: child.pid };
@@ -642,6 +645,54 @@ async function parseCliCommands() {
   return out;
 }
 
+let restarting = false;
+
+/** 保持当前请求，直到新 agent 已监听端口后再返回成功。 */
+async function restartAgent() {
+  if (restarting || [...registry.values()].some((entry) => entry.deployState === 'running' || entry.starting)) {
+    const error = new Error('agent 正忙，请等待启动或部署结束后再重启');
+    error.status = 409;
+    throw error;
+  }
+  restarting = true;
+  const logFd = openSync(path.join(LOG_DIR, 'agent.log'), 'a');
+  server.close();
+  try {
+    await new Promise((resolve, reject) => {
+      const child = fork(fileURLToPath(import.meta.url), [], {
+        cwd: ROOT,
+        detached: true,
+        stdio: ['ignore', logFd, logFd, 'ipc'],
+      });
+      const timer = setTimeout(() => {
+        child.kill();
+        reject(new Error('新 agent 启动超时'));
+      }, 15_000);
+      const fail = (error) => {
+        clearTimeout(timer);
+        reject(error);
+      };
+      child.once('error', fail);
+      child.once('exit', () => fail(new Error('新 agent 启动失败')));
+      child.once('message', (message) => {
+        if (message?.type !== 'ready') return;
+        clearTimeout(timer);
+        child.removeAllListeners('exit');
+        child.removeAllListeners('error');
+        child.disconnect();
+        child.unref();
+        resolve();
+      });
+    });
+  } catch (error) {
+    restarting = false;
+    server.listen(PORT, HOST);
+    throw error;
+  } finally {
+    closeSync(logFd);
+  }
+}
+
 const server = http.createServer(async (req, res) => {
   applyCors(req, res);
 
@@ -655,6 +706,13 @@ const server = http.createServer(async (req, res) => {
   const pathname = url.pathname;
 
   try {
+    if (req.method === 'POST' && pathname === '/api/agent/restart') {
+      await restartAgent();
+      res.once('finish', () => process.exit(0));
+      sendJson(res, 200, { restarted: true });
+      return;
+    }
+
     if (req.method === 'GET' && pathname === '/api/health') {
       sendJson(res, 200, { ok: true, pid: process.pid, services: registry.size });
       return;
@@ -744,4 +802,5 @@ await init();
 server.listen(PORT, HOST, () => {
   console.log(`[agent] my-dashboard agent listening on http://${HOST}:${PORT}`);
   console.log(`[agent] 服务数量: ${registry.size}`);
+  process.send?.({ type: 'ready' });
 });

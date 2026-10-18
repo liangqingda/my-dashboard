@@ -86,3 +86,7 @@ export const deployService = (id: string) =>
     `/services/${encodeURIComponent(id)}/deploy`,
     { method: 'POST' },
   );
+
+/** 重启本地 agent；接口在新进程就绪后返回。 */
+export const restartAgent = () =>
+  request<{ restarted: boolean }>('/agent/restart', { method: 'POST' });
