@@ -128,12 +128,31 @@ function lastMarkerIndex(text, marker) {
 function classifyBuild(config, tail, running) {
   if (!running) return 'stopped';
 
+  // 需忽略的日志行：命中失败标记但所在行符合忽略模式的，不计入失败
+  // （如 redis 未启动产生的 [redis] client error，不代表编译/启动失败）
+  const ignoreRes = (config.failIgnorePatterns ?? []).map(
+    (pattern) => new RegExp(pattern, 'i'),
+  );
+
   let failIdx = -1;
   let okIdx = -1;
 
   for (const marker of config.failMarkers) {
-    const idx = lastMarkerIndex(tail, marker);
-    if (idx > failIdx) failIdx = idx;
+    const re = new RegExp(
+      `(?<![A-Za-z0-9_])${escapeRegExp(marker)}(?![A-Za-z0-9_])`,
+      'ig',
+    );
+
+    for (const match of tail.matchAll(re)) {
+      const lineStart = tail.lastIndexOf('\n', match.index) + 1;
+      const lineEnd = tail.indexOf('\n', match.index);
+      const line = tail.slice(lineStart, lineEnd === -1 ? tail.length : lineEnd);
+      const ignored = ignoreRes.some((reIgnore) => reIgnore.test(line));
+
+      if (!ignored) {
+        failIdx = match.index;
+      }
+    }
   }
   for (const marker of config.successMarkers) {
     const idx = lastMarkerIndex(tail, marker);

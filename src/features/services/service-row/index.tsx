@@ -60,22 +60,25 @@ const ServiceRow = ({ service, busy, onStart, onStop, onRestart, onDeploy }: Ser
   const isHttpUrl = service.url?.startsWith('http') ?? false;
   const canOpen = isHttpUrl && service.running;
 
-  // 主操作按钮：build fail → 重启；运行中 → 停止；已停止 → 启动
+  // 主操作按钮：运行中 → 停止；已停止且编译失败 → 重启；否则 → 启动
   let actionColor: 'teal' | 'gray' = 'teal';
   let actionIcon = <IconPlayerPlay size={15} stroke={2} />;
   let actionLabel = '启动';
   let handlePrimaryAction = () => onStart(service.id);
 
-  if (isFailed) {
-    actionIcon = <IconRefresh size={15} stroke={2} />;
-    actionLabel = '重启';
-    handlePrimaryAction = () => onRestart(service.id);
-  } else if (service.running) {
+  if (service.running) {
     actionColor = 'gray';
     actionIcon = <IconPlayerStop size={15} stroke={2} />;
     actionLabel = '停止';
     handlePrimaryAction = () => onStop(service.id);
+  } else if (isFailed) {
+    actionIcon = <IconRefresh size={15} stroke={2} />;
+    actionLabel = '重启';
+    handlePrimaryAction = () => onRestart(service.id);
   }
+
+  // 编译失败但进程仍在运行时，额外提供「重启」，不隐藏停止按钮
+  const showRestartExtra = isFailed && service.running;
 
   /** 点击整行 → 新标签打开服务页面（仅可跳转服务） */
   const handleRowClick = () => {
@@ -158,6 +161,21 @@ const ServiceRow = ({ service, busy, onStart, onStop, onRestart, onDeploy }: Ser
             </a>
           )}
           <Group gap="xs" wrap="nowrap">
+            {showRestartExtra && (
+              <Tooltip label="重启" withArrow>
+                <Button
+                  color="teal"
+                  disabled={primaryLoading || stopLoading}
+                  loading={primaryLoading || stopLoading}
+                  onClick={() => void onRestart(service.id)}
+                  p={6}
+                  size="xs"
+                  variant="light"
+                >
+                  <IconRefresh size={15} stroke={2} />
+                </Button>
+              </Tooltip>
+            )}
             <Tooltip label={actionLabel} withArrow>
               <Button
                 color={actionColor}

@@ -51,7 +51,8 @@
       "typeerror",
       "cannot find",
       "stopped ("
-    ]
+    ],
+    "failIgnorePatterns": ["client error"]
   },
   {
     "id": "postgres",
