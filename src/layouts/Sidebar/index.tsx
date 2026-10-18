@@ -1,4 +1,4 @@
-import { useLocation } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import { AppShell, NavLink, ScrollArea } from '@mantine/core';
 import { IconDashboard, IconServer } from '@tabler/icons-react';
 
@@ -27,12 +27,12 @@ const Sidebar = () => {
             <NavLink
               active={location.pathname === to}
               className={styles.link}
-              component="a"
-              href={to}
+              component={Link}
               key={key}
               label={label}
               leftSection={<Icon size={16} stroke={1.9} />}
               noWrap
+              to={to}
               variant="light"
             />
           ))}
