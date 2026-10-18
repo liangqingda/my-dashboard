@@ -73,6 +73,9 @@ PostgreSQL、Redis 等服务通过 `executable` 配置指定绝对可执行文�
 所有 agent 请求都会验证 Host 和浏览器 Origin，写操作还需携带进程会话令牌。
 前端自动调用 `GET /api/session` 建立会话，通过 `X-Dashboard-Token` 发送令牌，
 agent 重启后自动更新令牌。未提供正确令牌的写请求和不可信来源均返回 403。
+开发模式下，若旧 agent 缺少会话接口，前端会先通过 Vite 升级 agent，再继续原操作；
+升级入口检查健康接口的 `protocolVersion`，使用现有令牌重启已支持认证的版本。
+升级过程中的连接断开通过只读探测确认恢复，不重复发送重启命令。
 Vite 的 agent 启动入口要求同源 Origin 和 `X-Dashboard-Request: 1`。
 默认允许 localhost / 127.0.0.1 的 3000、4173 页面以及 `[::1]:3000`；可通过
 `AGENT_ALLOWED_ORIGINS` 指定逗号分隔的完整来源列表。Vite 固定使用 3000，

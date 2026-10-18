@@ -11,13 +11,17 @@ const BASE = '/api';
 let session: Promise<string> | undefined;
 
 const getToken = () => {
-  session ??= fetch(`${BASE}/session`, { signal: AbortSignal.timeout(10_000) })
+  session ??= fetchSession()
     .then(async (response) => {
       if (!response.ok) {
         throw new Error('无法建立本机会话，请重新连接');
       }
 
       const body = (await response.json()) as { token: string };
+
+      if (typeof body.token !== 'string' || !body.token) {
+        throw new Error('本机会话无效，请重新连接');
+      }
 
       return body.token;
     })
@@ -28,6 +32,28 @@ const getToken = () => {
 
   return session;
 };
+
+async function fetchSession(): Promise<Response> {
+  const load = () =>
+    fetch(`${BASE}/session`, {
+      signal: AbortSignal.timeout(10_000),
+      cache: 'no-store',
+    });
+  const response = await load();
+
+  if (response.status !== 404) {
+    return response;
+  }
+
+  if (!import.meta.env.DEV) {
+    throw new Error('本机服务版本过旧，请重启 agent 后重试');
+  }
+
+  // Reconcile a live legacy agent before sending any service command.
+  await startAgent();
+
+  return load();
+}
 
 /** A rejected token is safe to retry: authorization runs before any side effect. */
 async function request<T>(
@@ -78,7 +104,7 @@ async function request<T>(
     throw new Error(message);
   }
 
-  if (path === '/agent/restart' || bootstrap) {
+  if (path === '/agent/restart') {
     session = undefined;
   }
 

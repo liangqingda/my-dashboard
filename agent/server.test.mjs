@@ -84,7 +84,9 @@ test(
         ).status,
         403,
       );
-      assert.equal((await fetch(`${agentPort}/api/health`)).status, 200);
+      const health = await fetch(`${agentPort}/api/health`);
+      assert.equal(health.status, 200);
+      assert.equal((await health.json()).protocolVersion, 1);
       token = (await (await fetch(`${agentPort}/api/session`)).json()).token;
       assert.equal(
         (await post('start', { origin: 'https://foreign.example' })).status,

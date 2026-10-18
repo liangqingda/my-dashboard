@@ -666,6 +666,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && pathname === '/api/health') {
       sendJson(res, 200, {
         ok: true,
+        protocolVersion: 1,
         pid: process.pid,
         services: registry.size,
       });

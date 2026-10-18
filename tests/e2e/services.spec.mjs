@@ -41,17 +41,22 @@ async function mock(page) {
     logs: 0,
     serviceRequests: 0,
     serviceDelay: 0,
+    legacyAgent: false,
+    agentStarts: 0,
   };
   await page.route('**/api/**', async (route) => {
     const pathname = new URL(route.request().url()).pathname;
     const json = (data, status = 200) => route.fulfill({ json: data, status });
     if (pathname === '/api/agent/start') {
+      state.agentStarts++;
+      state.legacyAgent = false;
       state.online = true;
       return json({ started: true });
     }
     if (!state.online) return json({ message: 'offline' }, 503);
     if (pathname === '/api/session') {
       state.tokens++;
+      if (state.legacyAgent) return json({ message: '接口不存在' }, 404);
       return json({ token: `token-${state.tokens}` });
     }
     if (route.request().method() === 'POST' && state.expireToken) {
@@ -105,6 +110,21 @@ async function mock(page) {
   await expect(page.getByText('共 4 个服务')).toBeVisible();
   return state;
 }
+
+test('a running legacy agent is upgraded before service actions', async ({
+  page,
+}) => {
+  const state = await mock(page);
+  state.legacyAgent = true;
+  await page
+    .getByRole('button', { name: '停止 my-dashboard', exact: true })
+    .click();
+  await expect(page.getByText('「my-dashboard」停止成功')).toBeVisible();
+  expect(state.agentStarts).toBe(1);
+  expect(state.tokens).toBe(2);
+  expect(state.stops).toBe(1);
+  await expect(page.getByText('无法建立本机会话，请重新连接')).toHaveCount(0);
+});
 
 test('repeated refreshes keep the button visible and merge in-flight requests', async ({
   page,
