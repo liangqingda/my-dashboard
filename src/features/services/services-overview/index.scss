@@ -25,31 +25,106 @@
   text-decoration: underline;
 }
 
-.body {
-  padding: var(--app-space-sm) var(--app-space-md);
+.offline {
+  padding: var(--app-space-md);
 }
 
-.row {
+/* 卡片容器：横向排列、自动换行，卡片宽度由内容决定（设最小可读宽度） */
+.grid {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-wrap: wrap;
   gap: var(--app-space-md);
-  padding: var(--app-space-sm) 0;
+  padding: var(--app-space-md);
 }
 
-.row + .row {
-  border-top: 1px solid var(--app-line);
-}
-
-.rowTitle {
-  min-width: 0;
+.card {
   display: flex;
+  flex: 0 0 auto;
   flex-direction: column;
-  gap: 1px;
+  gap: var(--app-space-sm);
+  width: auto;
+  min-width: 200px;
+  max-width: 340px;
+  padding: var(--app-space-md);
+  border: 1px solid var(--app-line);
+  border-radius: var(--mantine-radius-md);
+  background: var(--app-surface);
 }
 
-.rowName {
+.cardHead {
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--app-space-sm);
+}
+
+.cardName {
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.cardAutoStart {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--app-accent-soft);
+  color: var(--app-accent);
+  font-size: 0.68rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.cardUrl {
+  width: fit-content;
+  color: var(--app-ink-faint);
+  font-size: 0.82rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  text-decoration: none;
+  cursor: default;
+}
+
+/* 可跳转服务的名称信息区：整块可点击，hover 用 tooltip 提示 */
+.cardInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--app-space-sm);
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--mantine-radius-sm);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.cardInfo.canOpen {
+  cursor: pointer;
+}
+
+.cardInfo.canOpen:hover {
+  background: var(--app-surface-subtle);
+}
+
+.cardInfo.canOpen:hover .cardName {
+  color: var(--app-accent-strong);
+}
+
+.cardRepo {
+  display: inline-flex;
+  align-items: center;
+  color: var(--app-ink-faint);
+  cursor: pointer;
+}
+
+.cardRepo:hover {
+  color: var(--app-accent-strong);
+}
+
+.cardActions {
+  margin-top: auto;
 }
