@@ -1,151 +1,110 @@
 .row {
   padding: var(--app-space-md) var(--app-space-lg);
   border-bottom: 1px solid var(--app-line);
-  border-radius: var(--mantine-radius-sm);
 }
-
-/* 可跳转服务的整行：可点击 + hover 高亮 + tooltip 提示 */
-.rowClickable {
-  cursor: pointer;
+.row:last-child {
+  border-bottom: 0;
 }
-
-.rowClickable:hover {
-  background: var(--app-surface-subtle);
-}
-
-.rowClickable:hover .name {
-  color: var(--app-accent-strong);
-}
-
-/* 顶部行：服务名（左）+ 操作按钮（右），同一水平带 */
 .topRow {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--app-space-md);
-}
-
-/* 描述行：占满整行宽度，不再被右侧按钮列挤窄 */
-.desc {
-  margin-top: 2px;
-  min-width: 0;
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
   flex-wrap: wrap;
+  gap: 12px;
 }
-
-/* 端口号：等宽字体、弱化色，紧跟描述后面 */
-.port {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.8rem;
-  color: var(--app-ink-faint);
-}
-
-.name {
-  font-size: 1rem;
-}
-
-.nameRow {
+.nameRow,
+.actions {
   display: flex;
   align-items: center;
-  gap: var(--app-space-sm);
   flex-wrap: wrap;
+  gap: var(--app-space-sm);
   min-width: 0;
 }
-
+.name,
+.nameLink {
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}
+.nameLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.nameLink:hover {
+  color: var(--app-accent);
+  text-decoration: underline;
+}
 .autoStart {
   padding: 1px 7px;
   border-radius: 999px;
   background: var(--app-accent-soft);
   color: var(--app-accent);
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   white-space: nowrap;
 }
-
-.right {
-  display: flex;
-  align-items: center;
-  gap: var(--app-space-md);
-  flex-wrap: wrap;
-}
-
-/* 服务信息区：可跳转页面时整块可点击，hover 用 tooltip 提示（由整行 .rowClickable 承担） */
-.endpoint {
-  color: var(--app-ink-faint);
-  font-size: 0.82rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-}
-
 .repo {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
   color: var(--app-ink-faint);
-  cursor: pointer;
 }
-
 .repo:hover {
-  color: var(--app-accent-strong);
+  color: var(--app-accent);
 }
-
+.desc {
+  margin-top: 6px;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.port {
+  font-family: var(--mantine-font-family-monospace);
+  font-size: 0.8rem;
+  color: var(--app-ink-faint);
+}
 .logBar {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--app-space-sm);
-  margin-top: var(--app-space-sm);
+  margin-top: 8px;
 }
-
 .logToggle {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  min-height: 30px;
   padding: 2px 0;
   background: transparent;
   color: var(--app-accent);
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   cursor: pointer;
 }
-
-.logToggle:hover {
-  color: var(--app-accent-strong);
+.loader {
+  display: inline-block;
+  margin-left: 6px;
 }
-
-.clearLog {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  border: 1px solid transparent;
-  border-radius: var(--mantine-radius-sm);
-  background: transparent;
-  color: var(--app-ink-faint);
-  cursor: pointer;
-}
-
-.clearLog:hover:not(:disabled) {
-  color: var(--app-status-danger);
-  border-color: var(--app-line);
-  background: var(--app-surface-subtle);
-}
-
-.clearLog:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
 .log {
-  margin-top: var(--app-space-sm);
+  margin: 8px 0 0;
   padding: var(--app-space-sm) var(--app-space-md);
-  max-height: 260px;
+  max-height: 280px;
   overflow: auto;
   border-radius: var(--mantine-radius-sm);
   background: var(--app-surface-subtle);
   color: var(--app-ink-soft);
-  font-size: 0.76rem;
-  line-height: 1.5;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  font-family: var(--mantine-font-family-monospace);
   white-space: pre-wrap;
-  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 48em) {
+  .row {
+    padding: var(--app-space-md);
+  }
 }

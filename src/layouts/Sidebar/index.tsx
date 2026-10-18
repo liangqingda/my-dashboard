@@ -16,7 +16,7 @@ const navItems: NavItem[] = [
   { key: 'services', label: '服务', to: '/services', icon: IconServer },
 ];
 
-const Sidebar = () => {
+const Sidebar = ({ onNavigate }: { onNavigate: () => void }) => {
   const location = useLocation();
 
   return (
@@ -26,12 +26,14 @@ const Sidebar = () => {
           {navItems.map(({ key, label, to, icon: Icon }) => (
             <NavLink
               active={location.pathname === to}
+              aria-current={location.pathname === to ? 'page' : undefined}
               className={styles.link}
               component={Link}
               key={key}
               label={label}
               leftSection={<Icon size={16} stroke={1.9} />}
               noWrap
+              onClick={onNavigate}
               to={to}
               variant="light"
             />

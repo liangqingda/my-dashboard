@@ -17,11 +17,17 @@ type PillView = {
 /** 由运行态 + 编译态推导徽标文案与色系 */
 const deriveView = (build: BuildState, running: boolean): PillView => {
   if (running) {
-    if (build === 'ok') {return { label: '运行中', tone: 'ok' };}
+    if (build === 'ok') {
+      return { label: '运行中', tone: 'ok' };
+    }
 
-    if (build === 'fail') {return { label: '编译失败', tone: 'danger' };}
+    if (build === 'fail') {
+      return { label: '编译失败', tone: 'danger' };
+    }
 
-    return { label: '启动中', tone: 'warn' };
+    return build === 'starting'
+      ? { label: '启动中', tone: 'warn' }
+      : { label: '运行待确认', tone: 'warn' };
   }
 
   return build === 'fail'
@@ -40,7 +46,12 @@ export type ServiceStatusPillProps = {
   compact?: boolean;
 };
 
-const ServiceStatusPill = ({ build, running, className, compact = false }: ServiceStatusPillProps) => {
+const ServiceStatusPill = ({
+  build,
+  running,
+  className,
+  compact = false,
+}: ServiceStatusPillProps) => {
   const { label, tone } = deriveView(build, running);
 
   return (

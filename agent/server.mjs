@@ -18,27 +18,37 @@
  *   POST /api/services/:id/start   启动服务
  *   POST /api/services/:id/stop    停止服务
  */
-import { execFile as execFileCb, fork, spawn } from 'node:child_process';
+import { fork, spawn } from 'node:child_process';
 import { openSync, closeSync } from 'node:fs';
-import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { appendFile, mkdir, readFile, writeFile, stat } from 'node:fs/promises';
 import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { promisify } from 'node:util';
 
 import { waitForStartup } from './wait-for-startup.mjs';
-
-const execFile = promisify(execFileCb);
+import { classifyBuild } from './build-state.mjs';
+import { readTail, rotateLog, normalizeLines } from './logs.mjs';
+import {
+  findServiceProcesses,
+  findServiceRoot,
+  processIdentity,
+  terminateTree as killTree,
+} from './processes.mjs';
+import { createRequestSecurity, DEFAULT_ORIGINS } from './request-security.mjs';
 
 const AGENT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(AGENT_DIR, '..');
-const LOG_DIR = path.join(AGENT_DIR, 'logs');
-const CONFIG_FILE = path.join(AGENT_DIR, 'services.json');
+const LOG_DIR = process.env.AGENT_LOG_DIR || path.join(AGENT_DIR, 'logs');
+const CONFIG_FILE =
+  process.env.AGENT_CONFIG_FILE || path.join(AGENT_DIR, 'services.json');
 
 const HOST = process.env.AGENT_HOST || '127.0.0.1';
 const PORT = Number(process.env.AGENT_PORT || 8787);
 const DEFAULT_LINES = 60;
+const security = createRequestSecurity(
+  process.env.AGENT_ALLOWED_ORIGINS?.split(',') ?? DEFAULT_ORIGINS,
+);
 
 /** 启动命令超时：命令卡住且服务始终未就绪时判定启动失败，避免无限等待 */
 const START_TIMEOUT_MS = Number(process.env.AGENT_START_TIMEOUT || 60_000);
@@ -52,10 +62,17 @@ const DEFAULT_SERVICES = [
     cwd: ROOT,
     port: 3000,
     startCmd: ['pnpm', 'dev'],
-    stopCmd: ['pnpm', 'stop:dev'],
-    detectPatterns: [path.join(ROOT, 'node_modules', 'vite', 'bin', 'vite.js')],
+    stopCmd: [],
     successMarkers: ['ready in', 'local:', 'vite v', 'built in', 'compiled'],
-    failMarkers: ['error during build', 'failed to resolve', 'eaddrinuse', 'syntaxerror', 'typeerror', '[vite] error', 'failed to compile'],
+    failMarkers: [
+      'error during build',
+      'failed to resolve',
+      'eaddrinuse',
+      'syntaxerror',
+      'typeerror',
+      '[vite] error',
+      'failed to compile',
+    ],
   },
 ];
 
@@ -63,141 +80,10 @@ const DEFAULT_SERVICES = [
 /* 工具函数                                                             */
 /* ------------------------------------------------------------------ */
 
-/** 解析命令行可执行文件的绝对路径（优先 pnpm），找不到则原样返回 */
-async function resolveBin(bin) {
-  try {
-    const { stdout } = await execFile('which', [bin]);
-    const resolved = stdout.trim();
-    if (resolved) return resolved;
-  } catch {
-    /* 无 which 或未找到，回退使用原始命令名 */
-  }
-  return bin;
-}
-
-/** 用 pgrep -f 匹配一组进程模式，返回去重后的 pid 列表 */
-async function detectPids(patterns) {
-  const pids = new Set();
-  for (const pattern of patterns) {
-    try {
-      const { stdout } = await execFile('pgrep', ['-f', pattern]);
-      for (const line of stdout.split('\n')) {
-        const pid = Number(line.trim());
-        if (Number.isInteger(pid) && pid > 0) pids.add(pid);
-      }
-    } catch (err) {
-      // pgrep 退出码 1 表示无匹配，是正常情况
-      if (err.code !== 1) {
-        console.error(`[agent] pgrep "${pattern}" 失败:`, err.message);
-      }
-    }
-  }
-  return [...pids];
-}
-
-/** 读取文件尾部若干行；文件不存在返回空串 */
-async function readTail(file, lines) {
-  try {
-    const data = await readFile(file, 'utf8');
-    return data.split('\n').slice(-lines).join('\n');
-  } catch {
-    return '';
-  }
-}
-
-/** 正则转义：把标记文本中的特殊字符转义为字面量 */
-function escapeRegExp(s) {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-/**
- * 在文本中查找某个标记的“最后出现位置”。
- * 按整词边界匹配：标记两侧不能紧贴字母/数字/下划线，
- * 避免 `Errors/NotFound.tsx` 里的 "error"、`restarted` 里的 "started" 误命中。
- */
-function lastMarkerIndex(text, marker) {
-  const re = new RegExp(`(?<![A-Za-z0-9_])${escapeRegExp(marker)}(?![A-Za-z0-9_])`, 'ig');
-  let last = -1;
-  for (const m of text.matchAll(re)) last = m.index;
-  return last;
-}
-
-/**
- * 根据日志尾部判定编译/启动状态。
- * 取所有 success/fail 标记在日志中的最后出现位置，按时间先后判定；
- * 标记按整词匹配，防止路径/变量名里的片段误判为编译失败。
- */
-function classifyBuild(config, tail, running) {
-  if (!running) return 'stopped';
-
-  // 需忽略的日志行：命中失败标记但所在行符合忽略模式的，不计入失败
-  // （如 redis 未启动产生的 [redis] client error，不代表编译/启动失败）
-  const ignoreRes = (config.failIgnorePatterns ?? []).map(
-    (pattern) => new RegExp(pattern, 'i'),
-  );
-
-  let failIdx = -1;
-  let okIdx = -1;
-
-  for (const marker of config.failMarkers) {
-    const re = new RegExp(
-      `(?<![A-Za-z0-9_])${escapeRegExp(marker)}(?![A-Za-z0-9_])`,
-      'ig',
-    );
-
-    for (const match of tail.matchAll(re)) {
-      const lineStart = tail.lastIndexOf('\n', match.index) + 1;
-      const lineEnd = tail.indexOf('\n', match.index);
-      const line = tail.slice(lineStart, lineEnd === -1 ? tail.length : lineEnd);
-      const ignored = ignoreRes.some((reIgnore) => reIgnore.test(line));
-
-      if (!ignored) {
-        failIdx = match.index;
-      }
-    }
-  }
-  for (const marker of config.successMarkers) {
-    const idx = lastMarkerIndex(tail, marker);
-    if (idx > okIdx) okIdx = idx;
-  }
-
-  if (failIdx > okIdx) return 'fail';
-  return 'ok';
-}
-
-/** 递归终止进程及其全部子进程 */
-async function killTree(pid) {
-  const children = await getChildren(pid);
-  for (const child of children) await killTree(child);
-  await killPid(pid);
-}
-
-/** 获取某 pid 的直接子进程 pid 列表 */
-async function getChildren(pid) {
-  try {
-    const { stdout } = await execFile('pgrep', ['-P', String(pid)]);
-    return stdout
-      .split('\n')
-      .map((line) => Number(line.trim()))
-      .filter((n) => Number.isInteger(n) && n > 0);
-  } catch {
-    return [];
-  }
-}
-
-/** 先 SIGTERM，短暂等待后 SIGKILL，尽力确保进程结束 */
-async function killPid(pid) {
-  try {
-    process.kill(pid, 'SIGTERM');
-  } catch {
-    /* 进程可能已退出 */
-  }
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  try {
-    process.kill(pid, 'SIGKILL');
-  } catch {
-    /* 已退出 */
-  }
+/** Detect by port ownership and executable/project identity, never a global substring. */
+async function detectPids(entry) {
+  const processes = await findServiceProcesses(entry.config);
+  return processes.map(({ pid }) => pid);
 }
 
 /* ------------------------------------------------------------------ */
@@ -215,10 +101,10 @@ async function loadConfig() {
     }
     try {
       await mkdir(AGENT_DIR, { recursive: true });
-      await appendFile(
+      await writeFile(
         CONFIG_FILE,
         `${JSON.stringify(DEFAULT_SERVICES, null, 2)}\n`,
-        'utf8',
+        { encoding: 'utf8', flag: 'wx' },
       );
     } catch {
       /* 只读环境，忽略 */
@@ -229,14 +115,22 @@ async function loadConfig() {
 
 /** 运行时服务注册表：id -> { config, child, lastStartedAt, lastExit, logPath } */
 const registry = new Map();
-let pnpmBin = 'pnpm';
 
 async function init() {
   await mkdir(LOG_DIR, { recursive: true });
-  pnpmBin = await resolveBin('pnpm');
   const configs = await loadConfig();
 
+  if (!Array.isArray(configs)) throw new Error('服务清单必须是数组');
   for (const config of configs) {
+    if (
+      !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(config.id) ||
+      registry.has(config.id) ||
+      !path.isAbsolute(config.cwd) ||
+      !Array.isArray(config.startCmd) ||
+      config.startCmd.length === 0
+    ) {
+      throw new Error('服务配置无效：请检查 id、cwd 和 startCmd');
+    }
     registry.set(config.id, {
       config,
       child: null,
@@ -249,6 +143,8 @@ async function init() {
       deployState: null,
       lastDeployAt: null,
       logPath: path.join(LOG_DIR, `${config.id}.log`),
+      deployLogPath: path.join(LOG_DIR, `${config.id}-deploy.log`),
+      operation: null,
     });
   }
 }
@@ -256,11 +152,15 @@ async function init() {
 /** 组装单条服务的状态快照 */
 async function getStatus(entry) {
   const { config, lastStartedAt, lastExit } = entry;
-  const pids = await detectPids(config.detectPatterns);
+  const pids = await detectPids(entry);
   const running = pids.length > 0;
   const tail = await readTail(entry.logPath, DEFAULT_LINES);
 
-  let build = classifyBuild(config, tail, running);
+  let build = entry.starting
+    ? 'starting'
+    : classifyBuild(config, tail, running);
+  // A verified listening socket is readiness evidence for externally launched/daemon services.
+  if (build === 'unknown' && running) build = 'ok';
   // 进程不在运行且上次是崩溃退出（非主动停止、非正常退出）→ 标记失败
   if (!running && entry.lastOutcome === 'failed') {
     build = 'fail';
@@ -277,7 +177,12 @@ async function getStatus(entry) {
       ? config.extraPorts.map((p) => (typeof p === 'number' ? { port: p } : p))
       : [],
     // url 显式给 null 表示不可访问的后端服务（数据库等），不自动拼 http 地址
-    url: config.url !== undefined ? config.url : (config.port ? `http://localhost:${config.port}` : null),
+    url:
+      config.url !== undefined
+        ? config.url
+        : config.port
+          ? `http://localhost:${config.port}`
+          : null,
     repo: config.repo ?? null,
     autoStart: config.autoStart ?? false,
     running,
@@ -296,7 +201,6 @@ async function getStatus(entry) {
     logLines: tail ? tail.split('\n').length : 0,
     startCmd: config.startCmd,
     stopCmd: config.stopCmd ?? [],
-    detectPatterns: config.detectPatterns ?? [],
     successMarkers: config.successMarkers ?? [],
     failMarkers: config.failMarkers ?? [],
   };
@@ -311,7 +215,7 @@ async function startService(id) {
     throw err;
   }
 
-  const pids = await detectPids(entry.config.detectPatterns);
+  const pids = await detectPids(entry);
   if (pids.length > 0) {
     return { id, alreadyRunning: true, pids };
   }
@@ -324,7 +228,8 @@ async function startService(id) {
 
   try {
     await appendFile(entry.logPath, banner, 'utf8');
-    const logOffset = Buffer.byteLength(await readFile(entry.logPath));
+    await rotateLog(entry.logPath);
+    const logOffset = (await stat(entry.logPath)).size;
     const logFd = openSync(entry.logPath, 'a');
     const child = spawn(cmd, args, {
       cwd: entry.config.cwd,
@@ -346,14 +251,20 @@ async function startService(id) {
     child.once('error', (error) => {
       clearTimeout(entry.startTimer);
       entry.startTimer = null;
-      entry.lastExit = { code: 'spawn-error', signal: null, at: new Date().toISOString(), message: error.message };
-      entry.lastOutcome =
-        entry.stopInitiatedAt !== null ? 'stopped' : 'failed';
+      entry.lastExit = {
+        code: 'spawn-error',
+        signal: null,
+        at: new Date().toISOString(),
+        message: error.message,
+      };
+      entry.lastOutcome = entry.stopInitiatedAt !== null ? 'stopped' : 'failed';
       entry.child = null;
     });
 
     entry.child = child;
     entry.lastOutcome = null; // 进入启动阶段，等待就绪/失败标记
+    if (!child.pid) throw new Error('无法创建服务进程，请检查启动命令');
+    entry.childIdentity = await processIdentity(child.pid);
     child.unref();
     entry.lastStartedAt = new Date().toISOString();
 
@@ -366,10 +277,11 @@ async function startService(id) {
         logOffset,
         config: entry.config,
         timeoutMs: START_TIMEOUT_MS,
+        isReady: async () => (await detectPids(entry)).length > 0,
       });
     } catch (error) {
       entry.lastOutcome = 'failed';
-      await killTree(child.pid);
+      await killTree(child.pid, entry.childIdentity);
       throw error;
     } finally {
       entry.starting = false;
@@ -405,46 +317,58 @@ async function deployService(id) {
     return { id, deploying: true, alreadyDeploying: true };
   }
 
-  const time = new Date().toLocaleTimeString();
-  await appendFile(entry.logPath, `\n===== [${time}] 重新部署开始 =====\n`, 'utf8');
-
-  const deployLogFd = openSync(entry.logPath, 'a');
   entry.deployState = 'running';
-  entry.deployChild = spawn(cmd[0], cmd.slice(1), {
-    cwd: entry.config.cwd,
-    env: { ...process.env, ...(entry.config.env || {}) },
-    stdio: ['ignore', deployLogFd, deployLogFd],
-    detached: true,
-  });
-  entry.deployChild.unref();
-
-  const finishDeploy = (state) => {
-    entry.deployState = state;
-    entry.lastDeployAt = new Date().toISOString();
-    entry.deployChild = null;
-    try {
-      closeSync(deployLogFd);
-    } catch {
-      /* 已关闭 */
-    }
-  };
-
-  entry.deployChild.once('error', (error) => {
-    finishDeploy('failed');
-    appendFile(entry.logPath, `===== 部署失败：${error.message} =====\n`, 'utf8').catch(() => {});
-  });
-
-  entry.deployChild.once('exit', (code) => {
-    const state = code === 0 ? 'success' : 'failed';
-    finishDeploy(state);
-    appendFile(
-      entry.logPath,
-      `===== [${new Date().toLocaleTimeString()}] 部署${code === 0 ? '成功' : `失败（exit ${code}）`} =====\n`,
+  try {
+    await rotateLog(entry.deployLogPath);
+    const time = new Date().toLocaleTimeString();
+    await appendFile(
+      entry.deployLogPath,
+      `\n===== [${time}] 重新部署开始 =====\n`,
       'utf8',
-    ).catch(() => {});
-  });
+    );
 
-  return { id, deploying: true };
+    const deployLogFd = openSync(entry.deployLogPath, 'a');
+    entry.deployState = 'running';
+    entry.deployChild = spawn(cmd[0], cmd.slice(1), {
+      cwd: entry.config.cwd,
+      env: { ...process.env, ...(entry.config.env || {}) },
+      stdio: ['ignore', deployLogFd, deployLogFd],
+      detached: true,
+    });
+    closeSync(deployLogFd);
+    entry.deployChild.unref();
+
+    const finishDeploy = (state) => {
+      entry.deployState = state;
+      entry.lastDeployAt = new Date().toISOString();
+      entry.deployChild = null;
+    };
+
+    entry.deployChild.once('error', (error) => {
+      finishDeploy('failed');
+      appendFile(
+        entry.deployLogPath,
+        `===== 部署失败：${error.message} =====\n`,
+        'utf8',
+      ).catch(() => {});
+    });
+
+    entry.deployChild.once('exit', (code) => {
+      const state = code === 0 ? 'success' : 'failed';
+      finishDeploy(state);
+      appendFile(
+        entry.deployLogPath,
+        `===== [${new Date().toLocaleTimeString()}] 部署${code === 0 ? '成功' : `失败（exit ${code}）`} =====\n`,
+        'utf8',
+      ).catch(() => {});
+    });
+
+    return { id, deploying: true };
+  } catch (error) {
+    entry.deployState = 'failed';
+    entry.lastDeployAt = new Date().toISOString();
+    throw error;
+  }
 }
 
 /** 运行服务的自定义停止命令（如 pnpm stop:dev），带超时保护 */
@@ -454,6 +378,7 @@ function runStopCmd(entry) {
     const child = spawn(cmd, args, {
       cwd: entry.config.cwd,
       stdio: 'ignore',
+      env: { ...process.env, ...(entry.config.env ?? {}) },
     });
     const timer = setTimeout(() => {
       try {
@@ -490,23 +415,35 @@ async function stopService(id) {
   clearTimeout(entry.startTimer);
   entry.startTimer = null;
 
-  let pids = await detectPids(entry.config.detectPatterns);
+  const pids = await detectPids(entry);
   const childAlive = entry.child && entry.child.exitCode === null;
 
-  if (entry.config.stopCmd.length > 0 && (pids.length > 0 || childAlive)) {
+  if (entry.config.stopCmd?.length > 0 && (pids.length > 0 || childAlive)) {
     await runStopCmd(entry);
   }
 
-  // 兜底：清理所有仍匹配该服务的进程树
-  const remaining = await detectPids(entry.config.detectPatterns);
-  for (const pid of remaining) await killTree(pid);
-
+  // Stop the owned launcher first so it cannot respawn listeners during cleanup.
   if (entry.child && entry.child.exitCode === null) {
-    await killTree(entry.child.pid);
+    await killTree(entry.child.pid, entry.childIdentity);
   }
-
-  const after = await detectPids(entry.config.detectPatterns);
-  return { id, stopped: after.length === 0, remaining: after };
+  // Custom stop commands own database lifecycle; never force-kill managed databases.
+  if (!entry.config.stopCmd?.length) {
+    const remaining = await findServiceProcesses(entry.config);
+    for (const target of remaining) {
+      const root = await findServiceRoot(target, entry.config);
+      await killTree(root.pid, root.identity);
+    }
+  }
+  const after = await detectPids(entry);
+  if (after.length > 0) {
+    const error = new Error(
+      `停止失败，仍有进程运行（PID ${after.join(', ')}）`,
+    );
+    error.status = 409;
+    throw error;
+  }
+  entry.lastOutcome = 'stopped';
+  return { id, stopped: true, remaining: [] };
 }
 
 /* ------------------------------------------------------------------ */
@@ -519,21 +456,6 @@ function sendJson(res, status, payload) {
   res.end(JSON.stringify(payload));
 }
 
-/** 校验本地来源的 CORS 请求头 */
-function applyCors(req, res) {
-  const origin = req.headers.origin;
-  const host = origin ? new URL(origin).hostname : null;
-  const isLocal =
-    host === 'localhost' || host === '127.0.0.1' || host === '::1';
-
-  if (isLocal) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Vary', 'Origin');
-  }
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-}
-
 /** 把 /api/services/:id/action 的路径拆成 [id, action] */
 function parseServicesPath(pathname) {
   const parts = pathname.split('/').filter(Boolean);
@@ -542,7 +464,8 @@ function parseServicesPath(pathname) {
   if (parts.length === 3) return { id: parts[2], action: 'status' };
   if (parts.length === 4) return { id: parts[2], action: parts[3] };
   // /api/services/:id/log/clear
-  if (parts.length === 5) return { id: parts[2], action: `${parts[3]}/${parts[4]}` };
+  if (parts.length === 5)
+    return { id: parts[2], action: `${parts[3]}/${parts[4]}` };
   return { id: null, action: null };
 }
 
@@ -555,7 +478,8 @@ const ZSHRC = path.join(os.homedir(), '.zshrc');
 /** 根据别名取值推断一句说明 */
 function aliasDescription(value) {
   if (/python3/.test(value)) return '运行 Python3';
-  if (/code\.app|visual studio|\/code(\s|$|")/i.test(value)) return '打开 VS Code';
+  if (/code\.app|visual studio|\/code(\s|$|")/i.test(value))
+    return '打开 VS Code';
   return `别名 → ${value.replace(/^["']+|["']+$/g, '')}`;
 }
 
@@ -649,7 +573,12 @@ let restarting = false;
 
 /** 保持当前请求，直到新 agent 已监听端口后再返回成功。 */
 async function restartAgent() {
-  if (restarting || [...registry.values()].some((entry) => entry.deployState === 'running' || entry.starting)) {
+  if (
+    restarting ||
+    [...registry.values()].some(
+      (entry) => entry.deployState === 'running' || entry.operation,
+    )
+  ) {
     const error = new Error('agent 正忙，请等待启动或部署结束后再重启');
     error.status = 409;
     throw error;
@@ -693,19 +622,40 @@ async function restartAgent() {
   }
 }
 
-const server = http.createServer(async (req, res) => {
-  applyCors(req, res);
-
-  if (req.method === 'OPTIONS') {
-    res.writeHead(204);
-    res.end();
-    return;
+/** Serialize state-changing commands per service, including the asynchronous setup phase. */
+async function withServiceOperation(id, operation, action) {
+  const entry = registry.get(id);
+  if (!entry) {
+    const error = new Error(`未知服务 "${id}"`);
+    error.status = 404;
+    throw error;
   }
-
-  const url = new URL(req.url, `http://${HOST}:${PORT}`);
-  const pathname = url.pathname;
-
+  if (entry.operation || entry.deployState === 'running') {
+    const error = new Error('服务正在执行操作，请稍候');
+    error.status = 409;
+    throw error;
+  }
+  entry.operation = operation;
   try {
+    return await action();
+  } finally {
+    entry.operation = null;
+  }
+}
+
+const server = http.createServer(async (req, res) => {
+  try {
+    security.authorize(req, res);
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204).end();
+      return;
+    }
+    const url = new URL(req.url, `http://${HOST}:${PORT}`);
+    const pathname = url.pathname;
+    if (req.method === 'GET' && pathname === '/api/session') {
+      sendJson(res, 200, { token: security.token });
+      return;
+    }
     if (req.method === 'POST' && pathname === '/api/agent/restart') {
       await restartAgent();
       res.once('finish', () => process.exit(0));
@@ -714,7 +664,11 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'GET' && pathname === '/api/health') {
-      sendJson(res, 200, { ok: true, pid: process.pid, services: registry.size });
+      sendJson(res, 200, {
+        ok: true,
+        pid: process.pid,
+        services: registry.size,
+      });
       return;
     }
 
@@ -732,7 +686,7 @@ const server = http.createServer(async (req, res) => {
 
     const parsed = parseServicesPath(pathname);
 
-    if (parsed && parsed.action === 'status') {
+    if (parsed && parsed.action === 'status' && req.method === 'GET') {
       const entry = registry.get(parsed.id);
       if (!entry) {
         sendJson(res, 404, { message: `未知服务 "${parsed.id}"` });
@@ -748,8 +702,15 @@ const server = http.createServer(async (req, res) => {
         sendJson(res, 404, { message: `未知服务 "${parsed.id}"` });
         return;
       }
-      const lines = Number(url.searchParams.get('lines') ?? DEFAULT_LINES) || DEFAULT_LINES;
-      const log = await readTail(entry.logPath, lines);
+      const lines = normalizeLines(
+        url.searchParams.get('lines'),
+        DEFAULT_LINES,
+      );
+      const logPath =
+        url.searchParams.get('kind') === 'deploy'
+          ? entry.deployLogPath
+          : entry.logPath;
+      const log = await readTail(logPath, lines);
       sendJson(res, 200, { id: parsed.id, log, lines });
       return;
     }
@@ -760,35 +721,87 @@ const server = http.createServer(async (req, res) => {
         sendJson(res, 404, { message: `未知服务 "${parsed.id}"` });
         return;
       }
-      await writeFile(entry.logPath, '', 'utf8');
+      if (entry.starting) {
+        sendJson(res, 409, { message: '启动期间暂不能清空日志' });
+        return;
+      }
+      const logPath =
+        url.searchParams.get('kind') === 'deploy'
+          ? entry.deployLogPath
+          : entry.logPath;
+      await writeFile(logPath, '', 'utf8');
       sendJson(res, 200, { id: parsed.id, cleared: true });
       return;
     }
 
     if (parsed && parsed.action === 'start' && req.method === 'POST') {
-      sendJson(res, 200, await startService(parsed.id));
+      sendJson(
+        res,
+        200,
+        await withServiceOperation(parsed.id, 'start', () =>
+          startService(parsed.id),
+        ),
+      );
       return;
     }
 
     if (parsed && parsed.action === 'stop' && req.method === 'POST') {
-      sendJson(res, 200, await stopService(parsed.id));
+      sendJson(
+        res,
+        200,
+        await withServiceOperation(parsed.id, 'stop', () =>
+          stopService(parsed.id),
+        ),
+      );
+      return;
+    }
+
+    if (parsed && parsed.action === 'restart' && req.method === 'POST') {
+      const result = await withServiceOperation(
+        parsed.id,
+        'restart',
+        async () => {
+          await stopService(parsed.id);
+          return startService(parsed.id);
+        },
+      );
+      sendJson(res, 200, result);
       return;
     }
 
     if (parsed && parsed.action === 'deploy' && req.method === 'POST') {
-      sendJson(res, 200, await deployService(parsed.id));
+      sendJson(
+        res,
+        200,
+        await withServiceOperation(parsed.id, 'deploy', () =>
+          deployService(parsed.id),
+        ),
+      );
       return;
     }
 
     sendJson(res, 404, { message: '接口不存在' });
   } catch (error) {
     const status = error.status ?? 500;
-    const message =
-      status >= 500 ? '服务端内部错误' : error.message;
+    const message = status >= 500 ? '服务端内部错误' : error.message;
     if (status >= 500) console.error('[agent]', error.message);
-    sendJson(res, status, { message });
+    sendJson(res, status, { message, code: error.code });
   }
 });
+
+const rotationTimer = setInterval(() => {
+  for (const entry of registry.values()) {
+    if (entry.starting) continue;
+    void Promise.all([
+      rotateLog(entry.logPath),
+      rotateLog(entry.deployLogPath),
+    ]).catch((error) => console.error('[agent] 日志轮转失败:', error.message));
+  }
+  void rotateLog(path.join(LOG_DIR, 'agent.log')).catch((error) =>
+    console.error('[agent] 日志轮转失败:', error.message),
+  );
+}, 30_000);
+rotationTimer.unref();
 
 /* 优雅退出：只关闭服务，不杀掉正在运行的开发服务 */
 function shutdown() {

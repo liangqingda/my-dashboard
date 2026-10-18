@@ -31,3 +31,19 @@
 .themeToggle {
   color: var(--app-ink-soft);
 }
+
+@media (max-width: 48em) {
+  .inner {
+    padding: 0 var(--app-space-md);
+    gap: 8px;
+  }
+  .tagline {
+    display: none;
+  }
+  .title {
+    font-size: 1rem;
+  }
+  .brandMark {
+    display: none;
+  }
+}

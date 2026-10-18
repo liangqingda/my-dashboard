@@ -8,45 +8,105 @@ import type { ServiceStatus } from './types';
 /** agent 基础路径（经 Vite 代理转发到本机 agent） */
 const BASE = '/api';
 
-/** 统一的 JSON 请求封装：非 2xx 时抛出带后端 message 的错误 */
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${BASE}${path}`, init);
+let session: Promise<string> | undefined;
+
+const getToken = () => {
+  session ??= fetch(`${BASE}/session`, { signal: AbortSignal.timeout(10_000) })
+    .then(async (response) => {
+      if (!response.ok) {
+        throw new Error('无法建立本机会话，请重新连接');
+      }
+
+      const body = (await response.json()) as { token: string };
+
+      return body.token;
+    })
+    .catch((error: unknown) => {
+      session = undefined;
+      throw error;
+    });
+
+  return session;
+};
+
+/** A rejected token is safe to retry: authorization runs before any side effect. */
+async function request<T>(
+  path: string,
+  init?: RequestInit,
+  retry = true,
+): Promise<T> {
+  const mutation = init?.method === 'POST';
+  const bootstrap = path === '/agent/start';
+  const headers = new Headers(init?.headers);
+
+  if (mutation) {
+    headers.set('X-Dashboard-Request', '1');
+
+    if (!bootstrap) {
+      headers.set('X-Dashboard-Token', await getToken());
+    }
+  }
+
+  const response = await fetch(`${BASE}${path}`, {
+    ...init,
+    headers,
+    signal: init?.signal ?? AbortSignal.timeout(mutation ? 75_000 : 10_000),
+  });
 
   if (!response.ok) {
     let message = `请求失败（HTTP ${response.status}）`;
+    let code: string | undefined;
 
     try {
-      const { message: bodyMessage } = (await response.json()) as {
+      const body = (await response.json()) as {
         message?: string;
+        code?: string;
       };
 
-      if (bodyMessage) {
-        message = bodyMessage;
-      }
+      message = body.message ?? message;
+      ({ code } = body);
     } catch {
-      /* 非 JSON 响应，保留默认错误信息 */
+      /* Keep the HTTP status for non-JSON responses. */
+    }
+
+    if (code === 'INVALID_TOKEN' && retry) {
+      session = undefined;
+
+      return request<T>(path, init, false);
     }
 
     throw new Error(message);
   }
 
+  if (path === '/agent/restart' || bootstrap) {
+    session = undefined;
+  }
+
   return (await response.json()) as T;
 }
+
+export type LogKind = 'service' | 'deploy';
 
 /** 获取所有服务的状态快照 */
 export const fetchServices = (): Promise<ServiceStatus[]> =>
   request<ServiceStatus[]>('/services');
 
 /** 获取单个服务的日志尾部 */
-export const fetchServiceLog = (id: string, lines = 80) =>
+export const fetchServiceLog = (
+  id: string,
+  lines = 80,
+  kind: LogKind = 'service',
+  signal?: AbortSignal,
+) =>
   request<{ id: string; log: string; lines: number }>(
-    `/services/${encodeURIComponent(id)}/log?lines=${lines}`,
+    `/services/${encodeURIComponent(id)}/log?lines=${lines}&kind=${kind}`,
+    { signal },
   );
 
 /** 清空单个服务的日志文件 */
-export const clearServiceLog = (id: string) =>
+export const clearServiceLog = (id: string, kind: LogKind = 'service') =>
   request<{ id: string; cleared: boolean }>(
-    `/services/${encodeURIComponent(id)}/log/clear`,
+    `/services/${encodeURIComponent(id)}/log/clear?kind=${kind}`,
     { method: 'POST' },
   );
 
@@ -77,6 +137,12 @@ export const startService = (id: string) =>
 export const stopService = (id: string) =>
   request<{ id: string; stopped?: boolean; remaining?: number[] }>(
     `/services/${encodeURIComponent(id)}/stop`,
+    { method: 'POST' },
+  );
+
+export const restartService = (id: string) =>
+  request<{ id: string; started?: boolean }>(
+    `/services/${encodeURIComponent(id)}/restart`,
     { method: 'POST' },
   );
 

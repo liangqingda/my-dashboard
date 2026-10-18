@@ -47,11 +47,18 @@ const implicitScssModules = (): Plugin => ({
   name: 'implicit-scss-modules',
   enforce: 'pre',
   async resolveId(source, importer, options) {
-    if (!importer || !source.endsWith(scssExtension) || source.endsWith(scssModuleExtension)) {
+    if (
+      !importer ||
+      !source.endsWith(scssExtension) ||
+      source.endsWith(scssModuleExtension)
+    ) {
       return null;
     }
 
-    const resolved = await this.resolve(source, importer, { ...options, skipSelf: true });
+    const resolved = await this.resolve(source, importer, {
+      ...options,
+      skipSelf: true,
+    });
 
     if (!resolved || !shouldUseScssModule(resolved.id)) {
       return null;
@@ -75,7 +82,9 @@ const implicitScssModules = (): Plugin => ({
       return;
     }
 
-    const module = context.server.moduleGraph.getModuleById(toScssModuleId(context.file));
+    const module = context.server.moduleGraph.getModuleById(
+      toScssModuleId(context.file),
+    );
 
     if (!module) {
       return;
@@ -100,6 +109,7 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+    strictPort: true,
     // 本机服务 agent（agent/server.mjs，默认 8787）
     proxy: {
       '/api': {

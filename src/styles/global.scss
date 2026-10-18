@@ -13,7 +13,7 @@
   /* ink */
   --app-ink: #172522;
   --app-ink-soft: #5b6b66;
-  --app-ink-faint: #84938d;
+  --app-ink-faint: #64766e;
 
   /* lines */
   --app-line: #e2e8e5;
@@ -32,7 +32,7 @@
   --app-status-warn-soft: #f7ecd6;
   --app-status-danger: #c0392b;
   --app-status-danger-soft: #fbeceb;
-  --app-status-muted: #84938d;
+  --app-status-muted: #64766e;
   --app-status-muted-soft: #eef2f0;
 
   /* spacing */
@@ -49,7 +49,7 @@ html[data-mantine-color-scheme='dark'] {
 
   --app-ink: #e6eee9;
   --app-ink-soft: #9aa9a3;
-  --app-ink-faint: #74837d;
+  --app-ink-faint: #9aa9a3;
 
   --app-line: #2b3733;
   --app-line-strong: #3a4742;
@@ -65,7 +65,7 @@ html[data-mantine-color-scheme='dark'] {
   --app-status-warn-soft: #302a17;
   --app-status-danger: #ef6b60;
   --app-status-danger-soft: #341b19;
-  --app-status-muted: #74837d;
+  --app-status-muted: #9aa9a3;
   --app-status-muted-soft: #1d2724;
 }
 
@@ -73,8 +73,13 @@ html[data-mantine-color-scheme='dark'] {
   color: var(--app-ink);
   background: var(--app-bg);
   font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -139,4 +144,17 @@ a {
 
 *::-webkit-scrollbar-track {
   background: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--app-accent);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
 }

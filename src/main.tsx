@@ -7,6 +7,7 @@ import { createTheme, MantineProvider } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 
 import App from '@/App';
+import ServicesProvider from '@/features/services/services-provider';
 import '@/styles/global.scss';
 
 const theme = createTheme({
@@ -27,7 +28,9 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <MantineProvider defaultColorScheme="light" theme={theme}>
       <Notifications limit={5} position="bottom-right" />
-      <App />
+      <ServicesProvider>
+        <App />
+      </ServicesProvider>
     </MantineProvider>
   </StrictMode>,
 );

@@ -5,13 +5,11 @@
  * 每行左右布局（命令 | 说明），点击命令可复制。
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { IconCheck, IconCopy } from '@tabler/icons-react';
 
-import {
-  fetchCliCommands,
-  type CliCommand,
-} from '@/features/services/api';
+import { fetchCliCommands, type CliCommand } from '@/features/services/api';
+import { useServices } from '@/features/services/hooks/useServices';
 
 import styles from './index.scss';
 
@@ -38,9 +36,11 @@ const copyText = async (text: string): Promise<boolean> => {
       ta.value = text;
       document.body.appendChild(ta);
       ta.select();
-      document.execCommand('copy');
+      const copied = document.execCommand('copy');
+
       document.body.removeChild(ta);
-      return true;
+
+      return copied;
     } catch {
       return false;
     }
@@ -50,12 +50,16 @@ const copyText = async (text: string): Promise<boolean> => {
 /** 单行命令：左右布局（命令 | 说明 | 复制），点击整行复制 */
 const CommandRow = ({ name, desc }: { name: string; desc: string }) => {
   const [copied, setCopied] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  useEffect(() => () => window.clearTimeout(timer.current), []);
 
   const handleCopy = async () => {
     const ok = await copyText(name);
 
     setCopied(ok);
-    setTimeout(() => setCopied(false), 1500);
+    window.clearTimeout(timer.current);
+    timer.current = setTimeout(() => setCopied(false), 1500);
   };
 
   return (
@@ -76,31 +80,49 @@ const CommandRow = ({ name, desc }: { name: string; desc: string }) => {
 
 /** 全局快捷命令卡片（动态读取 ~/.zshrc） */
 const QuickCommands = () => {
+  const { agentOnline } = useServices();
+  const [revision, setRevision] = useState(0);
+  const [loading, setLoading] = useState(true);
   const [commands, setCommands] = useState<CliCommand[]>([]);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
+    if (!agentOnline) {
+      return;
+    }
+
     let alive = true;
 
     const load = async () => {
+      setLoading(true);
+
       try {
         const result = await fetchCliCommands();
 
-        if (!alive) {return;}
+        if (!alive) {
+          return;
+        }
 
         setCommands(result.commands);
         setFailed(false);
       } catch {
-        if (alive) {setFailed(true);}
+        if (alive) {
+          setFailed(true);
+        }
+      } finally {
+        if (alive) {
+          setLoading(false);
+        }
       }
     };
 
-    void load();
+    const timerId = window.setTimeout(() => void load(), 0);
 
     return () => {
       alive = false;
+      window.clearTimeout(timerId);
     };
-  }, []);
+  }, [agentOnline, revision]);
 
   const groups = GROUP_ORDER.map((key) => ({
     key,
@@ -109,8 +131,20 @@ const QuickCommands = () => {
   })).filter((g) => g.items.length > 0);
 
   const renderBody = () => {
+    if (!agentOnline) {
+      return <div className={styles.empty}>连接恢复后显示快捷命令。</div>;
+    }
+
+    if (loading) {
+      return <div className={styles.empty}>正在读取快捷命令…</div>;
+    }
+
     if (failed) {
-      return <div className={styles.empty}>（读取 ~/.zshrc 失败，请确认 agent 在线）</div>;
+      return (
+        <div className={styles.empty}>
+          （读取 ~/.zshrc 失败，请确认 agent 在线）
+        </div>
+      );
     }
 
     if (groups.length === 0) {
@@ -135,7 +169,15 @@ const QuickCommands = () => {
     <section aria-label="全局快捷命令" className={styles.card}>
       <header className={styles.header}>
         <span className={styles.title}>全局快捷命令</span>
-        <span className={styles.note}>来自 ~/.zshrc · 自动发现</span>
+        <button
+          aria-label="刷新快捷命令"
+          className={styles.refresh}
+          disabled={!agentOnline || loading}
+          onClick={() => setRevision((current) => current + 1)}
+          type="button"
+        >
+          刷新
+        </button>
       </header>
       {renderBody()}
     </section>

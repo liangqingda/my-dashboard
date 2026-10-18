@@ -1,210 +1,328 @@
-/** 服务列表 Hook：首次加载服务状态，并提供刷新、启动、停止和重启动作。 */
-
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { notifications } from '@mantine/notifications';
 
 import {
-  deployService as deployServiceApi,
+  deployService,
   fetchServices,
-  startService as startServiceApi,
-  stopService as stopServiceApi,
+  restartService,
+  startService,
+  stopService,
 } from '@/features/services/api';
+import { ServicesContext } from '@/features/services/context';
 import type { ServiceStatus } from '@/features/services/types';
 
-/** 可对服务执行的动作 */
-export type ServiceAction = 'start' | 'stop' | 'restart';
+export type ServiceAction = 'start' | 'stop' | 'restart' | 'deploy';
 
-/** 各动作的提示文案 */
-const ACTION_LABEL: Record<ServiceAction, { title: string; doneText: string }> = {
-  start: { title: '启动', doneText: '已启动' },
-  stop: { title: '停止', doneText: '已停止' },
-  restart: { title: '重启', doneText: '已重启' },
+export type ServiceBusy = Partial<Record<string, ServiceAction>>;
+
+export type ServiceActivity = {
+  id: string;
+  serviceName: string;
+  label: string;
+  at: string;
+  success: boolean;
 };
 
-/** 正在执行中的动作（区分服务与动作） */
-export type ServiceBusy = { id: string; action: ServiceAction } | null;
-
 export type UseServicesResult = {
-  /** 服务状态列表 */
   services: ServiceStatus[];
-  /** 首次加载中 */
   loading: boolean;
-  /** agent 是否在线（false 表示无法连接） */
+  refreshing: boolean;
   agentOnline: boolean;
-  /** 最近一次错误信息 */
   error: string | null;
-  /** 正在执行的动作（用于对应按钮 loading / 禁用） */
+  lastUpdated: string | null;
+  activity: ServiceActivity[];
   busy: ServiceBusy;
-  /** 立即刷新一次 */
   refresh: () => Promise<void>;
-  /** 启动服务 */
   start: (id: string) => Promise<void>;
-  /** 停止服务 */
   stop: (id: string) => Promise<void>;
-  /** 重启服务（编译失败时使用，先停后起） */
   restart: (id: string) => Promise<void>;
-  /** 重新部署服务（如部署到 CloudBase）；部署中状态在刷新时更新 */
   deploy: (id: string) => Promise<void>;
 };
 
-/** 主操作（启动 / 重启）是否执行中 */
 export const isPrimaryBusy = (busy: ServiceBusy, id: string): boolean =>
-  busy?.id === id && (busy.action === 'start' || busy.action === 'restart');
+  busy[id] === 'start' || busy[id] === 'restart';
 
-/** 停止是否执行中 */
 export const isStopBusy = (busy: ServiceBusy, id: string): boolean =>
-  busy?.id === id && busy.action === 'stop';
+  busy[id] === 'stop';
+const LABELS: Record<ServiceAction, string> = {
+  start: '启动',
+  stop: '停止',
+  restart: '重启',
+  deploy: '部署',
+};
+const ACTIVITY_KEY = 'dashboard-activity';
 
-/** 加载本机服务状态。 */
-export function useServices(): UseServicesResult {
+const loadActivity = (): ServiceActivity[] => {
+  try {
+    const saved: unknown = JSON.parse(
+      sessionStorage.getItem(ACTIVITY_KEY) ?? '[]',
+    );
+
+    if (!Array.isArray(saved)) {
+      return [];
+    }
+
+    return (saved as unknown[])
+      .filter((item): item is ServiceActivity => {
+        if (typeof item !== 'object' || item === null) {
+          return false;
+        }
+
+        return (
+          'id' in item &&
+          typeof item.id === 'string' &&
+          'serviceName' in item &&
+          typeof item.serviceName === 'string' &&
+          'label' in item &&
+          typeof item.label === 'string' &&
+          'at' in item &&
+          typeof item.at === 'string' &&
+          Number.isFinite(Date.parse(item.at)) &&
+          'success' in item &&
+          typeof item.success === 'boolean'
+        );
+      })
+      .slice(0, 8);
+  } catch {
+    return [];
+  }
+};
+
+/** Shared by the header, overview and management page. */
+export function useServicesController(): UseServicesResult {
   const [services, setServices] = useState<ServiceStatus[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [agentOnline, setAgentOnline] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState<ServiceBusy>(null);
-  /** 各服务最近一次部署结果（用于检测终态变化，仅在本次会话内提示） */
-  const prevDeployOutcomeRef = useRef<
-    Record<string, ServiceStatus['deployOutcome'] | undefined>
-  >({});
-
-  const refresh = useCallback(async () => {
-    try {
-      const list = await fetchServices();
-
-      setServices(list);
-      setAgentOnline(true);
-      setError(null);
-
-      // 部署是异步进程：检测 deployOutcome 从非终态变为终态，用 message 提示结果
-      const prevOutcomes = prevDeployOutcomeRef.current;
-
-      list.forEach((service) => {
-        const prev = prevOutcomes[service.id];
-
-        prevOutcomes[service.id] = service.deployOutcome;
-
-        if (prev === undefined) {
-          return; // 首次加载仅建立基线，不提示
-        }
-
-        if (service.deployOutcome === 'success' && prev !== 'success') {
-          notifications.show({
-            title: '部署成功',
-            message: `「${service.name}」已部署到 CloudBase`,
-            color: 'teal',
-            withCloseButton: true,
-            autoClose: false,
-          });
-        } else if (service.deployOutcome === 'failed' && prev !== 'failed') {
-          notifications.show({
-            title: '部署失败',
-            message: `「${service.name}」部署失败，详见服务日志`,
-            color: 'red',
-            withCloseButton: true,
-            autoClose: false,
-          });
-        }
-      });
-    } catch (err) {
-      setAgentOnline(false);
-      setError(err instanceof Error ? err.message : '无法连接本机服务 agent');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [busy, setBusy] = useState<ServiceBusy>({});
+  const [activity, setActivity] = useState(loadActivity);
+  const locks = useRef(new Set<string>());
+  const pending = useRef<Promise<void> | undefined>(undefined);
+  const outcomes = useRef<Partial<Record<string, string>>>({});
+  const record = useCallback(
+    (serviceName: string, label: string, success: boolean) => {
+      setActivity((current) =>
+        [
+          {
+            id: crypto.randomUUID(),
+            serviceName,
+            label,
+            success,
+            at: new Date().toISOString(),
+          },
+          ...current,
+        ].slice(0, 8),
+      );
+    },
+    [],
+  );
 
   useEffect(() => {
-    const immediate = window.setTimeout(() => void refresh(), 0);
+    try {
+      sessionStorage.setItem(ACTIVITY_KEY, JSON.stringify(activity));
+    } catch {
+      /* Storage is optional. */
+    }
+  }, [activity]);
+
+  const refresh = useCallback((): Promise<void> => {
+    if (pending.current) {
+      return pending.current;
+    }
+
+    const load = async () => {
+      setRefreshing(true);
+
+      try {
+        const list = await fetchServices();
+
+        setServices(list);
+        setAgentOnline(true);
+        setError(null);
+        setLastUpdated(new Date().toISOString());
+        list.forEach((service) => {
+          const key = `${service.deployOutcome ?? ''}:${service.lastDeployAt ?? ''}`;
+          const previous = outcomes.current[service.id];
+
+          outcomes.current[service.id] = key;
+
+          if (
+            previous === undefined ||
+            previous === key ||
+            !service.deployOutcome
+          ) {
+            return;
+          }
+
+          const success = service.deployOutcome === 'success';
+
+          notifications.show({
+            title: success ? '部署成功' : '部署失败',
+            message: `「${service.name}」${success ? '部署完成' : '部署失败，请查看部署日志'}`,
+            color: success ? 'teal' : 'red',
+            autoClose: success ? 5000 : false,
+          });
+          record(service.name, success ? '部署完成' : '部署失败', success);
+        });
+      } catch (err) {
+        setAgentOnline(false);
+        setError(err instanceof Error ? err.message : '无法连接本机服务');
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    };
+
+    pending.current = load().finally(() => {
+      pending.current = undefined;
+    });
+
+    return pending.current;
+  }, [record]);
+
+  const tracking =
+    services.some(
+      (service) => service.deploying || service.build === 'starting',
+    ) || Object.keys(busy).length > 0;
+
+  useEffect(() => {
+    let disposed = false;
+    let timer: number;
+    const idleInterval = agentOnline ? 5000 : 10_000;
+    const interval = tracking ? 1000 : idleInterval;
+
+    const tick = async () => {
+      if (document.visibilityState === 'visible') {
+        await refresh();
+      }
+
+      if (!disposed) {
+        timer = window.setTimeout(() => void tick(), interval);
+      }
+    };
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        void refresh();
+      }
+    };
+
+    timer = window.setTimeout(() => void tick(), 0);
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
 
     return () => {
-      window.clearTimeout(immediate);
+      disposed = true;
+      window.clearTimeout(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
     };
-  }, [refresh]);
+  }, [refresh, tracking, agentOnline]);
 
   const runAction = useCallback(
     async (id: string, action: ServiceAction) => {
-      setBusy({ id, action });
-
-      const serviceName = services.find((service) => service.id === id)?.name ?? id;
-      const { title, doneText } = ACTION_LABEL[action];
-
-      try {
-        if (action === 'start') {
-          await startServiceApi(id);
-        } else if (action === 'stop') {
-          await stopServiceApi(id);
-        } else {
-          // 重启：先停后起
-          await stopServiceApi(id);
-          await startServiceApi(id);
-        }
-
-        notifications.show({
-          title,
-          message: `「${serviceName}」${doneText}`,
-          color: 'teal',
-          withCloseButton: true,
-          autoClose: false,
-        });
-      } catch (err) {
-        notifications.show({
-          title: `${title}失败`,
-          message: err instanceof Error ? err.message : `「${serviceName}」${title}失败`,
-          color: 'red',
-          withCloseButton: true,
-          autoClose: false,
-        });
+      if (!agentOnline || locks.current.has(id)) {
+        return;
       }
 
-      await refresh();
-      setBusy((current) =>
-        current?.id === id && current.action === action ? null : current,
-      );
-    },
-    [refresh, services],
-  );
-
-  const start = useCallback((id: string) => runAction(id, 'start'), [runAction]);
-  const stop = useCallback((id: string) => runAction(id, 'stop'), [runAction]);
-  const restart = useCallback((id: string) => runAction(id, 'restart'), [runAction]);
-
-  const deploy = useCallback(
-    async (id: string) => {
-      const serviceName = services.find((service) => service.id === id)?.name ?? id;
+      locks.current.add(id);
+      setBusy((current) => ({ ...current, [id]: action }));
+      const serviceName =
+        services.find((service) => service.id === id)?.name ?? id;
+      const label = LABELS[action];
 
       try {
-        const result = await deployServiceApi(id);
+        if (action === 'stop') {
+          const result = await stopService(id);
 
-        if (result.alreadyDeploying) {
+          if (!result.stopped || result.remaining?.length) {
+            throw new Error('服务仍在运行，请检查日志后重试');
+          }
+        } else if (action === 'start' || action === 'restart') {
+          const result =
+            action === 'start'
+              ? await startService(id)
+              : await restartService(id);
+
+          if (
+            !result.started &&
+            !('alreadyRunning' in result && result.alreadyRunning)
+          ) {
+            throw new Error('服务尚未就绪，请检查日志');
+          }
+        } else {
+          const result = await deployService(id);
+
+          if (!result.deploying) {
+            throw new Error('部署未开始，请检查日志');
+          }
+        }
+
+        record(
+          serviceName,
+          action === 'deploy' ? '开始部署' : `${label}成功`,
+          true,
+        );
+
+        if (action !== 'deploy') {
           notifications.show({
-            title: '部署中',
-            message: `「${serviceName}」已在部署中，请稍候`,
-            color: 'blue',
-            withCloseButton: true,
-            autoClose: false,
+            title: `${label}成功`,
+            message: `「${serviceName}」${label}成功`,
+            color: 'teal',
+            autoClose: 4000,
           });
         }
-        // 部署为异步进程：最终成功/失败在刷新时根据 deployOutcome 变化提示
       } catch (err) {
+        record(serviceName, `${label}失败`, false);
         notifications.show({
-          title: '部署失败',
-          message: err instanceof Error ? err.message : `「${serviceName}」部署失败`,
+          title: `${label}失败`,
+          message: err instanceof Error ? err.message : '请稍后重试',
           color: 'red',
-          withCloseButton: true,
           autoClose: false,
         });
-      }
+      } finally {
+        // Drain a snapshot begun before the mutation, then read the resulting state.
+        if (pending.current) {
+          await pending.current;
+        }
 
-      await refresh();
+        await refresh();
+        locks.current.delete(id);
+        setBusy((current) => {
+          const next = { ...current };
+
+          delete next[id];
+
+          return next;
+        });
+      }
     },
-    [refresh, services],
+    [agentOnline, services, refresh, record],
+  );
+  const start = useCallback(
+    (id: string) => runAction(id, 'start'),
+    [runAction],
+  );
+  const stop = useCallback((id: string) => runAction(id, 'stop'), [runAction]);
+  const restart = useCallback(
+    (id: string) => runAction(id, 'restart'),
+    [runAction],
+  );
+  const deploy = useCallback(
+    (id: string) => runAction(id, 'deploy'),
+    [runAction],
   );
 
   return {
     services,
     loading,
+    refreshing,
     agentOnline,
     error,
+    lastUpdated,
+    activity,
     busy,
     refresh,
     start,
@@ -212,4 +330,14 @@ export function useServices(): UseServicesResult {
     restart,
     deploy,
   };
+}
+
+export function useServices(): UseServicesResult {
+  const value = useContext(ServicesContext);
+
+  if (!value) {
+    throw new Error('useServices requires ServicesProvider');
+  }
+
+  return value;
 }

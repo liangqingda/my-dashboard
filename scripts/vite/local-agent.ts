@@ -11,9 +11,11 @@ export const localAgent = (root: string): Plugin => {
       const response = await fetch('http://127.0.0.1:8787/api/health', {
         signal: AbortSignal.timeout(1500),
       });
-      const health = await response.json() as { ok?: boolean };
+      const health = (await response.json()) as { ok?: boolean };
 
-      if (response.ok && health.ok) {return;}
+      if (response.ok && health.ok) {
+        return;
+      }
     } catch {
       // agent 离线，启动新进程。
     }
@@ -35,9 +37,18 @@ export const localAgent = (root: string): Plugin => {
       };
 
       child.once('error', fail);
-      child.once('exit', () => fail(new Error('agent 启动失败，请检查配置或端口占用')));
+      child.once('exit', () =>
+        fail(new Error('agent 启动失败，请检查配置或端口占用')),
+      );
       child.once('message', (message: unknown) => {
-        if (!message || typeof message !== 'object' || !('type' in message) || message.type !== 'ready') {return;}
+        if (
+          !message ||
+          typeof message !== 'object' ||
+          !('type' in message) ||
+          message.type !== 'ready'
+        ) {
+          return;
+        }
 
         clearTimeout(timer);
         child.removeAllListeners('exit');
@@ -52,22 +63,35 @@ export const localAgent = (root: string): Plugin => {
     name: 'local-agent',
     configureServer(server) {
       server.middlewares.use('/api/agent/start', async (req, res, next) => {
-        if (req.method !== 'POST' || (req.url !== '/' && req.url !== '')) {return next();}
+        if (req.method !== 'POST' || (req.url !== '/' && req.url !== '')) {
+          return next();
+        }
 
         // 只允许当前页面发起本机进程操作。
-        if (req.headers.origin && req.headers.origin !== `http://${req.headers.host}`) {
+        if (
+          req.headers.origin !== `http://${req.headers.host}` ||
+          req.headers['x-dashboard-request'] !== '1' ||
+          req.headers['sec-fetch-site'] === 'cross-site'
+        ) {
           res.writeHead(403).end();
           return;
         }
 
         res.setHeader('Content-Type', 'application/json');
         try {
-          starting ??= start().finally(() => { starting = undefined; });
+          starting ??= start().finally(() => {
+            starting = undefined;
+          });
           await starting;
           res.end(JSON.stringify({ started: true }));
         } catch (error) {
           res.statusCode = 503;
-          res.end(JSON.stringify({ message: error instanceof Error ? error.message : 'agent 启动失败' }));
+          res.end(
+            JSON.stringify({
+              message:
+                error instanceof Error ? error.message : 'agent 启动失败',
+            }),
+          );
         }
       });
     },

@@ -1,4 +1,5 @@
 node_modules
+.pnpm-store
 dist
 dist-ssr
 
@@ -23,3 +24,7 @@ lerna-debug.log*
 *.njsproj
 *.sln
 *.sw?
+
+# Browser regression artifacts
+playwright-report
+test-results
