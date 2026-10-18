@@ -1,0 +1,38 @@
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.ok {
+  color: var(--app-status-ok);
+  background: var(--app-status-ok-soft);
+}
+
+.warn {
+  color: var(--app-status-warn);
+  background: var(--app-status-warn-soft);
+}
+
+.danger {
+  color: var(--app-status-danger);
+  background: var(--app-status-danger-soft);
+}
+
+.muted {
+  color: var(--app-status-muted);
+  background: var(--app-status-muted-soft);
+}

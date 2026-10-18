@@ -1,0 +1,48 @@
+[
+  {
+    "id": "my-dashboard",
+    "name": "my-dashboard",
+    "description": "个人工作台（Vite + React，端口 3000）",
+    "cwd": "/Users/lqd/projects/my-dashboard",
+    "port": 3000,
+    "startCmd": ["pnpm", "dev"],
+    "stopCmd": ["pnpm", "stop:dev"],
+    "detectPatterns": [
+      "/Users/lqd/projects/my-dashboard/node_modules/"
+    ],
+    "successMarkers": ["ready in", "local:", "vite v", "built in", "compiled"],
+    "failMarkers": [
+      "error during build",
+      "failed to resolve",
+      "eaddrinuse",
+      "syntaxerror",
+      "typeerror",
+      "[vite] error",
+      "failed to compile"
+    ]
+  },
+  {
+    "id": "study-lab",
+    "name": "study-lab",
+    "description": "全栈学习工作台（pnpm monorepo，web 3000 / api 3001）",
+    "cwd": "/Users/lqd/projects/study-lab",
+    "port": 3001,
+    "startCmd": ["pnpm", "dev"],
+    "stopCmd": ["pnpm", "dev:stop"],
+    "detectPatterns": [
+      "/Users/lqd/projects/study-lab/node_modules/",
+      "/Users/lqd/projects/study-lab/apps/web/node_modules/",
+      "scripts/dev.mjs"
+    ],
+    "successMarkers": ["ready in", "local:", "listening", "server running", "started"],
+    "failMarkers": [
+      "error",
+      "failed",
+      "eaddrinuse",
+      "syntaxerror",
+      "typeerror",
+      "cannot find",
+      "stopped ("
+    ]
+  }
+]

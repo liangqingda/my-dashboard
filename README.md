@@ -14,23 +14,57 @@
 
 ```bash
 pnpm dev        # 本地开发（默认端口 3000）
+pnpm agent      # 前台运行本机服务 agent（默认 127.0.0.1:8787）
+pnpm agent:bg   # 后台运行 agent（日志 /tmp/my-dashboard-agent.log）
+pnpm agent:stop # 停止 agent
 pnpm typecheck  # 类型检查
 pnpm lint       # ESLint
 pnpm build      # 类型检查 + 构建
 pnpm preview    # 预览构建产物
 ```
 
+## 本机服务 agent
+
+「服务」页与首页概览展示并启停本机各开发服务（如 my-dashboard、study-lab）。
+浏览器无法直接操作本地进程，因此由本地 agent（`agent/server.mjs`，零依赖 Node HTTP
+服务，仅监听 `127.0.0.1:8787`）负责探测、启停与编译状态判定；前端通过 Vite 的
+`/api` 代理访问它。
+
+使用方式：
+
+```bash
+pnpm agent:bg   # 先启动 agent
+pnpm dev        # 再启动前端（默认 3000）
+```
+
+服务清单在 `agent/services.json` 登记（名称、工作目录、启停命令、进程探测模式、
+编译成功/失败标记）。新增服务：往数组里加一条配置，重启 agent 即可。
+日志落在 `agent/logs/<serviceId>.log`。
+
+agent API：
+
+```
+GET  /api/health               健康检查
+GET  /api/services             所有服务状态（运行态 / 编译状态 / 日志尾部）
+GET  /api/services/:id/log     日志尾部（?lines=N）
+POST /api/services/:id/start   启动服务
+POST /api/services/:id/stop    停止服务
+```
+
 ## 目录结构
 
 ```
+agent/                # 本机服务 agent（server.mjs、services.json、logs/）
 src/
-  layouts/          # 布局（BasicLayout / Header / Sidebar）
-  pages/            # 页面（各信息模块）
-  styles/           # 全局样式与 design tokens
+  layouts/            # 布局（BasicLayout / Header / Sidebar）
+  pages/              # 页面（各信息模块，如 Home / Services）
+  features/services/  # 服务模块（types / api / hooks / 组件）
+  styles/             # 全局样式与 design tokens
 ```
 
 ## 约定
 
 - 路径别名：`@/*` → `src/*`
 - 新增组件时，同级放置 `index.tsx` + `index.scss`（CSS Module 类名自动 camelCase）
+- 组件目录使用 kebab-case 命名
 - 侧边栏导航在 `src/layouts/Sidebar/index.tsx` 的 `navItems` 中登记

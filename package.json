@@ -5,6 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:bg": "nohup vite > /tmp/my-dashboard-dev.log 2>&1 &",
+    "stop:dev": "kill $(pgrep -f 'vite/bin/vite.js$') 2>/dev/null && echo 'Dev server stopped' || echo 'No dev server running'",
+    "agent": "node agent/server.mjs",
+    "agent:bg": "nohup node agent/server.mjs > /tmp/my-dashboard-agent.log 2>&1 &",
+    "agent:stop": "kill $(pgrep -f 'agent/server.mjs') 2>/dev/null && echo 'Agent stopped' || echo 'No agent running'",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.node.json --noEmit",
     "build": "tsc -p tsconfig.json && tsc -p tsconfig.node.json && vite build",
     "lint": "eslint .",

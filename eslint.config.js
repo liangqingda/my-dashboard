@@ -8,7 +8,7 @@ const rootDir = dirname(fileURLToPath(import.meta.url));
 export default [
   ...reactTypedConfig,
   {
-    ignores: ['dist/**', 'eslint.config.js', '.prettierrc.js'],
+    ignores: ['dist/**', 'eslint.config.js', '.prettierrc.js', 'agent/**'],
   },
   {
     files: ['vite.config.ts'],

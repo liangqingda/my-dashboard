@@ -25,6 +25,16 @@
   --app-accent-soft: #e4f2ec;
   --app-accent-soft-strong: #d6ece3;
 
+  /* status */
+  --app-status-ok: #0e7a3d;
+  --app-status-ok-soft: #e2f2e7;
+  --app-status-warn: #a06b11;
+  --app-status-warn-soft: #f7ecd6;
+  --app-status-danger: #c0392b;
+  --app-status-danger-soft: #fbeceb;
+  --app-status-muted: #84938d;
+  --app-status-muted-soft: #eef2f0;
+
   /* spacing */
   --app-space-sm: 0.5rem;
   --app-space-md: 1rem;
@@ -48,6 +58,15 @@ html[data-mantine-color-scheme='dark'] {
   --app-accent-strong: #5fd6b6;
   --app-accent-soft: #1c362f;
   --app-accent-soft-strong: #24483e;
+
+  --app-status-ok: #4dd389;
+  --app-status-ok-soft: #16301f;
+  --app-status-warn: #e0b45a;
+  --app-status-warn-soft: #302a17;
+  --app-status-danger: #ef6b60;
+  --app-status-danger-soft: #341b19;
+  --app-status-muted: #74837d;
+  --app-status-muted-soft: #1d2724;
 }
 
 :root {

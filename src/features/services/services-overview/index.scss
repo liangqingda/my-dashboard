@@ -1,0 +1,55 @@
+.overview {
+  border: 1px solid var(--app-line);
+  border-radius: var(--mantine-radius-md);
+  background: var(--app-surface);
+  overflow: hidden;
+}
+
+.head {
+  padding: var(--app-space-sm) var(--app-space-md);
+  border-bottom: 1px solid var(--app-line);
+}
+
+.headIcon {
+  color: var(--app-accent);
+}
+
+.more {
+  color: var(--app-accent);
+  font-size: 0.8rem;
+  text-decoration: none;
+}
+
+.more:hover {
+  color: var(--app-accent-strong);
+  text-decoration: underline;
+}
+
+.body {
+  padding: var(--app-space-sm) var(--app-space-md);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--app-space-md);
+  padding: var(--app-space-sm) 0;
+}
+
+.row + .row {
+  border-top: 1px solid var(--app-line);
+}
+
+.rowTitle {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.rowName {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

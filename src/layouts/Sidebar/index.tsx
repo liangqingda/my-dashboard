@@ -1,6 +1,6 @@
 import { useLocation } from 'react-router';
 import { AppShell, NavLink, ScrollArea } from '@mantine/core';
-import { IconDashboard } from '@tabler/icons-react';
+import { IconDashboard, IconServer } from '@tabler/icons-react';
 
 import styles from './index.scss';
 
@@ -11,8 +11,10 @@ type NavItem = {
   icon: typeof IconDashboard;
 };
 
-// 占位导航：后续接入各信息模块时在此扩充
-const navItems: NavItem[] = [{ key: 'overview', label: '概览', to: '/', icon: IconDashboard }];
+const navItems: NavItem[] = [
+  { key: 'overview', label: '概览', to: '/', icon: IconDashboard },
+  { key: 'services', label: '服务', to: '/services', icon: IconServer },
+];
 
 const Sidebar = () => {
   const location = useLocation();
