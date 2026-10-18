@@ -5,6 +5,7 @@ import {
   Group,
   Text,
   Title,
+  Tooltip,
   useComputedColorScheme,
   useMantineColorScheme,
 } from '@mantine/core';
@@ -48,27 +49,29 @@ const Header = () => {
       </Group>
 
       <Group gap="xs" ml="auto" wrap="nowrap">
-        <ActionIcon
-          aria-label="重启 agent"
-          className={styles.themeToggle}
-          loading={agentRestarting}
-          onClick={() => void handleRestartAgent()}
-          size="lg"
-          title="重启 agent"
-          variant="subtle"
-        >
-          <IconReload size={20} />
-        </ActionIcon>
-        <ActionIcon
-          aria-label={isDark ? '切换到亮色主题' : '切换到暗色主题'}
-          className={styles.themeToggle}
-          onClick={() => setColorScheme(isDark ? 'light' : 'dark')}
-          size="lg"
-          title={isDark ? '切换到亮色主题' : '切换到暗色主题'}
-          variant="subtle"
-        >
-          {isDark ? <IconSun size={20} /> : <IconMoon size={20} />}
-        </ActionIcon>
+        <Tooltip label="重启 agent" withArrow>
+          <ActionIcon
+            aria-label="重启 agent"
+            className={styles.themeToggle}
+            loading={agentRestarting}
+            onClick={() => void handleRestartAgent()}
+            size="lg"
+            variant="subtle"
+          >
+            <IconReload size={20} />
+          </ActionIcon>
+        </Tooltip>
+        <Tooltip label={isDark ? '切换到亮色主题' : '切换到暗色主题'} withArrow>
+          <ActionIcon
+            aria-label={isDark ? '切换到亮色主题' : '切换到暗色主题'}
+            className={styles.themeToggle}
+            onClick={() => setColorScheme(isDark ? 'light' : 'dark')}
+            size="lg"
+            variant="subtle"
+          >
+            {isDark ? <IconSun size={20} /> : <IconMoon size={20} />}
+          </ActionIcon>
+        </Tooltip>
       </Group>
     </Group>
   );
