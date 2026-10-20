@@ -19,57 +19,57 @@ const ServicesManager = () => {
   return (
     <div className={styles.manager}>
       <ServiceConnection />
-      {services.length > 0 && (
-        <Group aria-label="服务统计" gap="md">
-          <Text c="dimmed" size="sm">
-            共 {services.length} 个服务
-          </Text>
-          <Text className={styles.runningCount} size="sm">
-            运行 {running}
-          </Text>
-          <Text c="dimmed" size="sm">
-            停止 {services.length - running}
-          </Text>
-          {failed > 0 && (
-            <Text c="red" size="sm">
-              异常 {failed}
+      <Group gap="sm" justify="space-between">
+        {services.length > 0 && (
+          <Group aria-label="服务统计" gap="md">
+            <Text c="dimmed" size="sm">
+              共 {services.length} 个服务
             </Text>
-          )}
-          <Text c="dimmed" size="sm">
-            开机自启 {services.filter((service) => service.autoStart).length}
-          </Text>
-        </Group>
-      )}
-      <div className={styles.grid}>
-        <div aria-busy={loading} className={styles.list}>
-          {loading && <Text className={styles.empty}>正在读取服务…</Text>}
-          {!loading && agentOnline && services.length === 0 && (
-            <Text c="dimmed" className={styles.empty}>
-              暂无已登记的服务。
+            <Text className={styles.runningCount} size="sm">
+              运行 {running}
             </Text>
-          )}
-          {!loading && !agentOnline && services.length === 0 && (
-            <Text c="dimmed" className={styles.empty}>
-              恢复连接后显示服务列表。
+            <Text c="dimmed" size="sm">
+              停止 {services.length - running}
             </Text>
-          )}
-          {services.map((service) => (
-            <ServiceRow
-              busy={busy}
-              key={service.id}
-              offline={!agentOnline}
-              onDeploy={deploy}
-              onRestart={restart}
-              onStart={start}
-              onStop={stop}
-              service={service}
-            />
-          ))}
-        </div>
-        <div className={styles.sidebar}>
-          <QuickCommands />
+            {failed > 0 && (
+              <Text c="red" size="sm">
+                异常 {failed}
+              </Text>
+            )}
+            <Text c="dimmed" size="sm">
+              开机自启 {services.filter((service) => service.autoStart).length}
+            </Text>
+          </Group>
+        )}
+        <Group gap="xs">
           <ServiceActivity />
-        </div>
+          <QuickCommands />
+        </Group>
+      </Group>
+      <div aria-busy={loading} className={styles.list}>
+        {loading && <Text className={styles.empty}>正在读取服务…</Text>}
+        {!loading && agentOnline && services.length === 0 && (
+          <Text c="dimmed" className={styles.empty}>
+            暂无已登记的服务。
+          </Text>
+        )}
+        {!loading && !agentOnline && services.length === 0 && (
+          <Text c="dimmed" className={styles.empty}>
+            恢复连接后显示服务列表。
+          </Text>
+        )}
+        {services.map((service) => (
+          <ServiceRow
+            busy={busy}
+            key={service.id}
+            offline={!agentOnline}
+            onDeploy={deploy}
+            onRestart={restart}
+            onStart={start}
+            onStop={stop}
+            service={service}
+          />
+        ))}
       </div>
     </div>
   );

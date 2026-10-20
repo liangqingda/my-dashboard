@@ -1,12 +1,13 @@
 /**
- * 全局快捷命令卡片：展示 ~/.zshrc 中的别名与函数。
+ * 全局快捷命令弹窗：展示 ~/.zshrc 中的别名与函数。
  * 数据由 agent 动态解析下发（GET /api/cli-commands），
- * 页面加载时读取别名/函数，无需改前端代码。
+ * 打开弹窗时读取别名/函数，无需改前端代码。
  * 每行左右布局（命令 | 说明），点击命令可复制。
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { IconCheck, IconCopy } from '@tabler/icons-react';
+import { Button, Modal } from '@mantine/core';
+import { IconCheck, IconCopy, IconTerminal2 } from '@tabler/icons-react';
 
 import { fetchCliCommands, type CliCommand } from '@/features/services/api';
 import { useServices } from '@/features/services/hooks/useServices';
@@ -78,16 +79,17 @@ const CommandRow = ({ name, desc }: { name: string; desc: string }) => {
   );
 };
 
-/** 全局快捷命令卡片（动态读取 ~/.zshrc） */
+/** 全局快捷命令弹窗（动态读取 ~/.zshrc） */
 const QuickCommands = () => {
   const { agentOnline } = useServices();
+  const [opened, setOpened] = useState(false);
   const [revision, setRevision] = useState(0);
   const [loading, setLoading] = useState(true);
   const [commands, setCommands] = useState<CliCommand[]>([]);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    if (!agentOnline) {
+    if (!opened || !agentOnline) {
       return;
     }
 
@@ -122,7 +124,7 @@ const QuickCommands = () => {
       alive = false;
       window.clearTimeout(timerId);
     };
-  }, [agentOnline, revision]);
+  }, [opened, agentOnline, revision]);
 
   const groups = GROUP_ORDER.map((key) => ({
     key,
@@ -166,21 +168,38 @@ const QuickCommands = () => {
   };
 
   return (
-    <section aria-label="全局快捷命令" className={styles.card}>
-      <header className={styles.header}>
-        <span className={styles.title}>全局快捷命令</span>
-        <button
-          aria-label="刷新快捷命令"
-          className={styles.refresh}
-          disabled={!agentOnline || loading}
-          onClick={() => setRevision((current) => current + 1)}
-          type="button"
-        >
-          刷新
-        </button>
-      </header>
-      {renderBody()}
-    </section>
+    <>
+      <Button
+        aria-haspopup="dialog"
+        leftSection={<IconTerminal2 aria-hidden="true" size={14} />}
+        onClick={() => setOpened(true)}
+        size="xs"
+        variant="light"
+      >
+        全局快捷命令
+      </Button>
+      <Modal
+        centered
+        closeButtonProps={{ 'aria-label': '关闭全局快捷命令' }}
+        onClose={() => setOpened(false)}
+        opened={opened}
+        size="lg"
+        title="全局快捷命令"
+      >
+        <div className={styles.header}>
+          <button
+            aria-label="刷新快捷命令"
+            className={styles.refresh}
+            disabled={!agentOnline || loading}
+            onClick={() => setRevision((current) => current + 1)}
+            type="button"
+          >
+            刷新
+          </button>
+        </div>
+        {renderBody()}
+      </Modal>
+    </>
   );
 };
 

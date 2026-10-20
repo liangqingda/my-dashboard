@@ -44,6 +44,7 @@ async function mock(page) {
     serviceDelay: 0,
     legacyAgent: false,
     agentStarts: 0,
+    commandRequests: 0,
   };
   await page.route('**/api/**', async (route) => {
     const pathname = new URL(route.request().url()).pathname;
@@ -71,7 +72,8 @@ async function mock(page) {
       }
       return json(state.services);
     }
-    if (pathname === '/api/cli-commands')
+    if (pathname === '/api/cli-commands') {
+      state.commandRequests++;
       return json({
         commands: [
           {
@@ -83,6 +85,7 @@ async function mock(page) {
         ],
         source: '~/.zshrc',
       });
+    }
     if (pathname.endsWith('/log')) {
       state.logs++;
       return json({ log: `ready\nupdate ${state.logs}`, lines: 2 });
@@ -111,6 +114,48 @@ async function mock(page) {
   await expect(page.getByText('共 4 个服务')).toBeVisible();
   return state;
 }
+
+test('service tools stay hidden until their dialogs are opened', async ({
+  page,
+  context,
+}) => {
+  const state = await mock(page);
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByText('服务操作和部署结果会记录在这里。')).toHaveCount(
+    0,
+  );
+  await expect(page.getByText('pg status', { exact: true })).toHaveCount(0);
+  expect(state.commandRequests).toBe(0);
+
+  const activityButton = page.getByRole('button', {
+    name: '最近操作',
+    exact: true,
+  });
+  await activityButton.focus();
+  await page.keyboard.press('Enter');
+  const activity = page.getByRole('dialog', { name: '最近操作', exact: true });
+  await expect(activity).toContainText('服务操作和部署结果会记录在这里。');
+  await page.keyboard.press('Escape');
+  await expect(activity).toHaveCount(0);
+  await expect(activityButton).toBeFocused();
+
+  await page.getByRole('button', { name: '全局快捷命令', exact: true }).click();
+  const commands = page.getByRole('dialog', {
+    name: '全局快捷命令',
+    exact: true,
+  });
+  await expect(commands.getByText('pg status', { exact: true })).toBeVisible();
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await commands.getByRole('button', { name: /pg status/ }).click();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+    'pg status',
+  );
+  const beforeRefresh = state.commandRequests;
+  await commands.getByRole('button', { name: '刷新快捷命令' }).click();
+  await expect.poll(() => state.commandRequests).toBe(beforeRefresh + 1);
+  await commands.getByRole('button', { name: '关闭全局快捷命令' }).click();
+  await expect(commands).toHaveCount(0);
+});
 
 test('a running legacy agent is upgraded before service actions', async ({
   page,
@@ -243,13 +288,16 @@ test('deployment completion releases button and reports result', async ({
   await expect(button).toBeEnabled();
   await expect(page.getByText(/最近部署成功/)).toBeVisible();
   expect(state.deploys).toBe(1);
-  await expect(page.getByRole('region', { name: '最近操作' })).toContainText(
+  await page.getByRole('button', { name: '最近操作', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: '最近操作' })).toContainText(
     '部署完成',
   );
+  await page.keyboard.press('Escape');
   await page.getByRole('link', { name: '概览', exact: true }).click();
   await expect(page.getByRole('region', { name: '最近操作' })).toHaveCount(0);
   await page.getByRole('link', { name: '服务管理 →', exact: true }).click();
-  await expect(page.getByRole('region', { name: '最近操作' })).toContainText(
+  await page.getByRole('button', { name: '最近操作', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: '最近操作' })).toContainText(
     '部署完成',
   );
 });
@@ -264,12 +312,15 @@ test('offline status disables actions and reconnect reloads commands', async ({
   await expect(
     page.getByRole('button', { name: '停止 my-dashboard', exact: true }),
   ).toBeDisabled();
+  await page.getByRole('button', { name: '全局快捷命令', exact: true }).click();
   await expect(page.getByText('连接恢复后显示快捷命令。')).toBeVisible();
+  await page.keyboard.press('Escape');
   await page.getByRole('button', { name: '恢复连接', exact: true }).click();
   await expect(page.getByText('本机服务连接中断')).toHaveCount(0);
   await expect(
     page.getByRole('button', { name: '停止 my-dashboard', exact: true }),
   ).toBeEnabled();
+  await page.getByRole('button', { name: '全局快捷命令', exact: true }).click();
   await expect(page.getByText('pg status', { exact: true })).toBeVisible();
 });
 
@@ -300,6 +351,16 @@ for (const width of [320, 390, 768, 1024, 1440]) {
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     ).toBe(true);
+    for (const name of ['最近操作', '全局快捷命令']) {
+      await page.getByRole('button', { name, exact: true }).click();
+      const dialog = page.getByRole('dialog', { name, exact: true });
+      await expect(dialog).toBeVisible();
+      const bounds = await dialog.boundingBox();
+      expect(bounds.x).toBeGreaterThanOrEqual(0);
+      expect(bounds.x + bounds.width).toBeLessThanOrEqual(width);
+      await page.keyboard.press('Escape');
+      await expect(dialog).toHaveCount(0);
+    }
     if (width < 768) {
       await page.getByRole('button', { name: '展开导航' }).click();
       await page.getByRole('link', { name: '概览', exact: true }).click();
