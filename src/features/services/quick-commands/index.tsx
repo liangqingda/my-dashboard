@@ -6,8 +6,13 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { Button, Modal } from '@mantine/core';
-import { IconCheck, IconCopy, IconTerminal2 } from '@tabler/icons-react';
+import { ActionIcon, Button, Group, Modal } from '@mantine/core';
+import {
+  IconCheck,
+  IconCopy,
+  IconRefresh,
+  IconTerminal2,
+} from '@tabler/icons-react';
 
 import { fetchCliCommands, type CliCommand } from '@/features/services/api';
 import { useServices } from '@/features/services/hooks/useServices';
@@ -178,27 +183,32 @@ const QuickCommands = () => {
       >
         全局快捷命令
       </Button>
-      <Modal
+      <Modal.Root
         centered
-        closeButtonProps={{ 'aria-label': '关闭全局快捷命令' }}
         onClose={() => setOpened(false)}
         opened={opened}
         size="lg"
-        title="全局快捷命令"
       >
-        <div className={styles.header}>
-          <button
-            aria-label="刷新快捷命令"
-            className={styles.refresh}
-            disabled={!agentOnline || loading}
-            onClick={() => setRevision((current) => current + 1)}
-            type="button"
-          >
-            刷新
-          </button>
-        </div>
-        {renderBody()}
-      </Modal>
+        <Modal.Overlay />
+        <Modal.Content>
+          <Modal.Header>
+            <Modal.Title>全局快捷命令</Modal.Title>
+            <Group gap="xs" wrap="nowrap">
+              <ActionIcon
+                aria-label="刷新快捷命令"
+                disabled={!agentOnline || loading}
+                onClick={() => setRevision((current) => current + 1)}
+                title="刷新快捷命令"
+                variant="subtle"
+              >
+                <IconRefresh aria-hidden="true" size={18} />
+              </ActionIcon>
+              <Modal.CloseButton aria-label="关闭全局快捷命令" />
+            </Group>
+          </Modal.Header>
+          <Modal.Body>{renderBody()}</Modal.Body>
+        </Modal.Content>
+      </Modal.Root>
     </>
   );
 };
