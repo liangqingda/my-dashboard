@@ -3,6 +3,7 @@
   "extends": "@liangqingda/tsconfig/react.json",
   "include": ["src"],
   "compilerOptions": {
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "paths": {
       "@/*": ["./src/*"]
     }

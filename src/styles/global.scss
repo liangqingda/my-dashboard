@@ -39,6 +39,11 @@
   --app-space-sm: 0.5rem;
   --app-space-md: 1rem;
   --app-space-lg: 1.5rem;
+
+  /* 词典体：英文标题与例句用衬线，中文自动回落到宋体 */
+  --app-serif:
+    'Iowan Old Style', Palatino, 'Palatino Linotype', 'Book Antiqua', Georgia,
+    'Songti SC', 'Source Han Serif SC', serif;
 }
 
 html[data-mantine-color-scheme='dark'] {

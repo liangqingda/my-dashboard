@@ -7,6 +7,7 @@ import { defineConfig, normalizePath } from 'vite';
 
 import type { Plugin } from 'vite';
 
+import { englishRecords } from './scripts/vite/english-records.js';
 import { localAgent } from './scripts/vite/local-agent.js';
 
 const rootDir = fileURLToPath(new URL('.', import.meta.url));
@@ -101,7 +102,7 @@ export default defineConfig({
       localsConvention: 'camelCaseOnly',
     },
   },
-  plugins: [localAgent(rootDir), implicitScssModules(), react()],
+  plugins: [englishRecords(rootDir), localAgent(rootDir), implicitScssModules(), react()],
   resolve: {
     alias: {
       '@': srcDir,

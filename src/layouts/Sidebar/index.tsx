@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router';
 import { AppShell, NavLink, ScrollArea } from '@mantine/core';
-import { IconDashboard, IconServer } from '@tabler/icons-react';
+import { IconDashboard, IconLanguage, IconServer } from '@tabler/icons-react';
 
 import styles from './index.scss';
 
@@ -14,6 +14,7 @@ type NavItem = {
 const navItems: NavItem[] = [
   { key: 'overview', label: '概览', to: '/', icon: IconDashboard },
   { key: 'services', label: '服务', to: '/services', icon: IconServer },
+  { key: 'english', label: '英语', to: '/english', icon: IconLanguage },
 ];
 
 const Sidebar = ({ onNavigate }: { onNavigate: () => void }) => {

@@ -6,6 +6,7 @@ import BasicLayout from '@/layouts/BasicLayout';
 import NotFound from '@/pages/Errors/NotFound';
 import Home from '@/pages/Home';
 
+const English = lazy(() => import('@/pages/English'));
 const Services = lazy(() => import('@/pages/Services'));
 
 const App = () => (
@@ -21,6 +22,7 @@ const App = () => (
         <Routes>
           <Route element={<Home />} path="/" />
           <Route element={<Services />} path="/services" />
+          <Route element={<English />} path="/english" />
           <Route element={<NotFound />} path="*" />
         </Routes>
       </Suspense>

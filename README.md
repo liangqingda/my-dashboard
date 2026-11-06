@@ -1,6 +1,6 @@
 # My Dashboard
 
-个人工作台。首页以独立小卡片聚合各类信息，目前包含本机服务卡片；服务页提供启停、重启、部署、实时日志、快捷命令及最近操作。
+个人工作台。首页以独立小卡片聚合各类信息，目前包含本机服务卡片；服务页提供启停、重启、部署、实时日志、快捷命令及最近操作；英语页把 learn-english 仓库里的全部学习记录做成可搜索的索引卡。
 
 ## 技术栈
 
@@ -124,6 +124,27 @@ PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/Ma
 
 页面截图与测试失败时的 trace 存放于已忽略的 `test-results/`。
 
+## 英语页
+
+「英语」页把同级目录 `../learn-english` 仓库里的学习记录原样读出来展示：分类索引、
+搜索、状态筛选、复习排期，以及每条记录的原始输入、例句、评分历史。
+
+数据不经过本机 agent，由 Vite 插件 `scripts/vite/english-records.ts` 直接读盘：
+
+- 开发：`GET /api/english/records` 每次请求实时读取
+  `learning-records/*.json` 与 `mastered-learning-records/*.json`，
+  仓库有新记录时刷新页面即可看到，无需重启服务。
+- 构建：同一份数据作为 `english-records.json` 写进产物，供预览与静态部署使用。
+
+记录仓库不在 `../learn-english` 时，用环境变量指定绝对路径：
+
+```bash
+ENGLISH_RECORDS_DIR=/path/to/learn-english pnpm dev
+```
+
+只读取 `errors`、`vocabulary`、`phrases`、`grammar`、`usage`、`pronunciation`
+六个分类；已掌握记录只有 id / 标题 / 讲解 / 掌握时间，页面对应的其它字段留空。
+
 ## 目录结构
 
 ```
@@ -132,8 +153,9 @@ agent/                # 本机服务 agent（server.mjs、services.json、logs/�
 scripts/              # 工程脚本（结构检查、feature/组件脚手架）
 src/
   layouts/            # 布局（BasicLayout / Header / Sidebar）
-  pages/              # 页面（各信息模块，如 Home / Services）
+  pages/              # 页面（各信息模块，如 Home / Services / English）
   features/services/  # 服务模块（types / api / hooks / 组件）
+  features/english-records/  # 英语记录模块（记录读取、索引栏、记录条目）
   styles/             # 全局样式与 design tokens
 ```
 
