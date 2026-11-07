@@ -9,6 +9,7 @@ import { useEnglishNotes } from '@/features/english-notes/hooks/useEnglishNotes'
 import NoteEditor from '@/features/english-notes/note-editor';
 import NotesBoard from '@/features/english-notes/notes-board';
 import type { EnglishNote } from '@/features/english-notes/types';
+import { isBoardNote } from '@/features/english-notes/utils';
 import { onPageRefresh } from '@/utils/page-refresh';
 
 import styles from './index.scss';
@@ -22,10 +23,12 @@ const English = () => {
   /** 打开请求的序号：连点两篇时只认最后一次 */
   const openSeq = useRef(0);
 
+  /** 只看板上真正展示的笔记：`mixed` / `paper` 不占翻页计数 */
+  const boardNotes = notes.filter((note) => isBoardNote(note.name));
   const activeIndex =
     active === null
       ? -1
-      : notes.findIndex((note) => note.name === active.name);
+      : boardNotes.findIndex((note) => note.name === active.name);
 
   // 侧边栏「刷新」按钮：重新读取仓库里的笔记
   useEffect(() => onPageRefresh(reload), [reload]);
@@ -91,13 +94,13 @@ const English = () => {
 
   /** 在笔记列表中循环切换上一篇 / 下一篇。 */
   const step = (delta: number) => {
-    if (activeIndex < 0 || notes.length === 0) {
+    if (activeIndex < 0 || boardNotes.length === 0) {
       return;
     }
 
-    const next = (activeIndex + delta + notes.length) % notes.length;
+    const next = (activeIndex + delta + boardNotes.length) % boardNotes.length;
 
-    void openNote(notes[next].name);
+    void openNote(boardNotes[next].name);
   };
 
   return (
@@ -111,7 +114,7 @@ const English = () => {
         </div>
       ) : null}
 
-      <NotesBoard loading={loading} notes={notes} onOpen={openNote} />
+      <NotesBoard loading={loading} notes={boardNotes} onOpen={openNote} />
 
       <MarkdownPreviewModal
         // 换一篇就重挂弹窗，避免上一篇的「已保存」提示和编辑态漏到下一篇
@@ -119,13 +122,15 @@ const English = () => {
         key={active?.name ?? 'closed'}
         markdown={active?.content ?? ''}
         onClose={() => setActive(null)}
-        onNext={notes.length > 1 ? () => step(1) : null}
-        onPrevious={notes.length > 1 ? () => step(-1) : null}
+        onNext={boardNotes.length > 1 ? () => step(1) : null}
+        onPrevious={boardNotes.length > 1 ? () => step(-1) : null}
         onRefresh={import.meta.env.DEV ? refreshActive : null}
         onSave={import.meta.env.DEV ? saveActive : undefined}
         opened={active !== null}
         position={
-          active ? { index: activeIndex + 1, total: notes.length } : undefined
+          active
+            ? { index: activeIndex + 1, total: boardNotes.length }
+            : undefined
         }
         title={active?.name ?? ''}
       />
