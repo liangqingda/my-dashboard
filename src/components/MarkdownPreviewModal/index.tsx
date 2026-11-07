@@ -355,6 +355,7 @@ const MarkdownPreviewModal = ({
               <IconRefresh size={15} stroke={1.9} />
             </ActionIcon>
           ) : null}
+          <span className={styles.titleGap} />
         </div>
       }
       transitionProps={{ duration: 140, transition: 'fade' }}

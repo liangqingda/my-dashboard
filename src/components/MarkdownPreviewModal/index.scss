@@ -47,9 +47,10 @@
   color: var(--app-accent);
 }
 
-/* header 右侧的正文刷新 */
+/* 紧跟标题的正文刷新，和标题之间只留一点点间隙 */
 .refreshButton {
   flex: 0 0 auto;
+  margin-left: 2px;
   color: var(--app-ink-faint);
 }
 
@@ -58,7 +59,7 @@
 }
 
 .fileName {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-width: 0;
   overflow: hidden;
   color: var(--app-ink);
@@ -67,6 +68,12 @@
   line-height: 1.4;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+/* 标题与刷新之后吃掉剩余空间，把关闭按钮顶到最右 */
+.titleGap {
+  flex: 1 1 auto;
+  min-width: 8px;
 }
 
 /* 计数紧跟在切换按钮右边 */
