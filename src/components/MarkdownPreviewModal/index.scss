@@ -141,6 +141,34 @@
   overflow: hidden;
 }
 
+/* 编辑态：正文区换成块级编辑器，滚动同样收在这里 */
+.blockEditor {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 18px 26px 22px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* 保存成功提示：显示 3 秒后淡出 */
+.savedHint {
+  flex: 0 0 auto;
+  color: var(--app-ink-faint);
+  font-size: 0.74rem;
+  animation: savedHintFade 3s ease forwards;
+}
+
+@keyframes savedHintFade {
+  0%,
+  70% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
 /* footer：编辑 / 保存 / 关闭 */
 .footer {
   display: flex;
@@ -198,62 +226,7 @@
   cursor: default;
 }
 
-/*/* 编辑态：正文本身就是可编辑的渲染结果，排版不变 */
-.editable {
-  outline: none;
-  caret-color: var(--app-accent);
-}
-
-/* 编辑态注入的行删除控件 */
-.prose .rowActionCell {
-  width: 28px;
-  padding: 0 2px;
-  border-bottom: 1px solid var(--app-line);
-  text-align: right;
-  vertical-align: middle;
-}
-
-.prose .rowAction {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  border: 0;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--app-ink-faint);
-  font-size: 0.78rem;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.prose .rowAction:hover {
-  background: var(--app-accent-soft);
-  color: var(--app-status-danger);
-}
-
-/* 编辑态注入的添加行控件 */
-.addRow {
-  display: inline-block;
-  margin: 8px 0 2px;
-  padding: 3px 10px;
-  border: 1px dashed var(--app-line-strong);
-  border-radius: 4px;
-  color: var(--app-ink-faint);
-  font-family: var(--app-sans, inherit);
-  font-size: 0.72rem;
-  cursor: pointer;
-  user-select: none;
-}
-
-.addRow:hover {
-  border-color: var(--app-accent);
-  color: var(--app-accent);
-}
-
-/* 文档排版：表格、折叠讲解、引用都按笔记里的真实用法设计 */
+/*/* 文档排版：表格、折叠讲解、引用都按笔记里的真实用法设计 */
 .prose {
   flex: 1 1 auto;
   min-height: 0;

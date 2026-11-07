@@ -13,8 +13,8 @@
 - 文档排版：标题、表格、引用、代码块、`<details>` 折叠讲解等；
 - 导航：header 里、**标题左侧**的上一个 / 下一个图标按钮，配合 `←` / `→` 快捷键；
 - 标题导航：弹窗左上角、**浮在弹窗框体之外**的文档内 h1–h3 目录，点击滚动到对应标题；
-- footer：`编辑` / `关闭` 按钮；进入编辑态后变为 `取消` / `保存`。编辑是**就地改渲染出来的文档**，
-  不是编辑源码：表格每行可删、表尾可加行，纯文本直接改；
+- footer：`编辑` / `关闭` 按钮；进入编辑态后变为 `取消` / `保存`，保存成功在 footer 显示
+  「已保存・HH:MM」并在 3 秒内淡出；
 - 关闭、键盘可访问性与焦点管理。
 
 组件契约：
@@ -34,8 +34,10 @@
 `react-markdown` + `remark-gfm` + `rehype-raw`（需要 GFM 表格与 `<details>` 折叠块）；
 新增 Markdown 能力时改这个组件，不要在别处另装渲染器。
 
-编辑态的 DOM 会被序列化回 Markdown（`src/utils/markdown-article.ts`），只覆盖笔记里出现的写法：
-标题、段落、列表、引用、代码块、`<details>` 与 **原样保留的 HTML 表格**；新增写法要同步扩这个序列化器。
+编辑采用**块级受控编辑**（`src/components/MarkdownBlockEditor`）：`src/utils/markdown-blocks.ts`
+先把源文本切成块，表格解析成行 / 单元格矩阵、用受控网格编辑（可删行、加行、改单元格），其余块各自
+编辑自己的源码片段；保存时按块重新拼回 Markdown。**不要再走 contentEditable + DOM 反向序列化**，
+那条路会丢格式、且和 React 抢 DOM。新增块类型要同时改解析与序列化两侧。
 
 参考实现：`src/pages/English/index.tsx`（分列笔记 → 弹窗预览，循环切换上一篇 / 下一篇，
 保存时 `PUT /api/english/notes` 写回 `learning-record-notes/*.md`）。

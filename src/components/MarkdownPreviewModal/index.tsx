@@ -5,9 +5,25 @@ import Markdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 
-import { serializeArticle } from '@/utils/markdown-article';
+import MarkdownBlockEditor from '@/components/MarkdownBlockEditor';
+import {
+  parseMarkdownBlocks,
+  serializeMarkdownBlocks,
+  type MarkdownBlock,
+} from '@/utils/markdown-blocks';
 
 import styles from './index.scss';
+
+/** 「已保存」提示停留时长 */
+const SAVED_HINT_DURATION = 3000;
+
+/** 取当前时刻的 HH:MM，用于「已保存」提示 */
+const formatClock = (date: Date): string =>
+  new Intl.DateTimeFormat('zh-CN', {
+    hour: '2-digit',
+    hour12: false,
+    minute: '2-digit',
+  }).format(date);
 
 /** 固定引用，避免每次渲染重建插件数组 */
 const REMARK_PLUGINS = [remarkGfm];
@@ -126,11 +142,13 @@ const MarkdownPreviewModal = ({
   onSave,
 }: MarkdownPreviewModalProps) => {
   const bodyRef = useRef<HTMLElement | null>(null);
-  const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  /** 编辑期间 DOM 由浏览器直接改，退出编辑时靠版本号重挂载回原始渲染 */
-  const [version, setVersion] = useState(0);
   const [saveError, setSaveError] = useState<string | null>(null);
+  /** 非 null 即编辑态；块列表就是编辑中的全部内容 */
+  const [blocks, setBlocks] = useState<MarkdownBlock[] | null>(null);
+  /** 保存成功后的短暂提示时刻，如 20:54 */
+  const [savedAt, setSavedAt] = useState<string | null>(null);
+  const editing = blocks !== null;
   const outline = extractOutline(markdown);
 
   useEffect(() => {
@@ -161,142 +179,30 @@ const MarkdownPreviewModal = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [opened, editing, onPrevious, onNext]);
 
-  // 进入编辑态后给每张表的每行补一个删除按钮，并在表尾补「添加一行」
-  useEffect(() => {
-    const article = bodyRef.current;
-
-    if (!editing || !article) {
-      return undefined;
-    }
-
-    article.querySelectorAll('table').forEach((table) => {
-      table.querySelectorAll('tr').forEach((row) => {
-        const cell = document.createElement('td');
-
-        cell.dataset.rowAction = 'delete';
-        cell.className = styles.rowActionCell;
-        cell.contentEditable = 'false';
-
-        const button = document.createElement('button');
-
-        button.dataset.rowAction = 'delete';
-        button.className = styles.rowAction;
-        button.textContent = '×';
-        button.type = 'button';
-        button.title = '删除这一行';
-        cell.append(button);
-        row.append(cell);
-      });
-
-      const adder = document.createElement('div');
-
-      adder.dataset.tableAction = 'add';
-      adder.className = styles.addRow;
-      adder.contentEditable = 'false';
-      adder.textContent = '＋ 添加一行';
-      table.after(adder);
-    });
-
-    return () => {
-      article
-        .querySelectorAll('[data-row-action], [data-table-action]')
-        .forEach((node) => node.remove());
-    };
-  }, [editing]);
-
-  /** 编辑态点击：删行 / 加行都由这里接管，避免落到正文里。 */
-  const handleEditorClick = (event: React.MouseEvent<HTMLElement>) => {
-    const { target } = event;
-
-    if (!(target instanceof Element)) {
-      return;
-    }
-
-    const deleteButton = target.closest('[data-row-action]');
-
-    if (deleteButton) {
-      event.preventDefault();
-      deleteButton.closest('tr')?.remove();
-
-      return;
-    }
-
-    const addButton = target.closest('[data-table-action]');
-
-    if (!addButton) {
-      return;
-    }
-
-    event.preventDefault();
-
-    const { previousElementSibling: table } = addButton;
-
-    if (!(table instanceof HTMLTableElement)) {
-      return;
-    }
-
-    const lastRow = table.querySelector('tr');
-
-    if (!lastRow) {
-      return;
-    }
-
-    const newRow = lastRow.cloneNode(true);
-
-    if (!(newRow instanceof HTMLTableRowElement)) {
-      return;
-    }
-
-    newRow.querySelectorAll('[data-row-action]').forEach((node) => node.remove());
-
-    for (const cell of newRow.querySelectorAll('td, th')) {
-      cell.textContent = '';
-    }
-
-    table.append(newRow);
-
-    // 新行同样需要删除按钮
-    const cell = document.createElement('td');
-
-    cell.dataset.rowAction = 'delete';
-    cell.className = styles.rowActionCell;
-    cell.contentEditable = 'false';
-
-    const button = document.createElement('button');
-
-    button.dataset.rowAction = 'delete';
-    button.className = styles.rowAction;
-    button.textContent = '×';
-    button.type = 'button';
-    button.title = '删除这一行';
-    cell.append(button);
-    newRow.append(cell);
-  };
-
   /** 关掉弹窗，同时退出编辑态。 */
   const handleClose = () => {
-    setEditing(false);
+    setBlocks(null);
     setSaveError(null);
+    setSavedAt(null);
     onClose();
   };
 
-  /** 进入编辑态：正文保持原样渲染，直接在上面改。 */
+  /** 进入编辑态：把源文本切成块，交给块级编辑器。 */
   const startEditing = () => {
     setSaveError(null);
-    setEditing(true);
+    setSavedAt(null);
+    setBlocks(parseMarkdownBlocks(markdown));
   };
 
-  /** 退出编辑态并把 DOM 恢复成组件自己渲染的样子。 */
+  /** 退出编辑态，什么都不写回。 */
   const stopEditing = () => {
-    setEditing(false);
-    setVersion((value) => value + 1);
+    setBlocks(null);
+    setSaveError(null);
   };
 
   /** 保存草稿；成功后回到预览态，正文等调用方刷新。 */
   const handleSave = async () => {
-    const article = bodyRef.current;
-
-    if (!onSave || !article) {
+    if (!onSave || !blocks) {
       return;
     }
 
@@ -304,9 +210,10 @@ const MarkdownPreviewModal = ({
     setSaveError(null);
 
     try {
-      await onSave(serializeArticle(article));
-      setEditing(false);
-      setVersion((value) => value + 1);
+      await onSave(serializeMarkdownBlocks(blocks));
+      setBlocks(null);
+      setSavedAt(formatClock(new Date()));
+      window.setTimeout(() => setSavedAt(null), SAVED_HINT_DURATION);
     } catch (caught) {
       setSaveError(caught instanceof Error ? caught.message : '保存失败');
     } finally {
@@ -396,22 +303,25 @@ const MarkdownPreviewModal = ({
       }
       transitionProps={{ duration: 140, transition: 'fade' }}
     >
-      <article
-        className={editing ? `${styles.prose} ${styles.editable}` : styles.prose}
-        contentEditable={editing}
-        key={version}
-        onClick={editing ? handleEditorClick : undefined}
-        ref={bodyRef}
-        spellCheck={false}
-        suppressContentEditableWarning
-      >
-        <Markdown rehypePlugins={REHYPE_PLUGINS} remarkPlugins={REMARK_PLUGINS}>
-          {markdown}
-        </Markdown>
-      </article>
+      {blocks ? (
+        <div className={styles.blockEditor}>
+          <MarkdownBlockEditor blocks={blocks} onChange={setBlocks} />
+        </div>
+      ) : (
+        <article className={styles.prose} ref={bodyRef}>
+          <Markdown rehypePlugins={REHYPE_PLUGINS} remarkPlugins={REMARK_PLUGINS}>
+            {markdown}
+          </Markdown>
+        </article>
+      )}
 
       <footer className={styles.footer}>
-        {saveError ? <span className={styles.saveError}>{saveError}</span> : null}
+        {saveError ? (
+          <span className={styles.saveError}>{saveError}</span>
+        ) : null}
+        {savedAt && !saveError ? (
+          <span className={styles.savedHint}>已保存・{savedAt}</span>
+        ) : null}
         <div className={styles.actions}>
           {editing ? (
             <>
