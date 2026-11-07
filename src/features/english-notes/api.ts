@@ -104,3 +104,40 @@ export const fetchEnglishNotes = async (
 
   return normalize(payload as RawPayload);
 };
+
+/**
+ * 把编辑后的 Markdown 写回源文件（仅开发模式可用，由 Vite 插件落地）。
+ * 保存成功后需要重新读取一次笔记，页面才会拿到新的正文与修改时间。
+ */
+export const saveEnglishNote = async (
+  name: string,
+  content: string,
+): Promise<void> => {
+  const response = await fetch(ENDPOINT, {
+    body: JSON.stringify({ content, name }),
+    headers: { 'Content-Type': 'application/json' },
+    method: 'PUT',
+  });
+
+  if (response.ok) {
+    return;
+  }
+
+  if (!import.meta.env.DEV) {
+    throw new Error('静态预览不支持编辑，请在开发模式下保存');
+  }
+
+  let message = `保存失败（HTTP ${response.status}）`;
+
+  try {
+    const payload: unknown = await response.json();
+
+    if (isObject(payload) && typeof payload.message === 'string') {
+      message = payload.message || message;
+    }
+  } catch {
+    // 响应不是 JSON 时保留默认文案。
+  }
+
+  throw new Error(message);
+};

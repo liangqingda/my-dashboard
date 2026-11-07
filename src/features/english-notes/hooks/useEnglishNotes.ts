@@ -17,7 +17,7 @@ export type UseEnglishNotesResult = {
   /** 重新读取一次（带动画与 loading 态） */
   refresh: () => void;
   /** 静默重新读取：不改 loading，用于打开预览前同步最新内容 */
-  reload: () => void;
+  reload: () => Promise<void>;
 };
 
 const EMPTY_NOTES: EnglishNote[] = [];
@@ -87,19 +87,16 @@ export const useEnglishNotes = (): UseEnglishNotesResult => {
   }, [apply, fail]);
 
   /** 静默重新读取：不切换 loading，用于打开预览前同步仓库最新内容。 */
-  const reload = useCallback(() => {
+  const reload = useCallback(async () => {
     const current = requestId.current + 1;
 
     requestId.current = current;
 
-    fetchEnglishNotes()
-      .then(
-        (snapshot) => apply(snapshot, current),
-        (caught: unknown) => fail(caught, current),
-      )
-      .catch(() => {
-        /* apply / fail 已处理状态，这里只兜住回调自身抛出的异常。 */
-      });
+    try {
+      apply(await fetchEnglishNotes(), current);
+    } catch (caught) {
+      fail(caught, current);
+    }
   }, [apply, fail]);
 
   useEffect(() => {

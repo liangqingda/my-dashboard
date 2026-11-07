@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import MarkdownPreviewModal from '@/components/MarkdownPreviewModal';
+import { saveEnglishNote } from '@/features/english-notes/api';
 import { useEnglishNotes } from '@/features/english-notes/hooks/useEnglishNotes';
 import NotesBoard from '@/features/english-notes/notes-board';
 import { onPageRefresh } from '@/utils/page-refresh';
@@ -24,7 +25,17 @@ const English = () => {
   /** 打开预览：先静默重新读盘，避免看到仓库里已被改掉的旧正文。 */
   const openNote = (name: string) => {
     setActiveName(name);
-    reload();
+    void reload();
+  };
+
+  /** 保存弹窗里的编辑：写回源文件后重新读取，正文与修改时间一起更新。 */
+  const saveActive = async (markdown: string) => {
+    if (!active) {
+      return;
+    }
+
+    await saveEnglishNote(active.name, markdown);
+    await reload();
   };
 
   /** 在笔记列表中循环切换上一篇 / 下一篇。 */
@@ -56,6 +67,7 @@ const English = () => {
         onClose={() => setActiveName(null)}
         onNext={notes.length > 1 ? () => step(1) : null}
         onPrevious={notes.length > 1 ? () => step(-1) : null}
+        onSave={import.meta.env.DEV ? saveActive : undefined}
         opened={active !== null}
         position={
           active ? { index: activeIndex + 1, total: notes.length } : undefined

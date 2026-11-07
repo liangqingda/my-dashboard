@@ -1,7 +1,8 @@
-import { readFile, readdir, stat } from 'node:fs/promises';
+import { readFile, readdir, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import type { Dirent } from 'node:fs';
+import type { IncomingMessage as HttpRequest } from 'node:http';
 import type { Plugin } from 'vite';
 
 /** 笔记目录（相对记录仓库根目录） */
@@ -10,8 +11,11 @@ const NOTES_DIR = 'learning-record-notes';
 /** 只收集 Markdown 文件 */
 const NOTE_EXTENSION = '.md';
 
-/** 目录级的说明文件不算笔记 */
+/** 目录级的说明文件不算笔记，也不允许写 */
 const EXCLUDED_FILES = new Set(['readme.md']);
+
+/** 笔记文件名只能是这种形态，避免路径穿越 */
+const NOTE_NAME_PATTERN = /^[\w.-]+\.md$/u;
 
 /** 一篇笔记的读取结果 */
 type NoteSnapshot = {
@@ -91,6 +95,29 @@ const collectNotes = async (repoDir: string): Promise<NotesSnapshot> => {
   };
 };
 
+/** 判断解析后的 JSON 是不是普通对象 */
+const isObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+/** 读取请求体并解析为 JSON，超过 1 MB 直接拒绝 */
+const readJsonBody = async (req: HttpRequest): Promise<unknown> => {
+  let body = '';
+
+  for await (const chunk of req) {
+    body += chunk;
+
+    if (body.length > 1_000_000) {
+      throw new Error('请求体过大');
+    }
+  }
+
+  try {
+    return JSON.parse(body);
+  } catch {
+    throw new Error('请求体不是有效的 JSON');
+  }
+};
+
 /**
  * 英语笔记插件：把 learn-english 仓库 learning-record-notes 下的 Markdown
  * 以只读 JSON 暴露给前端。
@@ -119,25 +146,81 @@ export const englishNotes = (root: string): Plugin => {
     configureServer(server) {
       // 该中间件先于 /api 代理执行，因此不会落到本机 agent 上。
       server.middlewares.use('/api/english/notes', async (req, res, next) => {
-        if (req.method !== 'GET') {
-          next();
-          return;
-        }
-
         res.setHeader('Content-Type', 'application/json; charset=utf-8');
         res.setHeader('Cache-Control', 'no-store');
 
-        try {
-          res.end(JSON.stringify(await collectNotes(repoDir)));
-        } catch (error) {
-          res.statusCode = 500;
-          res.end(
-            JSON.stringify({
-              message:
-                error instanceof Error ? error.message : '读取英语笔记失败',
-            }),
-          );
+        if (req.method === 'GET') {
+          try {
+            res.end(JSON.stringify(await collectNotes(repoDir)));
+          } catch (error) {
+            res.statusCode = 500;
+            res.end(
+              JSON.stringify({
+                message:
+                  error instanceof Error ? error.message : '读取英语笔记失败',
+              }),
+            );
+          }
+
+          return;
         }
+
+        // 把编辑后的 Markdown 写回源文件；只允许写学习笔记目录下已存在的笔记。
+        if (req.method === 'PUT') {
+          try {
+            const payload = await readJsonBody(req);
+
+            if (!isObject(payload)) {
+              throw new Error('请求体格式不正确');
+            }
+
+            const name = payload.name;
+            const content = payload.content;
+
+            if (
+              typeof name !== 'string' ||
+              !NOTE_NAME_PATTERN.test(name) ||
+              EXCLUDED_FILES.has(name.toLowerCase())
+            ) {
+              throw new Error('这个文件不允许写入');
+            }
+
+            if (typeof content !== 'string') {
+              throw new Error('正文必须是字符串');
+            }
+
+            const dir = path.resolve(repoDir, NOTES_DIR);
+            const file = path.resolve(dir, name);
+
+            if (!file.startsWith(`${dir}${path.sep}`)) {
+              throw new Error('这个文件不允许写入');
+            }
+
+            await writeFile(file, content, 'utf8');
+
+            const info = await stat(file);
+
+            res.end(
+              JSON.stringify({
+                name,
+                updatedAt: info.mtime.toISOString(),
+                size: info.size,
+              }),
+            );
+          } catch (error) {
+            res.statusCode = 400;
+            res.end(
+              JSON.stringify({
+                message:
+                  error instanceof Error ? error.message : '写入英语笔记失败',
+              }),
+            );
+          }
+
+          return;
+        }
+
+        next();
       });
     },
   };

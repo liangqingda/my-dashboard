@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActionIcon, Modal } from '@mantine/core';
+import { ActionIcon, Button, Modal } from '@mantine/core';
 import { IconChevronLeft, IconChevronRight, IconList } from '@tabler/icons-react';
 import Markdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
@@ -100,15 +100,18 @@ export type MarkdownPreviewModalProps = {
   onPrevious?: (() => void) | null;
   /** 下一篇；null 表示没有相邻文档 */
   onNext?: (() => void) | null;
+  /** 保存编辑后的 Markdown；提供后 footer 才会出现「编辑」 */
+  onSave?: (markdown: string) => Promise<void>;
 };
 
 /**
  * Markdown 预览弹窗（公共组件）。
  *
  * 全站所有 Markdown 弹窗预览都必须使用这个组件，不要各自拼装 Modal 与渲染器：
- * 它统一了文档排版、上一篇 / 下一篇导航（header 标题左侧按钮 + ← / → 快捷键）
- * 以及弹窗左上角悬浮在框体之外的标题导航（文档内 h1–h3 目录）。
- * 相邻文档由调用方决定，组件只负责触发回调与滚动定位。
+ * 它统一了文档排版、上一篇 / 下一篇导航（header 标题左侧按钮 + ← / → 快捷键）、
+ * 弹窗左上角悬浮在框体之外的标题导航（文档内 h1–h3 目录），以及 footer 的
+ * 编辑 / 关闭操作。编辑能力由调用方的 onSave 提供，组件只负责编辑态与保存流程，
+ * 不知道文件落在哪里。
  */
 const MarkdownPreviewModal = ({
   opened,
@@ -118,13 +121,18 @@ const MarkdownPreviewModal = ({
   onClose,
   onPrevious,
   onNext,
+  onSave,
 }: MarkdownPreviewModalProps) => {
   const bodyRef = useRef<HTMLElement | null>(null);
   const [outlineOpen, setOutlineOpen] = useState(true);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const outline = extractOutline(markdown);
 
   useEffect(() => {
-    if (!opened) {
+    if (!opened || editing) {
       return undefined;
     }
 
@@ -149,10 +157,47 @@ const MarkdownPreviewModal = ({
     window.addEventListener('keydown', handleKeyDown);
 
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [opened, onPrevious, onNext]);
+  }, [opened, editing, onPrevious, onNext]);
+
+  /** 关掉弹窗，同时退出编辑态。 */
+  const handleClose = () => {
+    setEditing(false);
+    setSaveError(null);
+    onClose();
+  };
+
+  /** 进入编辑态，草稿从当前正文开始。 */
+  const startEditing = () => {
+    setDraft(markdown);
+    setSaveError(null);
+    setEditing(true);
+  };
+
+  /** 保存草稿；成功后回到预览态，正文等调用方刷新。 */
+  const handleSave = async () => {
+    if (!onSave) {
+      return;
+    }
+
+    setSaving(true);
+    setSaveError(null);
+
+    try {
+      await onSave(draft);
+      setEditing(false);
+    } catch (caught) {
+      setSaveError(caught instanceof Error ? caught.message : '保存失败');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   /** 跳到文档内第 index 个标题。 */
   const scrollToHeading = (index: number) => {
+    if (editing) {
+      return;
+    }
+
     const target = bodyRef.current?.querySelectorAll('h1, h2, h3').item(index);
 
     target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -202,7 +247,7 @@ const MarkdownPreviewModal = ({
         title: styles.title,
       }}
       closeButtonProps={{ 'aria-label': '关闭预览' }}
-      onClose={onClose}
+      onClose={handleClose}
       opened={opened}
       overlayProps={{ backgroundOpacity: 0.5, blur: 2 }}
       padding={0}
@@ -214,7 +259,7 @@ const MarkdownPreviewModal = ({
           <ActionIcon
             aria-label="上一篇"
             className={styles.stepButton}
-            disabled={!onPrevious}
+            disabled={!onPrevious || editing}
             onClick={onPrevious ?? undefined}
             size="sm"
             variant="subtle"
@@ -224,7 +269,7 @@ const MarkdownPreviewModal = ({
           <ActionIcon
             aria-label="下一篇"
             className={styles.stepButton}
-            disabled={!onNext}
+            disabled={!onNext || editing}
             onClick={onNext ?? undefined}
             size="sm"
             variant="subtle"
@@ -241,11 +286,75 @@ const MarkdownPreviewModal = ({
       }
       transitionProps={{ duration: 140, transition: 'fade' }}
     >
-      <article className={styles.prose} ref={bodyRef}>
-        <Markdown rehypePlugins={REHYPE_PLUGINS} remarkPlugins={REMARK_PLUGINS}>
-          {markdown}
-        </Markdown>
-      </article>
+      {editing ? (
+        <textarea
+          aria-label="编辑 Markdown"
+          className={styles.editor}
+          onChange={(event) => setDraft(event.currentTarget.value)}
+          spellCheck={false}
+          value={draft}
+        />
+      ) : (
+        <article className={styles.prose} ref={bodyRef}>
+          <Markdown
+            rehypePlugins={REHYPE_PLUGINS}
+            remarkPlugins={REMARK_PLUGINS}
+          >
+            {markdown}
+          </Markdown>
+        </article>
+      )}
+
+      <footer className={styles.footer}>
+        {saveError ? <span className={styles.saveError}>{saveError}</span> : null}
+        <div className={styles.actions}>
+          {editing ? (
+            <>
+              <Button
+                disabled={saving}
+                onClick={() => setEditing(false)}
+                radius="sm"
+                size="compact-sm"
+                variant="subtle"
+              >
+                取消
+              </Button>
+              <Button
+                loading={saving}
+                onClick={() => {
+                  void handleSave();
+                }}
+                radius="sm"
+                size="compact-sm"
+                variant="filled"
+              >
+                保存
+              </Button>
+            </>
+          ) : (
+            <>
+              {onSave ? (
+                <Button
+                  onClick={startEditing}
+                  radius="sm"
+                  size="compact-sm"
+                  variant="subtle"
+                >
+                  编辑
+                </Button>
+              ) : null}
+              <Button
+                onClick={handleClose}
+                radius="sm"
+                size="compact-sm"
+                variant="default"
+              >
+                关闭
+              </Button>
+            </>
+          )}
+        </div>
+      </footer>
     </Modal>
   );
 };
