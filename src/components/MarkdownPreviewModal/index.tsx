@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActionIcon, Modal } from '@mantine/core';
-import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
+import { IconChevronLeft, IconChevronRight, IconList } from '@tabler/icons-react';
 import Markdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
@@ -10,6 +10,80 @@ import styles from './index.scss';
 /** 固定引用，避免每次渲染重建插件数组 */
 const REMARK_PLUGINS = [remarkGfm];
 const REHYPE_PLUGINS = [rehypeRaw];
+
+/** 标题导航收录的最深层级 */
+const MAX_HEADING_LEVEL = 3;
+
+/** 用于渲染的标题信息 */
+type OutlineHeading = {
+  /** 层级：1 / 2 / 3 */
+  level: number;
+  /** 纯文本标题 */
+  text: string;
+  /** 稳定 key：同名标题按出现次序区分 */
+  key: string;
+};
+
+/** 去掉标题里的内联 Markdown 标记，留住可读文本。 */
+const stripInlineMarkup = (text: string): string =>
+  text
+    .replace(/<\/?[^>]+>/g, '')
+    .replace(/[*_`~]/g, '')
+    .replace(/\\(.)/g, '$1')
+    .trim();
+
+/** 抽取文档内的 h1–h3，作为按书写顺序排列的标题导航。 */
+const extractOutline = (markdown: string): OutlineHeading[] => {
+  const { headings } = markdown.split('\n').reduce<{
+    headings: OutlineHeading[];
+    inCode: boolean;
+  }>(
+    (acc, line) => {
+      const trimmed = line.trimStart();
+
+      if (trimmed.startsWith('```') || trimmed.startsWith('~~~')) {
+        return { headings: acc.headings, inCode: !acc.inCode };
+      }
+
+      if (acc.inCode) {
+        return acc;
+      }
+
+      const match = /^(#{1,3})\s+(.+)$/u.exec(line);
+
+      if (!match) {
+        return acc;
+      }
+
+      const level = match[1].length;
+
+      if (level > MAX_HEADING_LEVEL) {
+        return acc;
+      }
+
+      const text = stripInlineMarkup(match[2]);
+
+      if (!text) {
+        return acc;
+      }
+
+      const occurrence = acc.headings.filter(
+        (item) => item.text === text,
+      ).length;
+
+      return {
+        headings: [
+          ...acc.headings,
+          { level, text, key: `${level}:${text}:${occurrence}` },
+        ],
+        inCode: acc.inCode,
+      };
+    },
+    { headings: [], inCode: false },
+  );
+
+  return headings;
+};
 
 export type MarkdownPreviewModalProps = {
   /** 是否打开预览 */
@@ -32,8 +106,9 @@ export type MarkdownPreviewModalProps = {
  * Markdown 预览弹窗（公共组件）。
  *
  * 全站所有 Markdown 弹窗预览都必须使用这个组件，不要各自拼装 Modal 与渲染器：
- * 它统一了文档排版、上一篇 / 下一篇导航（弹窗左上角悬浮按钮 + header 图标按钮 +
- * ← / → 快捷键）以及键盘可访问性。导航逻辑由调用方决定，组件只负责触发回调。
+ * 它统一了文档排版、上一篇 / 下一篇导航（header 标题左侧按钮 + ← / → 快捷键）
+ * 以及弹窗左上角悬浮在框体之外的标题导航（文档内 h1–h3 目录）。
+ * 相邻文档由调用方决定，组件只负责触发回调与滚动定位。
  */
 const MarkdownPreviewModal = ({
   opened,
@@ -44,6 +119,10 @@ const MarkdownPreviewModal = ({
   onPrevious,
   onNext,
 }: MarkdownPreviewModalProps) => {
+  const bodyRef = useRef<HTMLElement | null>(null);
+  const [outlineOpen, setOutlineOpen] = useState(true);
+  const outline = extractOutline(markdown);
+
   useEffect(() => {
     if (!opened) {
       return undefined;
@@ -72,6 +151,47 @@ const MarkdownPreviewModal = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [opened, onPrevious, onNext]);
 
+  /** 跳到文档内第 index 个标题。 */
+  const scrollToHeading = (index: number) => {
+    const target = bodyRef.current?.querySelectorAll('h1, h2, h3').item(index);
+
+    target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  /** 弹窗左上角、框体之外的标题导航 */
+  const outlineNav =
+    outline.length > 1 ? (
+      <div className={styles.outlineNav}>
+        <button
+          aria-expanded={outlineOpen}
+          aria-label="标题导航"
+          className={styles.outlineToggle}
+          onClick={() => setOutlineOpen((open) => !open)}
+          type="button"
+        >
+          <IconList size={14} stroke={1.8} />
+          <span>目录</span>
+        </button>
+        {outlineOpen ? (
+          <ul className={styles.outlineList}>
+            {outline.map((heading, index) => (
+              <li key={heading.key}>
+                <button
+                  className={styles.outlineItem}
+                  data-level={heading.level}
+                  onClick={() => scrollToHeading(index)}
+                  title={heading.text}
+                  type="button"
+                >
+                  {heading.text}
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
+    ) : null;
+
   return (
     <Modal
       centered
@@ -90,65 +210,38 @@ const MarkdownPreviewModal = ({
       size="min(980px, 92vw)"
       title={
         <div className={styles.titleRow}>
-          <div className={styles.floatNav}>
-            <ActionIcon
-              aria-label="上一篇"
-              className={styles.floatButton}
-              disabled={!onPrevious}
-              onClick={onPrevious ?? undefined}
-              radius="sm"
-              size="lg"
-              title="上一篇（←）"
-              variant="default"
-            >
-              <IconChevronLeft size={18} stroke={1.9} />
-            </ActionIcon>
-            <ActionIcon
-              aria-label="下一篇"
-              className={styles.floatButton}
-              disabled={!onNext}
-              onClick={onNext ?? undefined}
-              radius="sm"
-              size="lg"
-              title="下一篇（→）"
-              variant="default"
-            >
-              <IconChevronRight size={18} stroke={1.9} />
-            </ActionIcon>
-          </div>
+          {outlineNav}
+          <ActionIcon
+            aria-label="上一篇"
+            className={styles.stepButton}
+            disabled={!onPrevious}
+            onClick={onPrevious ?? undefined}
+            size="sm"
+            variant="subtle"
+          >
+            <IconChevronLeft size={16} stroke={1.9} />
+          </ActionIcon>
+          <ActionIcon
+            aria-label="下一篇"
+            className={styles.stepButton}
+            disabled={!onNext}
+            onClick={onNext ?? undefined}
+            size="sm"
+            variant="subtle"
+          >
+            <IconChevronRight size={16} stroke={1.9} />
+          </ActionIcon>
           <span className={styles.fileName}>{title}</span>
-          <span className={styles.trailing}>
-            {position ? (
-              <span className={styles.position}>
-                {position.index} / {position.total}
-              </span>
-            ) : null}
-            <ActionIcon
-              aria-label="上一篇"
-              className={styles.headerButton}
-              disabled={!onPrevious}
-              onClick={onPrevious ?? undefined}
-              size="sm"
-              variant="subtle"
-            >
-              <IconChevronLeft size={16} stroke={1.9} />
-            </ActionIcon>
-            <ActionIcon
-              aria-label="下一篇"
-              className={styles.headerButton}
-              disabled={!onNext}
-              onClick={onNext ?? undefined}
-              size="sm"
-              variant="subtle"
-            >
-              <IconChevronRight size={16} stroke={1.9} />
-            </ActionIcon>
-          </span>
+          {position ? (
+            <span className={styles.position}>
+              {position.index} / {position.total}
+            </span>
+          ) : null}
         </div>
       }
       transitionProps={{ duration: 140, transition: 'fade' }}
     >
-      <article className={styles.prose}>
+      <article className={styles.prose} ref={bodyRef}>
         <Markdown rehypePlugins={REHYPE_PLUGINS} remarkPlugins={REMARK_PLUGINS}>
           {markdown}
         </Markdown>

@@ -143,8 +143,8 @@ ENGLISH_RECORDS_DIR=/path/to/learn-english pnpm dev
 ```
 
 Markdown 弹窗预览统一使用公共组件 `src/components/MarkdownPreviewModal`
-（详见 `CLAUDE.md`）：文档排版、表格与 `<details>` 折叠块、弹窗左上角悬浮导航、
-header 图标按钮与 `←` / `→` 快捷键都在组件内，页面只决定相邻文档是谁。
+（详见 `CLAUDE.md`）：文档排版、表格与 `<details>` 折叠块、header 标题左侧的上一个 / 下一个、
+`←` / `→` 快捷键，以及弹窗左上角框体之外的标题目录都在组件内；页面只决定相邻文档是谁。
 
 ## 目录结构
 

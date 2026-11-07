@@ -1,6 +1,6 @@
-/* Markdown 预览弹窗：文档排版 + 弹窗外侧悬浮导航 + header 图标导航 */
+/* Markdown 预览弹窗：文档排版 + header 导航 + 弹窗外侧标题导航 */
 
-/* 允许悬浮导航跑到弹窗框外 */
+/* 允许标题导航跑到弹窗框外 */
 .content {
   display: flex;
   flex-direction: column;
@@ -12,7 +12,7 @@
   position: relative;
   flex: 0 0 auto;
   overflow: visible;
-  padding: 11px 44px 11px 16px;
+  padding: 11px 44px 11px 12px;
   border-bottom: 1px solid var(--app-line);
   background: var(--app-surface-subtle);
 }
@@ -25,8 +25,18 @@
 .titleRow {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
+}
+
+/* 上一篇 / 下一篇：落在标题左侧 */
+.stepButton {
+  flex: 0 0 auto;
+  color: var(--app-ink-faint);
+}
+
+.stepButton:hover {
+  color: var(--app-accent);
 }
 
 .fileName {
@@ -41,49 +51,89 @@
   text-overflow: ellipsis;
 }
 
-.trailing {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 2px;
-}
-
 .position {
-  margin-right: 6px;
+  flex: 0 0 auto;
   color: var(--app-ink-faint);
   font-size: 0.7rem;
   font-variant-numeric: tabular-nums;
 }
 
-.headerButton {
-  color: var(--app-ink-soft);
-}
-
-.headerButton:hover {
-  color: var(--app-accent);
-}
-
-/* 弹窗左上角的悬浮导航，落在弹窗框之外 */
-.floatNav {
+/* 弹窗左上角、框体之外的标题导航 */
+.outlineNav {
   position: absolute;
-  top: 50%;
-  left: -58px;
+  top: 0;
+  left: -182px;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  transform: translateY(-50%);
-}
-
-.floatButton {
-  border-color: var(--app-line-strong);
+  width: 170px;
+  max-height: 70dvh;
+  padding: 8px;
+  border: 1px solid var(--app-line);
+  border-radius: 2px;
   background: var(--app-surface);
-  color: var(--app-ink);
-  box-shadow: 0 4px 14px rgb(23 37 34 / 14%);
+  box-shadow: 0 8px 24px rgb(23 37 34 / 10%);
 }
 
-.floatButton:hover {
-  background: var(--app-surface-hover);
+.outlineToggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px 6px;
+  border: 0;
+  border-bottom: 1px solid var(--app-line);
+  background: none;
+  color: var(--app-ink-faint);
+  font-size: 0.7rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.outlineToggle:hover {
   color: var(--app-accent);
+}
+
+.outlineList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.outlineItem {
+  width: 100%;
+  padding: 3px 5px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 2px;
+  background: none;
+  color: var(--app-ink-soft);
+  font-family: var(--app-serif);
+  font-size: 0.72rem;
+  line-height: 1.5;
+  text-align: left;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.outlineItem:hover {
+  background: var(--app-surface-hover);
+  color: var(--app-ink);
+}
+
+.outlineItem[data-level='1'] {
+  color: var(--app-ink);
+  font-size: 0.76rem;
+}
+
+.outlineItem[data-level='3'] {
+  padding-left: 13px;
+  color: var(--app-ink-faint);
+  font-size: 0.68rem;
 }
 
 .body {
@@ -108,6 +158,7 @@
   font-size: 1.26rem;
   font-weight: 600;
   line-height: 1.45;
+  scroll-margin-top: 12px;
 }
 
 .prose h2 {
@@ -119,6 +170,7 @@
   font-size: 1.02rem;
   font-weight: 600;
   line-height: 1.5;
+  scroll-margin-top: 12px;
 }
 
 .prose h3 {
@@ -126,6 +178,7 @@
   color: var(--app-ink);
   font-size: 0.92rem;
   font-weight: 600;
+  scroll-margin-top: 12px;
 }
 
 .prose h4 {
@@ -250,13 +303,40 @@
   height: auto;
 }
 
-/* 屏幕不够宽时，悬浮导航改到弹窗上方，仍在弹窗之外 */
-@media (max-width: 1180px) {
-  .floatNav {
-    top: -48px;
-    left: 6px;
+/* 屏幕不够宽时，标题导航改到弹窗上方，仍在弹窗之外 */
+@media (max-width: 1240px) {
+  .outlineNav {
+    top: -52px;
+    left: 0;
     flex-direction: row;
-    transform: none;
+    align-items: center;
+    gap: 10px;
+    width: auto;
+    max-width: 86vw;
+    max-height: none;
+    padding: 6px 8px;
+  }
+
+  .outlineToggle {
+    flex: 0 0 auto;
+    padding: 0 8px 0 2px;
+    border-right: 1px solid var(--app-line);
+    border-bottom: 0;
+  }
+
+  .outlineList {
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .outlineItem {
+    width: auto;
+    max-width: 34ch;
+  }
+
+  .outlineItem[data-level='3'] {
+    padding-left: 5px;
   }
 }
 
