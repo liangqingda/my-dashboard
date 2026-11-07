@@ -8,8 +8,11 @@
   flex-direction: column;
   height: 82dvh;
   max-height: 88dvh;
-  /* 整体略向右让出框体外部标题导航的位置 */
-  margin-left: 64px;
+  /*
+   * 整体靠右：居中布局下左右外边距之差的一半就是位移量，
+   * 这里净位移约 76px，同时给框体外的标题导航留出空间。
+   */
+  margin-left: 152px;
   overflow: visible;
   border: 1px solid var(--app-line-strong);
   background: var(--preview-paper);
