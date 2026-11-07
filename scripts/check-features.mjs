@@ -7,6 +7,7 @@
  *  2. 组件目录（含 index.tsx）必须同时有 index.scss
  *  3. features / pages 下不得嵌套 components/ 目录（子组件直接放父组件目录）
  *  4. feature 内跨模块禁止用相对导入绕开 @/ 别名
+ *  5. 菜单页面必须用 src/layouts/MenuContentLayout 包内容，页面样式不得再定义 .page
  *
  * 任一规则被违反 → 打印错误并以退出码 1 结束。
  */
@@ -118,6 +119,48 @@ function checkPages() {
     }
   }
 }
+
+/**
+ * 菜单页统一布局：菜单项对应的页面内容必须包在 MenuContentLayout 里
+ * （内边距 14px 12px、标题排版都由它负责），页面样式不能再自写 .page。
+ * 非菜单页（如 Errors 下的 404）不在约束内。
+ */
+function checkMenuPages() {
+  if (!existsSync(PAGES)) return;
+
+  /** 非菜单页面目录白名单：错误页、纯重定向页等不套菜单内容布局 */
+  const NON_MENU_PAGES = new Set(['Errors']);
+
+  for (const entry of readdirSync(PAGES, { withFileTypes: true })) {
+    if (!entry.isDirectory() || NON_MENU_PAGES.has(entry.name)) continue;
+
+    const pageDir = path.join(PAGES, entry.name);
+    const pageTsx = path.join(pageDir, 'index.tsx');
+
+    if (!existsSync(pageTsx)) continue;
+
+    const source = readFileSync(pageTsx, 'utf8');
+    if (!/<MenuContentLayout[\s/>]/.test(source)) {
+      errors.push(
+        `[布局] pages/${entry.name}/index.tsx 必须用 <MenuContentLayout title="…"> 包裹内容`,
+      );
+    }
+
+    const pageScss = path.join(pageDir, 'index.scss');
+    if (
+      existsSync(pageScss) &&
+      /\.page\b/.test(readFileSync(pageScss, 'utf8'))
+    ) {
+      errors.push(
+        `[布局] pages/${entry.name}/index.scss 不得再定义 .page，内边距与高度由 MenuContentLayout 负责`,
+      );
+    }
+  }
+}
+
+checkFeatures();
+checkPages();
+checkMenuPages();
 
 checkFeatures();
 checkPages();

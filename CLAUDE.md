@@ -95,6 +95,11 @@ pnpm check:md   # scripts/md-roundtrip.mts，夹具在 scripts/fixtures/md/
 新增菜单页时复用该组件，不要在页面 `index.scss` 里重写 `.page` 的 padding / height。
 404 等非菜单页不受此约束。
 
+这条规则由 `pnpm lint` 强制执行（`scripts/check-features.mjs` 的 `checkMenuPages`）：
+页面没包 `<MenuContentLayout>`、或 `index.scss` 里还有 `.page` 选择器，检查都不通过；
+确需新增非菜单页，要在该脚本的 `NON_MENU_PAGES` 白名单里登记。跨 agent 的硬约束摘要见
+根目录 `AGENTS.md`。
+
 ## 其它约定
 
 - 公共组件放 `src/components/<PascalCase>/`（lint 强制），同样 `index.tsx` + `index.scss`；
