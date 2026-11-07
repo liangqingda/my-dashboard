@@ -9,7 +9,7 @@ import { useEnglishNotes } from '@/features/english-notes/hooks/useEnglishNotes'
 import NoteEditor from '@/features/english-notes/note-editor';
 import NotesBoard from '@/features/english-notes/notes-board';
 import type { EnglishNote } from '@/features/english-notes/types';
-import { isBoardNote } from '@/features/english-notes/utils';
+import { getNoteCategory, isBoardNote } from '@/features/english-notes/utils';
 import { onPageRefresh } from '@/utils/page-refresh';
 
 import styles from './index.scss';
@@ -25,10 +25,19 @@ const English = () => {
 
   /** 只看板上真正展示的笔记：`mixed` / `paper` 不占翻页计数 */
   const boardNotes = notes.filter((note) => isBoardNote(note.name));
+  /**
+   * 翻页与计数都只在本列内进行：计数是「本篇在本列第几 / 本列共几」，
+   * 上一篇 / 下一篇也只在该列内循环，不跨列跳到别的分类。
+   */
+  const columnNotes = active
+    ? boardNotes.filter(
+        (note) => getNoteCategory(note.name) === getNoteCategory(active.name),
+      )
+    : [];
   const activeIndex =
     active === null
       ? -1
-      : boardNotes.findIndex((note) => note.name === active.name);
+      : columnNotes.findIndex((note) => note.name === active.name);
 
   // 侧边栏「刷新」按钮：重新读取仓库里的笔记
   useEffect(() => onPageRefresh(reload), [reload]);
@@ -92,15 +101,16 @@ const English = () => {
     }
   };
 
-  /** 在笔记列表中循环切换上一篇 / 下一篇。 */
+  /** 在本列笔记中循环切换上一篇 / 下一篇。 */
   const step = (delta: number) => {
-    if (activeIndex < 0 || boardNotes.length === 0) {
+    if (activeIndex < 0 || columnNotes.length === 0) {
       return;
     }
 
-    const next = (activeIndex + delta + boardNotes.length) % boardNotes.length;
+    const next =
+      (activeIndex + delta + columnNotes.length) % columnNotes.length;
 
-    void openNote(boardNotes[next].name);
+    void openNote(columnNotes[next].name);
   };
 
   return (
@@ -122,14 +132,14 @@ const English = () => {
         key={active?.name ?? 'closed'}
         markdown={active?.content ?? ''}
         onClose={() => setActive(null)}
-        onNext={boardNotes.length > 1 ? () => step(1) : null}
-        onPrevious={boardNotes.length > 1 ? () => step(-1) : null}
+        onNext={columnNotes.length > 1 ? () => step(1) : null}
+        onPrevious={columnNotes.length > 1 ? () => step(-1) : null}
         onRefresh={import.meta.env.DEV ? refreshActive : null}
         onSave={import.meta.env.DEV ? saveActive : undefined}
         opened={active !== null}
         position={
           active
-            ? { index: activeIndex + 1, total: boardNotes.length }
+            ? { index: activeIndex + 1, total: columnNotes.length }
             : undefined
         }
         title={active?.name ?? ''}
