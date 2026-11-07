@@ -4,12 +4,12 @@
  * 通用逻辑：不认识任何具体文档形态，只按「行首 # 标题 + 跳过代码围栏」处理。
  */
 
-/** 标题导航收录的最深层级 */
-const MAX_HEADING_LEVEL = 3;
+/** 标题导航收录的最深层级：笔记里每道题都是 h4，收到 h3 会漏掉大半 */
+const MAX_HEADING_LEVEL = 4;
 
 /** 用于渲染的标题信息 */
 export type MarkdownOutlineHeading = {
-  /** 层级：1 / 2 / 3 */
+  /** 层级：1 / 2 / 3 / 4 */
   level: number;
   /** 纯文本标题 */
   text: string;
@@ -26,7 +26,7 @@ const stripInlineMarkup = (text: string): string =>
     .trim();
 
 /**
- * 抽取文档内的 h1–h3，作为按书写顺序排列的标题导航。
+ * 抽取文档内的 h1–h4，作为按书写顺序排列的标题导航。
  * 同名标题用出现次数做 key，避免 React 列表 key 重复。
  */
 export const extractMarkdownOutline = (
@@ -47,7 +47,7 @@ export const extractMarkdownOutline = (
         return acc;
       }
 
-      const match = /^(#{1,3})\s+(.+)$/u.exec(line);
+      const match = /^(#{1,4})\s+(.+)$/u.exec(line);
 
       if (!match) {
         return acc;

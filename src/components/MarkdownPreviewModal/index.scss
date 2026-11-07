@@ -72,13 +72,13 @@
 .outlineNav {
   position: absolute;
   top: calc(100% + 10px);
-  left: -182px;
+  left: -202px;
   z-index: 2;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  width: 170px;
-  max-height: calc(88dvh - 96px);
+  width: 190px;
+  max-height: calc(82dvh - 80px);
   padding: 8px;
   border: 1px solid var(--app-line);
   border-radius: 2px;
@@ -90,11 +90,14 @@
 
 .outlineList {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: 2px;
+  min-height: 0;
   margin: 0;
   padding: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   list-style: none;
 }
 
@@ -127,6 +130,11 @@
 
 .outlineItem[data-level='3'] {
   padding-left: 13px;
+  color: var(--app-ink-faint);
+  font-size: 0.68rem;
+}
+.outlineItem[data-level='4'] {
+  padding-left: 22px;
   color: var(--app-ink-faint);
   font-size: 0.68rem;
 }

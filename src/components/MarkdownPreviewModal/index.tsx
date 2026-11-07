@@ -66,7 +66,7 @@ export type MarkdownPreviewModalProps = {
  *
  * 全站所有 Markdown 弹窗预览都必须使用这个组件，不要各自拼装 Modal 与渲染器：
  * 它统一了文档排版、上一篇 / 下一篇导航（header 标题左侧按钮 + ← / → 快捷键）、
- * 弹窗左上角悬浮在框体之外的标题导航（文档内 h1–h3 目录），以及 footer 的
+ * 弹窗左上角悬浮在框体之外的标题导航（文档内 h1–h4 目录），以及 footer 的
  * 编辑 / 关闭操作。组件只负责编辑态与保存流程，不知道文档结构和文件落在哪里：
  * 具体怎么编辑由调用方通过 `Editor` 插槽传入，没有定制编辑器时给出定制提示。
  */
@@ -233,7 +233,9 @@ const MarkdownPreviewModal = ({
       return;
     }
 
-    const target = bodyRef.current?.querySelectorAll('h1, h2, h3').item(index);
+    const target = bodyRef.current
+      ?.querySelectorAll('h1, h2, h3, h4')
+      .item(index);
 
     target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
