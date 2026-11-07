@@ -1,0 +1,9 @@
+/* 笔记编辑器：滚动收在编辑区里，和预览态正文区一致 */
+
+.editor {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 18px 26px 22px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}

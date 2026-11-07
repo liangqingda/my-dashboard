@@ -15,6 +15,8 @@
 - 标题导航：弹窗左上角、**浮在弹窗框体之外**的文档内 h1–h3 目录，点击滚动到对应标题；
 - footer：`编辑` / `关闭` 按钮；进入编辑态后变为 `取消` / `保存`，保存成功在 footer 显示
   「已保存・HH:MM」并在 3 秒内淡出；
+- 编辑插槽：组件**不带默认编辑器**，具体编辑界面由调用方通过 `Editor` 传入；没有传 `Editor`
+  时点「编辑」只弹提示，告知可用 `personalize-edit-markdown` skill 定制；
 - 关闭、键盘可访问性与焦点管理。
 
 组件契约：
@@ -28,16 +30,32 @@
 | `onClose` | `() => void` | 关闭 |
 | `onPrevious` | `(() => void) \| null`（可选） | 上一篇；`null` 表示到头，按钮置灰 |
 | `onNext` | `(() => void) \| null`（可选） | 下一篇；`null` 表示到头，按钮置灰 |
-| `onSave` | `(markdown: string) => Promise<void>`（可选） | 提供后才出现「编辑」；组件负责编辑态与序列化，落盘由调用方实现 |
+| `onSave` | `(markdown: string) => Promise<{ notice?: string }>`（可选） | 提供后才出现「编辑」；落盘由调用方实现，返回的 `notice` 会追加在「已保存」提示后 |
+| `Editor` | `ComponentType<MarkdownEditorProps>`（可选） | 这一类文档的定制编辑器；不传则点「编辑」只给定制提示 |
 
-调用方只决定「相邻文档是谁」与「保存落到哪里」，导航和编辑交互由组件负责。渲染栈固定为
+调用方决定「相邻文档是谁」「保存落到哪里」以及「这类文档怎么编辑」，导航与编辑态流程由组件负责。渲染栈固定为
 `react-markdown` + `remark-gfm` + `rehype-raw`（需要 GFM 表格与 `<details>` 折叠块）；
 新增 Markdown 能力时改这个组件，不要在别处另装渲染器。
 
-编辑采用**块级受控编辑**（`src/components/MarkdownBlockEditor`）：`src/utils/markdown-blocks.ts`
-先把源文本切成块，表格解析成行 / 单元格矩阵、用受控网格编辑（可删行、加行、改单元格），其余块各自
-编辑自己的源码片段；保存时按块重新拼回 Markdown。**不要再走 contentEditable + DOM 反向序列化**，
-那条路会丢格式、且和 React 抢 DOM。新增块类型要同时改解析与序列化两侧。
+## 编辑能力是可定制的
+
+公共组件只提供 `MarkdownEditorProps`（`markdown` 快照 + `onChange` 草稿回传）这一个插槽，
+**编辑逻辑按文档类别放在各自的 feature 里**，通用的解析 / 控件才上提：
+
+- 英语笔记：`src/features/english-notes/note-editor`（适配层）+ `block-editor`（受控控件）+
+  `markdown-blocks.ts`（解析与回写）。做法是把正文切成块，表格解析成行 / 单元格矩阵用受控网格
+  编辑（可删行、加行、改单元格），其余块编辑自己的源码片段，保存时按块重拼 Markdown。
+- 其它模块要编辑时，先跑 skill `personalize-edit-markdown`（仓库内 `.claude/skills/`）：
+
+  ```bash
+  # Claude Code 里直接 /personalize-edit-markdown
+  ```
+
+  它给出职责边界、契约、目录规则、数据安全底线（不认识的写法要降级为源码编辑）、
+  以及「真实文件 parse → serialize 逐字 diff」的验证方式。
+
+**不要走 contentEditable + DOM 反向序列化**：会丢格式、和 React 抢 DOM，且父级刷新时编辑内容
+当场消失。新增块类型要同时改解析与序列化两侧。
 
 保存落盘后由同一个 Vite 中间件把该文件提交到 `learn-english`：只 stage 这一个文件，
 提交信息半固定为 `docs(notes): 手动编辑 <文件名去扩展名>` + 固定正文「通过 my-dashboard 的

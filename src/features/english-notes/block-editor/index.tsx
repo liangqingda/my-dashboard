@@ -1,4 +1,4 @@
-import type { MarkdownBlock } from '@/utils/markdown-blocks';
+import type { MarkdownBlock } from '../markdown-blocks';
 
 import styles from './index.scss';
 

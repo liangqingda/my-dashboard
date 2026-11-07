@@ -1,16 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ComponentType } from 'react';
 import { ActionIcon, Modal } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import Markdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
-
-import MarkdownBlockEditor from '@/components/MarkdownBlockEditor';
-import {
-  parseMarkdownBlocks,
-  serializeMarkdownBlocks,
-  type MarkdownBlock,
-} from '@/utils/markdown-blocks';
 
 import styles from './index.scss';
 
@@ -24,6 +18,10 @@ const formatClock = (date: Date): string =>
     hour12: false,
     minute: '2-digit',
   }).format(date);
+
+/** 没有定制编辑器时的提示：告诉用户可以去定制，而不是不给入口 */
+const NO_EDITOR_MESSAGE =
+  '这类 Markdown 还没有定制编辑器。用 personalize-edit-markdown skill 可以为它写一套编辑逻辑。';
 
 /** 固定引用，避免每次渲染重建插件数组 */
 const REMARK_PLUGINS = [remarkGfm];
@@ -103,6 +101,14 @@ const extractOutline = (markdown: string): OutlineHeading[] => {
   return headings;
 };
 
+/** 定制编辑器收到的入参与出口：正文快照 + 草稿回传 */
+export type MarkdownEditorProps = {
+  /** 进入编辑时的正文快照 */
+  markdown: string;
+  /** 编辑过程中的草稿；弹窗保存时取最后一次的值 */
+  onChange: (markdown: string) => void;
+};
+
 export type MarkdownPreviewModalProps = {
   /** 是否打开预览 */
   opened: boolean;
@@ -120,6 +126,11 @@ export type MarkdownPreviewModalProps = {
   onNext?: (() => void) | null;
   /** 保存编辑后的 Markdown；提供后 footer 才会出现「编辑」 */
   onSave?: (markdown: string) => Promise<{ notice?: string }>;
+  /**
+   * 这一类 Markdown 的定制编辑器。不传则点「编辑」只给出定制提示——
+   * 通用组件不假设任何文档结构，编辑逻辑归调用方（见 personalize-edit-markdown）。
+   */
+  Editor?: ComponentType<MarkdownEditorProps>;
 };
 
 /**
@@ -128,8 +139,8 @@ export type MarkdownPreviewModalProps = {
  * 全站所有 Markdown 弹窗预览都必须使用这个组件，不要各自拼装 Modal 与渲染器：
  * 它统一了文档排版、上一篇 / 下一篇导航（header 标题左侧按钮 + ← / → 快捷键）、
  * 弹窗左上角悬浮在框体之外的标题导航（文档内 h1–h3 目录），以及 footer 的
- * 编辑 / 关闭操作。编辑能力由调用方的 onSave 提供，组件只负责编辑态与保存流程，
- * 不知道文件落在哪里。
+ * 编辑 / 关闭操作。组件只负责编辑态与保存流程，不知道文档结构和文件落在哪里：
+ * 具体怎么编辑由调用方通过 `Editor` 插槽传入，没有定制编辑器时给出定制提示。
  */
 const MarkdownPreviewModal = ({
   opened,
@@ -140,17 +151,18 @@ const MarkdownPreviewModal = ({
   onPrevious,
   onNext,
   onSave,
+  Editor,
 }: MarkdownPreviewModalProps) => {
   const bodyRef = useRef<HTMLElement | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  /** 非 null 即编辑态；块列表就是编辑中的全部内容 */
-  const [blocks, setBlocks] = useState<MarkdownBlock[] | null>(null);
+  /** 非 null 即编辑态；值就是当前草稿 */
+  const [draft, setDraft] = useState<string | null>(null);
   /** 保存成功后的短暂提示时刻，如 20:54 */
   const [savedAt, setSavedAt] = useState<string | null>(null);
   /** 提示后面追加的说明，如自动提交失败原因 */
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
-  const editing = blocks !== null;
+  const editing = draft !== null;
   const outline = extractOutline(markdown);
 
   useEffect(() => {
@@ -183,30 +195,40 @@ const MarkdownPreviewModal = ({
 
   /** 关掉弹窗，同时退出编辑态。 */
   const handleClose = () => {
-    setBlocks(null);
+    setDraft(null);
     setSaveError(null);
     setSavedAt(null);
     setSaveNotice(null);
     onClose();
   };
 
-  /** 进入编辑态：把源文本切成块，交给块级编辑器。 */
+  /** 进入编辑态：有定制编辑器才进入，没有就提示去定制。 */
   const startEditing = () => {
+    if (!Editor) {
+      notifications.show({
+        color: 'teal',
+        message: NO_EDITOR_MESSAGE,
+        title: '这里还没有定制编辑器',
+      });
+
+      return;
+    }
+
     setSaveError(null);
     setSavedAt(null);
     setSaveNotice(null);
-    setBlocks(parseMarkdownBlocks(markdown));
+    setDraft(markdown);
   };
 
   /** 退出编辑态，什么都不写回。 */
   const stopEditing = () => {
-    setBlocks(null);
+    setDraft(null);
     setSaveError(null);
   };
 
   /** 保存草稿；成功后回到预览态，正文等调用方刷新。 */
   const handleSave = async () => {
-    if (!onSave || !blocks) {
+    if (!onSave || draft === null) {
       return;
     }
 
@@ -214,9 +236,9 @@ const MarkdownPreviewModal = ({
     setSaveError(null);
 
     try {
-      const result = await onSave(serializeMarkdownBlocks(blocks));
+      const result = await onSave(draft);
 
-      setBlocks(null);
+      setDraft(null);
       setSavedAt(formatClock(new Date()));
       setSaveNotice(result.notice ?? null);
       window.setTimeout(() => setSavedAt(null), SAVED_HINT_DURATION);
@@ -309,10 +331,8 @@ const MarkdownPreviewModal = ({
       }
       transitionProps={{ duration: 140, transition: 'fade' }}
     >
-      {blocks ? (
-        <div className={styles.blockEditor}>
-          <MarkdownBlockEditor blocks={blocks} onChange={setBlocks} />
-        </div>
+      {editing && Editor ? (
+        <Editor markdown={markdown} onChange={setDraft} />
       ) : (
         <article className={styles.prose} ref={bodyRef}>
           <Markdown rehypePlugins={REHYPE_PLUGINS} remarkPlugins={REMARK_PLUGINS}>

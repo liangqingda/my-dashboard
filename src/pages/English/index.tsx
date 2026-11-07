@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import MarkdownPreviewModal from '@/components/MarkdownPreviewModal';
 import { saveEnglishNote } from '@/features/english-notes/api';
 import { useEnglishNotes } from '@/features/english-notes/hooks/useEnglishNotes';
+import NoteEditor from '@/features/english-notes/note-editor';
 import NotesBoard from '@/features/english-notes/notes-board';
 import { onPageRefresh } from '@/utils/page-refresh';
 
@@ -68,6 +69,7 @@ const English = () => {
       <NotesBoard loading={loading} notes={notes} onOpen={openNote} />
 
       <MarkdownPreviewModal
+        Editor={NoteEditor}
         markdown={active?.content ?? ''}
         onClose={() => setActiveName(null)}
         onNext={notes.length > 1 ? () => step(1) : null}

@@ -141,15 +141,6 @@
   overflow: hidden;
 }
 
-/* 编辑态：正文区换成块级编辑器，滚动同样收在这里 */
-.blockEditor {
-  flex: 1 1 auto;
-  min-height: 0;
-  padding: 18px 26px 22px;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-
 /* 保存成功提示：显示 3 秒后淡出 */
 .savedHint {
   flex: 0 0 auto;

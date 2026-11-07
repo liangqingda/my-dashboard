@@ -1,5 +1,5 @@
 /**
- * Markdown 笔记的块级解析与序列化。
+ * 学习笔记的块级解析与序列化（英语页专用，不是通用 Markdown 编辑器）。
  *
  * 编辑不再直接改渲染出来的 DOM，而是先把源文本切成块，块内用受控控件编辑，
  * 保存时按块重新拼回 Markdown。这样格式只会按模板重排一次，不会因为 DOM
@@ -33,6 +33,8 @@ export type MarkdownTableRow = {
 export type MarkdownTableBlock = {
   id: string;
   type: 'table';
+  /** 与前一块之间保留的空行数，回写时原样还原 */
+  gapBefore: number;
   /** `<table` 与 `>` 之间的属性串 */
   attrs: string;
   /** `<colgroup>…</colgroup>` 原文，没有则为空串 */
@@ -44,6 +46,8 @@ export type MarkdownTableBlock = {
 export type MarkdownTextBlock = {
   id: string;
   type: 'text';
+  /** 与前一块之间保留的空行数，回写时原样还原 */
+  gapBefore: number;
   /** 该块的源文本 */
   source: string;
 };
@@ -87,7 +91,10 @@ const nextId = (): string => {
 };
 
 /** 把一段 `<table>…</table>` 解析成表格块；没有行时返回 null */
-const parseTableBlock = (source: string): MarkdownTableBlock | null => {
+const parseTableBlock = (
+  source: string,
+  gapBefore: number,
+): MarkdownTableBlock | null => {
   const [firstLine] = source.split('\n');
   const attrs = TABLE_OPEN.exec(firstLine)?.[1] ?? '';
   const colgroup = COLGROUP.exec(source)?.[0] ?? '';
@@ -110,7 +117,7 @@ const parseTableBlock = (source: string): MarkdownTableBlock | null => {
     return null;
   }
 
-  return { attrs, colgroup, id: nextId(), rows, type: 'table' };
+  return { attrs, colgroup, gapBefore, id: nextId(), rows, type: 'table' };
 };
 
 /** 表格块序列化：属性、colgroup 原样保留，行与单元格按模板重写 */
@@ -148,11 +155,19 @@ export const parseMarkdownBlocks = (markdown: string): MarkdownBlock[] => {
   let raw: string[] = [];
   let mode: 'details' | 'fence' | 'table' | 'text' = 'text';
 
+  /** 上一个块之后累计的空行数 */
+  let blanks = 0;
+  /** 当前块之前的空行数，开新块时取一次 */
+  let gap = 0;
+
   const flushText = () => {
     const source = buffer.join('\n').trim();
 
     if (source) {
-      blocks = [...blocks, { id: nextId(), source, type: 'text' }];
+      blocks = [
+        ...blocks,
+        { gapBefore: gap, id: nextId(), source, type: 'text' },
+      ];
     }
 
     buffer = [];
@@ -165,7 +180,10 @@ export const parseMarkdownBlocks = (markdown: string): MarkdownBlock[] => {
       raw = [...raw, line];
 
       if (FENCE.test(trimmed)) {
-        blocks = [...blocks, { id: nextId(), source: raw.join('\n'), type: 'text' }];
+        blocks = [
+          ...blocks,
+          { gapBefore: gap, id: nextId(), source: raw.join('\n'), type: 'text' },
+        ];
         raw = [];
         mode = 'text';
       }
@@ -178,11 +196,16 @@ export const parseMarkdownBlocks = (markdown: string): MarkdownBlock[] => {
 
       if (line.includes(TABLE_CLOSE)) {
         const source = raw.join('\n');
-        const table = parseTableBlock(source);
+        const table = parseTableBlock(source, gap);
 
         blocks = [
           ...blocks,
-          table ?? { id: nextId(), source, type: 'text' },
+          table ?? {
+            gapBefore: gap,
+            id: nextId(),
+            source,
+            type: 'text',
+          },
         ];
         raw = [];
         mode = 'text';
@@ -195,7 +218,10 @@ export const parseMarkdownBlocks = (markdown: string): MarkdownBlock[] => {
       raw = [...raw, line];
 
       if (line.includes(DETAILS_CLOSE)) {
-        blocks = [...blocks, { id: nextId(), source: raw.join('\n'), type: 'text' }];
+        blocks = [
+          ...blocks,
+          { gapBefore: gap, id: nextId(), source: raw.join('\n'), type: 'text' },
+        ];
         raw = [];
         mode = 'text';
       }
@@ -205,12 +231,15 @@ export const parseMarkdownBlocks = (markdown: string): MarkdownBlock[] => {
 
     if (!trimmed) {
       flushText();
+      blanks += 1;
 
       continue;
     }
 
     if (FENCE.test(trimmed)) {
       flushText();
+      gap = blanks;
+      blanks = 0;
       raw = [line];
       mode = 'fence';
 
@@ -219,6 +248,8 @@ export const parseMarkdownBlocks = (markdown: string): MarkdownBlock[] => {
 
     if (TABLE_OPEN.test(trimmed)) {
       flushText();
+      gap = blanks;
+      blanks = 0;
       raw = [line];
       mode = 'table';
 
@@ -227,10 +258,17 @@ export const parseMarkdownBlocks = (markdown: string): MarkdownBlock[] => {
 
     if (DETAILS_OPEN.test(trimmed)) {
       flushText();
+      gap = blanks;
+      blanks = 0;
       raw = [line];
       mode = 'details';
 
       continue;
+    }
+
+    if (buffer.length === 0) {
+      gap = blanks;
+      blanks = 0;
     }
 
     buffer = [...buffer, line];
@@ -242,16 +280,31 @@ export const parseMarkdownBlocks = (markdown: string): MarkdownBlock[] => {
 };
 
 /**
- * 把块重新拼成 Markdown 源文本；块之间统一一个空行，结尾补换行。
+ * 把块重新拼成 Markdown 源文本：块之间的空行按解析时记录的数量原样还原，
+ * 结尾补一个换行。
  */
 export const serializeMarkdownBlocks = (blocks: MarkdownBlock[]): string => {
   const parts = blocks
-    .map((block) =>
-      block.type === 'table'
-        ? serializeTableBlock(block)
-        : block.source.trim(),
-    )
-    .filter((part) => part.length > 0);
+    .map((block) => ({
+      gapBefore: block.gapBefore,
+      text:
+        block.type === 'table'
+          ? serializeTableBlock(block)
+          : block.source.trim(),
+    }))
+    .filter((part) => part.text.length > 0);
 
-  return parts.length === 0 ? '' : `${parts.join('\n\n')}\n`;
+  if (parts.length === 0) {
+    return '';
+  }
+
+  const body = parts.reduce(
+    (acc, part, index) =>
+      index === 0
+        ? part.text
+        : `${acc}${'\n'.repeat(part.gapBefore + 1)}${part.text}`,
+    '',
+  );
+
+  return `${body}\n`;
 };
