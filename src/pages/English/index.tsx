@@ -75,6 +75,20 @@ const English = () => {
       : {};
   };
 
+  /** 弹窗 header 的刷新：只重取当前这一篇，原地更新正文。 */
+  const refreshActive = async () => {
+    if (!active) {
+      return;
+    }
+
+    const fresh = await fetchEnglishNote(active.name);
+
+    if (fresh) {
+      setActive(fresh);
+      applyNote(fresh);
+    }
+  };
+
   /** 在笔记列表中循环切换上一篇 / 下一篇。 */
   const step = (delta: number) => {
     if (activeIndex < 0 || notes.length === 0) {
@@ -107,6 +121,7 @@ const English = () => {
         onClose={() => setActive(null)}
         onNext={notes.length > 1 ? () => step(1) : null}
         onPrevious={notes.length > 1 ? () => step(-1) : null}
+        onRefresh={import.meta.env.DEV ? refreshActive : null}
         onSave={import.meta.env.DEV ? saveActive : undefined}
         opened={active !== null}
         position={

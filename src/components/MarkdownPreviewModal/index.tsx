@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState, type ComponentType } from 'react';
 import { ActionIcon, Modal } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
+import {
+  IconChevronLeft,
+  IconChevronRight,
+  IconRefresh,
+} from '@tabler/icons-react';
 import Markdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
@@ -52,6 +56,11 @@ export type MarkdownPreviewModalProps = {
   onPrevious?: (() => void) | null;
   /** 下一篇；null 表示没有相邻文档 */
   onNext?: (() => void) | null;
+  /**
+   * header 刷新：调用方重新取一次最新正文并回灌 markdown。
+   * 返回 Promise 时按钮显示 loading 直到结束；不提供则不显示刷新按钮。
+   */
+  onRefresh?: (() => Promise<void> | void) | null;
   /** 保存编辑后的 Markdown；提供后 footer 才会出现「编辑」 */
   onSave?: (markdown: string) => Promise<{ notice?: string }>;
   /**
@@ -78,11 +87,13 @@ const MarkdownPreviewModal = ({
   onClose,
   onPrevious,
   onNext,
+  onRefresh,
   onSave,
   Editor,
 }: MarkdownPreviewModalProps) => {
   const bodyRef = useRef<HTMLElement | null>(null);
   const [saving, setSaving] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   /** 非 null 即编辑态；值就是当前草稿 */
   const [draft, setDraft] = useState<string | null>(null);
@@ -227,6 +238,21 @@ const MarkdownPreviewModal = ({
     }
   };
 
+  /** 重新取一次最新正文；失败交给调用方决定怎么提示，这里只收起 loading。 */
+  const handleRefresh = () => {
+    if (!onRefresh) {
+      return;
+    }
+
+    setRefreshing(true);
+    void Promise.resolve()
+      .then(() => onRefresh())
+      .catch(() => {
+        /* 读取失败不打断预览，调用方自己处理提示 */
+      })
+      .finally(() => setRefreshing(false));
+  };
+
   /** 跳到文档内第 index 个标题。 */
   const scrollToHeading = (index: number) => {
     if (editing) {
@@ -315,6 +341,20 @@ const MarkdownPreviewModal = ({
             </span>
           ) : null}
           <span className={styles.fileName}>{title}</span>
+          {onRefresh ? (
+            <ActionIcon
+              aria-label="刷新预览内容"
+              className={styles.refreshButton}
+              disabled={editing}
+              loading={refreshing}
+              onClick={handleRefresh}
+              size="sm"
+              title="重新读取最新内容"
+              variant="subtle"
+            >
+              <IconRefresh size={15} stroke={1.9} />
+            </ActionIcon>
+          ) : null}
         </div>
       }
       transitionProps={{ duration: 140, transition: 'fade' }}

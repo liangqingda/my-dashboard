@@ -32,6 +32,7 @@
 | `onClose` | `() => void` | 关闭 |
 | `onPrevious` | `(() => void) \| null`（可选） | 上一篇；`null` 表示到头，按钮置灰 |
 | `onNext` | `(() => void) \| null`（可选） | 下一篇；`null` 表示到头，按钮置灰 |
+| `onRefresh` | `(() => Promise<void> \| void) \| null`（可选） | header 标题右侧的刷新按钮；调用方重取最新正文并回灌 `markdown`，返回 Promise 时按钮显示 loading，不传则不显示 |
 | `onSave` | `(markdown: string) => Promise<{ notice?: string }>`（可选） | 提供后才出现「编辑」；落盘由调用方实现，抛错则显示为保存失败，返回的 `notice` 追加在「已保存」提示后 |
 | `Editor` | `ComponentType<MarkdownEditorProps>`（可选） | 这一类文档的定制编辑器；不传则点「编辑」只给定制提示 |
 

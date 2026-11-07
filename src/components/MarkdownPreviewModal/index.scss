@@ -47,6 +47,16 @@
   color: var(--app-accent);
 }
 
+/* header 右侧的正文刷新 */
+.refreshButton {
+  flex: 0 0 auto;
+  color: var(--app-ink-faint);
+}
+
+.refreshButton:hover {
+  color: var(--app-accent);
+}
+
 .fileName {
   flex: 1 1 auto;
   min-width: 0;
