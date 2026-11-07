@@ -1,62 +1,35 @@
+/* 英语页：整页占满内容区且不滚动，滚动只发生在各列内部 */
 .page {
   display: flex;
   flex-direction: column;
-  padding: var(--app-space-lg);
+  height: calc(100dvh - 56px);
+  padding: 0 var(--app-space-lg);
+  overflow: hidden;
 }
 
-.masthead {
+.errorBar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--app-line);
-}
-
-.title {
-  margin: 0;
-  color: var(--app-ink);
-  font-family: var(--app-serif);
-  font-size: 1.2rem;
-  font-weight: 600;
-  line-height: 1.3;
-}
-
-.refresh {
   flex: 0 0 auto;
-  color: var(--app-ink-faint);
-}
-
-.refresh:hover {
-  color: var(--app-accent);
-}
-
-.empty {
-  margin: 14px 0 0;
-  color: var(--app-ink-faint);
-  font-size: 0.8rem;
-}
-
-.error {
-  display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 14px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--app-line);
   color: var(--app-status-danger);
-  font-size: 0.8rem;
+  font-size: 0.76rem;
 }
 
 .errorText {
-  margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .retry {
-  padding: 4px 12px;
+  flex: 0 0 auto;
+  padding: 3px 10px;
   border: 1px solid var(--app-line-strong);
   border-radius: 2px;
   background: var(--app-surface);
   color: var(--app-ink);
-  font-size: 0.76rem;
+  font-size: 0.74rem;
   cursor: pointer;
 }
 

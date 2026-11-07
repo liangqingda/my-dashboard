@@ -1,14 +1,12 @@
 import { useState } from 'react';
-import { ActionIcon, Skeleton, Tooltip } from '@mantine/core';
-import { IconRefresh } from '@tabler/icons-react';
 
 import MarkdownPreviewModal from '@/components/MarkdownPreviewModal';
 import { useEnglishNotes } from '@/features/english-notes/hooks/useEnglishNotes';
-import NotesIndex from '@/features/english-notes/notes-index';
+import NotesBoard from '@/features/english-notes/notes-board';
 
 import styles from './index.scss';
 
-/** 英语页：只展示 learning-record-notes 目录下的 md 文件名。 */
+/** 英语页：把 learning-record-notes 下的笔记按分类分列展示，整页不滚动。 */
 const English = () => {
   const { notes, loading, error, refresh, reload } = useEnglishNotes();
   const [activeName, setActiveName] = useState<string | null>(null);
@@ -38,42 +36,16 @@ const English = () => {
 
   return (
     <div className={styles.page}>
-      <header className={styles.masthead}>
-        <h2 className={styles.title}>Learning record notes</h2>
-        <Tooltip label="重新读取笔记" withArrow>
-          <ActionIcon
-            aria-label="重新读取笔记"
-            className={styles.refresh}
-            loading={loading}
-            onClick={refresh}
-            size="md"
-            variant="subtle"
-          >
-            <IconRefresh size={16} stroke={1.8} />
-          </ActionIcon>
-        </Tooltip>
-      </header>
-
       {error ? (
-        <div className={styles.error}>
-          <p className={styles.errorText}>{error}</p>
+        <div className={styles.errorBar}>
+          <span className={styles.errorText}>{error}</span>
           <button className={styles.retry} onClick={refresh} type="button">
             重新读取
           </button>
         </div>
       ) : null}
 
-      {loading && notes.length === 0 ? (
-        <Skeleton h={40} mt={12} />
-      ) : null}
-
-      {!error && !loading && notes.length === 0 ? (
-        <p className={styles.empty}>这个目录里还没有笔记。</p>
-      ) : null}
-
-      {notes.length > 0 ? (
-        <NotesIndex notes={notes} onOpen={openNote} />
-      ) : null}
+      <NotesBoard loading={loading} notes={notes} onOpen={openNote} />
 
       <MarkdownPreviewModal
         markdown={active?.content ?? ''}
