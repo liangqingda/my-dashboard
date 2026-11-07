@@ -14,9 +14,11 @@
 - 导航：header 里、**标题左侧**的上一个 / 下一个图标按钮，配合 `←` / `→` 快捷键；
 - 标题导航：弹窗左上角、**浮在弹窗框体之外**的文档内 h1–h3 目录，点击滚动到对应标题；
 - footer：`编辑` / `关闭` 按钮；进入编辑态后变为 `取消` / `保存`，保存成功在 footer 显示
-  「已保存・HH:MM」并在 3 秒内淡出；
+  「已保存・HH:MM」并在 3 秒内淡出（连续保存不会互相踩定时器）；
 - 编辑插槽：组件**不带默认编辑器**，具体编辑界面由调用方通过 `Editor` 传入；没有传 `Editor`
   时点「编辑」只弹提示，告知可用 `personalize-edit-markdown` skill 定制；
+- 关闭保护：编辑中且有未保存改动时，点关闭 / Esc / 遮罩先在 footer 二次确认（`继续编辑` /
+  `放弃并关闭`），不会静默丢改动；编辑态标题目录置灰不可点；
 - 关闭、键盘可访问性与焦点管理。
 
 组件契约：
@@ -30,7 +32,7 @@
 | `onClose` | `() => void` | 关闭 |
 | `onPrevious` | `(() => void) \| null`（可选） | 上一篇；`null` 表示到头，按钮置灰 |
 | `onNext` | `(() => void) \| null`（可选） | 下一篇；`null` 表示到头，按钮置灰 |
-| `onSave` | `(markdown: string) => Promise<{ notice?: string }>`（可选） | 提供后才出现「编辑」；落盘由调用方实现，返回的 `notice` 会追加在「已保存」提示后 |
+| `onSave` | `(markdown: string) => Promise<{ notice?: string }>`（可选） | 提供后才出现「编辑」；落盘由调用方实现，抛错则显示为保存失败，返回的 `notice` 追加在「已保存」提示后 |
 | `Editor` | `ComponentType<MarkdownEditorProps>`（可选） | 这一类文档的定制编辑器；不传则点「编辑」只给定制提示 |
 
 调用方决定「相邻文档是谁」「保存落到哪里」以及「这类文档怎么编辑」，导航与编辑态流程由组件负责。渲染栈固定为
@@ -61,14 +63,32 @@
 提交信息半固定为 `docs(notes): 手动编辑 <文件名去扩展名>` + 固定正文「通过 my-dashboard 的
 Markdown 预览弹窗保存」；内容无变化时不产生空提交，提交失败不阻断保存、原因回传到 footer。
 
-参考实现：`src/pages/English/index.tsx`（分列笔记 → 弹窗预览，循环切换上一篇 / 下一篇，
-保存时 `PUT /api/english/notes` 写回 `learning-record-notes/*.md`）。
+**文档结构写不进去时的底线**：不认识的写法一律降级为「源码文本块」，用户直接改原文，
+不要硬解析后重排。以英语笔记的表格为例（`isStructuredTableSafe`）：单元格内含标签、
+`<thead>` / `<tbody>` / `<tfoot>` / `<caption>`、`<tr>` 带属性、表格嵌套、`&nbsp;` / 数字实体，
+都会整表降级，避免往返丢结构。
+
+往返自检在仓库里，改解析或回写逻辑后必须跑：
+
+```bash
+pnpm check:md   # scripts/md-roundtrip.mts，夹具在 scripts/fixtures/md/
+```
+
+它检查「原文 → parse → serialize」逐字一致、该降级的没有结构化、删行 / 加行只动目标行。
+`pnpm lint` 已包含这一步。
+
+参考实现：`src/pages/English/index.tsx`（五列看板 → 弹窗预览，循环切换上一篇 / 下一篇，
+打开时 `GET /api/english/notes?name=…` 只取这一篇，保存时 `PUT /api/english/notes`
+写回 `learning-record-notes/*.md`）。
 
 ## 其它约定
 
 - 公共组件放 `src/components/<PascalCase>/`（lint 强制），同样 `index.tsx` + `index.scss`；
   功能模块放 `src/features/<kebab-case>/`，页面只做数据拼装与状态编排。
 - 页面默认只展示文件名、标题这类索引信息，正文细节交给预览层，不要把所有内容平铺出来。
-- 本机仓库数据（如 `../learn-english`）一律通过 `scripts/vite/*` 中间件读盘，前端
+- 本机仓库数据（如 `../learn-english`）一律通过 `scripts/vite/*` 中间件读盘（英语笔记插件已拆成
+  `english-notes.ts` 路由壳 + `english-notes-store.ts` 读写与校验 + `english-notes-commit.ts` 自动提交），前端
   按 `import.meta.env.DEV` 切换接口与构建快照，不新增后端服务；写操作同样走该中间件，
   只在开发模式可用，并且必须校验文件名（禁止路径穿越、禁止写目录说明文件）。
+- 仓库内的 skill 目录（`.claude/skills/*`）不会被 agent 自动扫描，需要时按路径手动 `Read`
+  `SKILL.md`；不要以为写了 skill 就会自动生效。

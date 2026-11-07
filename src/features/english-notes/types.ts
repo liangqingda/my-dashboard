@@ -11,16 +11,10 @@ export type EnglishNote = {
   content: string;
   /** 最后修改时间（ISO 8601） */
   updatedAt: string;
-  /** 文件字节数 */
-  size: number;
 };
 
-/** 一次读取得到的笔记集合与来源信息 */
+/** 一次读取得到的笔记集合 */
 export type EnglishNotesSnapshot = {
-  /** 快照生成时间（ISO 8601） */
-  generatedAt: string;
-  /** 记录仓库的绝对路径 */
-  repoPath: string;
   /** 全部笔记，按最后修改时间倒序 */
   notes: EnglishNote[];
 };

@@ -81,6 +81,38 @@ const decodeEntities = (text: string): string =>
 const encodeEntities = (text: string): string =>
   text.replace(/&/gu, '&amp;').replace(/</gu, '&lt;').replace(/>/gu, '&gt;');
 
+/**
+ * 表格能不能安全地做成「行 / 单元格矩阵」。
+ *
+ * 只要出现这些写法，重排一次就会丢信息，统一降级成源码文本块、让用户直接改原文：
+ * - 单元格里带标签（`<br>`、`<strong>`、嵌套表格…）：矩阵编辑只认纯文本；
+ * - `<thead>` / `<tbody>` / `<tfoot>` / `<caption>`：回写时会把包裹层抹掉；
+ * - `<tr>` 带属性：回写只按裸 `<tr>` 重建；
+ * - 表格套表格：逐行正则匹配会截断；
+ * - `&nbsp;` 或数字实体：解成普通字符就再也回不去了。
+ */
+const isStructuredTableSafe = (source: string): boolean => {
+  if (/<(thead|tbody|tfoot|caption)\b/iu.test(source)) {
+    return false;
+  }
+
+  if (/<tr\s+[^>]*>/iu.test(source)) {
+    return false;
+  }
+
+  if (source.match(/<table\b/giu)?.length !== 1) {
+    return false;
+  }
+
+  if (/&nbsp;|&#/iu.test(source)) {
+    return false;
+  }
+
+  return !Array.from(source.matchAll(CELL), (cellMatch) =>
+    /<[a-z!/]/iu.test(cellMatch[3]),
+  ).some(Boolean);
+};
+
 let idSeed = 0;
 
 /** 生成块内稳定 id */
@@ -95,6 +127,10 @@ const parseTableBlock = (
   source: string,
   gapBefore: number,
 ): MarkdownTableBlock | null => {
+  if (!isStructuredTableSafe(source)) {
+    return null;
+  }
+
   const [firstLine] = source.split('\n');
   const attrs = TABLE_OPEN.exec(firstLine)?.[1] ?? '';
   const colgroup = COLGROUP.exec(source)?.[0] ?? '';

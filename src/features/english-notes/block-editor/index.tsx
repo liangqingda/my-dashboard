@@ -47,11 +47,14 @@ const MarkdownBlockEditor = ({ blocks, onChange }: MarkdownBlockEditorProps) => 
       return;
     }
 
-    const row = block.rows[rowIndex];
-    const cells = replaceAt(row.cells, cellIndex, {
-      ...row.cells[cellIndex],
-      text,
-    });
+    const row = block.rows.at(rowIndex);
+    const cell = row?.cells.at(cellIndex);
+
+    if (!row || !cell) {
+      return;
+    }
+
+    const cells = replaceAt(row.cells, cellIndex, { ...cell, text });
 
     updateBlock(blockIndex, {
       ...block,
@@ -67,7 +70,13 @@ const MarkdownBlockEditor = ({ blocks, onChange }: MarkdownBlockEditorProps) => 
       return;
     }
 
-    const cells = block.rows[0].cells.map((cell) => ({
+    const firstRow = block.rows.at(0);
+
+    if (!firstRow) {
+      return;
+    }
+
+    const cells = firstRow.cells.map((cell) => ({
       ...cell,
       id: createId(),
       text: '',
@@ -126,6 +135,7 @@ const MarkdownBlockEditor = ({ blocks, onChange }: MarkdownBlockEditorProps) => 
                         key={cell.id}
                       >
                         <input
+                          aria-label={`第 ${rowIndex + 1} 行第 ${cellIndex + 1} 列`}
                           className={styles.cellInput}
                           onChange={(event) =>
                             updateCell(

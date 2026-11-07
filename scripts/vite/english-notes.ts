@@ -1,181 +1,10 @@
-import { execFile } from 'node:child_process';
-import { readFile, readdir, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { promisify } from 'node:util';
 
-import type { Dirent } from 'node:fs';
 import type { IncomingMessage as HttpRequest } from 'node:http';
 import type { Plugin } from 'vite';
 
-/** 笔记目录（相对记录仓库根目录） */
-const NOTES_DIR = 'learning-record-notes';
-
-/** 只收集 Markdown 文件 */
-const NOTE_EXTENSION = '.md';
-
-/** 目录级的说明文件不算笔记，也不允许写 */
-const EXCLUDED_FILES = new Set(['readme.md']);
-
-/** 笔记文件名只能是这种形态，避免路径穿越 */
-const NOTE_NAME_PATTERN = /^[\w.-]+\.md$/u;
-
-const runGit = promisify(execFile);
-
-/** 自动提交失败不阻断保存，原样把原因带回前端 */
-type CommitResult = {
-  /** 提交短 hash */
-  hash?: string;
-  /** 提交标题 */
-  subject?: string;
-  /** 提交失败原因 */
-  error?: string;
-};
-
-/**
- * 把本次保存的笔记提交到记录仓库。
- *
- * 只 stage 这一个文件，避免把仓库里其它进程的改动一起提交；提交信息半固定，
- * 前半段说明是手动编辑、带上文件名，后半段是固定来源说明。
- */
-const commitNote = async (
-  repoDir: string,
-  name: string,
-): Promise<CommitResult> => {
-  const relative = `${NOTES_DIR}/${name}`;
-  const subject = `docs(notes): 手动编辑 ${path.basename(name, NOTE_EXTENSION)}`;
-
-  try {
-    await runGit('git', ['add', '--', relative], { cwd: repoDir });
-
-    // 内容没有实际变化时不产生空提交
-    const { stdout: staged } = await runGit(
-      'git',
-      ['diff', '--cached', '--name-only', '--', relative],
-      { cwd: repoDir },
-    );
-
-    if (!staged.trim()) {
-      return {};
-    }
-
-    await runGit(
-      'git',
-      ['commit', '-m', subject, '-m', '通过 my-dashboard 的 Markdown 预览弹窗保存'],
-      { cwd: repoDir },
-    );
-
-    const { stdout } = await runGit('git', ['log', '-1', '--format=%h'], {
-      cwd: repoDir,
-    });
-
-    return { hash: stdout.trim(), subject };
-  } catch (error) {
-    const output =
-      typeof error === 'object' && error !== null
-        ? [readField(error, 'stdout'), readField(error, 'stderr')].join('\n')
-        : '';
-
-    if (output.includes('nothing to commit')) {
-      return {};
-    }
-
-    const firstLine = output
-      .split('\n')
-      .map((line) => line.trim())
-      .find((line) => line.length > 0);
-
-    return { error: firstLine ?? '提交失败' };
-  }
-};
-
-/** 读取错误对象上的 stdout / stderr 文本 */
-const readField = (value: object, key: string): string => {
-  if (!(key in value)) {
-    return '';
-  }
-
-  const field = (value as Record<string, unknown>)[key];
-
-  return typeof field === 'string' ? field : '';
-};
-
-/** 一篇笔记的读取结果 */
-type NoteSnapshot = {
-  /** 文件名，如 errors-back-west-spacing.md */
-  name: string;
-  /** Markdown 原文 */
-  content: string;
-  /** 最后修改时间（ISO 8601） */
-  updatedAt: string;
-  /** 文件字节数 */
-  size: number;
-};
-
-/** 返回给前端的完整快照 */
-type NotesSnapshot = {
-  /** 生成快照的时间（ISO 8601） */
-  generatedAt: string;
-  /** 记录仓库的绝对路径，页脚会展示 */
-  repoPath: string;
-  /** 全部笔记，按最后修改时间倒序 */
-  notes: NoteSnapshot[];
-};
-
-/**
- * 读取一篇笔记；文件在收集过程中消失或不可读时返回 null，
- * 不让单篇失败影响整页。
- */
-const readNote = async (dir: string, name: string): Promise<NoteSnapshot | null> => {
-  const file = path.join(dir, name);
-
-  try {
-    const [content, info] = await Promise.all([readFile(file, 'utf8'), stat(file)]);
-
-    return {
-      name,
-      content,
-      updatedAt: info.mtime.toISOString(),
-      size: info.size,
-    };
-  } catch {
-    return null;
-  }
-};
-
-/** 汇总 learning-record-notes 目录下的全部笔记。 */
-const collectNotes = async (repoDir: string): Promise<NotesSnapshot> => {
-  const dir = path.join(repoDir, NOTES_DIR);
-
-  let entries: Dirent[] = [];
-
-  try {
-    entries = await readdir(dir, { withFileTypes: true });
-  } catch {
-    // 目录不存在时按空笔记集处理，页面会给出空态。
-  }
-
-  const names = entries
-    .filter(
-      (entry) =>
-        entry.isFile() &&
-        entry.name.toLowerCase().endsWith(NOTE_EXTENSION) &&
-        !EXCLUDED_FILES.has(entry.name.toLowerCase()),
-    )
-    .map((entry) => entry.name);
-
-  const notes = await Promise.all(names.map((name) => readNote(dir, name)));
-
-  return {
-    generatedAt: new Date().toISOString(),
-    repoPath: repoDir,
-    notes: notes
-      .filter((note): note is NoteSnapshot => note !== null)
-      .toSorted(
-        (a, b) =>
-          b.updatedAt.localeCompare(a.updatedAt) || a.name.localeCompare(b.name),
-      ),
-  };
-};
+import { commitNote } from './english-notes-commit.js';
+import { collectNotes, readNote, writeNote } from './english-notes-store.js';
 
 /** 判断解析后的 JSON 是不是普通对象 */
 const isObject = (value: unknown): value is Record<string, unknown> =>
@@ -200,13 +29,23 @@ const readJsonBody = async (req: HttpRequest): Promise<unknown> => {
   }
 };
 
+/** 从 `?name=` 取单篇笔记名；没带参数返回 null */
+const nameFromUrl = (url: string | undefined): string | null => {
+  const query = url?.split('?')[1] ?? '';
+  const value = new URLSearchParams(query).get('name');
+
+  return value && value.length > 0 ? value : null;
+};
+
 /**
  * 英语笔记插件：把 learn-english 仓库 learning-record-notes 下的 Markdown
- * 以只读 JSON 暴露给前端。
+ * 暴露给前端，并把弹窗里的编辑写回源文件、提交记录仓库。
  *
- * - 开发服务器：`GET /api/english/notes` 每次请求实时读盘，
- *   Codex 写完新笔记后刷新页面即可看到。
- * - 构建：作为 `english-notes.json` 资源写进产物，供静态预览使用。
+ * - 开发服务器：
+ *   - `GET /api/english/notes`：全部笔记（每次请求实时读盘）；
+ *   - `GET /api/english/notes?name=<file>`：单篇笔记，打开预览 / 保存后只刷这一篇；
+ *   - `PUT /api/english/notes`：写回源文件后自动提交该文件。
+ * - 构建：全部笔记作为 `english-notes.json` 资源写进产物，供静态预览使用。
  *
  * 记录仓库默认取与本项目同级目录（`../learn-english`），
  * 可用环境变量 `ENGLISH_RECORDS_DIR` 指定其它路径。
@@ -222,7 +61,7 @@ export const englishNotes = (root: string): Plugin => {
       this.emitFile({
         type: 'asset',
         fileName: 'english-notes.json',
-        source: JSON.stringify(await collectNotes(repoDir)),
+        source: JSON.stringify({ notes: await collectNotes(repoDir) }),
       });
     },
     configureServer(server) {
@@ -232,8 +71,25 @@ export const englishNotes = (root: string): Plugin => {
         res.setHeader('Cache-Control', 'no-store');
 
         if (req.method === 'GET') {
+          const name = nameFromUrl(req.url);
+
           try {
-            res.end(JSON.stringify(await collectNotes(repoDir)));
+            if (name) {
+              const note = await readNote(repoDir, name);
+
+              if (!note) {
+                res.statusCode = 404;
+                res.end(JSON.stringify({ message: '这篇笔记不存在' }));
+
+                return;
+              }
+
+              res.end(JSON.stringify({ note }));
+
+              return;
+            }
+
+            res.end(JSON.stringify({ notes: await collectNotes(repoDir) }));
           } catch (error) {
             res.statusCode = 500;
             res.end(
@@ -247,7 +103,7 @@ export const englishNotes = (root: string): Plugin => {
           return;
         }
 
-        // 把编辑后的 Markdown 写回源文件；只允许写学习笔记目录下已存在的笔记。
+        // 把编辑后的 Markdown 写回源文件，再提交记录仓库。
         if (req.method === 'PUT') {
           try {
             const payload = await readJsonBody(req);
@@ -259,38 +115,18 @@ export const englishNotes = (root: string): Plugin => {
             const name = payload.name;
             const content = payload.content;
 
-            if (
-              typeof name !== 'string' ||
-              !NOTE_NAME_PATTERN.test(name) ||
-              EXCLUDED_FILES.has(name.toLowerCase())
-            ) {
-              throw new Error('这个文件不允许写入');
+            if (typeof name !== 'string') {
+              throw new Error('缺少文件名');
             }
 
             if (typeof content !== 'string') {
               throw new Error('正文必须是字符串');
             }
 
-            const dir = path.resolve(repoDir, NOTES_DIR);
-            const file = path.resolve(dir, name);
-
-            if (!file.startsWith(`${dir}${path.sep}`)) {
-              throw new Error('这个文件不允许写入');
-            }
-
-            await writeFile(file, content, 'utf8');
-
-            const info = await stat(file);
+            const { updatedAt } = await writeNote(repoDir, name, content);
             const commit = await commitNote(repoDir, name);
 
-            res.end(
-              JSON.stringify({
-                commit,
-                name,
-                updatedAt: info.mtime.toISOString(),
-                size: info.size,
-              }),
-            );
+            res.end(JSON.stringify({ commit, name, updatedAt }));
           } catch (error) {
             res.statusCode = 400;
             res.end(

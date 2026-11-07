@@ -6,18 +6,16 @@ import type { EnglishNote } from '@/features/english-notes/types';
 export type UseEnglishNotesResult = {
   /** 全部笔记，按最后修改时间倒序 */
   notes: EnglishNote[];
-  /** 快照生成时间（ISO 8601） */
-  generatedAt: string;
-  /** 记录仓库路径 */
-  repoPath: string;
   /** 是否正在读取 */
   loading: boolean;
   /** 读取失败的原因 */
   error: string | null;
   /** 重新读取一次（带动画与 loading 态） */
   refresh: () => void;
-  /** 静默重新读取：不改 loading，用于打开预览前同步最新内容 */
+  /** 静默重新读取全部笔记：不改 loading，用于侧边栏刷新 */
   reload: () => Promise<void>;
+  /** 用单篇笔记的最新内容替换列表里的那一条（不在列表里就插到最前） */
+  applyNote: (note: EnglishNote) => void;
 };
 
 const EMPTY_NOTES: EnglishNote[] = [];
@@ -29,8 +27,6 @@ const EMPTY_NOTES: EnglishNote[] = [];
  */
 export const useEnglishNotes = (): UseEnglishNotesResult => {
   const [notes, setNotes] = useState<EnglishNote[]>(EMPTY_NOTES);
-  const [generatedAt, setGeneratedAt] = useState('');
-  const [repoPath, setRepoPath] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const requestId = useRef(0);
@@ -46,8 +42,6 @@ export const useEnglishNotes = (): UseEnglishNotesResult => {
       }
 
       setNotes(snapshot.notes);
-      setGeneratedAt(snapshot.generatedAt);
-      setRepoPath(snapshot.repoPath);
       setError(null);
       setLoading(false);
     },
@@ -86,7 +80,7 @@ export const useEnglishNotes = (): UseEnglishNotesResult => {
       });
   }, [apply, fail]);
 
-  /** 静默重新读取：不切换 loading，用于打开预览前同步仓库最新内容。 */
+  /** 静默重新读取：不切换 loading，用于侧边栏刷新。 */
   const reload = useCallback(async () => {
     const current = requestId.current + 1;
 
@@ -98,6 +92,15 @@ export const useEnglishNotes = (): UseEnglishNotesResult => {
       fail(caught, current);
     }
   }, [apply, fail]);
+
+  /** 单篇更新：保存或打开预览后只替换这一条，不整页重拉。 */
+  const applyNote = useCallback((note: EnglishNote) => {
+    setNotes((current) =>
+      current.some((item) => item.name === note.name)
+        ? current.map((item) => (item.name === note.name ? note : item))
+        : [note, ...current],
+    );
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -120,5 +123,5 @@ export const useEnglishNotes = (): UseEnglishNotesResult => {
     };
   }, [apply, fail]);
 
-  return { notes, generatedAt, repoPath, loading, error, refresh, reload };
+  return { notes, loading, error, refresh, reload, applyNote };
 };

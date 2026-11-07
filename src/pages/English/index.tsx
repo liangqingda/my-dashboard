@@ -1,35 +1,48 @@
 import { useEffect, useState } from 'react';
 
 import MarkdownPreviewModal from '@/components/MarkdownPreviewModal';
-import { saveEnglishNote } from '@/features/english-notes/api';
+import {
+  fetchEnglishNote,
+  saveEnglishNote,
+} from '@/features/english-notes/api';
 import { useEnglishNotes } from '@/features/english-notes/hooks/useEnglishNotes';
 import NoteEditor from '@/features/english-notes/note-editor';
 import NotesBoard from '@/features/english-notes/notes-board';
+import type { EnglishNote } from '@/features/english-notes/types';
 import { onPageRefresh } from '@/utils/page-refresh';
 
 import styles from './index.scss';
 
 /** 英语页：把 learning-record-notes 下的笔记按分类分列展示，整页不滚动。 */
 const English = () => {
-  const { notes, loading, error, refresh, reload } = useEnglishNotes();
-  const [activeName, setActiveName] = useState<string | null>(null);
+  const { notes, loading, error, refresh, reload, applyNote } =
+    useEnglishNotes();
+  /** 当前预览的笔记（存内容而不是文件名，打开时就能拿到最新正文） */
+  const [active, setActive] = useState<EnglishNote | null>(null);
 
   const activeIndex =
-    activeName === null
+    active === null
       ? -1
-      : notes.findIndex((note) => note.name === activeName);
-  const active = activeIndex >= 0 ? notes[activeIndex] : null;
+      : notes.findIndex((note) => note.name === active.name);
 
   // 侧边栏「刷新」按钮：重新读取仓库里的笔记
   useEffect(() => onPageRefresh(reload), [reload]);
 
-  /** 打开预览：先静默重新读盘，避免看到仓库里已被改掉的旧正文。 */
-  const openNote = (name: string) => {
-    setActiveName(name);
-    void reload();
+  /** 打开预览：先取这一篇的最新正文再开弹窗，避免先显示旧内容再跳变。 */
+  const openNote = async (name: string) => {
+    const fallback = notes.find((note) => note.name === name) ?? null;
+
+    try {
+      const fresh = await fetchEnglishNote(name);
+
+      setActive(fresh ?? fallback);
+    } catch {
+      // 单篇读取失败就先用列表里的那份，至少还能看
+      setActive(fallback);
+    }
   };
 
-  /** 保存弹窗里的编辑：写回源文件、提交记录仓库，再重新读取。 */
+  /** 保存弹窗里的编辑：写回源文件、提交记录仓库，再只刷这一篇。 */
   const saveActive = async (markdown: string) => {
     if (!active) {
       return {};
@@ -37,7 +50,16 @@ const English = () => {
 
     const saved = await saveEnglishNote(active.name, markdown);
 
-    await reload();
+    try {
+      const fresh = await fetchEnglishNote(active.name);
+
+      if (fresh) {
+        setActive(fresh);
+        applyNote(fresh);
+      }
+    } catch {
+      // 刷新失败不影响保存结果，下次打开会重新取
+    }
 
     return saved.commitError
       ? { notice: `自动提交失败：${saved.commitError}` }
@@ -52,7 +74,7 @@ const English = () => {
 
     const next = (activeIndex + delta + notes.length) % notes.length;
 
-    setActiveName(notes[next].name);
+    void openNote(notes[next].name);
   };
 
   return (
@@ -71,7 +93,7 @@ const English = () => {
       <MarkdownPreviewModal
         Editor={NoteEditor}
         markdown={active?.content ?? ''}
-        onClose={() => setActiveName(null)}
+        onClose={() => setActive(null)}
         onNext={notes.length > 1 ? () => step(1) : null}
         onPrevious={notes.length > 1 ? () => step(-1) : null}
         onSave={import.meta.env.DEV ? saveActive : undefined}

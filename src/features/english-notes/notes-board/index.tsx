@@ -13,7 +13,7 @@ export type NotesBoardProps = {
   /** 是否正在读取 */
   loading: boolean;
   /** 打开某一篇笔记的预览 */
-  onOpen: (name: string) => void;
+  onOpen: (name: string) => Promise<void>;
 };
 
 /** 把文件名拆成主名与扩展名，扩展名弱化展示。 */
@@ -31,9 +31,10 @@ const splitName = (name: string): { base: string; extension: string } => {
 const NotesBoard = ({ notes, loading, onOpen }: NotesBoardProps) => (
   <div className={styles.board}>
     {NOTE_CATEGORIES.map((category) => {
-      const columnNotes = notes.filter(
-        (note) => getNoteCategory(note.name) === category.key,
-      );
+      // 列内按文件名排序：保存会刷新修改时间，按时间排会让笔记在列里乱跳
+      const columnNotes = notes
+        .filter((note) => getNoteCategory(note.name) === category.key)
+        .toSorted((a, b) => a.name.localeCompare(b.name));
 
       return (
         <section className={styles.column} key={category.key}>
@@ -57,7 +58,9 @@ const NotesBoard = ({ notes, loading, onOpen }: NotesBoardProps) => (
                       <button
                         aria-label={`预览 ${note.name}`}
                         className={styles.item}
-                        onClick={() => onOpen(note.name)}
+                        onClick={() => {
+                          void onOpen(note.name);
+                        }}
                         type="button"
                       >
                         <span className={styles.name}>

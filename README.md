@@ -127,14 +127,19 @@ PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/Ma
 ## 英语页
 
 「英语」页只展示同级目录 `../learn-english` 仓库 `learning-record-notes/` 下的 Markdown
-笔记：列表默认只露出文件名，点文件名在弹窗里看全文。
+笔记：五列看板（一列一类，按文件名第一个 `-` 前缀分类），整页不滚动、每列各自纵向滚动，
+列内按文件名排序；列表只露出文件名，点文件名在弹窗里看全文。
 
 数据不经过本机 agent，由 Vite 插件 `scripts/vite/english-notes.ts` 直接读盘：
 
 - 开发：`GET /api/english/notes` 每次请求实时读取该目录下的 `*.md`（排除目录自带的
-  `README.md`），写完新笔记刷新页面即可看到，无需重启服务。
-- 构建：同一份内容作为 `english-notes.json` 写进产物，供预览与静态部署使用。
-- 列表按文件最后修改时间倒序；文件正文一并返回，弹窗切换上一篇 / 下一篇时无需再请求。
+  `README.md`），写完新笔记刷新页面即可看到，无需重启服务；`GET /api/english/notes?name=…`
+  只返回这一篇，弹窗打开时用它取最新正文，避免先显示旧内容再跳变。
+- 保存：`PUT /api/english/notes`（body `{ name, content }`）写完再自动提交记录仓库；
+  文件名必须匹配 `^[\w.-]+\.md$ 且解析后仍落在笔记目录内，否则 400。
+- 构建：同一份内容作为 `english-notes.json` 写进产物，供预览与静态部署使用（只读快照，
+  保存能力仅开发模式提供）。
+- 列表按文件最后修改时间倒序；页面打开单篇时才去取正文，切换上一篇 / 下一篇只请求那一篇。
 
 记录仓库不在 `../learn-english` 时，用环境变量指定绝对路径：
 
@@ -150,7 +155,14 @@ Markdown 弹窗预览统一使用公共组件 `src/components/MarkdownPreviewMod
 用 `.claude/skills/personalize-edit-markdown` 定制）。英语页注入的是块级编辑器（表格可删行 / 加行、格子可改，其余块直接改
 源码），保存后写回源文件，并由同一个 Vite 中间件把该文件提交到记录仓库——只 stage 这一个文件，
 提交信息半固定为 `docs(notes): 手动编辑 <文件名>`，正文说明来源；内容无变化不产生空提交，
-提交失败不阻断保存，原因会显示在 footer 的「已保存」提示后面。保存成功后页面自动重新读盘。
+提交失败不阻断保存，原因会显示在 footer 的「已保存」提示后面。保存成功后只重新取这一篇。
+
+编辑中若有未保存改动，点关闭 / Esc / 遮罩会先在 footer 二次确认；编辑态标题目录置灰不可点。
+表格能否做成行 / 单元格矩阵由 `isStructuredTableSafe` 判定，含内联标签、`<thead>`、
+`<tr>` 属性、嵌套表格、实体的表格整表降级为源码编辑，避免往返丢结构。
+
+解析与回写的往返自检在仓库里（`pnpm check:md`，夹具见 `scripts/fixtures/md/`），
+已验证「原文 → parse → serialize」逐字一致、删行 / 加行只动目标行。
 
 ## 目录结构
 

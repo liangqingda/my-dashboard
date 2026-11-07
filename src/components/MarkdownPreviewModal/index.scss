@@ -141,6 +141,28 @@
   overflow: hidden;
 }
 
+/* 编辑态禁用标题目录：预览态才可跳转 */
+.outlineDisabled {
+  opacity: 0.55;
+}
+
+.outlineDisabled .outlineItem {
+  cursor: default;
+}
+
+/* 有未保存改动时的提示 */
+.unsavedHint {
+  flex: 0 0 auto;
+  color: var(--app-status-warn);
+  font-size: 0.74rem;
+}
+
+/* 危险操作（放弃改动）：只描红，不做实底 */
+.footerButtonDanger {
+  border-color: var(--app-status-danger);
+  color: var(--app-status-danger);
+}
+
 /* 保存成功提示：显示 3 秒后淡出 */
 .savedHint {
   flex: 0 0 auto;

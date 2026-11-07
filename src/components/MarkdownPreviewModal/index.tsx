@@ -6,6 +6,8 @@ import Markdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 
+import { extractMarkdownOutline } from '@/utils/markdown-outline';
+
 import styles from './index.scss';
 
 /** 「已保存」提示停留时长 */
@@ -26,80 +28,6 @@ const NO_EDITOR_MESSAGE =
 /** 固定引用，避免每次渲染重建插件数组 */
 const REMARK_PLUGINS = [remarkGfm];
 const REHYPE_PLUGINS = [rehypeRaw];
-
-/** 标题导航收录的最深层级 */
-const MAX_HEADING_LEVEL = 3;
-
-/** 用于渲染的标题信息 */
-type OutlineHeading = {
-  /** 层级：1 / 2 / 3 */
-  level: number;
-  /** 纯文本标题 */
-  text: string;
-  /** 稳定 key：同名标题按出现次序区分 */
-  key: string;
-};
-
-/** 去掉标题里的内联 Markdown 标记，留住可读文本。 */
-const stripInlineMarkup = (text: string): string =>
-  text
-    .replace(/<\/?[^>]+>/g, '')
-    .replace(/[*_`~]/g, '')
-    .replace(/\\(.)/g, '$1')
-    .trim();
-
-/** 抽取文档内的 h1–h3，作为按书写顺序排列的标题导航。 */
-const extractOutline = (markdown: string): OutlineHeading[] => {
-  const { headings } = markdown.split('\n').reduce<{
-    headings: OutlineHeading[];
-    inCode: boolean;
-  }>(
-    (acc, line) => {
-      const trimmed = line.trimStart();
-
-      if (trimmed.startsWith('```') || trimmed.startsWith('~~~')) {
-        return { headings: acc.headings, inCode: !acc.inCode };
-      }
-
-      if (acc.inCode) {
-        return acc;
-      }
-
-      const match = /^(#{1,3})\s+(.+)$/u.exec(line);
-
-      if (!match) {
-        return acc;
-      }
-
-      const level = match[1].length;
-
-      if (level > MAX_HEADING_LEVEL) {
-        return acc;
-      }
-
-      const text = stripInlineMarkup(match[2]);
-
-      if (!text) {
-        return acc;
-      }
-
-      const occurrence = acc.headings.filter(
-        (item) => item.text === text,
-      ).length;
-
-      return {
-        headings: [
-          ...acc.headings,
-          { level, text, key: `${level}:${text}:${occurrence}` },
-        ],
-        inCode: acc.inCode,
-      };
-    },
-    { headings: [], inCode: false },
-  );
-
-  return headings;
-};
 
 /** 定制编辑器收到的入参与出口：正文快照 + 草稿回传 */
 export type MarkdownEditorProps = {
@@ -162,8 +90,37 @@ const MarkdownPreviewModal = ({
   const [savedAt, setSavedAt] = useState<string | null>(null);
   /** 提示后面追加的说明，如自动提交失败原因 */
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
+  /** 有未保存改动时，关闭要二次确认 */
+  const [askDiscard, setAskDiscard] = useState(false);
+  /** 「已保存」提示的定时器句柄，连续保存时先清掉上一个 */
+  const savedTimer = useRef<number | null>(null);
   const editing = draft !== null;
-  const outline = extractOutline(markdown);
+  /** 草稿和进来的正文不一样，才算有改动 */
+  const dirty = draft !== null && draft !== markdown;
+  const outline = extractMarkdownOutline(markdown);
+
+  // 弹窗卸载时别留悬着的定时器
+  useEffect(
+    () => () => {
+      if (savedTimer.current !== null) {
+        window.clearTimeout(savedTimer.current);
+      }
+    },
+    [],
+  );
+
+  /** 显示「已保存」提示，3 秒后淡出；连续保存不会互相踩定时器 */
+  const showSavedHint = (clock: string) => {
+    if (savedTimer.current !== null) {
+      window.clearTimeout(savedTimer.current);
+    }
+
+    setSavedAt(clock);
+    savedTimer.current = window.setTimeout(() => {
+      savedTimer.current = null;
+      setSavedAt(null);
+    }, SAVED_HINT_DURATION);
+  };
 
   useEffect(() => {
     if (!opened || editing) {
@@ -193,13 +150,30 @@ const MarkdownPreviewModal = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [opened, editing, onPrevious, onNext]);
 
-  /** 关掉弹窗，同时退出编辑态。 */
-  const handleClose = () => {
+  /** 真正关掉弹窗，并清空所有编辑态。 */
+  const closeAll = () => {
+    if (savedTimer.current !== null) {
+      window.clearTimeout(savedTimer.current);
+      savedTimer.current = null;
+    }
+
     setDraft(null);
     setSaveError(null);
     setSavedAt(null);
     setSaveNotice(null);
+    setAskDiscard(false);
     onClose();
+  };
+
+  /** 关闭入口：编辑中有未保存改动时先确认，别静默丢改动。 */
+  const handleClose = () => {
+    if (dirty) {
+      setAskDiscard(true);
+
+      return;
+    }
+
+    closeAll();
   };
 
   /** 进入编辑态：有定制编辑器才进入，没有就提示去定制。 */
@@ -214,6 +188,7 @@ const MarkdownPreviewModal = ({
       return;
     }
 
+    setAskDiscard(false);
     setSaveError(null);
     setSavedAt(null);
     setSaveNotice(null);
@@ -239,9 +214,9 @@ const MarkdownPreviewModal = ({
       const result = await onSave(draft);
 
       setDraft(null);
-      setSavedAt(formatClock(new Date()));
+      setAskDiscard(false);
       setSaveNotice(result.notice ?? null);
-      window.setTimeout(() => setSavedAt(null), SAVED_HINT_DURATION);
+      showSavedHint(formatClock(new Date()));
     } catch (caught) {
       setSaveError(caught instanceof Error ? caught.message : '保存失败');
     } finally {
@@ -263,13 +238,21 @@ const MarkdownPreviewModal = ({
   /** 弹窗左上角、框体之外的标题导航 */
   const outlineNav =
     outline.length > 1 ? (
-      <div className={styles.outlineNav}>
+      <div
+        aria-disabled={editing}
+        className={
+          editing
+            ? `${styles.outlineNav} ${styles.outlineDisabled}`
+            : styles.outlineNav
+        }
+      >
         <ul className={styles.outlineList}>
           {outline.map((heading, index) => (
             <li key={heading.key}>
               <button
                 className={styles.outlineItem}
                 data-level={heading.level}
+                disabled={editing}
                 onClick={() => scrollToHeading(index)}
                 title={heading.text}
                 type="button"
@@ -345,14 +328,35 @@ const MarkdownPreviewModal = ({
         {saveError ? (
           <span className={styles.saveError}>{saveError}</span>
         ) : null}
-        {savedAt && !saveError ? (
+        {askDiscard ? (
+          <span className={styles.unsavedHint}>这份改动还没保存</span>
+        ) : null}
+        {savedAt && !saveError && !askDiscard ? (
           <span className={styles.savedHint}>
             已保存・{savedAt}
             {saveNotice ? `・${saveNotice}` : ''}
           </span>
         ) : null}
         <div className={styles.actions}>
-          {editing ? (
+          {askDiscard ? (
+            <>
+              <button
+                className={styles.footerButton}
+                onClick={() => setAskDiscard(false)}
+                type="button"
+              >
+                继续编辑
+              </button>
+              <button
+                className={`${styles.footerButton} ${styles.footerButtonDanger}`}
+                onClick={closeAll}
+                type="button"
+              >
+                放弃并关闭
+              </button>
+            </>
+          ) : null}
+          {!askDiscard && editing ? (
             <>
               <button
                 className={styles.footerButton}
@@ -373,7 +377,8 @@ const MarkdownPreviewModal = ({
                 {saving ? '保存中…' : '保存'}
               </button>
             </>
-          ) : (
+          ) : null}
+          {!askDiscard && !editing ? (
             <>
               {onSave ? (
                 <button
@@ -392,7 +397,7 @@ const MarkdownPreviewModal = ({
                 关闭
               </button>
             </>
-          )}
+          ) : null}
         </div>
       </footer>
     </Modal>

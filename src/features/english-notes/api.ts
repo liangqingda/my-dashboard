@@ -14,14 +14,16 @@ const ENDPOINT = import.meta.env.DEV
   ? '/api/english/notes'
   : '/english-notes.json';
 
-/** 原始 payload 结构（由 Vite 插件生成） */
-type RawPayload = {
-  /** 快照生成时间 */
-  generatedAt: unknown;
-  /** 记录仓库路径 */
-  repoPath: unknown;
+/** 全部笔记的原始 payload（由 Vite 插件生成） */
+type RawNotesPayload = {
   /** 笔记列表 */
   notes: unknown;
+};
+
+/** 单篇笔记的原始 payload */
+type RawNotePayload = {
+  /** 一篇笔记 */
+  note: unknown;
 };
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
@@ -29,12 +31,6 @@ const isObject = (value: unknown): value is Record<string, unknown> =>
 
 const asString = (value: unknown): string =>
   typeof value === 'string' ? value : '';
-
-const asNumber = (value: unknown): number => {
-  const parsed = value;
-
-  return typeof parsed === 'number' && Number.isFinite(parsed) ? parsed : 0;
-};
 
 /** 归一化单篇笔记；缺少文件名或正文的条目直接丢弃。 */
 const normalizeNote = (raw: unknown): EnglishNote | null => {
@@ -52,26 +48,19 @@ const normalizeNote = (raw: unknown): EnglishNote | null => {
     name,
     content: raw.content,
     updatedAt: asString(raw.updatedAt),
-    size: asNumber(raw.size),
   };
 };
 
 /** 把原始 payload 归一化为页面直接消费的笔记集合。 */
-const normalize = (payload: RawPayload): EnglishNotesSnapshot => {
-  const notes = Array.isArray(payload.notes)
+const normalize = (payload: RawNotesPayload): EnglishNotesSnapshot => ({
+  notes: Array.isArray(payload.notes)
     ? payload.notes.flatMap((raw) => {
         const note = normalizeNote(raw);
 
         return note ? [note] : [];
       })
-    : [];
-
-  return {
-    generatedAt: asString(payload.generatedAt),
-    repoPath: asString(payload.repoPath),
-    notes,
-  };
-};
+    : [],
+});
 
 /**
  * 读取 learning-record-notes 下的全部笔记。
@@ -102,7 +91,48 @@ export const fetchEnglishNotes = async (
     throw new Error('笔记数据格式不符合预期');
   }
 
-  return normalize(payload as RawPayload);
+  return normalize(payload as RawNotesPayload);
+};
+
+/**
+ * 读取单篇笔记：打开预览、保存之后只需要刷这一篇，不必拉全仓库正文。
+ * 文件不存在时返回 null（例如刚好被删掉）。
+ */
+export const fetchEnglishNote = async (
+  name: string,
+  signal?: AbortSignal,
+): Promise<EnglishNote | null> => {
+  if (!import.meta.env.DEV) {
+    // 静态快照只带构建时的内容，单篇刷新没有意义，直接回落到列表里的那份。
+    return null;
+  }
+
+  const response = await fetch(`${ENDPOINT}?name=${encodeURIComponent(name)}`, {
+    cache: 'no-store',
+    signal,
+  });
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    throw new Error(`读取笔记失败（HTTP ${response.status}）`);
+  }
+
+  let payload: unknown;
+
+  try {
+    payload = await response.json();
+  } catch {
+    throw new Error('笔记数据不是有效的 JSON');
+  }
+
+  if (!isObject(payload)) {
+    throw new Error('笔记数据格式不符合预期');
+  }
+
+  return normalizeNote((payload as RawNotePayload).note);
 };
 
 /** 保存后自动提交到记录仓库的结果 */
