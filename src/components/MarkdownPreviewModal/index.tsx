@@ -285,7 +285,6 @@ const MarkdownPreviewModal = ({
                 data-level={heading.level}
                 disabled={editing}
                 onClick={() => scrollToHeading(index)}
-                title={heading.text}
                 type="button"
               >
                 {heading.text}
