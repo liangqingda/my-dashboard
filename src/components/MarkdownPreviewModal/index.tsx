@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ActionIcon, Modal } from '@mantine/core';
-import { IconChevronLeft, IconChevronRight, IconList } from '@tabler/icons-react';
+import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import Markdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
@@ -124,7 +124,6 @@ const MarkdownPreviewModal = ({
   onSave,
 }: MarkdownPreviewModalProps) => {
   const bodyRef = useRef<HTMLElement | null>(null);
-  const [outlineOpen, setOutlineOpen] = useState(true);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
   const [saving, setSaving] = useState(false);
@@ -207,33 +206,21 @@ const MarkdownPreviewModal = ({
   const outlineNav =
     outline.length > 1 ? (
       <div className={styles.outlineNav}>
-        <button
-          aria-expanded={outlineOpen}
-          aria-label="标题导航"
-          className={styles.outlineToggle}
-          onClick={() => setOutlineOpen((open) => !open)}
-          type="button"
-        >
-          <IconList size={14} stroke={1.8} />
-          <span>目录</span>
-        </button>
-        {outlineOpen ? (
-          <ul className={styles.outlineList}>
-            {outline.map((heading, index) => (
-              <li key={heading.key}>
-                <button
-                  className={styles.outlineItem}
-                  data-level={heading.level}
-                  onClick={() => scrollToHeading(index)}
-                  title={heading.text}
-                  type="button"
-                >
-                  {heading.text}
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : null}
+        <ul className={styles.outlineList}>
+          {outline.map((heading, index) => (
+            <li key={heading.key}>
+              <button
+                className={styles.outlineItem}
+                data-level={heading.level}
+                onClick={() => scrollToHeading(index)}
+                title={heading.text}
+                type="button"
+              >
+                {heading.text}
+              </button>
+            </li>
+          ))}
+        </ul>
       </div>
     ) : null;
 
