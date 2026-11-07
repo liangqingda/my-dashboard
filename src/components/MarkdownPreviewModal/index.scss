@@ -1,11 +1,13 @@
 /* Markdown 预览弹窗：文档排版 + header 导航 + 弹窗外侧标题导航 */
 
-/* 允许标题导航跑到弹窗框外 */
+/* 允许标题导航跑到弹窗框外；底色用带一点纸感的浅调，不是纯白 */
 .content {
   display: flex;
   flex-direction: column;
   max-height: 88dvh;
   overflow: visible;
+  border: 1px solid var(--app-line-strong);
+  background: color-mix(in srgb, var(--app-surface) 86%, var(--app-bg));
 }
 
 .header {
@@ -61,13 +63,14 @@
 /* 弹窗左上角、框体之外的标题导航 */
 .outlineNav {
   position: absolute;
-  top: 0;
+  top: calc(100% + 10px);
   left: -182px;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   gap: 6px;
   width: 170px;
-  max-height: 70dvh;
+  max-height: calc(88dvh - 96px);
   padding: 8px;
   border: 1px solid var(--app-line);
   border-radius: 2px;
@@ -306,37 +309,9 @@
 /* 屏幕不够宽时，标题导航改到弹窗上方，仍在弹窗之外 */
 @media (max-width: 1240px) {
   .outlineNav {
-    top: -52px;
-    left: 0;
-    flex-direction: row;
-    align-items: center;
-    gap: 10px;
-    width: auto;
-    max-width: 86vw;
-    max-height: none;
-    padding: 6px 8px;
-  }
-
-  .outlineToggle {
-    flex: 0 0 auto;
-    padding: 0 8px 0 2px;
-    border-right: 1px solid var(--app-line);
-    border-bottom: 0;
-  }
-
-  .outlineList {
-    flex-direction: row;
-    overflow-x: auto;
-    overflow-y: hidden;
-  }
-
-  .outlineItem {
-    width: auto;
-    max-width: 34ch;
-  }
-
-  .outlineItem[data-level='3'] {
-    padding-left: 5px;
+    left: 6px;
+    width: min(260px, 82vw);
+    max-height: 46dvh;
   }
 }
 
