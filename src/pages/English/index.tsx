@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import MarkdownPreviewModal from '@/components/MarkdownPreviewModal';
 import { useEnglishNotes } from '@/features/english-notes/hooks/useEnglishNotes';
 import NotesBoard from '@/features/english-notes/notes-board';
+import { onPageRefresh } from '@/utils/page-refresh';
 
 import styles from './index.scss';
 
@@ -16,6 +17,9 @@ const English = () => {
       ? -1
       : notes.findIndex((note) => note.name === activeName);
   const active = activeIndex >= 0 ? notes[activeIndex] : null;
+
+  // 侧边栏「刷新」按钮：重新读取仓库里的笔记
+  useEffect(() => onPageRefresh(reload), [reload]);
 
   /** 打开预览：先静默重新读盘，避免看到仓库里已被改掉的旧正文。 */
   const openNote = (name: string) => {

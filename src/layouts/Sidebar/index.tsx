@@ -1,6 +1,13 @@
 import { Link, useLocation } from 'react-router';
-import { AppShell, NavLink, ScrollArea } from '@mantine/core';
-import { IconDashboard, IconLanguage, IconServer } from '@tabler/icons-react';
+import { ActionIcon, AppShell, NavLink, ScrollArea } from '@mantine/core';
+import {
+  IconDashboard,
+  IconLanguage,
+  IconRefresh,
+  IconServer,
+} from '@tabler/icons-react';
+
+import { requestPageRefresh } from '@/utils/page-refresh';
 
 import styles from './index.scss';
 
@@ -24,21 +31,42 @@ const Sidebar = ({ onNavigate }: { onNavigate: () => void }) => {
     <AppShell.Section aria-label="主导航" component="nav" grow>
       <ScrollArea h="100%" scrollbars="y" type="auto">
         <div className={styles.list}>
-          {navItems.map(({ key, label, to, icon: Icon }) => (
-            <NavLink
-              active={location.pathname === to}
-              aria-current={location.pathname === to ? 'page' : undefined}
-              className={styles.link}
-              component={Link}
-              key={key}
-              label={label}
-              leftSection={<Icon size={16} stroke={1.9} />}
-              noWrap
-              onClick={onNavigate}
-              to={to}
-              variant="light"
-            />
-          ))}
+          {navItems.map(({ key, label, to, icon: Icon }) => {
+            const active = location.pathname === to;
+
+            return (
+              <div className={styles.item} key={key}>
+                <NavLink
+                  active={active}
+                  aria-current={active ? 'page' : undefined}
+                  className={styles.link}
+                  component={Link}
+                  label={label}
+                  leftSection={<Icon size={16} stroke={1.9} />}
+                  noWrap
+                  onClick={onNavigate}
+                  rightSection={
+                    active ? <span className={styles.refreshSlot} /> : undefined
+                  }
+                  to={to}
+                  variant="light"
+                />
+                {active ? (
+                  <ActionIcon
+                    aria-label="刷新当前页面"
+                    className={styles.refresh}
+                    onClick={requestPageRefresh}
+                    radius="sm"
+                    size="sm"
+                    title="刷新当前页面"
+                    variant="subtle"
+                  >
+                    <IconRefresh size={14} stroke={1.9} />
+                  </ActionIcon>
+                ) : null}
+              </div>
+            );
+          })}
         </div>
       </ScrollArea>
     </AppShell.Section>

@@ -5,6 +5,30 @@
   padding: var(--app-space-md);
 }
 
+/* 刷新按钮浮在激活项右侧，避免按钮嵌进链接里 */
+.item {
+  position: relative;
+}
+
 .link {
   border-radius: var(--mantine-radius-md);
+}
+
+/* 只占位：给刷新按钮留出右侧空间 */
+.refreshSlot {
+  display: block;
+  width: 20px;
+  height: 1px;
+}
+
+.refresh {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  color: var(--app-ink-faint);
+  transform: translateY(-50%);
+}
+
+.refresh:hover {
+  color: var(--app-accent);
 }
