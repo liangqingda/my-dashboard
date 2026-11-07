@@ -255,6 +255,14 @@
   font-weight: 600;
 }
 
+.prose tbody tr {
+  transition: background-color 100ms ease;
+}
+
+.prose tbody tr:hover {
+  background: var(--app-accent-soft);
+}
+
 .prose tbody tr:last-child td {
   border-bottom: 0;
 }
@@ -327,5 +335,11 @@
 
   .header {
     padding-right: 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .prose tbody tr {
+    transition: none;
   }
 }
