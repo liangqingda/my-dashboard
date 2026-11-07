@@ -207,13 +207,16 @@ const MarkdownPreviewModal = ({
       return;
     }
 
+    const savedDraft = draft;
+
     setSaving(true);
     setSaveError(null);
 
     try {
-      const result = await onSave(draft);
+      const result = await onSave(savedDraft);
 
-      setDraft(null);
+      // 保存期间用户又改了内容，就别把他的新输入一起清掉
+      setDraft((current) => (current === savedDraft ? null : current));
       setAskDiscard(false);
       setSaveNotice(result.notice ?? null);
       showSavedHint(formatClock(new Date()));
@@ -325,7 +328,7 @@ const MarkdownPreviewModal = ({
       )}
 
       <footer className={styles.footer}>
-        {saveError ? (
+        {saveError && !askDiscard ? (
           <span className={styles.saveError}>{saveError}</span>
         ) : null}
         {askDiscard ? (

@@ -44,8 +44,12 @@ const NotesBoard = ({ notes, loading, onOpen }: NotesBoardProps) => (
               <Skeleton h={14} mt={8} w="64%" />
             ) : null}
 
-            {!loading && columnNotes.length === 0 ? (
+            {!loading && notes.length > 0 && columnNotes.length === 0 ? (
               <p className={styles.empty}>这一列还没有笔记</p>
+            ) : null}
+
+            {notes.length === 0 && !loading ? (
+              <p className={styles.empty}>笔记目录里还没有 Markdown 文件</p>
             ) : null}
 
             {columnNotes.length > 0 ? (

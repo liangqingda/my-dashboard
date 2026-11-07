@@ -28,6 +28,8 @@ const NoteEditor = ({ markdown, onChange }: MarkdownEditorProps) => {
   const [blocks, setBlocks] = useState<MarkdownBlock[]>(() =>
     parseMarkdownBlocks(markdown),
   );
+  /** 原文件用 CRLF 时写回也用它，不把整个文件的换行都换掉 */
+  const [usesCrlf] = useState(() => markdown.includes('\r\n'));
   /** 结构操作（删行 / 加行 / 改格）的撤销栈；文本框里的撤销仍走浏览器原生 */
   const history = useRef<MarkdownBlock[][]>([]);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -40,11 +42,18 @@ const NoteEditor = ({ markdown, onChange }: MarkdownEditorProps) => {
     firstField?.focus();
   }, []);
 
+  /** 拼回 Markdown，并按原文件的换行风格输出 */
+  const toMarkdown = (next: MarkdownBlock[]): string => {
+    const text = serializeMarkdownBlocks(next);
+
+    return usesCrlf ? text.replace(/\n/gu, '\r\n') : text;
+  };
+
   /** 块列表变化：自己留一份，同时把拼好的 Markdown 交给弹窗当草稿 */
   const handleChange = (next: MarkdownBlock[]) => {
     history.current = [...history.current.slice(-(UNDO_DEPTH - 1)), blocks];
     setBlocks(next);
-    onChange(serializeMarkdownBlocks(next));
+    onChange(toMarkdown(next));
   };
 
   /** 撤销上一步结构改动 */
@@ -57,7 +66,7 @@ const NoteEditor = ({ markdown, onChange }: MarkdownEditorProps) => {
 
     history.current = history.current.slice(0, -1);
     setBlocks(previous);
-    onChange(serializeMarkdownBlocks(previous));
+    onChange(toMarkdown(previous));
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {

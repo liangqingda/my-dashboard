@@ -60,7 +60,14 @@ export const readNote = async (
   repoDir: string,
   name: string,
 ): Promise<NoteSnapshot | null> => {
-  const file = path.join(notesDirOf(repoDir), name);
+  // 读也要过同一套校验：`?name=../../package.json` 这种必须当不存在
+  let file: string;
+
+  try {
+    file = resolveNoteFile(repoDir, name);
+  } catch {
+    return null;
+  }
 
   try {
     const [content, info] = await Promise.all([

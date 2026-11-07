@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import MarkdownPreviewModal from '@/components/MarkdownPreviewModal';
 import {
@@ -19,6 +19,8 @@ const English = () => {
     useEnglishNotes();
   /** 当前预览的笔记（存内容而不是文件名，打开时就能拿到最新正文） */
   const [active, setActive] = useState<EnglishNote | null>(null);
+  /** 打开请求的序号：连点两篇时只认最后一次 */
+  const openSeq = useRef(0);
 
   const activeIndex =
     active === null
@@ -30,15 +32,22 @@ const English = () => {
 
   /** 打开预览：先取这一篇的最新正文再开弹窗，避免先显示旧内容再跳变。 */
   const openNote = async (name: string) => {
+    openSeq.current += 1;
+
+    const seq = openSeq.current;
     const fallback = notes.find((note) => note.name === name) ?? null;
 
     try {
       const fresh = await fetchEnglishNote(name);
 
-      setActive(fresh ?? fallback);
+      if (seq === openSeq.current) {
+        setActive(fresh ?? fallback);
+      }
     } catch {
       // 单篇读取失败就先用列表里的那份，至少还能看
-      setActive(fallback);
+      if (seq === openSeq.current) {
+        setActive(fallback);
+      }
     }
   };
 
@@ -91,7 +100,9 @@ const English = () => {
       <NotesBoard loading={loading} notes={notes} onOpen={openNote} />
 
       <MarkdownPreviewModal
+        // 换一篇就重挂弹窗，避免上一篇的「已保存」提示和编辑态漏到下一篇
         Editor={NoteEditor}
+        key={active?.name ?? 'closed'}
         markdown={active?.content ?? ''}
         onClose={() => setActive(null)}
         onNext={notes.length > 1 ? () => step(1) : null}

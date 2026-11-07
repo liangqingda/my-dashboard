@@ -197,7 +197,7 @@ export const parseMarkdownBlocks = (markdown: string): MarkdownBlock[] => {
   let gap = 0;
 
   const flushText = () => {
-    const source = buffer.join('\n').trim();
+    const source = buffer.join('\n').trimEnd();
 
     if (source) {
       blocks = [
@@ -312,6 +312,14 @@ export const parseMarkdownBlocks = (markdown: string): MarkdownBlock[] => {
 
   flushText();
 
+  if (raw.length > 0) {
+    // 表格 / details / 代码围栏没写闭合标签时，整段按源码保留，绝不丢内容
+    blocks = [
+      ...blocks,
+      { gapBefore: gap, id: nextId(), source: raw.join('\n'), type: 'text' },
+    ];
+  }
+
   return blocks;
 };
 
@@ -326,7 +334,7 @@ export const serializeMarkdownBlocks = (blocks: MarkdownBlock[]): string => {
       text:
         block.type === 'table'
           ? serializeTableBlock(block)
-          : block.source.trim(),
+          : block.source.trimEnd(),
     }))
     .filter((part) => part.text.length > 0);
 

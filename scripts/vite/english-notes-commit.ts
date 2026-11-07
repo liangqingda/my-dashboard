@@ -71,7 +71,16 @@ export const commitNote = async (
 
     await runGit(
       'git',
-      ['commit', '-m', subject, '-m', '通过 my-dashboard 的 Markdown 预览弹窗保存'],
+      [
+        'commit',
+        '-m',
+        subject,
+        '-m',
+        '通过 my-dashboard 的 Markdown 预览弹窗保存',
+        // 带 pathspec：只提交这一个文件，不把 index 里别的预暂存改动捎上
+        '--',
+        relative,
+      ],
       { cwd: repoDir },
     );
 
