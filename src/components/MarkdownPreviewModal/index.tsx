@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActionIcon, Button, Modal } from '@mantine/core';
+import { ActionIcon, Modal } from '@mantine/core';
 import { IconChevronLeft, IconChevronRight, IconList } from '@tabler/icons-react';
 import Markdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
@@ -310,47 +310,43 @@ const MarkdownPreviewModal = ({
         <div className={styles.actions}>
           {editing ? (
             <>
-              <Button
+              <button
+                className={styles.footerButton}
                 disabled={saving}
                 onClick={() => setEditing(false)}
-                radius="sm"
-                size="compact-sm"
-                variant="subtle"
+                type="button"
               >
                 取消
-              </Button>
-              <Button
-                loading={saving}
+              </button>
+              <button
+                className={styles.footerButton}
+                disabled={saving}
                 onClick={() => {
                   void handleSave();
                 }}
-                radius="sm"
-                size="compact-sm"
-                variant="filled"
+                type="button"
               >
-                保存
-              </Button>
+                {saving ? '保存中…' : '保存'}
+              </button>
             </>
           ) : (
             <>
               {onSave ? (
-                <Button
+                <button
+                  className={styles.footerButton}
                   onClick={startEditing}
-                  radius="sm"
-                  size="compact-sm"
-                  variant="subtle"
+                  type="button"
                 >
                   编辑
-                </Button>
+                </button>
               ) : null}
-              <Button
+              <button
+                className={styles.footerButton}
                 onClick={handleClose}
-                radius="sm"
-                size="compact-sm"
-                variant="default"
+                type="button"
               >
                 关闭
-              </Button>
+              </button>
             </>
           )}
         </div>
