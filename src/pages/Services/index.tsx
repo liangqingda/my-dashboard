@@ -3,13 +3,11 @@
  */
 
 import { useEffect } from 'react';
-import { Stack, Title } from '@mantine/core';
 
 import { useServices } from '@/features/services/hooks/useServices';
 import ServicesManager from '@/features/services/services-manager';
+import MenuContentLayout from '@/layouts/MenuContentLayout';
 import { onPageRefresh } from '@/utils/page-refresh';
-
-import styles from './index.scss';
 
 const Services = () => {
   const { refresh } = useServices();
@@ -18,12 +16,9 @@ const Services = () => {
   useEffect(() => onPageRefresh(() => void refresh()), [refresh]);
 
   return (
-    <div className={styles.page}>
-      <Stack gap="md">
-        <Title order={2}>服务</Title>
-        <ServicesManager />
-      </Stack>
-    </div>
+    <MenuContentLayout title="服务">
+      <ServicesManager />
+    </MenuContentLayout>
   );
 };
 

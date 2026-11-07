@@ -82,6 +82,19 @@ pnpm check:md   # scripts/md-roundtrip.mts，夹具在 scripts/fixtures/md/
 打开时 `GET /api/english/notes?name=…` 只取这一篇，保存时 `PUT /api/english/notes`
 写回 `learning-record-notes/*.md`）。
 
+## 菜单页面内容统一走 MenuContentLayout
+
+所有侧边栏菜单页（概览 / 服务 / 英语 …）的内容必须包在 `src/layouts/MenuContentLayout/` 里，
+页面自己不要再写页面内边距和标题样式：
+
+- 内边距固定 `14px 12px`、标题排版、标题与内容的纵向间距都由该组件负责；
+- 标题通过 `title` prop 传入（`ReactNode`，在组件内统一用 Mantine `Title order={2}` 渲染）；
+- 需要「整页不滚动、滚动只在内部子区域」的页面（如英语看板）传 `fill`，高度按
+  `calc(100dvh - var(--app-header-height))` 撑满，全屏模式下随 `--app-header-height: 0px` 自动铺满。
+
+新增菜单页时复用该组件，不要在页面 `index.scss` 里重写 `.page` 的 padding / height。
+404 等非菜单页不受此约束。
+
 ## 其它约定
 
 - 公共组件放 `src/components/<PascalCase>/`（lint 强制），同样 `index.tsx` + `index.scss`；

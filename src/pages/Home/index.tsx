@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
-import { Stack, Title } from '@mantine/core';
 
 import { useServices } from '@/features/services/hooks/useServices';
 import ServicesOverview from '@/features/services/services-overview';
+import MenuContentLayout from '@/layouts/MenuContentLayout';
 import { onPageRefresh } from '@/utils/page-refresh';
 
 import styles from './index.scss';
@@ -14,14 +14,11 @@ const Home = () => {
   useEffect(() => onPageRefresh(() => void refresh()), [refresh]);
 
   return (
-    <div className={styles.page}>
-      <Stack gap="md">
-        <Title order={2}>概览</Title>
-        <div className={styles.cards}>
-          <ServicesOverview />
-        </div>
-      </Stack>
-    </div>
+    <MenuContentLayout title="概览">
+      <div className={styles.cards}>
+        <ServicesOverview />
+      </div>
+    </MenuContentLayout>
   );
 };
 

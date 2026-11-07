@@ -1,0 +1,29 @@
+/* 菜单内容页统一外壳：内边距、标题行间距、纵向排列都在这里定死 */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-space-md);
+  padding: 14px 12px;
+}
+
+/* 撑满视口高度：页面自身不滚动，滚动只发生在内部子区域 */
+.fill {
+  height: calc(100dvh - var(--app-header-height));
+  overflow: hidden;
+}
+
+.titleBar {
+  flex: 0 0 auto;
+}
+
+.title {
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}

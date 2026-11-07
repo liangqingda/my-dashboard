@@ -10,6 +10,7 @@ import NoteEditor from '@/features/english-notes/note-editor';
 import NotesBoard from '@/features/english-notes/notes-board';
 import type { EnglishNote } from '@/features/english-notes/types';
 import { getNoteCategory, isBoardNote } from '@/features/english-notes/utils';
+import MenuContentLayout from '@/layouts/MenuContentLayout';
 import { onPageRefresh } from '@/utils/page-refresh';
 
 import styles from './index.scss';
@@ -114,17 +115,19 @@ const English = () => {
   };
 
   return (
-    <div className={styles.page}>
-      {error ? (
-        <div className={styles.errorBar}>
-          <span className={styles.errorText}>{error}</span>
-          <button className={styles.retry} onClick={refresh} type="button">
-            重新读取
-          </button>
-        </div>
-      ) : null}
+    <>
+      <MenuContentLayout fill title="英语">
+        {error ? (
+          <div className={styles.errorBar}>
+            <span className={styles.errorText}>{error}</span>
+            <button className={styles.retry} onClick={refresh} type="button">
+              重新读取
+            </button>
+          </div>
+        ) : null}
 
-      <NotesBoard loading={loading} notes={boardNotes} onOpen={openNote} />
+        <NotesBoard loading={loading} notes={boardNotes} onOpen={openNote} />
+      </MenuContentLayout>
 
       <MarkdownPreviewModal
         // 换一篇就重挂弹窗，避免上一篇的「已保存」提示和编辑态漏到下一篇
@@ -144,7 +147,7 @@ const English = () => {
         }
         title={active?.name ?? ''}
       />
-    </div>
+    </>
   );
 };
 

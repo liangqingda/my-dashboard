@@ -1,12 +1,4 @@
-/* 英语页：整页占满内容区且不滚动，滚动只发生在各列内部 */
-.page {
-  display: flex;
-  flex-direction: column;
-  height: calc(100dvh - var(--app-header-height));
-  padding: 0 var(--app-space-lg);
-  overflow: hidden;
-}
-
+/* 英语页错误提示条：页面外壳（内边距、标题、整页不滚动）由 MenuContentLayout 负责 */
 .errorBar {
   display: flex;
   flex: 0 0 auto;
