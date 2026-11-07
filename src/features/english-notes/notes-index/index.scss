@@ -1,23 +1,24 @@
-/* 笔记索引：一行一个文件名，悬停才露出进入箭头 */
+/* 笔记索引：三列文件名，行紧凑，悬停才露出进入箭头 */
 .list {
-  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 18px;
+  margin: 4px 0 0;
   padding: 0;
-  border-top: 1px solid var(--app-line);
-  border-bottom: 1px solid var(--app-line);
   list-style: none;
 }
 
-.row + .row {
-  border-top: 1px solid var(--app-line);
+.row {
+  border-bottom: 1px solid var(--app-line);
 }
 
 .item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 10px;
   width: 100%;
-  padding: 13px 6px 13px 2px;
+  padding: 6px 4px;
   background: transparent;
   color: inherit;
   font: inherit;
@@ -34,7 +35,7 @@
   overflow-wrap: anywhere;
   color: var(--app-ink);
   font-family: var(--app-serif);
-  font-size: 0.98rem;
+  font-size: 0.84rem;
   line-height: 1.4;
 }
 
@@ -57,6 +58,18 @@
   color: var(--app-accent);
   opacity: 1;
   transform: translateX(2px);
+}
+
+@media (max-width: 900px) {
+  .list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .list {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
