@@ -73,7 +73,9 @@
 
 .name {
   min-width: 0;
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   color: var(--app-ink);
   font-family: var(--app-serif);
   font-size: 0.82rem;

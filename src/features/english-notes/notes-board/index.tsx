@@ -27,6 +27,10 @@ const splitName = (name: string): { base: string; extension: string } => {
   return { base: name.slice(0, index), extension: name.slice(index) };
 };
 
+/** 列标题已经写明分类，列表里去掉重复的分类前缀。 */
+const stripCategory = (base: string, category: string): string =>
+  base.startsWith(`${category}-`) ? base.slice(category.length + 1) : base;
+
 /** 分列看板：一类一列，列内独立滚动，默认只露出文件名。 */
 const NotesBoard = ({ notes, loading, onOpen }: NotesBoardProps) => (
   <div className={styles.board}>
@@ -56,6 +60,7 @@ const NotesBoard = ({ notes, loading, onOpen }: NotesBoardProps) => (
               <ul className={styles.list}>
                 {columnNotes.map((note) => {
                   const { base, extension } = splitName(note.name);
+                  const display = stripCategory(base, category.key);
 
                   return (
                     <li className={styles.row} key={note.name}>
@@ -68,7 +73,7 @@ const NotesBoard = ({ notes, loading, onOpen }: NotesBoardProps) => (
                         type="button"
                       >
                         <span className={styles.name}>
-                          {base}
+                          {display}
                           <span className={styles.extension}>{extension}</span>
                         </span>
                         <IconChevronRight
