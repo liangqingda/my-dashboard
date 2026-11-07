@@ -126,15 +126,15 @@ PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/Ma
 
 ## 英语页
 
-「英语」页把同级目录 `../learn-english` 仓库里的学习记录原样读出来展示：分类索引、
-搜索、状态筛选、复习排期，以及每条记录的原始输入、例句、评分历史。
+「英语」页只展示同级目录 `../learn-english` 仓库 `learning-record-notes/` 下的 Markdown
+笔记：列表默认只露出文件名，点文件名在弹窗里看全文。
 
-数据不经过本机 agent，由 Vite 插件 `scripts/vite/english-records.ts` 直接读盘：
+数据不经过本机 agent，由 Vite 插件 `scripts/vite/english-notes.ts` 直接读盘：
 
-- 开发：`GET /api/english/records` 每次请求实时读取
-  `learning-records/*.json` 与 `mastered-learning-records/*.json`，
-  仓库有新记录时刷新页面即可看到，无需重启服务。
-- 构建：同一份数据作为 `english-records.json` 写进产物，供预览与静态部署使用。
+- 开发：`GET /api/english/notes` 每次请求实时读取该目录下的 `*.md`（排除目录自带的
+  `README.md`），写完新笔记刷新页面即可看到，无需重启服务。
+- 构建：同一份内容作为 `english-notes.json` 写进产物，供预览与静态部署使用。
+- 列表按文件最后修改时间倒序；文件正文一并返回，弹窗切换上一篇 / 下一篇时无需再请求。
 
 记录仓库不在 `../learn-english` 时，用环境变量指定绝对路径：
 
@@ -142,8 +142,9 @@ PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/Ma
 ENGLISH_RECORDS_DIR=/path/to/learn-english pnpm dev
 ```
 
-只读取 `errors`、`vocabulary`、`phrases`、`grammar`、`usage`、`pronunciation`
-六个分类；已掌握记录只有 id / 标题 / 讲解 / 掌握时间，页面对应的其它字段留空。
+Markdown 弹窗预览统一使用公共组件 `src/components/MarkdownPreviewModal`
+（详见 `CLAUDE.md`）：文档排版、表格与 `<details>` 折叠块、弹窗左上角悬浮导航、
+header 图标按钮与 `←` / `→` 快捷键都在组件内，页面只决定相邻文档是谁。
 
 ## 目录结构
 
@@ -154,8 +155,9 @@ scripts/              # 工程脚本（结构检查、feature/组件脚手架）
 src/
   layouts/            # 布局（BasicLayout / Header / Sidebar）
   pages/              # 页面（各信息模块，如 Home / Services / English）
+  components/         # 公共组件（如 MarkdownPreviewModal）
   features/services/  # 服务模块（types / api / hooks / 组件）
-  features/english-records/  # 英语记录模块（记录读取、索引栏、记录条目）
+  features/english-notes/  # 英语笔记模块（笔记读取、文件名索引）
   styles/             # 全局样式与 design tokens
 ```
 

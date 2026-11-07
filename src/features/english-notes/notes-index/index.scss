@@ -1,0 +1,66 @@
+/* 笔记索引：一行一个文件名，悬停才露出进入箭头 */
+.list {
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--app-line);
+  border-bottom: 1px solid var(--app-line);
+  list-style: none;
+}
+
+.row + .row {
+  border-top: 1px solid var(--app-line);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 13px 6px 13px 2px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.item:hover {
+  background: var(--app-surface-hover);
+}
+
+.name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--app-ink);
+  font-family: var(--app-serif);
+  font-size: 0.98rem;
+  line-height: 1.4;
+}
+
+.extension {
+  color: var(--app-ink-faint);
+  font-size: 0.82em;
+}
+
+.chevron {
+  flex: 0 0 auto;
+  color: var(--app-ink-faint);
+  opacity: 0;
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
+}
+
+.item:hover .chevron,
+.item:focus-visible .chevron {
+  color: var(--app-accent);
+  opacity: 1;
+  transform: translateX(2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chevron {
+    transition: none;
+  }
+}

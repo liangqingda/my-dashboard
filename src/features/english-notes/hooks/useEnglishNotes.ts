@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { fetchEnglishRecords } from '@/features/english-records/api';
-import type { EnglishRecord } from '@/features/english-records/types';
+import { fetchEnglishNotes } from '@/features/english-notes/api';
+import type { EnglishNote } from '@/features/english-notes/types';
 
-export type UseEnglishRecordsResult = {
-  /** 归一化后的全部记录 */
-  records: EnglishRecord[];
+export type UseEnglishNotesResult = {
+  /** 全部笔记，按最后修改时间倒序 */
+  notes: EnglishNote[];
   /** 快照生成时间（ISO 8601） */
   generatedAt: string;
   /** 记录仓库路径 */
@@ -18,28 +18,31 @@ export type UseEnglishRecordsResult = {
   refresh: () => void;
 };
 
-const EMPTY_RECORDS: EnglishRecord[] = [];
+const EMPTY_NOTES: EnglishNote[] = [];
 
 /**
- * 读取 learn-english 仓库的全部学习记录。
+ * 读取 learn-english 仓库 learning-record-notes 下的全部笔记。
  * 首次进入页面时自动读取，调用 refresh 可手动同步仓库最新内容。
  */
-export const useEnglishRecords = (): UseEnglishRecordsResult => {
-  const [records, setRecords] = useState<EnglishRecord[]>(EMPTY_RECORDS);
+export const useEnglishNotes = (): UseEnglishNotesResult => {
+  const [notes, setNotes] = useState<EnglishNote[]>(EMPTY_NOTES);
   const [generatedAt, setGeneratedAt] = useState('');
   const [repoPath, setRepoPath] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const requestId = useRef(0);
 
-  /** 把请求结果落到状态上；返回 false 表示这次结果已经过期。 */
+  /** 把请求结果落到状态上；请求已过期时直接忽略。 */
   const apply = useCallback(
-    (snapshot: Awaited<ReturnType<typeof fetchEnglishRecords>>, current: number) => {
+    (
+      snapshot: Awaited<ReturnType<typeof fetchEnglishNotes>>,
+      current: number,
+    ) => {
       if (requestId.current !== current) {
         return;
       }
 
-      setRecords(snapshot.records);
+      setNotes(snapshot.notes);
       setGeneratedAt(snapshot.generatedAt);
       setRepoPath(snapshot.repoPath);
       setError(null);
@@ -58,7 +61,7 @@ export const useEnglishRecords = (): UseEnglishRecordsResult => {
       return;
     }
 
-    setError(caught instanceof Error ? caught.message : '读取学习记录失败');
+    setError(caught instanceof Error ? caught.message : '读取笔记失败');
     setLoading(false);
   }, []);
 
@@ -70,13 +73,13 @@ export const useEnglishRecords = (): UseEnglishRecordsResult => {
     setLoading(true);
     setError(null);
 
-    fetchEnglishRecords()
+    fetchEnglishNotes()
       .then(
         (snapshot) => apply(snapshot, current),
         (caught: unknown) => fail(caught, current),
       )
       .catch(() => {
-        /* apply / fail 已经处理过状态，这里只兜住回调自身抛出的异常。 */
+        /* apply / fail 已处理状态，这里只兜住回调自身抛出的异常。 */
       });
   }, [apply, fail]);
 
@@ -86,7 +89,7 @@ export const useEnglishRecords = (): UseEnglishRecordsResult => {
 
     requestId.current = current;
 
-    fetchEnglishRecords(controller.signal)
+    fetchEnglishNotes(controller.signal)
       .then(
         (snapshot) => apply(snapshot, current),
         (caught: unknown) => fail(caught, current),
@@ -101,5 +104,5 @@ export const useEnglishRecords = (): UseEnglishRecordsResult => {
     };
   }, [apply, fail]);
 
-  return { records, generatedAt, repoPath, loading, error, refresh };
+  return { notes, generatedAt, repoPath, loading, error, refresh };
 };
