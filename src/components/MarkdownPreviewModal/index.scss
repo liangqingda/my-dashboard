@@ -1,22 +1,25 @@
 /* Markdown 预览弹窗：文档排版 + header 导航 + 弹窗外侧标题导航 */
 
-/* 允许标题导航跑到弹窗框外；底色用带一点纸感的浅调，不是纯白 */
+/* 允许标题导航跑到弹窗框外；header、正文、标题导航共用同一块灰绿纸底 */
 .content {
+  --preview-paper: var(--app-surface-subtle);
+
   display: flex;
   flex-direction: column;
   max-height: 88dvh;
   overflow: visible;
   border: 1px solid var(--app-line-strong);
-  background: color-mix(in srgb, var(--app-surface) 86%, var(--app-bg));
+  background: var(--preview-paper);
 }
 
+/* header 与正文同底色，只用一条线分隔 */
 .header {
   position: relative;
   flex: 0 0 auto;
   overflow: visible;
-  padding: 11px 44px 11px 12px;
+  padding: 11px 10px 11px 12px;
   border-bottom: 1px solid var(--app-line);
-  background: var(--app-surface-subtle);
+  background: transparent;
 }
 
 .title {
@@ -53,8 +56,10 @@
   text-overflow: ellipsis;
 }
 
+/* 计数紧跟在切换按钮右边 */
 .position {
   flex: 0 0 auto;
+  min-width: 3.2em;
   color: var(--app-ink-faint);
   font-size: 0.7rem;
   font-variant-numeric: tabular-nums;
@@ -74,7 +79,7 @@
   padding: 8px;
   border: 1px solid var(--app-line);
   border-radius: 2px;
-  background: var(--app-surface);
+  background: var(--preview-paper);
   box-shadow: 0 8px 24px rgb(23 37 34 / 10%);
 }
 
@@ -219,7 +224,7 @@
   margin: 0 0 12px;
   padding: 8px 14px;
   border-left: 2px solid var(--app-accent);
-  background: var(--app-surface-subtle);
+  background: var(--app-surface);
   color: var(--app-ink-soft);
   font-family: var(--app-serif);
 }
@@ -245,7 +250,7 @@
 }
 
 .prose th {
-  background: var(--app-surface-subtle);
+  background: var(--app-surface);
   color: var(--app-ink);
   font-weight: 600;
 }
@@ -257,7 +262,7 @@
 .prose code {
   padding: 1px 5px;
   border-radius: 2px;
-  background: var(--app-surface-subtle);
+  background: var(--app-surface);
   font-family: var(--mantine-font-family-monospace);
   font-size: 0.82em;
 }
@@ -267,7 +272,7 @@
   margin: 0 0 14px;
   padding: 12px 14px;
   border: 1px solid var(--app-line);
-  background: var(--app-surface-subtle);
+  background: var(--app-surface);
 }
 
 .prose pre code {

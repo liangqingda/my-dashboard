@@ -231,12 +231,12 @@ const MarkdownPreviewModal = ({
           >
             <IconChevronRight size={16} stroke={1.9} />
           </ActionIcon>
-          <span className={styles.fileName}>{title}</span>
           {position ? (
             <span className={styles.position}>
               {position.index} / {position.total}
             </span>
           ) : null}
+          <span className={styles.fileName}>{title}</span>
         </div>
       }
       transitionProps={{ duration: 140, transition: 'fade' }}
