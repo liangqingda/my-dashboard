@@ -78,7 +78,7 @@ pnpm check:md   # scripts/md-roundtrip.mts，夹具在 scripts/fixtures/md/
 它检查「原文 → parse → serialize」逐字一致、该降级的没有结构化、删行 / 加行只动目标行。
 `pnpm lint` 已包含这一步。
 
-参考实现：`src/pages/English/index.tsx`（五列看板 → 弹窗预览，循环切换上一篇 / 下一篇，
+参考实现：`src/pages/English/index.tsx`（六列看板 → 弹窗预览，上一篇 / 下一篇只在本列内循环，
 打开时 `GET /api/english/notes?name=…` 只取这一篇，保存时 `PUT /api/english/notes`
 写回 `learning-record-notes/*.md`）。
 

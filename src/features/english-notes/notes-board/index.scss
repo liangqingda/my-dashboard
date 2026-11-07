@@ -1,7 +1,7 @@
-/* 笔记看板：五列，一列一类，列内独立滚动 */
+/* 笔记看板：一列一类（错题 / 短语 / 用法 / 语法 / 词汇 / 混合），列内独立滚动 */
 .board {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   flex: 1 1 auto;
   min-height: 0;
 }
@@ -101,7 +101,7 @@
   transform: translateX(2px);
 }
 
-/* 窄屏：列不再挤成五条，改为横向滚动 */
+/* 窄屏：列不再挤成细条，改为横向滚动 */
 @media (max-width: 900px) {
   .board {
     grid-auto-columns: minmax(220px, 1fr);

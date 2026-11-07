@@ -11,7 +11,7 @@ export const getNoteCategory = (name: string): string => {
   return separator > 0 ? name.slice(0, separator) : '';
 };
 
-/** 看板只认这五类前缀：`mixed` / `paper` 等暂不展示，也不参与翻页计数。 */
+/** 看板展示这六类前缀；`paper`（套题）等未开列的前缀不展示，也不参与翻页计数。 */
 const BOARD_CATEGORIES: ReadonlySet<string> = new Set(
   NOTE_CATEGORIES.map((category) => category.key),
 );

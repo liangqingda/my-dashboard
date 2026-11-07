@@ -127,8 +127,8 @@ PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/Ma
 ## 英语页
 
 「英语」页只展示同级目录 `../learn-english` 仓库 `learning-record-notes/` 下的 Markdown
-笔记：五列看板（一列一类，按文件名第一个 `-` 前缀分类），整页不滚动、每列各自纵向滚动，
-列内按文件名排序；列表只露出文件名，点文件名在弹窗里看全文。
+笔记：六列看板（错题 / 短语 / 用法 / 语法 / 词汇 / 混合，一列一类，按文件名第一个 `-` 前缀分类），
+整页不滚动、每列各自纵向滚动，列内按文件名排序；列表只露出文件名，点文件名在弹窗里看全文。
 
 数据不经过本机 agent，由 Vite 插件 `scripts/vite/english-notes.ts` 直接读盘：
 
