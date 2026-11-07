@@ -11,7 +11,7 @@ import styles from './index.scss';
 
 /** 英语页：列出 learn-english 仓库 learning-record-notes 下的笔记。 */
 const English = () => {
-  const { notes, generatedAt, repoPath, loading, error, refresh } =
+  const { notes, generatedAt, repoPath, loading, error, refresh, reload } =
     useEnglishNotes();
   const [activeName, setActiveName] = useState<string | null>(null);
 
@@ -20,6 +20,12 @@ const English = () => {
       ? -1
       : notes.findIndex((note) => note.name === activeName);
   const active = activeIndex >= 0 ? notes[activeIndex] : null;
+
+  /** 打开预览：先静默重新读盘，避免看到仓库里已被改掉的旧正文。 */
+  const openNote = (name: string) => {
+    setActiveName(name);
+    reload();
+  };
 
   /** 在笔记列表中循环切换上一篇 / 下一篇。 */
   const step = (delta: number) => {
@@ -93,7 +99,7 @@ const English = () => {
       ) : null}
 
       {notes.length > 0 ? (
-        <NotesIndex notes={notes} onOpen={setActiveName} />
+        <NotesIndex notes={notes} onOpen={openNote} />
       ) : null}
 
       <footer className={styles.footer}>

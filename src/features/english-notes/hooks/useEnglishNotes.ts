@@ -14,15 +14,18 @@ export type UseEnglishNotesResult = {
   loading: boolean;
   /** 读取失败的原因 */
   error: string | null;
-  /** 重新读取一次 */
+  /** 重新读取一次（带动画与 loading 态） */
   refresh: () => void;
+  /** 静默重新读取：不改 loading，用于打开预览前同步最新内容 */
+  reload: () => void;
 };
 
 const EMPTY_NOTES: EnglishNote[] = [];
 
 /**
  * 读取 learn-english 仓库 learning-record-notes 下的全部笔记。
- * 首次进入页面时自动读取，调用 refresh 可手动同步仓库最新内容。
+ * 首次进入页面时自动读取；refresh 手动同步（显示 loading），
+ * reload 静默同步，供打开预览前拉取仓库最新内容。
  */
 export const useEnglishNotes = (): UseEnglishNotesResult => {
   const [notes, setNotes] = useState<EnglishNote[]>(EMPTY_NOTES);
@@ -83,6 +86,22 @@ export const useEnglishNotes = (): UseEnglishNotesResult => {
       });
   }, [apply, fail]);
 
+  /** 静默重新读取：不切换 loading，用于打开预览前同步仓库最新内容。 */
+  const reload = useCallback(() => {
+    const current = requestId.current + 1;
+
+    requestId.current = current;
+
+    fetchEnglishNotes()
+      .then(
+        (snapshot) => apply(snapshot, current),
+        (caught: unknown) => fail(caught, current),
+      )
+      .catch(() => {
+        /* apply / fail 已处理状态，这里只兜住回调自身抛出的异常。 */
+      });
+  }, [apply, fail]);
+
   useEffect(() => {
     const controller = new AbortController();
     const current = requestId.current + 1;
@@ -104,5 +123,5 @@ export const useEnglishNotes = (): UseEnglishNotesResult => {
     };
   }, [apply, fail]);
 
-  return { notes, generatedAt, repoPath, loading, error, refresh };
+  return { notes, generatedAt, repoPath, loading, error, refresh, reload };
 };
