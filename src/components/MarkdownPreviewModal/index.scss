@@ -150,7 +150,7 @@
   flex: 1 1 auto;
   flex-direction: column;
   min-height: 0;
-  padding: 0 0 10px;
+  padding: 0;
   overflow: hidden;
 }
 
@@ -160,7 +160,7 @@
   flex: 0 0 auto;
   align-items: center;
   gap: 12px;
-  padding: 7px 12px;
+  padding: 10px 12px;
   border-top: 1px solid var(--app-line);
   background: transparent;
 }
