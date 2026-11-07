@@ -105,14 +105,22 @@ export const fetchEnglishNotes = async (
   return normalize(payload as RawPayload);
 };
 
+/** 保存后自动提交到记录仓库的结果 */
+export type SavedNoteResult = {
+  /** 自动提交失败的原因；成功或没有可提交内容时为空 */
+  commitError?: string;
+  /** 自动提交的短 hash */
+  commitHash?: string;
+};
+
 /**
- * 把编辑后的 Markdown 写回源文件（仅开发模式可用，由 Vite 插件落地）。
+ * 把编辑后的 Markdown 写回源文件，并由插件把改动提交到记录仓库（仅开发模式可用）。
  * 保存成功后需要重新读取一次笔记，页面才会拿到新的正文与修改时间。
  */
 export const saveEnglishNote = async (
   name: string,
   content: string,
-): Promise<void> => {
+): Promise<SavedNoteResult> => {
   const response = await fetch(ENDPOINT, {
     body: JSON.stringify({ content, name }),
     headers: { 'Content-Type': 'application/json' },
@@ -120,7 +128,24 @@ export const saveEnglishNote = async (
   });
 
   if (response.ok) {
-    return;
+    try {
+      const payload: unknown = await response.json();
+
+      if (isObject(payload) && isObject(payload.commit)) {
+        const { commit } = payload;
+
+        return {
+          commitError:
+            typeof commit.error === 'string' ? commit.error : undefined,
+          commitHash:
+            typeof commit.hash === 'string' ? commit.hash : undefined,
+        };
+      }
+    } catch {
+      // 返回值不是 JSON 时按「已写入但没提交」处理。
+    }
+
+    return {};
   }
 
   if (!import.meta.env.DEV) {

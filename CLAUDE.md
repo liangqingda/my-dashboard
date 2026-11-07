@@ -39,6 +39,10 @@
 编辑自己的源码片段；保存时按块重新拼回 Markdown。**不要再走 contentEditable + DOM 反向序列化**，
 那条路会丢格式、且和 React 抢 DOM。新增块类型要同时改解析与序列化两侧。
 
+保存落盘后由同一个 Vite 中间件把该文件提交到 `learn-english`：只 stage 这一个文件，
+提交信息半固定为 `docs(notes): 手动编辑 <文件名去扩展名>` + 固定正文「通过 my-dashboard 的
+Markdown 预览弹窗保存」；内容无变化时不产生空提交，提交失败不阻断保存、原因回传到 footer。
+
 参考实现：`src/pages/English/index.tsx`（分列笔记 → 弹窗预览，循环切换上一篇 / 下一篇，
 保存时 `PUT /api/english/notes` 写回 `learning-record-notes/*.md`）。
 

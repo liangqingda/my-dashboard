@@ -28,14 +28,19 @@ const English = () => {
     void reload();
   };
 
-  /** 保存弹窗里的编辑：写回源文件后重新读取，正文与修改时间一起更新。 */
+  /** 保存弹窗里的编辑：写回源文件、提交记录仓库，再重新读取。 */
   const saveActive = async (markdown: string) => {
     if (!active) {
-      return;
+      return {};
     }
 
-    await saveEnglishNote(active.name, markdown);
+    const saved = await saveEnglishNote(active.name, markdown);
+
     await reload();
+
+    return saved.commitError
+      ? { notice: `自动提交失败：${saved.commitError}` }
+      : {};
   };
 
   /** 在笔记列表中循环切换上一篇 / 下一篇。 */

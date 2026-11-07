@@ -119,7 +119,7 @@ export type MarkdownPreviewModalProps = {
   /** 下一篇；null 表示没有相邻文档 */
   onNext?: (() => void) | null;
   /** 保存编辑后的 Markdown；提供后 footer 才会出现「编辑」 */
-  onSave?: (markdown: string) => Promise<void>;
+  onSave?: (markdown: string) => Promise<{ notice?: string }>;
 };
 
 /**
@@ -148,6 +148,8 @@ const MarkdownPreviewModal = ({
   const [blocks, setBlocks] = useState<MarkdownBlock[] | null>(null);
   /** 保存成功后的短暂提示时刻，如 20:54 */
   const [savedAt, setSavedAt] = useState<string | null>(null);
+  /** 提示后面追加的说明，如自动提交失败原因 */
+  const [saveNotice, setSaveNotice] = useState<string | null>(null);
   const editing = blocks !== null;
   const outline = extractOutline(markdown);
 
@@ -184,6 +186,7 @@ const MarkdownPreviewModal = ({
     setBlocks(null);
     setSaveError(null);
     setSavedAt(null);
+    setSaveNotice(null);
     onClose();
   };
 
@@ -191,6 +194,7 @@ const MarkdownPreviewModal = ({
   const startEditing = () => {
     setSaveError(null);
     setSavedAt(null);
+    setSaveNotice(null);
     setBlocks(parseMarkdownBlocks(markdown));
   };
 
@@ -210,9 +214,11 @@ const MarkdownPreviewModal = ({
     setSaveError(null);
 
     try {
-      await onSave(serializeMarkdownBlocks(blocks));
+      const result = await onSave(serializeMarkdownBlocks(blocks));
+
       setBlocks(null);
       setSavedAt(formatClock(new Date()));
+      setSaveNotice(result.notice ?? null);
       window.setTimeout(() => setSavedAt(null), SAVED_HINT_DURATION);
     } catch (caught) {
       setSaveError(caught instanceof Error ? caught.message : '保存失败');
@@ -320,7 +326,10 @@ const MarkdownPreviewModal = ({
           <span className={styles.saveError}>{saveError}</span>
         ) : null}
         {savedAt && !saveError ? (
-          <span className={styles.savedHint}>已保存・{savedAt}</span>
+          <span className={styles.savedHint}>
+            已保存・{savedAt}
+            {saveNotice ? `・${saveNotice}` : ''}
+          </span>
         ) : null}
         <div className={styles.actions}>
           {editing ? (
@@ -334,7 +343,7 @@ const MarkdownPreviewModal = ({
                 取消
               </button>
               <button
-                className={styles.footerButton}
+                className={`${styles.footerButton} ${styles.footerButtonPrimary}`}
                 disabled={saving}
                 onClick={() => {
                   void handleSave();

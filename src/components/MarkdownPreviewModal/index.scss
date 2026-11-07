@@ -221,6 +221,19 @@
   color: var(--app-accent);
 }
 
+/* 主操作（保存）：主色实底 */
+.footerButtonPrimary {
+  border-color: var(--app-accent);
+  background: var(--app-accent);
+  color: var(--app-accent-contrast);
+}
+
+.footerButtonPrimary:hover:not(:disabled) {
+  border-color: var(--app-accent-strong);
+  background: var(--app-accent-strong);
+  color: var(--app-accent-contrast);
+}
+
 .footerButton:disabled {
   opacity: 0.6;
   cursor: default;

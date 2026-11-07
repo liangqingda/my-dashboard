@@ -1,5 +1,7 @@
+import { execFile } from 'node:child_process';
 import { readFile, readdir, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { promisify } from 'node:util';
 
 import type { Dirent } from 'node:fs';
 import type { IncomingMessage as HttpRequest } from 'node:http';
@@ -16,6 +18,86 @@ const EXCLUDED_FILES = new Set(['readme.md']);
 
 /** 笔记文件名只能是这种形态，避免路径穿越 */
 const NOTE_NAME_PATTERN = /^[\w.-]+\.md$/u;
+
+const runGit = promisify(execFile);
+
+/** 自动提交失败不阻断保存，原样把原因带回前端 */
+type CommitResult = {
+  /** 提交短 hash */
+  hash?: string;
+  /** 提交标题 */
+  subject?: string;
+  /** 提交失败原因 */
+  error?: string;
+};
+
+/**
+ * 把本次保存的笔记提交到记录仓库。
+ *
+ * 只 stage 这一个文件，避免把仓库里其它进程的改动一起提交；提交信息半固定，
+ * 前半段说明是手动编辑、带上文件名，后半段是固定来源说明。
+ */
+const commitNote = async (
+  repoDir: string,
+  name: string,
+): Promise<CommitResult> => {
+  const relative = `${NOTES_DIR}/${name}`;
+  const subject = `docs(notes): 手动编辑 ${path.basename(name, NOTE_EXTENSION)}`;
+
+  try {
+    await runGit('git', ['add', '--', relative], { cwd: repoDir });
+
+    // 内容没有实际变化时不产生空提交
+    const { stdout: staged } = await runGit(
+      'git',
+      ['diff', '--cached', '--name-only', '--', relative],
+      { cwd: repoDir },
+    );
+
+    if (!staged.trim()) {
+      return {};
+    }
+
+    await runGit(
+      'git',
+      ['commit', '-m', subject, '-m', '通过 my-dashboard 的 Markdown 预览弹窗保存'],
+      { cwd: repoDir },
+    );
+
+    const { stdout } = await runGit('git', ['log', '-1', '--format=%h'], {
+      cwd: repoDir,
+    });
+
+    return { hash: stdout.trim(), subject };
+  } catch (error) {
+    const output =
+      typeof error === 'object' && error !== null
+        ? [readField(error, 'stdout'), readField(error, 'stderr')].join('\n')
+        : '';
+
+    if (output.includes('nothing to commit')) {
+      return {};
+    }
+
+    const firstLine = output
+      .split('\n')
+      .map((line) => line.trim())
+      .find((line) => line.length > 0);
+
+    return { error: firstLine ?? '提交失败' };
+  }
+};
+
+/** 读取错误对象上的 stdout / stderr 文本 */
+const readField = (value: object, key: string): string => {
+  if (!(key in value)) {
+    return '';
+  }
+
+  const field = (value as Record<string, unknown>)[key];
+
+  return typeof field === 'string' ? field : '';
+};
 
 /** 一篇笔记的读取结果 */
 type NoteSnapshot = {
@@ -199,9 +281,11 @@ export const englishNotes = (root: string): Plugin => {
             await writeFile(file, content, 'utf8');
 
             const info = await stat(file);
+            const commit = await commitNote(repoDir, name);
 
             res.end(
               JSON.stringify({
+                commit,
                 name,
                 updatedAt: info.mtime.toISOString(),
                 size: info.size,

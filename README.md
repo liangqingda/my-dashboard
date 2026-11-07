@@ -146,6 +146,11 @@ Markdown 弹窗预览统一使用公共组件 `src/components/MarkdownPreviewMod
 （详见 `CLAUDE.md`）：文档排版、表格与 `<details>` 折叠块、header 标题左侧的上一个 / 下一个、
 `←` / `→` 快捷键，以及弹窗左上角框体之外的标题目录都在组件内；页面只决定相邻文档是谁。
 
+弹窗 footer 有「编辑」和「关闭」：编辑态换成块级编辑器（表格可删行 / 加行、格子可改，其余块直接改
+源码），保存后写回源文件，并由同一个 Vite 中间件把该文件提交到记录仓库——只 stage 这一个文件，
+提交信息半固定为 `docs(notes): 手动编辑 <文件名>`，正文说明来源；内容无变化不产生空提交，
+提交失败不阻断保存，原因会显示在 footer 的「已保存」提示后面。保存成功后页面自动重新读盘。
+
 ## 目录结构
 
 ```
@@ -165,7 +170,7 @@ src/
 
 - 路径别名：`@/*` → `src/*`
 - 新增组件时，同级放置 `index.tsx` + `index.scss`（CSS Module 类名自动 camelCase）
-- 组件目录使用 kebab-case 命名
+- `src/components/**` 的目录与其下文件名必须是 PascalCase（如 `MarkdownPreviewModal/index.tsx`）
 - `src/features/**`：目录一律 kebab-case；组件目录必须有 index.scss；不嵌套
   `components/`（子组件直接放父组件目录）；跨模块一律用 `@/features/...` 别名，
   禁止相对导入跨出模块
