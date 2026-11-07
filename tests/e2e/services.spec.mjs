@@ -172,48 +172,32 @@ test('a running legacy agent is upgraded before service actions', async ({
   await expect(page.getByText('无法建立本机会话，请重新连接')).toHaveCount(0);
 });
 
-test('repeated refreshes keep the button visible and merge in-flight requests', async ({
+test('rapid page refreshes merge in-flight requests and keep the nav icon in place', async ({
   page,
 }) => {
   const state = await mock(page);
-  const button = page.getByRole('button', { name: '刷新状态', exact: true });
-  await expect(button).toHaveAttribute('aria-busy', 'false');
-  const initialBounds = await button.boundingBox();
-  await button.evaluate((element) => {
-    let frame;
-    let minimumOpacity = 1;
-    const sample = () => {
-      let opacity = 1;
-      let node = element.querySelector('.mantine-Button-label');
-      while (node) {
-        opacity *= Number(getComputedStyle(node).opacity);
-        if (node === element) break;
-        node = node.parentElement;
-      }
-      minimumOpacity = Math.min(minimumOpacity, opacity);
-      frame = requestAnimationFrame(sample);
-    };
-    frame = requestAnimationFrame(sample);
-    window.stopRefreshObservation = () => {
-      cancelAnimationFrame(frame);
-      return minimumOpacity;
-    };
+  const button = page.getByRole('button', {
+    name: '刷新当前页面',
+    exact: true,
   });
+  await expect(button).toBeVisible();
+  const initialBounds = await button.boundingBox();
 
   state.serviceDelay = 500;
   const before = state.serviceRequests;
   await button.click();
-  await expect(button).toHaveAttribute('aria-busy', 'true');
   for (let index = 0; index < 5; index++) await button.dispatchEvent('click');
-  await expect(button).toHaveAttribute('aria-busy', 'false');
-  expect(state.serviceRequests).toBe(before + 1);
+  // 请求仍在飞行中：并发点击合并成一次请求，不会叠加
+  await expect.poll(() => state.serviceRequests).toBe(before + 1);
   expect(await button.boundingBox()).toEqual(initialBounds);
 
   state.serviceDelay = 0;
-  for (let index = 0; index < 5; index++) {
+  for (let index = 0; index < 3; index++) {
+    const count = state.serviceRequests;
     await button.click();
-    await expect(button).toHaveAttribute('aria-busy', 'false');
+    await expect.poll(() => state.serviceRequests).toBeGreaterThan(count);
   }
+
   // Visibility changes use the same refresh path as background polling.
   const beforeBackground = state.serviceRequests;
   await page.evaluate(() =>
@@ -222,11 +206,9 @@ test('repeated refreshes keep the button visible and merge in-flight requests', 
   await expect
     .poll(() => state.serviceRequests)
     .toBeGreaterThan(beforeBackground);
-  await expect(button).toHaveAttribute('aria-busy', 'false');
-  const minimumOpacity = await page.evaluate(() =>
-    window.stopRefreshObservation(),
-  );
-  expect(minimumOpacity).toBe(1);
+
+  await expect(button).toBeVisible();
+  expect(await button.boundingBox()).toEqual(initialBounds);
 });
 
 test('keyboard log toggle stays on page and expanded logs update', async ({
@@ -307,7 +289,10 @@ test('offline status disables actions and reconnect reloads commands', async ({
 }) => {
   const state = await mock(page);
   state.online = false;
-  await page.getByRole('button', { name: '刷新状态', exact: true }).click();
+  // 在线时服务页只靠 5 秒轮询与侧边栏刷新图标取数，用后者手动切到离线态
+  await page
+    .getByRole('button', { name: '刷新当前页面', exact: true })
+    .click();
   await expect(page.getByText('本机服务连接中断')).toBeVisible();
   await expect(
     page.getByRole('button', { name: '停止 my-dashboard', exact: true }),

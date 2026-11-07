@@ -65,37 +65,40 @@ const ServiceConnection = () => {
             ? '正在读取服务状态…'
             : `${agentOnline ? '已连接' : '已离线'} · ${lastUpdated ? `上次更新 ${new Date(lastUpdated).toLocaleTimeString()}` : '尚未同步'}`}
         </Text>
-        <Group gap="xs">
-          {!loading && !agentOnline && import.meta.env.DEV && (
+        {/* 在线时由 5 秒轮询与侧边栏刷新图标负责取数，这里只在离线后给出手动重连入口 */}
+        {!loading && !agentOnline ? (
+          <Group gap="xs">
+            {import.meta.env.DEV ? (
+              <Button
+                leftSection={<IconPlayerPlay size={14} />}
+                loading={starting}
+                onClick={() => void connect()}
+                size="xs"
+                variant="light"
+              >
+                恢复连接
+              </Button>
+            ) : null}
             <Button
-              leftSection={<IconPlayerPlay size={14} />}
-              loading={starting}
-              onClick={() => void connect()}
+              aria-busy={refreshing}
+              aria-disabled={starting || refreshing}
+              className={styles.refreshButton}
+              disabled={starting}
+              leftSection={
+                <IconRefresh
+                  aria-hidden="true"
+                  className={showRefreshActivity ? styles.refreshing : undefined}
+                  size={14}
+                />
+              }
+              onClick={() => void refresh()}
               size="xs"
-              variant="light"
+              variant="subtle"
             >
-              恢复连接
+              重新连接
             </Button>
-          )}
-          <Button
-            aria-busy={refreshing}
-            aria-disabled={starting || refreshing}
-            className={styles.refreshButton}
-            disabled={starting}
-            leftSection={
-              <IconRefresh
-                aria-hidden="true"
-                className={showRefreshActivity ? styles.refreshing : undefined}
-                size={14}
-              />
-            }
-            onClick={() => void refresh()}
-            size="xs"
-            variant="subtle"
-          >
-            {agentOnline ? '刷新状态' : '重新连接'}
-          </Button>
-        </Group>
+          </Group>
+        ) : null}
       </Group>
     </div>
   );
