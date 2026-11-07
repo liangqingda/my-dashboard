@@ -17,8 +17,10 @@
    高度由组件按 `calc(100dvh - var(--app-header-height))` 计算，页面不要自己写高度或 `100dvh`。
 4. 新增菜单页的顺序：先在 `src/layouts/Sidebar/index.tsx` 加导航项，再写 `src/pages/<Page>/`
    并用 `MenuContentLayout` 包住内容；页面只做数据拼装与状态编排。
-5. 非菜单页（`src/pages/Errors/**` 等错误页 / 重定向页）不受此约束；确需新增其它非菜单页时，
-   在 `scripts/check-features.mjs` 的 `NON_MENU_PAGES` 白名单里显式登记。
+5. 非菜单页不受此约束，且**不需要手工登记**：检查脚本从 `src/layouts/Sidebar/index.tsx` 的
+   `navItems` 取路径，经 `src/App.tsx` 的 `<Route>` 解析到 `src/pages/<Dir>`，解析不到的页面
+   （如 `src/pages/Errors` 的 404）自动跳过。因此新增菜单页只要「加导航项 + 加路由」就会自动纳入
+   校验；某条侧边栏路径解析不到页面目录时，检查直接报错，不会静默放过。
 
 这条不是口头约定：`pnpm lint` 里的 `scripts/check-features.mjs` 会检查每个页面是否用了
 `<MenuContentLayout>`、`index.scss` 是否还残留 `.page`，不合规直接失败。
