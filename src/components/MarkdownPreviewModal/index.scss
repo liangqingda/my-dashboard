@@ -180,8 +180,9 @@
   scroll-margin-top: 12px;
 }
 
-/* 第一个 h2 直接接在标题下面，不需要上分隔线 */
+/* 第一个 h2 直接接在标题下面：不收上 margin，也不需要上分隔线 */
 .prose h2:first-of-type {
+  margin-top: 0;
   border-top: 0;
 }
 
