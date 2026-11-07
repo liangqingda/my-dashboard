@@ -5,7 +5,7 @@
   padding: var(--app-space-md);
 }
 
-/* 刷新按钮浮在激活项右侧，避免按钮嵌进链接里 */
+/* 刷新 / 全屏按钮浮在激活项右侧，避免按钮嵌进链接里 */
 .item {
   position: relative;
 }
@@ -14,21 +14,26 @@
   border-radius: var(--mantine-radius-md);
 }
 
-/* 只占位：给刷新按钮留出右侧空间 */
-.refreshSlot {
+/* 只占位：给激活项右侧的两个图标按钮留出空间 */
+.actionSlot {
   display: block;
-  width: 20px;
+  width: 58px;
   height: 1px;
 }
 
-.refresh {
+.actions {
   position: absolute;
   top: 50%;
-  right: 8px;
-  color: var(--app-ink-faint);
+  right: 6px;
+  display: flex;
+  gap: 2px;
   transform: translateY(-50%);
 }
 
-.refresh:hover {
+.action {
+  color: var(--app-ink-faint);
+}
+
+.action:hover {
   color: var(--app-accent);
 }

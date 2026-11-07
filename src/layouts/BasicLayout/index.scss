@@ -21,3 +21,26 @@
   max-width: 1240px;
   margin: 0 auto;
 }
+
+/* 全屏：内容脱离文档流铺满整个页面（含顶栏、侧栏区域），不改动 AppShell 偏移，
+   子页面按 --app-header-height 计算高度，进入全屏后该高度归零 */
+.contentFullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  max-width: none;
+  margin: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: var(--app-bg);
+  --app-header-height: 0px;
+}
+
+/* 退出全屏按钮固定浮在页面右上角，不随内容滚动 */
+.exitFullscreen {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 160;
+  box-shadow: 0 2px 12px rgb(0 0 0 / 12%);
+}

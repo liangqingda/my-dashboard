@@ -3,6 +3,7 @@ import { ActionIcon, AppShell, NavLink, ScrollArea } from '@mantine/core';
 import {
   IconDashboard,
   IconLanguage,
+  IconMaximize,
   IconRefresh,
   IconServer,
 } from '@tabler/icons-react';
@@ -24,7 +25,12 @@ const navItems: NavItem[] = [
   { key: 'english', label: '英语', to: '/english', icon: IconLanguage },
 ];
 
-const Sidebar = ({ onNavigate }: { onNavigate: () => void }) => {
+type SidebarProps = {
+  onNavigate: () => void;
+  onEnterFullscreen: () => void;
+};
+
+const Sidebar = ({ onNavigate, onEnterFullscreen }: SidebarProps) => {
   const location = useLocation();
 
   return (
@@ -46,23 +52,36 @@ const Sidebar = ({ onNavigate }: { onNavigate: () => void }) => {
                   noWrap
                   onClick={onNavigate}
                   rightSection={
-                    active ? <span className={styles.refreshSlot} /> : undefined
+                    active ? <span className={styles.actionSlot} /> : undefined
                   }
                   to={to}
                   variant="light"
                 />
                 {active ? (
-                  <ActionIcon
-                    aria-label="刷新当前页面"
-                    className={styles.refresh}
-                    onClick={requestPageRefresh}
-                    radius="sm"
-                    size="sm"
-                    title="刷新当前页面"
-                    variant="subtle"
-                  >
-                    <IconRefresh size={14} stroke={1.9} />
-                  </ActionIcon>
+                  <div className={styles.actions}>
+                    <ActionIcon
+                      aria-label="刷新当前页面"
+                      className={styles.action}
+                      onClick={requestPageRefresh}
+                      radius="sm"
+                      size="sm"
+                      title="刷新当前页面"
+                      variant="subtle"
+                    >
+                      <IconRefresh size={14} stroke={1.9} />
+                    </ActionIcon>
+                    <ActionIcon
+                      aria-label="全屏查看当前页面"
+                      className={styles.action}
+                      onClick={onEnterFullscreen}
+                      radius="sm"
+                      size="sm"
+                      title="全屏查看当前页面"
+                      variant="subtle"
+                    >
+                      <IconMaximize size={14} stroke={1.9} />
+                    </ActionIcon>
+                  </div>
                 ) : null}
               </div>
             );
