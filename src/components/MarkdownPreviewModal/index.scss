@@ -155,11 +155,11 @@
   margin: 0 0 10px;
 }
 
-/* 无序 / 有序列表共用一套缩进：正文左边缘对齐，符号 / 编号区在 24px 内挂出，两者不再错位 */
+/* 无序 / 有序列表共用一套左缩进：整体右移 32px，符号 / 编号挂在该区间内，正文左边缘对齐 */
 .prose ul,
 .prose ol {
   margin: 0 0 12px;
-  padding-left: 24px;
+  padding-left: 32px;
 }
 
 .prose li {
