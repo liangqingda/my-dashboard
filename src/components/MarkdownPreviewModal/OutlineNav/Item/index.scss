@@ -88,14 +88,14 @@
   cursor: default;
 }
 
-/* 一级：加粗、最深色，作为整篇的骨架 */
+/* 一级：最深色 + 字号最大，作为整篇的骨架（字重只到 500，再粗就闷） */
 .level1 {
   color: var(--app-ink);
   font-size: 0.885rem;
-  font-weight: 600;
+  font-weight: 500;
 }
 
-/* 二级：常规字重，比一级轻一档 */
+/* 二级：比一级轻一档——同字重，靠颜色和字号拉开层次 */
 .level2 {
   color: var(--app-ink-soft);
   font-weight: 500;
