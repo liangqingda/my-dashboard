@@ -157,12 +157,29 @@ export type OutlineNavItemProps = {
 
 /** 编辑态状态机的入参 */
 export type NoteEditingParams = {
+  /**
+   * 当前文档的身份（用标题）：保存状态提示带着它存，
+   * 换一篇后标题对不上就自动失效，不用靠「换篇重挂弹窗」去清。
+   */
+  documentTitle: string;
   /** 当前正文；用来判断草稿是否有改动 */
   markdown: string;
   /** 是否提供了定制编辑器 */
   hasEditor: boolean;
   /** 保存落盘，由调用方实现 */
   onSave?: (markdown: string) => Promise<{ notice?: string }>;
+};
+
+/** 保存状态提示：都记着所属文档，换篇后自动失效 */
+export type SaveHintState = {
+  /** 这份提示所属的文档（标题）；与当前标题不一致就当作没有提示 */
+  document: string;
+  /** 「已保存」提示的时刻，如 20:54 */
+  savedAt: string | null;
+  /** 「已保存」后追加的说明，如自动提交失败原因 */
+  notice: string | null;
+  /** 保存失败的原因 */
+  error: string | null;
 };
 
 /** 编辑态状态机暴露的状态与操作 */

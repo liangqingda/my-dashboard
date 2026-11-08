@@ -12,11 +12,20 @@ import { notifications } from '@mantine/notifications';
 import { getErrorMessage } from '@/utils/error';
 import { formatClock } from '@/utils/format';
 
-import type { NoteEditingParams, NoteEditingState } from '../types';
+import type { NoteEditingParams, NoteEditingState, SaveHintState } from '../types';
 import { NO_EDITOR_MESSAGE, SAVED_HINT_DURATION } from '../constants';
+
+/** 没有可显示的提示时的基准：换篇后拿它顶掉上一篇那份 */
+const EMPTY_HINTS: SaveHintState = {
+  document: '',
+  savedAt: null,
+  notice: null,
+  error: null,
+};
 
 /** 管理预览弹窗的编辑流程 */
 export function useNoteEditing({
+  documentTitle,
   markdown,
   hasEditor,
   onSave,
@@ -25,14 +34,22 @@ export function useNoteEditing({
   /** 编辑态下是否切到「预览草稿」：编辑器留在原地，只是换成只读渲染 */
   const [previewing, setPreviewing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [savedAt, setSavedAt] = useState<string | null>(null);
-  const [saveNotice, setSaveNotice] = useState<string | null>(null);
+  /**
+   * 保存状态提示（已保存时刻 / 追加说明 / 失败原因）都记着「属于哪一篇」：
+   * 弹窗不再按篇重挂（重挂会把全屏一起重置），换篇后读的时候比一下标题就自动失效，
+   * 不必再用 state 里的一套重置逻辑去清。
+   */
+  const [hints, setHints] = useState<SaveHintState>(() => ({
+    ...EMPTY_HINTS,
+    document: documentTitle,
+  }));
   const [askDiscard, setAskDiscard] = useState(false);
   /** 「已保存」提示的定时器句柄，连续保存时先清掉上一个 */
   const savedTimer = useRef<number | null>(null);
   const editing = draft !== null;
   const dirty = draft !== null && draft !== markdown;
+  /** 当前这一篇的提示：标题对不上（换篇了）就当没有 */
+  const currentHints = hints.document === documentTitle ? hints : EMPTY_HINTS;
 
   const clearSavedTimer = () => {
     if (savedTimer.current !== null) {
@@ -44,13 +61,22 @@ export function useNoteEditing({
   // 弹窗卸载时别留悬着的定时器
   useEffect(() => () => clearSavedTimer(), []);
 
+  /** 写提示：上一篇留下的字段不沿用，写入时一并盖上本篇的标题 */
+  const updateHints = (patch: Partial<Omit<SaveHintState, 'document'>>) => {
+    setHints((current) => ({
+      ...(current.document === documentTitle ? current : EMPTY_HINTS),
+      ...patch,
+      document: documentTitle,
+    }));
+  };
+
   /** 显示「已保存」提示，3 秒后淡出；连续保存不会互相踩定时器 */
   const showSavedHint = (clock: string) => {
     clearSavedTimer();
-    setSavedAt(clock);
+    updateHints({ savedAt: clock });
     savedTimer.current = window.setTimeout(() => {
       savedTimer.current = null;
-      setSavedAt(null);
+      updateHints({ savedAt: null });
     }, SAVED_HINT_DURATION);
   };
 
@@ -59,10 +85,9 @@ export function useNoteEditing({
     clearSavedTimer();
     setDraftState(null);
     setPreviewing(false);
-    setSaveError(null);
-    setSavedAt(null);
-    setSaveNotice(null);
     setAskDiscard(false);
+    // 提示都属于这一次编辑，退出时一并收掉，免得红字留在只读预览上
+    setHints(EMPTY_HINTS);
   }, []);
 
   const setDraft = useCallback((next: string) => {
@@ -82,10 +107,8 @@ export function useNoteEditing({
     }
 
     setAskDiscard(false);
-    setSaveError(null);
-    setSavedAt(null);
-    setSaveNotice(null);
     setPreviewing(false);
+    setHints(EMPTY_HINTS);
     setDraftState(markdown);
   };
 
@@ -108,7 +131,7 @@ export function useNoteEditing({
     const savedDraft = draft;
 
     setSaving(true);
-    setSaveError(null);
+    updateHints({ error: null });
 
     try {
       const result = await onSave(savedDraft);
@@ -117,10 +140,10 @@ export function useNoteEditing({
       setDraftState((current) => (current === savedDraft ? null : current));
       setPreviewing(false);
       setAskDiscard(false);
-      setSaveNotice(result.notice ?? null);
+      updateHints({ notice: result.notice ?? null });
       showSavedHint(formatClock(new Date()));
     } catch (caught) {
-      setSaveError(getErrorMessage(caught, '保存失败'));
+      updateHints({ error: getErrorMessage(caught, '保存失败') });
     } finally {
       setSaving(false);
     }
@@ -146,9 +169,9 @@ export function useNoteEditing({
     dirty,
     draft,
     saving,
-    saveError,
-    savedAt,
-    saveNotice,
+    saveError: currentHints.error,
+    savedAt: currentHints.savedAt,
+    saveNotice: currentHints.notice,
     askDiscard,
     setDraft,
     startEditing,

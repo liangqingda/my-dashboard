@@ -39,6 +39,7 @@ import OutlineNav from './OutlineNav';
 import { HEADING_SELECTOR, REHYPE_PLUGINS, REMARK_PLUGINS } from './constants';
 import { useActiveHeadingIndex } from './hooks/useActiveHeadingIndex';
 import { useArrowNavigation } from './hooks/useArrowNavigation';
+import { useDocumentScrollReset } from './hooks/useDocumentScrollReset';
 import { useModalFullscreen } from './hooks/useModalFullscreen';
 import { useRefreshPreview } from './hooks/useRefreshPreview';
 import { useNoteEditing } from './hooks/useNoteEditing';
@@ -94,6 +95,7 @@ const MarkdownPreviewModal = ({
   const { refresh, refreshing } = useRefreshPreview(onRefresh);
 
   const editing = useNoteEditing({
+    documentTitle: title,
     hasEditor: Boolean(Editor),
     markdown,
     onSave,
@@ -142,6 +144,12 @@ const MarkdownPreviewModal = ({
     enabled: bodyReady,
     headings: outline,
   });
+
+  /**
+   * 换篇 / 重新打开时正文回到顶部：弹窗不再按篇重挂，
+   * 不给滚动复位的话上一篇读到的位置会留在下一篇上。
+   */
+  useDocumentScrollReset(bodyRef, title, opened);
 
   /**
    * 正文节点的 callback ref：ref 对象给需要即时读取的地方用，

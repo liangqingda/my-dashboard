@@ -240,9 +240,7 @@ const English = () => {
       </MenuContentLayout>
 
       <MarkdownPreviewModal
-        // 换一篇就重挂弹窗，避免上一篇的「已保存」提示和编辑态漏到下一篇
         Editor={NoteEditor}
-        key={active?.name ?? 'closed'}
         markdown={active?.content ?? ''}
         onClose={() => setActive(null)}
         onNext={scopeNotes.length > 1 ? () => step(1) : null}
