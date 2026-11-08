@@ -16,7 +16,7 @@
  * - 翻篇快捷键 → `hooks/use-arrow-navigation`
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { ActionIcon, Modal, Tooltip } from '@mantine/core';
 import {
   IconChevronLeft,
@@ -39,6 +39,7 @@ import OutlineNav from './OutlineNav';
 import { HEADING_SELECTOR, REHYPE_PLUGINS, REMARK_PLUGINS } from './constants';
 import { useActiveHeadingIndex } from './hooks/useActiveHeadingIndex';
 import { useArrowNavigation } from './hooks/useArrowNavigation';
+import { useModalFullscreen } from './hooks/useModalFullscreen';
 import { useRefreshPreview } from './hooks/useRefreshPreview';
 import { useNoteEditing } from './hooks/useNoteEditing';
 
@@ -63,11 +64,10 @@ const MarkdownPreviewModal = ({
   Editor,
 }: MarkdownPreviewModalProps) => {
   const bodyRef = useRef<HTMLElement | null>(null);
-  /**
-   * 编辑态正文不渲染，目录没法在正文里找标题节点：
-   * 定制编辑器若实现了 `revealHeading`，就把它的定位能力挂在这里，由目录调用。
-   */
+  /** 编辑态正文不渲染，目录定位靠定制编辑器交上来的 `revealHeading` */
   const editorHandleRef = useRef<MarkdownEditorHandle | null>(null);
+  /** 编辑态目录的激活项：最近一次跳到的标题（正文没渲染，算不出滚动位置） */
+  const [editorActiveIndex, setEditorActiveIndex] = useState(-1);
   /** 编辑器交上来的句柄只放 ref：目录点击时读，不需要触发重渲染 */
   const attachEditorHandle = useCallback(
     (handle: MarkdownEditorHandle | null) => {
@@ -80,14 +80,15 @@ const MarkdownPreviewModal = ({
    * 滚动跟踪和高度测量都要等节点真正挂上再建监听，只靠 ref 会在 ref 还空时跑完 effect。
    */
   const [bodyElement, setBodyElement] = useState<HTMLElement | null>(null);
-  /** 全屏预览：整个框体铺满视口，正文与目录的排布不变，只是可读空间变大 */
-  const [fullscreen, setFullscreen] = useState(false);
+  /** 全屏开关与全屏时的 Esc 语义都在这个 hook 里 */
+  const { exit: exitFullscreen, fullscreen, toggle: toggleFullscreen } =
+    useModalFullscreen();
 
   /** 关闭弹窗时一并退出全屏：下次打开回到常规大小，不会一进来就铺满 */
   const handleClose = useCallback(() => {
-    setFullscreen(false);
+    exitFullscreen();
     onClose();
-  }, [onClose]);
+  }, [exitFullscreen, onClose]);
 
   /** 刷新按钮的 loading 与失败提示都在这个 hook 里 */
   const { refresh, refreshing } = useRefreshPreview(onRefresh);
@@ -99,22 +100,16 @@ const MarkdownPreviewModal = ({
     onSave,
   });
 
-  // 全屏时才监听 Esc：这时按 Esc 是「退出全屏」而不是「关闭弹窗」
-  useEffect(() => {
-    if (!fullscreen) {
-      return undefined;
-    }
+  /** 进入 / 退出编辑时清掉目录激活项：新的一轮不该还亮着上一轮跳到的位置 */
+  const startEditing = () => {
+    setEditorActiveIndex(-1);
+    editing.startEditing();
+  };
 
-    const exitOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setFullscreen(false);
-      }
-    };
-
-    window.addEventListener('keydown', exitOnEscape);
-
-    return () => window.removeEventListener('keydown', exitOnEscape);
-  }, [fullscreen]);
+  const stopEditing = () => {
+    setEditorActiveIndex(-1);
+    editing.stopEditing();
+  };
 
   /** 编辑态里点了「预览」：正文换成草稿的渲染结果，编辑器还挂在原地 */
   const showingDraftPreview = editing.editing && editing.previewing;
@@ -164,10 +159,8 @@ const MarkdownPreviewModal = ({
   }, []);
 
   /**
-   * 跳到文档内第 index 个标题。
-   *
-   * 编辑态正文没有渲染（跳的是编辑器里的块），交给编辑器自己定位；
-   * 预览态才在渲染出来的正文里找同名标题节点滚过去。
+   * 跳到第 index 个标题：编辑态跳编辑器里的块（交给编辑器定位），
+   * 预览态跳渲染出来的正文节点。
    */
   const scrollToHeading = (index: number) => {
     if (!opened) {
@@ -175,7 +168,10 @@ const MarkdownPreviewModal = ({
     }
 
     if (editing.editing && !showingDraftPreview) {
-      editorHandleRef.current?.revealHeading(index);
+      if (editorHandleRef.current?.revealHeading(index)) {
+        setEditorActiveIndex(index);
+      }
+
       return;
     }
 
@@ -194,6 +190,7 @@ const MarkdownPreviewModal = ({
     headings[index].scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
+  // 编辑态（含草稿预览）收起关闭与全屏按钮：退出由 header 的返回箭头承担，全屏只会把表单抻大
   return (
     <Modal
       centered
@@ -256,35 +253,38 @@ const MarkdownPreviewModal = ({
               </ActionIcon>
             </Tooltip>
           ) : null}
-          <Tooltip
-            label={fullscreen ? '退出全屏（Esc）' : '全屏预览'}
-            withArrow
-          >
-            <ActionIcon
-              aria-label={fullscreen ? '退出全屏预览' : '全屏预览'}
-              className={styles.fullscreenButton}
-              onClick={() => setFullscreen(!fullscreen)}
-              size="sm"
-              variant="subtle"
+          {/* 编辑态（含草稿预览）不提供全屏：这时要看的是块编辑器，全屏只放大表单 */}
+          {!editing.editing ? (
+            <Tooltip
+              label={fullscreen ? '退出全屏（Esc）' : '全屏预览'}
+              withArrow
             >
-              {fullscreen ? (
-                <IconMinimize size={15} stroke={1.9} />
-              ) : (
-                <IconMaximize size={15} stroke={1.9} />
-              )}
-            </ActionIcon>
-          </Tooltip>
+              <ActionIcon
+                aria-label={fullscreen ? '退出全屏预览' : '全屏预览'}
+                className={styles.fullscreenButton}
+                onClick={toggleFullscreen}
+                size="sm"
+                variant="subtle"
+              >
+                {fullscreen ? (
+                  <IconMinimize size={15} stroke={1.9} />
+                ) : (
+                  <IconMaximize size={15} stroke={1.9} />
+                )}
+              </ActionIcon>
+            </Tooltip>
+          ) : null}
           <PreviewHeaderActions
             askDiscard={editing.askDiscard}
             canEdit={Boolean(onSave)}
             editing={editing.editing}
-            onCancelEdit={editing.stopEditing}
+            onCancelEdit={stopEditing}
             onDiscard={editing.discardAndClose}
             onKeepEditing={editing.keepEditing}
             onSaveEdit={() => {
               void editing.save();
             }}
-            onStartEdit={editing.startEditing}
+            onStartEdit={startEditing}
             onStartPreview={editing.startPreview}
             onStopPreview={editing.stopPreview}
             previewing={editing.previewing}
@@ -296,6 +296,7 @@ const MarkdownPreviewModal = ({
         </div>
       }
       transitionProps={{ duration: 140, transition: 'fade' }}
+      withCloseButton={!editing.editing}
     >
       {/*
        * 正文工作区：左侧标题目录固定占一列，右侧是阅读 / 编辑区。
@@ -303,7 +304,7 @@ const MarkdownPreviewModal = ({
        */}
       <div className={styles.workspace}>
         <OutlineNav
-          activeIndex={bodyReady ? activeIndex : -1}
+          activeIndex={bodyReady ? activeIndex : editorActiveIndex}
           disabled={!opened}
           fullscreen={fullscreen}
           headings={outline}
