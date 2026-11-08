@@ -25,6 +25,10 @@
 表格形态），刷新后应当还在；**由数据或操作结果推导出来的状态**（正在加载、当前选中的笔记、
 排序方向）不记——后者要么能重算，要么记下来反而与真实数据不一致。
 
+页面全屏的存储键与读取入口单独在 `@/utils/page-fullscreen`（`pageFullscreenKey` /
+`readStoredPageFullscreen`）：写入方是 `MenuContentLayout`，应用级加载占位
+`src/components/PageLoading` 只读它，用于在页面 chunk 挂载前就决定要不要铺满视口盖住外壳。
+
 自检方法（各条都应当只在上面那些文件里命中，第二行应当没有结果）：
 
 ```bash

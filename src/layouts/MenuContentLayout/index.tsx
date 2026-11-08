@@ -6,9 +6,9 @@ import { IconMaximize, IconMinimize, IconRefresh } from '@tabler/icons-react';
 import { useStoredState } from '@/hooks/useStoredState';
 import { cx } from '@/utils/cx';
 import { FLAG_CODEC } from '@/utils/local-storage';
+import { pageFullscreenKey } from '@/utils/page-fullscreen';
 import { requestPageRefresh } from '@/utils/page-refresh';
 
-import { FULLSCREEN_STORAGE_PREFIX } from './constants';
 import type { MenuContentLayoutProps } from './types';
 
 import styles from './index.scss';
@@ -34,7 +34,7 @@ const MenuContentLayout = ({
   /** 全屏状态按当前路由分开存：每个菜单页各自记住自己上次是否全屏 */
   const { pathname } = useLocation();
   const [fullscreen, setFullscreen] = useStoredState(
-    `${FULLSCREEN_STORAGE_PREFIX}${pathname}`,
+    pageFullscreenKey(pathname),
     FLAG_CODEC,
   );
 

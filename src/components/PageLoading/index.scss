@@ -1,0 +1,17 @@
+/* 常规加载占位：内容区里居中显示，不动外壳 */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: var(--mantine-spacing-xl);
+}
+
+/* 目标页面是全屏时：铺满视口、盖住顶栏与侧栏（层级与全屏页面一致），
+   让刷新后的第一帧就已经是「全屏的空白 + 加载图标」，不再先闪一下非全屏外壳 */
+.fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  background: var(--app-bg);
+}
