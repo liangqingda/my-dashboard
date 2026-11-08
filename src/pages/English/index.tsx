@@ -11,7 +11,7 @@ import { useEnglishNotes } from './hooks/useEnglishNotes';
 import NoteEditor from './NoteEditor';
 import NotesBoard from './NotesBoard';
 import NotesTable from './NotesTable';
-import { getNoteCategory, groupNotesByCategory, isBoardNote } from './utils/notes';
+import { getNoteCategory, groupNotesByCategory, isBoardNote, toNoteRows } from './utils/notes';
 import { fetchEnglishNote, saveEnglishNote } from './utils/notes-api';
 
 import styles from './index.scss';
@@ -37,23 +37,32 @@ const English = () => {
   );
   /** 六列一次算好，看板与翻页共用同一份结果（每列只排一次序） */
   const columns = useMemo(() => groupNotesByCategory(boardNotes), [boardNotes]);
+  /** 表格视图的行：一行一篇，按更新时间倒序 */
+  const rows = useMemo(() => toNoteRows(boardNotes), [boardNotes]);
+  /** 表格里的可见顺序，翻页与计数在表格视图下也走这一份 */
+  const rowNotes = useMemo(() => rows.map((row) => row.note), [rows]);
   /**
-   * 翻页与计数都只在本列内进行：计数是「本篇在本列第几 / 本列共几」，
-   * 上一篇 / 下一篇也只在该列内循环，不跨列跳到别的分类。
+   * 翻页与计数只在「当前视图看得见的那一份」里进行：
+   * 看板按本列走（计数是「本篇在本列第几 / 本列共几」，不跨分类跳），
+   * 表格按整表的更新时间倒序走（和屏幕上从上到下的顺序一致）。
    */
-  const columnNotes = useMemo(() => {
+  const scopeNotes = useMemo(() => {
     if (!active) {
       return NO_NOTES;
+    }
+
+    if (view === 'table') {
+      return rowNotes;
     }
 
     const key = getNoteCategory(active.name);
 
     return columns.find((column) => column.key === key)?.notes ?? NO_NOTES;
-  }, [active, columns]);
+  }, [active, columns, rowNotes, view]);
   const activeIndex =
     active === null
       ? -1
-      : columnNotes.findIndex((note) => note.name === active.name);
+      : scopeNotes.findIndex((note) => note.name === active.name);
 
   // 页面头部「刷新当前页面」按钮：重新读取仓库里的笔记
   useEffect(() => onPageRefresh(reload), [reload]);
@@ -117,16 +126,15 @@ const English = () => {
     }
   };
 
-  /** 在本列笔记中循环切换上一篇 / 下一篇。 */
+  /** 在「当前视图的可见顺序」里循环切换上一篇 / 下一篇。 */
   const step = (delta: number) => {
-    if (activeIndex < 0 || columnNotes.length === 0) {
+    if (activeIndex < 0 || scopeNotes.length === 0) {
       return;
     }
 
-    const next =
-      (activeIndex + delta + columnNotes.length) % columnNotes.length;
+    const next = (activeIndex + delta + scopeNotes.length) % scopeNotes.length;
 
-    void openNote(columnNotes[next].name);
+    void openNote(scopeNotes[next].name);
   };
 
   /** 切换展示形式：分列看板 ⇄ 表格平铺。 */
@@ -181,10 +189,10 @@ const English = () => {
           />
         ) : (
           <NotesTable
-            columns={columns}
             error={error}
             loading={loading}
             onOpen={openNote}
+            rows={rows}
           />
         )}
       </MenuContentLayout>
@@ -195,14 +203,14 @@ const English = () => {
         key={active?.name ?? 'closed'}
         markdown={active?.content ?? ''}
         onClose={() => setActive(null)}
-        onNext={columnNotes.length > 1 ? () => step(1) : null}
-        onPrevious={columnNotes.length > 1 ? () => step(-1) : null}
+        onNext={scopeNotes.length > 1 ? () => step(1) : null}
+        onPrevious={scopeNotes.length > 1 ? () => step(-1) : null}
         onRefresh={import.meta.env.DEV ? refreshActive : null}
         onSave={import.meta.env.DEV ? saveActive : undefined}
         opened={active !== null}
         position={
-          active && columnNotes.length > 0 && activeIndex >= 0
-            ? { index: activeIndex + 1, total: columnNotes.length }
+          active && scopeNotes.length > 0 && activeIndex >= 0
+            ? { index: activeIndex + 1, total: scopeNotes.length }
             : undefined
         }
         title={active?.name ?? ''}

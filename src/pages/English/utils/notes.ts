@@ -4,7 +4,7 @@
 
 import { formatDateTime } from '@/utils/format';
 
-import type { EnglishNote, NoteColumn } from '../types';
+import type { EnglishNote, NoteColumn, NoteRow } from '../types';
 import { NOTE_CATEGORIES } from '../constants';
 
 /** 正文「基础信息」表里的更新时间行：`<tr><td>笔记更新时间</td><td>2026-11-08 14:39</td></tr>` */
@@ -46,11 +46,13 @@ export const getNoteUpdatedAt = (note: EnglishNote): number => {
 };
 
 /** 展示用的更新时间文案，如 2026/11/08 14:39；时间未知返回空串（不渲染成 1970 年） */
-export const formatNoteUpdatedAt = (note: EnglishNote): string => {
-  const updatedAt = getNoteUpdatedAt(note);
+const formatNoteUpdatedAt = (updatedAt: number): string =>
+  updatedAt > 0 ? formatDateTime(updatedAt) : '';
 
-  return updatedAt > 0 ? formatDateTime(updatedAt) : '';
-};
+/** 分类前缀 → 中文标题；表格行的「分类」单元格用它 */
+const CATEGORY_LABELS = new Map(
+  NOTE_CATEGORIES.map(({ key, label }) => [key, label]),
+);
 
 /** 看板展示这六类前缀；`paper`（套题）等未开列的前缀不展示，也不参与翻页计数。 */
 const BOARD_CATEGORIES: ReadonlySet<string> = new Set(
@@ -118,6 +120,35 @@ export const groupNotesByCategory = (notes: EnglishNote[]): NoteColumn[] => {
     ),
   }));
 };
+
+/**
+ * 把笔记摊平成表格的一行一篇：只保留看板展示的分类，按「笔记更新时间」倒序（新的在前），
+ * 同一时间按文件名升序。分类中文标题与时间文案在这里一次算好，
+ * 组件只管渲染，不在 cell 里重复解析正文。
+ */
+export const toNoteRows = (notes: EnglishNote[]): NoteRow[] =>
+  notes
+    .filter((note) => isBoardNote(note.name))
+    .map((note) => {
+      const category = getNoteCategory(note.name);
+      const updatedAt = getNoteUpdatedAt(note);
+
+      return {
+        note,
+        categoryLabel: CATEGORY_LABELS.get(category) ?? '',
+        updatedLabel: formatNoteUpdatedAt(updatedAt),
+        updatedAt,
+      };
+    })
+    .toSorted(
+      (a, b) =>
+        b.updatedAt - a.updatedAt || a.note.name.localeCompare(b.note.name),
+    )
+    .map(({ note, categoryLabel, updatedLabel }) => ({
+      note,
+      categoryLabel,
+      updatedLabel,
+    }));
 
 /** 判断事件目标是不是正在输入的控件（那里交给浏览器自己的撤销） */
 export const isTypingTarget = (target: EventTarget | null): boolean =>

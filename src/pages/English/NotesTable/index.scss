@@ -1,4 +1,4 @@
-/* 表格平铺：六类各占一列，整张表一起滚动（与看板的按列滚动区分开） */
+/* 表格平铺：一行一篇笔记，分类与更新时间各占一窄列，整表一起滚动 */
 
 .wrap {
   flex: 1 1 auto;
@@ -10,10 +10,9 @@
 .table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;
 }
 
-/* 表头吸顶：往下滚时六列标题仍可见 */
+/* 表头吸顶：往下滚时列标题仍可见 */
 .head {
   position: sticky;
   z-index: 1;
@@ -21,6 +20,9 @@
   padding: 0 12px 8px;
   border-bottom: 1px solid var(--app-line-strong);
   background: var(--app-bg);
+  color: var(--app-ink-soft);
+  font-size: 0.76rem;
+  font-weight: 600;
   text-align: left;
   vertical-align: bottom;
 }
@@ -29,44 +31,58 @@
   padding-left: 0;
 }
 
-.label {
-  color: var(--app-ink-soft);
-  font-size: 0.76rem;
-  font-weight: 600;
+/* 分类列只放两三个字，更新时间列放 2026/11/08 14:39，都固定宽度，文件名列吃满剩余 */
+.categoryWidth {
+  width: 6.5rem;
 }
 
-.count {
-  margin-left: 6px;
-  color: var(--app-ink-faint);
-  font-size: 0.7rem;
-  font-variant-numeric: tabular-nums;
-  font-weight: 400;
+.timeWidth {
+  width: 9.5rem;
 }
 
 .cell {
-  padding: 0 12px 16px;
-  border-left: 1px solid var(--app-line);
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--app-line);
   vertical-align: top;
 }
 
 .cell:first-child {
   padding-left: 0;
-  border-left: 0;
 }
 
-.list {
-  margin: 0;
+.row:hover .cell {
+  background: var(--app-surface-hover);
+}
+
+/* 文件名即整行的入口：整格吃满，点击打开预览 */
+.name {
+  width: 100%;
   padding: 0;
-  list-style: none;
+  border: 0;
+  background: transparent;
+  color: var(--app-ink);
+  font-family: var(--app-serif);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
 }
 
-/* 窄屏：表格不再硬挤成六列，改为横向滚动 */
-@media (max-width: 900px) {
-  .wrap {
-    overflow-x: auto;
-  }
+.name:hover {
+  color: var(--app-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 
-  .table {
-    min-width: 900px;
-  }
+.category {
+  color: var(--app-ink-soft);
+  font-size: 0.78rem;
+}
+
+.time {
+  color: var(--app-ink-faint);
+  font-size: 0.74rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }

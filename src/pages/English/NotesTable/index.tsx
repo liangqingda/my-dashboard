@@ -1,4 +1,5 @@
-import NoteItem from '../NoteItem';
+import { cx } from '@/utils/cx';
+
 import NotesPlaceholder from '../NotesPlaceholder';
 
 import type { NotesTableProps } from './types';
@@ -6,57 +7,63 @@ import type { NotesTableProps } from './types';
 import styles from './index.scss';
 
 /**
- * 表格平铺：六类各占一列，所有笔记平铺在同一张表里一起滚动（不做按列独立滚动）。
- * 每篇额外显示「笔记更新时间」，因为顺序就是按它倒序排的。
+ * 表格平铺：一行一篇笔记，分类（错题 / 短语 / 用法 / 语法 / 词汇 / 混合）只是
+ * 「分类」单元格的内容，不再当列标题；行按「笔记更新时间」倒序，整表一起滚动。
  */
-const NotesTable = ({ columns, loading, error, onOpen }: NotesTableProps) => {
-  /** 板上真正展示的笔记数：0 才说明整目录为空 */
-  const total = columns.reduce((sum, column) => sum + column.notes.length, 0);
-
-  return (
-    <div className={styles.wrap}>
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            {columns.map((column) => (
-              <th className={styles.head} key={column.key} scope="col">
-                <span className={styles.label}>{column.label}</span>
-                <span className={styles.count}>{column.notes.length}</span>
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            {columns.map((column) => (
-              <td className={styles.cell} key={column.key}>
-                <NotesPlaceholder
-                  columnTotal={column.notes.length}
-                  error={error}
-                  loading={loading}
-                  total={total}
-                />
-
-                {column.notes.length > 0 ? (
-                  <ul className={styles.list}>
-                    {column.notes.map((note) => (
-                      <NoteItem
-                        category={column.key}
-                        key={note.name}
-                        note={note}
-                        onOpen={onOpen}
-                        showUpdated
-                      />
-                    ))}
-                  </ul>
-                ) : null}
+const NotesTable = ({ rows, loading, error, onOpen }: NotesTableProps) => (
+  <div className={styles.wrap}>
+    <table className={styles.table}>
+      <thead>
+        <tr>
+          <th className={styles.head} scope="col">
+            笔记
+          </th>
+          <th className={cx(styles.head, styles.categoryWidth)} scope="col">
+            分类
+          </th>
+          <th className={cx(styles.head, styles.timeWidth)} scope="col">
+            更新时间
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.length > 0 ? (
+          rows.map((row) => (
+            <tr className={styles.row} key={row.note.name}>
+              <td className={styles.cell}>
+                <button
+                  aria-label={`预览 ${row.note.name}`}
+                  className={styles.name}
+                  onClick={() => {
+                    void onOpen(row.note.name);
+                  }}
+                  type="button"
+                >
+                  {row.note.name}
+                </button>
               </td>
-            ))}
+              <td className={cx(styles.cell, styles.categoryWidth)}>
+                <span className={styles.category}>{row.categoryLabel}</span>
+              </td>
+              <td className={cx(styles.cell, styles.timeWidth, styles.time)}>
+                {row.updatedLabel}
+              </td>
+            </tr>
+          ))
+        ) : (
+          <tr>
+            <td className={styles.cell} colSpan={3}>
+              <NotesPlaceholder
+                error={error}
+                loading={loading}
+                total={rows.length}
+              />
+            </td>
           </tr>
-        </tbody>
-      </table>
-    </div>
-  );
-};
+        )}
+      </tbody>
+    </table>
+  </div>
+);
 
 export default NotesTable;

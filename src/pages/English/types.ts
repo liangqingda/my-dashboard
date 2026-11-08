@@ -36,6 +36,16 @@ export type NoteColumn = NoteCategory & {
   notes: EnglishNote[];
 };
 
+/** 表格平铺的一行：一行一篇笔记，分类和时间作为单元格内容 */
+export type NoteRow = {
+  /** 这一行对应的笔记 */
+  note: EnglishNote;
+  /** 分类中文标题，如「错题」 */
+  categoryLabel: string;
+  /** 「笔记更新时间」文案；时间未知时为空串 */
+  updatedLabel: string;
+};
+
 /** 保存后自动提交到记录仓库的结果 */
 export type SavedNoteResult = {
   /** 自动提交失败的原因；成功或没有可提交内容时为空 */
