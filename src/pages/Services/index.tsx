@@ -14,8 +14,11 @@ import ServicesManager from './ServicesManager';
 const Services = () => {
   const { refresh } = useServices();
 
-  // 页面头部「刷新当前页面」按钮：与页面自身的 refresh 共用一条路径，进行中的请求会被合并
-  useEffect(() => onPageRefresh(() => void refresh()), [refresh]);
+  /**
+   * 页面头部「刷新当前页面」按钮：与页面自身 refresh 共用一条路径（进行中的请求会合并），
+   * 把 Promise 交给订阅方，标题栏按钮才能等取数结束再提示结果。
+   */
+  useEffect(() => onPageRefresh(refresh), [refresh]);
 
   return (
     <MenuContentLayout actions={<RestartAgentButton />} title="服务">

@@ -16,7 +16,7 @@
 | 时间格式化 | `@/utils/format` 的 `formatClock` / `formatTime` / `formatDateTime`（内部缓存 `Intl` 实例，不要就地 `new Intl.DateTimeFormat`） |
 | 多 class 拼接 | `@/utils/cx` 的 `cx(...)`，不要手写模板串或 `?? ''` 拼空格 |
 | 剪贴板复制 | `@/utils/clipboard` 的 `copyText(text)`（含 `execCommand` 兜底） |
-| 页面级刷新广播 | `@/utils/page-refresh` 的 `requestPageRefresh` / `onPageRefresh` |
+| 页面级刷新 | `@/utils/page-refresh` 的 `requestPageRefresh()`（等页面取完数才 resolve，返回 `empty` 表示无订阅者）/ `onPageRefresh(handler)` |
 | Markdown 标题目录 | `@/utils/markdown-outline` 的 `extractMarkdownOutline` |
 | 单行省略文本 / 截断才提示 | `@/components/TruncatedText`：放得下就正常显示，只有被省略号截断时才在 hover / 聚焦弹 tip；传 `onClick` 渲染成 button，`inline` 用于夹在一行文字里 |
 | 界面状态的本地持久化（展开 / 收起、全屏、视图形态） | `@/hooks/useStoredState` 配 `@/utils/local-storage` 的 `FLAG_CODEC`（开关）或 `createChoiceCodec(choices, fallback)`（枚举形态）；存储键常量放各自模块的 `constants.ts`。不在组件里直接读写 `localStorage`，也不自己 try/catch |
