@@ -8,7 +8,7 @@ import styles from './index.scss';
 
 const navItems: NavItem[] = [
   { key: 'services', label: '服务', to: '/services', icon: IconServer },
-  { key: 'english', label: '英语', to: '/english', icon: IconLanguage },
+  { key: 'english', label: '英语练习', to: '/english', icon: IconLanguage },
 ];
 
 const Sidebar = ({ onNavigate }: SidebarProps) => {

@@ -6,12 +6,19 @@ import MarkdownPreviewModal from '@/components/MarkdownPreviewModal';
 import MenuContentLayout from '@/layouts/MenuContentLayout';
 import { onPageRefresh } from '@/utils/page-refresh';
 
-import type { EnglishNote, NotesViewMode } from './types';
+import type { EnglishNote, NotesSort, NotesViewMode } from './types';
+import { DEFAULT_NOTE_SORT } from './constants';
 import { useEnglishNotes } from './hooks/useEnglishNotes';
 import NoteEditor from './NoteEditor';
 import NotesBoard from './NotesBoard';
 import NotesTable from './NotesTable';
-import { getNoteCategory, groupNotesByCategory, isBoardNote, toNoteRows } from './utils/notes';
+import {
+  getNoteCategory,
+  groupNotesByCategory,
+  isBoardNote,
+  sortNoteRows,
+  toNoteRows,
+} from './utils/notes';
 import { fetchEnglishNote, saveEnglishNote } from './utils/notes-api';
 
 import styles from './index.scss';
@@ -19,7 +26,7 @@ import styles from './index.scss';
 /** 稳定的空数组，避免每次渲染都换新引用 */
 const NO_NOTES: EnglishNote[] = [];
 
-/** 英语页：把 learning-record-notes 下的笔记按分类分列展示，整页不滚动。 */
+/** 英语练习页：把 learning-record-notes 下的笔记按分类分列展示，整页不滚动。 */
 const English = () => {
   const { notes, loading, error, refresh, reload, applyNote } =
     useEnglishNotes();
@@ -27,6 +34,8 @@ const English = () => {
   const [active, setActive] = useState<EnglishNote | null>(null);
   /** 展示形式：分列看板（默认）或表格平铺，用 header 右侧图标按钮切换 */
   const [view, setView] = useState<NotesViewMode>('board');
+  /** 表格视图的排序状态：默认按更新时间倒序 */
+  const [sort, setSort] = useState<NotesSort>(DEFAULT_NOTE_SORT);
   /** 打开请求的序号：连点两篇时只认最后一次 */
   const openSeq = useRef(0);
 
@@ -37,8 +46,11 @@ const English = () => {
   );
   /** 六列一次算好，看板与翻页共用同一份结果（每列只排一次序） */
   const columns = useMemo(() => groupNotesByCategory(boardNotes), [boardNotes]);
-  /** 表格视图的行：一行一篇，按更新时间倒序 */
-  const rows = useMemo(() => toNoteRows(boardNotes), [boardNotes]);
+  /** 表格视图的行：一行一篇，按当前排序状态排好 */
+  const rows = useMemo(
+    () => sortNoteRows(toNoteRows(boardNotes), sort),
+    [boardNotes, sort],
+  );
   /** 表格里的可见顺序，翻页与计数在表格视图下也走这一份 */
   const rowNotes = useMemo(() => rows.map((row) => row.note), [rows]);
   /**
@@ -142,6 +154,23 @@ const English = () => {
     setView((current) => (current === 'board' ? 'table' : 'board'));
   };
 
+  /**
+   * 点击表格列标题：同一列上反转方向，换一列时用它的自然默认
+   * （更新时间默认新的在前，分类默认按看板列顺序）。
+   */
+  const sortBy = (key: NotesSort['key']) => {
+    setSort((current) => {
+      if (current.key === key) {
+        return {
+          key,
+          direction: current.direction === 'asc' ? 'desc' : 'asc',
+        };
+      }
+
+      return { key, direction: key === 'updated' ? 'desc' : 'asc' };
+    });
+  };
+
   /** 当前是否为分列看板；图标与提示文案都按「切过去是什么」来写 */
   const isBoardView = view === 'board';
 
@@ -169,7 +198,7 @@ const English = () => {
           </Tooltip>
         }
         fill
-        title="英语"
+        title="英语练习"
       >
         {error ? (
           <div className={styles.errorBar}>
@@ -192,7 +221,9 @@ const English = () => {
             error={error}
             loading={loading}
             onOpen={openNote}
+            onSort={sortBy}
             rows={rows}
+            sort={sort}
           />
         )}
       </MenuContentLayout>

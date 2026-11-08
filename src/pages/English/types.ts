@@ -36,14 +36,34 @@ export type NoteColumn = NoteCategory & {
   notes: EnglishNote[];
 };
 
-/** 表格平铺的一行：一行一篇笔记，分类和时间作为单元格内容 */
+/** 表格平铺的一行：一行一篇笔记，分类、目标知识点和时间作为单元格内容 */
 export type NoteRow = {
   /** 这一行对应的笔记 */
   note: EnglishNote;
+  /** 分类前缀，如 errors；排序按 NOTE_CATEGORIES 里的定义顺序 */
+  categoryKey: string;
   /** 分类中文标题，如「错题」 */
   categoryLabel: string;
+  /** 目标知识点（摘自正文基础信息表）；缺失时为空串 */
+  topicLabel: string;
   /** 「笔记更新时间」文案；时间未知时为空串 */
   updatedLabel: string;
+  /** 「笔记更新时间」时间戳（毫秒），0 表示未知；排序用 */
+  updatedAt: number;
+};
+
+/** 表格可排序的列 */
+export type NoteSortKey = 'category' | 'updated';
+
+/** 升序 / 倒序 */
+export type SortDirection = 'asc' | 'desc';
+
+/** 表格当前的排序状态 */
+export type NotesSort = {
+  /** 按哪一列排 */
+  key: NoteSortKey;
+  /** 排序方向 */
+  direction: SortDirection;
 };
 
 /** 保存后自动提交到记录仓库的结果 */

@@ -4,11 +4,23 @@
 
 import { formatDateTime } from '@/utils/format';
 
-import type { EnglishNote, NoteColumn, NoteRow } from '../types';
+import type {
+  EnglishNote,
+  NoteColumn,
+  NoteRow,
+  NotesSort,
+} from '../types';
 import { NOTE_CATEGORIES } from '../constants';
 
 /** 正文「基础信息」表里的更新时间行：`<tr><td>笔记更新时间</td><td>2026-11-08 14:39</td></tr>` */
 const NOTE_UPDATED_AT_PATTERN = /笔记更新时间[\s\S]{0,40}?<td>([^<]+)</u;
+
+/** 正文「基础信息」表里的目标知识点行：`<tr><td>目标知识点</td><td>out west 不是 outwest</td></tr>` */
+const NOTE_TOPIC_PATTERN = /目标知识点[\s\S]{0,40}?<td>([^<]*)</u;
+
+/** 取出第一个捕获组并去空白；没匹配到返回空串 */
+const readCell = (pattern: RegExp, content: string): string =>
+  (pattern.exec(content)?.[1] ?? '').trim();
 
 /** 「2026-11-08 14:39」这类正文时间补成可解析的 ISO 串；日期带秒的按原样解析 */
 const toIsoDateTime = (text: string): string => {
@@ -33,17 +45,21 @@ export const getNoteCategory = (name: string): string => {
  * 两者都取不到返回 0，调用方据此不渲染时间文案。
  */
 export const getNoteUpdatedAt = (note: EnglishNote): number => {
-  const matched = NOTE_UPDATED_AT_PATTERN.exec(note.content);
-  const fromContent = matched ? Date.parse(toIsoDateTime(matched[1])) : 0;
+  const fromContent = readCell(NOTE_UPDATED_AT_PATTERN, note.content);
+  const parsed = fromContent ? Date.parse(toIsoDateTime(fromContent)) : 0;
 
-  if (fromContent > 0) {
-    return fromContent;
+  if (parsed > 0) {
+    return parsed;
   }
 
   const fallback = Date.parse(note.updatedAt);
 
   return Number.isNaN(fallback) ? 0 : fallback;
 };
+
+/** 笔记的目标知识点（正文基础信息表里的字段），取不到返回空串 */
+export const getNoteTopic = (note: EnglishNote): string =>
+  readCell(NOTE_TOPIC_PATTERN, note.content);
 
 /** 展示用的更新时间文案，如 2026/11/08 14:39；时间未知返回空串（不渲染成 1970 年） */
 const formatNoteUpdatedAt = (updatedAt: number): string =>
@@ -52,6 +68,11 @@ const formatNoteUpdatedAt = (updatedAt: number): string =>
 /** 分类前缀 → 中文标题；表格行的「分类」单元格用它 */
 const CATEGORY_LABELS = new Map(
   NOTE_CATEGORIES.map(({ key, label }) => [key, label]),
+);
+
+/** 分类前缀 → 声明顺序；「分类」列排序按看板列顺序，而不是中文拼音序 */
+const CATEGORY_ORDERS = new Map(
+  NOTE_CATEGORIES.map(({ key }, index) => [key, index]),
 );
 
 /** 看板展示这六类前缀；`paper`（套题）等未开列的前缀不展示，也不参与翻页计数。 */
@@ -122,33 +143,47 @@ export const groupNotesByCategory = (notes: EnglishNote[]): NoteColumn[] => {
 };
 
 /**
- * 把笔记摊平成表格的一行一篇：只保留看板展示的分类，按「笔记更新时间」倒序（新的在前），
- * 同一时间按文件名升序。分类中文标题与时间文案在这里一次算好，
- * 组件只管渲染，不在 cell 里重复解析正文。
+ * 把笔记摊平成表格的一行一篇：只保留看板展示的分类，分类中文标题、目标知识点与
+ * 时间文案在这里一次算好，组件只管渲染，不在 cell 里重复解析正文。
+ * 排序交给 `sortNoteRows`，摊平结果本身不带顺序含义。
  */
 export const toNoteRows = (notes: EnglishNote[]): NoteRow[] =>
-  notes
-    .filter((note) => isBoardNote(note.name))
-    .map((note) => {
-      const category = getNoteCategory(note.name);
-      const updatedAt = getNoteUpdatedAt(note);
+  notes.filter((note) => isBoardNote(note.name)).map((note) => {
+    const categoryKey = getNoteCategory(note.name);
+    const updatedAt = getNoteUpdatedAt(note);
 
-      return {
-        note,
-        categoryLabel: CATEGORY_LABELS.get(category) ?? '',
-        updatedLabel: formatNoteUpdatedAt(updatedAt),
-        updatedAt,
-      };
-    })
-    .toSorted(
-      (a, b) =>
-        b.updatedAt - a.updatedAt || a.note.name.localeCompare(b.note.name),
-    )
-    .map(({ note, categoryLabel, updatedLabel }) => ({
+    return {
       note,
-      categoryLabel,
-      updatedLabel,
-    }));
+      categoryKey,
+      categoryLabel: CATEGORY_LABELS.get(categoryKey) ?? '',
+      topicLabel: getNoteTopic(note),
+      updatedLabel: formatNoteUpdatedAt(updatedAt),
+      updatedAt,
+    };
+  });
+
+/**
+ * 按当前排序状态给表格行排序：
+ * 「更新时间」按时间戳比较，「分类」按看板列顺序（错题→短语→…）而不是中文拼音序，
+ * 随后方向取反；主键相同时固定按更新时间倒序、再按文件名升序，保证顺序稳定。
+ */
+export const sortNoteRows = (rows: NoteRow[], sort: NotesSort): NoteRow[] => {
+  const factor = sort.direction === 'asc' ? 1 : -1;
+
+  return rows.toSorted((a, b) => {
+    const primary =
+      sort.key === 'category'
+        ? (CATEGORY_ORDERS.get(a.categoryKey) ?? NOTE_CATEGORIES.length) -
+          (CATEGORY_ORDERS.get(b.categoryKey) ?? NOTE_CATEGORIES.length)
+        : a.updatedAt - b.updatedAt;
+
+    if (primary !== 0) {
+      return primary * factor;
+    }
+
+    return b.updatedAt - a.updatedAt || a.note.name.localeCompare(b.note.name);
+  });
+};
 
 /** 判断事件目标是不是正在输入的控件（那里交给浏览器自己的撤销） */
 export const isTypingTarget = (target: EventTarget | null): boolean =>

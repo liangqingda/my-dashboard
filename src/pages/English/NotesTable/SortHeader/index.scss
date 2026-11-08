@@ -1,0 +1,35 @@
+/* 可排序列标题：文字 + 排序图标，整块可点，未激活时图标弱化到悬停才明显 */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--app-ink-soft);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.button:hover {
+  color: var(--app-accent);
+}
+
+.active {
+  color: var(--app-ink);
+}
+
+.icon {
+  flex: 0 0 auto;
+  color: var(--app-ink-faint);
+}
+
+.button:hover .icon {
+  color: var(--app-accent);
+}
+
+.active .icon {
+  color: var(--app-accent);
+}
