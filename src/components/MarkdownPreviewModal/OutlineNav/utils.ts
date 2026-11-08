@@ -1,5 +1,5 @@
 /**
- * 标题导航的树操作：从树里定位某个下标对应节点的 key 路径。
+ * 标题导航的 DOM 操作：树里定位某个下标对应节点的 key 路径，以及把高亮行滚进目录可视区。
  */
 
 import type { MarkdownOutlineNode } from '@/utils/markdown-outline';
@@ -49,4 +49,51 @@ export const findOutlineKeyPath = (
   }
 
   return path.slice(0, depth);
+};
+
+/** 往上找最近的、纵向可滚动的祖先 */
+const findScrollableAncestor = (row: HTMLElement): HTMLElement | null => {
+  let node = row.parentElement;
+
+  while (node) {
+    const { overflowY } = window.getComputedStyle(node);
+
+    if (overflowY === 'auto' || overflowY === 'scroll') {
+      return node;
+    }
+
+    node = node.parentElement;
+  }
+
+  return null;
+};
+
+/**
+ * 把一行滚进它所在滚动容器的可视范围。
+ *
+ * 只做「贴边」的最小移动（等价于 scrollIntoView 的 block: nearest）：
+ * 超出下沿就补差额、超出上沿就退差额，本来就看得见时不动，
+ * 也不会顺手把正文或页面一起滚走。
+ *
+ * @param row 要高亮的这一行；不在 DOM 里时什么都不做
+ */
+export const revealRowInScroller = (row: HTMLElement | null): void => {
+  if (!row) {
+    return;
+  }
+
+  const scroller = findScrollableAncestor(row);
+
+  if (!scroller) {
+    return;
+  }
+
+  const rowRect = row.getBoundingClientRect();
+  const scrollerRect = scroller.getBoundingClientRect();
+
+  if (rowRect.bottom > scrollerRect.bottom) {
+    scroller.scrollTop += rowRect.bottom - scrollerRect.bottom;
+  } else if (rowRect.top < scrollerRect.top) {
+    scroller.scrollTop -= scrollerRect.top - rowRect.top;
+  }
 };
