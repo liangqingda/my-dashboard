@@ -5,9 +5,10 @@
 import { useEffect } from 'react';
 
 import { useServices } from '@/services/hooks/useServices';
-import ServicesManager from '@/pages/Services/ServicesManager';
 import MenuContentLayout from '@/layouts/MenuContentLayout';
 import { onPageRefresh } from '@/utils/page-refresh';
+
+import ServicesManager from './ServicesManager';
 
 const Services = () => {
   const { refresh } = useServices();

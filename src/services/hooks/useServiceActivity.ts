@@ -5,28 +5,8 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { ACTIVITY_LIMIT, ACTIVITY_STORAGE_KEY } from '@/services/constants';
-import type { ServiceActivity } from '@/services/types';
-
-/** 校验 sessionStorage 里存进来的历史记录，坏数据一律丢弃 */
-const isServiceActivity = (item: unknown): item is ServiceActivity => {
-  if (typeof item !== 'object' || item === null) {
-    return false;
-  }
-
-  return (
-    'id' in item &&
-    typeof item.id === 'string' &&
-    'serviceName' in item &&
-    typeof item.serviceName === 'string' &&
-    'label' in item &&
-    typeof item.label === 'string' &&
-    'at' in item &&
-    typeof item.at === 'string' &&
-    Number.isFinite(Date.parse(item.at)) &&
-    'success' in item &&
-    typeof item.success === 'boolean'
-  );
-};
+import type { ServiceActivity, ServiceActivityState } from '@/services/types';
+import { isServiceActivity } from '@/services/utils';
 
 /** 读取历史记录；读不到就按空列表处理 */
 const loadActivity = (): ServiceActivity[] => {
@@ -45,23 +25,13 @@ const loadActivity = (): ServiceActivity[] => {
   }
 };
 
-type ServiceActivityState = {
-  /** 本次浏览会话的操作记录，最新的在前 */
-  activity: ServiceActivity[];
-  /** 记录一条操作 */
-  record: (serviceName: string, label: string, success: boolean) => void;
-};
-
 /** 管理「最近操作」列表并同步到 sessionStorage */
 export function useServiceActivity(): ServiceActivityState {
   const [activity, setActivity] = useState(loadActivity);
 
   useEffect(() => {
     try {
-      sessionStorage.setItem(
-        ACTIVITY_STORAGE_KEY,
-        JSON.stringify(activity),
-      );
+      sessionStorage.setItem(ACTIVITY_STORAGE_KEY, JSON.stringify(activity));
     } catch {
       /* 存不进去不影响功能 */
     }
@@ -72,11 +42,11 @@ export function useServiceActivity(): ServiceActivityState {
       setActivity((current) =>
         [
           {
-            id: crypto.randomUUID(),
-            serviceName,
-            label,
-            success,
             at: new Date().toISOString(),
+            id: crypto.randomUUID(),
+            label,
+            serviceName,
+            success,
           },
           ...current,
         ].slice(0, ACTIVITY_LIMIT),

@@ -3,21 +3,26 @@
   padding: 0;
   list-style: none;
 }
+
 .item {
   display: grid;
   gap: 4px;
   padding: 12px 0;
   overflow-wrap: anywhere;
 }
+
 .item + .item {
   border-top: 1px solid var(--app-line);
 }
+
 .item:last-child {
   padding-bottom: 0;
 }
+
 .ok {
   color: var(--app-status-ok);
 }
+
 .failed {
   color: var(--app-status-danger);
 }

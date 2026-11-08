@@ -7,24 +7,15 @@
 import type {
   EnglishNote,
   EnglishNotesSnapshot,
-} from '@/pages/English/types';
+  RawNotePayload,
+  RawNotesPayload,
+  SavedNoteResult,
+} from '../types';
 
 /** 笔记接口；构建产物里使用插件输出的静态快照文件 */
 const ENDPOINT = import.meta.env.DEV
   ? '/api/english/notes'
   : '/english-notes.json';
-
-/** 全部笔记的原始 payload（由 Vite 插件生成） */
-type RawNotesPayload = {
-  /** 笔记列表 */
-  notes: unknown;
-};
-
-/** 单篇笔记的原始 payload */
-type RawNotePayload = {
-  /** 一篇笔记 */
-  note: unknown;
-};
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -133,14 +124,6 @@ export const fetchEnglishNote = async (
   }
 
   return normalizeNote((payload as RawNotePayload).note);
-};
-
-/** 保存后自动提交到记录仓库的结果 */
-export type SavedNoteResult = {
-  /** 自动提交失败的原因；成功或没有可提交内容时为空 */
-  commitError?: string;
-  /** 自动提交的短 hash */
-  commitHash?: string;
 };
 
 /**

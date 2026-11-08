@@ -7,39 +7,17 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { notifications } from '@mantine/notifications';
 
 import { fetchServices } from '@/services/api';
+import type {
+  RecordActivity,
+  ServiceStatus,
+  ServicesSnapshotState,
+} from '@/services/types';
 import { isSameServiceList } from '@/services/utils';
-import type { ServiceStatus } from '@/services/types';
 import { getErrorMessage } from '@/utils/error';
-
-/** 记录一条最近操作：服务名 / 文案 / 是否成功 */
-type RecordActivity = (
-  serviceName: string,
-  label: string,
-  success: boolean,
-) => void;
 
 type Params = {
   /** 部署结果变化时写入最近操作 */
   record: RecordActivity;
-};
-
-type ServicesSnapshotState = {
-  /** 服务列表快照 */
-  services: ServiceStatus[];
-  /** 是否还在首次读取 */
-  loading: boolean;
-  /** 是否有请求正在进行 */
-  refreshing: boolean;
-  /** 本机 agent 是否可达 */
-  agentOnline: boolean;
-  /** 最近一次读取失败的原因 */
-  error: string | null;
-  /** 最近一次成功读取的时间（ISO 8601） */
-  lastUpdated: string | null;
-  /** 重新读取；进行中的请求直接复用 */
-  refresh: () => Promise<void>;
-  /** 等动作前可能在飞的那次读取落地，再读一次动作后的状态 */
-  refreshAfterSettled: () => Promise<void>;
 };
 
 /** 读取服务列表；同一时刻只允许一个请求在飞 */

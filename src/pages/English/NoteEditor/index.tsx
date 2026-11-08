@@ -1,22 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 
+import type { MarkdownBlock } from '../types';
+
 import type { MarkdownEditorProps } from '@/components/MarkdownPreviewModal';
 
 import BlockEditor from '../BlockEditor';
+import { UNDO_DEPTH } from '../constants';
 import {
+  blocksToMarkdown,
   parseMarkdownBlocks,
-  serializeMarkdownBlocks,
-  type MarkdownBlock,
 } from '../utils/markdown-blocks';
+import { isTypingTarget } from '../utils/notes';
 
 import styles from './index.scss';
-
-/** 撤销栈保留的步数 */
-const UNDO_DEPTH = 50;
-
-/** 判断事件目标是不是正在输入的控件（那里交给浏览器自己的撤销） */
-const isTypingTarget = (target: EventTarget | null): boolean =>
-  target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement;
 
 /**
  * 学习笔记专用编辑器：进编辑时把正文切成块，表格走受控网格，其余块编辑源码片段。
@@ -42,18 +38,11 @@ const NoteEditor = ({ markdown, onChange }: MarkdownEditorProps) => {
     firstField?.focus();
   }, []);
 
-  /** 拼回 Markdown，并按原文件的换行风格输出 */
-  const toMarkdown = (next: MarkdownBlock[]): string => {
-    const text = serializeMarkdownBlocks(next);
-
-    return usesCrlf ? text.replace(/\n/gu, '\r\n') : text;
-  };
-
   /** 块列表变化：自己留一份，同时把拼好的 Markdown 交给弹窗当草稿 */
   const handleChange = (next: MarkdownBlock[]) => {
     history.current = [...history.current.slice(-(UNDO_DEPTH - 1)), blocks];
     setBlocks(next);
-    onChange(toMarkdown(next));
+    onChange(blocksToMarkdown(next, usesCrlf));
   };
 
   /** 撤销上一步结构改动 */
@@ -66,7 +55,7 @@ const NoteEditor = ({ markdown, onChange }: MarkdownEditorProps) => {
 
     history.current = history.current.slice(0, -1);
     setBlocks(previous);
-    onChange(toMarkdown(previous));
+    onChange(blocksToMarkdown(previous, usesCrlf));
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {

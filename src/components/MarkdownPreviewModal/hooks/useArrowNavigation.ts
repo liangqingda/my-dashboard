@@ -4,21 +4,14 @@
 
 import { useEffect } from 'react';
 
-type Params = {
-  /** 是否启用（弹窗打开且不在编辑态） */
-  enabled: boolean;
-  /** 上一篇 */
-  onPrevious?: (() => void) | null;
-  /** 下一篇 */
-  onNext?: (() => void) | null;
-};
+import type { ArrowNavigationParams } from '../types';
 
 /** 监听方向键，在文档之间切换 */
 export function useArrowNavigation({
   enabled,
   onPrevious,
   onNext,
-}: Params): void {
+}: ArrowNavigationParams): void {
   useEffect(() => {
     if (!enabled) {
       return undefined;

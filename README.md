@@ -22,8 +22,10 @@ pnpm agent            # 前台运行本机服务 agent（默认 127.0.0.1:8787�
 pnpm agent:bg         # 后台运行 agent（日志 /tmp/my-dashboard-agent.log）
 pnpm agent:stop       # 停止 agent
 pnpm typecheck        # 类型检查
-pnpm lint             # ESLint + 目录结构检查
+pnpm lint             # ESLint + 目录结构 + 样式排版 + import 分组 + Markdown 往返
 pnpm check:structure  # 仅目录结构检查
+pnpm check:scss       # 仅样式排版检查（块间空行 / 选择器列表 / 行尾空格）
+pnpm check:imports    # 仅 import 分组检查（内联 type / 内部相对路径 / 页面组顺序）
 pnpm component:new <路径> # 生成合规组件（index.tsx + index.scss）
 pnpm test             # 单元测试 + 隔离 agent 的 HTTP/进程集成测试
 pnpm test:e2e         # 浏览器交互和响应式布局回归测试
@@ -31,8 +33,14 @@ pnpm build            # 类型检查 + 构建
 pnpm preview          # 预览构建产物
 ```
 
-`lint` 会在 ESLint 之后跑 `check:structure`（目录结构检查）；提交代码前 pre-commit
+`lint` 依次跑 `eslint .` → `check:structure`（目录结构）→ `check:scss`（样式排版）→
+`check:imports`（import 分组）→ `check:md`（Markdown 往返）；提交代码前 pre-commit
 钩子会自动执行 `pnpm lint && pnpm typecheck`，不合规直接拦截提交。
+
+分工：import 的**分组与空行**由 ESLint（`import/order`，见 `eslint.config.js`）负责；
+ESLint 管不到的三件事（值导入内联 `type`、页面内部必须相对路径、`@/pages/**` 排最后）
+由 `scripts/check-imports.mjs` 兜底。样式排版同理：ESLint 不覆盖 SCSS，由
+`scripts/check-scss.mjs` 校验，两个脚本都零依赖、风格与 `check-structure.mjs` 一致。
 
 ## 本机服务 agent
 

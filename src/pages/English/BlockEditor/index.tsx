@@ -1,26 +1,10 @@
-import type { MarkdownBlock } from '../utils/markdown-blocks';
+import type { MarkdownBlock } from '../types';
+import type { MarkdownBlockEditorProps } from './types';
+
+import { replaceAt } from '../utils/array';
+import { createBlockId } from '../utils/markdown-blocks';
 
 import styles from './index.scss';
-
-export type MarkdownBlockEditorProps = {
-  /** 解析后的块列表 */
-  blocks: MarkdownBlock[];
-  /** 块列表变化时回调，交给调用方持有状态 */
-  onChange: (blocks: MarkdownBlock[]) => void;
-};
-
-/** 替换数组某一项，不原地修改 */
-const replaceAt = <T,>(list: T[], index: number, item: T): T[] =>
-  list.map((entry, entryIndex) => (entryIndex === index ? item : entry));
-
-let seed = 0;
-
-/** 编辑期间新增行 / 单元格的稳定 id */
-const createId = (): string => {
-  seed += 1;
-
-  return `edit-${seed}`;
-};
 
 /**
  * Markdown 块级编辑器。
@@ -78,13 +62,13 @@ const MarkdownBlockEditor = ({ blocks, onChange }: MarkdownBlockEditorProps) => 
 
     const cells = firstRow.cells.map((cell) => ({
       ...cell,
-      id: createId(),
+      id: createBlockId(),
       text: '',
     }));
 
     updateBlock(blockIndex, {
       ...block,
-      rows: [...block.rows, { cells, id: createId() }],
+      rows: [...block.rows, { cells, id: createBlockId() }],
     });
   };
 

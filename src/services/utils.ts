@@ -2,7 +2,7 @@
  * 服务模块的纯函数工具。
  */
 
-import type { ServiceStatus } from '@/services/types';
+import type { ServiceActivity, ServiceStatus } from '@/services/types';
 
 /** 单个服务快照里所有会影响渲染的字段是否都没变 */
 const isSameService = (prev: ServiceStatus, next: ServiceStatus): boolean =>
@@ -26,3 +26,24 @@ export const isSameServiceList = (
 ): boolean =>
   prev.length === next.length &&
   next.every((service, index) => isSameService(prev[index], service));
+
+/** 校验 sessionStorage 里存进来的历史记录，坏数据一律丢弃 */
+export const isServiceActivity = (item: unknown): item is ServiceActivity => {
+  if (typeof item !== 'object' || item === null) {
+    return false;
+  }
+
+  return (
+    'id' in item &&
+    typeof item.id === 'string' &&
+    'serviceName' in item &&
+    typeof item.serviceName === 'string' &&
+    'label' in item &&
+    typeof item.label === 'string' &&
+    'at' in item &&
+    typeof item.at === 'string' &&
+    Number.isFinite(Date.parse(item.at)) &&
+    'success' in item &&
+    typeof item.success === 'boolean'
+  );
+};

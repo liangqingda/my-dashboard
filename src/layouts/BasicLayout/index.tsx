@@ -3,17 +3,13 @@ import { useLocation } from 'react-router';
 import { ActionIcon, AppShell } from '@mantine/core';
 import { IconMinimize } from '@tabler/icons-react';
 
-import type { ReactNode } from 'react';
+import type { BasicLayoutProps } from './types';
 
 import Header from '@/layouts/Header';
 import Sidebar from '@/layouts/Sidebar';
 import { cx } from '@/utils/cx';
 
 import styles from './index.scss';
-
-type BasicLayoutProps = {
-  children: ReactNode;
-};
 
 const BasicLayout = ({ children }: BasicLayoutProps) => {
   const [opened, setOpened] = useState(false);

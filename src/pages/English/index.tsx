@@ -1,19 +1,21 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+
+import type { EnglishNote } from './types';
 
 import MarkdownPreviewModal from '@/components/MarkdownPreviewModal';
-import {
-  fetchEnglishNote,
-  saveEnglishNote,
-} from '@/pages/English/utils/notes-api';
-import { useEnglishNotes } from '@/pages/English/hooks/useEnglishNotes';
-import NoteEditor from '@/pages/English/NoteEditor';
-import NotesBoard from '@/pages/English/NotesBoard';
-import type { EnglishNote } from '@/pages/English/types';
-import { getColumnNotes, getNoteCategory, isBoardNote } from '@/pages/English/utils';
 import MenuContentLayout from '@/layouts/MenuContentLayout';
 import { onPageRefresh } from '@/utils/page-refresh';
 
+import { useEnglishNotes } from './hooks/useEnglishNotes';
+import NoteEditor from './NoteEditor';
+import NotesBoard from './NotesBoard';
+import { getNoteCategory, groupNotesByCategory, isBoardNote } from './utils/notes';
+import { fetchEnglishNote, saveEnglishNote } from './utils/notes-api';
+
 import styles from './index.scss';
+
+/** 稳定的空数组，避免每次渲染都换新引用 */
+const NO_NOTES: EnglishNote[] = [];
 
 /** 英语页：把 learning-record-notes 下的笔记按分类分列展示，整页不滚动。 */
 const English = () => {
@@ -25,14 +27,25 @@ const English = () => {
   const openSeq = useRef(0);
 
   /** 只看板上真正展示的笔记：`mixed` / `paper` 不占翻页计数 */
-  const boardNotes = notes.filter((note) => isBoardNote(note.name));
+  const boardNotes = useMemo(
+    () => notes.filter((note) => isBoardNote(note.name)),
+    [notes],
+  );
+  /** 六列一次算好，看板与翻页共用同一份结果（每列只排一次序） */
+  const columns = useMemo(() => groupNotesByCategory(boardNotes), [boardNotes]);
   /**
    * 翻页与计数都只在本列内进行：计数是「本篇在本列第几 / 本列共几」，
    * 上一篇 / 下一篇也只在该列内循环，不跨列跳到别的分类。
    */
-  const columnNotes = active
-    ? getColumnNotes(boardNotes, getNoteCategory(active.name))
-    : [];
+  const columnNotes = useMemo(() => {
+    if (!active) {
+      return NO_NOTES;
+    }
+
+    const key = getNoteCategory(active.name);
+
+    return columns.find((column) => column.key === key)?.notes ?? NO_NOTES;
+  }, [active, columns]);
   const activeIndex =
     active === null
       ? -1
@@ -125,9 +138,9 @@ const English = () => {
         ) : null}
 
         <NotesBoard
+          columns={columns}
           error={error}
           loading={loading}
-          notes={boardNotes}
           onOpen={openNote}
         />
       </MenuContentLayout>

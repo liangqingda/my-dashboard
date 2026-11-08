@@ -19,9 +19,9 @@
 
 /* 紧凑模式：与"开机自启"小标签同行时使用 */
 .compact {
+  gap: 4px;
   padding: 1px 7px;
   font-size: 0.7rem;
-  gap: 4px;
 }
 
 .compact .dot {

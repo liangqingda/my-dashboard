@@ -13,18 +13,13 @@ import {
 } from '@/services/api';
 import { ACTION_LABELS } from '@/services/constants';
 import type {
+  RecordActivity,
   ServiceAction,
+  ServiceActions,
   ServiceBusy,
   ServiceStatus,
 } from '@/services/types';
 import { getErrorMessage } from '@/utils/error';
-
-/** 记录一条最近操作：服务名 / 文案 / 是否成功 */
-type RecordActivity = (
-  serviceName: string,
-  label: string,
-  success: boolean,
-) => void;
 
 type Params = {
   /** 当前服务列表，用来把 id 还原成展示名称 */
@@ -35,19 +30,6 @@ type Params = {
   refreshAfterSettled: () => Promise<void>;
   /** 写入最近操作 */
   record: RecordActivity;
-};
-
-type ServiceActions = {
-  /** 正在进行中的操作，按 serviceId 索引 */
-  busy: ServiceBusy;
-  /** 启动服务 */
-  start: (id: string) => Promise<void>;
-  /** 停止服务 */
-  stop: (id: string) => Promise<void>;
-  /** 重启服务 */
-  restart: (id: string) => Promise<void>;
-  /** 部署服务 */
-  deploy: (id: string) => Promise<void>;
 };
 
 /** 封装服务的启动 / 停止 / 重启 / 部署，同一个服务同一时刻只跑一个操作 */

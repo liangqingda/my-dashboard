@@ -17,19 +17,15 @@ import {
   IconSun,
 } from '@tabler/icons-react';
 
+import type { HeaderProps } from './types';
+
 import { restartAgent } from '@/services/api';
 import { useServices } from '@/services/hooks/useServices';
 import { getErrorMessage } from '@/utils/error';
 
 import styles from './index.scss';
 
-const Header = ({
-  menuOpened,
-  onToggleMenu,
-}: {
-  menuOpened: boolean;
-  onToggleMenu: () => void;
-}) => {
+const Header = ({ menuOpened, onToggleMenu }: HeaderProps) => {
   const { refresh, agentOnline, busy, services } = useServices();
   const [agentRestarting, setAgentRestarting] = useState(false);
 
@@ -85,7 +81,7 @@ const Header = ({
         <Tooltip label="重启 agent" withArrow>
           <ActionIcon
             aria-label="重启 agent"
-            className={styles.themeToggle}
+            className={styles.iconButton}
             disabled={
               !agentOnline ||
               Object.keys(busy).length > 0 ||
@@ -102,7 +98,7 @@ const Header = ({
         <Tooltip label={isDark ? '切换到亮色主题' : '切换到暗色主题'} withArrow>
           <ActionIcon
             aria-label={isDark ? '切换到亮色主题' : '切换到暗色主题'}
-            className={styles.themeToggle}
+            className={styles.iconButton}
             onClick={() => setColorScheme(isDark ? 'light' : 'dark')}
             size="lg"
             variant="subtle"

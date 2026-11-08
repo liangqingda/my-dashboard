@@ -7,26 +7,16 @@ import {
   IconServer,
 } from '@tabler/icons-react';
 
+import type { NavItem, SidebarProps } from './types';
+
 import { requestPageRefresh } from '@/utils/page-refresh';
 
 import styles from './index.scss';
-
-type NavItem = {
-  key: string;
-  label: string;
-  to: string;
-  icon: typeof IconServer;
-};
 
 const navItems: NavItem[] = [
   { key: 'services', label: '服务', to: '/services', icon: IconServer },
   { key: 'english', label: '英语', to: '/english', icon: IconLanguage },
 ];
-
-type SidebarProps = {
-  onNavigate: () => void;
-  onEnterFullscreen: () => void;
-};
 
 const Sidebar = ({ onNavigate, onEnterFullscreen }: SidebarProps) => {
   const location = useLocation();

@@ -4,6 +4,8 @@
  * 日志正文由 `GET /api/services/:id/log` 单独读取。
  */
 
+import type { ReactNode } from 'react';
+
 /** 编译 / 启动状态 */
 export type BuildState = 'ok' | 'fail' | 'starting' | 'stopped' | 'unknown';
 
@@ -115,4 +117,74 @@ export type UseServicesResult = {
   restart: (id: string) => Promise<void>;
   /** 部署服务 */
   deploy: (id: string) => Promise<void>;
+};
+
+/** 日志类型：运行日志 / 部署日志 */
+export type LogKind = 'service' | 'deploy';
+
+/** 全局 CLI 命令（来自 ~/.zshrc 的别名 / 函数） */
+export type CliCommand = {
+  /** 命令名 */
+  name: string;
+  /** 类型：alias 别名 / function 函数 */
+  type: 'alias' | 'function';
+  /** 一句话说明 */
+  desc: string;
+  /** 分组：alias / postgres / redis / other */
+  group: string;
+};
+
+/** 记录一条最近操作：服务名 / 文案 / 是否成功 */
+export type RecordActivity = (
+  serviceName: string,
+  label: string,
+  success: boolean,
+) => void;
+
+/** 服务快照取数 hook 暴露的状态 */
+export type ServicesSnapshotState = {
+  /** 服务列表快照 */
+  services: ServiceStatus[];
+  /** 是否还在首次读取 */
+  loading: boolean;
+  /** 是否有请求正在进行 */
+  refreshing: boolean;
+  /** 本机 agent 是否可达 */
+  agentOnline: boolean;
+  /** 最近一次读取失败的原因 */
+  error: string | null;
+  /** 最近一次成功读取的时间（ISO 8601） */
+  lastUpdated: string | null;
+  /** 重新读取；进行中的请求直接复用 */
+  refresh: () => Promise<void>;
+  /** 等动作前可能在飞的那次读取落地，再读一次动作后的状态 */
+  refreshAfterSettled: () => Promise<void>;
+};
+
+/** 服务操作 hook 暴露的能力 */
+export type ServiceActions = {
+  /** 正在进行中的操作，按 serviceId 索引 */
+  busy: ServiceBusy;
+  /** 启动服务 */
+  start: (id: string) => Promise<void>;
+  /** 停止服务 */
+  stop: (id: string) => Promise<void>;
+  /** 重启服务 */
+  restart: (id: string) => Promise<void>;
+  /** 部署服务 */
+  deploy: (id: string) => Promise<void>;
+};
+
+/** 最近操作 hook 暴露的状态 */
+export type ServiceActivityState = {
+  /** 本次浏览会话的操作记录，最新的在前 */
+  activity: ServiceActivity[];
+  /** 记录一条操作 */
+  record: RecordActivity;
+};
+
+/** ServicesProvider 的 props */
+export type ServicesProviderProps = {
+  /** 需要注入服务上下文的子树 */
+  children: ReactNode;
 };

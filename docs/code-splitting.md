@@ -47,3 +47,18 @@
 - 页面 / 组件目录内部用相对路径；
 - 跨出所属目录一律用 `@/` 别名（`@` → `src`），结构检查会拦穿过页面目录的相对导入；
 - 不造 barrel 文件，直接从具体文件导入。
+
+### import 分组（`eslint .` + `check-imports.mjs` 强制）
+
+组间必须空一行，组内不空行，顺序固定：
+
+1. `builtin` / `external`：Node 内置、第三方包（`react`、`@mantine/*`…）；
+2. `type`：**相对路径**的类型导入单独成组（`import type { X } from './types'`）；
+   `@/` 前缀的类型导入不单独成组，跟着 `internal` 走；
+3. `internal`：`@/` 公共能力（`@/components`、`@/utils`、`@/services`…）；
+4. `parent` / `sibling` / `index`：页面 / 组件 就近（`@/pages/**` 被归到 `parent`，
+   保证页面相关排在本组内靠前）；
+5. 样式导入（`*.scss`）排在最后。
+
+`check-imports.mjs` 补 ESLint 管不到的三件事：值导入里内联 `type`、页面内部必须相对路径、
+`@/pages/**` 排在其它 `@/` 之后。

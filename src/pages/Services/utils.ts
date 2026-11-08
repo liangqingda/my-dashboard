@@ -1,6 +1,8 @@
 /**
- * 服务页的纯函数工具：忙碌判定、可访问性、端口展示与列表统计。
+ * 服务页的纯函数工具：忙碌判定、可访问性、端口展示、状态徽标推导与列表统计。
  */
+
+import type { PillView, StatusViewInput } from './types';
 
 import type { ServiceBusy, ServiceStatus } from '@/services/types';
 
@@ -35,7 +37,31 @@ export const formatServicePorts = (service: ServiceStatus): string => {
   ].join(' · ');
 };
 
-/** 服务列表的汇总数字，列表顶部统计条用 */
+/** 由运行态 + 编译态推导状态徽标的文案与色系（渲染期直接推导，无需 effect） */
+export const deriveStatusView = ({
+  build,
+  running,
+}: StatusViewInput): PillView => {
+  if (running) {
+    if (build === 'ok') {
+      return { label: '运行中', tone: 'ok' };
+    }
+
+    if (build === 'fail') {
+      return { label: '编译失败', tone: 'danger' };
+    }
+
+    return build === 'starting'
+      ? { label: '启动中', tone: 'warn' }
+      : { label: '运行待确认', tone: 'warn' };
+  }
+
+  return build === 'fail'
+    ? { label: '启动失败', tone: 'danger' }
+    : { label: '已停止', tone: 'muted' };
+};
+
+/** 服务列表的汇总数字，列表顶部统计条用；一次遍历同时数四个口径 */
 export const summarizeServices = (
   services: ServiceStatus[],
 ): {
@@ -47,11 +73,33 @@ export const summarizeServices = (
   failed: number;
   /** 开机自启的个数 */
   autoStart: number;
-} => ({
-  total: services.length,
-  running: services.filter((service) => service.running).length,
-  failed: services.filter(
-    (service) => service.build === 'fail' || service.deployOutcome === 'failed',
-  ).length,
-  autoStart: services.filter((service) => service.autoStart).length,
-});
+} => {
+  let running = 0;
+  let failed = 0;
+  let autoStart = 0;
+
+  for (const service of services) {
+    if (service.running) {
+      running += 1;
+    }
+
+    if (service.build === 'fail' || service.deployOutcome === 'failed') {
+      failed += 1;
+    }
+
+    if (service.autoStart) {
+      autoStart += 1;
+    }
+  }
+
+  return { total: services.length, running, failed, autoStart };
+};
+
+/** 日志正文：有输出就原样显示，没有时区分「正在读取」与「确实没有」 */
+export const resolveLogContent = (log: string, loading: boolean): string => {
+  if (log.trim()) {
+    return log;
+  }
+
+  return loading ? '正在读取日志…' : '暂无日志输出';
+};

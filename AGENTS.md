@@ -40,8 +40,11 @@ README.md            运行、脚本、目录结构
 8. **本机仓库数据（如 `../learn-english`）只走 `scripts/vite/*` 中间件读盘**，不新增后端服务；
    写操作只在开发模式可用，且必须校验文件名（禁路径穿越）。
 
-以上由工具兜底的部分：`pnpm lint` 会跑 `eslint .`、`scripts/check-structure.mjs`（features 废弃 /
-页面组织 / 菜单页布局）与 `pnpm check:md`（Markdown 往返），不合规直接失败。
+以上由工具兜底的部分：`pnpm lint` 依次跑 `eslint .`（含 import 分组与空行）、
+`scripts/check-structure.mjs`（features 废弃 / 页面组织 / 菜单页布局）、
+`scripts/check-scss.mjs`（样式块间空行 / 选择器列表 / 行尾空格）、
+`scripts/check-imports.mjs`（值导入内联 type / 页面内部相对路径 / `@/pages/**` 排最后）与
+`pnpm check:md`（Markdown 往返），不合规直接失败。
 
 ## 提交约定
 

@@ -4,9 +4,13 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { clearServiceLog, fetchServiceLog, type LogKind } from '@/services/api';
-import { LOG_REFRESH_INTERVAL, LOG_TAIL_LINES } from '@/pages/Services/constants';
+import type { ServiceLogState } from '../types';
+
+import { clearServiceLog, fetchServiceLog } from '@/services/api';
+import type { LogKind } from '@/services/types';
 import { getErrorMessage } from '@/utils/error';
+
+import { LOG_REFRESH_INTERVAL, LOG_TAIL_LINES } from '../constants';
 
 type Params = {
   /** 服务 id */
@@ -15,19 +19,6 @@ type Params = {
   kind: LogKind;
   /** 是否应该读取（展开且在线） */
   enabled: boolean;
-};
-
-type ServiceLogState = {
-  /** 日志正文 */
-  log: string;
-  /** 是否正在读取 */
-  loading: boolean;
-  /** 读取或清空失败的原因 */
-  error: string | null;
-  /** 是否正在清空 */
-  clearing: boolean;
-  /** 清空当前 kind 的日志并重新读取 */
-  clear: () => Promise<void>;
 };
 
 /** 读取并跟踪单个服务的日志尾巴 */
@@ -74,10 +65,7 @@ export function useServiceLog({
       } finally {
         if (alive) {
           setLoading(false);
-          timer = window.setTimeout(
-            () => void load(),
-            LOG_REFRESH_INTERVAL,
-          );
+          timer = window.setTimeout(() => void load(), LOG_REFRESH_INTERVAL);
         }
       }
     };

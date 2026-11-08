@@ -1,0 +1,61 @@
+/* 看板单行：文件名 + 右侧箭头，悬停时箭头浮现 */
+
+.row + .row {
+  border-top: 1px solid var(--app-line);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.item:hover {
+  background: var(--app-surface-hover);
+}
+
+.name {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--app-ink);
+  font-family: var(--app-serif);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.extension {
+  color: var(--app-ink-faint);
+  font-size: 0.82em;
+}
+
+.chevron {
+  flex: 0 0 auto;
+  color: var(--app-ink-faint);
+  opacity: 0;
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
+}
+
+.item:hover .chevron,
+.item:focus-visible .chevron {
+  color: var(--app-accent);
+  opacity: 1;
+  transform: translateX(2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chevron {
+    transition: none;
+  }
+}

@@ -2,20 +2,42 @@
  * 全局快捷命令弹窗：展示 ~/.zshrc 中的别名与函数。
  * 数据由 agent 动态解析下发（GET /api/cli-commands），
  * 打开弹窗时读取别名/函数，无需改前端代码。
- * 每行左右布局（命令 | 说明），点击命令可复制；单行组件在 command-row 里。
+ * 每行左右布局（命令 | 说明），点击命令可复制；单行组件在 CommandRow 里。
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ActionIcon, Button, Group, Modal } from '@mantine/core';
 import { IconRefresh, IconTerminal2 } from '@tabler/icons-react';
 
-import { fetchCliCommands, type CliCommand } from '@/services/api';
+import { fetchCliCommands } from '@/services/api';
 import { useServices } from '@/services/hooks/useServices';
-import { GROUP_LABELS, GROUP_ORDER } from '@/pages/Services/QuickCommands/constants';
-import CommandRow from '@/pages/Services/QuickCommands/CommandRow';
+import type { CliCommand } from '@/services/types';
 import { getErrorMessage } from '@/utils/error';
 
+import CommandRow from './CommandRow';
+import { GROUP_LABELS, GROUP_ORDER } from './constants';
+
 import styles from './index.scss';
+
+/** 按分组名把命令归堆：一次遍历建 Map，避免每个分组各扫一遍全量命令 */
+const groupCommands = (
+  commands: CliCommand[],
+): Array<{ key: string; label: string; items: CliCommand[] }> => {
+  const byGroup = new Map<string, CliCommand[]>();
+
+  for (const command of commands) {
+    const bucket = byGroup.get(command.group) ?? [];
+
+    bucket[bucket.length] = command;
+    byGroup.set(command.group, bucket);
+  }
+
+  return GROUP_ORDER.map((key) => ({
+    key,
+    label: GROUP_LABELS[key],
+    items: byGroup.get(key) ?? [],
+  })).filter((group) => group.items.length > 0);
+};
 
 /** 全局快捷命令弹窗（动态读取 ~/.zshrc） */
 const QuickCommands = () => {
@@ -65,11 +87,7 @@ const QuickCommands = () => {
     };
   }, [opened, agentOnline, revision]);
 
-  const groups = GROUP_ORDER.map((key) => ({
-    key,
-    label: GROUP_LABELS[key],
-    items: commands.filter((command) => command.group === key),
-  })).filter((group) => group.items.length > 0);
+  const groups = useMemo(() => groupCommands(commands), [commands]);
 
   const renderBody = () => {
     if (!agentOnline) {

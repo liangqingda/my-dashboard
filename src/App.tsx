@@ -3,6 +3,7 @@ import { Center, Loader } from '@mantine/core';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 
 import BasicLayout from '@/layouts/BasicLayout';
+
 import NotFound from '@/pages/Errors/NotFound';
 
 const English = lazy(() => import('@/pages/English'));

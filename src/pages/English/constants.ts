@@ -2,13 +2,7 @@
  * 英语笔记模块的常量。
  */
 
-/** 笔记文件名里的分类前缀与中文标题 */
-export type NoteCategory = {
-  /** 文件名前缀，如 errors */
-  key: string;
-  /** 列标题 */
-  label: string;
-};
+import type { NoteCategory } from './types';
 
 /** 错题、短语、用法、语法、词汇、混合六类，顺序即页面列顺序 */
 export const NOTE_CATEGORIES: NoteCategory[] = [
@@ -19,3 +13,6 @@ export const NOTE_CATEGORIES: NoteCategory[] = [
   { key: 'vocabulary', label: '词汇' },
   { key: 'mixed', label: '混合' },
 ];
+
+/** 笔记编辑器的撤销栈保留步数 */
+export const UNDO_DEPTH = 50;

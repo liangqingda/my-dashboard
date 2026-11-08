@@ -8,52 +8,17 @@
  * 支持两种块：
  * - `table`：HTML 表格（学习笔记的表格本来就是 HTML），解析成行 / 单元格矩阵；
  * - `text`：其余内容（标题、段落、列表、引用、代码块、`<details>`），原样保留源文本。
+ *
+ * 注意：本文件被 `scripts/md-roundtrip.mts` 用 node 的 strip-types 按路径直接加载，
+ * 兄弟模块的值导入解析不了扩展名，因此保持自包含——只允许 `import type`。
  */
 
-/** 表格单元格 */
-export type MarkdownTableCell = {
-  /** 稳定 id，编辑期间不随内容变化，用作 React key */
-  id: string;
-  /** td / th */
-  tag: 'td' | 'th';
-  /** 单元格上原有的属性串，一般是空串 */
-  attrs: string;
-  /** 单元格纯文本（实体已解码） */
-  text: string;
-};
-
-/** 表格行 */
-export type MarkdownTableRow = {
-  /** 稳定 id */
-  id: string;
-  cells: MarkdownTableCell[];
-};
-
-/** HTML 表格块 */
-export type MarkdownTableBlock = {
-  id: string;
-  type: 'table';
-  /** 与前一块之间保留的空行数，回写时原样还原 */
-  gapBefore: number;
-  /** `<table` 与 `>` 之间的属性串 */
-  attrs: string;
-  /** `<colgroup>…</colgroup>` 原文，没有则为空串 */
-  colgroup: string;
-  rows: MarkdownTableRow[];
-};
-
-/** 文本块：除表格之外的 Markdown / HTML 片段 */
-export type MarkdownTextBlock = {
-  id: string;
-  type: 'text';
-  /** 与前一块之间保留的空行数，回写时原样还原 */
-  gapBefore: number;
-  /** 该块的源文本 */
-  source: string;
-};
-
-/** 一篇笔记被切分后的块 */
-export type MarkdownBlock = MarkdownTableBlock | MarkdownTextBlock;
+import type {
+  MarkdownBlock,
+  MarkdownTableBlock,
+  MarkdownTableCell,
+  MarkdownTableRow,
+} from '../types';
 
 const TABLE_OPEN = /^<table([^>]*)>/iu;
 const TABLE_CLOSE = '</table>';
@@ -115,14 +80,28 @@ const isStructuredTableSafe = (source: string): boolean => {
 
 let idSeed = 0;
 
-/** 生成块内稳定 id */
-const nextId = (): string => {
+/** 生成块内稳定 id（解析与编辑新增共用一套序号，保证一棵树里不重复） */
+export const createBlockId = (): string => {
   idSeed += 1;
 
   return `md-${idSeed}`;
 };
 
-/** 把一段 `<table>…</table>` 解析成表格块；没有行时返回 null */
+/** 解析一个 `<td>` / `<th>` */
+const parseCell = (cellMatch: RegExpExecArray): MarkdownTableCell => ({
+  attrs: cellMatch[2],
+  id: createBlockId(),
+  tag: cellMatch[1].toLowerCase() === 'th' ? 'th' : 'td',
+  text: decodeEntities(cellMatch[3].replace(/\s+/gu, ' ').trim()),
+});
+
+/** 解析一行 `<tr>` */
+const parseRow = (rowMatch: RegExpExecArray): MarkdownTableRow => ({
+  cells: Array.from(rowMatch[1].matchAll(CELL), parseCell),
+  id: createBlockId(),
+});
+
+/** 把一段 `<table>…</table>` 解析成表格块；不安全或没有行时返回 null */
 const parseTableBlock = (
   source: string,
   gapBefore: number,
@@ -134,26 +113,13 @@ const parseTableBlock = (
   const [firstLine] = source.split('\n');
   const attrs = TABLE_OPEN.exec(firstLine)?.[1] ?? '';
   const colgroup = COLGROUP.exec(source)?.[0] ?? '';
-  const rows = Array.from(source.matchAll(ROW), (rowMatch) => {
-    const cells = Array.from(rowMatch[1].matchAll(CELL), (cellMatch) => {
-      const tag: 'td' | 'th' = cellMatch[1].toLowerCase() === 'th' ? 'th' : 'td';
-
-      return {
-        attrs: cellMatch[2],
-        id: nextId(),
-        tag,
-        text: decodeEntities(cellMatch[3].replace(/\s+/gu, ' ').trim()),
-      };
-    });
-
-    return { cells, id: nextId() };
-  });
+  const rows = Array.from(source.matchAll(ROW), parseRow);
 
   if (rows.length === 0) {
     return null;
   }
 
-  return { attrs, colgroup, gapBefore, id: nextId(), rows, type: 'table' };
+  return { attrs, colgroup, gapBefore, id: createBlockId(), rows, type: 'table' };
 };
 
 /** 表格块序列化：属性、colgroup 原样保留，行与单元格按模板重写 */
@@ -169,12 +135,7 @@ const serializeTableBlock = (block: MarkdownTableBlock): string => {
     return `<tr>${cells}</tr>`;
   });
 
-  return [
-    `<table${block.attrs}>`,
-    block.colgroup,
-    ...rows,
-    TABLE_CLOSE,
-  ]
+  return [`<table${block.attrs}>`, block.colgroup, ...rows, TABLE_CLOSE]
     .filter(Boolean)
     .join('\n');
 };
@@ -185,8 +146,8 @@ const serializeTableBlock = (block: MarkdownTableBlock): string => {
  */
 export const parseMarkdownBlocks = (markdown: string): MarkdownBlock[] => {
   const lines = markdown.replace(/\r\n/gu, '\n').split('\n');
+  const blocks: MarkdownBlock[] = [];
 
-  let blocks: MarkdownBlock[] = [];
   let buffer: string[] = [];
   let raw: string[] = [];
   let mode: 'details' | 'fence' | 'table' | 'text' = 'text';
@@ -196,31 +157,48 @@ export const parseMarkdownBlocks = (markdown: string): MarkdownBlock[] => {
   /** 当前块之前的空行数，开新块时取一次 */
   let gap = 0;
 
+  /** 追加块：按下标写入，避免每次展开出新数组（O(n²)） */
+  const append = (block: MarkdownBlock) => {
+    blocks[blocks.length] = block;
+  };
+
+  /** 追加源码块（代码围栏 / 表格 / details / 未闭合的残段） */
+  const appendRaw = () => {
+    append({
+      gapBefore: gap,
+      id: createBlockId(),
+      source: raw.join('\n'),
+      type: 'text',
+    });
+    raw = [];
+  };
+
   const flushText = () => {
     const source = buffer.join('\n').trimEnd();
 
     if (source) {
-      blocks = [
-        ...blocks,
-        { gapBefore: gap, id: nextId(), source, type: 'text' },
-      ];
+      append({ gapBefore: gap, id: createBlockId(), source, type: 'text' });
     }
 
     buffer = [];
+  };
+
+  /** 跨空行的块开始：先收掉手上的文本，重置空行计数 */
+  const startRaw = (line: string) => {
+    flushText();
+    gap = blanks;
+    blanks = 0;
+    raw = [line];
   };
 
   for (const line of lines) {
     const trimmed = line.trim();
 
     if (mode === 'fence') {
-      raw = [...raw, line];
+      raw[raw.length] = line;
 
       if (FENCE.test(trimmed)) {
-        blocks = [
-          ...blocks,
-          { gapBefore: gap, id: nextId(), source: raw.join('\n'), type: 'text' },
-        ];
-        raw = [];
+        appendRaw();
         mode = 'text';
       }
 
@@ -228,21 +206,15 @@ export const parseMarkdownBlocks = (markdown: string): MarkdownBlock[] => {
     }
 
     if (mode === 'table') {
-      raw = [...raw, line];
+      raw[raw.length] = line;
 
       if (line.includes(TABLE_CLOSE)) {
         const source = raw.join('\n');
         const table = parseTableBlock(source, gap);
 
-        blocks = [
-          ...blocks,
-          table ?? {
-            gapBefore: gap,
-            id: nextId(),
-            source,
-            type: 'text',
-          },
-        ];
+        append(
+          table ?? { gapBefore: gap, id: createBlockId(), source, type: 'text' },
+        );
         raw = [];
         mode = 'text';
       }
@@ -251,14 +223,10 @@ export const parseMarkdownBlocks = (markdown: string): MarkdownBlock[] => {
     }
 
     if (mode === 'details') {
-      raw = [...raw, line];
+      raw[raw.length] = line;
 
       if (line.includes(DETAILS_CLOSE)) {
-        blocks = [
-          ...blocks,
-          { gapBefore: gap, id: nextId(), source: raw.join('\n'), type: 'text' },
-        ];
-        raw = [];
+        appendRaw();
         mode = 'text';
       }
 
@@ -273,30 +241,21 @@ export const parseMarkdownBlocks = (markdown: string): MarkdownBlock[] => {
     }
 
     if (FENCE.test(trimmed)) {
-      flushText();
-      gap = blanks;
-      blanks = 0;
-      raw = [line];
+      startRaw(line);
       mode = 'fence';
 
       continue;
     }
 
     if (TABLE_OPEN.test(trimmed)) {
-      flushText();
-      gap = blanks;
-      blanks = 0;
-      raw = [line];
+      startRaw(line);
       mode = 'table';
 
       continue;
     }
 
     if (DETAILS_OPEN.test(trimmed)) {
-      flushText();
-      gap = blanks;
-      blanks = 0;
-      raw = [line];
+      startRaw(line);
       mode = 'details';
 
       continue;
@@ -307,17 +266,14 @@ export const parseMarkdownBlocks = (markdown: string): MarkdownBlock[] => {
       blanks = 0;
     }
 
-    buffer = [...buffer, line];
+    buffer[buffer.length] = line;
   }
 
   flushText();
 
   if (raw.length > 0) {
     // 表格 / details / 代码围栏没写闭合标签时，整段按源码保留，绝不丢内容
-    blocks = [
-      ...blocks,
-      { gapBefore: gap, id: nextId(), source: raw.join('\n'), type: 'text' },
-    ];
+    appendRaw();
   }
 
   return blocks;
@@ -351,4 +307,14 @@ export const serializeMarkdownBlocks = (blocks: MarkdownBlock[]): string => {
   );
 
   return `${body}\n`;
+};
+
+/** 编辑态写回：拼回 Markdown，并按原文件的换行风格输出 */
+export const blocksToMarkdown = (
+  blocks: MarkdownBlock[],
+  usesCrlf: boolean,
+): string => {
+  const text = serializeMarkdownBlocks(blocks);
+
+  return usesCrlf ? text.replace(/\n/gu, '\r\n') : text;
 };

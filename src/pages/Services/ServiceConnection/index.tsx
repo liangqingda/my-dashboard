@@ -20,6 +20,13 @@ const ServiceConnection = () => {
     useServices();
   const [starting, setStarting] = useState(false);
   const [showRefreshActivity] = useDebouncedValue(refreshing, 200);
+  const connectionLabel = agentOnline ? '已连接' : '已离线';
+  const updatedLabel = lastUpdated
+    ? `上次更新 ${formatTime(lastUpdated)}`
+    : '尚未同步';
+  const statusText = loading
+    ? '正在读取服务状态…'
+    : `${connectionLabel} · ${updatedLabel}`;
 
   const connect = async () => {
     setStarting(true);
@@ -63,9 +70,7 @@ const ServiceConnection = () => {
       )}
       <Group gap="sm" justify="space-between">
         <Text aria-live="polite" c="dimmed" size="xs">
-          {loading
-            ? '正在读取服务状态…'
-            : `${agentOnline ? '已连接' : '已离线'} · ${lastUpdated ? `上次更新 ${formatTime(lastUpdated)}` : '尚未同步'}`}
+          {statusText}
         </Text>
         {/* 在线时由侧边栏刷新图标与页面自身刷新取数，这里只在离线后给出手动重连入口 */}
         {!loading && !agentOnline ? (

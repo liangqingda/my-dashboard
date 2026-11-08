@@ -1,23 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { fetchEnglishNotes } from '@/pages/English/utils/notes-api';
-import type { EnglishNote } from '@/pages/English/types';
+import type { EnglishNote, UseEnglishNotesResult } from '../types';
+
 import { getErrorMessage } from '@/utils/error';
 
-export type UseEnglishNotesResult = {
-  /** 全部笔记，按最后修改时间倒序 */
-  notes: EnglishNote[];
-  /** 是否正在读取 */
-  loading: boolean;
-  /** 读取失败的原因 */
-  error: string | null;
-  /** 重新读取一次（带动画与 loading 态） */
-  refresh: () => void;
-  /** 静默重新读取全部笔记：不改 loading，用于侧边栏刷新 */
-  reload: () => Promise<void>;
-  /** 用单篇笔记的最新内容替换列表里的那一条（不在列表里就插到最前） */
-  applyNote: (note: EnglishNote) => void;
-};
+import { fetchEnglishNotes } from '../utils/notes-api';
 
 const EMPTY_NOTES: EnglishNote[] = [];
 

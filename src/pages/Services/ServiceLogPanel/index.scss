@@ -1,0 +1,39 @@
+.bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--app-space-sm);
+  margin-top: 8px;
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 30px;
+  padding: 2px 0;
+  background: transparent;
+  color: var(--app-accent);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.loader {
+  display: inline-block;
+  margin-left: 6px;
+}
+
+.log {
+  margin: 8px 0 0;
+  padding: var(--app-space-sm) var(--app-space-md);
+  max-height: 280px;
+  overflow: auto;
+  border-radius: var(--mantine-radius-sm);
+  background: var(--app-surface-subtle);
+  color: var(--app-ink-soft);
+  font-size: 0.78rem;
+  line-height: 1.6;
+  font-family: var(--mantine-font-family-monospace);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

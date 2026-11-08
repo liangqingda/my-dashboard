@@ -2,9 +2,11 @@
   padding: var(--app-space-md) var(--app-space-lg);
   border-bottom: 1px solid var(--app-line);
 }
+
 .row:last-child {
   border-bottom: 0;
 }
+
 .topRow {
   display: flex;
   align-items: flex-start;
@@ -25,6 +27,7 @@
   font-size: 1rem;
   overflow-wrap: anywhere;
 }
+
 .nameLink {
   display: inline-flex;
   align-items: center;
@@ -32,10 +35,12 @@
   font-weight: 600;
   text-decoration: none;
 }
+
 .nameLink:hover {
   color: var(--app-accent);
   text-decoration: underline;
 }
+
 .autoStart {
   padding: 1px 7px;
   border-radius: 999px;
@@ -44,6 +49,7 @@
   font-size: 0.72rem;
   white-space: nowrap;
 }
+
 .repo {
   display: inline-flex;
   align-items: center;
@@ -52,9 +58,11 @@
   height: 30px;
   color: var(--app-ink-faint);
 }
+
 .repo:hover {
   color: var(--app-accent);
 }
+
 .desc {
   margin-top: 6px;
   display: flex;
@@ -62,47 +70,13 @@
   flex-wrap: wrap;
   gap: 8px;
 }
+
 .port {
   font-family: var(--mantine-font-family-monospace);
   font-size: 0.8rem;
   color: var(--app-ink-faint);
 }
-.logBar {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--app-space-sm);
-  margin-top: 8px;
-}
-.logToggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  min-height: 30px;
-  padding: 2px 0;
-  background: transparent;
-  color: var(--app-accent);
-  font-size: 0.8rem;
-  cursor: pointer;
-}
-.loader {
-  display: inline-block;
-  margin-left: 6px;
-}
-.log {
-  margin: 8px 0 0;
-  padding: var(--app-space-sm) var(--app-space-md);
-  max-height: 280px;
-  overflow: auto;
-  border-radius: var(--mantine-radius-sm);
-  background: var(--app-surface-subtle);
-  color: var(--app-ink-soft);
-  font-size: 0.78rem;
-  line-height: 1.6;
-  font-family: var(--mantine-font-family-monospace);
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
+
 @media (max-width: 48em) {
   .row {
     padding: var(--app-space-md);

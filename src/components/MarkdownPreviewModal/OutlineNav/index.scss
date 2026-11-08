@@ -56,7 +56,6 @@
  * 内容，只留下 hover 底色，因此不需要额外判断「是否被截断」。
  */
 .item:hover,
-
 .item:focus-visible {
   z-index: 3;
   overflow: visible;

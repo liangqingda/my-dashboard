@@ -3,10 +3,12 @@
   flex-direction: column;
   gap: var(--app-space-md);
 }
+
 .runningCount {
   color: var(--app-status-ok);
   font-variant-numeric: tabular-nums;
 }
+
 .list {
   min-width: 0;
   border: 1px solid var(--app-line);
@@ -14,6 +16,7 @@
   background: var(--app-surface);
   overflow: hidden;
 }
+
 .empty {
   padding: var(--app-space-lg);
 }

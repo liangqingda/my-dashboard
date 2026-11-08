@@ -1,11 +1,12 @@
 import { Group, Text } from '@mantine/core';
 
 import { useServices } from '@/services/hooks/useServices';
-import ServiceActivity from '@/pages/Services/ServiceActivity';
-import ServiceConnection from '@/pages/Services/ServiceConnection';
-import ServiceRow from '@/pages/Services/ServiceRow';
-import QuickCommands from '@/pages/Services/QuickCommands';
-import { summarizeServices } from '@/pages/Services/utils';
+
+import ServiceActivity from '../ServiceActivity';
+import ServiceConnection from '../ServiceConnection';
+import ServiceRow from '../ServiceRow';
+import QuickCommands from '../QuickCommands';
+import { summarizeServices } from '../utils';
 
 import styles from './index.scss';
 

@@ -5,19 +5,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { IconCheck, IconCopy } from '@tabler/icons-react';
 
+import type { CommandRowProps } from './types';
+
 import { copyText } from '@/utils/clipboard';
 
+import { COPIED_HINT_DURATION } from '../../constants';
+
 import styles from './index.scss';
-
-/** 复制成功反馈的停留时长（毫秒） */
-const COPIED_HINT_DURATION = 1500;
-
-type CommandRowProps = {
-  /** 命令本身，点击复制的内容 */
-  name: string;
-  /** 说明文字 */
-  desc: string;
-};
 
 const CommandRow = ({ desc, name }: CommandRowProps) => {
   const [copied, setCopied] = useState(false);

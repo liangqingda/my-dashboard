@@ -16,6 +16,7 @@
 
 import { useMemo, useRef, useState } from 'react';
 import { ActionIcon, Modal } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import {
   IconChevronLeft,
   IconChevronRight,
@@ -23,24 +24,27 @@ import {
 } from '@tabler/icons-react';
 import Markdown from 'react-markdown';
 
-import PreviewFooter from '@/components/MarkdownPreviewModal/Footer';
-import OutlineNav from '@/components/MarkdownPreviewModal/OutlineNav';
+import type { MarkdownPreviewModalProps } from './types';
+
+import { getErrorMessage } from '@/utils/error';
+import { extractMarkdownOutline } from '@/utils/markdown-outline';
+
+import PreviewFooter from './Footer';
+import OutlineNav from './OutlineNav';
 import {
   HEADING_SELECTOR,
   REHYPE_PLUGINS,
   REMARK_PLUGINS,
-} from '@/components/MarkdownPreviewModal/constants';
-import { useArrowNavigation } from '@/components/MarkdownPreviewModal/hooks/useArrowNavigation';
-import { useNoteEditing } from '@/components/MarkdownPreviewModal/hooks/useNoteEditing';
-import type { MarkdownPreviewModalProps } from '@/components/MarkdownPreviewModal/types';
-import { extractMarkdownOutline } from '@/utils/markdown-outline';
+} from './constants';
+import { useArrowNavigation } from './hooks/useArrowNavigation';
+import { useNoteEditing } from './hooks/useNoteEditing';
 
 import styles from './index.scss';
 
 export type {
   MarkdownEditorProps,
   MarkdownPreviewModalProps,
-} from '@/components/MarkdownPreviewModal/types';
+} from './types';
 
 const MarkdownPreviewModal = ({
   opened,
@@ -74,7 +78,7 @@ const MarkdownPreviewModal = ({
     onPrevious,
   });
 
-  /** 重新取一次最新正文；失败交给调用方决定怎么提示，这里只收起 loading */
+  /** 重新取一次最新正文：失败时给出可见提示（不静默吞掉），并收起 loading */
   const handleRefresh = () => {
     if (!onRefresh) {
       return;
@@ -83,8 +87,12 @@ const MarkdownPreviewModal = ({
     setRefreshing(true);
     void Promise.resolve()
       .then(() => onRefresh())
-      .catch(() => {
-        /* 读取失败不打断预览，调用方自己处理提示 */
+      .catch((err: unknown) => {
+        notifications.show({
+          color: 'red',
+          message: getErrorMessage(err, '请稍后再试'),
+          title: '刷新预览失败',
+        });
       })
       .finally(() => setRefreshing(false));
   };

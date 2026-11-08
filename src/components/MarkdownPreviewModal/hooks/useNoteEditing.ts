@@ -6,53 +6,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { notifications } from '@mantine/notifications';
 
-import { NO_EDITOR_MESSAGE, SAVED_HINT_DURATION } from '@/components/MarkdownPreviewModal/constants';
+import type { NoteEditingParams, NoteEditingState } from '../types';
+
 import { getErrorMessage } from '@/utils/error';
 import { formatClock } from '@/utils/format';
 
-type Params = {
-  /** 当前正文；用来判断草稿是否有改动 */
-  markdown: string;
-  /** 是否提供了定制编辑器 */
-  hasEditor: boolean;
-  /** 保存落盘，由调用方实现 */
-  onSave?: (markdown: string) => Promise<{ notice?: string }>;
-  /** 真正关闭弹窗 */
-  onClose: () => void;
-};
-
-type NoteEditingState = {
-  /** 是否处于编辑态 */
-  editing: boolean;
-  /** 草稿与正文不一致 */
-  dirty: boolean;
-  /** 草稿；null 表示没在编辑 */
-  draft: string | null;
-  /** 是否正在保存 */
-  saving: boolean;
-  /** 保存失败的原因 */
-  saveError: string | null;
-  /** 「已保存」提示的时刻，如 20:54 */
-  savedAt: string | null;
-  /** 提示后追加的说明，如自动提交失败原因 */
-  saveNotice: string | null;
-  /** 关闭时是否在等用户确认放弃改动 */
-  askDiscard: boolean;
-  /** 编辑器回传草稿 */
-  setDraft: (markdown: string) => void;
-  /** 进入编辑态 */
-  startEditing: () => void;
-  /** 退出编辑态（不写回） */
-  stopEditing: () => void;
-  /** 保存草稿 */
-  save: () => Promise<void>;
-  /** 关闭入口：有未保存改动时先确认 */
-  requestClose: () => void;
-  /** 确认放弃并关闭 */
-  discardAndClose: () => void;
-  /** 取消放弃，继续编辑 */
-  keepEditing: () => void;
-};
+import { NO_EDITOR_MESSAGE, SAVED_HINT_DURATION } from '../constants';
 
 /** 管理预览弹窗的编辑流程 */
 export function useNoteEditing({
@@ -60,7 +19,7 @@ export function useNoteEditing({
   hasEditor,
   onSave,
   onClose,
-}: Params): NoteEditingState {
+}: NoteEditingParams): NoteEditingState {
   const [draft, setDraftState] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
