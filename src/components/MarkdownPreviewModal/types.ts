@@ -4,7 +4,7 @@
 
 import type { ComponentType } from 'react';
 
-import type { MarkdownOutlineHeading } from '@/utils/markdown-outline';
+import type { MarkdownOutlineHeading, MarkdownOutlineNode } from '@/utils/markdown-outline';
 
 /** 定制编辑器收到的入参与出口：正文快照 + 草稿回传 */
 export type MarkdownEditorProps = {
@@ -82,16 +82,40 @@ export type OutlineNavProps = {
   disabled: boolean;
   /** 点击第几条标题 */
   onSelect: (index: number) => void;
+  /** 允许的最大高度（px），不超过弹窗正文区；null 表示还没量到，用样式里的兜底值 */
+  maxHeight: number | null;
+};
+
+/** 标题导航某一层的入参：渲染这一层的节点，展开时递归渲染下一层 */
+export type OutlineNavListProps = {
+  /** 这一层的节点 */
+  nodes: MarkdownOutlineNode[];
+  /** 编辑态下禁用 */
+  disabled: boolean;
+  /** 已展开的节点 key 集合 */
+  expanded: ReadonlySet<string>;
+  /** 点击标题跳转；参数是标题在正文里的下标 */
+  onSelect: (index: number) => void;
+  /** 展开 / 收起某个节点的子标题 */
+  onToggle: (key: string) => void;
+  /** 顶层那一层额外带滚动样式；嵌套层不传 */
+  className?: string;
 };
 
 /** 标题导航单条的入参 */
 export type OutlineNavItemProps = {
   /** 编辑态下禁用跳转 */
   disabled: boolean;
+  /** 有子标题：左侧留出折叠按钮 */
+  hasChildren: boolean;
+  /** 子标题当前是否展开 */
+  expanded: boolean;
   /** 标题层级 1–4，决定缩进与字号 */
   level: MarkdownOutlineHeading['level'];
   /** 点击这一条时跳转 */
   onSelect: () => void;
+  /** 展开 / 收起子标题 */
+  onToggle: () => void;
   /** 标题纯文本；被省略号截断时用 tip 展示完整内容 */
   text: string;
 };

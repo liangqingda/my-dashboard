@@ -20,6 +20,16 @@ export type MarkdownOutlineHeading = {
   key: string;
 };
 
+/** 标题导航树的一个节点：标题本身 + 它的子标题 */
+export type MarkdownOutlineNode = {
+  /** 这一节的标题 */
+  heading: MarkdownOutlineHeading;
+  /** 该标题在正文里的下标（按 extractMarkdownOutline 的顺序），用于滚动定位 */
+  index: number;
+  /** 下一级标题；没有子标题时为空数组 */
+  children: MarkdownOutlineNode[];
+};
+
 /** 去掉标题里的内联 Markdown 标记，留住可读文本。 */
 const stripInlineMarkup = (text: string): string =>
   text
@@ -83,4 +93,41 @@ export const extractMarkdownOutline = (
   }
 
   return headings;
+};
+
+/**
+ * 把扁平标题列表按层级折成树：后出现的更高级别标题挂到最近的、层级更浅的标题下。
+ *
+ * 用「栈 + 游标」而不是递归/回溯：标题本来就是按文档顺序给出的，一次遍历即可，
+ * 同时避免 push / pop 这类数组变异写法（项目 lint 禁）。层级跳级（h2 下面直接 h4）
+ * 也自然处理：栈顶会被压到层级更浅的位置为止。
+ */
+export const buildMarkdownOutlineTree = (
+  headings: MarkdownOutlineHeading[],
+): MarkdownOutlineNode[] => {
+  const roots: MarkdownOutlineNode[] = [];
+  /** 当前路径上的节点，depth 以内的位置有效 */
+  const path: MarkdownOutlineNode[] = [];
+  let depth = 0;
+
+  headings.forEach((heading, index) => {
+    while (depth > 0 && path[depth - 1].heading.level >= heading.level) {
+      depth -= 1;
+    }
+
+    const node: MarkdownOutlineNode = { heading, index, children: [] };
+
+    if (depth === 0) {
+      roots[roots.length] = node;
+    } else {
+      const parent = path[depth - 1];
+
+      parent.children[parent.children.length] = node;
+    }
+
+    path[depth] = node;
+    depth += 1;
+  });
+
+  return roots;
 };

@@ -1,6 +1,10 @@
 /* 标题导航：定位在弹窗框体之外，不参与正文布局；单条的样式在 Item 目录 */
 
-/* 弹窗左上角、框体之外的标题导航 */
+/*
+ * 弹窗左上角、框体之外的标题导航。
+ * 右侧内边距只留 3px：目录自身要滚动，滚动条再往里缩就会看着像悬在中间。
+ * 高度由组件按正文区（body − footer）的实测值回写，这里的 max-height 只是还没量到时的兜底。
+ */
 .nav {
   position: absolute;
   top: calc(100% + 10px);
@@ -11,13 +15,14 @@
   gap: 6px;
   width: 208px;
   max-height: calc(82dvh - 80px);
-  padding: 8px;
+  padding: 8px 3px 8px 8px;
   border: 1px solid var(--app-line);
   border-radius: 2px;
   background: var(--preview-paper);
   box-shadow: 0 8px 24px rgb(23 37 34 / 10%);
 }
 
+/* 目录的滚动容器：滚动条做细，且尽量贴住右边缘 */
 .list {
   display: flex;
   flex: 1 1 auto;
@@ -28,7 +33,23 @@
   padding: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+  scrollbar-color: var(--app-line-strong) transparent;
+  scrollbar-width: thin;
   list-style: none;
+}
+
+/* WebKit 不认 scrollbar-width：单独把槽位宽度压到 6px，thumb 紧贴边缘 */
+.list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.list::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background: var(--app-line-strong);
 }
 
 /* 编辑态禁用标题目录：预览态才可跳转 */

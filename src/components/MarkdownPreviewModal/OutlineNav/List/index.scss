@@ -1,0 +1,11 @@
+/* 标题导航的嵌套层：只负责清掉列表默认样式与间距，滚动与宽度由顶层 .list 管 */
+
+.nodes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nodes li + li {
+  margin-top: 2px;
+}

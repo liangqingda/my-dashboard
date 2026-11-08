@@ -1,14 +1,72 @@
-/* 标题导航的单条：只保留按钮骨架与层级样式，省略号与 tip 由公共组件 TruncatedText 负责 */
+/*
+ * 标题导航的单条：左侧一格折叠按钮 + 标题文本。
+ * 层级（字号 / 缩进 / 颜色）挂在整行上，标题按钮只继承，不再自己定样式，
+ * 这样有没有折叠按钮都不会让同一层的标题错位。
+ */
+
+.row {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr);
+  align-items: center;
+  gap: 2px;
+  color: var(--app-ink-soft);
+  font-family: var(--app-serif);
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+/* 折叠按钮的格子：没有子标题时用空 span 占位 */
+.slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  background: none;
+  color: var(--app-ink-faint);
+}
+
+.toggle {
+  cursor: pointer;
+}
+
+.toggle:hover,
+.toggle:focus-visible {
+  color: var(--app-accent);
+}
+
+/* disabled 的折叠按钮不响应 hover，指针不要留在 pointer 上 */
+.toggle:disabled {
+  cursor: default;
+}
+
+/* 展开时朝下、收起时朝右；只用 transform，不换图标 */
+.chevron {
+  transition: transform 120ms ease;
+}
+
+.collapsed {
+  transform: rotate(-90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chevron {
+    transition: none;
+  }
+}
 
 .item {
   padding: 3px 5px;
   border: 0;
   border-radius: 2px;
   background: none;
-  color: var(--app-ink-soft);
-  font-family: var(--app-serif);
-  font-size: 0.72rem;
-  line-height: 1.5;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
   text-align: left;
   cursor: pointer;
 }
@@ -35,13 +93,13 @@
 }
 
 .level3 {
-  padding-left: 13px;
+  padding-left: 8px;
   color: var(--app-ink-faint);
   font-size: 0.68rem;
 }
 
 .level4 {
-  padding-left: 22px;
+  padding-left: 17px;
   color: var(--app-ink-faint);
   font-size: 0.68rem;
 }

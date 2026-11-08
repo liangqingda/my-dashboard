@@ -37,6 +37,7 @@ import {
 } from './constants';
 import { useArrowNavigation } from './hooks/useArrowNavigation';
 import { useNoteEditing } from './hooks/useNoteEditing';
+import { useOutlineMaxHeight } from './hooks/useOutlineMaxHeight';
 
 import styles from './index.scss';
 
@@ -76,6 +77,12 @@ const MarkdownPreviewModal = ({
     onNext,
     onPrevious,
   });
+
+  /** 标题导航的高度封顶到正文区（body − footer），不越过 footer */
+  const outlineMaxHeight = useOutlineMaxHeight(
+    bodyRef,
+    opened && !editing.editing,
+  );
 
   /** 重新取一次最新正文：失败时给出可见提示（不静默吞掉），并收起 loading */
   const handleRefresh = () => {
@@ -134,6 +141,7 @@ const MarkdownPreviewModal = ({
           <OutlineNav
             disabled={editing.editing}
             headings={outline}
+            maxHeight={outlineMaxHeight}
             onSelect={scrollToHeading}
           />
           <ActionIcon

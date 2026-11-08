@@ -19,3 +19,9 @@ export const REHYPE_PLUGINS = [rehypeRaw];
 
 /** 文档内参与标题导航的标题层级 */
 export const HEADING_SELECTOR = 'h1, h2, h3, h4';
+
+/** 标题导航与正文顶部的间距（px）：与 OutlineNav 样式里的 top 偏移保持一致 */
+export const OUTLINE_TOP_GAP = 10;
+
+/** 标题导航底部留白（px）：别贴着 footer */
+export const OUTLINE_BOTTOM_GAP = 8;
