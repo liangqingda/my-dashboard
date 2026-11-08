@@ -39,6 +39,7 @@ import OutlineNav from './OutlineNav';
 import { HEADING_SELECTOR, REHYPE_PLUGINS, REMARK_PLUGINS } from './constants';
 import { useActiveHeadingIndex } from './hooks/useActiveHeadingIndex';
 import { useArrowNavigation } from './hooks/useArrowNavigation';
+import { useCloseRequest } from './hooks/useCloseRequest';
 import { useDocumentScrollReset } from './hooks/useDocumentScrollReset';
 import { useModalFullscreen } from './hooks/useModalFullscreen';
 import { useRefreshPreview } from './hooks/useRefreshPreview';
@@ -101,6 +102,13 @@ const MarkdownPreviewModal = ({
     onSave,
   });
 
+  /** 关闭请求：编辑态（含草稿预览）不关，只提示先退出编辑，其余照常关 */
+  const requestClose = useCloseRequest({
+    blocking: editing.editing,
+    onClose: handleClose,
+    previewing: editing.previewing,
+  });
+
   /** 进入编辑时清掉目录激活项：新的一轮不该还亮着上一轮跳到的位置 */
   const startEditing = () => {
     setEditorActiveIndex(-1);
@@ -145,10 +153,7 @@ const MarkdownPreviewModal = ({
     headings: outline,
   });
 
-  /**
-   * 换篇 / 重新打开时正文回到顶部：弹窗不再按篇重挂，
-   * 不给滚动复位的话上一篇读到的位置会留在下一篇上。
-   */
+  /** 换篇 / 重新打开时正文回到顶部：弹窗不再按篇重挂，不复位就把上一篇的位置留给下一篇 */
   useDocumentScrollReset(bodyRef, title, opened);
 
   /**
@@ -193,9 +198,9 @@ const MarkdownPreviewModal = ({
   };
 
   /*
-   * 编辑态（含草稿预览）彻底关不掉：关闭按钮、Esc、点遮罩三条路径全部收掉。
-   * 这时唯一出口是 header 的返回箭头——草稿预览时回编辑器，编辑态时退出编辑（有未保存改动先确认），
-   * 退出编辑后关闭按钮才重新出现，也就是「先退出再关」。全屏也一并收掉：这时要看的是块编辑器。
+   * 编辑态（含草稿预览）关不掉：关闭按钮不渲染，Esc / 点遮罩统一走 `requestClose`（不关、只提示）。
+   * 唯一出口是 header 的返回箭头：草稿预览时回编辑器，编辑时退出编辑（有未保存改动先确认），
+   * 退出后关闭按钮与全屏才回来。全屏也一并收掉：这时要看的是块编辑器。
    */
   return (
     <Modal
@@ -207,10 +212,9 @@ const MarkdownPreviewModal = ({
         title: styles.title,
       }}
       closeButtonProps={{ 'aria-label': '关闭预览' }}
-      closeOnClickOutside={!editing.editing}
-      closeOnEscape={!fullscreen && !editing.editing}
+      closeOnEscape={!fullscreen}
       fullScreen={fullscreen}
-      onClose={handleClose}
+      onClose={requestClose}
       opened={opened}
       overlayProps={{ backgroundOpacity: 0.5, blur: 2 }}
       padding={0}
@@ -288,9 +292,7 @@ const MarkdownPreviewModal = ({
             onCancelEdit={editing.requestExitEditing}
             onDiscard={editing.discardAndExitEditing}
             onKeepEditing={editing.keepEditing}
-            onSaveEdit={() => {
-              void editing.save();
-            }}
+            onSaveEdit={editing.save}
             onStartEdit={startEditing}
             onStartPreview={editing.startPreview}
             onStopPreview={editing.stopPreview}

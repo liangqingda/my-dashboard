@@ -12,6 +12,17 @@ export const SAVED_HINT_DURATION = 3000;
 export const NO_EDITOR_MESSAGE =
   '这类 Markdown 还没有定制编辑器。用 personalize-edit-markdown skill 可以为它写一套编辑逻辑。';
 
+/** 「编辑中不能关闭」提示的固定 id：连按 Esc 只会刷新同一条，不叠一屏 */
+export const CLOSE_BLOCKED_NOTIFICATION_ID = 'markdown-preview-close-blocked';
+
+/** 编辑态想关弹窗时的提示：说清出口在哪，而不是让按键像坏了一样没反应 */
+export const CLOSE_BLOCKED_EDITING_MESSAGE =
+'先点 header 的返回箭头退出编辑，关闭按钮就回来了。';
+
+/** 草稿预览态想关弹窗时的提示：这时返回箭头是「回到编辑」，不是退出编辑 */
+export const CLOSE_BLOCKED_PREVIEWING_MESSAGE =
+'现在是草稿预览：先点「返回编辑」回到编辑器，再退出编辑才能关闭。';
+
 /** 固定引用，避免每次渲染重建插件数组 */
 export const REMARK_PLUGINS = [remarkGfm];
 

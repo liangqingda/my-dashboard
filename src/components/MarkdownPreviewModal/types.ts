@@ -232,6 +232,16 @@ export type ArrowNavigationParams = {
   onNext?: (() => void) | null;
 };
 
+/** 关闭请求的入参：决定「照常关」还是「拦下来并提示」 */
+export type CloseRequestParams = {
+  /** 是否正在编辑（含草稿预览）：这时弹窗不许关，只提示 */
+  blocking: boolean;
+  /** 是否停在草稿预览：两种状态的出口不同，提示文案也不同 */
+  previewing: boolean;
+  /** 允许关闭时真正关掉弹窗（含退出全屏） */
+  onClose: () => void;
+};
+
 /** 滚动定位当前小节的入参 */
 export type ActiveHeadingParams = {
   /** 正文区（同时也是滚动容器）的节点；还没挂上时为 null，挂上后 effect 会自动重建监听 */
