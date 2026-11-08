@@ -3,10 +3,13 @@
  * 只被单个组件使用的 props 写在各自组件目录的 types.ts 里。
  */
 
-import type { BuildState } from '@/services/types';
+import type { BuildState, ServiceAction } from '@/services/types';
 
 /** 状态徽标的色系 */
 export type PillTone = 'ok' | 'warn' | 'danger' | 'muted';
+
+/** 服务行的主操作动作：停止 / 启动 / 重启（部署另有按钮） */
+export type PrimaryServiceAction = Exclude<ServiceAction, 'deploy'>;
 
 /** 状态徽标要展示的内容 */
 export type PillView = {

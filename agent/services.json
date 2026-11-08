@@ -8,6 +8,7 @@
     "url": "http://localhost:3000",
     "repo": "https://github.com/liangqingda/my-dashboard",
     "autoStart": true,
+    "stopDisabled": true,
     "startCmd": [
       "pnpm",
       "dev"

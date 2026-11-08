@@ -63,6 +63,8 @@ const DEFAULT_SERVICES = [
     port: 3000,
     startCmd: ['pnpm', 'dev'],
     stopCmd: [],
+    // 工作台自身停掉就打不开这个页面了，只允许重启
+    stopDisabled: true,
     successMarkers: ['ready in', 'local:', 'vite v', 'built in', 'compiled'],
     failMarkers: [
       'error during build',
@@ -187,6 +189,8 @@ async function getStatus(entry) {
     deployedUrl: config.deployedUrl ?? null,
     repo: config.repo ?? null,
     autoStart: config.autoStart ?? false,
+    // 承载当前页面的服务（如工作台自身）停止后页面就没了，只允许重启
+    canStop: config.stopDisabled !== true,
     running,
     pids,
     build,
@@ -746,6 +750,12 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (parsed && parsed.action === 'stop' && req.method === 'POST') {
+      // 重启走 restart 分支（内部直接调用 stopService），这里只拦住单独的停止请求
+      if (registry.get(parsed.id)?.config.stopDisabled) {
+        const error = new Error('该服务承载当前页面，不能停止，请改用重启');
+        error.status = 409;
+        throw error;
+      }
       sendJson(
         res,
         200,

@@ -2,17 +2,26 @@
  * 服务页的纯函数工具：忙碌判定、可访问性、端口展示、状态徽标推导与列表统计。
  */
 
-import type { ServiceBusy, ServiceStatus } from '@/services/types';
+import type { ServiceStatus } from '@/services/types';
 
-import type { PillView, StatusViewInput } from './types';
+import type { PillView, PrimaryServiceAction, StatusViewInput } from './types';
 
-/** 启动 / 重启这类「把服务拉起来」的操作是否在进行 */
-export const isPrimaryBusy = (busy: ServiceBusy, id: string): boolean =>
-  busy[id] === 'start' || busy[id] === 'restart';
+/**
+ * 主操作按钮该做什么：运行中且允许停止才能「停止」；
+ * 承载当前页面的服务（工作台自身）停掉就打不开页面，只能「重启」；
+ * 没运行时按编译结果选「启动」或「重启」。
+ * 只有 agent 明确给了 `canStop: false` 才换按钮：旧版 agent 不返回该字段，
+ * 那时期望保持原来的「停止」，不能把每个运行中的服务都改成重启。
+ */
+export const resolvePrimaryAction = (
+  service: ServiceStatus,
+): PrimaryServiceAction => {
+  if (!service.running) {
+    return service.build === 'fail' ? 'restart' : 'start';
+  }
 
-/** 停止操作是否在进行 */
-export const isStopBusy = (busy: ServiceBusy, id: string): boolean =>
-  busy[id] === 'stop';
+  return service.canStop === false ? 'restart' : 'stop';
+};
 
 /** 服务是否有可访问的 http 地址并且正在运行 */
 export const canOpenService = (service: ServiceStatus): boolean =>

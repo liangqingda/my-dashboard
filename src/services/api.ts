@@ -3,6 +3,7 @@
  * 通过 Vite 的 /api 代理访问本地 agent（agent/server.mjs，默认 8787）。
  */
 
+import { AGENT_RECOVERY_INTERVAL, AGENT_RECOVERY_TIMEOUT } from '@/services/constants';
 import type { CliCommand, LogKind, ServiceStatus } from '@/services/types';
 
 /** agent 基础路径（经 Vite 代理转发到本机 agent） */
@@ -172,3 +173,41 @@ export const restartAgent = () =>
 /** 通过开发服务器启动 agent，等待其就绪。 */
 export const startAgent = () =>
   request<{ started: boolean }>('/agent/start', { method: 'POST' });
+
+/** 探一次健康检查：代理还没恢复时 fetch 会直接抛错 */
+const probeHealth = async (): Promise<boolean> => {
+  try {
+    const response = await fetch(`${BASE}/health`, {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(2_000),
+    });
+
+    return response.ok;
+  } catch {
+    return false;
+  }
+};
+
+const waitForHealth = async (deadline: number): Promise<boolean> => {
+  if (await probeHealth()) {
+    return true;
+  }
+
+  if (Date.now() >= deadline) {
+    return false;
+  }
+
+  await new Promise((resolve) => {
+    setTimeout(resolve, AGENT_RECOVERY_INTERVAL);
+  });
+
+  return waitForHealth(deadline);
+};
+
+/**
+ * 轮询 /api/health，直到本机服务重新可用；超时返回 false。
+ * 重启工作台自身会先切断页面到 dev server 的代理，dev server 起来后才有响应。
+ */
+export const waitForAgentOnline = (
+  timeoutMs = AGENT_RECOVERY_TIMEOUT,
+): Promise<boolean> => waitForHealth(Date.now() + timeoutMs);

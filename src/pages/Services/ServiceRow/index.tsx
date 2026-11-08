@@ -9,20 +9,32 @@ import {
   IconRocket,
 } from '@tabler/icons-react';
 
+import { ACTION_LABELS } from '@/services/constants';
 import { formatDateTime } from '@/utils/format';
 
+import { PRIMARY_ACTION_TONES } from '../constants';
 import ServiceLogPanel from '../ServiceLogPanel';
 import ServiceStatusPill from '../ServiceStatusPill';
 import {
   canOpenService,
   formatServicePorts,
-  isPrimaryBusy,
-  isStopBusy,
+  resolvePrimaryAction,
 } from '../utils';
+import type { PrimaryServiceAction } from '../types';
 
 import type { ServiceRowProps } from './types';
 
 import styles from './index.scss';
+
+/** 主操作按钮的图标：停止 / 启动 / 重启 */
+const PRIMARY_ACTION_GLYPHS: Record<
+  PrimaryServiceAction,
+  typeof IconPlayerStop
+> = {
+  start: IconPlayerPlay,
+  stop: IconPlayerStop,
+  restart: IconRefresh,
+};
 
 /** 单个服务：状态、启停 / 部署操作；展开的日志面板交给 ServiceLogPanel */
 const ServiceRow = ({
@@ -34,17 +46,32 @@ const ServiceRow = ({
   onRestart,
   onDeploy,
 }: ServiceRowProps) => {
-  const primaryLoading = isPrimaryBusy(busy, service.id);
-  const stopLoading = isStopBusy(busy, service.id);
+  const primaryAction = resolvePrimaryAction(service);
+  const PrimaryGlyph = PRIMARY_ACTION_GLYPHS[primaryAction];
+  const primaryLabel = ACTION_LABELS[primaryAction];
   const disabled = offline || Boolean(busy[service.id]) || service.deploying;
   const openable = canOpenService(service);
   const ports = formatServicePorts(service);
-  const stoppedAction = service.build === 'fail' ? '重启' : '启动';
-  const action = service.running ? '停止' : stoppedAction;
-  const onStoppedAction = service.build === 'fail' ? onRestart : onStart;
-  const onAction = service.running ? onStop : onStoppedAction;
-  const StoppedGlyph = service.build === 'fail' ? IconRefresh : IconPlayerPlay;
-  const ActionGlyph = service.running ? IconPlayerStop : StoppedGlyph;
+  /**
+   * 运行中但编译失败时，停止按钮旁再给一个独立的重启入口；
+   * 工作台自身不允许停止，主按钮已经是重启，不用再重复
+   */
+  const showRestartShortcut =
+    service.running && service.canStop !== false && service.build === 'fail';
+
+  const runPrimary = (id: string) => {
+    if (primaryAction === 'start') {
+      onStart(id);
+      return;
+    }
+
+    if (primaryAction === 'stop') {
+      onStop(id);
+      return;
+    }
+
+    onRestart(id);
+  };
 
   return (
     <article aria-label={service.name} className={styles.row}>
@@ -101,12 +128,12 @@ const ServiceRow = ({
               线上网页
             </Button>
           )}
-          {service.running && service.build === 'fail' && (
+          {showRestartShortcut && (
             <Button
               aria-label={`重启 ${service.name}`}
               disabled={disabled}
               leftSection={<IconRefresh size={14} />}
-              loading={primaryLoading}
+              loading={busy[service.id] === 'restart'}
               onClick={() => onRestart(service.id)}
               size="xs"
               variant="light"
@@ -115,16 +142,16 @@ const ServiceRow = ({
             </Button>
           )}
           <Button
-            aria-label={`${action} ${service.name}`}
-            color={service.running ? 'gray' : 'teal'}
+            aria-label={`${primaryLabel} ${service.name}`}
+            color={PRIMARY_ACTION_TONES[primaryAction]}
             disabled={disabled}
-            leftSection={<ActionGlyph size={14} />}
-            loading={primaryLoading || stopLoading}
-            onClick={() => onAction(service.id)}
+            leftSection={<PrimaryGlyph size={14} />}
+            loading={busy[service.id] === primaryAction}
+            onClick={() => runPrimary(service.id)}
             size="xs"
             variant="light"
           >
-            {action}
+            {primaryLabel}
           </Button>
           {service.canDeploy && (
             <Button

@@ -4,12 +4,17 @@
 
 import type { ServiceActivity, ServiceStatus } from '@/services/types';
 
+/** 读取状态失败：HTTP 错误是带 message 的 Error，连接被切断时 fetch 抛 TypeError */
+export const isConnectionError = (error: unknown): boolean =>
+  error instanceof TypeError;
+
 /** 单个服务快照里所有会影响渲染的字段是否都没变 */
 const isSameService = (prev: ServiceStatus, next: ServiceStatus): boolean =>
   prev.id === next.id &&
   prev.name === next.name &&
   prev.running === next.running &&
   prev.build === next.build &&
+  prev.canStop === next.canStop &&
   prev.deploying === next.deploying &&
   prev.deployOutcome === next.deployOutcome &&
   prev.lastDeployAt === next.lastDeployAt &&

@@ -10,6 +10,7 @@ import {
   restartService,
   startService,
   stopService,
+  waitForAgentOnline,
 } from '@/services/api';
 import { ACTION_LABELS } from '@/services/constants';
 import type {
@@ -19,6 +20,7 @@ import type {
   ServiceBusy,
   ServiceStatus,
 } from '@/services/types';
+import { isConnectionError } from '@/services/utils';
 import { getErrorMessage } from '@/utils/error';
 
 type Params = {
@@ -51,9 +53,13 @@ export function useServiceActions({
       locks.current.add(id);
       setBusy((current) => ({ ...current, [id]: action }));
 
-      const serviceName =
-        services.find((service) => service.id === id)?.name ?? id;
+      const service = services.find((item) => item.id === id);
+      const serviceName = service?.name ?? id;
       const label = ACTION_LABELS[action];
+      // 工作台自身不允许停止：重启它会把页面到 dev server 的代理连接一起断掉
+      const restartsSelf = action === 'restart' && service?.canStop === false;
+      /** 代理被切断（而不是接口报错）：成败只能等它重新上线后再判定 */
+      let interrupted = false;
 
       try {
         if (action === 'stop') {
@@ -98,16 +104,45 @@ export function useServiceActions({
           });
         }
       } catch (err) {
-        record(serviceName, `${label}失败`, false);
-        notifications.show({
-          title: `${label}失败`,
-          message: getErrorMessage(err, '请稍后重试'),
-          color: 'red',
-          autoClose: false,
-        });
+        if (restartsSelf && isConnectionError(err)) {
+          interrupted = true;
+        } else {
+          record(serviceName, `${label}失败`, false);
+          notifications.show({
+            title: `${label}失败`,
+            message: getErrorMessage(err, '请稍后重试'),
+            color: 'red',
+            autoClose: false,
+          });
+        }
       } finally {
+        if (interrupted) {
+          notifications.show({
+            title: `${label}中`,
+            message: `「${serviceName}」重启期间页面会短暂断开，恢复后自动刷新`,
+            color: 'blue',
+            autoClose: 4000,
+          });
+        }
+
+        // 被自己切断的连接要先等它回来，再读才有意义
+        const online = interrupted ? await waitForAgentOnline() : true;
+
         // 动作期间可能有一个更早的读取在飞，等它落地再读，保证拿到动作后的状态
         await refreshAfterSettled();
+
+        if (interrupted) {
+          record(serviceName, `${label}${online ? '成功' : '失败'}`, online);
+          notifications.show({
+            title: online ? '连接已恢复' : `${label}未完成`,
+            message: online
+              ? `「${serviceName}」已重启，服务状态已刷新`
+              : '工作台没有重新上线，请手动恢复连接',
+            color: online ? 'teal' : 'red',
+            autoClose: online ? 4000 : false,
+          });
+        }
+
         locks.current.delete(id);
         setBusy((current) => {
           const next = { ...current };

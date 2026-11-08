@@ -15,6 +15,7 @@ const fixture = () =>
     deployedUrl: index === 1 ? 'https://study-lab.example.com/' : null,
     repo: index < 2 ? `https://github.com/example/${id}` : null,
     autoStart: index === 0,
+    canStop: true,
     canDeploy: index === 1,
     deploying: false,
     deployOutcome: null,

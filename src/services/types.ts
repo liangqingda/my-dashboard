@@ -45,6 +45,8 @@ export type ServiceStatus = {
   repo: string | null;
   /** 是否开机自动启动（如 brew launchd / LaunchAgent 托管） */
   autoStart: boolean;
+  /** 是否允许停止；承载当前页面的服务（工作台自身）为 false，只能重启 */
+  canStop: boolean;
   /** 是否配置了部署命令（如部署到 CloudBase） */
   canDeploy: boolean;
   /** 是否正在部署中 */

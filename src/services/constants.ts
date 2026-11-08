@@ -23,3 +23,9 @@ export const ACTIVITY_LIMIT = 8;
  * 空闲状态不轮询：页面进入、窗口重新获得焦点、侧边栏刷新图标都会触发一次读取。
  */
 export const TRACKING_REFRESH_INTERVAL = 1000;
+
+/** 重启工作台自身后，等待本机服务重新上线的总时长（毫秒） */
+export const AGENT_RECOVERY_TIMEOUT = 20_000;
+
+/** 等待本机服务重新上线时的轮询间隔（毫秒） */
+export const AGENT_RECOVERY_INTERVAL = 500;
