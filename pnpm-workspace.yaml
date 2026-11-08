@@ -2,3 +2,6 @@
 allowBuilds:
   '@parcel/watcher': true
   unrs-resolver: true
+minimumReleaseAgeExclude:
+  - '@liangqingda/eslint-config@1.4.0'
+  - '@liangqingda/tsconfig@1.1.0'

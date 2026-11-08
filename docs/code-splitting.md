@@ -48,7 +48,7 @@
 - 跨出所属目录一律用 `@/` 别名（`@` → `src`），结构检查会拦穿过页面目录的相对导入；
 - 不造 barrel 文件，直接从具体文件导入。
 
-### import 分组（`eslint .` + `check-imports.mjs` 强制）
+### import 分组（`eslint .` 强制，规则来自共享包）
 
 组间必须空一行，组内不空行，顺序固定：
 
@@ -60,5 +60,10 @@
    保证页面相关排在本组内靠前）；
 5. 样式导入（`*.scss`）排在最后。
 
-`check-imports.mjs` 补 ESLint 管不到的三件事：值导入里内联 `type`、页面内部必须相对路径、
-`@/pages/**` 排在其它 `@/` 之后。
+上面这套顺序由 `@liangqingda/eslint-config` 的 `react-typed` 统一强制（1.4.0 起自带
+`@/pages/**` → `parent` 的分组），本仓库不再在 `eslint.config.js` 里覆写 `import/order`；
+值导入里内联 `type` 也由同一套配置的 `consistent-type-imports` 拦下。
+
+只会留在本仓库 `scripts/check-imports.mjs` 的是 ESLint 表达不了的一条：页面 / 组件 / 布局
+目录内部引用自己的文件必须用相对路径（`no-restricted-imports` 只能禁 pattern，表达不了
+「只禁本目录的别名写法」）。

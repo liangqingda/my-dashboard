@@ -1,19 +1,17 @@
 #!/usr/bin/env node
 /**
- * My Dashboard — import 分组检查（补 import/order 查不到的部分）
+ * My Dashboard — 页面内部引用检查（补共享 ESLint 配置查不到的那一条）
  *
- * 分层与空行由 `import/order` 负责（见 eslint.config.js：公共 `@/**` 归 internal，
- * `@/pages/**` 归 parent，`newlines-between: always`），但有三件事它管不到：
+ * 分组、组间空行、`@/pages/**` 排在公共 `@/**` 之后、值导入里的 `type` 必须单独成句，
+ * 这些现在都由 `@liangqingda/eslint-config` 的 `react-typed` 强制（共享包 1.4.0 起），
+ * 本脚本不再重复实现，只保留唯一一个 ESLint 表达不了的规则：
  *
- *  1. 值导入里内联 type（`import { a, type B }`）：类型一律单独 `import type`，
- *     否则「哪些是类型」在文件头看不出来（本项目未启用 consistent-type-imports）。
- *  2. 页面 / 组件 / 布局目录内部引用自己的文件必须用相对路径，不得绕回 `@/`。
- *     跨出所属目录才用 `@/`（相对路径跨出页面目录由 check-structure.mjs 拦截）。
- *  3. `@/pages/**` 必须排在其它 `@/` 之后：import/order 把它们放在了不同组（parent /
- *     internal），但脚本再兜一层顺序断言，避免有人调 pathGroups 时静默失去分层。
+ *   页面 / 组件 / 布局目录内部引用自己的文件必须用相对路径，不得绕回 `@/`。
+ *   「相对自己这一页」这种判断 ESLint 的 `no-restricted-imports` 写不出来
+ *   （它只能禁止某个 pattern，不能表达「只禁止本目录的别名写法」），所以留在这里。
+ *   跨出所属目录才用 `@/`（相对路径跨出页面目录由 check-structure.mjs 拦截）。
  *
- * 注意：不要在这里再实现一遍「type 组位置」的判断——实测 import/order 的规则是
- * 「相对路径 type 单独成组、`@/` type 留在原组」，重复实现两套规则必然漂移。
+ * 别在这里再加回分组/顺序/type 的判断：规则一旦在共享包里，两处维护必然漂移。
  */
 import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
@@ -77,8 +75,7 @@ function checkFile(file) {
   const ownMatch = OWN_ROOT_PATTERN.exec(rel);
   const ownPrefix = ownMatch ? `@/${ownMatch[1]}/${ownMatch[2]}/` : null;
 
-  /** @/ 导入的层级：0 公共，1 页面 */
-  const aliasRanks = [];
+  if (!ownPrefix) return;
 
   for (const item of parseImports(source)) {
     const { line, statement } = item;
@@ -86,39 +83,9 @@ function checkFile(file) {
 
     if (!/\bfrom\b/u.test(statement)) continue;
 
-    if (/\{[^}]*\btype\s+[\w{]/u.test(statement)) {
-      errors.push(
-        `${rel}:${line} 值导入里内联了 type，请拆成单独的 import type：${statement.split('\n')[0]}`,
-      );
-    }
-
-    if (ownPrefix && specifier.startsWith(ownPrefix)) {
+    if (specifier.startsWith(ownPrefix)) {
       errors.push(
         `${rel}:${line} 引用本目录文件应使用相对路径，不要用 "${specifier}"`,
-      );
-    }
-
-    if (specifier.startsWith('@/')) {
-      aliasRanks.push({
-        line,
-        page: specifier.startsWith('@/pages/'),
-        specifier,
-      });
-    }
-  }
-
-  let sawPage = null;
-
-  for (const entry of aliasRanks) {
-    if (entry.page) {
-      sawPage ??= entry;
-
-      continue;
-    }
-
-    if (sawPage) {
-      errors.push(
-        `${rel}:${entry.line} 公共导入 "${entry.specifier}" 排在了页面导入 "${sawPage.specifier}"（第 ${sawPage.line} 行）之后；公共能力应在前，页面代码在后`,
       );
     }
   }
@@ -129,11 +96,11 @@ const files = collectFiles(SRC);
 for (const file of files) checkFile(file);
 
 if (errors.length > 0) {
-  console.error('[×] import 分组检查未通过：');
+  console.error('[×] 页面内部引用检查未通过：');
 
   for (const message of errors) console.error(`  ${message}`);
 
   process.exit(1);
 }
 
-console.log(`[✓] import 分组检查通过：${files.length} 个源文件符合分组约定`);
+console.log(`[✓] 页面内部引用检查通过：${files.length} 个源文件内部引用均为相对路径`);

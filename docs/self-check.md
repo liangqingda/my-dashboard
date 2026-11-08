@@ -3,7 +3,7 @@
 **每次改完代码，提交或交付前必须再走一遍**，不能只保证「能跑」。六条按顺序过：
 
 1. **命令全绿**：`pnpm typecheck` / `pnpm lint` / `pnpm build`。
-   （`pnpm lint` = `eslint .` + `check-structure` + `check-scss` + `check-imports` + `check:md`）
+   （`pnpm lint` = `eslint .` + `check-structure` + `check-scss`（共享包 CLI）+ `check-imports` + `check:md`）
 2. **查重复**：有没有同样的文案、格式化、class 拼接、剪贴板逻辑散在多处 → 按
    `shared-utils.md` 上提。
 3. **查复杂度**：**禁止 O(n²)**——在循环里 `filter` / `find` 已收集的结果、循环里反复展开数组
