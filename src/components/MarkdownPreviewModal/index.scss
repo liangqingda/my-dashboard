@@ -155,9 +155,23 @@
   margin: 0 0 10px;
 }
 
-/* 无序 / 有序列表共用一套左缩进：整体右移 32px，符号 / 编号挂在该区间内，正文左边缘对齐 */
-.prose ul,
+.prose ul {
+  margin: 0 0 12px;
+  padding-left: 1.3em;
+}
+
+/* 有序列表：和上文拉开 4px、编号区右移 8px、编号与正文之间留足 24px */
 .prose ol {
+  margin: 4px 0 12px 8px;
+  padding-left: 24px;
+}
+
+/*
+ * 折叠块里的第一层列表：ul / ol 统一成同一档左缩进（32px），
+ * 只作用于 details 的直接子列表，嵌套层级与折叠外的列表保持各自原有写法。
+ */
+.prose details > ul,
+.prose details > ol {
   margin: 0 0 12px;
   padding-left: 32px;
 }
@@ -256,8 +270,8 @@
 
 /*
  * details 里的正文比标题行缩进一档。
- * 列表排除在外：ul / ol 共用一套左间距（见上方 .prose ul, .prose ol），留在这里会被这条更高优先级的
- * 规则盖成 14px。
+ * 列表排除在外：折叠内第一层的 ul / ol 已单独声明左缩进（见 .prose details > ul, .prose details > ol），
+ * 留在这里会被这条更高优先级的规则盖成 14px。
  */
 .prose details > *:not(summary, ul, ol) {
   margin-left: 14px;
