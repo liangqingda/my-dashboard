@@ -5,6 +5,7 @@ import type { MarkdownEditorProps } from '@/components/MarkdownPreviewModal';
 import type { MarkdownBlock } from '../types';
 import BlockEditor from '../BlockEditor';
 import { UNDO_DEPTH } from '../constants';
+import { findBlockIndexForHeading } from '../utils/heading-block';
 import {
   blocksToMarkdown,
   parseMarkdownBlocks,
@@ -14,12 +15,38 @@ import { isTypingTarget } from '../utils/notes';
 import styles from './index.scss';
 
 /**
+ * 把某个块滚进视野并聚焦它的第一个可编辑控件。
+ * 块元素靠 `data-block-index` 找：块的 DOM 顺序由 BlockEditor 决定，这里不猜层级。
+ */
+const focusBlock = (root: HTMLElement | null, blockIndex: number): boolean => {
+  const node = root?.querySelector<HTMLElement>(
+    `[data-block-index="${blockIndex}"]`,
+  );
+
+  if (!node) {
+    return false;
+  }
+
+  node.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // 聚焦时不要再滚一次，否则会把刚起的平滑滚动打断在块中间
+  node.querySelector<HTMLElement>('textarea, input')?.focus({ preventScroll: true });
+
+  return true;
+};
+
+/**
  * 学习笔记专用编辑器：进编辑时把正文切成块，表格走受控网格，其余块编辑源码片段。
  *
  * 这是「定制编辑」的参考实现——公共组件只提供插槽，笔记长什么样、怎么改回文本，
  * 都由这一类文档自己说了算。换成按块重拼，只会在保存时重排一次格式。
+ *
+ * 同时实现 `handleRef` 这条可选能力：编辑态正文不渲染，弹窗的标题目录靠它把对应块滚进视野。
  */
-const NoteEditor = ({ markdown, onChange }: MarkdownEditorProps) => {
+const NoteEditor = ({
+  markdown,
+  onChange,
+  onHandleReady,
+}: MarkdownEditorProps) => {
   const [blocks, setBlocks] = useState<MarkdownBlock[]>(() =>
     parseMarkdownBlocks(markdown),
   );
@@ -36,6 +63,28 @@ const NoteEditor = ({ markdown, onChange }: MarkdownEditorProps) => {
 
     firstField?.focus();
   }, []);
+
+  /**
+   * 把「跳到某一节」交给弹窗：编辑态正文不渲染，目录只能由编辑器定位。
+   * 每次块变动重交一份——定位依赖最新的块顺序。
+   */
+  useEffect(() => {
+    if (!onHandleReady) {
+      return undefined;
+    }
+
+    onHandleReady({
+      revealHeading: (index) => {
+        const blockIndex = findBlockIndexForHeading(blocks, index);
+
+        return blockIndex === -1
+          ? false
+          : focusBlock(rootRef.current, blockIndex);
+      },
+    });
+
+    return () => onHandleReady(null);
+  }, [blocks, onHandleReady]);
 
   /** 块列表变化：自己留一份，同时把拼好的 Markdown 交给弹窗当草稿 */
   const handleChange = (next: MarkdownBlock[]) => {

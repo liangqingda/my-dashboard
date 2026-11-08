@@ -18,7 +18,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActionIcon, Modal, Tooltip } from '@mantine/core';
-import { notifications } from '@mantine/notifications';
 import {
   IconChevronLeft,
   IconChevronRight,
@@ -29,20 +28,24 @@ import {
 import Markdown from 'react-markdown';
 
 import { cx } from '@/utils/cx';
-import { getErrorMessage } from '@/utils/error';
 import { extractMarkdownOutline } from '@/utils/markdown-outline';
 
-import type { MarkdownPreviewModalProps } from './types';
+import type {
+  MarkdownEditorHandle,
+  MarkdownPreviewModalProps,
+} from './types';
 import PreviewHeaderActions from './HeaderActions';
 import OutlineNav from './OutlineNav';
 import { HEADING_SELECTOR, REHYPE_PLUGINS, REMARK_PLUGINS } from './constants';
 import { useActiveHeadingIndex } from './hooks/useActiveHeadingIndex';
 import { useArrowNavigation } from './hooks/useArrowNavigation';
+import { useRefreshPreview } from './hooks/useRefreshPreview';
 import { useNoteEditing } from './hooks/useNoteEditing';
 
 import styles from './index.scss';
 
 export type {
+  MarkdownEditorHandle,
   MarkdownEditorProps,
   MarkdownPreviewModalProps,
 } from './types';
@@ -61,19 +64,33 @@ const MarkdownPreviewModal = ({
 }: MarkdownPreviewModalProps) => {
   const bodyRef = useRef<HTMLElement | null>(null);
   /**
+   * 编辑态正文不渲染，目录没法在正文里找标题节点：
+   * 定制编辑器若实现了 `revealHeading`，就把它的定位能力挂在这里，由目录调用。
+   */
+  const editorHandleRef = useRef<MarkdownEditorHandle | null>(null);
+  /** 编辑器交上来的句柄只放 ref：目录点击时读，不需要触发重渲染 */
+  const attachEditorHandle = useCallback(
+    (handle: MarkdownEditorHandle | null) => {
+      editorHandleRef.current = handle;
+    },
+    [],
+  );
+  /**
    * 正文节点同时存一份 state：弹窗内容比 header 晚一帧挂载，
    * 滚动跟踪和高度测量都要等节点真正挂上再建监听，只靠 ref 会在 ref 还空时跑完 effect。
    */
   const [bodyElement, setBodyElement] = useState<HTMLElement | null>(null);
   /** 全屏预览：整个框体铺满视口，正文与目录的排布不变，只是可读空间变大 */
   const [fullscreen, setFullscreen] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
 
   /** 关闭弹窗时一并退出全屏：下次打开回到常规大小，不会一进来就铺满 */
   const handleClose = useCallback(() => {
     setFullscreen(false);
     onClose();
   }, [onClose]);
+
+  /** 刷新按钮的 loading 与失败提示都在这个 hook 里 */
+  const { refresh, refreshing } = useRefreshPreview(onRefresh);
 
   const editing = useNoteEditing({
     hasEditor: Boolean(Editor),
@@ -122,7 +139,7 @@ const MarkdownPreviewModal = ({
     [renderedMarkdown],
   );
   /** 正文渲染出来后才能测量 / 跟踪标题：编辑态只有草稿预览时满足 */
-  const navigable = opened && (!editing.editing || showingDraftPreview);
+  const bodyReady = opened && (!editing.editing || showingDraftPreview);
 
   useArrowNavigation({
     enabled: opened && !editing.editing,
@@ -133,7 +150,7 @@ const MarkdownPreviewModal = ({
   /** 滚动正文时跟踪当前小节，供标题目录高亮 */
   const activeIndex = useActiveHeadingIndex({
     container: bodyElement,
-    enabled: navigable,
+    enabled: bodyReady,
     headings: outline,
   });
 
@@ -146,30 +163,25 @@ const MarkdownPreviewModal = ({
     setBodyElement(node);
   }, []);
 
-  /** 重新取一次最新正文：失败时给出可见提示（不静默吞掉），并收起 loading */
-  const handleRefresh = () => {
-    if (!onRefresh) {
+  /**
+   * 跳到文档内第 index 个标题。
+   *
+   * 编辑态正文没有渲染（跳的是编辑器里的块），交给编辑器自己定位；
+   * 预览态才在渲染出来的正文里找同名标题节点滚过去。
+   */
+  const scrollToHeading = (index: number) => {
+    if (!opened) {
       return;
     }
 
-    setRefreshing(true);
-    void Promise.resolve()
-      .then(() => onRefresh())
-      .catch((err: unknown) => {
-        notifications.show({
-          color: 'red',
-          message: getErrorMessage(err, '请稍后再试'),
-          title: '刷新预览失败',
-        });
-      })
-      .finally(() => setRefreshing(false));
-  };
+    if (editing.editing && !showingDraftPreview) {
+      editorHandleRef.current?.revealHeading(index);
+      return;
+    }
 
-  /** 跳到文档内第 index 个标题 */
-  const scrollToHeading = (index: number) => {
     const body = bodyRef.current;
 
-    if (!navigable || !body) {
+    if (!body) {
       return;
     }
 
@@ -229,14 +241,14 @@ const MarkdownPreviewModal = ({
           ) : null}
           <span className={styles.fileName}>{title}</span>
           <span className={styles.titleGap} />
-          {onRefresh ? (
+          {/* 编辑中不显示刷新：正文不是从盘里读的，刷了也只会把草稿盖掉 */}
+          {onRefresh && !editing.editing ? (
             <Tooltip label="刷新预览内容" withArrow>
               <ActionIcon
                 aria-label="刷新预览内容"
                 className={styles.refreshButton}
-                disabled={editing.editing}
                 loading={refreshing}
-                onClick={handleRefresh}
+                onClick={refresh}
                 size="sm"
                 variant="subtle"
               >
@@ -291,8 +303,8 @@ const MarkdownPreviewModal = ({
        */}
       <div className={styles.workspace}>
         <OutlineNav
-          activeIndex={activeIndex}
-          disabled={!navigable}
+          activeIndex={bodyReady ? activeIndex : -1}
+          disabled={!opened}
           fullscreen={fullscreen}
           headings={outline}
           onSelect={scrollToHeading}
@@ -309,7 +321,11 @@ const MarkdownPreviewModal = ({
                 showingDraftPreview && styles.editorSlotHidden,
               )}
             >
-              <Editor markdown={markdown} onChange={editing.setDraft} />
+              <Editor
+                markdown={markdown}
+                onChange={editing.setDraft}
+                onHandleReady={attachEditorHandle}
+              />
             </div>
           ) : null}
 

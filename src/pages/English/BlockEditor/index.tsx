@@ -93,6 +93,7 @@ const MarkdownBlockEditor = ({ blocks, onChange }: MarkdownBlockEditorProps) => 
           return (
             <textarea
               className={styles.textArea}
+              data-block-index={blockIndex}
               key={block.id}
               onChange={(event) =>
                 updateBlock(blockIndex, {
@@ -108,7 +109,11 @@ const MarkdownBlockEditor = ({ blocks, onChange }: MarkdownBlockEditorProps) => 
         }
 
         return (
-          <div className={styles.tableBlock} key={block.id}>
+          <div
+            className={styles.tableBlock}
+            data-block-index={blockIndex}
+            key={block.id}
+          >
             <table className={styles.table}>
               <tbody>
                 {block.rows.map((row, rowIndex) => (

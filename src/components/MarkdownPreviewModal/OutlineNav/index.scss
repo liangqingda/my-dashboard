@@ -3,10 +3,14 @@
 /*
  * 目录列：宽度固定、高度跟着工作区走（父级 flex 给的），
  * 只用右侧一条细线与正文分开——目录是阅读辅助，不做成带阴影的浮层。
+ * 字号基准按全屏写（Item 目录），非全屏用 --outline-shrink 整体减 2px，
+ * 这样「界面里的目录」和「全屏的目录」始终差一档，只改这一个变量就能调。
  */
 .nav {
+  --outline-shrink: 2px;
+
   display: flex;
-  flex: 0 0 208px;
+  flex: 0 0 184px;
   flex-direction: column;
   gap: 8px;
   min-height: 0;
@@ -15,8 +19,10 @@
   background: var(--app-surface);
 }
 
-/* 全屏预览：目录全展开后层级更深，列跟着放宽，标题不至于一进来就被省略 */
+/* 全屏预览：目录全展开后层级更深，列跟着放宽、字号回到基准，标题不至于一进来就被省略 */
 .navFullscreen {
+  --outline-shrink: 0px;
+
   flex: 0 0 300px;
 }
 
@@ -25,7 +31,7 @@
   flex: 0 0 auto;
   padding-left: 5px;
   color: var(--app-ink-faint);
-  font-size: 0.805rem;
+  font-size: calc(0.805rem - var(--outline-shrink, 0px));
 }
 
 /*
@@ -61,7 +67,7 @@
   background: var(--app-line-strong);
 }
 
-/* 编辑态禁用标题目录：预览态才可跳转 */
+/* 目录整列不可用（弹窗还没打开）时压暗：置灰只是提示，不是靠降低对比来「藏」这一列 */
 .disabled {
   opacity: 0.55;
 }

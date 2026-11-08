@@ -6,12 +6,33 @@ import type { ComponentType } from 'react';
 
 import type { MarkdownOutlineHeading, MarkdownOutlineNode } from '@/utils/markdown-outline';
 
+/**
+ * 定制编辑器可选实现的能力：按标题目录的下标把自己那一节滚进视野。
+ * 编辑态正文不渲染，目录没法靠 `scrollIntoView` 找标题，只能由编辑器自己定位；
+ * 不实现时编辑态点目录没有反应（预览态不受影响）。
+ */
+export type MarkdownEditorHandle = {
+  /**
+   * 定位到正文里第 index 个 h1–h4（与标题目录的下标一致）。
+   *
+   * @param index 标题下标，从 0 开始
+   * @returns 是否定位到；找不到时返回 false，弹窗不额外提示
+   */
+  revealHeading: (index: number) => boolean;
+};
+
 /** 定制编辑器收到的入参与出口：正文快照 + 草稿回传 */
 export type MarkdownEditorProps = {
   /** 进入编辑时的正文快照 */
   markdown: string;
   /** 编辑过程中的草稿；弹窗保存时取最后一次的值 */
   onChange: (markdown: string) => void;
+  /**
+   * 可选：编辑器把自己的定位能力交上来，供编辑态的标题目录调用。
+   * 每次块变动（内容改了、标题位置变了）都要重新交一份；卸载时交 null。
+   * 不实现则编辑态点目录没有反应，预览态不受影响。
+   */
+  onHandleReady?: (handle: MarkdownEditorHandle | null) => void;
 };
 
 /** 预览弹窗的对外 props */

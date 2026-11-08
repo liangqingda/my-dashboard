@@ -12,7 +12,7 @@
   gap: 2px;
   color: var(--app-ink-soft);
   font-family: var(--app-serif);
-  font-size: 0.85rem;
+  font-size: calc(0.85rem - var(--outline-shrink, 0px));
   line-height: 1.55;
 }
 
@@ -91,7 +91,7 @@
 /* 一级：最深色 + 字号最大，作为整篇的骨架（字重只到 500，再粗就闷） */
 .level1 {
   color: var(--app-ink);
-  font-size: 0.885rem;
+  font-size: calc(0.885rem - var(--outline-shrink, 0px));
   font-weight: 500;
 }
 
@@ -104,12 +104,12 @@
 /* 三、四级：字号再降一档、对比再淡一点，缩进由 List 的引导线承担 */
 .level3 {
   color: var(--app-ink-faint);
-  font-size: 0.805rem;
+  font-size: calc(0.805rem - var(--outline-shrink, 0px));
 }
 
 .level4 {
   color: var(--app-ink-faint);
-  font-size: 0.805rem;
+  font-size: calc(0.805rem - var(--outline-shrink, 0px));
   font-weight: 400;
 }
 
