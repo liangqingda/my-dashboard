@@ -1,13 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { ActionIcon, Tooltip } from '@mantine/core';
+import { IconLayoutGrid, IconLayoutList } from '@tabler/icons-react';
 
 import MarkdownPreviewModal from '@/components/MarkdownPreviewModal';
 import MenuContentLayout from '@/layouts/MenuContentLayout';
 import { onPageRefresh } from '@/utils/page-refresh';
 
-import type { EnglishNote } from './types';
+import type { EnglishNote, NotesViewMode } from './types';
 import { useEnglishNotes } from './hooks/useEnglishNotes';
 import NoteEditor from './NoteEditor';
 import NotesBoard from './NotesBoard';
+import NotesTable from './NotesTable';
 import { getNoteCategory, groupNotesByCategory, isBoardNote } from './utils/notes';
 import { fetchEnglishNote, saveEnglishNote } from './utils/notes-api';
 
@@ -22,6 +25,8 @@ const English = () => {
     useEnglishNotes();
   /** 当前预览的笔记（存内容而不是文件名，打开时就能拿到最新正文） */
   const [active, setActive] = useState<EnglishNote | null>(null);
+  /** 展示形式：分列看板（默认）或表格平铺，用 header 右侧图标按钮切换 */
+  const [view, setView] = useState<NotesViewMode>('board');
   /** 打开请求的序号：连点两篇时只认最后一次 */
   const openSeq = useRef(0);
 
@@ -124,9 +129,40 @@ const English = () => {
     void openNote(columnNotes[next].name);
   };
 
+  /** 切换展示形式：分列看板 ⇄ 表格平铺。 */
+  const toggleView = () => {
+    setView((current) => (current === 'board' ? 'table' : 'board'));
+  };
+
+  /** 当前是否为分列看板；图标与提示文案都按「切过去是什么」来写 */
+  const isBoardView = view === 'board';
+
   return (
     <>
-      <MenuContentLayout fill title="英语">
+      <MenuContentLayout
+        actions={
+          <Tooltip
+            label={isBoardView ? '切换为表格形式' : '切换为分列看板'}
+            withArrow
+          >
+            <ActionIcon
+              aria-label={isBoardView ? '切换为表格形式' : '切换为分列看板'}
+              className={styles.viewToggle}
+              onClick={toggleView}
+              size="sm"
+              variant="subtle"
+            >
+              {isBoardView ? (
+                <IconLayoutGrid size={16} stroke={1.9} />
+              ) : (
+                <IconLayoutList size={16} stroke={1.9} />
+              )}
+            </ActionIcon>
+          </Tooltip>
+        }
+        fill
+        title="英语"
+      >
         {error ? (
           <div className={styles.errorBar}>
             <span className={styles.errorText}>{error}</span>
@@ -136,12 +172,21 @@ const English = () => {
           </div>
         ) : null}
 
-        <NotesBoard
-          columns={columns}
-          error={error}
-          loading={loading}
-          onOpen={openNote}
-        />
+        {isBoardView ? (
+          <NotesBoard
+            columns={columns}
+            error={error}
+            loading={loading}
+            onOpen={openNote}
+          />
+        ) : (
+          <NotesTable
+            columns={columns}
+            error={error}
+            loading={loading}
+            onOpen={openNote}
+          />
+        )}
       </MenuContentLayout>
 
       <MarkdownPreviewModal

@@ -1,0 +1,72 @@
+/* 表格平铺：六类各占一列，整张表一起滚动（与看板的按列滚动区分开） */
+
+.wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+/* 表头吸顶：往下滚时六列标题仍可见 */
+.head {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  padding: 0 12px 8px;
+  border-bottom: 1px solid var(--app-line-strong);
+  background: var(--app-bg);
+  text-align: left;
+  vertical-align: bottom;
+}
+
+.head:first-child {
+  padding-left: 0;
+}
+
+.label {
+  color: var(--app-ink-soft);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.count {
+  margin-left: 6px;
+  color: var(--app-ink-faint);
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+}
+
+.cell {
+  padding: 0 12px 16px;
+  border-left: 1px solid var(--app-line);
+  vertical-align: top;
+}
+
+.cell:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* 窄屏：表格不再硬挤成六列，改为横向滚动 */
+@media (max-width: 900px) {
+  .wrap {
+    overflow-x: auto;
+  }
+
+  .table {
+    min-width: 900px;
+  }
+}

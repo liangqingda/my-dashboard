@@ -29,3 +29,12 @@
   border-color: var(--app-accent);
   color: var(--app-accent);
 }
+
+/* 展示形式切换按钮：规格与 MenuContentLayout 内置的图标按钮一致（默认弱化、悬停强调） */
+.viewToggle {
+  color: var(--app-ink-faint);
+}
+
+.viewToggle:hover {
+  color: var(--app-accent);
+}

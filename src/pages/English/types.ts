@@ -19,6 +19,9 @@ export type EnglishNotesSnapshot = {
   notes: EnglishNote[];
 };
 
+/** 笔记列表的展示形式：分列看板 / 表格平铺 */
+export type NotesViewMode = 'board' | 'table';
+
 /** 笔记文件名里的分类前缀与中文标题 */
 export type NoteCategory = {
   /** 文件名前缀，如 errors */
@@ -27,9 +30,9 @@ export type NoteCategory = {
   label: string;
 };
 
-/** 看板的一列：分类 + 该列按文件名排序的笔记 */
+/** 看板的一列：分类 + 该列按「笔记更新时间」倒序排列的笔记 */
 export type NoteColumn = NoteCategory & {
-  /** 本列笔记，按文件名排序；空列也会返回，方便区分「整目录为空」与「这列为空」 */
+  /** 本列笔记，按笔记更新时间倒序（新的在前）；空列也会返回，方便区分「整目录为空」与「这列为空」 */
   notes: EnglishNote[];
 };
 

@@ -1,4 +1,4 @@
-/* 看板单行：文件名 + 右侧箭头，悬停时箭头浮现 */
+/* 笔记单行：文件名（表格视图再加更新时间）+ 右侧箭头，悬停时箭头浮现 */
 
 .row + .row {
   border-top: 1px solid var(--app-line);
@@ -22,6 +22,14 @@
   background: var(--app-surface-hover);
 }
 
+/* 文件名与更新时间的竖排容器：宽度吃满，让文件名能自己省略 */
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
 .name {
   min-width: 0;
   overflow: hidden;
@@ -30,6 +38,13 @@
   color: var(--app-ink);
   font-family: var(--app-serif);
   font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.updated {
+  color: var(--app-ink-faint);
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
   line-height: 1.4;
 }
 
