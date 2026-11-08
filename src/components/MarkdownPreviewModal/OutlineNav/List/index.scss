@@ -8,13 +8,13 @@
 
 /*
  * 子层向右挪一段，并在左侧画一条竖线：
- * 「这根线里的是上一级标题的子标题」，层级一眼可辨，不依赖字号 / 颜色去猜。
- * 缩进量与线的位置对齐，第三、第四级会依次再往里一条。
+ * 线只是「这几条是上一级标题的子标题」的位置提示，不能抢正文与标题本身的注意力，
+ * 所以用最浅的 --app-line；再淡就看不见了，再深就成了装饰框。
  */
 .nested {
   margin-left: 3px;
   padding-left: 7px;
-  border-left: 1px solid var(--app-line-strong);
+  border-left: 1px solid var(--app-line);
 }
 
 .nodes li + li {

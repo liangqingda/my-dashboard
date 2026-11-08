@@ -24,8 +24,7 @@
 
 /*
  * 目录的滚动容器：滚动条做细，且尽量贴住右边缘。
- * 左侧那根 1px 线是一级标题的引导线：子层的线都挂在这一根里面，
- * 内边距与线的位置对齐，读者能顺着线数层级。
+ * 本身不画线——引导线只出现在子层（List 的 .nested），顶层标题不额外加装饰。
  */
 .list {
   display: flex;
@@ -34,8 +33,7 @@
   gap: 2px;
   min-height: 0;
   margin: 0;
-  padding: 0 0 0 7px;
-  border-left: 1px solid var(--app-line-strong);
+  padding: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-color: var(--app-line-strong) transparent;
