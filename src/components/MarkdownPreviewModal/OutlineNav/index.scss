@@ -22,7 +22,11 @@
   box-shadow: 0 8px 24px rgb(23 37 34 / 10%);
 }
 
-/* 目录的滚动容器：滚动条做细，且尽量贴住右边缘 */
+/*
+ * 目录的滚动容器：滚动条做细，且尽量贴住右边缘。
+ * 左侧那根 1px 线是一级标题的引导线：子层的线都挂在这一根里面，
+ * 内边距与线的位置对齐，读者能顺着线数层级。
+ */
 .list {
   display: flex;
   flex: 1 1 auto;
@@ -30,7 +34,8 @@
   gap: 2px;
   min-height: 0;
   margin: 0;
-  padding: 0;
+  padding: 0 0 0 7px;
+  border-left: 1px solid var(--app-line-strong);
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-color: var(--app-line-strong) transparent;

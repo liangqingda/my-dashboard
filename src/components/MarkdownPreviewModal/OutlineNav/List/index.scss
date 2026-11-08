@@ -1,9 +1,20 @@
-/* 标题导航的嵌套层：只负责清掉列表默认样式与间距，滚动与宽度由顶层 .list 管 */
+/* 标题导航的嵌套层：清掉列表默认样式，并给每个子层补缩进 + 左侧引导线 */
 
 .nodes {
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+/*
+ * 子层向右挪一段，并在左侧画一条竖线：
+ * 「这根线里的是上一级标题的子标题」，层级一眼可辨，不依赖字号 / 颜色去猜。
+ * 缩进量与线的位置对齐，第三、第四级会依次再往里一条。
+ */
+.nested {
+  margin-left: 3px;
+  padding-left: 7px;
+  border-left: 1px solid var(--app-line-strong);
 }
 
 .nodes li + li {

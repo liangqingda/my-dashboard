@@ -1,7 +1,7 @@
 /*
  * 标题导航的单条：标题文本 + 右对齐的折叠图标（有子标题时）。
- * 层级（字号 / 缩进 / 颜色）挂在整行上，标题按钮只继承，不再自己定样式，
- * 这样有没有折叠图标都不会让同一层的标题错位。
+ * 缩进不在这里做——层级靠 List 的每层引导线表示，这里只管字号 / 字重 / 颜色。
+ * 样式挂在整行上，标题按钮只继承，这样有没有折叠图标都不会让同一层的标题错位。
  */
 
 .row {
@@ -87,19 +87,27 @@
   cursor: default;
 }
 
+/* 一级：加粗、最深色，作为整篇的骨架 */
 .level1 {
   color: var(--app-ink);
   font-size: 0.76rem;
+  font-weight: 600;
 }
 
+/* 二级：常规字重，比一级轻一档 */
+.level2 {
+  color: var(--app-ink-soft);
+  font-weight: 500;
+}
+
+/* 三、四级：字号再降一档、对比再淡一点，缩进由 List 的引导线承担 */
 .level3 {
-  padding-left: 8px;
   color: var(--app-ink-faint);
   font-size: 0.68rem;
 }
 
 .level4 {
-  padding-left: 17px;
   color: var(--app-ink-faint);
   font-size: 0.68rem;
+  font-weight: 400;
 }

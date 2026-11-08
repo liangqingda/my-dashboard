@@ -100,6 +100,8 @@ export type OutlineNavListProps = {
   onExpand: (key: string) => void;
   /** 点右侧图标时展开 / 收起某个节点的子标题 */
   onToggle: (key: string) => void;
+  /** 缩进深度，顶层为 1；每深一层多一段缩进和一条左侧引导线 */
+  depth?: number;
   /** 顶层那一层额外带滚动样式；嵌套层不传 */
   className?: string;
 };
@@ -112,7 +114,7 @@ export type OutlineNavItemProps = {
   hasChildren: boolean;
   /** 子标题当前是否展开 */
   expanded: boolean;
-  /** 标题层级 1–4，决定缩进与字号 */
+  /** 标题层级 1–4，决定字号 / 字重 / 颜色（缩进由 List 的引导线表示） */
   level: MarkdownOutlineHeading['level'];
   /** 点击这一条时跳转 */
   onSelect: () => void;
