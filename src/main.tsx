@@ -7,7 +7,7 @@ import { createTheme, MantineProvider } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 
 import App from '@/App';
-import ServicesProvider from '@/features/services/services-provider';
+import ServicesProvider from '@/services/provider';
 import '@/styles/global.scss';
 
 const theme = createTheme({

@@ -1,0 +1,103 @@
+/* 标题导航：定位在弹窗框体之外，不参与正文布局 */
+
+/* 弹窗左上角、框体之外的标题导航 */
+.nav {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: -220px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 208px;
+  max-height: calc(82dvh - 80px);
+  padding: 8px;
+  border: 1px solid var(--app-line);
+  border-radius: 2px;
+  background: var(--preview-paper);
+  box-shadow: 0 8px 24px rgb(23 37 34 / 10%);
+}
+
+.list {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+}
+
+.item {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  padding: 3px 5px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 2px;
+  background: none;
+  color: var(--app-ink-soft);
+  font-family: var(--app-serif);
+  font-size: 0.72rem;
+  line-height: 1.5;
+  text-align: left;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+/*
+ * hover 当场摊开被截断的标题：改成换行显示，不再依赖浏览器原生 title
+ * （原生提示要悬停一秒才出来，太慢）。标题本来就没截断时，换行不改变任何
+ * 内容，只留下 hover 底色，因此不需要额外判断「是否被截断」。
+ */
+.item:hover,
+
+.item:focus-visible {
+  z-index: 3;
+  overflow: visible;
+  background: var(--app-surface);
+  color: var(--app-ink);
+  white-space: normal;
+  overflow-wrap: anywhere;
+  box-shadow: 0 2px 10px rgb(23 37 34 / 12%);
+}
+
+.item[data-level='1'] {
+  color: var(--app-ink);
+  font-size: 0.76rem;
+}
+
+.item[data-level='3'] {
+  padding-left: 13px;
+  color: var(--app-ink-faint);
+  font-size: 0.68rem;
+}
+
+.item[data-level='4'] {
+  padding-left: 22px;
+  color: var(--app-ink-faint);
+  font-size: 0.68rem;
+}
+
+/* 编辑态禁用标题目录：预览态才可跳转 */
+.disabled {
+  opacity: 0.55;
+}
+
+.disabled .item {
+  cursor: default;
+}
+
+/* 屏幕不够宽时，标题导航改到弹窗上方，仍在弹窗之外 */
+@media (max-width: 1340px) {
+  .nav {
+    left: 6px;
+    width: min(220px, 82vw);
+    max-height: 46dvh;
+  }
+}

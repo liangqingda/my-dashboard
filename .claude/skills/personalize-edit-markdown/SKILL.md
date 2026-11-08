@@ -34,13 +34,13 @@ export type MarkdownEditorProps = {
 
 ## 步骤
 
-1. **读参考实现**：`src/features/english-notes/note-editor`（适配层）、`block-editor`（受控控件）、`markdown-blocks.ts`（解析 + 序列化）。这三者合起来就是一套完整样例：块级切分、表格矩阵编辑、按模板重拼。
+1. **读参考实现**：`src/pages/English/note-editor`（适配层）、`block-editor`（受控控件）、`markdown-blocks.ts`（解析 + 序列化）。这三者合起来就是一套完整样例：块级切分、表格矩阵编辑、按模板重拼。
 2. **定结构**：先看目标 md 里真实出现哪些结构（标题、段落、列表、管道表、HTML 表格、`<details>`、代码围栏、frontmatter、图片、内联 HTML）。只给「需要结构化编辑」的结构做控件，其余一律按源码文本块编辑——**宁可让用户改源码，也不要猜错结构**。
 3. **建目录**：编辑逻辑放进该文档所属的 feature，例如
-   - `src/features/<feature>/<xxx>-editor/index.tsx` + `index.scss`（适配层，`MarkdownEditorProps` 入参）
-   - 需要的纯逻辑放同目录或 `src/features/<feature>/<xxx>-blocks.ts`
-   - 复用已有的块级控件时从 `@/features/english-notes/block-editor` 引，不要复制粘贴一份
-   - 目录名 kebab-case、组件目录必须有 `index.scss`、feature 内不得出现 `components/` 目录（`pnpm check:features` 会拦）
+   - `src/pages/<Page>/<xxx>-editor/index.tsx` + `index.scss`（适配层，`MarkdownEditorProps` 入参）
+   - 需要的纯逻辑放同目录或 `src/pages/<Page>/<xxx>-blocks.ts`
+   - 复用已有的块级控件时从 `@/pages/English/block-editor` 引，不要复制粘贴一份
+   - 组件目录必须有 `index.scss`、页面目录内不得出现 `components/` 目录、页面内相对导入不得跨出页面目录（`pnpm check:structure` 会拦）
 4. **接进页面**：给 `<MarkdownPreviewModal>` 传 `Editor={<XxxEditor />}`。属性按字母序排（`Editor` 排最前），`onSave` 与它配套出现；只读场景不要传 `onSave`。
 5. **守住数据安全**（最重要）：
    - 解析器遇到**自己不认识的写法**（单元格里嵌了标签、表格带 `<thead>/<tbody>`、`<tr>` 带属性、嵌套表格、非常见围栏）必须**降级成源码文本块**，绝不能重新拼装后丢掉或转义掉原有标签。
@@ -58,7 +58,7 @@ export type MarkdownEditorProps = {
 
 ## 已知坑（踩过）
 
-- `src/components/**` 的目录与文件名必须 **PascalCase**；`src/features/**` 必须 kebab-case。序列化逻辑如果放在 `src/components/` 下会因文件名规则报错，放 `src/utils`（kebab-case）或 feature 里更省事。
+- `src/components/**` 与 `src/pages/**` 的目录名必须是 **PascalCase**；页面内的组件目录沿用所在页面的组织。序列化逻辑放 `src/utils`（kebab-case）或页面内同名 utils 文件更省事。
 - `no-restricted-syntax` 禁止 `push/sort/splice/...`，用展开、`toSorted()`、`reduce`、`flatMap` 代替。
 - `curly` 要求 `if (...) { return; }` 带花括号；`react/jsx-sort-props` 要求属性字母序（大写开头的 `Editor` 在前）。
 - `react-hooks/set-state-in-effect` 禁止在 effect 里同步 setState：初始块列表用 `useState(() => parse(markdown))`，不要在 `useEffect` 里灌。

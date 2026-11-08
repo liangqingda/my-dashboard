@@ -24,8 +24,6 @@ const fixture = () =>
     build: 'ok',
     lastStartedAt: null,
     lastExit: null,
-    log: 'ready',
-    logLines: 1,
     startCmd: [],
     stopCmd: [],
   }));
@@ -198,7 +196,7 @@ test('rapid page refreshes merge in-flight requests and keep the nav icon in pla
     await expect.poll(() => state.serviceRequests).toBeGreaterThan(count);
   }
 
-  // Visibility changes use the same refresh path as background polling.
+  // 页面重新可见时走同一条刷新路径，补一次最新状态
   const beforeBackground = state.serviceRequests;
   await page.evaluate(() =>
     document.dispatchEvent(new Event('visibilitychange')),
@@ -275,13 +273,7 @@ test('deployment completion releases button and reports result', async ({
     '部署完成',
   );
   await page.keyboard.press('Escape');
-  await page.getByRole('link', { name: '概览', exact: true }).click();
   await expect(page.getByRole('region', { name: '最近操作' })).toHaveCount(0);
-  await page.getByRole('link', { name: '服务管理 →', exact: true }).click();
-  await page.getByRole('button', { name: '最近操作', exact: true }).click();
-  await expect(page.getByRole('dialog', { name: '最近操作' })).toContainText(
-    '部署完成',
-  );
 });
 
 test('offline status disables actions and reconnect reloads commands', async ({
@@ -289,7 +281,7 @@ test('offline status disables actions and reconnect reloads commands', async ({
 }) => {
   const state = await mock(page);
   state.online = false;
-  // 在线时服务页只靠 5 秒轮询与侧边栏刷新图标取数，用后者手动切到离线态
+  // 停掉后台轮询后，状态只靠侧边栏刷新图标取数，用它手动切到离线态
   await page
     .getByRole('button', { name: '刷新当前页面', exact: true })
     .click();
@@ -348,20 +340,18 @@ for (const width of [320, 390, 768, 1024, 1440]) {
     }
     if (width < 768) {
       await page.getByRole('button', { name: '展开导航' }).click();
-      await page.getByRole('link', { name: '概览', exact: true }).click();
+      await page.getByRole('link', { name: '英语', exact: true }).click();
       await expect(
         page.getByRole('button', { name: '展开导航' }),
       ).toBeVisible();
-      await expect(
-        page.getByRole('region', { name: '本机服务概览' }),
-      ).toBeVisible();
+      await expect(page.getByRole('main')).toBeVisible();
       expect(
         await page.evaluate(
           () => document.documentElement.scrollWidth <= innerWidth,
         ),
       ).toBe(true);
       await page.screenshot({
-        path: `test-results/home-${width}.png`,
+        path: `test-results/english-${width}.png`,
         fullPage: true,
       });
       await page.getByRole('button', { name: '展开导航' }).click();
@@ -373,7 +363,7 @@ for (const width of [320, 390, 768, 1024, 1440]) {
   });
 }
 
-test('theme persists and overview shows all services in one compact card', async ({
+test('theme persists and all services stay listed in dark mode', async ({
   page,
 }) => {
   await mock(page);
@@ -399,26 +389,15 @@ test('theme persists and overview shows all services in one compact card', async
     path: 'test-results/services-dark.png',
     fullPage: true,
   });
-  await page.getByRole('link', { name: '概览', exact: true }).click();
-  const card = page.getByRole('region', { name: '本机服务概览' });
-  await expect(card).toBeVisible();
-  await expect(card.getByRole('listitem')).toHaveCount(4);
   for (const id of ['my-dashboard', 'study-lab', 'postgres', 'redis']) {
-    await expect(card.getByText(id, { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole('article', { name: id, exact: true }),
+    ).toBeVisible();
   }
-  await expect(card).toContainText('3000');
-  await expect(card).toContainText('5432');
-  await expect(card).toContainText('6379');
-  const bounds = await card.boundingBox();
-  expect(bounds.width).toBeLessThanOrEqual(400);
-  expect(bounds.height).toBeLessThan(400);
-  await expect(page.getByRole('region', { name: '常用入口' })).toHaveCount(0);
-  await expect(page.getByRole('region', { name: '需要关注' })).toHaveCount(0);
-  await expect(page.getByRole('region', { name: '最近操作' })).toHaveCount(0);
-  await page.screenshot({ path: 'test-results/home-dark.png', fullPage: true });
+  await expect(page.getByText('3000', { exact: false }).first()).toBeVisible();
   await page.getByRole('button', { name: '切换到亮色主题' }).click();
   await page.screenshot({
-    path: 'test-results/home-desktop.png',
+    path: 'test-results/services-light.png',
     fullPage: true,
   });
 });

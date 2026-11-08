@@ -1,7 +1,6 @@
 import { Link, useLocation } from 'react-router';
 import { ActionIcon, AppShell, NavLink, ScrollArea } from '@mantine/core';
 import {
-  IconDashboard,
   IconLanguage,
   IconMaximize,
   IconRefresh,
@@ -16,11 +15,10 @@ type NavItem = {
   key: string;
   label: string;
   to: string;
-  icon: typeof IconDashboard;
+  icon: typeof IconServer;
 };
 
 const navItems: NavItem[] = [
-  { key: 'overview', label: '概览', to: '/', icon: IconDashboard },
   { key: 'services', label: '服务', to: '/services', icon: IconServer },
   { key: 'english', label: '英语', to: '/english', icon: IconLanguage },
 ];

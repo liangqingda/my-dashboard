@@ -2,6 +2,8 @@ import { Title } from '@mantine/core';
 
 import type { ReactNode } from 'react';
 
+import { cx } from '@/utils/cx';
+
 import styles from './index.scss';
 
 type MenuContentLayoutProps = {
@@ -22,7 +24,7 @@ const MenuContentLayout = ({
   fill = false,
   title,
 }: MenuContentLayoutProps) => (
-  <div className={fill ? `${styles.page} ${styles.fill}` : styles.page}>
+  <div className={cx(styles.page, fill && styles.fill)}>
     <div className={styles.titleBar}>
       <Title className={styles.title} order={2}>
         {title}

@@ -3,7 +3,7 @@
  * My Dashboard — 新建组件脚手架
  *
  * 用法：pnpm component:new <相对 src/ 的路径>
- * 例如：pnpm component:new features/services/log-detail
+ * 例如：pnpm component:new pages/Services/log-detail
  *       pnpm component:new pages/home/quick-actions
  *
  * 会生成 <路径>/index.tsx + <路径>/index.scss，
@@ -27,7 +27,7 @@ const toPascal = (segment) =>
 const rel = process.argv[2];
 
 if (!rel) {
-  console.error('用法: pnpm component:new <相对 src/ 的路径，如 features/services/log-detail>');
+  console.error('用法: pnpm component:new <相对 src/ 的路径，如 pages/Services/log-detail>');
   process.exit(1);
 }
 

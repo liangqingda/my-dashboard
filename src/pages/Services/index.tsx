@@ -4,15 +4,15 @@
 
 import { useEffect } from 'react';
 
-import { useServices } from '@/features/services/hooks/useServices';
-import ServicesManager from '@/features/services/services-manager';
+import { useServices } from '@/services/hooks/useServices';
+import ServicesManager from '@/pages/Services/ServicesManager';
 import MenuContentLayout from '@/layouts/MenuContentLayout';
 import { onPageRefresh } from '@/utils/page-refresh';
 
 const Services = () => {
   const { refresh } = useServices();
 
-  // 侧边栏「刷新」按钮：与 5 秒轮询走同一个 refresh，进行中的请求会被合并
+  // 侧边栏「刷新」按钮：与页面自身的 refresh 共用一条路径，进行中的请求会被合并
   useEffect(() => onPageRefresh(() => void refresh()), [refresh]);
 
   return (

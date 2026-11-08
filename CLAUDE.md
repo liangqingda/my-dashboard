@@ -43,9 +43,9 @@
 ## 编辑能力是可定制的
 
 公共组件只提供 `MarkdownEditorProps`（`markdown` 快照 + `onChange` 草稿回传）这一个插槽，
-**编辑逻辑按文档类别放在各自的 feature 里**，通用的解析 / 控件才上提：
+**编辑逻辑按文档类别放在对应页面目录里**，通用的解析 / 控件才上提：
 
-- 英语笔记：`src/features/english-notes/note-editor`（适配层）+ `block-editor`（受控控件）+
+- 英语笔记：`src/pages/English/note-editor`（适配层）+ `block-editor`（受控控件）+
   `markdown-blocks.ts`（解析与回写）。做法是把正文切成块，表格解析成行 / 单元格矩阵用受控网格
   编辑（可删行、加行、改单元格），其余块编辑自己的源码片段，保存时按块重拼 Markdown。
 - 其它模块要编辑时，先跑 skill `personalize-edit-markdown`（仓库内 `.claude/skills/`）：
@@ -95,7 +95,7 @@ pnpm check:md   # scripts/md-roundtrip.mts，夹具在 scripts/fixtures/md/
 新增菜单页时复用该组件，不要在页面 `index.scss` 里重写 `.page` 的 padding / height。
 404 等非菜单页不受此约束。
 
-这条规则由 `pnpm lint` 强制执行（`scripts/check-features.mjs` 的 `checkMenuPages`）：
+这条规则由 `pnpm lint` 强制执行（`scripts/check-structure.mjs` 的 `checkMenuPages`）：
 页面没包 `<MenuContentLayout>`、或 `index.scss` 里还有 `.page` 选择器，检查都不通过。
 「哪些页面算菜单页」不靠手工白名单——脚本从 `Sidebar` 的 `navItems` 取路径，经 `App.tsx` 的
 `<Route>` 解析到 `src/pages` 目录，解析不到的页面（如 404）自动跳过；新增菜单页只要加导航项与
@@ -104,7 +104,9 @@ pnpm check:md   # scripts/md-roundtrip.mts，夹具在 scripts/fixtures/md/
 ## 其它约定
 
 - 公共组件放 `src/components/<PascalCase>/`（lint 强制），同样 `index.tsx` + `index.scss`；
-  功能模块放 `src/features/<kebab-case>/`，页面只做数据拼装与状态编排。
+  页面代码就近放 `src/pages/<Page>/`，按 `components` / `hooks` / `utils` / `types` /
+  `constants` 五个维度适度拆分，非公共的不上提；页面只做数据拼装与状态编排。
+- `src/features` 已废弃，出现即被结构检查判定失败。
 - 页面默认只展示文件名、标题这类索引信息，正文细节交给预览层，不要把所有内容平铺出来。
 - 本机仓库数据（如 `../learn-english`）一律通过 `scripts/vite/*` 中间件读盘（英语笔记插件已拆成
   `english-notes.ts` 路由壳 + `english-notes-store.ts` 读写与校验 + `english-notes-commit.ts` 自动提交），前端

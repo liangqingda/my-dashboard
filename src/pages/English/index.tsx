@@ -4,12 +4,12 @@ import MarkdownPreviewModal from '@/components/MarkdownPreviewModal';
 import {
   fetchEnglishNote,
   saveEnglishNote,
-} from '@/features/english-notes/api';
-import { useEnglishNotes } from '@/features/english-notes/hooks/useEnglishNotes';
-import NoteEditor from '@/features/english-notes/note-editor';
-import NotesBoard from '@/features/english-notes/notes-board';
-import type { EnglishNote } from '@/features/english-notes/types';
-import { getNoteCategory, isBoardNote } from '@/features/english-notes/utils';
+} from '@/pages/English/utils/notes-api';
+import { useEnglishNotes } from '@/pages/English/hooks/useEnglishNotes';
+import NoteEditor from '@/pages/English/NoteEditor';
+import NotesBoard from '@/pages/English/NotesBoard';
+import type { EnglishNote } from '@/pages/English/types';
+import { getColumnNotes, getNoteCategory, isBoardNote } from '@/pages/English/utils';
 import MenuContentLayout from '@/layouts/MenuContentLayout';
 import { onPageRefresh } from '@/utils/page-refresh';
 
@@ -31,9 +31,7 @@ const English = () => {
    * 上一篇 / 下一篇也只在该列内循环，不跨列跳到别的分类。
    */
   const columnNotes = active
-    ? boardNotes.filter(
-        (note) => getNoteCategory(note.name) === getNoteCategory(active.name),
-      )
+    ? getColumnNotes(boardNotes, getNoteCategory(active.name))
     : [];
   const activeIndex =
     active === null
@@ -126,7 +124,12 @@ const English = () => {
           </div>
         ) : null}
 
-        <NotesBoard loading={loading} notes={boardNotes} onOpen={openNote} />
+        <NotesBoard
+          error={error}
+          loading={loading}
+          notes={boardNotes}
+          onOpen={openNote}
+        />
       </MenuContentLayout>
 
       <MarkdownPreviewModal
@@ -141,7 +144,7 @@ const English = () => {
         onSave={import.meta.env.DEV ? saveActive : undefined}
         opened={active !== null}
         position={
-          active
+          active && columnNotes.length > 0 && activeIndex >= 0
             ? { index: activeIndex + 1, total: columnNotes.length }
             : undefined
         }

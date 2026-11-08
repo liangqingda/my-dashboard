@@ -7,6 +7,7 @@ import type { ReactNode } from 'react';
 
 import Header from '@/layouts/Header';
 import Sidebar from '@/layouts/Sidebar';
+import { cx } from '@/utils/cx';
 
 import styles from './index.scss';
 
@@ -39,9 +40,7 @@ const BasicLayout = ({ children }: BasicLayoutProps) => {
     return () => window.removeEventListener('keydown', close);
   }, []);
 
-  const contentClassName = fullscreen
-    ? `${styles.content} ${styles.contentFullscreen}`
-    : styles.content;
+  const contentClassName = cx(styles.content, fullscreen && styles.contentFullscreen);
 
   const enterFullscreen = () => {
     setOpened(false);

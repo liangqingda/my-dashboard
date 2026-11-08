@@ -17,8 +17,9 @@ import {
   IconSun,
 } from '@tabler/icons-react';
 
-import { restartAgent } from '@/features/services/api';
-import { useServices } from '@/features/services/hooks/useServices';
+import { restartAgent } from '@/services/api';
+import { useServices } from '@/services/hooks/useServices';
+import { getErrorMessage } from '@/utils/error';
 
 import styles from './index.scss';
 
@@ -46,7 +47,7 @@ const Header = ({
     } catch (err) {
       notifications.show({
         title: 'agent 重启失败',
-        message: err instanceof Error ? err.message : '请检查 agent 日志',
+        message: getErrorMessage(err, '请检查 agent 日志'),
         color: 'red',
       });
     } finally {

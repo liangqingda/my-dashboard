@@ -149,11 +149,12 @@ async function init() {
   }
 }
 
-/** 组装单条服务的状态快照 */
+/** 组装单条服务的状态快照：只返回展示需要的字段，config 内部字段不外泄 */
 async function getStatus(entry) {
   const { config, lastStartedAt, lastExit } = entry;
   const pids = await detectPids(entry);
   const running = pids.length > 0;
+  // 尾部日志只用于判断编译 / 启动状态，不随接口返回
   const tail = await readTail(entry.logPath, DEFAULT_LINES);
 
   let build = entry.starting
@@ -198,12 +199,9 @@ async function getStatus(entry) {
         : null,
     lastDeployAt: entry.lastDeployAt,
     canDeploy: Array.isArray(config.deployCmd) && config.deployCmd.length > 0,
-    log: tail,
-    logLines: tail ? tail.split('\n').length : 0,
     startCmd: config.startCmd,
     stopCmd: config.stopCmd ?? [],
-    successMarkers: config.successMarkers ?? [],
-    failMarkers: config.failMarkers ?? [],
+    // 日志正文只走 GET /api/services/:id/log，列表接口只给展示字段
   };
 }
 

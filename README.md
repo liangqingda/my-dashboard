@@ -23,8 +23,7 @@ pnpm agent:bg         # 后台运行 agent（日志 /tmp/my-dashboard-agent.log�
 pnpm agent:stop       # 停止 agent
 pnpm typecheck        # 类型检查
 pnpm lint             # ESLint + 目录结构检查
-pnpm check:features   # 仅目录结构检查
-pnpm feature:new <名> # 生成一个 feature 模块（kebab-case）
+pnpm check:structure  # 仅目录结构检查
 pnpm component:new <路径> # 生成合规组件（index.tsx + index.scss）
 pnpm test             # 单元测试 + 隔离 agent 的 HTTP/进程集成测试
 pnpm test:e2e         # 浏览器交互和响应式布局回归测试
@@ -32,12 +31,13 @@ pnpm build            # 类型检查 + 构建
 pnpm preview          # 预览构建产物
 ```
 
-`lint` 会在 ESLint 之后跑 `check:features`（目录结构检查）；提交代码前 pre-commit
+`lint` 会在 ESLint 之后跑 `check:structure`（目录结构检查）；提交代码前 pre-commit
 钩子会自动执行 `pnpm lint && pnpm typecheck`，不合规直接拦截提交。
 
 ## 本机服务 agent
 
-「服务」页展示并启停本机各开发服务（如 my-dashboard、study-lab），首页以独立卡片展示这些服务的状态。
+「服务」页展示并启停本机各开发服务（如 my-dashboard、study-lab）；根路由 `/` 直接跳到服务页，
+不再有概览页。
 浏览器无法直接操作本地进程，因此由本地 agent（`agent/server.mjs`，零依赖 Node HTTP
 服务，仅监听 `127.0.0.1:8787`）负责探测、启停与编译状态判定；前端通过 Vite 的
 `/api` 代理访问它。
@@ -67,10 +67,11 @@ PostgreSQL、Redis 等服务通过 `executable` 配置指定绝对可执行文�
 5 MiB 时复制归档并截断原文件，保留 3 份归档。该方式保留运行进程的写入描述符；
 复制与截断瞬间可能丢失少量并发写入。启动期间暂缓轮转且禁止清空日志。
 
-页面可见时每 5 秒更新状态，启动/部署期间每秒更新，断线后每 10 秒重试；
-后台页面暂停状态轮询，切回时立即刷新。展开的日志每 2 秒更新，收起后停止读取。
-侧边栏激活项右侧的刷新图标会通知当前页面重新取数（概览、服务、英语都已订阅），
-服务页在线时即靠它和轮询刷新，不再单设按钮；只有离线后才显示「重新连接」入口。
+服务状态不再后台定时轮询：进入页面、页面重新可见 / 窗口聚焦、以及点侧边栏刷新图标时
+各取一次状态；只有「有服务在启动 / 部署 / 操作中」时才短暂按 1 秒刷新，空闲即停。
+展开的日志每 2 秒更新，收起后停止读取。
+侧边栏激活项右侧的刷新图标会通知当前页面重新取数（服务、英语都已订阅），
+服务页在线时即靠它取数，不再单设按钮；只有离线后才显示「重新连接」入口。
 最近操作与全局快捷命令通过服务统计旁的按钮打开弹窗，快捷命令在打开时读取，支持刷新及点击复制。
 离线时保留旧数据及更新时间，禁用服务操作；恢复连接后，已打开的快捷命令弹窗自动重新加载。
 最近操作存放于当前浏览会话的 sessionStorage（最多 8 条）。
@@ -171,13 +172,16 @@ Markdown 弹窗预览统一使用公共组件 `src/components/MarkdownPreviewMod
 ```
 .husky/               # git 提交钩子（pre-commit 跑 lint + typecheck）
 agent/                # 本机服务 agent（server.mjs、services.json、logs/）
-scripts/              # 工程脚本（结构检查、feature/组件脚手架）
+scripts/              # 工程脚本（结构检查、组件脚手架）
 src/
-  layouts/            # 布局（BasicLayout / Header / Sidebar）
-  pages/              # 页面（各信息模块，如 Home / Services / English）
+  layouts/            # 布局（BasicLayout / Header / Sidebar / MenuContentLayout）
+  pages/              # 页面，页面代码与它的 components / hooks / utils 就近放在同一目录
+    Services/         # 服务页（服务列表、日志、快捷命令）
+    English/          # 英语笔记页（看板、预览、块级编辑器）
+    Errors/           # 404
+  services/           # 服务数据层（api / provider / types / hooks），跨页面共用
   components/         # 公共组件（如 MarkdownPreviewModal）
-  features/services/  # 服务模块（types / api / hooks / 组件）
-  features/english-notes/  # 英语笔记模块（笔记读取、文件名索引）
+  utils/              # 公共纯函数（markdown-outline / error / format / cx / clipboard）
   styles/             # 全局样式与 design tokens
 ```
 
@@ -186,10 +190,10 @@ src/
 - 路径别名：`@/*` → `src/*`
 - 新增组件时，同级放置 `index.tsx` + `index.scss`（CSS Module 类名自动 camelCase）
 - `src/components/**` 的目录与其下文件名必须是 PascalCase（如 `MarkdownPreviewModal/index.tsx`）
-- `src/features/**`：目录一律 kebab-case；组件目录必须有 index.scss；不嵌套
-  `components/`（子组件直接放父组件目录）；跨模块一律用 `@/features/...` 别名，
-  禁止相对导入跨出模块
-- 新建 feature 用 `pnpm feature:new <名>`；新建组件用 `pnpm component:new <路径>`，
-  脚手架默认产出即合规
-- `pnpm check:features` 强制以上结构规则；pre-commit 钩子拦截不合规提交
+- 页面代码就近放 `src/pages/<Page>/`，按 `components` / `hooks` / `utils` / `types` /
+  `constants` 五个维度适度拆分，非公共的不上提；页面内相对导入不得跨出该页面目录，
+  跨目录一律用 `@/` 别名
+- `src/features` 已废弃：目录出现即判定失败，页面代码请直接写进页面目录
+- 新建组件用 `pnpm component:new <路径>`，脚手架默认产出即合规
+- `pnpm check:structure` 强制以上结构规则；pre-commit 钩子拦截不合规提交
 - 侧边栏导航在 `src/layouts/Sidebar/index.tsx` 的 `navItems` 中登记

@@ -12,15 +12,14 @@
     "agent:stop": "node scripts/stop-local.mjs agent",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.node.json --noEmit",
     "build": "tsc -p tsconfig.json && tsc -p tsconfig.node.json && vite build",
-    "lint": "eslint . && node scripts/check-features.mjs && pnpm check:md",
-    "check:features": "node scripts/check-features.mjs",
+    "lint": "eslint . && node scripts/check-structure.mjs && pnpm check:md",
     "check:md": "node --experimental-strip-types scripts/md-roundtrip.mts",
-    "feature:new": "node scripts/new-feature.mjs",
     "component:new": "node scripts/new-component.mjs",
     "preview": "vite preview",
     "prepare": "husky",
     "test": "node --test agent/*.test.mjs",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "check:structure": "node scripts/check-structure.mjs"
   },
   "dependencies": {
     "@mantine/core": "^9.4.1",
