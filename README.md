@@ -20,7 +20,6 @@
 pnpm dev              # 本地开发（默认端口 3000）
 pnpm start            # 后台起 agent + dev（复用 scripts/auto-start.sh，已在运行的不重复起）
 pnpm stop             # 停止 agent 与 dev
-pnpm agent:bg         # 仅后台运行 agent（日志 /tmp/my-dashboard-agent.log）
 pnpm typecheck        # 类型检查
 pnpm lint             # ESLint + 目录结构 + 样式排版 + import 分组 + Markdown 往返
 pnpm check:structure  # 仅目录结构检查
@@ -62,10 +61,10 @@ pnpm start      # 后台起 agent + dev，一条命令起全套
 pnpm stop       # 停止 agent 与 dev
 ```
 
-也可以分开：`pnpm agent:bg` 起 agent，再 `pnpm dev` 起前端（默认 3000）。
-开发模式下前端需要时还会通过 Vite 的 `/api/agent/start` 中间件自动拉起 agent，
-所以只跑 `pnpm dev` 也能用服务页；该中间件与 `/api` 代理都只存在于 dev server，
-服务页相关能力不适用于 `pnpm preview` 的构建产物。
+也可以只跑 `pnpm dev` 前台起前端；需要 agent 时补一条 `pnpm start`，已在运行的
+进程不会重复起。开发模式下前端需要时还会通过 Vite 的 `/api/agent/start` 中间件
+自动拉起 agent，所以只跑 `pnpm dev` 也能用服务页；该中间件与 `/api` 代理都只存在于
+dev server，服务页相关能力不适用于 `pnpm preview` 的构建产物。
 `pnpm start` / `pnpm stop` 不要写成 `pnpm up`——`up` 是 pnpm 的内置 `update` 别名。
 
 服务清单在 `agent/services.json` 登记（名称、工作目录、端口、启停命令、

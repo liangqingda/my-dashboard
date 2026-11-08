@@ -7,7 +7,6 @@
     "dev": "vite",
     "start": "bash scripts/auto-start.sh",
     "stop": "node scripts/stop-local.mjs all",
-    "agent:bg": "nohup node agent/server.mjs > /tmp/my-dashboard-agent.log 2>&1 &",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.node.json --noEmit",
     "build": "tsc -p tsconfig.json && tsc -p tsconfig.node.json && vite build",
     "lint": "eslint . && node scripts/check-structure.mjs && liangqingda-check-scss src && node scripts/check-imports.mjs && pnpm check:md",

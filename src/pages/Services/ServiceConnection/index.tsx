@@ -63,7 +63,7 @@ const ServiceConnection = () => {
           )}
           {!import.meta.env.DEV && (
             <Text mt={4} size="xs">
-              请在本机运行 pnpm agent:bg 后重新连接。
+              请在本机运行 pnpm start 后重新连接。
             </Text>
           )}
         </Alert>
