@@ -71,31 +71,39 @@ const NotesTable = ({
       </thead>
       <tbody>
         {rows.length > 0 ? (
-          rows.map((row) => (
-            <tr className={styles.row} key={row.note.name}>
-              <td className={styles.cell}>
-                <button
-                  aria-label={`预览 ${row.note.name}`}
-                  className={styles.name}
-                  onClick={() => {
-                    void onOpen(row.note.name);
-                  }}
-                  type="button"
-                >
-                  {row.note.name}
-                </button>
-              </td>
-              <td className={cx(styles.cell, styles.topic)}>
-                {row.topicLabel || EMPTY_CELL}
-              </td>
-              <td className={cx(styles.cell, styles.categoryWidth)}>
-                <span className={styles.category}>{row.categoryLabel}</span>
-              </td>
-              <td className={cx(styles.cell, styles.timeWidth, styles.time)}>
-                {row.updatedLabel || EMPTY_CELL}
-              </td>
-            </tr>
-          ))
+          rows.map((row) => {
+            /** 整行都是打开入口；文件名按钮自己 stopPropagation，避免点它时触发两次 */
+            const open = () => {
+              void onOpen(row.note.name);
+            };
+
+            return (
+              <tr className={styles.row} key={row.note.name} onClick={open}>
+                <td className={styles.cell}>
+                  <button
+                    aria-label={`预览 ${row.note.name}`}
+                    className={styles.name}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      open();
+                    }}
+                    type="button"
+                  >
+                    {row.note.name}
+                  </button>
+                </td>
+                <td className={cx(styles.cell, styles.topic)}>
+                  {row.topicLabel || EMPTY_CELL}
+                </td>
+                <td className={cx(styles.cell, styles.categoryWidth)}>
+                  <span className={styles.category}>{row.categoryLabel}</span>
+                </td>
+                <td className={cx(styles.cell, styles.timeWidth, styles.time)}>
+                  {row.updatedLabel || EMPTY_CELL}
+                </td>
+              </tr>
+            );
+          })
         ) : (
           <tr>
             <td className={styles.cell} colSpan={4}>

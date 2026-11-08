@@ -58,11 +58,16 @@
   padding-left: 0;
 }
 
+/* 整行都是打开入口：行内任意位置（含分类、时间）点了就开预览 */
+.row {
+  cursor: pointer;
+}
+
 .row:hover .cell {
   background: var(--app-surface-hover);
 }
 
-/* 文件名即整行的入口：整格吃满，点击打开预览 */
+/* 文件名保留按钮：整行的键盘入口，鼠标点它时不再重复触发一次 */
 .name {
   width: 100%;
   padding: 0;
