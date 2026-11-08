@@ -18,13 +18,14 @@
 }
 
 /*
- * hover / 聚焦只给底色，不再原地摊开长标题：
+ * hover / 聚焦只给底色 + 一条主色标线，不再原地摊开长标题：
  * 摊开会挤动下方标题、也让目录高度跳动，完整标题统一交给 tip。
  */
 .item:hover,
 .item:focus-visible {
   background: var(--app-surface);
   color: var(--app-ink);
+  box-shadow: inset 2px 0 0 var(--app-accent);
 }
 
 /* disabled 的按钮不响应 hover，指针不要留在 pointer 上 */
@@ -50,18 +51,21 @@
 }
 
 /*
- * tip 走 portal，拿不到弹窗内容上的 --preview-paper，直接用全局 surface 令牌，
- * 样式与目录卡片保持一致，不用 Mantine 默认的深色提示。
+ * tip 走 portal，拿不到弹窗内容上的 --preview-paper，直接用全局令牌。
+ * 刻意做成深底浅字（暗色模式自动反转）：目录卡片本身是浅底，tip 必须靠明暗反差
+ * 一眼跳出来，否则和卡片糊在一起。同时写 --tooltip-bg / --tooltip-color，
+ * Mantine 取色读的就是这两个变量，样式顺序变了底色也不会退回默认灰。
  */
 .tooltip {
-  max-width: 280px;
-  padding: 6px 8px;
-  border: 1px solid var(--app-line);
-  border-radius: 2px;
-  background: var(--app-surface);
-  color: var(--app-ink);
+  --tooltip-bg: var(--app-ink);
+  --tooltip-color: var(--app-surface);
+
+  max-width: 320px;
+  padding: 7px 10px;
+  background: var(--app-ink);
+  color: var(--app-surface);
   font-family: var(--app-serif);
-  font-size: 0.72rem;
-  line-height: 1.5;
-  box-shadow: 0 8px 24px rgb(23 37 34 / 12%);
+  font-size: 0.8rem;
+  line-height: 1.55;
+  box-shadow: 0 10px 28px rgb(23 37 34 / 26%);
 }

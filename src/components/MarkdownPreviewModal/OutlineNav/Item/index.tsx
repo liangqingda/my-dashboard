@@ -19,14 +19,17 @@ const OutlineNavItem = ({
 
   return (
     <Tooltip
+      arrowSize={5}
       classNames={{ tooltip: styles.tooltip }}
       disabled={disabled || !truncated}
       events={{ focus: true, hover: true, touch: false }}
       label={text}
       multiline
-      offset={8}
+      offset={10}
       openDelay={0}
       position="left-start"
+      radius={4}
+      withArrow
     >
       <button
         className={styles.item}
