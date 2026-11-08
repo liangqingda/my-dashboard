@@ -1,25 +1,32 @@
 /**
  * 全屏预览的状态：把整个框体铺满视口，只放大可读空间。
  *
- * 全屏时自己接管 Esc——这时按 Esc 是「退出全屏」而不是关闭弹窗；
- * 其它关闭路径（关闭按钮 / 遮罩 / 二次确认后关闭）走 `exit` 一并退出全屏，
- * 下次打开回到常规大小。
+ * 全屏是「怎么看」的偏好，不是某一篇的属性，所以记在 localStorage 里：
+ * 换篇、关掉重开、刷新页面后都还是上次的样子；Esc（或再点一次按钮）只切回常规大小。
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
+
+import { useStoredState } from '@/hooks/useStoredState';
+import { FLAG_CODEC } from '@/utils/local-storage';
+
+import { FULLSCREEN_STORAGE_KEY } from '../constants';
 
 /**
  * 管理弹窗的全屏开关与 Esc 语义。
  *
- * @returns `fullscreen` 当前是否全屏，`toggle` 切换，`exit` 无条件退出
+ * @returns `fullscreen` 当前是否全屏，`toggle` 切换
  */
 export const useModalFullscreen = (): {
   fullscreen: boolean;
   toggle: () => void;
-  exit: () => void;
 } => {
-  const [fullscreen, setFullscreen] = useState(false);
+  const [fullscreen, setFullscreen] = useStoredState(
+    FULLSCREEN_STORAGE_KEY,
+    FLAG_CODEC,
+  );
 
+  // 全屏时自己接管 Esc：这时按 Esc 是「退出全屏」，不会顺带把弹窗也关掉
   useEffect(() => {
     if (!fullscreen) {
       return undefined;
@@ -34,11 +41,12 @@ export const useModalFullscreen = (): {
     window.addEventListener('keydown', exitOnEscape);
 
     return () => window.removeEventListener('keydown', exitOnEscape);
-  }, [fullscreen]);
+  }, [fullscreen, setFullscreen]);
 
-  // 回调保持稳定：它们会进上层 useCallback 的依赖，每次新建会让关闭流程跟着重建
-  const exit = useCallback(() => setFullscreen(false), []);
-  const toggle = useCallback(() => setFullscreen((current) => !current), []);
+  const toggle = useCallback(
+    () => setFullscreen(!fullscreen),
+    [fullscreen, setFullscreen],
+  );
 
-  return { exit, fullscreen, toggle };
+  return { fullscreen, toggle };
 };

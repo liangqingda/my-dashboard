@@ -82,15 +82,8 @@ const MarkdownPreviewModal = ({
    * 滚动跟踪和高度测量都要等节点真正挂上再建监听，只靠 ref 会在 ref 还空时跑完 effect。
    */
   const [bodyElement, setBodyElement] = useState<HTMLElement | null>(null);
-  /** 全屏开关与全屏时的 Esc 语义都在这个 hook 里 */
-  const { exit: exitFullscreen, fullscreen, toggle: toggleFullscreen } =
-    useModalFullscreen();
-
-  /** 关闭弹窗时一并退出全屏：下次打开回到常规大小，不会一进来就铺满 */
-  const handleClose = useCallback(() => {
-    exitFullscreen();
-    onClose();
-  }, [exitFullscreen, onClose]);
+  /** 全屏开关与全屏时的 Esc 语义都在这个 hook 里；它是记住的偏好，关闭弹窗也不重置 */
+  const { fullscreen, toggle: toggleFullscreen } = useModalFullscreen();
 
   /** 刷新按钮的 loading 与失败提示都在这个 hook 里 */
   const { refresh, refreshing } = useRefreshPreview(onRefresh);
@@ -105,7 +98,7 @@ const MarkdownPreviewModal = ({
   /** 关闭请求：编辑态（含草稿预览）不关，只提示先退出编辑，其余照常关 */
   const requestClose = useCloseRequest({
     blocking: editing.editing,
-    onClose: handleClose,
+    onClose,
     previewing: editing.previewing,
   });
 

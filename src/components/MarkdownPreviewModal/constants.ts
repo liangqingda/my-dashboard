@@ -8,6 +8,12 @@ import remarkGfm from 'remark-gfm';
 /** 「已保存」提示停留时长（毫秒） */
 export const SAVED_HINT_DURATION = 3000;
 
+/**
+ * 全屏预览偏好存在 localStorage 的键：全屏是「怎么看」，不是某一篇的属性，
+ * 换篇、关掉重开、刷新页面后都保持上次的样子。
+ */
+export const FULLSCREEN_STORAGE_KEY = 'my-dashboard:markdown-preview:fullscreen';
+
 /** 没有定制编辑器时的提示：告诉用户可以去定制，而不是不给入口 */
 export const NO_EDITOR_MESSAGE =
   '这类 Markdown 还没有定制编辑器。用 personalize-edit-markdown skill 可以为它写一套编辑逻辑。';
