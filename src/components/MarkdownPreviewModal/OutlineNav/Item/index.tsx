@@ -1,5 +1,5 @@
 /**
- * 标题导航的单条：折叠按钮（有子标题时）+ 可点击标题文本。
+ * 标题导航的单条：可点击标题文本 + 右侧折叠图标（有子标题时）。
  * 省略号与「只在被截断时才弹 tip」交给公共组件 TruncatedText。
  */
 
@@ -24,6 +24,12 @@ const OutlineNavItem = ({
   text,
 }: OutlineNavItemProps) => (
   <div className={cx(styles.row, LEVEL_CLASS[level])}>
+    <TruncatedText
+      className={styles.item}
+      disabled={disabled}
+      onClick={onSelect}
+      text={text}
+    />
     {hasChildren ? (
       <button
         aria-expanded={expanded}
@@ -40,16 +46,7 @@ const OutlineNavItem = ({
           stroke={1.9}
         />
       </button>
-    ) : (
-      // 没有子标题也占住这一格，同一层的标题文字才对得齐
-      <span aria-hidden="true" className={styles.slot} />
-    )}
-    <TruncatedText
-      className={styles.item}
-      disabled={disabled}
-      onClick={onSelect}
-      text={text}
-    />
+    ) : null}
   </div>
 );
 

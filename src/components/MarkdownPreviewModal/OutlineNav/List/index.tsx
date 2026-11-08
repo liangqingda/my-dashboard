@@ -14,6 +14,7 @@ const OutlineNavList = ({
   disabled,
   expanded,
   nodes,
+  onExpand,
   onSelect,
   onToggle,
 }: OutlineNavListProps) => (
@@ -29,7 +30,14 @@ const OutlineNavList = ({
             expanded={isExpanded}
             hasChildren={hasChildren}
             level={node.heading.level}
-            onSelect={() => onSelect(node.index)}
+            onSelect={() => {
+              // 点标题：先跳转，顺手把子标题展开；收起只能点右侧图标
+              onSelect(node.index);
+
+              if (hasChildren) {
+                onExpand(node.heading.key);
+              }
+            }}
             onToggle={() => onToggle(node.heading.key)}
             text={node.heading.text}
           />
@@ -38,6 +46,7 @@ const OutlineNavList = ({
               disabled={disabled}
               expanded={expanded}
               nodes={node.children}
+              onExpand={onExpand}
               onSelect={onSelect}
               onToggle={onToggle}
             />

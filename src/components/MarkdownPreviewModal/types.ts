@@ -96,7 +96,9 @@ export type OutlineNavListProps = {
   expanded: ReadonlySet<string>;
   /** 点击标题跳转；参数是标题在正文里的下标 */
   onSelect: (index: number) => void;
-  /** 展开 / 收起某个节点的子标题 */
+  /** 点标题时顺手展开（只展开，不收起） */
+  onExpand: (key: string) => void;
+  /** 点右侧图标时展开 / 收起某个节点的子标题 */
   onToggle: (key: string) => void;
   /** 顶层那一层额外带滚动样式；嵌套层不传 */
   className?: string;
@@ -106,7 +108,7 @@ export type OutlineNavListProps = {
 export type OutlineNavItemProps = {
   /** 编辑态下禁用跳转 */
   disabled: boolean;
-  /** 有子标题：左侧留出折叠按钮 */
+  /** 有子标题：标题右侧显示折叠图标 */
   hasChildren: boolean;
   /** 子标题当前是否展开 */
   expanded: boolean;
