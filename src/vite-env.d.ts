@@ -1,4 +1,4 @@
-/* eslint-disable spaced-comment */
+// eslint-disable-next-line spaced-comment -- Vite 类型引用只能是三斜线指令，格式改不了
 /// <reference types="vite/client" />
 
 declare module '*.scss' {

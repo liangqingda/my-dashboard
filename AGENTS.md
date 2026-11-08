@@ -33,11 +33,11 @@ README.md            运行、脚本、目录结构
    复制 `copyText`。同一逻辑出现第二处就上提。
 5. **服务状态不做后台定时轮询**：只在进页面、页面重新可见 / 窗口聚焦、手动刷新时取数；
    仅「有服务在启动 / 部署 / 操作中」时短暂按 1 秒刷新。新页面不要自己加 `setInterval`。
-6. **每次改完代码自检自改自优化一遍**（`docs/self-check.md` 九条，发现问题直接改，不只在回复里列）：
-   三命令全绿（动 `agent/`、`scripts/vite/*` 还要 `pnpm test`）→ 拆分是否合理 → 查重复 →
-   禁 O(n²) → 副作用清理与异步竞态 → 读盘 / 写盘接口安全 → 注释与实现一致 →
-   空态 / 错误态 / 越界 → 清旧目录旧引用旧文档。前三项里「拆分是否合理」与
-   「副作用 / 竞态」是工具兜不住的部分，必须逐文件判断。
+6. **每次改完代码自检自改自优化一遍**（`docs/self-check.md`，发现问题直接改，不只在回复里列）：
+   命令全绿（动 `agent/`、`scripts/vite/*` 还要 `pnpm test`）→ 按 `best-react-code` 的
+   《Review 时的判据顺序》逐项过（数据流 / 性能 / 分层 / 副作用与竞态 / 注释）→
+   本项目特有的事实（分层命名细则、读盘接口、残留清理）。通用判据只写在那份 skill 里，
+   本项目 `docs/` 不复述。
 7. **前端 / 视觉改动默认不做浏览器实测**：不启 dev server、不截图，以 `typecheck` / `lint` 为准，
    除非用户明确要求浏览器验证。
 8. **本机仓库数据（如 `../learn-english`）只走 `scripts/vite/*` 中间件读盘**，不新增后端服务；
@@ -49,7 +49,9 @@ README.md            运行、脚本、目录结构
 `import/order` 覆写已删除）、`scripts/check-structure.mjs`（features 废弃 / 页面组织 /
 菜单页布局，项目事实不上提）、`liangqingda-check-scss src`（共享包零依赖 CLI，样式块间空行 /
 选择器列表 / 行尾空格）、`scripts/check-imports.mjs`（只剩页面内部必须相对路径）与
-`pnpm check:md`（Markdown 往返），不合规直接失败。
+`pnpm check:md`（Markdown 往返），不合规直接失败。禁裸 `eslint-disable` / 失效 disable /
+`@ts-ignore` 由 `@liangqingda/eslint-config@1.6.0` 起的规则兜住（`eslint-comments` 与
+`ban-ts-comment`），同样属于机器判的部分。
 
 通用规范的落点分工：机器可判的规则在 `@liangqingda/eslint-config` 与 `@liangqingda/tsconfig`
 （新项目直接用 `strictest.json`）；需要判断的拆分维度、性能反模式、注释语义写在
