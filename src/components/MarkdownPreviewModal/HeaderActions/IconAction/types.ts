@@ -21,4 +21,6 @@ export type HeaderIconActionProps = {
   loading?: boolean;
   /** 点击 */
   onClick?: () => void;
+  /** 按钮档位：`lg` 用于编辑态那排承担全部操作的按钮，`md` 与标题栏其它图标同档 */
+  size?: 'md' | 'lg';
 };

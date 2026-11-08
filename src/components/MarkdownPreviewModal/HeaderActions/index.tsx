@@ -23,8 +23,10 @@ import HeaderIconAction from './IconAction';
 
 import styles from './index.scss';
 
-/** 图标统一 15px、细描边，和标题栏里其它图标按钮同一套观感 */
+/** 非编辑态（只有一个铅笔）与标题栏其它图标同档：15px 图标、sm 按钮 */
 const ICON_SIZE = 15;
+/** 编辑态那排按钮承担全部操作，放大一档：18px 图标、lg 按钮，点击区跟着变大 */
+const EDIT_ICON_SIZE = 18;
 const ICON_STROKE = 1.9;
 
 const PreviewHeaderActions = ({
@@ -50,6 +52,9 @@ const PreviewHeaderActions = ({
    */
   const backLabel = previewing ? '返回编辑' : '退出编辑（不保存）';
   const handleBack = previewing ? onStopPreview : onCancelEdit;
+  /** 编辑态（含草稿预览）把这一组图标放大一档，非编辑态仍与刷新 / 全屏 / 关闭同档 */
+  const actionSize = editing ? 'lg' : 'md';
+  const iconSize = editing ? EDIT_ICON_SIZE : ICON_SIZE;
 
   return (
     <div className={styles.actions}>
@@ -74,22 +79,31 @@ const PreviewHeaderActions = ({
       {/* 关闭前的二次确认：只在「继续编辑」与「放弃改动并关闭」之间二选一 */}
       {askDiscard ? (
         <>
-          <HeaderIconAction label="继续编辑" onClick={onKeepEditing}>
-            <IconArrowBackUp size={ICON_SIZE} stroke={ICON_STROKE} />
+          <HeaderIconAction
+            label="继续编辑"
+            onClick={onKeepEditing}
+            size={actionSize}
+          >
+            <IconArrowBackUp size={iconSize} stroke={ICON_STROKE} />
           </HeaderIconAction>
           <HeaderIconAction
             label="放弃改动并关闭"
             onClick={onDiscard}
+            size={actionSize}
             tone="danger"
           >
-            <IconTrash size={ICON_SIZE} stroke={ICON_STROKE} />
+            <IconTrash size={iconSize} stroke={ICON_STROKE} />
           </HeaderIconAction>
         </>
       ) : null}
 
       {!askDiscard && !editing && canEdit ? (
-        <HeaderIconAction label="编辑" onClick={onStartEdit}>
-          <IconPencil size={ICON_SIZE} stroke={ICON_STROKE} />
+        <HeaderIconAction
+          label="编辑"
+          onClick={onStartEdit}
+          size={actionSize}
+        >
+          <IconPencil size={iconSize} stroke={ICON_STROKE} />
         </HeaderIconAction>
       ) : null}
 
@@ -99,8 +113,9 @@ const PreviewHeaderActions = ({
             disabled={saving}
             label={backLabel}
             onClick={handleBack}
+            size={actionSize}
           >
-            <IconArrowBackUp size={ICON_SIZE} stroke={ICON_STROKE} />
+            <IconArrowBackUp size={iconSize} stroke={ICON_STROKE} />
           </HeaderIconAction>
           {/* 已经在看草稿就没有「预览」了；保存两个态都有，只有它才落盘 */}
           {previewing ? null : (
@@ -108,8 +123,9 @@ const PreviewHeaderActions = ({
               disabled={saving}
               label="预览草稿"
               onClick={onStartPreview}
+              size={actionSize}
             >
-              <IconEye size={ICON_SIZE} stroke={ICON_STROKE} />
+              <IconEye size={iconSize} stroke={ICON_STROKE} />
             </HeaderIconAction>
           )}
           <HeaderIconAction
@@ -117,9 +133,10 @@ const PreviewHeaderActions = ({
             label="保存"
             loading={saving}
             onClick={onSaveEdit}
+            size={actionSize}
             tone="accent"
           >
-            <IconCheck size={ICON_SIZE} stroke={ICON_STROKE} />
+            <IconCheck size={iconSize} stroke={ICON_STROKE} />
           </HeaderIconAction>
         </>
       ) : null}

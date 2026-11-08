@@ -18,6 +18,7 @@ const HeaderIconAction = ({
   label,
   loading = false,
   onClick,
+  size = 'md',
   tone = 'normal',
 }: HeaderIconActionProps) => (
   <Tooltip label={label} withArrow>
@@ -27,7 +28,7 @@ const HeaderIconAction = ({
       disabled={disabled}
       loading={loading}
       onClick={onClick}
-      size="sm"
+      size={size === 'lg' ? 'lg' : 'sm'}
       variant="subtle"
     >
       {children}
