@@ -187,6 +187,9 @@ src/
 
 ## 约定（由工具强制，不只靠自觉）
 
+细则见 `docs/conventions/`（页面布局 / 代码拆分与命名 / 公共能力复用 / 自检清单），
+跨 agent 的硬约束速览见 `AGENTS.md`。下面是其中被工具强制的最短版本：
+
 - 路径别名：`@/*` → `src/*`
 - 新增组件时，同级放置 `index.tsx` + `index.scss`（CSS Module 类名自动 camelCase）
 - `src/components/**` 的目录与其下文件名必须是 PascalCase（如 `MarkdownPreviewModal/index.tsx`）

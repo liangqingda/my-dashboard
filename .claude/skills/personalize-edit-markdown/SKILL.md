@@ -30,16 +30,16 @@ export type MarkdownEditorProps = {
 
 - 组件进入编辑态时把 `markdown` 给你，此后你每次改动调 `onChange(最新全文)`。
 - 弹窗保存 = 调页面传的 `onSave(草稿)`，成功回到预览态并显示「已保存・HH:MM」；失败停在编辑态、把错误显示在 footer。
-- 你**不需要**也不该自己渲染 Modal、按钮、滚动容器（滚动容器由你的编辑器根节点自己撑起来，参考 `note-editor/index.scss`）。
+- 你**不需要**也不该自己渲染 Modal、按钮、滚动容器（滚动容器由你的编辑器根节点自己撑起来，参考 `src/pages/English/NoteEditor/index.scss`）。
 
 ## 步骤
 
-1. **读参考实现**：`src/pages/English/note-editor`（适配层）、`block-editor`（受控控件）、`markdown-blocks.ts`（解析 + 序列化）。这三者合起来就是一套完整样例：块级切分、表格矩阵编辑、按模板重拼。
+1. **读参考实现**：`src/pages/English/NoteEditor`（适配层）、`BlockEditor`（受控控件）、`src/pages/English/utils/markdown-blocks.ts`（解析 + 序列化）。这三者合起来就是一套完整样例：块级切分、表格矩阵编辑、按模板重拼。
 2. **定结构**：先看目标 md 里真实出现哪些结构（标题、段落、列表、管道表、HTML 表格、`<details>`、代码围栏、frontmatter、图片、内联 HTML）。只给「需要结构化编辑」的结构做控件，其余一律按源码文本块编辑——**宁可让用户改源码，也不要猜错结构**。
-3. **建目录**：编辑逻辑放进该文档所属的 feature，例如
-   - `src/pages/<Page>/<xxx>-editor/index.tsx` + `index.scss`（适配层，`MarkdownEditorProps` 入参）
-   - 需要的纯逻辑放同目录或 `src/pages/<Page>/<xxx>-blocks.ts`
-   - 复用已有的块级控件时从 `@/pages/English/block-editor` 引，不要复制粘贴一份
+3. **建目录**：编辑逻辑放进该文档所属的页面目录（`src/features` 已废弃），例如
+   - `src/pages/<Page>/<Xxx>Editor/index.tsx` + `index.scss`（适配层，`MarkdownEditorProps` 入参）
+   - 需要的纯逻辑放同目录 `utils/` 或 `utils.ts`
+   - 复用已有的块级控件时从 `@/pages/English/BlockEditor` 引，不要复制粘贴一份
    - 组件目录必须有 `index.scss`、页面目录内不得出现 `components/` 目录、页面内相对导入不得跨出页面目录（`pnpm check:structure` 会拦）
 4. **接进页面**：给 `<MarkdownPreviewModal>` 传 `Editor={<XxxEditor />}`。属性按字母序排（`Editor` 排最前），`onSave` 与它配套出现；只读场景不要传 `onSave`。
 5. **守住数据安全**（最重要）：
