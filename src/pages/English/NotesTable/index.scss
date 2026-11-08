@@ -27,10 +27,6 @@
   vertical-align: bottom;
 }
 
-.head:first-child {
-  padding-left: 0;
-}
-
 /* 分类列只放两三个字，更新时间列放 2026/11/08 14:39，都固定宽度；
    文件名与目标知识点两列按内容分配剩余宽度 */
 .categoryWidth {
@@ -52,10 +48,6 @@
   padding: 7px 12px;
   border-bottom: 1px solid var(--app-line);
   vertical-align: top;
-}
-
-.cell:first-child {
-  padding-left: 0;
 }
 
 /* 整行都是打开入口：行内任意位置（含分类、时间）点了就开预览 */
