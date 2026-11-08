@@ -88,8 +88,8 @@ pnpm check:md   # scripts/md-roundtrip.mts，夹具在 scripts/fixtures/md/
 纵向间距、`fill` 页面的高度都由该组件负责，页面不要再写页面内边距和标题样式，
 `index.scss` 里也不要出现 `.page`。404 等非菜单页不受约束。
 
-规则细节、新增菜单页步骤与校验机制见 `docs/conventions/pages.md`；页面组织与五维拆分见
-`docs/conventions/code-splitting.md`。跨 agent 的硬约束速览见根目录 `AGENTS.md`。
+规则细节、新增菜单页步骤与校验机制见 `docs/pages.md`；页面组织与五维拆分见
+`docs/code-splitting.md`。跨 agent 的硬约束速览见根目录 `AGENTS.md`。
 
 ## 其它约定
 
