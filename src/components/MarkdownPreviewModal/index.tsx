@@ -83,6 +83,18 @@ const MarkdownPreviewModal = ({
     () => extractMarkdownOutline(renderedMarkdown),
     [renderedMarkdown],
   );
+  /**
+   * 正文只随内容重建：`react-markdown` 每次渲染都会重新解析整篇（长文档几十毫秒），
+   * 弹窗内部状态（正文节点挂载、刷新、编辑态切换）变化时不该再解析一遍。
+   */
+  const bodyContent = useMemo(
+    () => (
+      <Markdown rehypePlugins={REHYPE_PLUGINS} remarkPlugins={REMARK_PLUGINS}>
+        {renderedMarkdown}
+      </Markdown>
+    ),
+    [renderedMarkdown],
+  );
   /** 正文渲染出来后才能测量 / 跟踪标题：编辑态只有草稿预览时满足 */
   const navigable = opened && (!editing.editing || showingDraftPreview);
 
@@ -234,12 +246,7 @@ const MarkdownPreviewModal = ({
 
       {!editing.editing || showingDraftPreview ? (
         <article className={styles.prose} ref={attachBody}>
-          <Markdown
-            rehypePlugins={REHYPE_PLUGINS}
-            remarkPlugins={REMARK_PLUGINS}
-          >
-            {renderedMarkdown}
-          </Markdown>
+          {bodyContent}
         </article>
       ) : null}
 
