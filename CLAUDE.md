@@ -104,3 +104,8 @@ pnpm check:md   # scripts/md-roundtrip.mts，夹具在 scripts/fixtures/md/
   只在开发模式可用，并且必须校验文件名（禁止路径穿越、禁止写目录说明文件）。
 - 仓库内的 skill 目录（`.claude/skills/*`）不会被 agent 自动扫描，需要时按路径手动 `Read`
   `SKILL.md`；不要以为写了 skill 就会自动生效。
+- **笔记内容的问题改 `../learn-english` 的 md，不在预览层打补丁**：标题被未闭合的折叠块吞掉、
+  字段缺失、模板写歪这类现象，根因在 md 正文，先定位到文件与行号、说清怎么改，由 md（或
+  `check_note.py` 这类校验）修掉；不要顺手在 `MarkdownPreviewModal` / `OutlineNav` 里加「兼容
+  畸形数据」的兜底——兜底会把数据缺陷藏起来，还会被后来者当成正常契约。判据：把那段 md 改
+  成正确形态后现象是否消失，消失即修数据。通用原则见 `best-react-code` 的《先判根因归属》。
