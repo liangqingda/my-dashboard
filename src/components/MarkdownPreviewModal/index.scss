@@ -155,15 +155,11 @@
   margin: 0 0 10px;
 }
 
-.prose ul {
+/* 无序 / 有序列表共用一套间距：两者左缩进一致，不再靠 ol 独有的 margin-left 拉开 */
+.prose ul,
+.prose ol {
   margin: 0 0 12px;
   padding-left: 1.3em;
-}
-
-/* 有序列表：和上文拉开 4px、编号区右移 8px、编号与正文之间留足 24px */
-.prose ol {
-  margin: 4px 0 12px 8px;
-  padding-left: 24px;
 }
 
 /*
