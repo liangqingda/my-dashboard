@@ -155,14 +155,10 @@
   margin: 0 0 10px;
 }
 
-.prose ul {
-  margin: 0 0 12px;
-  padding-left: 1.3em;
-}
-
-/* 有序列表：和上文拉开 4px、编号区右移 8px、编号与正文之间留足 24px */
+/* 无序 / 有序列表共用一套缩进：正文左边缘对齐，符号 / 编号区在 24px 内挂出，两者不再错位 */
+.prose ul,
 .prose ol {
-  margin: 4px 0 12px 8px;
+  margin: 0 0 12px;
   padding-left: 24px;
 }
 
@@ -260,7 +256,7 @@
 
 /*
  * details 里的正文比标题行缩进一档。
- * 列表排除在外：ul / ol 各自声明了左间距（见 .prose ol），留在这里会被这条更高优先级的
+ * 列表排除在外：ul / ol 共用一套左间距（见上方 .prose ul, .prose ol），留在这里会被这条更高优先级的
  * 规则盖成 14px。
  */
 .prose details > *:not(summary, ul, ol) {
