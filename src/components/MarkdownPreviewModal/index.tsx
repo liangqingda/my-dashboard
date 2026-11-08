@@ -117,7 +117,20 @@ const MarkdownPreviewModal = ({
       return;
     }
 
-    headings[index].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const heading = headings[index];
+
+    // 标题可能写在不闭合的 <details> 里（笔记里常见）：不打开折叠块就滚不动，逐层展开
+    let details = heading.parentElement?.closest('details') ?? null;
+
+    while (details) {
+      if (!details.open) {
+        details.open = true;
+      }
+
+      details = details.parentElement?.closest('details') ?? null;
+    }
+
+    heading.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   return (
