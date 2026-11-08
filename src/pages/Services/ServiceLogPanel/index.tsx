@@ -10,12 +10,12 @@ import {
   IconTrash,
 } from '@tabler/icons-react';
 
-import type { ServiceLogPanelProps } from './types';
-
 import type { LogKind } from '@/services/types';
 
 import { useServiceLog } from '../hooks/useServiceLog';
 import { resolveLogContent } from '../utils';
+
+import type { ServiceLogPanelProps } from './types';
 
 import styles from './index.scss';
 

@@ -4,7 +4,6 @@ import { fileURLToPath } from 'node:url';
 
 import react from '@vitejs/plugin-react';
 import { defineConfig, normalizePath } from 'vite';
-
 import type { Plugin } from 'vite';
 
 import { englishNotes } from './scripts/vite/english-notes.js';

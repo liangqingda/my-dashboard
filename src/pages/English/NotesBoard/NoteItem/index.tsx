@@ -1,8 +1,8 @@
 import { IconChevronRight } from '@tabler/icons-react';
 
-import type { NoteItemProps } from './types';
-
 import { splitNoteName, stripCategoryPrefix } from '../../utils/notes';
+
+import type { NoteItemProps } from './types';
 
 import styles from './index.scss';
 

@@ -2,9 +2,9 @@
  * 预览弹窗 footer：编辑 / 保存 / 关闭，以及「已保存」「未保存」与放弃改动的二次确认。
  */
 
-import type { PreviewFooterProps } from '../types';
-
 import { cx } from '@/utils/cx';
+
+import type { PreviewFooterProps } from '../types';
 
 import styles from './index.scss';
 

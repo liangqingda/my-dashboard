@@ -2,9 +2,9 @@
  * 服务页的纯函数工具：忙碌判定、可访问性、端口展示、状态徽标推导与列表统计。
  */
 
-import type { PillView, StatusViewInput } from './types';
-
 import type { ServiceBusy, ServiceStatus } from '@/services/types';
+
+import type { PillView, StatusViewInput } from './types';
 
 /** 启动 / 重启这类「把服务拉起来」的操作是否在进行 */
 export const isPrimaryBusy = (busy: ServiceBusy, id: string): boolean =>

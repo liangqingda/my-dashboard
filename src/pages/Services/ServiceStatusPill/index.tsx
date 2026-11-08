@@ -3,11 +3,11 @@
  * 展示在渲染期直接推导，无需 effect。
  */
 
-import type { ServiceStatusPillProps } from './types';
-
 import { cx } from '@/utils/cx';
 
 import { deriveStatusView } from '../utils';
+
+import type { ServiceStatusPillProps } from './types';
 
 import styles from './index.scss';
 

@@ -17,11 +17,11 @@ import {
   IconSun,
 } from '@tabler/icons-react';
 
-import type { HeaderProps } from './types';
-
 import { restartAgent } from '@/services/api';
 import { useServices } from '@/services/hooks/useServices';
 import { getErrorMessage } from '@/utils/error';
+
+import type { HeaderProps } from './types';
 
 import styles from './index.scss';
 

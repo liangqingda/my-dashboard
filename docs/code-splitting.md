@@ -53,15 +53,18 @@
 组间必须空一行，组内不空行，顺序固定：
 
 1. `builtin` / `external`：Node 内置、第三方包（`react`、`@mantine/*`…）；
-2. `type`：**相对路径**的类型导入单独成组（`import type { X } from './types'`）；
-   `@/` 前缀的类型导入不单独成组，跟着 `internal` 走；
-3. `internal`：`@/` 公共能力（`@/components`、`@/utils`、`@/services`…）；
-4. `parent` / `sibling` / `index`：页面 / 组件 就近（`@/pages/**` 被归到 `parent`，
-   保证页面相关排在本组内靠前）；
-5. 样式导入（`*.scss`）排在最后。
+2. `internal`：`@/` 公共能力（`@/components`、`@/utils`、`@/services`…），
+   其中 `@/pages/**` 在本块内排在最后（与公共 `@/` 之间空行）；
+3. `parent`：`../` 就近引用（父目录，含 `import type { X } from '../types'`）；
+4. `sibling`：`./` 就近引用（同目录），样式导入（`*.scss`）排在本块最后；
+5. `index`：同目录 index 文件。
 
-上面这套顺序由 `@liangqingda/eslint-config` 的 `react-typed` 统一强制（1.4.0 起自带
-`@/pages/**` → `parent` 的分组），本仓库不再在 `eslint.config.js` 里覆写 `import/order`；
+类型 import 不单独成组：跟着来源路径走（外部的归 external、`@/` 的归 internal、
+就近的归 parent/sibling），所以 `import type { X } from './types'` 和同目录的值 import
+在一起，不会被提到文件顶部。
+
+上面这套顺序由 `@liangqingda/eslint-config` 的 `react-typed` 统一强制（1.5.0 起 type 跟随路径、
+就近按 `../` / `./` 拆块），本仓库不再在 `eslint.config.js` 里覆写 `import/order`；
 值导入里内联 `type` 也由同一套配置的 `consistent-type-imports` 拦下。
 
 只会留在本仓库 `scripts/check-imports.mjs` 的是 ESLint 表达不了的一条：页面 / 组件 / 布局

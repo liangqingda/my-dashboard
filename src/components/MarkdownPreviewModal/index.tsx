@@ -24,11 +24,10 @@ import {
 } from '@tabler/icons-react';
 import Markdown from 'react-markdown';
 
-import type { MarkdownPreviewModalProps } from './types';
-
 import { getErrorMessage } from '@/utils/error';
 import { extractMarkdownOutline } from '@/utils/markdown-outline';
 
+import type { MarkdownPreviewModalProps } from './types';
 import PreviewFooter from './Footer';
 import OutlineNav from './OutlineNav';
 import {

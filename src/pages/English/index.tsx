@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import type { EnglishNote } from './types';
-
 import MarkdownPreviewModal from '@/components/MarkdownPreviewModal';
 import MenuContentLayout from '@/layouts/MenuContentLayout';
 import { onPageRefresh } from '@/utils/page-refresh';
 
+import type { EnglishNote } from './types';
 import { useEnglishNotes } from './hooks/useEnglishNotes';
 import NoteEditor from './NoteEditor';
 import NotesBoard from './NotesBoard';

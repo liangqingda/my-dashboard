@@ -4,12 +4,11 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-import type { ServiceLogState } from '../types';
-
 import { clearServiceLog, fetchServiceLog } from '@/services/api';
 import type { LogKind } from '@/services/types';
 import { getErrorMessage } from '@/utils/error';
 
+import type { ServiceLogState } from '../types';
 import { LOG_REFRESH_INTERVAL, LOG_TAIL_LINES } from '../constants';
 
 type Params = {

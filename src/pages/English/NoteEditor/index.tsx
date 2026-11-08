@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 
-import type { MarkdownBlock } from '../types';
-
 import type { MarkdownEditorProps } from '@/components/MarkdownPreviewModal';
 
+import type { MarkdownBlock } from '../types';
 import BlockEditor from '../BlockEditor';
 import { UNDO_DEPTH } from '../constants';
 import {

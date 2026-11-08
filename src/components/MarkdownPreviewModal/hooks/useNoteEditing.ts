@@ -6,11 +6,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { notifications } from '@mantine/notifications';
 
-import type { NoteEditingParams, NoteEditingState } from '../types';
-
 import { getErrorMessage } from '@/utils/error';
 import { formatClock } from '@/utils/format';
 
+import type { NoteEditingParams, NoteEditingState } from '../types';
 import { NO_EDITOR_MESSAGE, SAVED_HINT_DURATION } from '../constants';
 
 /** 管理预览弹窗的编辑流程 */

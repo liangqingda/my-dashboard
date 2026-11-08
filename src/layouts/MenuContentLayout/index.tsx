@@ -1,8 +1,8 @@
 import { Title } from '@mantine/core';
 
-import type { MenuContentLayoutProps } from './types';
-
 import { cx } from '@/utils/cx';
+
+import type { MenuContentLayoutProps } from './types';
 
 import styles from './index.scss';
 

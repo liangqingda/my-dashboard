@@ -9,8 +9,6 @@ import {
   IconRocket,
 } from '@tabler/icons-react';
 
-import type { ServiceRowProps } from './types';
-
 import { formatDateTime } from '@/utils/format';
 
 import ServiceLogPanel from '../ServiceLogPanel';
@@ -21,6 +19,8 @@ import {
   isPrimaryBusy,
   isStopBusy,
 } from '../utils';
+
+import type { ServiceRowProps } from './types';
 
 import styles from './index.scss';
 

@@ -7,9 +7,9 @@ import {
   IconServer,
 } from '@tabler/icons-react';
 
-import type { NavItem, SidebarProps } from './types';
-
 import { requestPageRefresh } from '@/utils/page-refresh';
+
+import type { NavItem, SidebarProps } from './types';
 
 import styles from './index.scss';
 

@@ -1,8 +1,8 @@
 import type { MarkdownBlock } from '../types';
-import type { MarkdownBlockEditorProps } from './types';
-
 import { replaceAt } from '../utils/array';
 import { createBlockId } from '../utils/markdown-blocks';
+
+import type { MarkdownBlockEditorProps } from './types';
 
 import styles from './index.scss';
 

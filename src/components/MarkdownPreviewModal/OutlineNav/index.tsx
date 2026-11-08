@@ -2,9 +2,9 @@
  * 弹窗左上角、浮在框体之外的标题导航：点击某条标题滚动到正文对应位置。
  */
 
-import type { OutlineNavProps } from '../types';
-
 import { cx } from '@/utils/cx';
+
+import type { OutlineNavProps } from '../types';
 
 import styles from './index.scss';
 

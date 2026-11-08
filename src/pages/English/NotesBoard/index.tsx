@@ -1,7 +1,6 @@
 import { Skeleton } from '@mantine/core';
 
 import type { NotesBoardProps } from './types';
-
 import NoteItem from './NoteItem';
 
 import styles from './index.scss';

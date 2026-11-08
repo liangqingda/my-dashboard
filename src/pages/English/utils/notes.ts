@@ -3,7 +3,6 @@
  */
 
 import type { EnglishNote, NoteColumn } from '../types';
-
 import { NOTE_CATEGORIES } from '../constants';
 
 /** 从文件名取分类前缀：`errors-back-west-spacing.md` → `errors`。 */

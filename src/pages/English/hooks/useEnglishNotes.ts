@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import type { EnglishNote, UseEnglishNotesResult } from '../types';
-
 import { getErrorMessage } from '@/utils/error';
 
+import type { EnglishNote, UseEnglishNotesResult } from '../types';
 import { fetchEnglishNotes } from '../utils/notes-api';
 
 const EMPTY_NOTES: EnglishNote[] = [];
