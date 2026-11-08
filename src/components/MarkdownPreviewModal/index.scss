@@ -161,7 +161,7 @@
   padding-left: 1.3em;
 }
 
-/* 有序列表：和上文稍微分开，编号区留出 8px 右移、正文与编号之间留足 24px */
+/* 有序列表覆盖上面的通用值：和上文拉开 4px，编号区右移 8px、编号与正文之间留足 24px */
 .prose ol {
   margin-top: 4px;
   margin-left: 8px;
@@ -242,6 +242,26 @@
 .prose pre code {
   padding: 0;
   background: none;
+}
+
+.prose details {
+  margin: 0 0 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--app-line-strong);
+}
+
+.prose details[open] {
+  border-top-style: solid;
+}
+
+.prose summary {
+  color: var(--app-accent);
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.prose details > *:not(summary) {
+  margin-left: 14px;
 }
 
 .prose hr {
