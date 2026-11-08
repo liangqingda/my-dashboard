@@ -1,48 +1,23 @@
 /**
- * 标题导航的单条：默认单行省略；只有被截断的那条，hover / 键盘聚焦时才用 tip 展示完整标题。
+ * 标题导航的单条：可点击按钮；省略号与「只在被截断时才弹 tip」交给公共组件 TruncatedText。
  */
 
-import { Tooltip } from '@mantine/core';
+import TruncatedText from '@/components/TruncatedText';
+import { cx } from '@/utils/cx';
 
-import useIsTruncated from '../../hooks/useIsTruncated';
 import type { OutlineNavItemProps } from '../../types';
+
+import { LEVEL_CLASS } from './constants';
 
 import styles from './index.scss';
 
-const OutlineNavItem = ({
-  disabled,
-  level,
-  onSelect,
-  text,
-}: OutlineNavItemProps) => {
-  const { ref, truncated } = useIsTruncated<HTMLButtonElement>(text);
-
-  return (
-    <Tooltip
-      arrowSize={5}
-      classNames={{ tooltip: styles.tooltip }}
-      disabled={disabled || !truncated}
-      events={{ focus: true, hover: true, touch: false }}
-      label={text}
-      multiline
-      offset={10}
-      openDelay={0}
-      position="left-start"
-      radius={4}
-      withArrow
-    >
-      <button
-        className={styles.item}
-        data-level={level}
-        disabled={disabled}
-        onClick={onSelect}
-        ref={ref}
-        type="button"
-      >
-        {text}
-      </button>
-    </Tooltip>
-  );
-};
+const OutlineNavItem = ({ disabled, level, onSelect, text }: OutlineNavItemProps) => (
+  <TruncatedText
+    className={cx(styles.item, LEVEL_CLASS[level])}
+    disabled={disabled}
+    onClick={onSelect}
+    text={text}
+  />
+);
 
 export default OutlineNavItem;

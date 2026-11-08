@@ -1,0 +1,39 @@
+/* 单行省略文本：截断时才弹 tip（判宽逻辑在 hooks/useIsTruncated） */
+
+.text {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 夹在一行文字里时不要独占整行 */
+.inline {
+  display: inline-block;
+  vertical-align: bottom;
+  width: auto;
+  max-width: 100%;
+}
+
+/*
+ * tip 走 portal，拿不到弹窗内容上的 --preview-paper，直接用全局令牌。
+ * 刻意做成深底浅字（暗色模式自动反转）：浅底卡片上必须靠明暗反差一眼跳出来。
+ * 同时写 --tooltip-bg / --tooltip-color，Mantine 取色读的就是这两个变量，
+ * 样式顺序变了底色也不会退回默认灰。
+ */
+.tooltip {
+  --tooltip-bg: var(--app-ink);
+  --tooltip-color: var(--app-surface);
+
+  max-width: 320px;
+  padding: 7px 10px;
+  background: var(--app-ink);
+  color: var(--app-surface);
+  font-family: var(--app-serif);
+  font-size: 0.8rem;
+  line-height: 1.55;
+  box-shadow: 0 10px 28px rgb(23 37 34 / 26%);
+}

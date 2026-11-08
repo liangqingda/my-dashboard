@@ -18,6 +18,7 @@
 | 剪贴板复制 | `@/utils/clipboard` 的 `copyText(text)`（含 `execCommand` 兜底） |
 | 页面级刷新广播 | `@/utils/page-refresh` 的 `requestPageRefresh` / `onPageRefresh` |
 | Markdown 标题目录 | `@/utils/markdown-outline` 的 `extractMarkdownOutline` |
+| 单行省略文本 / 截断才提示 | `@/components/TruncatedText`：放得下就正常显示，只有被省略号截断时才在 hover / 聚焦弹 tip；传 `onClick` 渲染成 button，`inline` 用于夹在一行文字里 |
 
 自检方法（各条都应当只在上面那些文件里命中，第二行应当没有结果）：
 
