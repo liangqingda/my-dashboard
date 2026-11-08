@@ -1,5 +1,3 @@
-import { useState } from 'react';
-import { notifications } from '@mantine/notifications';
 import {
   ActionIcon,
   Burger,
@@ -10,47 +8,13 @@ import {
   useComputedColorScheme,
   useMantineColorScheme,
 } from '@mantine/core';
-import {
-  IconLayoutDashboard,
-  IconMoon,
-  IconReload,
-  IconSun,
-} from '@tabler/icons-react';
-
-import { restartAgent } from '@/services/api';
-import { useServices } from '@/services/hooks/useServices';
-import { getErrorMessage } from '@/utils/error';
+import { IconLayoutDashboard, IconMoon, IconSun } from '@tabler/icons-react';
 
 import type { HeaderProps } from './types';
 
 import styles from './index.scss';
 
 const Header = ({ menuOpened, onToggleMenu }: HeaderProps) => {
-  const { refresh, agentOnline, busy, services } = useServices();
-  const [agentRestarting, setAgentRestarting] = useState(false);
-
-  const handleRestartAgent = async () => {
-    setAgentRestarting(true);
-
-    try {
-      await restartAgent();
-      await refresh();
-      notifications.show({
-        title: 'agent 已重启',
-        message: '已加载最新配置和代码',
-        color: 'teal',
-      });
-    } catch (err) {
-      notifications.show({
-        title: 'agent 重启失败',
-        message: getErrorMessage(err, '请检查 agent 日志'),
-        color: 'red',
-      });
-    } finally {
-      setAgentRestarting(false);
-    }
-  };
-
   const { setColorScheme } = useMantineColorScheme();
   const isDark = useComputedColorScheme('light') === 'dark';
 
@@ -78,23 +42,6 @@ const Header = ({ menuOpened, onToggleMenu }: HeaderProps) => {
       </Group>
 
       <Group gap="xs" ml="auto" wrap="nowrap">
-        <Tooltip label="重启 agent" withArrow>
-          <ActionIcon
-            aria-label="重启 agent"
-            className={styles.iconButton}
-            disabled={
-              !agentOnline ||
-              Object.keys(busy).length > 0 ||
-              services.some((service) => service.deploying)
-            }
-            loading={agentRestarting}
-            onClick={() => void handleRestartAgent()}
-            size="lg"
-            variant="subtle"
-          >
-            <IconReload size={20} />
-          </ActionIcon>
-        </Tooltip>
         <Tooltip label={isDark ? '切换到亮色主题' : '切换到暗色主题'} withArrow>
           <ActionIcon
             aria-label={isDark ? '切换到亮色主题' : '切换到暗色主题'}

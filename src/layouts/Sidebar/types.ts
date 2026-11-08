@@ -20,6 +20,4 @@ export type NavItem = {
 export type SidebarProps = {
   /** 点击导航项后收起侧栏 */
   onNavigate: () => void;
-  /** 进入全屏 */
-  onEnterFullscreen: () => void;
 };

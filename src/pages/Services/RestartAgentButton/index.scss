@@ -1,0 +1,8 @@
+/* 与页面头部其它图标按钮同色，避免抢标题视觉 */
+.icon {
+  color: var(--app-ink-faint);
+}
+
+.icon:hover {
+  color: var(--app-accent);
+}

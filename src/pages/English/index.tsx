@@ -50,7 +50,7 @@ const English = () => {
       ? -1
       : columnNotes.findIndex((note) => note.name === active.name);
 
-  // 侧边栏「刷新」按钮：重新读取仓库里的笔记
+  // 页面头部「刷新当前页面」按钮：重新读取仓库里的笔记
   useEffect(() => onPageRefresh(reload), [reload]);
 
   /** 打开预览：先取这一篇的最新正文再开弹窗，避免先显示旧内容再跳变。 */

@@ -170,7 +170,7 @@ test('a running legacy agent is upgraded before service actions', async ({
   await expect(page.getByText('无法建立本机会话，请重新连接')).toHaveCount(0);
 });
 
-test('rapid page refreshes merge in-flight requests and keep the nav icon in place', async ({
+test('rapid page refreshes merge in-flight requests and keep the header icon in place', async ({
   page,
 }) => {
   const state = await mock(page);
@@ -281,7 +281,7 @@ test('offline status disables actions and reconnect reloads commands', async ({
 }) => {
   const state = await mock(page);
   state.online = false;
-  // 停掉后台轮询后，状态只靠侧边栏刷新图标取数，用它手动切到离线态
+  // 停掉后台轮询后，状态只靠页面标题右侧的刷新图标取数，用它手动切到离线态
   await page
     .getByRole('button', { name: '刷新当前页面', exact: true })
     .click();

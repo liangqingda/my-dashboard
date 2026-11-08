@@ -11,6 +11,11 @@
    **不得**定义 `.page` 选择器，也不得设置页面级 `padding` / `height`。
 3. 「整页不滚动、滚动只发生在内部子区域」的页面（如英语看板）传 `fill`，高度由组件按
    `calc(100dvh - var(--app-header-height))` 计算，页面不要自己写高度或 `100dvh`。
+4. 标题右侧固定内置两个图标按钮：「刷新当前页面」（只广播 `app:page-refresh` 事件，页面自己
+   `onPageRefresh` 订阅后重新取数）与「全屏查看当前页面」（全屏状态由 `BasicLayout` 的
+   `PageFullscreen` 上下文提供）。**页面不要再自己造这两个按钮**。
+5. 页面自己的操作按钮（如服务页「重启 agent」）通过 `actions` prop 传入，排在上述两个内置
+   按钮之前；按钮组件就近放在该页面目录下（`src/pages/<Page>/<Button>/`）。
 
 ## 新增一个菜单页
 

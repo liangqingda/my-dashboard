@@ -12,13 +12,36 @@
   overflow: hidden;
 }
 
+/* 标题行：标题占满左侧，页面操作与刷新 / 全屏图标靠右对齐 */
 .titleBar {
+  display: flex;
   flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--app-space-md);
 }
 
 .title {
+  flex: 1 1 auto;
+  min-width: 0;
   margin: 0;
   letter-spacing: -0.01em;
+}
+
+.actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 2px;
+}
+
+/* 刷新 / 全屏图标：默认弱化，悬停才用强调色 */
+.iconButton {
+  color: var(--app-ink-faint);
+}
+
+.iconButton:hover {
+  color: var(--app-accent);
 }
 
 .body {

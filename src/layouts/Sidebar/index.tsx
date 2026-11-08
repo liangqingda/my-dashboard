@@ -1,13 +1,6 @@
 import { Link, useLocation } from 'react-router';
-import { ActionIcon, AppShell, NavLink, ScrollArea } from '@mantine/core';
-import {
-  IconLanguage,
-  IconMaximize,
-  IconRefresh,
-  IconServer,
-} from '@tabler/icons-react';
-
-import { requestPageRefresh } from '@/utils/page-refresh';
+import { AppShell, NavLink, ScrollArea } from '@mantine/core';
+import { IconLanguage, IconServer } from '@tabler/icons-react';
 
 import type { NavItem, SidebarProps } from './types';
 
@@ -18,7 +11,7 @@ const navItems: NavItem[] = [
   { key: 'english', label: '英语', to: '/english', icon: IconLanguage },
 ];
 
-const Sidebar = ({ onNavigate, onEnterFullscreen }: SidebarProps) => {
+const Sidebar = ({ onNavigate }: SidebarProps) => {
   const location = useLocation();
 
   return (
@@ -29,49 +22,19 @@ const Sidebar = ({ onNavigate, onEnterFullscreen }: SidebarProps) => {
             const active = location.pathname === to;
 
             return (
-              <div className={styles.item} key={key}>
-                <NavLink
-                  active={active}
-                  aria-current={active ? 'page' : undefined}
-                  className={styles.link}
-                  component={Link}
-                  label={label}
-                  leftSection={<Icon size={16} stroke={1.9} />}
-                  noWrap
-                  onClick={onNavigate}
-                  rightSection={
-                    active ? <span className={styles.actionSlot} /> : undefined
-                  }
-                  to={to}
-                  variant="light"
-                />
-                {active ? (
-                  <div className={styles.actions}>
-                    <ActionIcon
-                      aria-label="刷新当前页面"
-                      className={styles.action}
-                      onClick={requestPageRefresh}
-                      radius="sm"
-                      size="sm"
-                      title="刷新当前页面"
-                      variant="subtle"
-                    >
-                      <IconRefresh size={14} stroke={1.9} />
-                    </ActionIcon>
-                    <ActionIcon
-                      aria-label="全屏查看当前页面"
-                      className={styles.action}
-                      onClick={onEnterFullscreen}
-                      radius="sm"
-                      size="sm"
-                      title="全屏查看当前页面"
-                      variant="subtle"
-                    >
-                      <IconMaximize size={14} stroke={1.9} />
-                    </ActionIcon>
-                  </div>
-                ) : null}
-              </div>
+              <NavLink
+                active={active}
+                aria-current={active ? 'page' : undefined}
+                className={styles.link}
+                component={Link}
+                key={key}
+                label={label}
+                leftSection={<Icon size={16} stroke={1.9} />}
+                noWrap
+                onClick={onNavigate}
+                to={to}
+                variant="light"
+              />
             );
           })}
         </div>
