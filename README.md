@@ -172,7 +172,8 @@ ENGLISH_RECORDS_DIR=/path/to/learn-english pnpm dev
 
 Markdown 弹窗预览统一使用公共组件 `src/components/MarkdownPreviewModal`
 （详见 `CLAUDE.md`）：文档排版、表格与 `<details>` 折叠块、header 标题左侧的上一个 / 下一个、
-`←` / `→` 快捷键，以及弹窗左上角框体之外的标题目录都在组件内；页面只决定相邻文档是谁。
+`←` / `→` 快捷键，弹窗左侧固定的标题目录 sidebar，以及 header 右侧把框体铺满视口（再点或
+Esc 退出）的全屏按钮都在组件内；页面只决定相邻文档是谁。
 
 弹窗 footer 有「编辑」和「关闭」，编辑能力由页面注入（公共组件只给插槽，未定制时点编辑会提示
 用 `.claude/skills/personalize-edit-markdown` 定制）。英语页注入的是块级编辑器（表格可删行 / 加行、格子可改，其余块直接改

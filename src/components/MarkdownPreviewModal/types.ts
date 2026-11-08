@@ -80,7 +80,7 @@ export type PreviewFooterProps = {
   onKeepEditing: () => void;
 };
 
-/** 标题导航的入参 */
+/** 标题目录 sidebar 的入参 */
 export type OutlineNavProps = {
   /** 文档内标题列表 */
   headings: MarkdownOutlineHeading[];
@@ -90,8 +90,6 @@ export type OutlineNavProps = {
   disabled: boolean;
   /** 点击第几条标题 */
   onSelect: (index: number) => void;
-  /** 允许的最大高度（px），不超过弹窗正文区；null 表示还没量到，用样式里的兜底值 */
-  maxHeight: number | null;
 };
 
 /** 标题导航某一层的入参：渲染这一层的节点，展开时递归渲染下一层 */

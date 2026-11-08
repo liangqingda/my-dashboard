@@ -1,4 +1,4 @@
-/* Markdown 预览弹窗：框体、header 与正文排版；标题导航与 footer 的样式在各自目录 */
+/* Markdown 预览弹窗：框体、header 与正文排版；目录 sidebar 与 footer 的样式在各自目录 */
 
 .content {
   --preview-paper: var(--app-surface-subtle);
@@ -7,14 +7,23 @@
   flex-direction: column;
   height: 82dvh;
   max-height: 88dvh;
-  /*
-   * 整体靠右：居中布局下左右外边距之差的一半就是位移量，
-   * 这里净位移约 122px，同时给框体外的标题导航留出空间。
-   */
-  margin-left: 244px;
-  overflow: visible;
+  overflow: hidden;
   border: 1px solid var(--app-line-strong);
   background: var(--preview-paper);
+}
+
+/*
+ * 全屏预览：铺满整个视口，去掉外边距、描边与圆角，
+ * 标题栏与 footer 照旧钉在上下，可读空间交给正文与目录。
+ * 两条类名一起写是为了压过 Mantine 自己的 `.content` 高度与圆角。
+ */
+.content.contentFullscreen {
+  width: 100vw;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
 }
 
 /* header 与正文同底色，只用一条线分隔 */
@@ -60,6 +69,17 @@
   color: var(--app-accent);
 }
 
+/* 全屏 / 退出全屏：挨着关闭按钮，是标题栏最右的一组操作 */
+.fullscreenButton {
+  flex: 0 0 auto;
+  margin-right: 4px;
+  color: var(--app-ink-faint);
+}
+
+.fullscreenButton:hover {
+  color: var(--app-accent);
+}
+
 .fileName {
   flex: 0 1 auto;
   min-width: 0;
@@ -97,6 +117,25 @@
   overflow: hidden;
 }
 
+/*
+ * 工作区：左侧标题目录 + 右侧阅读 / 编辑区。
+ * 两列各自滚动，目录因此固定在自己的那一列里，不随正文滚走。
+ */
+.workspace {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* 阅读 / 编辑区：编辑插槽与正文纵向排在同一列里，共享两份之间剩下的高度 */
+.pane {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
 /* 编辑插槽：撑满正文区，编辑器自己的滚动仍在里面 */
 .editorSlot {
   display: flex;
@@ -119,6 +158,14 @@
   color: var(--app-ink-soft);
   font-size: 0.86rem;
   line-height: 1.85;
+}
+
+/*
+ * 全屏下屏幕可能很宽：正文行宽收到一栏就读得动的宽度并居中，
+ * 只放大可读的纵向空间，不把每行拉成一整屏。
+ */
+.proseWide {
+  padding-inline: max(26px, calc((100% - 1020px) / 2));
 }
 
 .prose h1 {
@@ -294,10 +341,10 @@
   height: auto;
 }
 
-/* 屏幕不够宽时取消靠右位移，标题导航改到弹窗上方（见 OutlineNav） */
-@media (max-width: 1340px) {
-  .content {
-    margin-left: 0;
+/* 窄屏：目录挪到正文上方成一条横向占位，正文占满剩余高度（见 OutlineNav 的同一断点） */
+@media (max-width: 720px) {
+  .workspace {
+    flex-direction: column;
   }
 }
 

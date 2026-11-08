@@ -1,6 +1,7 @@
 /**
- * 弹窗左上角、浮在框体之外的标题导航：点击某条标题滚动到正文对应位置，
+ * 弹窗左侧固定的标题目录 sidebar：点击某条标题滚动到正文对应位置，
  * 滚动正文时反过来高亮当前所在的那一节。
+ * 目录自己占一列、自身滚动，不跟正文一起滚走，也不需要外部拿正文高度来封顶。
  * 有子标题的节点在标题右侧带折叠图标，默认展开第一个节点和它下面的第一个子级；
  * 点标题只会「展开」不会「收起」，收起只能由右侧图标触发。
  */
@@ -60,7 +61,6 @@ const OutlineNav = ({
   headings,
   disabled,
   onSelect,
-  maxHeight,
 }: OutlineNavProps) => {
   const tree = useMemo(() => buildMarkdownOutlineTree(headings), [headings]);
   /** 默认展开集合很小，但要在下面的派生里当基准，算一次缓存住 */
@@ -139,8 +139,8 @@ const OutlineNav = ({
     <div
       aria-disabled={disabled}
       className={cx(styles.nav, disabled && styles.disabled)}
-      style={maxHeight === null ? undefined : { maxHeight }}
     >
+      <span className={styles.label}>目录</span>
       <OutlineNavList
         activeIndex={activeIndex}
         className={styles.list}

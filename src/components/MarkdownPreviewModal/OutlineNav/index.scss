@@ -1,25 +1,26 @@
-/* 标题导航：定位在弹窗框体之外，不参与正文布局；单条的样式在 Item 目录 */
+/* 标题目录：弹窗左侧固定的 sidebar，占一列、自身滚动；单条的样式在 Item 目录 */
 
 /*
- * 弹窗左上角、框体之外的标题导航。
- * 右侧内边距只留 3px：目录自身要滚动，滚动条再往里缩就会看着像悬在中间。
- * 高度由组件按正文区（body − footer）的实测值回写，这里的 max-height 只是还没量到时的兜底。
+ * 目录列：宽度固定、高度跟着工作区走（父级 flex 给的），
+ * 只用右侧一条细线与正文分开——目录是阅读辅助，不做成带阴影的浮层。
  */
 .nav {
-  position: absolute;
-  top: calc(100% + 10px);
-  left: -220px;
-  z-index: 2;
   display: flex;
+  flex: 0 0 208px;
   flex-direction: column;
-  gap: 6px;
-  width: 208px;
-  max-height: calc(82dvh - 80px);
-  padding: 8px 3px 8px 8px;
-  border: 1px solid var(--app-line);
-  border-radius: 2px;
-  background: var(--preview-paper);
-  box-shadow: 0 8px 24px rgb(23 37 34 / 10%);
+  gap: 8px;
+  min-height: 0;
+  padding: 14px 4px 14px 14px;
+  border-right: 1px solid var(--app-line);
+  background: var(--app-surface);
+}
+
+/* 列的标题：说明这一列是什么，不参与跳转 */
+.label {
+  flex: 0 0 auto;
+  padding-left: 5px;
+  color: var(--app-ink-faint);
+  font-size: 0.68rem;
 }
 
 /*
@@ -60,11 +61,16 @@
   opacity: 0.55;
 }
 
-/* 屏幕不够宽时，标题导航改到弹窗上方，仍在弹窗之外 */
-@media (max-width: 1340px) {
+/*
+ * 窄屏：父级 .workspace 在同一断点改成纵向，目录挪到正文上方的一条横带，
+ * 最多占三成高度，剩下的高度留给正文。
+ */
+@media (max-width: 720px) {
   .nav {
-    left: 6px;
-    width: min(220px, 82vw);
-    max-height: 46dvh;
+    flex: 0 0 auto;
+    max-height: 32dvh;
+    padding: 10px 12px 8px;
+    border-right: 0;
+    border-bottom: 1px solid var(--app-line);
   }
 }
