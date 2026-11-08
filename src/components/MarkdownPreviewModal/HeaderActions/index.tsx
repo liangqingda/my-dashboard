@@ -1,8 +1,9 @@
 /**
  * 预览弹窗 header 右侧的文档操作与状态提示。
  *
- * 弹窗没有 footer：编辑 / 预览 / 保存 / 关闭与放弃改动的二次确认全部收进标题栏，
- * 关闭按钮仍是 Modal 自带的那一个。按钮只留图标，含义交给 tooltip 与 aria-label；
+ * 弹窗没有 footer：编辑 / 预览 / 保存 / 放弃改动与状态提示全部收进标题栏，
+ * 关闭按钮仍是 Modal 自带的那一个——但编辑态（含草稿预览）它整条关闭路径都不在，
+ * 退出编辑只能走这里的返回箭头。按钮只留图标，含义交给 tooltip 与 aria-label；
  * 保存成功、保存失败、未保存这类状态放在图标左侧的一行小字上，超长时省略并弹完整内容。
  */
 
@@ -76,7 +77,7 @@ const PreviewHeaderActions = ({
         />
       ) : null}
 
-      {/* 关闭前的二次确认：只在「继续编辑」与「放弃改动并关闭」之间二选一 */}
+      {/* 退出编辑前的二次确认：只在「继续编辑」与「放弃改动并退出编辑」之间二选一 */}
       {askDiscard ? (
         <>
           <HeaderIconAction
@@ -87,7 +88,7 @@ const PreviewHeaderActions = ({
             <IconArrowBackUp size={iconSize} stroke={ICON_STROKE} />
           </HeaderIconAction>
           <HeaderIconAction
-            label="放弃改动并关闭"
+            label="放弃改动并退出编辑"
             onClick={onDiscard}
             size={actionSize}
             tone="danger"

@@ -18,7 +18,7 @@
   color: var(--app-accent-strong);
 }
 
-/* 危险操作（放弃改动并关闭）：只描红，不做实底 */
+/* 危险操作（放弃改动并退出编辑）：只描红，不做实底 */
 .danger {
   color: var(--app-status-danger);
 }

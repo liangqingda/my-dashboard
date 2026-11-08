@@ -79,13 +79,13 @@ export type PreviewHeaderActionsProps = {
   savedAt: string | null;
   /** 「已保存」后追加的说明 */
   saveNotice: string | null;
-  /** 是否在等用户确认放弃改动 */
+  /** 是否在等用户确认放弃改动（退出编辑前） */
   askDiscard: boolean;
   /** 调用方是否提供了编辑能力 */
   canEdit: boolean;
   /** 进入编辑态 */
   onStartEdit: () => void;
-  /** 退出编辑态 */
+  /** 退出编辑态（不写回）；有未保存改动时弹窗先转入确认，不会直接丢草稿 */
   onCancelEdit: () => void;
   /** 编辑态下预览草稿的渲染效果 */
   onStartPreview: () => void;
@@ -93,7 +93,7 @@ export type PreviewHeaderActionsProps = {
   onStopPreview: () => void;
   /** 保存草稿 */
   onSaveEdit: () => void;
-  /** 确认放弃并关闭 */
+  /** 确认放弃改动并退出编辑 */
   onDiscard: () => void;
   /** 取消放弃，继续编辑 */
   onKeepEditing: () => void;
@@ -163,8 +163,6 @@ export type NoteEditingParams = {
   hasEditor: boolean;
   /** 保存落盘，由调用方实现 */
   onSave?: (markdown: string) => Promise<{ notice?: string }>;
-  /** 真正关闭弹窗 */
-  onClose: () => void;
 };
 
 /** 编辑态状态机暴露的状态与操作 */
@@ -185,7 +183,7 @@ export type NoteEditingState = {
   savedAt: string | null;
   /** 提示后追加的说明，如自动提交失败原因 */
   saveNotice: string | null;
-  /** 关闭时是否在等用户确认放弃改动 */
+  /** 退出编辑前是否在等用户确认放弃改动 */
   askDiscard: boolean;
   /** 编辑器回传草稿 */
   setDraft: (markdown: string) => void;
@@ -199,10 +197,10 @@ export type NoteEditingState = {
   stopPreview: () => void;
   /** 保存草稿 */
   save: () => Promise<void>;
-  /** 关闭入口：有未保存改动时先确认 */
-  requestClose: () => void;
-  /** 确认放弃并关闭 */
-  discardAndClose: () => void;
+  /** 退出编辑入口：有未保存改动时先在 header 里确认 */
+  requestExitEditing: () => void;
+  /** 确认放弃改动并退出编辑（弹窗仍开着） */
+  discardAndExitEditing: () => void;
   /** 取消放弃，继续编辑 */
   keepEditing: () => void;
 };

@@ -96,19 +96,13 @@ const MarkdownPreviewModal = ({
   const editing = useNoteEditing({
     hasEditor: Boolean(Editor),
     markdown,
-    onClose: handleClose,
     onSave,
   });
 
-  /** 进入 / 退出编辑时清掉目录激活项：新的一轮不该还亮着上一轮跳到的位置 */
+  /** 进入编辑时清掉目录激活项：新的一轮不该还亮着上一轮跳到的位置 */
   const startEditing = () => {
     setEditorActiveIndex(-1);
     editing.startEditing();
-  };
-
-  const stopEditing = () => {
-    setEditorActiveIndex(-1);
-    editing.stopEditing();
   };
 
   /** 编辑态里点了「预览」：正文换成草稿的渲染结果，编辑器还挂在原地 */
@@ -190,7 +184,11 @@ const MarkdownPreviewModal = ({
     headings[index].scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  // 编辑态（含草稿预览）收起关闭与全屏按钮：退出由 header 的返回箭头承担，全屏只会把表单抻大
+  /*
+   * 编辑态（含草稿预览）彻底关不掉：关闭按钮、Esc、点遮罩三条路径全部收掉。
+   * 这时唯一出口是 header 的返回箭头——草稿预览时回编辑器，编辑态时退出编辑（有未保存改动先确认），
+   * 退出编辑后关闭按钮才重新出现，也就是「先退出再关」。全屏也一并收掉：这时要看的是块编辑器。
+   */
   return (
     <Modal
       centered
@@ -201,9 +199,10 @@ const MarkdownPreviewModal = ({
         title: styles.title,
       }}
       closeButtonProps={{ 'aria-label': '关闭预览' }}
-      closeOnEscape={!fullscreen}
+      closeOnClickOutside={!editing.editing}
+      closeOnEscape={!fullscreen && !editing.editing}
       fullScreen={fullscreen}
-      onClose={editing.requestClose}
+      onClose={handleClose}
       opened={opened}
       overlayProps={{ backgroundOpacity: 0.5, blur: 2 }}
       padding={0}
@@ -278,8 +277,8 @@ const MarkdownPreviewModal = ({
             askDiscard={editing.askDiscard}
             canEdit={Boolean(onSave)}
             editing={editing.editing}
-            onCancelEdit={stopEditing}
-            onDiscard={editing.discardAndClose}
+            onCancelEdit={editing.requestExitEditing}
+            onDiscard={editing.discardAndExitEditing}
             onKeepEditing={editing.keepEditing}
             onSaveEdit={() => {
               void editing.save();
