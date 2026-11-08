@@ -1,5 +1,5 @@
 /**
- * 预览弹窗 footer：编辑 / 保存 / 关闭，以及「已保存」「未保存」与放弃改动的二次确认。
+ * 预览弹窗 footer：编辑 / 预览 / 保存 / 关闭，以及「已保存」「未保存」与放弃改动的二次确认。
  */
 
 import { cx } from '@/utils/cx';
@@ -10,6 +10,7 @@ import styles from './index.scss';
 
 const PreviewFooter = ({
   editing,
+  previewing,
   saving,
   saveError,
   savedAt,
@@ -18,6 +19,8 @@ const PreviewFooter = ({
   canEdit,
   onStartEdit,
   onCancelEdit,
+  onStartPreview,
+  onStopPreview,
   onSaveEdit,
   onRequestClose,
   onDiscard,
@@ -55,12 +58,41 @@ const PreviewFooter = ({
           </button>
         </>
       ) : null}
-      {!askDiscard && editing ? (
+      {!askDiscard && editing && !previewing ? (
         <>
           <button
             className={styles.footerButton}
             disabled={saving}
             onClick={onCancelEdit}
+            type="button"
+          >
+            取消
+          </button>
+          <button
+            className={styles.footerButton}
+            disabled={saving}
+            onClick={onStartPreview}
+            type="button"
+          >
+            预览
+          </button>
+          <button
+            className={cx(styles.footerButton, styles.footerButtonPrimary)}
+            disabled={saving}
+            onClick={onSaveEdit}
+            type="button"
+          >
+            {saving ? '保存中…' : '保存'}
+          </button>
+        </>
+      ) : null}
+      {/* 草稿预览态：只剩「取消」「保存」；取消回到编辑模式，草稿不丢 */}
+      {!askDiscard && editing && previewing ? (
+        <>
+          <button
+            className={styles.footerButton}
+            disabled={saving}
+            onClick={onStopPreview}
             type="button"
           >
             取消

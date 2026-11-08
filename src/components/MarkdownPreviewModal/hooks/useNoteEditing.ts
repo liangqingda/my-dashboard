@@ -20,6 +20,8 @@ export function useNoteEditing({
   onClose,
 }: NoteEditingParams): NoteEditingState {
   const [draft, setDraftState] = useState<string | null>(null);
+  /** 编辑态下是否切到「预览草稿」：编辑器留在原地，只是换成只读渲染 */
+  const [previewing, setPreviewing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<string | null>(null);
@@ -54,6 +56,7 @@ export function useNoteEditing({
   const closeAll = useCallback(() => {
     clearSavedTimer();
     setDraftState(null);
+    setPreviewing(false);
     setSaveError(null);
     setSavedAt(null);
     setSaveNotice(null);
@@ -81,13 +84,25 @@ export function useNoteEditing({
     setSaveError(null);
     setSavedAt(null);
     setSaveNotice(null);
+    setPreviewing(false);
     setDraftState(markdown);
   };
 
   /** 退出编辑态，什么都不写回 */
   const stopEditing = () => {
     setDraftState(null);
+    setPreviewing(false);
     setSaveError(null);
+  };
+
+  /** 编辑态内看草稿的渲染效果：减为只读，草稿一个字都不动 */
+  const startPreview = () => {
+    setPreviewing(true);
+  };
+
+  /** 草稿预览态取消，回到编辑器继续改 */
+  const stopPreview = () => {
+    setPreviewing(false);
   };
 
   /** 保存草稿；成功后回到预览态，正文等调用方刷新 */
@@ -106,6 +121,7 @@ export function useNoteEditing({
 
       // 保存期间用户又改了内容，就别把他的新输入一起清掉
       setDraftState((current) => (current === savedDraft ? null : current));
+      setPreviewing(false);
       setAskDiscard(false);
       setSaveNotice(result.notice ?? null);
       showSavedHint(formatClock(new Date()));
@@ -129,6 +145,7 @@ export function useNoteEditing({
 
   return {
     editing,
+    previewing,
     dirty,
     draft,
     saving,
@@ -139,9 +156,15 @@ export function useNoteEditing({
     setDraft,
     startEditing,
     stopEditing,
+    startPreview,
+    stopPreview,
     save,
     requestClose,
     discardAndClose: closeAll,
-    keepEditing: () => setAskDiscard(false),
+    /** 二次确认里选「继续编辑」：回到编辑器，不再停在草稿预览 */
+    keepEditing: () => {
+      setAskDiscard(false);
+      setPreviewing(false);
+    },
   };
 }

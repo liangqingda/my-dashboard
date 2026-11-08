@@ -97,6 +97,18 @@
   overflow: hidden;
 }
 
+/* 编辑插槽：撑满正文区，编辑器自己的滚动仍在里面 */
+.editorSlot {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* 预览草稿时只隐藏、不卸载：草稿与编辑器的内部状态都留在原地 */
+.editorSlotHidden {
+  display: none;
+}
+
 /* 文档排版：表格、折叠讲解、引用都按笔记里的真实用法设计 */
 .prose {
   flex: 1 1 auto;

@@ -48,6 +48,8 @@ export type MarkdownPreviewModalProps = {
 export type PreviewFooterProps = {
   /** 是否处于编辑态 */
   editing: boolean;
+  /** 编辑态下是否正在预览草稿（footer 只留「取消」「保存」） */
+  previewing: boolean;
   /** 是否正在保存 */
   saving: boolean;
   /** 保存失败的原因 */
@@ -64,6 +66,10 @@ export type PreviewFooterProps = {
   onStartEdit: () => void;
   /** 退出编辑态 */
   onCancelEdit: () => void;
+  /** 编辑态下预览草稿的渲染效果 */
+  onStartPreview: () => void;
+  /** 草稿预览态下取消，回到编辑态 */
+  onStopPreview: () => void;
   /** 保存草稿 */
   onSaveEdit: () => void;
   /** 关闭入口（可能有二次确认） */
@@ -146,6 +152,8 @@ export type NoteEditingParams = {
 export type NoteEditingState = {
   /** 是否处于编辑态 */
   editing: boolean;
+  /** 编辑态下是否正在预览草稿；false 时显示编辑器 */
+  previewing: boolean;
   /** 草稿与正文不一致 */
   dirty: boolean;
   /** 草稿；null 表示没在编辑 */
@@ -166,6 +174,10 @@ export type NoteEditingState = {
   startEditing: () => void;
   /** 退出编辑态（不写回） */
   stopEditing: () => void;
+  /** 预览草稿的渲染效果（编辑态内，不丢草稿） */
+  startPreview: () => void;
+  /** 从草稿预览态回到编辑态 */
+  stopPreview: () => void;
   /** 保存草稿 */
   save: () => Promise<void>;
   /** 关闭入口：有未保存改动时先确认 */

@@ -4,7 +4,7 @@
  * 全站所有 Markdown 弹窗预览都必须使用这个组件，不要各自拼装 Modal 与渲染器：
  * 它统一了文档排版、上一篇 / 下一篇导航（header 标题左侧按钮 + ← / → 快捷键）、
  * 弹窗左上角悬浮在框体之外的标题导航（文档内 h1–h4 目录，滚动正文时跟随高亮当前小节），以及 footer 的
- * 编辑 / 关闭操作。组件只负责编辑态与保存流程，不知道文档结构和文件落在哪里：
+ * 编辑 / 预览 / 保存 / 关闭操作。组件只负责编辑态与保存流程，不知道文档结构和文件落在哪里：
  * 具体怎么编辑由调用方通过 `Editor` 插槽传入，没有定制编辑器时给出定制提示。
  *
  * 这里的职责只有 Modal 骨架与装配：
@@ -24,6 +24,7 @@ import {
 } from '@tabler/icons-react';
 import Markdown from 'react-markdown';
 
+import { cx } from '@/utils/cx';
 import { getErrorMessage } from '@/utils/error';
 import { extractMarkdownOutline } from '@/utils/markdown-outline';
 
@@ -67,11 +68,18 @@ const MarkdownPreviewModal = ({
     onClose,
     onSave,
   });
+  /** 编辑态里点了「预览」：正文换成草稿的渲染结果，编辑器还挂在原地 */
+  const showingDraftPreview = editing.editing && editing.previewing;
+  /** 正文区当前要渲染的内容：预览草稿时用草稿，其余用正文 */
+  const renderedMarkdown =
+    showingDraftPreview && editing.draft !== null ? editing.draft : markdown;
   /** 标题只在正文变化时重算，弹窗内部的其它状态变化不必重扫全文 */
   const outline = useMemo(
-    () => extractMarkdownOutline(markdown),
-    [markdown],
+    () => extractMarkdownOutline(renderedMarkdown),
+    [renderedMarkdown],
   );
+  /** 正文渲染出来后才能测量 / 跟踪标题：编辑态只有草稿预览时满足 */
+  const navigable = opened && (!editing.editing || showingDraftPreview);
 
   useArrowNavigation({
     enabled: opened && !editing.editing,
@@ -80,15 +88,12 @@ const MarkdownPreviewModal = ({
   });
 
   /** 标题导航的高度封顶到正文区（body − footer），不越过 footer */
-  const outlineMaxHeight = useOutlineMaxHeight(
-    bodyRef,
-    opened && !editing.editing,
-  );
+  const outlineMaxHeight = useOutlineMaxHeight(bodyRef, navigable);
 
   /** 滚动正文时跟踪当前小节，供标题导航高亮 */
   const activeIndex = useActiveHeadingIndex({
     containerRef: bodyRef,
-    enabled: opened && !editing.editing,
+    enabled: navigable,
     headings: outline,
   });
 
@@ -115,7 +120,7 @@ const MarkdownPreviewModal = ({
   const scrollToHeading = (index: number) => {
     const body = bodyRef.current;
 
-    if (editing.editing || !body) {
+    if (!navigable || !body) {
       return;
     }
 
@@ -148,7 +153,7 @@ const MarkdownPreviewModal = ({
         <div className={styles.titleRow}>
           <OutlineNav
             activeIndex={activeIndex}
-            disabled={editing.editing}
+            disabled={!navigable}
             headings={outline}
             maxHeight={outlineMaxHeight}
             onSelect={scrollToHeading}
@@ -198,18 +203,31 @@ const MarkdownPreviewModal = ({
       }
       transitionProps={{ duration: 140, transition: 'fade' }}
     >
+      {/*
+       * 编辑插槽在预览草稿时只隐藏、不卸载：草稿、撤销栈和光标位置都留在编辑器里，
+       * 点「取消」回到编辑模式时接着改，不用把草稿重新解析一遍。
+       */}
       {editing.editing && Editor ? (
-        <Editor markdown={markdown} onChange={editing.setDraft} />
-      ) : (
+        <div
+          className={cx(
+            styles.editorSlot,
+            showingDraftPreview && styles.editorSlotHidden,
+          )}
+        >
+          <Editor markdown={markdown} onChange={editing.setDraft} />
+        </div>
+      ) : null}
+
+      {!editing.editing || showingDraftPreview ? (
         <article className={styles.prose} ref={bodyRef}>
           <Markdown
             rehypePlugins={REHYPE_PLUGINS}
             remarkPlugins={REMARK_PLUGINS}
           >
-            {markdown}
+            {renderedMarkdown}
           </Markdown>
         </article>
-      )}
+      ) : null}
 
       <PreviewFooter
         askDiscard={editing.askDiscard}
@@ -223,6 +241,9 @@ const MarkdownPreviewModal = ({
           void editing.save();
         }}
         onStartEdit={editing.startEditing}
+        onStartPreview={editing.startPreview}
+        onStopPreview={editing.stopPreview}
+        previewing={editing.previewing}
         saveError={editing.saveError}
         saveNotice={editing.saveNotice}
         savedAt={editing.savedAt}
