@@ -121,7 +121,6 @@
 
 .prose h2 {
   margin: 26px 0 10px;
-  border-top: 1px solid var(--app-line);
   color: var(--app-ink);
   font-family: var(--app-serif);
   font-size: 1.02rem;
@@ -130,10 +129,9 @@
   scroll-margin-top: 12px;
 }
 
-/* 第一个 h2 直接接在标题下面：不收上 margin，也不需要上分隔线 */
+/* 第一个 h2 直接接在标题下面，不收上 margin */
 .prose h2:first-of-type {
   margin-top: 0;
-  border-top: 0;
 }
 
 .prose h3 {
