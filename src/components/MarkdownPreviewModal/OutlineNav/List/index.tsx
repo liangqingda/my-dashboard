@@ -14,6 +14,7 @@ import styles from './index.scss';
 const TOP_DEPTH = 1;
 
 const OutlineNavList = ({
+  activeIndex,
   className,
   depth = TOP_DEPTH,
   disabled,
@@ -31,6 +32,7 @@ const OutlineNavList = ({
       return (
         <li key={node.heading.key}>
           <OutlineNavItem
+            active={node.index === activeIndex}
             disabled={disabled}
             expanded={isExpanded}
             hasChildren={hasChildren}
@@ -48,6 +50,7 @@ const OutlineNavList = ({
           />
           {isExpanded ? (
             <OutlineNavList
+              activeIndex={activeIndex}
               depth={depth + 1}
               disabled={disabled}
               expanded={expanded}

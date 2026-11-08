@@ -15,6 +15,7 @@ import { LEVEL_CLASS } from './constants';
 import styles from './index.scss';
 
 const OutlineNavItem = ({
+  active,
   disabled,
   expanded,
   hasChildren,
@@ -23,7 +24,7 @@ const OutlineNavItem = ({
   onToggle,
   text,
 }: OutlineNavItemProps) => (
-  <div className={cx(styles.row, LEVEL_CLASS[level])}>
+  <div className={cx(styles.row, LEVEL_CLASS[level], active && styles.active)}>
     <TruncatedText
       className={styles.item}
       disabled={disabled}

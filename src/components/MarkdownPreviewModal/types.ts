@@ -2,7 +2,7 @@
  * Markdown 预览弹窗的类型契约：调用方传什么、编辑器插槽收什么。
  */
 
-import type { ComponentType } from 'react';
+import type { ComponentType, RefObject } from 'react';
 
 import type { MarkdownOutlineHeading, MarkdownOutlineNode } from '@/utils/markdown-outline';
 
@@ -78,6 +78,8 @@ export type PreviewFooterProps = {
 export type OutlineNavProps = {
   /** 文档内标题列表 */
   headings: MarkdownOutlineHeading[];
+  /** 当前小节是第几条标题（-1 表示还判不出）；用来高亮并展开所在分支 */
+  activeIndex: number;
   /** 编辑态下置灰不可点 */
   disabled: boolean;
   /** 点击第几条标题 */
@@ -90,6 +92,8 @@ export type OutlineNavProps = {
 export type OutlineNavListProps = {
   /** 这一层的节点 */
   nodes: MarkdownOutlineNode[];
+  /** 当前小节是第几条标题（-1 表示还判不出） */
+  activeIndex: number;
   /** 编辑态下禁用 */
   disabled: boolean;
   /** 已展开的节点 key 集合 */
@@ -108,6 +112,8 @@ export type OutlineNavListProps = {
 
 /** 标题导航单条的入参 */
 export type OutlineNavItemProps = {
+  /** 是否就是当前所在的这一节 */
+  active: boolean;
   /** 编辑态下禁用跳转 */
   disabled: boolean;
   /** 有子标题：标题右侧显示折叠图标 */
@@ -178,4 +184,14 @@ export type ArrowNavigationParams = {
   onPrevious?: (() => void) | null;
   /** 下一篇 */
   onNext?: (() => void) | null;
+};
+
+/** 滚动定位当前小节的入参 */
+export type ActiveHeadingParams = {
+  /** 正文区（同时也是滚动容器）的 ref */
+  containerRef: RefObject<HTMLElement | null>;
+  /** 是否启用（弹窗打开且不在编辑态） */
+  enabled: boolean;
+  /** 文档内标题列表：数量决定扫几个节点，引用变化表示换了一篇文档，需要重判 */
+  headings: MarkdownOutlineHeading[];
 };

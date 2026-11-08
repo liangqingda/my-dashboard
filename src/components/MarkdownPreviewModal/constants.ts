@@ -25,3 +25,6 @@ export const OUTLINE_TOP_GAP = 10;
 
 /** 标题导航底部留白（px）：别贴着 footer */
 export const OUTLINE_BOTTOM_GAP = 8;
+
+/** 判定「已滚到某个标题」的参考线：正文区顶边往下 16px 内的标题算作当前小节 */
+export const ACTIVE_HEADING_OFFSET = 16;

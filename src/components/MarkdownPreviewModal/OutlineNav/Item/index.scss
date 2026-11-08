@@ -111,3 +111,16 @@
   font-size: 0.68rem;
   font-weight: 400;
 }
+
+/*
+ * 当前所在小节：底色 + 左侧主色标线，颜色统一提到主色，
+ * 和 hover 那种「临时掠过」的浅底区分开。放在层级类之后，靠出现顺序压过 .level1–4 的颜色。
+ */
+.active {
+  color: var(--app-accent);
+}
+
+.active .item {
+  background: var(--app-accent-soft);
+  box-shadow: inset 2px 0 0 var(--app-accent);
+}

@@ -3,7 +3,7 @@
  *
  * 全站所有 Markdown 弹窗预览都必须使用这个组件，不要各自拼装 Modal 与渲染器：
  * 它统一了文档排版、上一篇 / 下一篇导航（header 标题左侧按钮 + ← / → 快捷键）、
- * 弹窗左上角悬浮在框体之外的标题导航（文档内 h1–h4 目录），以及 footer 的
+ * 弹窗左上角悬浮在框体之外的标题导航（文档内 h1–h4 目录，滚动正文时跟随高亮当前小节），以及 footer 的
  * 编辑 / 关闭操作。组件只负责编辑态与保存流程，不知道文档结构和文件落在哪里：
  * 具体怎么编辑由调用方通过 `Editor` 插槽传入，没有定制编辑器时给出定制提示。
  *
@@ -35,6 +35,7 @@ import {
   REHYPE_PLUGINS,
   REMARK_PLUGINS,
 } from './constants';
+import { useActiveHeadingIndex } from './hooks/useActiveHeadingIndex';
 import { useArrowNavigation } from './hooks/useArrowNavigation';
 import { useNoteEditing } from './hooks/useNoteEditing';
 import { useOutlineMaxHeight } from './hooks/useOutlineMaxHeight';
@@ -83,6 +84,13 @@ const MarkdownPreviewModal = ({
     bodyRef,
     opened && !editing.editing,
   );
+
+  /** 滚动正文时跟踪当前小节，供标题导航高亮 */
+  const activeIndex = useActiveHeadingIndex({
+    containerRef: bodyRef,
+    enabled: opened && !editing.editing,
+    headings: outline,
+  });
 
   /** 重新取一次最新正文：失败时给出可见提示（不静默吞掉），并收起 loading */
   const handleRefresh = () => {
@@ -139,6 +147,7 @@ const MarkdownPreviewModal = ({
       title={
         <div className={styles.titleRow}>
           <OutlineNav
+            activeIndex={activeIndex}
             disabled={editing.editing}
             headings={outline}
             maxHeight={outlineMaxHeight}
