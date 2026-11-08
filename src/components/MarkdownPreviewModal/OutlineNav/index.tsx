@@ -6,6 +6,8 @@ import { cx } from '@/utils/cx';
 
 import type { OutlineNavProps } from '../types';
 
+import OutlineNavItem from './Item';
+
 import styles from './index.scss';
 
 /** 只有一个标题时没有导航价值，直接不渲染 */
@@ -22,15 +24,12 @@ const OutlineNav = ({ headings, disabled, onSelect }: OutlineNavProps) => {
       <ul className={styles.list}>
         {headings.map((heading, index) => (
           <li key={heading.key}>
-            <button
-              className={styles.item}
-              data-level={heading.level}
+            <OutlineNavItem
               disabled={disabled}
-              onClick={() => onSelect(index)}
-              type="button"
-            >
-              {heading.text}
-            </button>
+              level={heading.level}
+              onSelect={() => onSelect(index)}
+              text={heading.text}
+            />
           </li>
         ))}
       </ul>

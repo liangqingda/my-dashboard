@@ -84,6 +84,18 @@ export type OutlineNavProps = {
   onSelect: (index: number) => void;
 };
 
+/** 标题导航单条的入参 */
+export type OutlineNavItemProps = {
+  /** 编辑态下禁用跳转 */
+  disabled: boolean;
+  /** 标题层级 1–4，决定缩进与字号 */
+  level: MarkdownOutlineHeading['level'];
+  /** 点击这一条时跳转 */
+  onSelect: () => void;
+  /** 标题纯文本；被省略号截断时用 tip 展示完整内容 */
+  text: string;
+};
+
 /** 编辑态状态机的入参 */
 export type NoteEditingParams = {
   /** 当前正文；用来判断草稿是否有改动 */
