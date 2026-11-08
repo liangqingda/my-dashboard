@@ -12,6 +12,18 @@
   overflow: hidden;
 }
 
+/* 全屏：只把页面根元素铺满视口（覆盖顶栏与侧栏），换来更大的展示空间；
+   内部结构与内容不换一套，标题行、刷新 / 全屏按钮仍在原位，高度基准同步归零 */
+.fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: var(--app-bg);
+  --app-header-height: 0px;
+}
+
 /* 标题行：标题占满左侧，页面操作与刷新 / 全屏图标靠右对齐 */
 .titleBar {
   display: flex;
