@@ -2,8 +2,8 @@
  * 弹窗左侧固定的标题目录 sidebar：点击某条标题滚动到正文对应位置，
  * 滚动正文时反过来高亮当前所在的那一节。
  * 目录自己占一列、自身滚动，不跟正文一起滚走，也不需要外部拿正文高度来封顶。
- * 有子标题的节点在标题右侧带折叠图标，默认展开第一个节点和它下面的第一个子级；
- * 点标题只会「展开」不会「收起」，收起只能由右侧图标触发。
+ * 有子标题的节点在标题右侧带折叠图标：常规只展开第一个节点和它下面的第一个子级，
+ * 全屏预览时默认全部展开（列也放宽）；点标题只会「展开」不会「收起」，收起只能由右侧图标触发。
  */
 
 import { useMemo, useState } from 'react';
@@ -44,13 +44,35 @@ const defaultExpandedKeys = (
 };
 
 /**
- * 用户对展开态做过的手动改动：`base` 记录这份表属于哪一棵树（也就是哪一篇文档）。
- * 文档换了（树换了引用）就当作没动过，不必用 effect 去重置状态——
+ * 全屏预览时的基准：整棵树全部展开。
+ * 全屏是为了看清整篇的脉络，逐节点点开太慢，所以默认全开；用户仍可逐个收起。
+ */
+const allExpandedKeys = (nodes: MarkdownOutlineNode[]): ReadonlySet<string> => {
+  const keys = new Set<string>();
+
+  const walk = (level: MarkdownOutlineNode[]) => {
+    for (const node of level) {
+      keys.add(node.heading.key);
+      walk(node.children);
+    }
+  };
+
+  walk(nodes);
+
+  return keys;
+};
+
+/**
+ * 用户对展开态做过的手动改动：`base` 记录这份表属于哪一棵树（也就是哪一篇文档），
+ * `fullscreen` 记录它属于哪一种默认展开策略（常规两级 / 全屏全展开）。
+ * 树或策略换了就当作没动过，不必用 effect 去重置状态——
  * 节点 key 带标题文本，不清掉会漏出上一篇的展开态。
  */
 type ExpansionState = {
   /** 这份覆写表对应的树 */
   base: MarkdownOutlineNode[];
+  /** 这份覆写表对应的默认展开策略 */
+  fullscreen: boolean;
   /** 显式改过的节点：true 展开、false 收起；没记录的走默认值 + 当前小节祖先链 */
   overrides: ReadonlyMap<string, boolean>;
 };
@@ -60,13 +82,18 @@ const OutlineNav = ({
   activeIndex,
   headings,
   disabled,
+  fullscreen,
   onSelect,
 }: OutlineNavProps) => {
   const tree = useMemo(() => buildMarkdownOutlineTree(headings), [headings]);
-  /** 默认展开集合很小，但要在下面的派生里当基准，算一次缓存住 */
-  const defaultExpanded = useMemo(() => defaultExpandedKeys(tree), [tree]);
+  /** 默认展开集合要在下面的派生里当基准，算一次缓存住：全屏全开，常规只开前两层 */
+  const defaultExpanded = useMemo(
+    () => (fullscreen ? allExpandedKeys(tree) : defaultExpandedKeys(tree)),
+    [fullscreen, tree],
+  );
   const [expansion, setExpansion] = useState<ExpansionState>(() => ({
     base: tree,
+    fullscreen,
     overrides: EMPTY_OVERRIDES,
   }));
 
@@ -83,8 +110,9 @@ const OutlineNav = ({
    * 用户显式收起的节点不会被这条规则重新掰开——那是用户的决定，要一直保留到他自己再展开。
    */
   const expanded = useMemo(() => {
-    const overrides =
-      expansion.base === tree ? expansion.overrides : EMPTY_OVERRIDES;
+    const sameDocument =
+      expansion.base === tree && expansion.fullscreen === fullscreen;
+    const overrides = sameDocument ? expansion.overrides : EMPTY_OVERRIDES;
     const next = new Set(defaultExpanded);
 
     overrides.forEach((flag, key) => {
@@ -102,16 +130,18 @@ const OutlineNav = ({
     }
 
     return next;
-  }, [activePath, defaultExpanded, expansion, tree]);
+  }, [activePath, defaultExpanded, expansion, fullscreen, tree]);
 
   if (headings.length <= 1) {
     return null;
   }
 
-  /** 记一条显式改动；`base` 换了（换文档）就丢掉上一篇的记录 */
+  /** 记一条显式改动；换文档或换展开策略（进出全屏）就丢掉上一份记录 */
   const setOverride = (key: string, flag: boolean) => {
     setExpansion((current) => {
-      const base = current.base === tree ? current.overrides : EMPTY_OVERRIDES;
+      const sameDocument =
+        current.base === tree && current.fullscreen === fullscreen;
+      const base = sameDocument ? current.overrides : EMPTY_OVERRIDES;
 
       if (base.get(key) === flag) {
         return current;
@@ -121,7 +151,7 @@ const OutlineNav = ({
 
       next.set(key, flag);
 
-      return { base: tree, overrides: next };
+      return { base: tree, fullscreen, overrides: next };
     });
   };
 
@@ -138,7 +168,11 @@ const OutlineNav = ({
   return (
     <div
       aria-disabled={disabled}
-      className={cx(styles.nav, disabled && styles.disabled)}
+      className={cx(
+        styles.nav,
+        fullscreen && styles.navFullscreen,
+        disabled && styles.disabled,
+      )}
     >
       <span className={styles.label}>目录</span>
       <OutlineNavList

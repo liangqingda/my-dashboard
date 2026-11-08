@@ -6,7 +6,7 @@
  */
 .nav {
   display: flex;
-  flex: 0 0 208px;
+  flex: 0 0 232px;
   flex-direction: column;
   gap: 8px;
   min-height: 0;
@@ -15,12 +15,17 @@
   background: var(--app-surface);
 }
 
+/* 全屏预览：目录全展开后层级更深，列跟着放宽，标题不至于一进来就被省略 */
+.navFullscreen {
+  flex: 0 0 300px;
+}
+
 /* 列的标题：说明这一列是什么，不参与跳转 */
 .label {
   flex: 0 0 auto;
   padding-left: 5px;
   color: var(--app-ink-faint);
-  font-size: 0.68rem;
+  font-size: 0.805rem;
 }
 
 /*
@@ -63,10 +68,12 @@
 
 /*
  * 窄屏：父级 .workspace 在同一断点改成纵向，目录挪到正文上方的一条横带，
- * 最多占三成高度，剩下的高度留给正文。
+ * 最多占三成高度，剩下的高度留给正文。全屏在这里也要收掉固定宽度，
+ * 否则 flex-basis 会变成这一横带的高度。
  */
 @media (max-width: 720px) {
-  .nav {
+  .nav,
+  .navFullscreen {
     flex: 0 0 auto;
     max-height: 32dvh;
     padding: 10px 12px 8px;

@@ -4,14 +4,14 @@
  * 全站所有 Markdown 弹窗预览都必须使用这个组件，不要各自拼装 Modal 与渲染器：
  * 它统一了文档排版、上一篇 / 下一篇导航（header 标题左侧按钮 + ← / → 快捷键）、
  * 弹窗左侧固定的标题目录 sidebar（文档内 h1–h4 目录，随弹窗高度拉伸、目录自身滚动，
- * 滚动正文时跟随高亮当前小节）、header 右侧的全屏按钮（把整个框体铺满视口放大阅读空间，
- * 再点一次或按 Esc 退出），以及 footer 的编辑 / 预览 / 保存 / 关闭操作。
+ * 滚动正文时跟随高亮当前小节）、header 右侧的一排操作：全屏预览（把整个框体铺满视口放大
+ * 阅读空间，再点一次或按 Esc 退出）与编辑 / 预览 / 保存 / 放弃改动，全部只留图标 + tooltip。
  * 组件只负责编辑态与保存流程，不知道文档结构和文件落在哪里：
  * 具体怎么编辑由调用方通过 `Editor` 插槽传入，没有定制编辑器时给出定制提示。
  *
  * 这里的职责只有 Modal 骨架与装配：
  * - 标题目录 sidebar → `outline-nav`
- * - footer 与二次确认 → `footer`
+ * - header 右侧的操作与状态提示 → `header-actions`
  * - 编辑态状态机 → `hooks/use-note-editing`
  * - 翻篇快捷键 → `hooks/use-arrow-navigation`
  */
@@ -33,7 +33,7 @@ import { getErrorMessage } from '@/utils/error';
 import { extractMarkdownOutline } from '@/utils/markdown-outline';
 
 import type { MarkdownPreviewModalProps } from './types';
-import PreviewFooter from './Footer';
+import PreviewHeaderActions from './HeaderActions';
 import OutlineNav from './OutlineNav';
 import { HEADING_SELECTOR, REHYPE_PLUGINS, REMARK_PLUGINS } from './constants';
 import { useActiveHeadingIndex } from './hooks/useActiveHeadingIndex';
@@ -228,21 +228,22 @@ const MarkdownPreviewModal = ({
             </span>
           ) : null}
           <span className={styles.fileName}>{title}</span>
-          {onRefresh ? (
-            <ActionIcon
-              aria-label="刷新预览内容"
-              className={styles.refreshButton}
-              disabled={editing.editing}
-              loading={refreshing}
-              onClick={handleRefresh}
-              size="sm"
-              title="重新读取最新内容"
-              variant="subtle"
-            >
-              <IconRefresh size={15} stroke={1.9} />
-            </ActionIcon>
-          ) : null}
           <span className={styles.titleGap} />
+          {onRefresh ? (
+            <Tooltip label="刷新预览内容" withArrow>
+              <ActionIcon
+                aria-label="刷新预览内容"
+                className={styles.refreshButton}
+                disabled={editing.editing}
+                loading={refreshing}
+                onClick={handleRefresh}
+                size="sm"
+                variant="subtle"
+              >
+                <IconRefresh size={15} stroke={1.9} />
+              </ActionIcon>
+            </Tooltip>
+          ) : null}
           <Tooltip
             label={fullscreen ? '退出全屏（Esc）' : '全屏预览'}
             withArrow
@@ -261,6 +262,25 @@ const MarkdownPreviewModal = ({
               )}
             </ActionIcon>
           </Tooltip>
+          <PreviewHeaderActions
+            askDiscard={editing.askDiscard}
+            canEdit={Boolean(onSave)}
+            editing={editing.editing}
+            onCancelEdit={editing.stopEditing}
+            onDiscard={editing.discardAndClose}
+            onKeepEditing={editing.keepEditing}
+            onSaveEdit={() => {
+              void editing.save();
+            }}
+            onStartEdit={editing.startEditing}
+            onStartPreview={editing.startPreview}
+            onStopPreview={editing.stopPreview}
+            previewing={editing.previewing}
+            saveError={editing.saveError}
+            saveNotice={editing.saveNotice}
+            savedAt={editing.savedAt}
+            saving={editing.saving}
+          />
         </div>
       }
       transitionProps={{ duration: 140, transition: 'fade' }}
@@ -273,6 +293,7 @@ const MarkdownPreviewModal = ({
         <OutlineNav
           activeIndex={activeIndex}
           disabled={!navigable}
+          fullscreen={fullscreen}
           headings={outline}
           onSelect={scrollToHeading}
         />
@@ -302,27 +323,6 @@ const MarkdownPreviewModal = ({
           ) : null}
         </div>
       </div>
-
-      <PreviewFooter
-        askDiscard={editing.askDiscard}
-        canEdit={Boolean(onSave)}
-        editing={editing.editing}
-        onCancelEdit={editing.stopEditing}
-        onDiscard={editing.discardAndClose}
-        onKeepEditing={editing.keepEditing}
-        onRequestClose={editing.requestClose}
-        onSaveEdit={() => {
-          void editing.save();
-        }}
-        onStartEdit={editing.startEditing}
-        onStartPreview={editing.startPreview}
-        onStopPreview={editing.stopPreview}
-        previewing={editing.previewing}
-        saveError={editing.saveError}
-        saveNotice={editing.saveNotice}
-        savedAt={editing.savedAt}
-        saving={editing.saving}
-      />
     </Modal>
   );
 };

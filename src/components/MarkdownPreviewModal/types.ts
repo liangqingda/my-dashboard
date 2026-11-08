@@ -35,7 +35,7 @@ export type MarkdownPreviewModalProps = {
    * 返回 Promise 时按钮显示 loading 直到结束；不提供则不显示刷新按钮。
    */
   onRefresh?: (() => Promise<void> | void) | null;
-  /** 保存编辑后的 Markdown；提供后 footer 才会出现「编辑」 */
+  /** 保存编辑后的 Markdown；提供后 header 才会出现「编辑」图标按钮 */
   onSave?: (markdown: string) => Promise<{ notice?: string }>;
   /**
    * 这一类 Markdown 的定制编辑器。不传则点「编辑」只给出定制提示——
@@ -44,11 +44,11 @@ export type MarkdownPreviewModalProps = {
   Editor?: ComponentType<MarkdownEditorProps>;
 };
 
-/** footer 的入参：编辑 / 保存 / 关闭与二次确认所需的状态 */
-export type PreviewFooterProps = {
+/** header 操作组的入参：编辑 / 预览 / 保存 / 放弃改动与状态提示所需的状态 */
+export type PreviewHeaderActionsProps = {
   /** 是否处于编辑态 */
   editing: boolean;
-  /** 编辑态下是否正在预览草稿（footer 只留「取消」「保存」） */
+  /** 编辑态下是否正在预览草稿（只留「返回编辑」「保存」） */
   previewing: boolean;
   /** 是否正在保存 */
   saving: boolean;
@@ -68,12 +68,10 @@ export type PreviewFooterProps = {
   onCancelEdit: () => void;
   /** 编辑态下预览草稿的渲染效果 */
   onStartPreview: () => void;
-  /** 草稿预览态下取消，回到编辑态 */
+  /** 草稿预览态下返回编辑器 */
   onStopPreview: () => void;
   /** 保存草稿 */
   onSaveEdit: () => void;
-  /** 关闭入口（可能有二次确认） */
-  onRequestClose: () => void;
   /** 确认放弃并关闭 */
   onDiscard: () => void;
   /** 取消放弃，继续编辑 */
@@ -88,6 +86,8 @@ export type OutlineNavProps = {
   activeIndex: number;
   /** 编辑态下置灰不可点 */
   disabled: boolean;
+  /** 全屏预览：目录默认全部展开、列宽放宽（小的弹窗里默认只展开前两层） */
+  fullscreen: boolean;
   /** 点击第几条标题 */
   onSelect: (index: number) => void;
 };

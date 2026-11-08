@@ -1,4 +1,4 @@
-/* Markdown 预览弹窗：框体、header 与正文排版；目录 sidebar 与 footer 的样式在各自目录 */
+/* Markdown 预览弹窗：框体、header 与正文排版；目录 sidebar 与 header 操作的样式在各自目录 */
 
 .content {
   --preview-paper: var(--app-surface-subtle);
@@ -14,7 +14,7 @@
 
 /*
  * 全屏预览：铺满整个视口，去掉外边距、描边与圆角，
- * 标题栏与 footer 照旧钉在上下，可读空间交给正文与目录。
+ * 标题栏照旧钉在顶部，正文与目录各自占满剩下的高度。
  * 两条类名一起写是为了压过 Mantine 自己的 `.content` 高度与圆角。
  */
 .content.contentFullscreen {
@@ -58,10 +58,9 @@
   color: var(--app-accent);
 }
 
-/* 紧跟标题的正文刷新，和标题之间只留一点点间隙 */
+/* 刷新正文：和全屏、编辑操作排在同一组右对齐图标里 */
 .refreshButton {
   flex: 0 0 auto;
-  margin-left: 2px;
   color: var(--app-ink-faint);
 }
 
@@ -69,10 +68,9 @@
   color: var(--app-accent);
 }
 
-/* 全屏 / 退出全屏：挨着关闭按钮，是标题栏最右的一组操作 */
+/* 全屏 / 退出全屏：和刷新、编辑操作排在同一组右对齐图标里 */
 .fullscreenButton {
   flex: 0 0 auto;
-  margin-right: 4px;
   color: var(--app-ink-faint);
 }
 
@@ -92,7 +90,7 @@
   text-overflow: ellipsis;
 }
 
-/* 标题与刷新之后吃掉剩余空间，把关闭按钮顶到最右 */
+/* 标题之后吃掉剩余空间，把右侧那组操作（刷新 / 全屏 / 编辑 / 关闭）顶到最右 */
 .titleGap {
   flex: 1 1 auto;
   min-width: 8px;
@@ -107,7 +105,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* 正文区自身不滚动：滚动交给 .prose / .editor，footer 因此永远钉在底部 */
+/* 正文区自身不滚动：滚动交给 .prose / .editor，弹窗没有 footer，正文直接到底 */
 .body {
   display: flex;
   flex: 1 1 auto;

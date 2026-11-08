@@ -2,6 +2,7 @@
  * 标题导航的单条：标题文本 + 右对齐的折叠图标（有子标题时）。
  * 缩进不在这里做——层级靠 List 的每层引导线表示，这里只管字号 / 字重 / 颜色。
  * 样式挂在整行上，标题按钮只继承，这样有没有折叠图标都不会让同一层的标题错位。
+ * 字号按「比正文小一档但仍可扫读」定：一级 14px 左右，其余 13px 上下，暗色模式下也不发虚。
  */
 
 .row {
@@ -11,8 +12,8 @@
   gap: 2px;
   color: var(--app-ink-soft);
   font-family: var(--app-serif);
-  font-size: 0.72rem;
-  line-height: 1.5;
+  font-size: 0.85rem;
+  line-height: 1.55;
 }
 
 /* 折叠图标的格子：始终贴在这一行的最右侧 */
@@ -90,7 +91,7 @@
 /* 一级：加粗、最深色，作为整篇的骨架 */
 .level1 {
   color: var(--app-ink);
-  font-size: 0.76rem;
+  font-size: 0.885rem;
   font-weight: 600;
 }
 
@@ -103,12 +104,12 @@
 /* 三、四级：字号再降一档、对比再淡一点，缩进由 List 的引导线承担 */
 .level3 {
   color: var(--app-ink-faint);
-  font-size: 0.68rem;
+  font-size: 0.805rem;
 }
 
 .level4 {
   color: var(--app-ink-faint);
-  font-size: 0.68rem;
+  font-size: 0.805rem;
   font-weight: 400;
 }
 

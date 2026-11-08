@@ -1,0 +1,54 @@
+/* header 右侧操作组：状态提示 + 图标按钮，整体贴最右，标题栏变窄时只压提示不压图标 */
+.actions {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+/*
+ * 状态提示（已保存 / 保存失败）：只在标题栏的剩余宽度里显示，
+ * 省略号与「只有被截断才弹 tip」交给公共组件 TruncatedText。
+ */
+.status {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 220px;
+  font-size: 0.7rem;
+}
+
+.statusError {
+  color: var(--app-status-danger);
+}
+
+/* 保存成功：3 秒后淡出，不长期占着标题栏 */
+.statusSaved {
+  color: var(--app-ink-faint);
+  animation: savedHintFade 3s ease forwards;
+}
+
+/* 有未保存改动：提示一直留着，等用户选「继续编辑」或「放弃并关闭」 */
+.unsavedHint {
+  flex: 0 0 auto;
+  color: var(--app-status-warn);
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+
+@keyframes savedHintFade {
+  0%,
+  70% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .statusSaved {
+    animation: none;
+  }
+}

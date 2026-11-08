@@ -1,0 +1,29 @@
+/* 标题栏图标操作：尺寸与形状统一，语气只改颜色 */
+
+.button {
+  flex: 0 0 auto;
+  color: var(--app-ink-faint);
+}
+
+.button:hover:not(:disabled) {
+  color: var(--app-accent);
+}
+
+/* 主操作（保存）：常态就用主色，在标题栏里能一眼找到 */
+.accent {
+  color: var(--app-accent);
+}
+
+.accent:hover:not(:disabled) {
+  color: var(--app-accent-strong);
+}
+
+/* 危险操作（放弃改动并关闭）：只描红，不做实底 */
+.danger {
+  color: var(--app-status-danger);
+}
+
+.danger:hover:not(:disabled) {
+  background: var(--app-status-danger-soft);
+  color: var(--app-status-danger);
+}
