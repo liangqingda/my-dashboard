@@ -16,19 +16,20 @@ import type { ActiveHeadingParams } from '../types';
  * 每帧直接读一遍可见标题的 rect：标题数量是几十级、正文只有一个滚动容器，
  * 滚动时本来就要布局，比维护一份容易过期的位置缓存可靠。
  *
- * @param params 正文区 ref、是否启用、标题列表
+ * 收的是节点本身而不是 ref：弹窗正文比 header 晚一帧挂载，只盯 ref 时 effect 会在
+ * ref 还为空时跑完，之后再没有触发点，监听就永远绑不上。
+ *
+ * @param params 正文节点、是否启用、标题列表
  * @returns 当前小节下标；-1 表示还判不出（没有标题或未启用）
  */
 export const useActiveHeadingIndex = ({
-  containerRef,
+  container,
   enabled,
   headings,
 }: ActiveHeadingParams): number => {
   const [activeIndex, setActiveIndex] = useState(-1);
 
   useEffect(() => {
-    const container = containerRef.current;
-
     if (!enabled || !container) {
       return undefined;
     }
@@ -104,7 +105,7 @@ export const useActiveHeadingIndex = ({
         window.cancelAnimationFrame(frame);
       }
     };
-  }, [containerRef, enabled, headings]);
+  }, [container, enabled, headings]);
 
   return activeIndex;
 };

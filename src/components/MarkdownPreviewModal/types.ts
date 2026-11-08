@@ -2,7 +2,7 @@
  * Markdown 预览弹窗的类型契约：调用方传什么、编辑器插槽收什么。
  */
 
-import type { ComponentType, RefObject } from 'react';
+import type { ComponentType } from 'react';
 
 import type { MarkdownOutlineHeading, MarkdownOutlineNode } from '@/utils/markdown-outline';
 
@@ -200,8 +200,8 @@ export type ArrowNavigationParams = {
 
 /** 滚动定位当前小节的入参 */
 export type ActiveHeadingParams = {
-  /** 正文区（同时也是滚动容器）的 ref */
-  containerRef: RefObject<HTMLElement | null>;
+  /** 正文区（同时也是滚动容器）的节点；还没挂上时为 null，挂上后 effect 会自动重建监听 */
+  container: HTMLElement | null;
   /** 是否启用（弹窗打开且不在编辑态） */
   enabled: boolean;
   /** 文档内标题列表：数量决定扫几个节点，引用变化表示换了一篇文档，需要重判 */

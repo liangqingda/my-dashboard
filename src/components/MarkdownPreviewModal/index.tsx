@@ -14,7 +14,7 @@
  * - 翻篇快捷键 → `hooks/use-arrow-navigation`
  */
 
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { ActionIcon, Modal } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
@@ -61,6 +61,11 @@ const MarkdownPreviewModal = ({
   Editor,
 }: MarkdownPreviewModalProps) => {
   const bodyRef = useRef<HTMLElement | null>(null);
+  /**
+   * 正文节点同时存一份 state：弹窗内容比 header 晚一帧挂载，
+   * 滚动跟踪和高度测量都要等节点真正挂上再建监听，只靠 ref 会在 ref 还空时跑完 effect。
+   */
+  const [bodyElement, setBodyElement] = useState<HTMLElement | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const editing = useNoteEditing({
     hasEditor: Boolean(Editor),
@@ -88,14 +93,23 @@ const MarkdownPreviewModal = ({
   });
 
   /** 标题导航的高度封顶到正文区（body − footer），不越过 footer */
-  const outlineMaxHeight = useOutlineMaxHeight(bodyRef, navigable);
+  const outlineMaxHeight = useOutlineMaxHeight(bodyElement, navigable);
 
   /** 滚动正文时跟踪当前小节，供标题导航高亮 */
   const activeIndex = useActiveHeadingIndex({
-    containerRef: bodyRef,
+    container: bodyElement,
     enabled: navigable,
     headings: outline,
   });
+
+  /**
+   * 正文节点的 callback ref：ref 对象给需要即时读取的地方用，
+   * state 负责在节点挂载 / 卸载时触发依赖它的 effect 重建。
+   */
+  const attachBody = useCallback((node: HTMLElement | null) => {
+    bodyRef.current = node;
+    setBodyElement(node);
+  }, []);
 
   /** 重新取一次最新正文：失败时给出可见提示（不静默吞掉），并收起 loading */
   const handleRefresh = () => {
@@ -219,7 +233,7 @@ const MarkdownPreviewModal = ({
       ) : null}
 
       {!editing.editing || showingDraftPreview ? (
-        <article className={styles.prose} ref={bodyRef}>
+        <article className={styles.prose} ref={attachBody}>
           <Markdown
             rehypePlugins={REHYPE_PLUGINS}
             remarkPlugins={REMARK_PLUGINS}
