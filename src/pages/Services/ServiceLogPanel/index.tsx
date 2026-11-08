@@ -10,17 +10,24 @@ import {
   IconTrash,
 } from '@tabler/icons-react';
 
+import { useStoredState } from '@/hooks/useStoredState';
+import { FLAG_CODEC } from '@/utils/local-storage';
 import type { LogKind } from '@/services/types';
 
 import { useServiceLog } from '../hooks/useServiceLog';
 import { resolveLogContent } from '../utils';
 
+import { LOG_EXPANDED_STORAGE_PREFIX } from './constants';
 import type { ServiceLogPanelProps } from './types';
 
 import styles from './index.scss';
 
 const ServiceLogPanel = ({ offline, service }: ServiceLogPanelProps) => {
-  const [expanded, setExpanded] = useState(false);
+  /** 展开状态按服务分开记：刷新后哪些服务的日志面板开着，仍然开着 */
+  const [expanded, setExpanded] = useStoredState(
+    `${LOG_EXPANDED_STORAGE_PREFIX}${service.id}`,
+    FLAG_CODEC,
+  );
   const [kind, setKind] = useState<LogKind>('service');
   const { log, loading, error, clearing, clear } = useServiceLog({
     enabled: expanded && !offline,
@@ -37,7 +44,7 @@ const ServiceLogPanel = ({ offline, service }: ServiceLogPanelProps) => {
           aria-controls={`log-${service.id}`}
           aria-expanded={expanded}
           className={styles.toggle}
-          onClick={() => setExpanded((current) => !current)}
+          onClick={() => setExpanded(!expanded)}
           type="button"
         >
           日志

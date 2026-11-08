@@ -19,12 +19,18 @@
 | 页面级刷新广播 | `@/utils/page-refresh` 的 `requestPageRefresh` / `onPageRefresh` |
 | Markdown 标题目录 | `@/utils/markdown-outline` 的 `extractMarkdownOutline` |
 | 单行省略文本 / 截断才提示 | `@/components/TruncatedText`：放得下就正常显示，只有被省略号截断时才在 hover / 聚焦弹 tip；传 `onClick` 渲染成 button，`inline` 用于夹在一行文字里 |
+| 界面状态的本地持久化（展开 / 收起、全屏、视图形态） | `@/hooks/useStoredState` 配 `@/utils/local-storage` 的 `FLAG_CODEC`（开关）或 `createChoiceCodec(choices, fallback)`（枚举形态）；存储键常量放各自模块的 `constants.ts`。不在组件里直接读写 `localStorage`，也不自己 try/catch |
+
+界面状态持久化的判据：**用户手动切换的展示偏好**才记（展开的日志面板、页面全屏、英语页看板 /
+表格形态），刷新后应当还在；**由数据或操作结果推导出来的状态**（正在加载、当前选中的笔记、
+排序方向）不记——后者要么能重算，要么记下来反而与真实数据不一致。
 
 自检方法（各条都应当只在上面那些文件里命中，第二行应当没有结果）：
 
 ```bash
 grep -rn "instanceof Error\|Intl\.DateTimeFormat\|execCommand\|navigator.clipboard" src
 grep -rn '`${styles' src   # 手写 class 模板串
+grep -rn "localStorage\.(get|set)Item" src   # 应当只命中 src/utils/local-storage.ts
 ```
 
 ## 新增公共能力时

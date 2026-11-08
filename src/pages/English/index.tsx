@@ -4,10 +4,15 @@ import { IconLayoutGrid, IconLayoutList } from '@tabler/icons-react';
 
 import MarkdownPreviewModal from '@/components/MarkdownPreviewModal';
 import MenuContentLayout from '@/layouts/MenuContentLayout';
+import { useStoredState } from '@/hooks/useStoredState';
 import { onPageRefresh } from '@/utils/page-refresh';
 
-import type { EnglishNote, NotesSort, NotesViewMode } from './types';
-import { DEFAULT_NOTE_SORT } from './constants';
+import type { EnglishNote, NotesSort } from './types';
+import {
+  DEFAULT_NOTE_SORT,
+  VIEW_MODE_CODEC,
+  VIEW_MODE_STORAGE_KEY,
+} from './constants';
 import { useEnglishNotes } from './hooks/useEnglishNotes';
 import NoteEditor from './NoteEditor';
 import NotesBoard from './NotesBoard';
@@ -32,8 +37,14 @@ const English = () => {
     useEnglishNotes();
   /** 当前预览的笔记（存内容而不是文件名，打开时就能拿到最新正文） */
   const [active, setActive] = useState<EnglishNote | null>(null);
-  /** 展示形式：分列看板（默认）或表格平铺，用 header 右侧图标按钮切换 */
-  const [view, setView] = useState<NotesViewMode>('board');
+  /**
+   * 展示形式：分列看板 / 表格平铺，用 header 右侧图标按钮切换。
+   * 记在 localStorage 里，刷新页面重新进入后保持上次切换到的形态。
+   */
+  const [view, setView] = useStoredState(
+    VIEW_MODE_STORAGE_KEY,
+    VIEW_MODE_CODEC,
+  );
   /** 表格视图的排序状态：默认按更新时间倒序 */
   const [sort, setSort] = useState<NotesSort>(DEFAULT_NOTE_SORT);
   /** 打开请求的序号：连点两篇时只认最后一次 */
@@ -151,7 +162,7 @@ const English = () => {
 
   /** 切换展示形式：分列看板 ⇄ 表格平铺。 */
   const toggleView = () => {
-    setView((current) => (current === 'board' ? 'table' : 'board'));
+    setView(view === 'board' ? 'table' : 'board');
   };
 
   /**
