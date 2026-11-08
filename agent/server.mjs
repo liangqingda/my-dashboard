@@ -370,7 +370,7 @@ async function deployService(id) {
   }
 }
 
-/** 运行服务的自定义停止命令（如 pnpm stop:dev），带超时保护 */
+/** 运行服务的自定义停止命令（如数据库的 brew 停止命令），带超时保护 */
 function runStopCmd(entry) {
   return new Promise((resolve) => {
     const [cmd, ...args] = entry.config.stopCmd;

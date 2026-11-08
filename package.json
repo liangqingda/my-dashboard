@@ -5,11 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:bg": "nohup vite > /tmp/my-dashboard-dev.log 2>&1 &",
-    "stop:dev": "node scripts/stop-local.mjs dev",
-    "agent": "node agent/server.mjs",
+    "start": "bash scripts/auto-start.sh",
+    "stop": "node scripts/stop-local.mjs all",
     "agent:bg": "nohup node agent/server.mjs > /tmp/my-dashboard-agent.log 2>&1 &",
-    "agent:stop": "node scripts/stop-local.mjs agent",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.node.json --noEmit",
     "build": "tsc -p tsconfig.json && tsc -p tsconfig.node.json && vite build",
     "lint": "eslint . && node scripts/check-structure.mjs && liangqingda-check-scss src && node scripts/check-imports.mjs && pnpm check:md",
