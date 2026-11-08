@@ -258,7 +258,12 @@
   cursor: pointer;
 }
 
-.prose details > *:not(summary) {
+/*
+ * details 里的正文比标题行缩进一档。
+ * 列表排除在外：ul / ol 各自声明了左间距（见 .prose ol），留在这里会被这条更高优先级的
+ * 规则盖成 14px。
+ */
+.prose details > *:not(summary, ul, ol) {
   margin-left: 14px;
 }
 
