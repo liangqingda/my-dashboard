@@ -1,9 +1,12 @@
 /**
- * Markdown 预览弹窗的常量：提示时长、无编辑器提示与固定渲染插件。
+ * Markdown 预览弹窗的常量：提示时长、无编辑器提示、固定渲染插件与元素映射。
  */
 
+import type { Components } from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
+
+import MarkdownDetails from '@/components/MarkdownDetails';
 
 /** 「已保存」提示停留时长（毫秒） */
 export const SAVED_HINT_DURATION = 3000;
@@ -16,6 +19,9 @@ export const NO_EDITOR_MESSAGE =
 export const REMARK_PLUGINS = [remarkGfm];
 
 export const REHYPE_PLUGINS = [rehypeRaw];
+
+/** 折叠讲解（`<details>`）交给公共组件，标题行常显、正文按需展开 */
+export const MARKDOWN_COMPONENTS: Components = { details: MarkdownDetails };
 
 /** 文档内参与标题导航的标题层级 */
 export const HEADING_SELECTOR = 'h1, h2, h3, h4';

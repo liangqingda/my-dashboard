@@ -18,6 +18,7 @@
 | 剪贴板复制 | `@/utils/clipboard` 的 `copyText(text)`（含 `execCommand` 兜底） |
 | 页面级刷新广播 | `@/utils/page-refresh` 的 `requestPageRefresh` / `onPageRefresh` |
 | Markdown 标题目录 | `@/utils/markdown-outline` 的 `extractMarkdownOutline` |
+| Markdown 折叠块（`<details>` 讲解） | `@/components/MarkdownDetails`：标题行常显、正文按需展开，预览弹窗通过 react-markdown 的 `components.details` 映射到它；也能单独用（传 `summary` + `children`，不传 `summary` 时自动取 `<summary>`） |
 | 单行省略文本 / 截断才提示 | `@/components/TruncatedText`：放得下就正常显示，只有被省略号截断时才在 hover / 聚焦弹 tip；传 `onClick` 渲染成 button，`inline` 用于夹在一行文字里 |
 
 自检方法（各条都应当只在上面那些文件里命中，第二行应当没有结果）：

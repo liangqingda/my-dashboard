@@ -9,6 +9,7 @@
  *
  * 这里的职责只有 Modal 骨架与装配：
  * - 标题导航 → `outline-nav`
+ * - 折叠块（`<details>`）→ 公共组件 `@/components/MarkdownDetails`
  * - footer 与二次确认 → `footer`
  * - 编辑态状态机 → `hooks/use-note-editing`
  * - 翻篇快捷键 → `hooks/use-arrow-navigation`
@@ -32,6 +33,7 @@ import PreviewFooter from './Footer';
 import OutlineNav from './OutlineNav';
 import {
   HEADING_SELECTOR,
+  MARKDOWN_COMPONENTS,
   REHYPE_PLUGINS,
   REMARK_PLUGINS,
 } from './constants';
@@ -186,6 +188,7 @@ const MarkdownPreviewModal = ({
       ) : (
         <article className={styles.prose} ref={bodyRef}>
           <Markdown
+            components={MARKDOWN_COMPONENTS}
             rehypePlugins={REHYPE_PLUGINS}
             remarkPlugins={REMARK_PLUGINS}
           >
