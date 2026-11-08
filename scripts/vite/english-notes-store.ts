@@ -16,8 +16,13 @@ export const NOTE_EXTENSION = '.md';
 /** 目录级的说明文件不算笔记，也不允许写 */
 const EXCLUDED_FILES = new Set(['readme.md']);
 
-/** 笔记文件名只能是这种形态，避免路径穿越 */
-const NOTE_NAME_PATTERN = /^[\w.-]+\.md$/u;
+/**
+ * 笔记文件名只能是这种形态，避免路径穿越。
+ * 用 `\p{L}\p{N}` 而不是 `\w`：`\w` 只认 ASCII，带中文的文件名
+ * （如 `usage-after-不宜直接当-later-连接后续动作.md`）会被判不合法，
+ * 连读盘都读不出来，页面上就静默少一篇。这里仍不放行 `/`、`\` 与空白等字符。
+ */
+const NOTE_NAME_PATTERN = /^[\p{L}\p{N}_.-]+\.md$/u;
 
 /** 一篇笔记 */
 export type NoteSnapshot = {
