@@ -22,7 +22,7 @@
   display: flex;
   flex: 1 1 auto;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
   padding: 6px 0;
   background: transparent;
@@ -32,8 +32,12 @@
   cursor: pointer;
 }
 
-/* 省略号与 tip 由 TruncatedText 负责，这里只管字形与颜色 */
+/* 省略号与 tip 由 TruncatedText 负责，这里只管字形与颜色；
+   宽度按内容走（放不下才让省略号收窄），箭头才能紧跟文字而不是被顶到行尾 */
 .name {
+  flex: 0 1 auto;
+  width: auto;
+  min-width: 0;
   color: var(--app-ink);
   font-family: var(--app-serif);
   font-size: 0.82rem;
