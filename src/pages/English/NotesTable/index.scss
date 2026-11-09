@@ -7,6 +7,14 @@
   overscroll-behavior: contain;
 }
 
+/* 「笔记」列标题后面的数量，如「笔记 (12)」：表头统一的浅色小数字 */
+.count {
+  margin-left: 4px;
+  color: var(--app-ink-faint);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
 /* 分类列只放两三个字，更新时间列放 2026/11/08 14:39，都固定宽度；
    文件名与目标知识点两列按内容分配剩余宽度 */
 .categoryWidth {

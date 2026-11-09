@@ -38,102 +38,112 @@ const NotesTable = ({
   onOpen,
   onSort,
   sort,
-}: NotesTableProps) => (
-  <div className={styles.wrap}>
-    <FreeTable tabularNums>
-      <FreeTable.Thead>
-        <FreeTable.Tr>
-          <FreeTable.Th scope="col">笔记</FreeTable.Th>
-          <FreeTable.Th scope="col">目标知识点</FreeTable.Th>
-          <FreeTable.Th
-            aria-sort={ariaSortOf(sort, 'category')}
-            className={styles.categoryWidth}
-            scope="col"
-          >
-            <SortHeader
-              label="分类"
-              onSort={onSort}
-              sort={sort}
-              sortKey="category"
-            />
-          </FreeTable.Th>
-          <FreeTable.Th
-            aria-sort={ariaSortOf(sort, 'updated')}
-            className={styles.timeWidth}
-            scope="col"
-          >
-            <SortHeader
-              label="更新时间"
-              onSort={onSort}
-              sort={sort}
-              sortKey="updated"
-            />
-          </FreeTable.Th>
-          <FreeTable.Th className={styles.actionWidth} scope="col">
-            操作
-          </FreeTable.Th>
-        </FreeTable.Tr>
-      </FreeTable.Thead>
-      <FreeTable.Tbody>
-        {rows.length > 0 ? (
-          rows.map((row) => {
-            /** 整行都是打开入口；文件名按钮自己 stopPropagation，避免点它时触发两次 */
-            const open = () => {
-              void onOpen(row.note.name);
-            };
+}: NotesTableProps) => {
+  /** 首次读取还没有行，先不报 0，避免「笔记 (0)」这种误导 */
+  const showCount = !(loading && rows.length === 0);
 
-            return (
-              <FreeTable.Tr
-                className={styles.row}
-                key={row.note.name}
-                onClick={open}
-              >
-                <FreeTable.Td>
-                  <UnstyledButton
-                    aria-label={`预览 ${row.note.name}`}
-                    className={styles.name}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      open();
-                    }}
-                    type="button"
-                  >
-                    {row.note.name}
-                  </UnstyledButton>
-                </FreeTable.Td>
-                <FreeTable.Td className={styles.topic}>
-                  {row.topicLabel || EMPTY_CELL}
-                </FreeTable.Td>
-                <FreeTable.Td className={styles.categoryWidth}>
-                  <span className={styles.category}>{row.categoryLabel}</span>
-                </FreeTable.Td>
-                <FreeTable.Td className={cx(styles.timeWidth, styles.time)}>
-                  {row.updatedLabel || EMPTY_CELL}
-                </FreeTable.Td>
-                <FreeTable.Td className={styles.actionWidth}>
-                  <CopyIconButton
-                    className={styles.actionButton}
-                    label="复制相对路径"
-                    text={getNoteRelativePath(row.note.name)}
-                  />
-                </FreeTable.Td>
-              </FreeTable.Tr>
-            );
-          })
-        ) : (
+  return (
+    <div className={styles.wrap}>
+      <FreeTable tabularNums>
+        <FreeTable.Thead>
           <FreeTable.Tr>
-            <FreeTable.Td colSpan={5}>
-              <NotesPlaceholder
-                error={error}
-                loading={loading}
-                total={rows.length}
+            <FreeTable.Th scope="col">
+              笔记
+              {showCount ? (
+                <span className={styles.count}>({rows.length})</span>
+              ) : null}
+            </FreeTable.Th>
+            <FreeTable.Th scope="col">目标知识点</FreeTable.Th>
+            <FreeTable.Th
+              aria-sort={ariaSortOf(sort, 'category')}
+              className={styles.categoryWidth}
+              scope="col"
+            >
+              <SortHeader
+                label="分类"
+                onSort={onSort}
+                sort={sort}
+                sortKey="category"
               />
-            </FreeTable.Td>
+            </FreeTable.Th>
+            <FreeTable.Th
+              aria-sort={ariaSortOf(sort, 'updated')}
+              className={styles.timeWidth}
+              scope="col"
+            >
+              <SortHeader
+                label="更新时间"
+                onSort={onSort}
+                sort={sort}
+                sortKey="updated"
+              />
+            </FreeTable.Th>
+            <FreeTable.Th className={styles.actionWidth} scope="col">
+              操作
+            </FreeTable.Th>
           </FreeTable.Tr>
-        )}
-      </FreeTable.Tbody>
-    </FreeTable>
-  </div>
-);
+        </FreeTable.Thead>
+        <FreeTable.Tbody>
+          {rows.length > 0 ? (
+            rows.map((row) => {
+              /** 整行都是打开入口；文件名按钮自己 stopPropagation，避免点它时触发两次 */
+              const open = () => {
+                void onOpen(row.note.name);
+              };
+
+              return (
+                <FreeTable.Tr
+                  className={styles.row}
+                  key={row.note.name}
+                  onClick={open}
+                >
+                  <FreeTable.Td>
+                    <UnstyledButton
+                      aria-label={`预览 ${row.note.name}`}
+                      className={styles.name}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        open();
+                      }}
+                      type="button"
+                    >
+                      {row.note.name}
+                    </UnstyledButton>
+                  </FreeTable.Td>
+                  <FreeTable.Td className={styles.topic}>
+                    {row.topicLabel || EMPTY_CELL}
+                  </FreeTable.Td>
+                  <FreeTable.Td className={styles.categoryWidth}>
+                    <span className={styles.category}>{row.categoryLabel}</span>
+                  </FreeTable.Td>
+                  <FreeTable.Td className={cx(styles.timeWidth, styles.time)}>
+                    {row.updatedLabel || EMPTY_CELL}
+                  </FreeTable.Td>
+                  <FreeTable.Td className={styles.actionWidth}>
+                    <CopyIconButton
+                      className={styles.actionButton}
+                      label="复制相对路径"
+                      text={getNoteRelativePath(row.note.name)}
+                    />
+                  </FreeTable.Td>
+                </FreeTable.Tr>
+              );
+            })
+          ) : (
+            <FreeTable.Tr>
+              <FreeTable.Td colSpan={5}>
+                <NotesPlaceholder
+                  error={error}
+                  loading={loading}
+                  total={rows.length}
+                />
+              </FreeTable.Td>
+            </FreeTable.Tr>
+          )}
+        </FreeTable.Tbody>
+      </FreeTable>
+    </div>
+  );
+};
 
 export default NotesTable;

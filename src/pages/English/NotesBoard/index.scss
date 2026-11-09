@@ -31,9 +31,20 @@
   line-height: 1.4;
 }
 
+/* 列标题后面的数量，如「错题 (2)」：同字号的浅色数字，不抢标题本身 */
+.columnCount {
+  margin-left: 4px;
+  color: var(--app-ink-faint);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 列内滚动条贴到列的右边缘；负外边距抵掉列右内边距，内容仍保持 14px 内缩 */
 .columnBody {
   flex: 1 1 auto;
   min-height: 0;
+  margin-right: -14px;
+  padding-right: 14px;
   overflow-y: auto;
   overscroll-behavior: contain;
 }

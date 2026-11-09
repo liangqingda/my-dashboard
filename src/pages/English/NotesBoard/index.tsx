@@ -9,12 +9,19 @@ import styles from './index.scss';
 const NotesBoard = ({ columns, loading, error, onOpen }: NotesBoardProps) => {
   /** 板上真正展示的笔记数：0 才说明整目录为空 */
   const total = columns.reduce((sum, column) => sum + column.notes.length, 0);
+  /** 首次读取还没数据，先不报 0，避免「错题 (0)」这种误导 */
+  const showCount = !(loading && total === 0);
 
   return (
     <div className={styles.board}>
       {columns.map((column) => (
         <section className={styles.column} key={column.key}>
-          <h3 className={styles.columnTitle}>{column.label}</h3>
+          <h3 className={styles.columnTitle}>
+            {column.label}
+            {showCount ? (
+              <span className={styles.columnCount}>({column.notes.length})</span>
+            ) : null}
+          </h3>
           <div className={styles.columnBody}>
             <NotesPlaceholder
               columnTotal={column.notes.length}
