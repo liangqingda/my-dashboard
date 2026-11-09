@@ -13,7 +13,7 @@
 | --- | --- |
 | 任何改动 | `pnpm typecheck` / `pnpm lint` / `pnpm build` |
 | 动 `agent/` 或 `scripts/vite/*` | 再加 `pnpm test`（node 原生测试，不碰浏览器） |
-| 用户明确要求浏览器验证 | `pnpm test:e2e`；默认不跑（硬约束 7） |
+| 用户明确要求浏览器验证 | `pnpm test:e2e`；默认不跑（见 `AGENTS.md`「前端 / 视觉改动默认不做浏览器实测」） |
 
 `pnpm lint` = `eslint .` + `check-structure` + `check-scss` + `check-imports` + `check:md`。
 布局 / 引用 / 命名 / 300 行上限 / import 分组 / 禁裸 `eslint-disable` / 禁 `@ts-ignore`
@@ -32,7 +32,7 @@
 | 5 | 注释与实现是否一致 | skill《注释 / JSDoc》 |
 | 6 | 共用能力有没有重复实现 | `docs/shared-utils.md` 的清单（项目特有） |
 | 7 | 残留：旧目录、`features/…`、已删页面、失效文档段落 | skill 判据 + 本项目 grep 旧路径字符串 |
-| 8 | 读盘 / 写盘接口：只走 `scripts/vite/*`、写操作仅开发模式、文件名校验禁路径穿越 | 硬约束 8（本项目事实） |
+| 8 | 读盘 / 写盘接口：只走 `scripts/vite/*`、写操作仅开发模式、文件名校验禁路径穿越 | `docs/local-repo-data.md` |
 | 9 | 文档同步：改到的行为 / 契约写进对应 `docs/`；入口文件仍只有红线与索引，没有该拆未拆的段落 | `AGENTS.md`《维护本文件》 |
 
 ## 3. 本项目容易返工的两点
