@@ -14,6 +14,7 @@ import {
 } from '@tabler/icons-react';
 
 import CopyIconButton from '@/components/CopyIconButton';
+import { cx } from '@/utils/cx';
 
 import type { TitleBarProps } from '../types';
 import PreviewHeaderActions from '../HeaderActions';
@@ -41,7 +42,12 @@ const TitleBar = ({
   relativePath,
   title,
 }: TitleBarProps) => (
-  <div className={styles.titleRow}>
+  <div
+    className={cx(
+      styles.titleRow,
+      editing.editing ? null : styles.titleRowBeforeClose,
+    )}
+  >
     <ActionIcon
       aria-label="上一篇"
       className={styles.stepButton}

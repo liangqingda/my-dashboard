@@ -65,6 +65,14 @@
   min-width: 8px;
 }
 
+/*
+ * 非编辑态才有 Modal 自带的关闭按钮，它紧接在标题行之后：右端留一段间距，
+ * 免得最后一个图标（保存 / 铅笔）直接贴上去。编辑态没有关闭按钮，不留这段内边距。
+ */
+.titleRowBeforeClose {
+  padding-inline-end: 10px;
+}
+
 /* 计数紧跟在切换按钮右边 */
 .position {
   flex: 0 0 auto;
