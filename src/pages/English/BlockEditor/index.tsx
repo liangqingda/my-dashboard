@@ -1,3 +1,7 @@
+import { UnstyledButton } from '@mantine/core';
+
+import FreeTable from '@/components/FreeTable';
+
 import type { MarkdownBlock } from '../types';
 import { replaceAt } from '../utils/array';
 import { createBlockId } from '../utils/markdown-blocks';
@@ -91,6 +95,10 @@ const MarkdownBlockEditor = ({ blocks, onChange }: MarkdownBlockEditorProps) => 
       {blocks.map((block, blockIndex) => {
         if (block.type === 'text') {
           return (
+            /*
+             * 块源码文本框保留原生 textarea：要按源码行数定高、贴住编辑器栅格排，
+             * Mantine Textarea 的 root 容器与尺寸体系在这里全部要覆盖
+             */
             <textarea
               className={styles.textArea}
               data-block-index={blockIndex}
@@ -114,15 +122,17 @@ const MarkdownBlockEditor = ({ blocks, onChange }: MarkdownBlockEditorProps) => 
             data-block-index={blockIndex}
             key={block.id}
           >
-            <table className={styles.table}>
-              <tbody>
+            <FreeTable className={styles.table} compact>
+              <FreeTable.Tbody>
                 {block.rows.map((row, rowIndex) => (
-                  <tr key={row.id}>
+                  <FreeTable.Tr key={row.id}>
                     {row.cells.map((cell, cellIndex) => (
-                      <td
+                      <FreeTable.Td
                         className={cell.tag === 'th' ? styles.headCell : undefined}
                         key={cell.id}
                       >
+                        {/* 单元格输入框保留原生 input：Mantine TextInput 会套一层 root 容器
+                            并带上自己的高度 / 内边距体系，在这里要全部覆盖，不如直接贴合格子 */}
                         <input
                           aria-label={`第 ${rowIndex + 1} 行第 ${cellIndex + 1} 列`}
                           className={styles.cellInput}
@@ -136,10 +146,10 @@ const MarkdownBlockEditor = ({ blocks, onChange }: MarkdownBlockEditorProps) => 
                           }
                           value={cell.text}
                         />
-                      </td>
+                      </FreeTable.Td>
                     ))}
-                    <td className={styles.rowTools}>
-                      <button
+                    <FreeTable.Td className={styles.rowTools}>
+                      <UnstyledButton
                         aria-label="删除这一行"
                         className={styles.rowRemove}
                         disabled={block.rows.length <= 1}
@@ -147,19 +157,19 @@ const MarkdownBlockEditor = ({ blocks, onChange }: MarkdownBlockEditorProps) => 
                         type="button"
                       >
                         ×
-                      </button>
-                    </td>
-                  </tr>
+                      </UnstyledButton>
+                    </FreeTable.Td>
+                  </FreeTable.Tr>
                 ))}
-              </tbody>
-            </table>
-            <button
+              </FreeTable.Tbody>
+            </FreeTable>
+            <UnstyledButton
               className={styles.addRow}
               onClick={() => addRow(blockIndex)}
               type="button"
             >
               ＋ 添加一行
-            </button>
+            </UnstyledButton>
           </div>
         );
       })}

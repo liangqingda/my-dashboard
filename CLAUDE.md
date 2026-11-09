@@ -12,6 +12,7 @@
 | 给某类文档做编辑器、改块解析与回写、`pnpm check:md` | `docs/markdown-editing.md` |
 | 动 `scripts/vite/*`、`../learn-english` 读盘写盘与提交、笔记数据修源头 | `docs/local-repo-data.md` |
 | 新增 / 改菜单页，动 `MenuContentLayout`、页面标题与内边距、页面呈现 | `docs/pages.md` |
+| 写 UI：该直接用组件库还是封 `FreeXxx`、业务表格 / 弹窗怎么落 | `docs/ui-components.md` |
 | 拆文件、决定函数 / 类型 / 常量放哪、命名与 import 分组 | `docs/code-splitting.md` |
 | 想写一段「好像别处也有」的工具函数 | `docs/shared-utils.md` |
 | 收尾 / 自检 / 提交 / 交付前 | `docs/self-check.md` |
@@ -28,6 +29,8 @@
 4. **菜单页必须套 `MenuContentLayout`**，标题走 `title` prop；页面 `index.scss` 不写 `.page`
    或页面级 `padding` / `height`。`src/features` 已废弃，不要重建，页面代码就近放 `src/pages/<Page>/`。
 5. **内容出问题先改源头 md**，不在预览层加「兼容畸形数据」的兜底，判据见 `docs/local-repo-data.md`。
+6. **UI 一律先用组件库**：Mantine 能给的（表格、按钮、输入框、弹窗）不手写原生标签；
+   第二处要同一套外观就封 `FreeXxx` 基础 UI 组件（如 `FreeTable`），业务表格 / 弹窗基于它再封一层。
 
 ## 维护本文件
 

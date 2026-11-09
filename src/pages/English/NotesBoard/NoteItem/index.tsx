@@ -1,3 +1,4 @@
+import { UnstyledButton } from '@mantine/core';
 import { IconChevronRight } from '@tabler/icons-react';
 
 import { splitNoteName, stripCategoryPrefix } from '../../utils/notes';
@@ -13,7 +14,7 @@ const NoteItem = ({ note, category, onOpen }: NoteItemProps) => {
 
   return (
     <li className={styles.row}>
-      <button
+      <UnstyledButton
         aria-label={`预览 ${note.name}`}
         className={styles.item}
         onClick={() => {
@@ -31,7 +32,7 @@ const NoteItem = ({ note, category, onOpen }: NoteItemProps) => {
           size={14}
           stroke={1.8}
         />
-      </button>
+      </UnstyledButton>
     </li>
   );
 };

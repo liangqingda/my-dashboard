@@ -3,6 +3,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
+import { UnstyledButton } from '@mantine/core';
 import { IconCheck, IconCopy } from '@tabler/icons-react';
 
 import { COPY_FEEDBACK_DURATION, copyText } from '@/utils/clipboard';
@@ -26,7 +27,7 @@ const CommandRow = ({ desc, name }: CommandRowProps) => {
   };
 
   return (
-    <button
+    <UnstyledButton
       className={styles.row}
       onClick={() => void handleCopy()}
       title="点击复制命令"
@@ -37,7 +38,7 @@ const CommandRow = ({ desc, name }: CommandRowProps) => {
       <span className={styles.copy}>
         {copied ? <IconCheck size={13} /> : <IconCopy size={13} />}
       </span>
-    </button>
+    </UnstyledButton>
   );
 };
 

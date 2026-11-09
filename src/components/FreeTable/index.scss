@@ -1,0 +1,38 @@
+/* 基础表格：项目统一外观，业务表格只补列宽、行交互与单元格内容样式 */
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* 表头：小字号字段色 + 强下边线，吸顶时用页面底色盖住滚上去的行 */
+.table th {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  padding: 0 12px 8px;
+  border-bottom: 1px solid var(--app-line-strong);
+  background: var(--app-bg);
+  color: var(--app-ink-soft);
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-align: left;
+  vertical-align: bottom;
+}
+
+.table td {
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--app-line);
+  vertical-align: top;
+}
+
+/* 密排：编辑器网格用，字与行都贴着内容，字号由所属编辑器自己定 */
+.compact th {
+  padding: 2px 6px;
+  vertical-align: middle;
+}
+
+.compact td {
+  padding: 2px 6px;
+  vertical-align: middle;
+}

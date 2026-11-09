@@ -1,30 +1,10 @@
-/* 表格平铺：一行一篇笔记，分类与更新时间各占一窄列，整表一起滚动 */
+/* 表格平铺：整表一起滚动；边框、表头、行 hover 由 FreeTable 统一负责，这里只补业务样式 */
 
 .wrap {
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
   overscroll-behavior: contain;
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-/* 表头吸顶：往下滚时列标题仍可见 */
-.head {
-  position: sticky;
-  z-index: 1;
-  top: 0;
-  padding: 0 12px 8px;
-  border-bottom: 1px solid var(--app-line-strong);
-  background: var(--app-bg);
-  color: var(--app-ink-soft);
-  font-size: 0.76rem;
-  font-weight: 600;
-  text-align: left;
-  vertical-align: bottom;
 }
 
 /* 分类列只放两三个字，更新时间列放 2026/11/08 14:39，都固定宽度；
@@ -54,34 +34,20 @@
   overflow-wrap: anywhere;
 }
 
-.cell {
-  padding: 7px 12px;
-  border-bottom: 1px solid var(--app-line);
-  vertical-align: top;
-}
-
 /* 整行都是打开入口：行内任意位置（含分类、时间）点了就开预览 */
 .row {
   cursor: pointer;
 }
 
-.row:hover .cell {
-  background: var(--app-surface-hover);
-}
-
 /* 文件名保留按钮：整行的键盘入口，鼠标点它时不再重复触发一次 */
 .name {
   width: 100%;
-  padding: 0;
-  border: 0;
-  background: transparent;
   color: var(--app-ink);
   font-family: var(--app-serif);
   font-size: 0.82rem;
   line-height: 1.5;
   text-align: left;
   overflow-wrap: anywhere;
-  cursor: pointer;
 }
 
 .name:hover {
@@ -98,6 +64,5 @@
 .time {
   color: var(--app-ink-faint);
   font-size: 0.74rem;
-  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }

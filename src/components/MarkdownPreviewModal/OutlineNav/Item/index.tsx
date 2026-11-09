@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useRef } from 'react';
+import { UnstyledButton } from '@mantine/core';
 import { IconChevronDown } from '@tabler/icons-react';
 
 import TruncatedText from '@/components/TruncatedText';
@@ -51,7 +52,7 @@ const OutlineNavItem = ({
         text={text}
       />
       {hasChildren ? (
-        <button
+        <UnstyledButton
           aria-expanded={expanded}
           aria-label={expanded ? '收起子标题' : '展开子标题'}
           className={cx(styles.slot, styles.toggle)}
@@ -65,7 +66,7 @@ const OutlineNavItem = ({
             size={12}
             stroke={1.9}
           />
-        </button>
+        </UnstyledButton>
       ) : null}
     </div>
   );

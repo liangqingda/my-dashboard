@@ -38,18 +38,12 @@
   gap: 8px;
 }
 
-.table {
+/* 编辑器网格按内容定宽，不铺满整行：用父级限定提高特异性，盖住基础表格的 100% */
+.tableBlock .table {
   width: auto;
   max-width: 100%;
-  border-collapse: collapse;
   color: var(--app-ink-soft);
   font-size: 0.82rem;
-}
-
-.table td {
-  padding: 2px 6px;
-  border-bottom: 1px solid var(--app-line);
-  vertical-align: middle;
 }
 
 .headCell {
@@ -93,14 +87,10 @@
   justify-content: center;
   width: 20px;
   height: 20px;
-  padding: 0;
-  border: 0;
   border-radius: 4px;
-  background: transparent;
   color: var(--app-ink-faint);
   font-size: 0.78rem;
   line-height: 1;
-  cursor: pointer;
 }
 
 .rowRemove:hover:not(:disabled) {
@@ -118,10 +108,8 @@
   padding: 3px 10px;
   border: 1px dashed var(--app-line-strong);
   border-radius: 4px;
-  background: transparent;
   color: var(--app-ink-faint);
   font-size: 0.72rem;
-  cursor: pointer;
 }
 
 .addRow:hover {

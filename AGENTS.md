@@ -6,8 +6,8 @@
 
 ```text
 AGENTS.md            本文件：硬约束速览 + 文档索引
-docs/    细则：页面布局 / 代码拆分与命名 / 公共能力复用 / 预览弹窗 / Markdown 编辑 /
-         本机数据链路 / 自检清单
+docs/    细则：页面布局 / 代码拆分与命名 / 公共能力复用 / UI 组件（组件库 → FreeXxx → 业务） /
+         预览弹窗 / Markdown 编辑 / 本机数据链路 / 自检清单
 CLAUDE.md            Claude Code 入口：红线 + 索引（内容同样在 docs/ 下）
 README.md            运行、脚本、目录结构
 ```
@@ -19,6 +19,7 @@ README.md            运行、脚本、目录结构
 | 新增 / 改菜单页，动 `MenuContentLayout`、页面标题与内边距、页面呈现 | `docs/pages.md` |
 | 拆分文件、决定某个函数 / 类型 / 常量放哪、目录与文件命名 | `docs/code-splitting.md` |
 | 想写一段「好像别处也有」的工具函数（错误文案、时间、class、复制） | `docs/shared-utils.md` |
+| 写 UI：直接用组件库还是封 `FreeXxx`、业务表格 / 弹窗怎么落 | `docs/ui-components.md` |
 | 动 Markdown 预览弹窗（排版 / 标题导航 / 全屏 / header 操作 / 换篇） | `docs/markdown-preview-modal.md` |
 | 做某类文档的编辑器、改块解析与回写、跑 `pnpm check:md` | `docs/markdown-editing.md` |
 | 动 `scripts/vite/*` 中间件、`../learn-english` 读盘写盘与提交、笔记数据修源头 | `docs/local-repo-data.md` |
@@ -45,6 +46,8 @@ README.md            运行、脚本、目录结构
    除非用户明确要求浏览器验证。
 8. **本机仓库数据（如 `../learn-english`）只走 `scripts/vite/*` 中间件读盘**，不新增后端服务；
    写操作只在开发模式可用，且必须校验文件名（禁路径穿越）。
+9. **UI 一律先用组件库**（Mantine）：表格、按钮、输入框、弹窗不手写原生标签；第二处要同一套外观
+   就封 `FreeXxx` 基础 UI 组件（现有 `FreeTable`），业务表格 / 弹窗基于它再封一层，不复制它的样式。
 
 以上由工具兜底的部分：`pnpm lint` 依次跑 `eslint .`（通用规则全部来自
 `@liangqingda/eslint-config` 的 `react-typed`：import 分组与空行、`@/pages/**` 排最后、

@@ -3,7 +3,14 @@
  */
 
 import { useState } from 'react';
-import { Button, Group, Loader, SegmentedControl, Text } from '@mantine/core';
+import {
+  Button,
+  Group,
+  Loader,
+  SegmentedControl,
+  Text,
+  UnstyledButton,
+} from '@mantine/core';
 import {
   IconChevronDown,
   IconChevronUp,
@@ -40,7 +47,7 @@ const ServiceLogPanel = ({ offline, service }: ServiceLogPanelProps) => {
   return (
     <>
       <div className={styles.bar}>
-        <button
+        <UnstyledButton
           aria-controls={`log-${service.id}`}
           aria-expanded={expanded}
           className={styles.toggle}
@@ -53,7 +60,7 @@ const ServiceLogPanel = ({ offline, service }: ServiceLogPanelProps) => {
           ) : (
             <IconChevronDown aria-hidden="true" size={14} />
           )}
-        </button>
+        </UnstyledButton>
         {expanded && (
           <Text c="dimmed" size="xs">
             {offline ? '已暂停更新' : '每 2 秒更新'}

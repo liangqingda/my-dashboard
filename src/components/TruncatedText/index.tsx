@@ -3,7 +3,7 @@
  * 文本本来就放得下时不弹任何提示，不给读者加噪音。
  */
 
-import { Tooltip } from '@mantine/core';
+import { Tooltip, UnstyledButton } from '@mantine/core';
 
 import { cx } from '@/utils/cx';
 
@@ -40,7 +40,7 @@ const TruncatedText = ({
       withArrow
     >
       {onClick ? (
-        <button
+        <UnstyledButton
           className={classes}
           disabled={disabled}
           onClick={onClick}
@@ -48,7 +48,7 @@ const TruncatedText = ({
           type="button"
         >
           {text}
-        </button>
+        </UnstyledButton>
       ) : (
         <span className={classes} ref={ref}>
           {text}

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActionIcon, Tooltip } from '@mantine/core';
+import { ActionIcon, Tooltip, UnstyledButton } from '@mantine/core';
 import { IconLayoutGrid, IconLayoutList } from '@tabler/icons-react';
 
 import MarkdownPreviewModal from '@/components/MarkdownPreviewModal';
@@ -215,9 +215,13 @@ const English = () => {
         {error ? (
           <div className={styles.errorBar}>
             <span className={styles.errorText}>{error}</span>
-            <button className={styles.retry} onClick={refresh} type="button">
+            <UnstyledButton
+              className={styles.retry}
+              onClick={refresh}
+              type="button"
+            >
               重新读取
-            </button>
+            </UnstyledButton>
           </div>
         ) : null}
 

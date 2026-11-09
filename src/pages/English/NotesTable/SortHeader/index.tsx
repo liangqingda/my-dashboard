@@ -1,3 +1,4 @@
+import { UnstyledButton } from '@mantine/core';
 import {
   IconArrowDown,
   IconArrowUp,
@@ -19,7 +20,7 @@ const SortHeader = ({ label, onSort, sort, sortKey }: SortHeaderProps) => {
   const SortIcon = active ? SORT_ICONS[sort.direction] : IconArrowsSort;
 
   return (
-    <button
+    <UnstyledButton
       aria-label={`按${label}排序`}
       className={cx(styles.button, active && styles.active)}
       onClick={() => onSort(sortKey)}
@@ -27,7 +28,7 @@ const SortHeader = ({ label, onSort, sort, sortKey }: SortHeaderProps) => {
     >
       {label}
       <SortIcon aria-hidden="true" className={styles.icon} size={13} stroke={1.9} />
-    </button>
+    </UnstyledButton>
   );
 };
 
