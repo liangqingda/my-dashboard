@@ -1,25 +1,35 @@
-/* 看板单行：文件名 + 右侧箭头，悬停时箭头浮现 */
+/* 看板单行：文件名 + 右侧复制图标 + 箭头，悬停时图标浮现 */
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 4px;
+}
 
 .row + .row {
   border-top: 1px solid var(--app-line);
 }
 
+/* 行级背景，好让复制图标也算在「整行可点」的观感里 */
+.row:hover {
+  background: var(--app-surface-hover);
+}
+
+/* 打开入口：占住除复制图标外的整行宽度 */
 .item {
   display: flex;
+  flex: 1 1 auto;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  width: 100%;
-  padding: 6px 4px;
+  min-width: 0;
+  padding: 6px 0;
   background: transparent;
   color: inherit;
   font: inherit;
   text-align: left;
   cursor: pointer;
-}
-
-.item:hover {
-  background: var(--app-surface-hover);
 }
 
 /* 单行省略：完整文件名靠看板「hover 的那一列变宽」展示，这里不挂 tip */
@@ -44,15 +54,28 @@
     transform 120ms ease;
 }
 
-.item:hover .chevron,
-.item:focus-visible .chevron {
+/* 复制图标常占位、悬停才露，避免浮现时把文件名挤窄一截 */
+.copy {
+  flex: 0 0 auto;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.row:hover .copy,
+.row:focus-within .copy {
+  opacity: 1;
+}
+
+.row:hover .chevron,
+.row:focus-within .chevron {
   color: var(--app-accent);
   opacity: 1;
   transform: translateX(2px);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .chevron {
+  .chevron,
+  .copy {
     transition: none;
   }
 }
