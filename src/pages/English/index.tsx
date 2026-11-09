@@ -19,6 +19,7 @@ import NotesBoard from './NotesBoard';
 import NotesTable from './NotesTable';
 import {
   getNoteCategory,
+  getNoteRelativePath,
   groupNotesByCategory,
   isBoardNote,
   sortNoteRows,
@@ -253,6 +254,7 @@ const English = () => {
             ? { index: activeIndex + 1, total: scopeNotes.length }
             : undefined
         }
+        relativePath={active ? getNoteRelativePath(active.name) : undefined}
         title={active?.name ?? ''}
       />
     </>

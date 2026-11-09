@@ -157,6 +157,8 @@ PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/Ma
 「英语」页只展示同级目录 `../learn-english` 仓库 `learning-record-notes/` 下的 Markdown
 笔记：六列看板（错题 / 短语 / 用法 / 语法 / 词汇 / 混合，一列一类，按文件名第一个 `-` 前缀分类），
 整页不滚动、每列各自纵向滚动，列内按文件名排序；列表只露出文件名，点文件名在弹窗里看全文。
+右上角图标可切到表格平铺（按分类 / 更新时间排序），每行末尾的「操作」列有一个复制图标，
+点一下复制这一篇的相对路径（`learning-record-notes/<文件名>`，相对记录仓库根目录）。
 
 数据不经过本机 agent，由 Vite 插件 `scripts/vite/english-notes.ts` 直接读盘：
 
@@ -177,9 +179,9 @@ ENGLISH_RECORDS_DIR=/path/to/learn-english pnpm dev
 
 Markdown 弹窗预览统一使用公共组件 `src/components/MarkdownPreviewModal`
 （详见 `CLAUDE.md`）：文档排版、表格与 `<details>` 折叠块、header 标题左侧的上一个 / 下一个、
-`←` / `→` 快捷键，弹窗左侧固定的标题目录 sidebar，以及 header 右侧把框体铺满视口（再点或
-Esc 退出）的全屏按钮都在组件内；页面只决定相邻文档是谁。全屏是记住的偏好（存 `localStorage`），
-换篇、关掉重开、刷新页面后再打开都保持上次的样子。
+`←` / `→` 快捷键，弹窗左侧固定的标题目录 sidebar，header 右侧的「复制相对路径」按钮，以及把框体
+铺满视口（再点或 Esc 退出）的全屏按钮都在组件内；页面只决定相邻文档是谁、这一篇的相对路径是什么。
+全屏是记住的偏好（存 `localStorage`），换篇、关掉重开、刷新页面后再打开都保持上次的样子。
 
 弹窗没有 footer：编辑 / 预览 / 保存与关闭全在 header 右侧的图标按钮里（tooltip 说明含义），
 编辑能力由页面注入（公共组件只给插槽，未定制时点编辑会提示

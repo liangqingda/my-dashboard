@@ -25,6 +25,13 @@ export const DEFAULT_NOTE_SORT: NotesSort = {
 /** 表格里字段缺失时的占位，避免出现空单元格 */
 export const EMPTY_CELL = '—';
 
+/**
+ * 笔记目录名，相对 learn-english 仓库根目录。
+ * 与 `scripts/vite/english-notes-store.ts` 的 `NOTES_DIR` 是同一个值：
+ * 前端只在「复制相对路径」时拼接它，不参与读盘，改目录时两处一起改。
+ */
+export const NOTES_DIR = 'learning-record-notes';
+
 /** 展示形式（分列看板 / 表格）的存储键：刷新页面后保持上次切换到的形态 */
 export const VIEW_MODE_STORAGE_KEY = 'my-dashboard:english:view-mode';
 

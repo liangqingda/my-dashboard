@@ -37,6 +37,16 @@
   width: 9.5rem;
 }
 
+/* 操作列只放一个复制图标，固定成最小宽度 */
+.actionWidth {
+  width: 4rem;
+}
+
+/* 复制按钮在单元格里居中，不跟着左边的内容走 */
+.actionButton {
+  margin-inline: auto;
+}
+
 /* 目标知识点长短不一，允许折行，别把表格撑到横向滚动 */
 .topic {
   color: var(--app-ink-soft);

@@ -4,12 +4,14 @@
  * 全站所有 Markdown 弹窗预览都必须使用这个组件，不要各自拼装 Modal 与渲染器：
  * 它统一了文档排版、上一篇 / 下一篇导航（header 标题左侧按钮 + ← / → 快捷键）、
  * 弹窗左侧固定的标题目录 sidebar（文档内 h1–h4 目录，随弹窗高度拉伸、目录自身滚动，
- * 滚动正文时跟随高亮当前小节）、header 右侧的一排操作：全屏预览（把整个框体铺满视口放大
- * 阅读空间，再点一次或按 Esc 退出）与编辑 / 预览 / 保存 / 放弃改动，全部只留图标 + tooltip。
+ * 滚动正文时跟随高亮当前小节）、header 右侧的一排操作：复制文档的相对路径（调用方给路径）、
+ * 全屏预览（把整个框体铺满视口放大阅读空间，再点一次或按 Esc 退出）
+ * 与编辑 / 预览 / 保存 / 放弃改动，全部只留图标 + tooltip。
  * 组件只负责编辑态与保存流程，不知道文档结构和文件落在哪里：
  * 具体怎么编辑由调用方通过 `Editor` 插槽传入，没有定制编辑器时给出定制提示。
  *
  * 这里的职责只有 Modal 骨架与装配：
+ * - 标题栏一行（翻篇 / 计数 / 文件名 / 复制路径 / 刷新 / 全屏）→ `title-bar`
  * - 标题目录 sidebar → `outline-nav`
  * - header 右侧的操作与状态提示 → `header-actions`
  * - 编辑态状态机 → `hooks/use-note-editing`
@@ -17,14 +19,7 @@
  */
 
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { ActionIcon, Modal, Tooltip } from '@mantine/core';
-import {
-  IconChevronLeft,
-  IconChevronRight,
-  IconMaximize,
-  IconMinimize,
-  IconRefresh,
-} from '@tabler/icons-react';
+import { Modal } from '@mantine/core';
 import Markdown from 'react-markdown';
 
 import { cx } from '@/utils/cx';
@@ -34,7 +29,7 @@ import type {
   MarkdownEditorHandle,
   MarkdownPreviewModalProps,
 } from './types';
-import PreviewHeaderActions from './HeaderActions';
+import TitleBar from './TitleBar';
 import OutlineNav from './OutlineNav';
 import { HEADING_SELECTOR, REHYPE_PLUGINS, REMARK_PLUGINS } from './constants';
 import { useActiveHeadingIndex } from './hooks/useActiveHeadingIndex';
@@ -58,6 +53,7 @@ const MarkdownPreviewModal = ({
   title,
   markdown,
   position,
+  relativePath,
   onClose,
   onPrevious,
   onNext,
@@ -214,88 +210,20 @@ const MarkdownPreviewModal = ({
       radius="md"
       size="min(980px, 92vw)"
       title={
-        <div className={styles.titleRow}>
-          <ActionIcon
-            aria-label="上一篇"
-            className={styles.stepButton}
-            disabled={!onPrevious || editing.editing}
-            onClick={onPrevious ?? undefined}
-            size="sm"
-            variant="subtle"
-          >
-            <IconChevronLeft size={16} stroke={1.9} />
-          </ActionIcon>
-          <ActionIcon
-            aria-label="下一篇"
-            className={styles.stepButton}
-            disabled={!onNext || editing.editing}
-            onClick={onNext ?? undefined}
-            size="sm"
-            variant="subtle"
-          >
-            <IconChevronRight size={16} stroke={1.9} />
-          </ActionIcon>
-          {position ? (
-            <span className={styles.position}>
-              {position.index} / {position.total}
-            </span>
-          ) : null}
-          <span className={styles.fileName}>{title}</span>
-          <span className={styles.titleGap} />
-          {/* 编辑中不显示刷新：正文不是从盘里读的，刷了也只会把草稿盖掉 */}
-          {onRefresh && !editing.editing ? (
-            <Tooltip label="刷新预览内容" withArrow>
-              <ActionIcon
-                aria-label="刷新预览内容"
-                className={styles.refreshButton}
-                loading={refreshing}
-                onClick={refresh}
-                size="sm"
-                variant="subtle"
-              >
-                <IconRefresh size={15} stroke={1.9} />
-              </ActionIcon>
-            </Tooltip>
-          ) : null}
-          {/* 编辑态（含草稿预览）不提供全屏：这时要看的是块编辑器，全屏只放大表单 */}
-          {!editing.editing ? (
-            <Tooltip
-              label={fullscreen ? '退出全屏（Esc）' : '全屏预览'}
-              withArrow
-            >
-              <ActionIcon
-                aria-label={fullscreen ? '退出全屏预览' : '全屏预览'}
-                className={styles.fullscreenButton}
-                onClick={toggleFullscreen}
-                size="sm"
-                variant="subtle"
-              >
-                {fullscreen ? (
-                  <IconMinimize size={15} stroke={1.9} />
-                ) : (
-                  <IconMaximize size={15} stroke={1.9} />
-                )}
-              </ActionIcon>
-            </Tooltip>
-          ) : null}
-          <PreviewHeaderActions
-            askDiscard={editing.askDiscard}
-            canEdit={Boolean(onSave)}
-            editing={editing.editing}
-            onCancelEdit={editing.requestExitEditing}
-            onDiscard={editing.discardAndExitEditing}
-            onKeepEditing={editing.keepEditing}
-            onSaveEdit={editing.save}
-            onStartEdit={startEditing}
-            onStartPreview={editing.startPreview}
-            onStopPreview={editing.stopPreview}
-            previewing={editing.previewing}
-            saveError={editing.saveError}
-            saveNotice={editing.saveNotice}
-            savedAt={editing.savedAt}
-            saving={editing.saving}
-          />
-        </div>
+        <TitleBar
+          canEdit={Boolean(onSave)}
+          editing={editing}
+          fullscreen={fullscreen}
+          onNext={onNext}
+          onPrevious={onPrevious}
+          onRefresh={onRefresh ? refresh : null}
+          onStartEdit={startEditing}
+          onToggleFullscreen={toggleFullscreen}
+          position={position}
+          refreshing={refreshing}
+          relativePath={relativePath}
+          title={title}
+        />
       }
       transitionProps={{ duration: 140, transition: 'fade' }}
       withCloseButton={!editing.editing}

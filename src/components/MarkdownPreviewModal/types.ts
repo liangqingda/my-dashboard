@@ -35,6 +35,34 @@ export type MarkdownEditorProps = {
   onHandleReady?: (handle: MarkdownEditorHandle | null) => void;
 };
 
+/** 预览弹窗标题栏的入参：翻篇、复制路径、刷新、全屏与编辑操作全在这一行 */
+export type TitleBarProps = {
+  /** 文档标题（通常是文件名） */
+  title: string;
+  /** 相对的路径；不传就不显示复制按钮 */
+  relativePath?: string;
+  /** 当前位置；不传就不显示计数 */
+  position?: { index: number; total: number };
+  /** 上一篇；null / 不传表示没有相邻文档 */
+  onPrevious?: (() => void) | null;
+  /** 下一篇；null / 不传表示没有相邻文档 */
+  onNext?: (() => void) | null;
+  /** 刷新正文；null 表示不提供（编辑中本来也不显示） */
+  onRefresh?: (() => void) | null;
+  /** 刷新按钮是否在 loading */
+  refreshing: boolean;
+  /** 是否全屏预览中 */
+  fullscreen: boolean;
+  /** 切换全屏 */
+  onToggleFullscreen: () => void;
+  /** 调用方是否提供编辑能力（决定「编辑」图标出不出来） */
+  canEdit: boolean;
+  /** 进入编辑（调用方顺带清掉目录激活项） */
+  onStartEdit: () => void;
+  /** 编辑态状态机，标题栏只读它的状态、调它的动作 */
+  editing: NoteEditingState;
+};
+
 /** 预览弹窗的对外 props */
 export type MarkdownPreviewModalProps = {
   /** 是否打开预览 */
@@ -45,6 +73,13 @@ export type MarkdownPreviewModalProps = {
   markdown: string;
   /** 当前位置，如第 3 / 12 篇 */
   position?: { index: number; total: number };
+  /**
+   * 文档的相对路径（相对它所在记录仓库的根目录，如
+   * `learning-record-notes/errors-back-west-spacing.md`）。
+   * 提供后 header 右侧才出现复制图标按钮，点一下把这串路径写进剪贴板；
+   * 组件不知道文件落在哪里，路径由调用方给。
+   */
+  relativePath?: string;
   /** 关闭预览 */
   onClose: () => void;
   /** 上一篇；null 表示没有相邻文档 */

@@ -1,8 +1,10 @@
+import CopyIconButton from '@/components/CopyIconButton';
 import { cx } from '@/utils/cx';
 
 import { EMPTY_CELL } from '../constants';
 import NotesPlaceholder from '../NotesPlaceholder';
 import type { NoteSortKey, NotesSort } from '../types';
+import { getNoteRelativePath } from '../utils/notes';
 
 import type { NotesTableProps } from './types';
 import SortHeader from './SortHeader';
@@ -67,6 +69,9 @@ const NotesTable = ({
               sortKey="updated"
             />
           </th>
+          <th className={cx(styles.head, styles.actionWidth)} scope="col">
+            操作
+          </th>
         </tr>
       </thead>
       <tbody>
@@ -101,12 +106,19 @@ const NotesTable = ({
                 <td className={cx(styles.cell, styles.timeWidth, styles.time)}>
                   {row.updatedLabel || EMPTY_CELL}
                 </td>
+                <td className={cx(styles.cell, styles.actionWidth)}>
+                  <CopyIconButton
+                    className={styles.actionButton}
+                    label="复制相对路径"
+                    text={getNoteRelativePath(row.note.name)}
+                  />
+                </td>
               </tr>
             );
           })
         ) : (
           <tr>
-            <td className={styles.cell} colSpan={4}>
+            <td className={styles.cell} colSpan={5}>
               <NotesPlaceholder
                 error={error}
                 loading={loading}

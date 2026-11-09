@@ -1,0 +1,10 @@
+/* 复制图标按钮：常态弱化，悬停强调；点击后换成对勾，颜色不变 */
+
+.button {
+  flex: 0 0 auto;
+  color: var(--app-ink-faint);
+}
+
+.button:hover:not(:disabled) {
+  color: var(--app-accent);
+}

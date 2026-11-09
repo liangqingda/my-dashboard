@@ -2,6 +2,9 @@
  * 剪贴板：优先用异步 Clipboard API，不可用时退回 execCommand。
  */
 
+/** 复制成功后「已复制 / 对勾」反馈的停留时长（毫秒）：各处的复制入口共用同一档手感 */
+export const COPY_FEEDBACK_DURATION = 1500;
+
 /**
  * 把文本写进系统剪贴板，成功返回 true。
  * 非安全上下文（http、旧浏览器）里 Clipboard API 不可用，退回隐藏 textarea + execCommand。

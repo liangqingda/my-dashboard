@@ -5,9 +5,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { IconCheck, IconCopy } from '@tabler/icons-react';
 
-import { copyText } from '@/utils/clipboard';
-
-import { COPIED_HINT_DURATION } from '../../constants';
+import { COPY_FEEDBACK_DURATION, copyText } from '@/utils/clipboard';
 
 import type { CommandRowProps } from './types';
 
@@ -24,7 +22,7 @@ const CommandRow = ({ desc, name }: CommandRowProps) => {
 
     setCopied(ok);
     window.clearTimeout(timer.current);
-    timer.current = setTimeout(() => setCopied(false), COPIED_HINT_DURATION);
+    timer.current = setTimeout(() => setCopied(false), COPY_FEEDBACK_DURATION);
   };
 
   return (

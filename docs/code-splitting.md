@@ -25,7 +25,7 @@
 
 - 单个 `index.tsx` 只放一个组件，**不得**堆多个组件；超长文件按五维拆开，
   公共组件同样适用（`MarkdownPreviewModal` 现拆成 `types.ts` / `constants.ts` / `hooks/` /
-  `OutlineNav/` / `HeaderActions/`，样式也随组件各自走）。
+  `TitleBar/` / `OutlineNav/` / `HeaderActions/`，样式也随组件各自走）。
 - 组件目录内**不嵌套** `components/` 层，子组件目录直接放父组件目录下。
 - 每个组件目录 `index.tsx` + `index.scss` 成对存在（CSS Module 类名自动 camelCase）。
 - 在组件里定义的局部变量不要与 import 进来的组件 / 函数同名。例如两个图标别名不要叫

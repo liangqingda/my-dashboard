@@ -10,7 +10,7 @@ import type {
   NoteRow,
   NotesSort,
 } from '../types';
-import { NOTE_CATEGORIES } from '../constants';
+import { NOTE_CATEGORIES, NOTES_DIR } from '../constants';
 
 /** 正文「基础信息」表里的更新时间行：`<tr><td>笔记更新时间</td><td>2026-11-08 14:39</td></tr>` */
 const NOTE_UPDATED_AT_PATTERN = /笔记更新时间[\s\S]{0,40}?<td>([^<]+)</u;
@@ -36,6 +36,16 @@ export const getNoteCategory = (name: string): string => {
 
   return separator > 0 ? name.slice(0, separator) : '';
 };
+
+/**
+ * 笔记在 learn-english 仓库里的相对路径，如
+ * `learning-record-notes/errors-back-west-spacing.md`。
+ *
+ * 表格的「操作」列与预览弹窗 header 复制出去的就是这一串：相对于记录仓库根目录，
+ * 粘进终端、编辑器或另一个 agent 都能直接定位到文件，不依赖本机绝对路径。
+ */
+export const getNoteRelativePath = (name: string): string =>
+  `${NOTES_DIR}/${name}`;
 
 /**
  * 笔记「笔记更新时间」，用于列内排序与表格展示。

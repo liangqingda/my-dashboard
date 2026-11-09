@@ -15,7 +15,8 @@
 | 错误对象转提示文案 | `@/utils/error` 的 `getErrorMessage(error, fallback)` |
 | 时间格式化 | `@/utils/format` 的 `formatClock` / `formatTime` / `formatDateTime`（内部缓存 `Intl` 实例，不要就地 `new Intl.DateTimeFormat`） |
 | 多 class 拼接 | `@/utils/cx` 的 `cx(...)`，不要手写模板串或 `?? ''` 拼空格 |
-| 剪贴板复制 | `@/utils/clipboard` 的 `copyText(text)`（含 `execCommand` 兜底） |
+| 剪贴板复制 | `@/utils/clipboard` 的 `copyText(text)`（含 `execCommand` 兜底）与 `COPY_FEEDBACK_DURATION`（复制成功后对勾的停留时长） |
+| 复制图标按钮 | `@/components/CopyIconButton`：点击复制 `text`，成功后图标 1.5 秒内变对勾；点击不冒泡（嵌在整行可点击的表格里不会顺带打开那一行），失败弹一条提示 |
 | 页面级刷新 | `@/utils/page-refresh` 的 `requestPageRefresh()`（等页面取完数才 resolve，返回 `empty` 表示无订阅者）/ `onPageRefresh(handler)` |
 | Markdown 标题目录 | `@/utils/markdown-outline` 的 `extractMarkdownOutline` |
 | 单行省略文本 / 截断才提示 | `@/components/TruncatedText`：放得下就正常显示，只有被省略号截断时才在 hover / 聚焦弹 tip；传 `onClick` 渲染成 button，`inline` 用于夹在一行文字里 |

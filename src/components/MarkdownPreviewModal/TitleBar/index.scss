@@ -1,0 +1,65 @@
+/* 标题栏一行：左半边是翻篇 + 计数 + 文件名，右半边是复制 / 刷新 / 全屏 / 编辑操作 */
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+/* 上一篇 / 下一篇：落在标题左侧 */
+.stepButton {
+  flex: 0 0 auto;
+  color: var(--app-ink-faint);
+}
+
+.stepButton:hover {
+  color: var(--app-accent);
+}
+
+/* 刷新正文：和全屏、编辑操作排在同一组右对齐图标里 */
+.refreshButton {
+  flex: 0 0 auto;
+  color: var(--app-ink-faint);
+}
+
+.refreshButton:hover {
+  color: var(--app-accent);
+}
+
+/* 全屏 / 退出全屏：和刷新、编辑操作排在同一组右对齐图标里 */
+.fullscreenButton {
+  flex: 0 0 auto;
+  color: var(--app-ink-faint);
+}
+
+.fullscreenButton:hover {
+  color: var(--app-accent);
+}
+
+.fileName {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--app-ink);
+  font-family: var(--app-serif);
+  font-size: 0.94rem;
+  line-height: 1.4;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 标题之后吃掉剩余空间，把右侧那组操作（复制 / 刷新 / 全屏 / 编辑 / 关闭）顶到最右 */
+.titleGap {
+  flex: 1 1 auto;
+  min-width: 8px;
+}
+
+/* 计数紧跟在切换按钮右边 */
+.position {
+  flex: 0 0 auto;
+  min-width: 3.2em;
+  color: var(--app-ink-faint);
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+}
