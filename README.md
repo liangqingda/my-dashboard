@@ -223,8 +223,8 @@ src/
 ## 约定（由工具强制，不只靠自觉）
 
 细则见 `docs/`（页面布局 / 代码拆分与命名 / 公共能力复用 / 预览弹窗 / Markdown 编辑 /
-本机数据链路 / 自检清单）；两个入口文件都只有红线与索引：`CLAUDE.md`（Claude Code）、
-`AGENTS.md`（其他 agent）。下面是其中被工具强制的最短版本：
+本机数据链路 / 自检清单）；入口只有一份 `AGENTS.md`（硬约束 + 索引），根目录的 `CLAUDE.md`
+是指向它的软链，供只认这个文件名的 Claude Code 读取。下面是其中被工具强制的最短版本：
 
 - 路径别名：`@/*` → `src/*`
 - 新增组件时，同级放置 `index.tsx` + `index.scss`（CSS Module 类名自动 camelCase）

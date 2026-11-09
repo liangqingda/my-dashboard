@@ -9,11 +9,18 @@
  *  4. 页面内相对导入不得跨出该页面目录，跨目录一律用 @/ 别名
  *  5. 菜单页（由 Sidebar navItems + App.tsx 路由自动解析）必须用 src/layouts/MenuContentLayout
  *     包内容，页面样式不得再定义 .page
- *  6. 入口文档 CLAUDE.md 只放红线与索引：行数不超上限，docs/ 下的细则与索引一一对应
+ *  6. 入口文档 AGENTS.md 只放硬约束与索引：行数不超上限，docs/ 下的细则与索引一一对应；
+ *     CLAUDE.md 只能是指向它的软链（两份内容会漂移）
  *
  * 任一规则被违反 → 打印错误并以退出码 1 结束。
  */
-import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import {
+  existsSync,
+  lstatSync,
+  readFileSync,
+  readdirSync,
+  realpathSync,
+} from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -24,9 +31,10 @@ const SRC = path.join(ROOT, 'src');
 const LEGACY_FEATURES = path.join(SRC, 'features');
 const PAGES = path.join(SRC, 'pages');
 const CODE_EXTS = ['.ts', '.tsx'];
+const AGENTS_FILE = path.join(ROOT, 'AGENTS.md');
 const CLAUDE_FILE = path.join(ROOT, 'CLAUDE.md');
 const DOCS = path.join(ROOT, 'docs');
-const CLAUDE_MAX_LINES = 60;
+const ENTRY_MAX_LINES = 100;
 
 const errors = [];
 
@@ -329,19 +337,23 @@ function checkMenuPages() {
 }
 
 /**
- * CLAUDE.md 是入口不是手册：只放红线与索引，细则都在 docs/ 下。
+ * AGENTS.md 是唯一入口，只放硬约束与索引，细则都在 docs/ 下：
  *  1. 超过行数上限说明该拆的没拆（不是放宽阈值，是拆到 docs/）
  *  2. docs/ 里的每份细则都必须出现在索引里，索引里写的路径也必须真实存在
+ *  3. CLAUDE.md 必须是指向它的软链；写成第二份内容即视为漂移
  */
 function checkEntryDocs() {
-  if (!existsSync(CLAUDE_FILE)) return;
+  if (!existsSync(AGENTS_FILE)) {
+    errors.push('[文档] 根目录 AGENTS.md 缺失：协作入口只维护这一份');
+    return;
+  }
 
-  const source = readFileSync(CLAUDE_FILE, 'utf8');
+  const source = readFileSync(AGENTS_FILE, 'utf8');
   const lineCount = source.replace(/\n$/, '').split('\n').length;
 
-  if (lineCount > CLAUDE_MAX_LINES) {
+  if (lineCount > ENTRY_MAX_LINES) {
     errors.push(
-      `[文档] CLAUDE.md 有 ${lineCount} 行（上限 ${CLAUDE_MAX_LINES}）：细则拆到 docs/，入口只留红线与索引`,
+      `[文档] AGENTS.md 有 ${lineCount} 行（上限 ${ENTRY_MAX_LINES}）：细则拆到 docs/，入口只留硬约束与索引`,
     );
   }
 
@@ -350,7 +362,7 @@ function checkEntryDocs() {
       if (!name.endsWith('.md')) continue;
       if (!source.includes(`docs/${name}`)) {
         errors.push(
-          `[文档] docs/${name} 没有出现在 CLAUDE.md 的索引里，新增细则要同时补索引`,
+          `[文档] docs/${name} 没有出现在 AGENTS.md 的索引里，新增细则要同时补索引`,
         );
       }
     }
@@ -358,8 +370,27 @@ function checkEntryDocs() {
 
   for (const match of source.matchAll(/docs\/([\w.-]+\.md)/g)) {
     if (!existsSync(path.join(DOCS, match[1]))) {
-      errors.push(`[文档] CLAUDE.md 索引里的 docs/${match[1]} 不存在`);
+      errors.push(`[文档] AGENTS.md 索引里的 docs/${match[1]} 不存在`);
     }
+  }
+
+  // Claude Code 只认 CLAUDE.md：要求它只是指向 AGENTS.md 的软链，规则只有一份
+  if (!existsSync(CLAUDE_FILE)) {
+    errors.push(
+      '[文档] CLAUDE.md 缺失：Claude Code 读不到规则，请建指向 AGENTS.md 的软链',
+    );
+    return;
+  }
+
+  if (!lstatSync(CLAUDE_FILE).isSymbolicLink()) {
+    errors.push(
+      '[文档] CLAUDE.md 不是软链：规则只维护 AGENTS.md，CLAUDE.md 请改为指向它的软链，避免两份内容漂移',
+    );
+    return;
+  }
+
+  if (realpathSync(CLAUDE_FILE) !== realpathSync(AGENTS_FILE)) {
+    errors.push('[文档] CLAUDE.md 软链指向的不是 AGENTS.md');
   }
 }
 
