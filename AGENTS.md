@@ -21,8 +21,8 @@
 
 1. **菜单页必须套 `MenuContentLayout`**，标题走 `title` prop；页面 `index.scss` 不得写 `.page`
    或页面级 `padding` / `height`。新增页 = 先加 `Sidebar` 导航项 + `App.tsx` 路由，页面自动纳入校验。
-2. **`src/features` 已废弃，不要重建**；页面代码就近放 `src/pages/<Page>/`，只有真正跨页面复用的
-   才上提 `src/components` 或 `src/utils`。
+2. **页面代码就近放 `src/pages/<Page>/`**，只有真正跨页面复用的才上提 `src/components`
+   或 `src/utils`；页面只做数据拼装与状态编排。
 3. **按五维拆分**：类型 `types.ts` / 纯函数 `utils.ts`（多了建 `utils/`）/ 副作用 `hooks/` /
    展示单元 一组件一目录 / 常量 `constants.ts`。一个 `index.tsx` 只放一个组件，不嵌套 `components/`。
 4. **公共能力不许重复实现**：错误文案 `getErrorMessage`、时间 `format*`、class `cx`、
