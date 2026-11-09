@@ -42,8 +42,8 @@
    提示、折叠、布局都不手写原生标签，先查 `docs/ui-components.md` 的「场景 → 用哪个」；
    第二处要同一套外观就封 `FreeXxx` 基础 UI 组件（现有 `FreeTable`），业务表格 / 弹窗基于它
    再封一层，不复制它的样式。
-10. **Markdown 预览一律走 `src/components/MarkdownPreviewModal`**：不在页面里另起 Modal + 渲染器，
-    不复制它的样式；渲染栈固定 `react-markdown` + `remark-gfm` + `rehype-raw`。
+10. **Markdown 预览 / 文档查看一律走 `src/components/MarkdownPreviewModal`**：不另起 Modal +
+    渲染器、不复制样式；选型见 `docs/ui-components.md`，行为与渲染栈见 `docs/markdown-preview-modal.md`。
 11. **编辑能力只走 `Editor` 插槽**，按文档类别放在对应页面目录里，通用的解析 / 控件才上提；
     新增一类可编辑文档先跑仓库内 skill `personalize-edit-markdown`。
     **禁止 contentEditable + DOM 反向序列化**（丢格式、与 React 抢 DOM、父级刷新时编辑内容消失）。

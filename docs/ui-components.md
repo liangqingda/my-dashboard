@@ -3,6 +3,29 @@
 **能用组件库（Mantine）的都一律用组件库，不自己手写一套。** 原生标签只在组件库没有对应能力、
 或只是纯语义容器（`<section>`、`<li>`）时出现，每一处都要能当场说出理由。
 
+## 场景 → 用哪个
+
+新写任何 UI 先在这张表里找，找不到再看下面三档判据；**表里有的一律不许手写原生标签**。
+
+| 场景 | 用什么 |
+| --- | --- |
+| 普通按钮（主次操作 / 提交） | `Button`（`variant` 区分主次，不自己写配色） |
+| 纯图标按钮 | `ActionIcon` + `Tooltip`（别用 `UnstyledButton` 当图标位） |
+| 长得像文字、或整行 / 整块可点的入口 | `UnstyledButton` |
+| 表格 | `FreeTable`（业务再包一层，见下文） |
+| 弹窗 | `Modal`；任何 Markdown / 文档预览一律走 `MarkdownPreviewModal`（不自己接渲染器，行为见 `docs/markdown-preview-modal.md`） |
+| 单行输入 | `TextInput` |
+| 多行输入（普通表单） | `Textarea` |
+| 下拉单选 / 多选 | `Select` / `MultiSelect` |
+| 分段切换（视图模式、日志类别） | `SegmentedControl` |
+| 悬停 / 聚焦提示 | `Tooltip`（截断后的完整内容走 `TruncatedText`） |
+| 加载中 | `Loader`（占位骨架 `Skeleton`） |
+| 一次性提示 | `notifications.show`（不自己造 toast） |
+| 折叠 / 展开 | `Collapse`、`Accordion` |
+| 布局排布 | `Stack`、`Group`、`Box`、`AppShell` 等布局组件，不堆自定义 flex 容器 |
+| 徽标 / 状态标记 | `Badge` |
+| 进度 | `Progress`、`RingProgress` |
+
 ## 三档判据
 
 | 情况 | 做法 | 放哪 |
@@ -18,6 +41,8 @@
   Mantine `Table` 就会出现两套外观，也算违反约定。
 - **不复制样式**：业务组件要改外观通过 props / 自己的 `index.scss` 加增量，不把 `FreeXxx`
   的规则抄一遍。
+- **不接第二套渲染栈**：已经该用 `MarkdownPreviewModal` 的场景，页面里再出现 `react-markdown`
+  直连、或另起 `Modal` + 渲染器，等同于复制整套组件。
 
 ## 命名与位置
 

@@ -178,7 +178,7 @@ ENGLISH_RECORDS_DIR=/path/to/learn-english pnpm dev
 ```
 
 Markdown 弹窗预览统一使用公共组件 `src/components/MarkdownPreviewModal`
-（详见 `docs/markdown-preview-modal.md`）：文档排版、表格与 `<details>` 折叠块、header 标题左侧的上一个 / 下一个、
+（选型见 `docs/ui-components.md`，行为见 `docs/markdown-preview-modal.md`）：文档排版、表格与 `<details>` 折叠块、header 标题左侧的上一个 / 下一个、
 `←` / `→` 快捷键，弹窗左侧固定的标题目录 sidebar，header 右侧的「复制相对路径」按钮，以及把框体
 铺满视口（再点或 Esc 退出）的全屏按钮都在组件内；页面只决定相邻文档是谁、这一篇的相对路径是什么。
 全屏是记住的偏好（存 `localStorage`），换篇、关掉重开、刷新页面后再打开都保持上次的样子。
