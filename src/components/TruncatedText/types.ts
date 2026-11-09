@@ -17,6 +17,6 @@ export type TruncatedTextProps = {
   onClick?: () => void;
   /** tip 打开延迟（毫秒），默认 0：不用等浏览器原生提示那一秒 */
   openDelay?: number;
-  /** tip 出现方向，默认 left-start（左侧对齐上方） */
+  /** tip 出现方向，默认 right（正右侧）；贴边或被遮挡的场景按需改成 top 等 */
   position?: FloatingPosition;
 };

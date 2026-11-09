@@ -29,7 +29,7 @@ const NoteItem = ({ note, category, onOpen }: NoteItemProps) => {
         }}
         type="button"
       >
-        <TruncatedText className={styles.name} text={label} />
+        <TruncatedText className={styles.name} position="top" text={label} />
         <IconChevronRight
           aria-hidden="true"
           className={styles.chevron}

@@ -18,7 +18,7 @@ const TruncatedText = ({
   inline = false,
   onClick,
   openDelay = 0,
-  position = 'left-start',
+  position = 'right',
   text,
 }: TruncatedTextProps) => {
   const { ref, truncated } = useIsTruncated(text);
