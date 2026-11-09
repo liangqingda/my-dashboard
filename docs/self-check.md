@@ -33,6 +33,7 @@
 | 6 | 共用能力有没有重复实现 | `docs/shared-utils.md` 的清单（项目特有） |
 | 7 | 残留：旧目录、`features/…`、已删页面、失效文档段落 | skill 判据 + 本项目 grep 旧路径字符串 |
 | 8 | 读盘 / 写盘接口：只走 `scripts/vite/*`、写操作仅开发模式、文件名校验禁路径穿越 | 硬约束 8（本项目事实） |
+| 9 | 文档同步：改到的行为 / 契约写进对应 `docs/`；入口文件仍只有红线与索引，没有该拆未拆的段落 | `CLAUDE.md`《维护本文件》 |
 
 ## 3. 本项目容易返工的两点
 
@@ -47,6 +48,7 @@
 ## 5. 提交前
 
 - `git status` + `git diff --stat`：只含本次改动，不夹带无关文件或整文件格式化。
+- 改了约定或行为：同一次提交里同步 `docs/` 与两个入口文件（`CLAUDE.md` 只加红线 / 索引，
+  `AGENTS.md` 只加速览 / 索引），不要只改代码。
 - 裸 `eslint-disable`、失效 disable、`@ts-ignore`、`console.log` 从
   `@liangqingda/eslint-config@1.6.0` 起都由 lint 拦下，不用人工再查一遍。
-</content>

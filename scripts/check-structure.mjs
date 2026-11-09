@@ -9,6 +9,7 @@
  *  4. 页面内相对导入不得跨出该页面目录，跨目录一律用 @/ 别名
  *  5. 菜单页（由 Sidebar navItems + App.tsx 路由自动解析）必须用 src/layouts/MenuContentLayout
  *     包内容，页面样式不得再定义 .page
+ *  6. 入口文档 CLAUDE.md 只放红线与索引：行数不超上限，docs/ 下的细则与索引一一对应
  *
  * 任一规则被违反 → 打印错误并以退出码 1 结束。
  */
@@ -23,6 +24,9 @@ const SRC = path.join(ROOT, 'src');
 const LEGACY_FEATURES = path.join(SRC, 'features');
 const PAGES = path.join(SRC, 'pages');
 const CODE_EXTS = ['.ts', '.tsx'];
+const CLAUDE_FILE = path.join(ROOT, 'CLAUDE.md');
+const DOCS = path.join(ROOT, 'docs');
+const CLAUDE_MAX_LINES = 60;
 
 const errors = [];
 
@@ -324,9 +328,45 @@ function checkMenuPages() {
   }
 }
 
+/**
+ * CLAUDE.md 是入口不是手册：只放红线与索引，细则都在 docs/ 下。
+ *  1. 超过行数上限说明该拆的没拆（不是放宽阈值，是拆到 docs/）
+ *  2. docs/ 里的每份细则都必须出现在索引里，索引里写的路径也必须真实存在
+ */
+function checkEntryDocs() {
+  if (!existsSync(CLAUDE_FILE)) return;
+
+  const source = readFileSync(CLAUDE_FILE, 'utf8');
+  const lineCount = source.replace(/\n$/, '').split('\n').length;
+
+  if (lineCount > CLAUDE_MAX_LINES) {
+    errors.push(
+      `[文档] CLAUDE.md 有 ${lineCount} 行（上限 ${CLAUDE_MAX_LINES}）：细则拆到 docs/，入口只留红线与索引`,
+    );
+  }
+
+  if (existsSync(DOCS)) {
+    for (const name of readdirSync(DOCS)) {
+      if (!name.endsWith('.md')) continue;
+      if (!source.includes(`docs/${name}`)) {
+        errors.push(
+          `[文档] docs/${name} 没有出现在 CLAUDE.md 的索引里，新增细则要同时补索引`,
+        );
+      }
+    }
+  }
+
+  for (const match of source.matchAll(/docs\/([\w.-]+\.md)/g)) {
+    if (!existsSync(path.join(DOCS, match[1]))) {
+      errors.push(`[文档] CLAUDE.md 索引里的 docs/${match[1]} 不存在`);
+    }
+  }
+}
+
 checkNoFeatures();
 checkPages();
 checkMenuPages();
+checkEntryDocs();
 
 if (errors.length > 0) {
   console.error('[×] 结构检查未通过：');
@@ -334,4 +374,4 @@ if (errors.length > 0) {
   process.exit(1);
 }
 
-console.log('[✓] 结构检查通过：pages 目录组织与菜单页布局符合约定');
+console.log('[✓] 结构检查通过：pages 目录组织、菜单页布局与入口文档索引符合约定');

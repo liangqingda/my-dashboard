@@ -1,157 +1,41 @@
 # CLAUDE.md
 
-`my-dashboard` 的协作约定。动手改代码前先读本文件；与 `README.md` 冲突时以本文件为准。
+`my-dashboard` 的协作入口（Claude Code 读这份）。只放**不可绕过的红线**和**细则索引**：
+细节一律写在 `docs/` 下，动手前按索引读对应文件，不要凭印象。
+运行与脚本见 `README.md`，跨 agent 的硬约束速览与提交约定见根目录 `AGENTS.md`。
 
-## Markdown 预览一律使用公共组件
+## 细则索引
 
-**所有 Markdown 弹窗预览都必须使用 `src/components/MarkdownPreviewModal`。**
-学习笔记、文档、报告、日志等任何以弹窗形式查看 Markdown 的场景都适用，不要在页面里
-另起一套 `Modal` + Markdown 渲染器，也不要复制这个组件的样式。
+| 场景 | 读 |
+| --- | --- |
+| 动 Markdown 预览弹窗（排版 / 标题导航 / 全屏 / header 操作 / 换篇） | `docs/markdown-preview-modal.md` |
+| 给某类文档做编辑器、改块解析与回写、`pnpm check:md` | `docs/markdown-editing.md` |
+| 动 `scripts/vite/*`、`../learn-english` 读盘写盘与提交、笔记数据修源头 | `docs/local-repo-data.md` |
+| 新增 / 改菜单页，动 `MenuContentLayout`、页面标题与内边距、页面呈现 | `docs/pages.md` |
+| 拆文件、决定函数 / 类型 / 常量放哪、命名与 import 分组 | `docs/code-splitting.md` |
+| 想写一段「好像别处也有」的工具函数 | `docs/shared-utils.md` |
+| 收尾 / 自检 / 提交 / 交付前 | `docs/self-check.md` |
 
-统一组件负责的内容：
+## 红线
 
-- 文档排版：标题、表格、引用、代码块、`<details>` 折叠讲解等；
-- 导航：header 里、**标题左侧**的上一个 / 下一个图标按钮，配合 `←` / `→` 快捷键；
-- 复制路径：header 右侧的复制图标按钮（排在刷新之前），**调用方传 `relativePath` 才出现**；
-  点一下把这串相对路径（相对文档所在记录仓库根目录，如 `learning-record-notes/x.md`）写进
-  剪贴板，图标 1.5 秒内变成对勾；编辑态也保留，尺寸跟着那排图标一起放大；
-  路径由调用方拼，组件不假设文件落在哪里（按钮本体是公共的
-  `src/components/CopyIconButton`）；
-- 标题导航：弹窗**左侧固定的一列**文档内 h1–h4 目录 sidebar，按层级折成树——每深一层向右
-  缩进一段、左侧多一条极淡的引导线（顶层不画线），层级靠线 + 字号 / 颜色区分；字号的基准按
-  全屏写（行 13.6px、一级 14px、其余 12.9px），**非全屏由目录列统一减 2px**（改一个
-  `--outline-shrink` 变量即可，Item 里的字号都是 `calc(基准 - var(--outline-shrink))`）；
-  有子标题的节点在标题右侧带折叠图标（右对齐），
-  **常规只展开第一个节点及其第一个子级，全屏预览时默认全部展开**；点标题会跳转并顺带
-  展开，收起只能点图标；**滚动正文时目录跟随高亮当前所在的小节，并把它的祖先链补展开**、
-  高亮行滚出目录可视区时自动滚回来（手动收起同一分支会保留，直到滚到别的小节）；
-  编辑态没有正文可测量，激活项取「最近一次跳转到的标题」（不跟编辑器滚动联动），
-  进入 / 退出编辑时清空；
-  目录占独立一列（常规 184px、全屏 300px）、高度由布局自然拉伸、只在目录列内滚动
-  （不再测量正文高度封顶），滚动条贴右边缘、做细；窄屏（≤720px）目录挪到正文上方一条
-  横带、最多占三成高度；
-  正文渲染结果必须 `useMemo` 包住（只依赖 `renderedMarkdown`）：`react-markdown` 每次渲染都会
-  重新解析整篇，正文节点挂载、刷新、编辑态切换这类内部状态变化时重解析一次就是几十毫秒的
-  「点开卡一下」；
-- 全屏预览：header 右侧的图标按钮（排在刷新之后、编辑操作之前；编辑态不显示），点了把整个框体铺满视口
-  （去外边距、描边与圆角），目录默认全展开且列加宽，正文行宽收在一栏并居中，只放大可读高度；
-  全屏期间 Esc 只退出全屏（不关弹窗）；**全屏是记住的偏好**（`localStorage`，键见
-  `constants.ts` 的 `FULLSCREEN_STORAGE_KEY`）：换篇、关掉重开、刷新页面后再打开
-  都还是上次的样子，关闭弹窗不会把它重置成常规大小；
-- 换篇（上一篇 / 下一篇）：**不重挂弹窗、不退出全屏**——全屏是「怎么看」，不属于某一篇。
-  属于「这一篇」的复位由组件自己做：保存状态提示带着所属标题存（标题对不上就当没有提示，
-  `SaveHintState`）、正文滚回顶部（`hooks/useDocumentScrollReset`）。调用方**不要**用
-  `key={文件名}` 重挂弹窗来清换篇状态，那会把全屏一起重置，表现为切一篇就掉出全屏；
-- **弹窗没有 footer**：编辑 / 预览 / 保存 / 放弃改动与状态提示全部收进 header 右侧，
-  只留图标 + tooltip（`aria-label` 与 tooltip 同一句人话）：未编辑时是「编辑（铅笔）」，
-  进入编辑态换成「退出编辑（返回箭头）/ 预览草稿（眼睛）/ 保存（对勾，主色）」，
-  保存成功在图标左侧显示「已保存・HH:MM」并在 3 秒内淡出（连续保存不会互相踩定时器），
-  编辑态（含草稿预览）那排图标放大一档（18px 图标 / lg 按钮），非编辑态（只有铅笔）与
-  刷新 / 全屏 / 关闭同档（15px / sm）；
-  保存失败显示红色错误文案，超长时省略、hover 弹完整内容；**编辑态（含草稿预览）弹窗
-  根本关不掉**：关闭按钮不渲染，Esc 与点遮罩都只弹一条「编辑中不能关闭预览」的提示
-  （固定 notification id，连按不会叠一屏；草稿预览态提示走「返回编辑」那条路），全屏按钮也收掉
-  （全屏只会把块编辑器抻大）——唯一出口是「返回箭头」，先退出编辑，关闭与全屏才回来；
-- 草稿预览：编辑态点「预览」把正文换成草稿的渲染结果（编辑器只隐藏、不卸载，草稿 / 撤销栈 /
-  光标都留着），header 的操作缩成「返回编辑」「保存」；点「返回编辑」回到编辑态接着改，
-  点「保存」才落盘。预览草稿期间跨文档的 `<` `>` 与 `←` `→` 仍禁用（避免草稿被换掉）；
-- 编辑插槽：组件**不带默认编辑器**，具体编辑界面由调用方通过 `Editor` 传入；没有传 `Editor`
-  时点「编辑」只弹提示，告知可用 `personalize-edit-markdown` skill 定制。编辑器可选实现
-  `onHandleReady(handle | null)`：交上来一个 `revealHeading(index)` 就能让编辑态的标题目录
-  可用（编辑态正文不渲染，目录只能由编辑器自己定位——`NoteEditor` 用 `findBlockIndexForHeading`
-  把标题换算成块下标，再把该块滚进视野并聚焦）；不实现时编辑态点目录没有反应；
-- 退出编辑保护：编辑中且有未保存改动时，点「返回箭头」先在 header 二次确认（提示
-  「这份改动还没保存」+「继续编辑（返回箭头）」/「放弃改动并退出编辑（红色垃圾桶）」），
-  不会静默丢改动；确认放弃只是退出编辑态，弹窗仍开着（这时才轮到关闭）；
-  编辑态标题目录保持可点（由编辑器定位到对应块），不再是置灰的死列；
-- 关闭、键盘可访问性与焦点管理。
+1. **Markdown 预览一律走 `src/components/MarkdownPreviewModal`**：不在页面里另起 Modal + 渲染器，
+   不复制它的样式；渲染栈固定 `react-markdown` + `remark-gfm` + `rehype-raw`。
+2. **编辑能力只走 `Editor` 插槽**，按文档类别放在对应页面目录里，通用的解析 / 控件才上提；
+   新增一类可编辑文档先跑仓库内 skill `personalize-edit-markdown`。
+   **禁止 contentEditable + DOM 反向序列化**（丢格式、与 React 抢 DOM、父级刷新时编辑内容消失）。
+3. **本机仓库数据（如 `../learn-english`）只走 `scripts/vite/*` 中间件**，不新增后端服务；
+   写操作只在开发模式可用，且必须校验文件名（禁路径穿越）。
+4. **菜单页必须套 `MenuContentLayout`**，标题走 `title` prop；页面 `index.scss` 不写 `.page`
+   或页面级 `padding` / `height`。`src/features` 已废弃，不要重建，页面代码就近放 `src/pages/<Page>/`。
+5. **内容出问题先改源头 md**，不在预览层加「兼容畸形数据」的兜底，判据见 `docs/local-repo-data.md`。
 
-组件契约：
+## 维护本文件
 
-| prop | 类型 | 说明 |
-| --- | --- | --- |
-| `opened` | `boolean` | 是否打开 |
-| `title` | `string` | 标题，通常传文件名 |
-| `markdown` | `string` | Markdown 原文 |
-| `position` | `{ index: number; total: number }`（可选） | 展示「第几 / 共几」 |
-| `relativePath` | `string`（可选） | 文档的相对路径（相对其记录仓库根目录）；提供后 header 出现复制图标按钮，不传则不显示。组件不拼路径，由调用方给 |
-| `onClose` | `() => void` | 关闭 |
-| `onPrevious` | `(() => void) \| null`（可选） | 上一篇；`null` 表示到头，按钮置灰 |
-| `onNext` | `(() => void) \| null`（可选） | 下一篇；`null` 表示到头，按钮置灰 |
-| `onRefresh` | `(() => Promise<void> \| void) \| null`（可选） | header 右侧操作组里的刷新按钮；调用方重取最新正文并回灌 `markdown`，返回 Promise 时按钮显示 loading，不传则不显示；编辑中不渲染（刷新会把草稿盖掉） |
-| `onSave` | `(markdown: string) => Promise<{ notice?: string }>`（可选） | 提供后才出现「编辑」；落盘由调用方实现，抛错则显示为保存失败，返回的 `notice` 追加在「已保存」提示后 |
-| `Editor` | `ComponentType<MarkdownEditorProps>`（可选） | 这一类文档的定制编辑器；不传则点「编辑」只给定制提示 |
-
-调用方决定「相邻文档是谁」「保存落到哪里」以及「这类文档怎么编辑」，导航与编辑态流程由组件负责。渲染栈固定为
-`react-markdown` + `remark-gfm` + `rehype-raw`（需要 GFM 表格与 `<details>` 折叠块）；
-新增 Markdown 能力时改这个组件，不要在别处另装渲染器。
-
-## 编辑能力是可定制的
-
-公共组件只提供 `MarkdownEditorProps`（`markdown` 快照 + `onChange` 草稿回传，可选
-`onHandleReady` 交出 `revealHeading` 定位能力）这一个插槽，
-**编辑逻辑按文档类别放在对应页面目录里**，通用的解析 / 控件才上提：
-
-- 英语笔记：`src/pages/English/NoteEditor`（适配层）+ `BlockEditor`（受控控件）+
-  `utils/markdown-blocks.ts`（解析与回写）。做法是把正文切成块，表格解析成行 / 单元格矩阵用受控网格
-  编辑（可删行、加行、改单元格），其余块编辑自己的源码片段，保存时按块重拼 Markdown。
-- 其它模块要编辑时，先跑 skill `personalize-edit-markdown`（仓库内 `.claude/skills/`）：
-
-  ```bash
-  # Claude Code 里直接 /personalize-edit-markdown
-  ```
-
-  它给出职责边界、契约、目录规则、数据安全底线（不认识的写法要降级为源码编辑）、
-  以及「真实文件 parse → serialize 逐字 diff」的验证方式。
-
-**不要走 contentEditable + DOM 反向序列化**：会丢格式、和 React 抢 DOM，且父级刷新时编辑内容
-当场消失。新增块类型要同时改解析与序列化两侧。
-
-保存落盘后由同一个 Vite 中间件把该文件提交到 `learn-english`：只 stage 这一个文件，
-提交信息半固定为 `docs(notes): 手动编辑 <文件名去扩展名>` + 固定正文「通过 my-dashboard 的
-Markdown 预览弹窗保存」；内容无变化时不产生空提交，提交失败不阻断保存、原因回传到 header
-的保存状态提示（红色文案）。
-
-**文档结构写不进去时的底线**：不认识的写法一律降级为「源码文本块」，用户直接改原文，
-不要硬解析后重排。以英语笔记的表格为例（`isStructuredTableSafe`）：单元格内含标签、
-`<thead>` / `<tbody>` / `<tfoot>` / `<caption>`、`<tr>` 带属性、表格嵌套、`&nbsp;` / 数字实体，
-都会整表降级，避免往返丢结构。
-
-往返自检在仓库里，改解析或回写逻辑后必须跑：
-
-```bash
-pnpm check:md   # scripts/md-roundtrip.mts，夹具在 scripts/fixtures/md/
-```
-
-它检查「原文 → parse → serialize」逐字一致、该降级的没有结构化、删行 / 加行只动目标行。
-`pnpm lint` 已包含这一步。
-
-参考实现：`src/pages/English/index.tsx`（六列看板 → 弹窗预览，上一篇 / 下一篇只在本列内循环，
-打开时 `GET /api/english/notes?name=…` 只取这一篇，保存时 `PUT /api/english/notes`
-写回 `learning-record-notes/*.md`）。
-
-## 菜单页面内容统一走 MenuContentLayout
-
-所有侧边栏菜单页的内容必须包在 `src/layouts/MenuContentLayout/` 里：内边距、标题排版、
-纵向间距、`fill` 页面的高度都由该组件负责，页面不要再写页面内边距和标题样式，
-`index.scss` 里也不要出现 `.page`。404 等非菜单页不受约束。
-
-规则细节、新增菜单页步骤与校验机制见 `docs/pages.md`；页面组织与五维拆分见
-`docs/code-splitting.md`。跨 agent 的硬约束速览见根目录 `AGENTS.md`。
-
-## 其它约定
-
-- 页面代码就近放 `src/pages/<Page>/`，`src/features` 已废弃（出现即被结构检查判定失败）；
-  页面只做数据拼装与状态编排。
-- 页面默认只展示文件名、标题这类索引信息，正文细节交给预览层，不要把所有内容平铺出来。
-- 本机仓库数据（如 `../learn-english`）一律通过 `scripts/vite/*` 中间件读盘（英语笔记插件已拆成
-  `english-notes.ts` 路由壳 + `english-notes-store.ts` 读写与校验 + `english-notes-commit.ts` 自动提交），前端
-  按 `import.meta.env.DEV` 切换接口与构建快照，不新增后端服务；写操作同样走该中间件，
-  只在开发模式可用，并且必须校验文件名（禁止路径穿越、禁止写目录说明文件）。
-- 仓库内的 skill 目录（`.claude/skills/*`）不会被 agent 自动扫描，需要时按路径手动 `Read`
-  `SKILL.md`；不要以为写了 skill 就会自动生效。
-- **笔记内容的问题改 `../learn-english` 的 md，不在预览层打补丁**：标题被未闭合的折叠块吞掉、
-  字段缺失、模板写歪这类现象，根因在 md 正文，先定位到文件与行号、说清怎么改，由 md（或
-  `check_note.py` 这类校验）修掉；不要顺手在 `MarkdownPreviewModal` / `OutlineNav` 里加「兼容
-  畸形数据」的兜底——兜底会把数据缺陷藏起来，还会被后来者当成正常契约。判据：把那段 md 改
-  成正确形态后现象是否消失，消失即修数据。通用原则见 `best-react-code` 的《先判根因归属》。
+- 本文件是**入口不是手册**：只留红线（每条 1–3 行）与索引；契约表、行为清单、实现细节、
+  示例命令一律写进 `docs/` 对应文件，这里只留链接和一句判据。
+- **每次改动本文件都要顺手优化与拆分，不用等用户提**：新内容先判断是不是细则，是就写 `docs/`；
+  发现某节变长、一个主题里混了多个主题、与 `docs/` 或 `AGENTS.md` 重复、或索引里没有对应文件，
+  当场拆出去 / 合并 / 更新索引，再收尾。
+- **硬阈值**：本文件不超过 60 行，`scripts/check-structure.mjs` 在 `pnpm lint` 里校验，超了即失败——
+  不是让你放宽阈值，是让你把内容拆到 `docs/`。
+- `docs/` 一个文件只讲一个主题；新增文件必须同时加进本文件索引与 `AGENTS.md` 的索引表。

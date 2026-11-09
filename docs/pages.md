@@ -22,6 +22,11 @@
 5. 页面自己的操作按钮（如服务页「重启 agent」）通过 `actions` prop 传入，排在上述两个内置
    按钮之前；按钮组件就近放在该页面目录下（`src/pages/<Page>/<Button>/`）。
 
+## 页面呈现
+
+页面默认只展示文件名、标题这类索引信息；正文细节交给预览层（`MarkdownPreviewModal`，见
+`docs/markdown-preview-modal.md`），不要把全文平铺在页面上。页面本身只做数据拼装与状态编排。
+
 ## 新增一个菜单页
 
 1. 在 `src/layouts/Sidebar/index.tsx` 的 `navItems` 里加导航项；

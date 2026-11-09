@@ -178,7 +178,7 @@ ENGLISH_RECORDS_DIR=/path/to/learn-english pnpm dev
 ```
 
 Markdown 弹窗预览统一使用公共组件 `src/components/MarkdownPreviewModal`
-（详见 `CLAUDE.md`）：文档排版、表格与 `<details>` 折叠块、header 标题左侧的上一个 / 下一个、
+（详见 `docs/markdown-preview-modal.md`）：文档排版、表格与 `<details>` 折叠块、header 标题左侧的上一个 / 下一个、
 `←` / `→` 快捷键，弹窗左侧固定的标题目录 sidebar，header 右侧的「复制相对路径」按钮，以及把框体
 铺满视口（再点或 Esc 退出）的全屏按钮都在组件内；页面只决定相邻文档是谁、这一篇的相对路径是什么。
 全屏是记住的偏好（存 `localStorage`），换篇、关掉重开、刷新页面后再打开都保持上次的样子。
@@ -222,8 +222,9 @@ src/
 
 ## 约定（由工具强制，不只靠自觉）
 
-细则见 `docs/`（页面布局 / 代码拆分与命名 / 公共能力复用 / 自检清单），
-跨 agent 的硬约束速览见 `AGENTS.md`。下面是其中被工具强制的最短版本：
+细则见 `docs/`（页面布局 / 代码拆分与命名 / 公共能力复用 / 预览弹窗 / Markdown 编辑 /
+本机数据链路 / 自检清单）；两个入口文件都只有红线与索引：`CLAUDE.md`（Claude Code）、
+`AGENTS.md`（其他 agent）。下面是其中被工具强制的最短版本：
 
 - 路径别名：`@/*` → `src/*`
 - 新增组件时，同级放置 `index.tsx` + `index.scss`（CSS Module 类名自动 camelCase）

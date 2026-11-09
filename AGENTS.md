@@ -6,8 +6,9 @@
 
 ```text
 AGENTS.md            本文件：硬约束速览 + 文档索引
-docs/    细则：页面布局 / 代码拆分与命名 / 公共能力复用 / 自检清单
-CLAUDE.md            组件契约（MarkdownPreviewModal）、编辑能力、本机数据链路
+docs/    细则：页面布局 / 代码拆分与命名 / 公共能力复用 / 预览弹窗 / Markdown 编辑 /
+         本机数据链路 / 自检清单
+CLAUDE.md            Claude Code 入口：红线 + 索引（内容同样在 docs/ 下）
 README.md            运行、脚本、目录结构
 ```
 
@@ -15,11 +16,13 @@ README.md            运行、脚本、目录结构
 
 | 场景 | 读 |
 | --- | --- |
-| 新增 / 改菜单页，动 `MenuContentLayout`、页面标题与内边距 | `docs/pages.md` |
+| 新增 / 改菜单页，动 `MenuContentLayout`、页面标题与内边距、页面呈现 | `docs/pages.md` |
 | 拆分文件、决定某个函数 / 类型 / 常量放哪、目录与文件命名 | `docs/code-splitting.md` |
 | 想写一段「好像别处也有」的工具函数（错误文案、时间、class、复制） | `docs/shared-utils.md` |
+| 动 Markdown 预览弹窗（排版 / 标题导航 / 全屏 / header 操作 / 换篇） | `docs/markdown-preview-modal.md` |
+| 做某类文档的编辑器、改块解析与回写、跑 `pnpm check:md` | `docs/markdown-editing.md` |
+| 动 `scripts/vite/*` 中间件、`../learn-english` 读盘写盘与提交、笔记数据修源头 | `docs/local-repo-data.md` |
 | 收尾 / 提交 / 交付前 | `docs/self-check.md` |
-| 动 Markdown 预览弹窗、笔记编辑器、`learn-english` 读盘 | `CLAUDE.md` |
 
 ## 硬约束速览
 
@@ -47,7 +50,7 @@ README.md            运行、脚本、目录结构
 `@liangqingda/eslint-config` 的 `react-typed`：import 分组与空行、`@/pages/**` 排最后、
 值导入里的 type 单独成句、命名、单文件 300 行上限等，原 `eslint.config.js` 的项目层
 `import/order` 覆写已删除）、`scripts/check-structure.mjs`（features 废弃 / 页面组织 /
-菜单页布局，项目事实不上提）、`liangqingda-check-scss src`（共享包零依赖 CLI，样式块间空行 /
+菜单页布局 / 入口文档行数与索引对应，项目事实不上提）、`liangqingda-check-scss src`（共享包零依赖 CLI，样式块间空行 /
 选择器列表 / 行尾空格）、`scripts/check-imports.mjs`（只剩页面内部必须相对路径）与
 `pnpm check:md`（Markdown 往返），不合规直接失败。禁裸 `eslint-disable` / 失效 disable /
 `@ts-ignore` 由 `@liangqingda/eslint-config@1.6.0` 起的规则兜住（`eslint-comments` 与
@@ -63,4 +66,5 @@ README.md            运行、脚本、目录结构
   `pnpm lint`（husky 也会跑；改到 `agent/` 或 `scripts/vite/*` 再加 `pnpm test`），有 origin 时
   随后推送，并在回复里报 commit hash 与推送结果。
 - 纯只读任务、或没有仓库文件改动时，不要造空提交。
-- 改了约定就要同步：细则写 `docs/`，本文件只留速览与索引，别把细则搬回来。
+- 改了约定就要同步：细则写 `docs/`，本文件只留速览与索引，`CLAUDE.md` 只留红线与索引，
+  别把细则搬回入口文件。新增 `docs/` 文件时，两张索引表都要加一行。
