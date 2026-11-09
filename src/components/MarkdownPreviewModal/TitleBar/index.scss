@@ -23,6 +23,17 @@
   color: var(--app-ink-faint);
 }
 
+/*
+ * 文档操作组（复制相对路径 / 刷新 / 全屏）：只在预览态渲染，编辑态与草稿预览整组不出现。
+ * 组内间距沿用标题栏那一档，拆成组后视觉上与之前一致。
+ */
+.documentActions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+}
+
 .refreshButton:hover {
   color: var(--app-accent);
 }
