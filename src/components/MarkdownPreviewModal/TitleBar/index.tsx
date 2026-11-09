@@ -111,6 +111,10 @@ const TitleBar = ({
         </ActionIcon>
       </Tooltip>
     ) : null}
+    {/* 阅读类操作与编辑流程之间隔一条竖线；左边那组为空时不画，免得线孤零零贴在图标前 */}
+    {relativePath || !editing.editing ? (
+      <span aria-hidden="true" className={styles.actionDivider} />
+    ) : null}
     <PreviewHeaderActions
       askDiscard={editing.askDiscard}
       canEdit={canEdit}

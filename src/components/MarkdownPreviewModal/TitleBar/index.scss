@@ -37,6 +37,16 @@
   color: var(--app-accent);
 }
 
+/* 竖分割线：把「复制 / 刷新 / 全屏」这类阅读操作与编辑流程隔成两组 */
+.actionDivider {
+  flex: 0 0 auto;
+  align-self: center;
+  width: 1px;
+  height: 18px;
+  margin-inline: 2px;
+  background: var(--app-line-strong);
+}
+
 .fileName {
   flex: 0 1 auto;
   min-width: 0;
