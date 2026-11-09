@@ -1,9 +1,10 @@
-/* 看板单行：文件名 + 右侧复制图标 + 箭头，悬停时图标浮现 */
+/* 看板单行：文件名 + 箭头，右侧留 20px 再放复制图标，悬停时图标浮现 */
 
 .row {
   display: flex;
   align-items: center;
-  gap: 4px;
+  /* 文件名与右侧操作按钮之间固定留白，省略号不会贴到图标上 */
+  gap: 20px;
   padding: 0 4px;
 }
 
@@ -21,7 +22,6 @@
   display: flex;
   flex: 1 1 auto;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
   min-width: 0;
   padding: 6px 0;
@@ -32,13 +32,8 @@
   cursor: pointer;
 }
 
-/* 单行省略：完整文件名靠看板「hover 的那一列变宽」展示，这里不挂 tip */
+/* 省略号与 tip 由 TruncatedText 负责，这里只管字形与颜色 */
 .name {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
   color: var(--app-ink);
   font-family: var(--app-serif);
   font-size: 0.82rem;
