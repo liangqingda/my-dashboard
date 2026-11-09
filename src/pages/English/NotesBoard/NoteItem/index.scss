@@ -22,20 +22,13 @@
   background: var(--app-surface-hover);
 }
 
+/* 省略号与「截断才弹 tip」由公共组件 TruncatedText 负责，这里只管字体与颜色 */
 .name {
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  flex: 1 1 auto;
   color: var(--app-ink);
   font-family: var(--app-serif);
   font-size: 0.82rem;
   line-height: 1.4;
-}
-
-.extension {
-  color: var(--app-ink-faint);
-  font-size: 0.82em;
 }
 
 .chevron {
