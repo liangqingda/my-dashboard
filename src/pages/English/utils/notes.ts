@@ -85,7 +85,7 @@ const CATEGORY_ORDERS = new Map(
   NOTE_CATEGORIES.map(({ key }, index) => [key, index]),
 );
 
-/** 看板展示这六类前缀；`paper`（套题）等未开列的前缀不展示，也不参与翻页计数。 */
+/** 看板只展示 NOTE_CATEGORIES 里的前缀；`paper`（套题）等未开列的前缀不展示，也不参与翻页计数。 */
 const BOARD_CATEGORIES: ReadonlySet<string> = new Set(
   NOTE_CATEGORIES.map((category) => category.key),
 );

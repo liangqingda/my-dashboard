@@ -51,12 +51,12 @@ const English = () => {
   /** 打开请求的序号：连点两篇时只认最后一次 */
   const openSeq = useRef(0);
 
-  /** 只看板上真正展示的笔记：`mixed` / `paper` 不占翻页计数 */
+  /** 只看板上真正展示的笔记：未开列的前缀（如 `paper`）不占翻页计数 */
   const boardNotes = useMemo(
     () => notes.filter((note) => isBoardNote(note.name)),
     [notes],
   );
-  /** 六列一次算好，看板与翻页共用同一份结果（每列只排一次序） */
+  /** 五列一次算好，看板与翻页共用同一份结果（每列只排一次序） */
   const columns = useMemo(() => groupNotesByCategory(boardNotes), [boardNotes]);
   /** 表格视图的行：一行一篇，按当前排序状态排好 */
   const rows = useMemo(

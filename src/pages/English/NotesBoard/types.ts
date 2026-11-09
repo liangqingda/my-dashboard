@@ -6,7 +6,7 @@ import type { NoteColumn } from '../types';
 
 /** 分列看板的入参 */
 export type NotesBoardProps = {
-  /** 六列（空列也在内，用来区分「整目录为空」与「这列为空」） */
+  /** 五列（空列也在内，用来区分「整目录为空」与「这列为空」） */
   columns: NoteColumn[];
   /** 是否正在读取 */
   loading: boolean;

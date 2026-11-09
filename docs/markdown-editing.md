@@ -22,7 +22,7 @@
 `NoteEditor` 实现 `onHandleReady`，用 `findBlockIndexForHeading` 把标题换算成块下标，再把该块滚进视野并
 聚焦——编辑态正文不渲染，目录只能由编辑器自己定位。
 
-页面侧的数据拼装见 `src/pages/English/index.tsx`（六列看板 → 弹窗预览，上一篇 / 下一篇只在本列内循环，
+页面侧的数据拼装见 `src/pages/English/index.tsx`（五列看板 → 弹窗预览，上一篇 / 下一篇只在本列内循环，
 打开时 `GET /api/english/notes?name=…` 只取这一篇，保存时 `PUT /api/english/notes` 写回
 `learning-record-notes/*.md`）；读盘链路见 `docs/local-repo-data.md`。
 
