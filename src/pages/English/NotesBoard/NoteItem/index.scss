@@ -22,9 +22,13 @@
   background: var(--app-surface-hover);
 }
 
-/* 省略号与「截断才弹 tip」由公共组件 TruncatedText 负责，这里只管字体与颜色 */
+/* 单行省略：完整文件名靠看板「hover 的那一列变宽」展示，这里不挂 tip */
 .name {
   flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   color: var(--app-ink);
   font-family: var(--app-serif);
   font-size: 0.82rem;

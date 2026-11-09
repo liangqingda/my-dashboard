@@ -5,7 +5,10 @@ import NoteItem from './NoteItem';
 
 import styles from './index.scss';
 
-/** 分列看板：一类一列，列内独立滚动，默认只露出文件名。 */
+/**
+ * 分列看板：一类一列，列内独立滚动，默认只露出文件名；
+ * hover 到某一列时这一列平滑变宽，被省略号截断的完整文件名就能整行露出来。
+ */
 const NotesBoard = ({ columns, loading, error, onOpen }: NotesBoardProps) => {
   /** 板上真正展示的笔记数：0 才说明整目录为空 */
   const total = columns.reduce((sum, column) => sum + column.notes.length, 0);

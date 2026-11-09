@@ -1,8 +1,6 @@
 import { UnstyledButton } from '@mantine/core';
 import { IconChevronRight } from '@tabler/icons-react';
 
-import TruncatedText from '@/components/TruncatedText';
-
 import { splitNoteName, stripCategoryPrefix } from '../../utils/notes';
 
 import type { NoteItemProps } from './types';
@@ -11,7 +9,7 @@ import styles from './index.scss';
 
 /**
  * 列表里的一行：只露文件名（去掉重复的分类前缀），点击打开预览。
- * 列宽放不下文件名时的省略号与「hover 出 tip 展示完整文件名」交给公共组件 TruncatedText。
+ * 放不下时省略号截断；完整文件名靠「hover 某一列时这一列变宽」露出来，不再额外弹 tip。
  */
 const NoteItem = ({ note, category, onOpen }: NoteItemProps) => {
   const { base, extension } = splitNoteName(note.name);
@@ -29,7 +27,7 @@ const NoteItem = ({ note, category, onOpen }: NoteItemProps) => {
         }}
         type="button"
       >
-        <TruncatedText className={styles.name} position="top" text={label} />
+        <span className={styles.name}>{label}</span>
         <IconChevronRight
           aria-hidden="true"
           className={styles.chevron}
