@@ -178,7 +178,7 @@ ENGLISH_RECORDS_DIR=/path/to/learn-english pnpm dev
 ```
 
 Markdown 弹窗预览统一使用公共组件 `src/components/MarkdownPreviewModal`
-（选型见 `docs/ui-components.md`，行为见 `docs/markdown-preview-modal.md`）：文档排版、表格与 `<details>` 折叠块、header 标题左侧的上一个 / 下一个、
+（选型见 `docs/ui-components.md`，行为见 `src/components/MarkdownPreviewModal/README.md`）：文档排版、表格与 `<details>` 折叠块、header 标题左侧的上一个 / 下一个、
 `←` / `→` 快捷键，弹窗左侧固定的标题目录 sidebar，header 右侧的「复制相对路径」按钮，以及把框体
 铺满视口（再点或 Esc 退出）的全屏按钮都在组件内；页面只决定相邻文档是谁、这一篇的相对路径是什么。
 全屏是记住的偏好（存 `localStorage`），换篇、关掉重开、刷新页面后再打开都保持上次的样子。
@@ -222,12 +222,13 @@ src/
 
 ## 约定（由工具强制，不只靠自觉）
 
-细则见 `docs/`（页面布局 / 代码拆分与命名 / 公共能力复用 / 预览弹窗 / Markdown 编辑 /
-本机数据链路 / 自检清单）；入口只有一份 `AGENTS.md`（硬约束 + 索引），根目录的 `CLAUDE.md`
-是指向它的软链，供只认这个文件名的 Claude Code 读取。下面是其中被工具强制的最短版本：
+跨文件的细则见 `docs/`（页面布局 / 代码拆分与命名 / 公共能力复用 / UI 组件 / Markdown 编辑 /
+本机数据链路 / 自检清单）；**只属于某个组件 / hook 的规格写在该目录的 `README.md`**
+（如 `src/components/MarkdownPreviewModal/README.md`）。入口只有一份 `AGENTS.md`（硬约束 + 索引），
+根目录的 `CLAUDE.md` 是指向它的软链，供只认这个文件名的 Claude Code 读取。下面是其中被工具强制的最短版本：
 
 - 路径别名：`@/*` → `src/*`
-- 新增组件时，同级放置 `index.tsx` + `index.scss`（CSS Module 类名自动 camelCase）
+- 新增组件时，同级放置 `index.tsx` + `index.scss`（CSS Module 类名自动 camelCase）；写规格时同目录加 `README.md`
 - `src/components/**` 的目录与其下文件名必须是 PascalCase（如 `MarkdownPreviewModal/index.tsx`）
 - 页面代码就近放 `src/pages/<Page>/`，按 `components` / `hooks` / `utils` / `types` /
   `constants` 五个维度适度拆分，非公共的不上提；页面内相对导入不得跨出该页面目录，

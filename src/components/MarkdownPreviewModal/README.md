@@ -1,7 +1,7 @@
 # Markdown 预览弹窗（`MarkdownPreviewModal`）
 
-**什么时候必须用它（选型）**归 `docs/ui-components.md` 的「场景 → 用哪个」，本文只讲它的
-行为契约与实现约束。
+组件规格，跟代码放在一起（非全局性文档不进 `docs/`）。**什么时候必须用它（选型）**归
+`docs/ui-components.md` 的「场景 → 用哪个」，本文件只讲它的行为契约与实现约束。
 
 渲染栈固定为 `react-markdown` + `remark-gfm` + `rehype-raw`（需要 GFM 表格与 `<details>` 折叠块）；
 新增 Markdown 能力时改这个组件，不要在别处另装渲染器。

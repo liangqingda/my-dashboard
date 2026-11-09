@@ -9,7 +9,8 @@
  *  4. 页面内相对导入不得跨出该页面目录，跨目录一律用 @/ 别名
  *  5. 菜单页（由 Sidebar navItems + App.tsx 路由自动解析）必须用 src/layouts/MenuContentLayout
  *     包内容，页面样式不得再定义 .page
- *  6. 入口文档 AGENTS.md 只放硬约束与索引：行数不超上限，docs/ 下的细则与索引一一对应；
+ *  6. 入口文档 AGENTS.md 只放硬约束与索引：行数不超上限，docs/ 下的细则与索引一一对应，
+ *     索引里的文档路径（含跟代码走的组件 / hook README）必须真实存在；
  *     CLAUDE.md 只能是指向它的软链（两份内容会漂移）
  *
  * 任一规则被违反 → 打印错误并以退出码 1 结束。
@@ -337,10 +338,11 @@ function checkMenuPages() {
 }
 
 /**
- * AGENTS.md 是唯一入口，只放硬约束与索引，细则都在 docs/ 下：
+ * AGENTS.md 是唯一入口，只放硬约束与索引：
  *  1. 超过行数上限说明该拆的没拆（不是放宽阈值，是拆到 docs/）
- *  2. docs/ 里的每份细则都必须出现在索引里，索引里写的路径也必须真实存在
- *  3. CLAUDE.md 必须是指向它的软链；写成第二份内容即视为漂移
+ *  2. docs/ 里的每份细则都必须出现在索引里
+ *  3. 索引里写的文档路径（docs/ 细则、src 下跟代码走的 README 规格）必须真实存在
+ *  4. CLAUDE.md 必须是指向它的软链；写成第二份内容即视为漂移
  */
 function checkEntryDocs() {
   if (!existsSync(AGENTS_FILE)) {
@@ -368,9 +370,10 @@ function checkEntryDocs() {
     }
   }
 
-  for (const match of source.matchAll(/docs\/([\w.-]+\.md)/g)) {
-    if (!existsSync(path.join(DOCS, match[1]))) {
-      errors.push(`[文档] AGENTS.md 索引里的 docs/${match[1]} 不存在`);
+  // 反向：索引里指的文档都要真实存在（non-global 规格跟着代码走，路径在 src/ 下）
+  for (const match of source.matchAll(/((?:docs|src)\/[\w./-]+\.md)/g)) {
+    if (!existsSync(path.join(ROOT, match[1]))) {
+      errors.push(`[文档] AGENTS.md 索引里的 ${match[1]} 不存在`);
     }
   }
 

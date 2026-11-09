@@ -13,7 +13,7 @@
 | 纯图标按钮 | `ActionIcon` + `Tooltip`（别用 `UnstyledButton` 当图标位） |
 | 长得像文字、或整行 / 整块可点的入口 | `UnstyledButton` |
 | 表格 | `FreeTable`（业务再包一层，见下文） |
-| 弹窗 | `Modal`；任何 Markdown / 文档预览一律走 `MarkdownPreviewModal`（不自己接渲染器，行为见 `docs/markdown-preview-modal.md`） |
+| 弹窗 | `Modal`；任何 Markdown / 文档预览一律走 `MarkdownPreviewModal`（不自己接渲染器，行为见 `src/components/MarkdownPreviewModal/README.md`） |
 | 单行输入 | `TextInput` |
 | 多行输入（普通表单） | `Textarea` |
 | 下拉单选 / 多选 | `Select` / `MultiSelect` |

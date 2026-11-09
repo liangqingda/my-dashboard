@@ -9,10 +9,10 @@
 | 场景 | 读 |
 | --- | --- |
 | 新增 / 改菜单页，动 `MenuContentLayout`、页面标题与内边距、页面呈现 | `docs/pages.md` |
-| 新增 / 拆分文件，决定函数 / 类型 / 常量放哪，目录与文件命名、import 分组 | `docs/code-splitting.md` |
+| 新增 / 拆分文件、决定函数 / 类型 / 常量 / 说明文档放哪，目录与文件命名、import 分组 | `docs/code-splitting.md` |
 | 想写一段「好像别处也有」的工具函数（错误文案、时间、class、复制） | `docs/shared-utils.md` |
 | 新写任何 UI：直接用组件库还是封 `FreeXxx`、业务表格 / 弹窗怎么落 | `docs/ui-components.md` |
-| 新建或改造任何 Markdown / 文档预览，动弹窗排版 / 标题导航 / 全屏 / header 操作 | `docs/markdown-preview-modal.md` |
+| 新建或改造任何 Markdown / 文档预览，动弹窗排版 / 标题导航 / 全屏 / header 操作 | `src/components/MarkdownPreviewModal/README.md` |
 | 新建或改造某类文档的编辑器、改块解析与回写、跑 `pnpm check:md` | `docs/markdown-editing.md` |
 | 新增或修改本机仓库读写（`../learn-english` 等）、动 `scripts/vite/*` 与自动提交、笔记数据修源头 | `docs/local-repo-data.md` |
 | 收尾 / 提交 / 交付前 | `docs/self-check.md` |
@@ -41,6 +41,9 @@
    提示、折叠、布局都不手写原生标签，先查 `docs/ui-components.md` 的「场景 → 用哪个」；
    第二处要同一套外观就封 `FreeXxx` 基础 UI 组件（现有 `FreeTable`），业务表格 / 弹窗基于它
    再封一层，不复制它的样式。
+8. **说明文档跟着代码走**：组件 / hook / 页面自己的规格写在其目录的 `README.md`（hook 要写说明
+   时提升为 `hooks/<hook>/index.ts` + `README.md`），不进 `docs/`——`docs/` 只放跨文件的约定与
+   流程，判据见 `docs/code-splitting.md`。
 
 以上由工具兜底的部分：`pnpm lint` 依次跑 `eslint .`（通用规则全部来自
 `@liangqingda/eslint-config` 的 `react-typed`：import 分组与空行、`@/pages/**` 排最后、
@@ -58,8 +61,9 @@
 
 ## 维护本文件（每次改动都要自优化，不用等用户提）
 
-1. **先分类再落位**：新内容属于 ①细则（实现细节、契约表、行为清单、示例命令）→ 写进
-   `docs/` 对应文件；②跨主题约束 → 写进「硬约束速览」，每条 1–3 行；③场景路由 → 写进索引表。
+1. **先分类再落位**：新内容属于 ①跨文件的细则（实现细节、契约表、行为清单、示例命令）→
+   写进 `docs/`；只属于某个组件 / hook / 页面的规格 → 写它自己目录的 `README.md`；
+   ②跨主题约束 → 写进「硬约束速览」，每条 1–3 行；③场景路由 → 写进索引表。
 2. **按触发点判断去留**：某条规则只在某个主题内生效、而索引已经能路由过去 → 它属于那份
    `docs/`，入口里就是重复，删掉；只在「还不知道该读哪份文档」时也必须生效的，才留在入口。
 3. **机器可判的不写进来**：`eslint` / `check-structure` 已会拦的（命名、行数上限、`features`

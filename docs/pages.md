@@ -25,7 +25,7 @@
 ## 页面呈现
 
 页面默认只展示文件名、标题这类索引信息；正文细节交给预览层（`MarkdownPreviewModal`，见
-`docs/markdown-preview-modal.md`），不要把全文平铺在页面上。页面本身只做数据拼装与状态编排。
+`src/components/MarkdownPreviewModal/README.md`），不要把全文平铺在页面上。页面本身只做数据拼装与状态编排。
 
 ## 新增一个菜单页
 

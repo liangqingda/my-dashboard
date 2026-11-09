@@ -14,12 +14,29 @@
 | --- | --- | --- |
 | 类型 | `types.ts` | 跨文件共享的 type / interface，不放组件文件里 |
 | 纯函数 | `utils.ts`，多了建 `utils/` 目录按主题拆多个文件 | 无 React 依赖；同一逻辑出现两处即上提 |
-| 副作用 / 状态 | `hooks/`，一个 hook 一个文件 | 需要 useEffect / useState / 订阅 |
+| 副作用 / 状态 | `hooks/`，一个 hook 一个文件（要写说明时提升为 `hooks/<hook>/index.ts` + `README.md`） | 需要 useEffect / useState / 订阅 |
 | 展示单元 | 一个组件一个目录：`<name>/index.tsx` + `index.scss` | 能在别处复用的 UI 片段 |
 | 常量 | `constants.ts` | 魔法数字、文案、插件数组、存储键 |
 
 反例（曾被 review 点名）：组件里内联一堆常量、把三个字段的类型内联在 props 里、
 `index.tsx` 里既写组件又写工具函数。
+
+## 说明文档跟着代码走
+
+**只有跨文件的约定与流程才进 `docs/`**；某个组件 / hook / 页面自己的规格与说明写在它自己的目录
+里，随代码一起改、一起删。
+
+| 对象 | 放哪 |
+| --- | --- |
+| 组件规格（契约、行为细节、样式约定） | `src/components/<Name>/README.md`；页面自己的业务组件同理放页面目录 |
+| hook 说明（触发条件、竞态处理、为什么这么写） | 该 hook 的目录：`hooks/use-notes/index.ts` + `README.md` |
+| 跨组件 / 跨页面的约定与流程（本文件、布局、复用、自检…） | `docs/` 对应文件 |
+
+hook 默认一个文件（`hooks/useXxx.ts`）；**一旦要为它写说明，就把它提升成同名目录**
+（`use-notes/index.ts` + `README.md`），不要再造「`useXxx.ts` + 同目录 `useXxx.md`」这种两份并列。
+
+判据：**这份文档只有改这个东西的人才需要读** → 跟代码走；改别处也会被牵连、要当时就知道 →
+进 `docs/`。拿不准时按「改动半径」判：半径为 1 个目录的，别占全局。
 
 ## 组件的硬要求
 
@@ -27,7 +44,8 @@
   公共组件同样适用（`MarkdownPreviewModal` 现拆成 `types.ts` / `constants.ts` / `hooks/` /
   `TitleBar/` / `OutlineNav/` / `HeaderActions/`，样式也随组件各自走）。
 - 组件目录内**不嵌套** `components/` 层，子组件目录直接放父组件目录下。
-- 每个组件目录 `index.tsx` + `index.scss` 成对存在（CSS Module 类名自动 camelCase）。
+- 每个组件目录 `index.tsx` + `index.scss` 成对存在（CSS Module 类名自动 camelCase）；
+  需要写规格时同目录放 `README.md`。
 - 在组件里定义的局部变量不要与 import 进来的组件 / 函数同名。例如两个图标别名不要叫
   `ActionIcon`——会和 Mantine 的 `ActionIcon` 撞名，读代码时极难分辨。
 
