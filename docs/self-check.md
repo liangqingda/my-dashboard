@@ -53,3 +53,16 @@
   `docs/`）；`CLAUDE.md` 是软链，不要往里写内容。
 - 裸 `eslint-disable`、失效 disable、`@ts-ignore`、`console.log` 从
   `@liangqingda/eslint-config@1.6.0` 起都由 lint 拦下，不用人工再查一遍。
+
+## 6. 改共享包（eslint-config / tsconfig）
+
+本项目依赖的是**发布版本**（`^1.x`，registry 为 `npm.pkg.github.com`），改共享包源码对本地
+lint 无效。要让规则真的生效，按顺序做完这一组：
+
+1. 在共享包仓库改源码 + 补测试（`pnpm test`）；
+2. 同步该仓库 `docs/`（它自己的 `AGENTS.md` 要求文档随代码走）；
+3. `package.json` 升版本 → `npm publish` → 推送源码；
+4. 回到本项目升依赖 → `pnpm install` → `pnpm lint`，把新规则报出的存量问题当场改掉；
+5. 确认 `node_modules/.bin/liangqingda-*` 跑的是新版本（输出文案 / 版本号变化），再提交。
+
+只改共享包源码不升版本，是最容易「以为生效了其实没有」的静默失败。

@@ -40,8 +40,8 @@ importers:
         version: 4.0.1(supports-color@7.2.0)
     devDependencies:
       '@liangqingda/eslint-config':
-        specifier: ^1.6.0
-        version: 1.6.0(eslint@9.39.5(supports-color@7.2.0))(prettier@3.9.10)(supports-color@7.2.0)(typescript@6.0.3)
+        specifier: ^1.7.0
+        version: 1.7.0(eslint@9.39.5(supports-color@7.2.0))(prettier@3.9.10)(supports-color@7.2.0)(typescript@6.0.3)
       '@liangqingda/tsconfig':
         specifier: ^1.1.0
         version: 1.1.0(typescript@6.0.3)
@@ -262,8 +262,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@liangqingda/eslint-config@1.6.0':
-    resolution: {integrity: sha512-aNGHVGeACO11N6NpLiUEb12g0B41x0nLcM/PR1E52j3UxA0NCw2GFEfJGtdjNZ+u7JnPd4++hAjz3gSSBhWUfA==, tarball: https://npm.pkg.github.com/download/@liangqingda/eslint-config/1.6.0/5c9358daaec1bdf79ef378dcb58bf2a7ee850f9e}
+  '@liangqingda/eslint-config@1.7.0':
+    resolution: {integrity: sha512-FBtxOI1pyzTKZ5UUUSypWojN+wkDDEJ9pGJn2OPmKEexgXeiukf7fW18W+S9Gge0guP1Dy+M/WqIcyxhCkARqQ==, tarball: https://npm.pkg.github.com/download/@liangqingda/eslint-config/1.7.0/7a7833bd2a74d6fa06bc57cba7e160f41083c52b}
     hasBin: true
     peerDependencies:
       eslint: ^9.39.4
@@ -2614,7 +2614,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
 
-  '@liangqingda/eslint-config@1.6.0(eslint@9.39.5(supports-color@7.2.0))(prettier@3.9.10)(supports-color@7.2.0)(typescript@6.0.3)':
+  '@liangqingda/eslint-config@1.7.0(eslint@9.39.5(supports-color@7.2.0))(prettier@3.9.10)(supports-color@7.2.0)(typescript@6.0.3)':
     dependencies:
       '@eslint-community/eslint-plugin-eslint-comments': 4.8.1(eslint@9.39.5(supports-color@7.2.0))
       '@eslint/js': 9.39.5
