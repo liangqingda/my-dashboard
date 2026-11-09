@@ -18,9 +18,10 @@
   transition: flex-grow 260ms cubic-bezier(0.33, 0, 0.2, 1);
 }
 
-/* hover 的这一列拿走更多份额（五列时约占四成），长文件名基本能整行放开 */
+/* hover 的这一列多占一档（五列时约 29%，比等分宽出四成多），够绝大多数文件名整行放下，
+   又不至于把兄弟列挤成细条，只剩极长的名字仍走省略号 */
 .column:hover {
-  flex-grow: 2.6;
+  flex-grow: 1.6;
 }
 
 .column:first-child {
