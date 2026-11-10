@@ -6,6 +6,12 @@
   /* 文件名与右侧操作按钮之间固定留白，省略号不会贴到图标上 */
   gap: 20px;
   padding: 0 4px;
+  /*
+   * 一列里可能有几百条（错题列 200+），屏外的条目跳过布局与绘制，只留 DOM 与滚动位置；
+   * 高度给一个接近真实行高的估算值顶住滚动条，写过一次后浏览器记住实际高度（auto）。
+   */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 30px;
 }
 
 .row + .row {

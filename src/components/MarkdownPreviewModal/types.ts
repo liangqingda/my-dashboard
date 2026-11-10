@@ -71,6 +71,12 @@ export type MarkdownPreviewModalProps = {
   title: string;
   /** Markdown 原文 */
   markdown: string;
+  /**
+   * 正文是否还在取。为 true 时正文区显示加载态、不渲染 Markdown，
+   * 目录为空，刷新与编辑入口一并收起（没有正文可编辑，也不该把 `markdown` 的空串写成一篇空文档）。
+   * 打开、翻篇、刷新都会经过这个状态，调用方按自己的取数时机传。
+   */
+  loading?: boolean;
   /** 当前位置，如第 3 / 12 篇 */
   position?: { index: number; total: number };
   /**

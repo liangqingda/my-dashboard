@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ActionIcon, Tooltip, UnstyledButton } from '@mantine/core';
 import { IconLayoutGrid, IconLayoutList } from '@tabler/icons-react';
 
@@ -8,36 +8,44 @@ import { useStoredState } from '@/hooks/useStoredState';
 import { onPageRefresh } from '@/utils/page-refresh';
 import { cx } from '@/utils/cx';
 
-import type { EnglishNote, NotesSort, NotesViewMode } from './types';
+import type { NoteSummary, NotesSort, NotesViewMode } from './types';
 import {
   DEFAULT_NOTE_SORT,
   VIEW_MODE_CODEC,
   VIEW_MODE_STORAGE_KEY,
 } from './constants';
+import { useActiveNote } from './hooks/useActiveNote';
 import { useEnglishNotes } from './hooks/useEnglishNotes';
 import NoteEditor from './NoteEditor';
 import NotesBoard from './NotesBoard';
 import NotesTable from './NotesTable';
-import { buildCategoryPlan, getNoteCategoryKey } from './utils/category';
+import { buildCategoryPlan } from './utils/category';
 import {
   getNoteRelativePath,
   groupNotesByCategory,
   sortNoteRows,
   toNoteRows,
 } from './utils/notes';
-import { fetchEnglishNote, saveEnglishNote } from './utils/notes-api';
 
 import styles from './index.scss';
 
 /** 稳定的空数组，避免每次渲染都换新引用 */
-const NO_NOTES: EnglishNote[] = [];
+const NO_NOTES: NoteSummary[] = [];
 
 /** 英语练习页：把 learning-record-notes 下的笔记按分类分列展示，整页不滚动。 */
 const English = () => {
-  const { categories, notes, loading, error, refresh, reload, applyNote } =
+  const { categories, notes, loading, error, refresh, reload, applySummary } =
     useEnglishNotes();
-  /** 当前预览的笔记（存内容而不是文件名，打开时就能拿到最新正文） */
-  const [active, setActive] = useState<EnglishNote | null>(null);
+  /** 当前打开的笔记与它的正文：取正文、翻篇、保存、刷新都在这个 hook 里 */
+  const {
+    active,
+    content: activeBody,
+    loading: noteLoading,
+    open: openNote,
+    close: closeNote,
+    save: saveActive,
+    refresh: refreshActive,
+  } = useActiveNote({ notes, onSummary: applySummary });
   /**
    * 展示形式：分列看板 / 表格平铺，用 header 右侧图标按钮切换。
    * 记在 localStorage 里，刷新页面重新进入后保持上次切换到的形态。
@@ -56,8 +64,6 @@ const English = () => {
   }));
   /** 表格视图的排序状态：默认按更新时间倒序 */
   const [sort, setSort] = useState<NotesSort>(DEFAULT_NOTE_SORT);
-  /** 打开请求的序号：连点两篇时只认最后一次 */
-  const openSeq = useRef(0);
 
   /**
    * 分类方案一次算好：列有哪些、标题、顺序都由记录仓库的分类清单决定，
@@ -93,7 +99,7 @@ const English = () => {
       return rowNotes;
     }
 
-    const key = getNoteCategoryKey(active);
+    const key = active.categoryKey;
 
     return columns.find((column) => column.key === key)?.notes ?? NO_NOTES;
   }, [active, columns, rowNotes, view]);
@@ -104,65 +110,6 @@ const English = () => {
 
   // 页面头部「刷新当前页面」按钮：重新读取仓库里的笔记
   useEffect(() => onPageRefresh(reload), [reload]);
-
-  /** 打开预览：先取这一篇的最新正文再开弹窗，避免先显示旧内容再跳变。 */
-  const openNote = async (name: string) => {
-    openSeq.current += 1;
-
-    const seq = openSeq.current;
-    const fallback = notes.find((note) => note.name === name) ?? null;
-
-    try {
-      const fresh = await fetchEnglishNote(name);
-
-      if (seq === openSeq.current) {
-        setActive(fresh ?? fallback);
-      }
-    } catch {
-      // 单篇读取失败就先用列表里的那份，至少还能看
-      if (seq === openSeq.current) {
-        setActive(fallback);
-      }
-    }
-  };
-
-  /** 保存弹窗里的编辑：写回源文件、提交记录仓库，再只刷这一篇。 */
-  const saveActive = async (markdown: string) => {
-    if (!active) {
-      return {};
-    }
-
-    const saved = await saveEnglishNote(active.name, markdown);
-
-    try {
-      const fresh = await fetchEnglishNote(active.name);
-
-      if (fresh) {
-        setActive(fresh);
-        applyNote(fresh);
-      }
-    } catch {
-      // 刷新失败不影响保存结果，下次打开会重新取
-    }
-
-    return saved.commitError
-      ? { notice: `自动提交失败：${saved.commitError}` }
-      : {};
-  };
-
-  /** 弹窗 header 的刷新：只重取当前这一篇，原地更新正文。 */
-  const refreshActive = async () => {
-    if (!active) {
-      return;
-    }
-
-    const fresh = await fetchEnglishNote(active.name);
-
-    if (fresh) {
-      setActive(fresh);
-      applyNote(fresh);
-    }
-  };
 
   /** 在「当前视图的可见顺序」里循环切换上一篇 / 下一篇。 */
   const step = (delta: number) => {
@@ -275,12 +222,15 @@ const English = () => {
 
       <MarkdownPreviewModal
         Editor={NoteEditor}
-        markdown={active?.content ?? ''}
-        onClose={() => setActive(null)}
+        loading={noteLoading}
+        markdown={activeBody ?? ''}
+        onClose={closeNote}
         onNext={scopeNotes.length > 1 ? () => step(1) : null}
         onPrevious={scopeNotes.length > 1 ? () => step(-1) : null}
-        onRefresh={import.meta.env.DEV ? refreshActive : null}
-        onSave={import.meta.env.DEV ? saveActive : undefined}
+        onRefresh={import.meta.env.DEV && activeBody !== null ? refreshActive : null}
+        onSave={
+          import.meta.env.DEV && activeBody !== null ? saveActive : undefined
+        }
         opened={active !== null}
         position={
           active && scopeNotes.length > 0 && activeIndex >= 0

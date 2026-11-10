@@ -1,44 +1,15 @@
 /**
- * 分类归属：从笔记正文解析分类键，并把记录仓库的分类清单摊成看板列。
+ * 分类归属：把记录仓库的分类清单摊成看板列，并判断某篇笔记的分类要不要展示。
  *
- * 分类不是本项目的事实：键来自笔记正文「记录 ID / 试卷 ID」的前缀，
- * 中文标题与列顺序来自记录仓库 `learning-record-notes/categories.json`。
+ * 分类**不是本项目的事实**：分类键由读盘侧的插件从正文「记录 ID / 试卷 ID」前缀解析
+ * （文件名兜底），中文标题与列顺序来自记录仓库 `learning-record-notes/categories.json`。
  * 这里只做读取与兜底，不维护第二份分类表——记录仓库加一个分类，页面自动多一列。
  */
 
-import type {
-  EnglishNote,
-  NoteCategory,
-  NoteCategoryPlan,
-} from '../types';
-
-/** 正文基础信息表里的记录 ID 行：`<tr><td>记录 ID / 试卷 ID</td><td>errors:xxx</td></tr>` */
-const RECORD_ID_PATTERN = /记录 ID[^<]{0,40}<\/td>\s*<td>([^<]*)<\/td>/u;
+import type { NoteCategory, NoteCategoryPlan, NoteSummary } from '../types';
 
 /** 认不出分类时的列表标题 */
 const UNCATEGORIZED_LABEL = '未分类';
-
-/** 从正文的记录 ID 取分类键：`errors:xxx` → `errors`；取不到返回空串 */
-export const categoryKeyFromContent = (content: string): string => {
-  const recordId = (RECORD_ID_PATTERN.exec(content)?.[1] ?? '').trim();
-  const separator = recordId.indexOf(':');
-
-  return separator > 0 ? recordId.slice(0, separator).trim() : '';
-};
-
-/**
- * 从文件名取分类键：`errors-back-west-spacing.md` → `errors`。
- * 只在正文没有记录 ID 时兜底，正常笔记以正文为准。
- */
-export const categoryKeyFromName = (name: string): string => {
-  const separator = name.indexOf('-');
-
-  return separator > 0 ? name.slice(0, separator) : '';
-};
-
-/** 一篇笔记的分类键：正文优先，文件名兜底 */
-export const getNoteCategoryKey = (note: EnglishNote): string =>
-  categoryKeyFromContent(note.content) || categoryKeyFromName(note.name);
 
 /**
  * 按「笔记里出现的分类键 + 记录仓库的分类清单」算出看板列。
@@ -51,7 +22,7 @@ export const getNoteCategoryKey = (note: EnglishNote): string =>
  * - 连记录 ID 和文件名都认不出分类的笔记归到末尾的「未分类」列。
  */
 export const buildCategoryPlan = (
-  notes: EnglishNote[],
+  notes: NoteSummary[],
   config: NoteCategory[],
 ): NoteCategoryPlan => {
   const declaredKeys = new Set(config.map((category) => category.key));
@@ -59,7 +30,7 @@ export const buildCategoryPlan = (
   const discovered = new Map<string, true>();
 
   for (const note of notes) {
-    discovered.set(getNoteCategoryKey(note), true);
+    discovered.set(note.categoryKey, true);
   }
 
   const discoveredKeys = [...discovered.keys()];

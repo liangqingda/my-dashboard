@@ -169,15 +169,18 @@ PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/Ma
 数据不经过本机 agent，由 Vite 插件 `scripts/vite/english-notes.ts` 直接读盘：
 
 - 开发：`GET /api/english/notes` 每次请求实时读取该目录下的 `*.md`（排除目录自带的
-  `README.md`），同时带出 `categories.json` 的分类清单，写完新笔记刷新页面即可看到，无需重启服务；
-  `GET /api/english/notes?name=…` 只返回这一篇，弹窗打开时用它取最新正文，避免先显示旧内容再跳变。
+  `README.md`），返回**列表摘要**（文件名 + 分类键 + 目标知识点 + 笔记更新时间）与
+  `categories.json` 的分类清单，写完新笔记刷新页面即可看到，无需重启服务；
+  `GET /api/english/notes?name=…` 只返回这一篇（摘要 + 正文），弹窗打开时用它取正文。
 - 保存：`PUT /api/english/notes`（body `{ name, content }`）写完再自动提交记录仓库；
   文件名必须匹配 `^([a-z]+)-([a-z0-9][a-z0-9-]*)\.md$`（与记录仓库 `check_note.py` 同一口径：
   分类键小写字母、slug 只用小写 ASCII 字母 / 数字 / 连字符，中文主题在源仓库要意译成英文短语）
   且解析后仍落在笔记目录内，否则 400。
-- 构建：同一份内容作为 `english-notes.json` 写进产物，供预览与静态部署使用（只读快照，
-  保存能力仅开发模式提供）。
-- 列表按文件最后修改时间倒序；页面打开单篇时才去取正文，切换上一篇 / 下一篇只请求那一篇。
+- 构建：索引（分类清单 + 每篇摘要）写成 `english-notes.index.json`，每篇正文单独落成
+  `english-notes/<文件名>`，供预览与静态部署按需取（只读快照，保存能力仅开发模式提供）。
+- 列表只带摘要，正文不随列表下发：打开某一篇时才按名取，取的过程中弹窗先显示加载态。
+  摘要里的三个派生字段（分类键、目标知识点、笔记更新时间）由插件读盘时解析好，前端不再扫正文。
+- 列表按「笔记更新时间」倒序（正文基础信息表里的时间优先，缺失时用文件 mtime）。
 
 记录仓库不在 `../learn-english` 时，用环境变量指定绝对路径：
 

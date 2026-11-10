@@ -16,6 +16,7 @@
 | `opened` | `boolean` | 是否打开 |
 | `title` | `string` | 标题，通常传文件名 |
 | `markdown` | `string` | Markdown 原文 |
+| `loading` | `boolean`（可选） | 正文是否还在取。为 `true` 时正文区只显示居中加载指示、不渲染 Markdown，标题目录为空且不可点，刷新与编辑入口一并收起（没有正文可编辑，也不该把空串写成一篇空文档）。打开 / 翻篇 / 刷新过程中由调用方传 |
 | `position` | `{ index: number; total: number }`（可选） | 展示「第几 / 共几」 |
 | `relativePath` | `string`（可选） | 文档的相对路径（相对其记录仓库根目录）；提供后 header 出现复制图标按钮，不传则不显示。组件不拼路径，由调用方给 |
 | `onClose` | `() => void` | 关闭 |

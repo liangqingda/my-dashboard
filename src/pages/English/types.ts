@@ -3,20 +3,40 @@
  * 笔记来源为 learn-english 仓库的 learning-record-notes/*.md。
  */
 
-/** 一篇学习笔记 */
-export type EnglishNote = {
+/**
+ * 列表里的一条笔记摘要：列表页只消费这些字段，正文不随列表下发。
+ * 三个派生字段（分类键、知识点、更新时间）由读盘侧的插件解析好，
+ * 前端不再重复扫正文（口径见 `docs/local-repo-data.md`）。
+ */
+export type NoteSummary = {
   /** 文件名，如 errors-back-west-spacing.md */
+  name: string;
+  /** 分类键，如 errors；正文记录 ID 优先，文件名兜底 */
+  categoryKey: string;
+  /** 目标知识点（摘自正文基础信息表）；缺失时为空串 */
+  topic: string;
+  /** 笔记更新时间（ISO 串）；正文里的「笔记更新时间」优先，缺失时回落文件 mtime */
+  updatedAt: string;
+};
+
+/**
+ * 按名取到的一篇正文。
+ * 开发态接口顺带回最新摘要（保存后分类 / 知识点 / 时间可能一起变），
+ * 静态快照只有正文，摘要继续用列表里那条。
+ */
+export type NoteBody = {
+  /** 文件名 */
   name: string;
   /** Markdown 原文 */
   content: string;
-  /** 最后修改时间（ISO 8601） */
-  updatedAt: string;
+  /** 最新摘要；静态快照下为 null */
+  summary: NoteSummary | null;
 };
 
 /** 一次读取得到的笔记集合 */
 export type EnglishNotesSnapshot = {
-  /** 全部笔记，按最后修改时间倒序 */
-  notes: EnglishNote[];
+  /** 全部笔记摘要，按笔记更新时间倒序 */
+  notes: NoteSummary[];
   /** 记录仓库声明的分类清单（键、标题、顺序、是否展示），缺失时为空数组 */
   categories: NoteCategory[];
 };
@@ -39,8 +59,8 @@ export type NoteCategory = {
 
 /** 看板的一列：分类 + 该列按「笔记更新时间」倒序排列的笔记 */
 export type NoteColumn = NoteCategory & {
-  /** 本列笔记，按笔记更新时间倒序（新的在前）；空列也会返回，方便区分「整目录为空」与「这列为空」 */
-  notes: EnglishNote[];
+  /** 本列笔记摘要，按笔记更新时间倒序（新的在前）；空列也会返回，方便区分「整目录为空」与「这列为空」 */
+  notes: NoteSummary[];
 };
 
 /**
@@ -60,8 +80,8 @@ export type NoteCategoryPlan = {
 
 /** 表格平铺的一行：一行一篇笔记，分类、目标知识点和时间作为单元格内容 */
 export type NoteRow = {
-  /** 这一行对应的笔记 */
-  note: EnglishNote;
+  /** 这一行对应的笔记摘要 */
+  note: NoteSummary;
   /** 分类键，如 errors；排序按分类清单里的声明顺序 */
   categoryKey: string;
   /** 分类中文标题，如「错题」 */
@@ -98,8 +118,8 @@ export type SavedNoteResult = {
 
 /** 笔记读取 hook 暴露的状态 */
 export type UseEnglishNotesResult = {
-  /** 全部笔记，按最后修改时间倒序 */
-  notes: EnglishNote[];
+  /** 全部笔记摘要，按笔记更新时间倒序 */
+  notes: NoteSummary[];
   /** 记录仓库声明的分类清单；读取失败时保留上一次的结果 */
   categories: NoteCategory[];
   /** 是否正在读取 */
@@ -110,8 +130,26 @@ export type UseEnglishNotesResult = {
   refresh: () => void;
   /** 静默重新读取全部笔记：不改 loading，用于侧边栏刷新 */
   reload: () => Promise<void>;
-  /** 用单篇笔记的最新内容替换列表里的那一条（不在列表里就插到最前） */
-  applyNote: (note: EnglishNote) => void;
+  /** 用单篇的最新摘要替换列表里的那一条（保存后分类 / 知识点 / 时间可能变；不在列表里就插到最前） */
+  applySummary: (summary: NoteSummary) => void;
+};
+
+/** 当前打开的那一篇：取正文 / 保存 / 刷新共用的状态与动作（见 `hooks/useActiveNote.ts`） */
+export type UseActiveNoteResult = {
+  /** 当前打开的笔记摘要；null 表示弹窗关闭 */
+  active: NoteSummary | null;
+  /** 当前这一篇的正文；null 表示还在取（弹窗里显示加载态） */
+  content: string | null;
+  /** 正文是否正在取：打开、翻篇、刷新都会回到加载态 */
+  loading: boolean;
+  /** 按列表里的名字打开一篇 */
+  open: (name: string) => Promise<void>;
+  /** 关闭弹窗并清掉正文 */
+  close: () => void;
+  /** 保存编辑后的正文，返回值叠加在弹窗的「已保存」提示上 */
+  save: (markdown: string) => Promise<{ notice?: string }>;
+  /** 重取当前这一篇 */
+  refresh: () => Promise<void>;
 };
 
 /** 表格单元格 */

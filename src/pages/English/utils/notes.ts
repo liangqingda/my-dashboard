@@ -1,37 +1,20 @@
 /**
- * 英语笔记模块的纯工具函数：分类归属、看板分列、排序、文件名展示与编辑态序列化。
+ * 英语笔记模块的纯工具函数：分列、排序、文件名展示。
+ *
+ * 分类键、目标知识点、笔记更新时间都由读盘侧解析好随摘要下发（见 `docs/local-repo-data.md`），
+ * 这里不再扫正文，只做展示与排序需要的换算。
  */
 
 import { formatDateTime } from '@/utils/format';
 
 import type {
-  EnglishNote,
   NoteCategoryPlan,
   NoteColumn,
   NoteRow,
+  NoteSummary,
   NotesSort,
 } from '../types';
 import { NOTES_DIR } from '../constants';
-
-import { getNoteCategoryKey } from './category';
-
-/** 正文「基础信息」表里的更新时间行：`<tr><td>笔记更新时间</td><td>2026-11-08 14:39</td></tr>` */
-const NOTE_UPDATED_AT_PATTERN = /笔记更新时间[\s\S]{0,40}?<td>([^<]+)</u;
-
-/** 正文「基础信息」表里的目标知识点行：`<tr><td>目标知识点</td><td>out west 不是 outwest</td></tr>` */
-const NOTE_TOPIC_PATTERN = /目标知识点[\s\S]{0,40}?<td>([^<]*)</u;
-
-/** 取出第一个捕获组并去空白；没匹配到返回空串 */
-const readCell = (pattern: RegExp, content: string): string =>
-  (pattern.exec(content)?.[1] ?? '').trim();
-
-/** 「2026-11-08 14:39」这类正文时间补成可解析的 ISO 串；日期带秒的按原样解析 */
-const toIsoDateTime = (text: string): string => {
-  const trimmed = text.trim();
-  const iso = trimmed.includes('T') ? trimmed : trimmed.replace(' ', 'T');
-
-  return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/u.test(iso) ? `${iso}:00` : iso;
-};
 
 /**
  * 笔记在 learn-english 仓库里的相对路径，如
@@ -44,28 +27,14 @@ export const getNoteRelativePath = (name: string): string =>
   `${NOTES_DIR}/${name}`;
 
 /**
- * 笔记「笔记更新时间」，用于列内排序与表格展示。
- *
- * 优先取正文基础信息表里的字段：那是学习记录自己的更新时间，仓库被复制、拉取或换机器后
- * 文件 mtime 会跟着变，用它排序会让顺序跳来跳去；正文里没有这个字段时才退回 mtime。
- * 两者都取不到返回 0，调用方据此不渲染时间文案。
+ * 摘要里的「笔记更新时间」（ISO 串）转时间戳，用于列内排序与展示。
+ * 解析不出来返回 0，调用方据此不渲染时间文案。
  */
-export const getNoteUpdatedAt = (note: EnglishNote): number => {
-  const fromContent = readCell(NOTE_UPDATED_AT_PATTERN, note.content);
-  const parsed = fromContent ? Date.parse(toIsoDateTime(fromContent)) : 0;
+export const toNoteTimestamp = (updatedAt: string): number => {
+  const parsed = Date.parse(updatedAt);
 
-  if (parsed > 0) {
-    return parsed;
-  }
-
-  const fallback = Date.parse(note.updatedAt);
-
-  return Number.isNaN(fallback) ? 0 : fallback;
+  return Number.isNaN(parsed) ? 0 : parsed;
 };
-
-/** 笔记的目标知识点（正文基础信息表里的字段），取不到返回空串 */
-export const getNoteTopic = (note: EnglishNote): string =>
-  readCell(NOTE_TOPIC_PATTERN, note.content);
 
 /** 展示用的更新时间文案，如 2026/11/08 14:39；时间未知返回空串（不渲染成 1970 年） */
 const formatNoteUpdatedAt = (updatedAt: number): string =>
@@ -94,32 +63,30 @@ export const stripCategoryPrefix = (base: string, category: string): string =>
   base.startsWith(`${category}-`) ? base.slice(category.length + 1) : base;
 
 /**
- * 把笔记按类分列：一次遍历建 Map，并顺手记下每篇的「笔记更新时间」，
- * 排序时只查表，不在比较函数里反复解析正文。每列按更新时间倒序（新的在前），
+ * 把笔记按类分列：一次遍历建 Map，并顺手记下每篇的时间戳，
+ * 排序时只查表，不在比较函数里反复解析时间串。每列按更新时间倒序（新的在前），
  * 同一时间再按文件名升序，保证刷新前后顺序稳定。
  *
  * 列的顺序与标题来自 `plan`（记录仓库的分类清单），本函数不维护分类表；
  * 空列也返回（笔记为空），由看板自己决定「这一列为空」还是「整目录为空」。
  */
 export const groupNotesByCategory = (
-  notes: EnglishNote[],
+  notes: NoteSummary[],
   plan: NoteCategoryPlan,
 ): NoteColumn[] => {
-  const byCategory = new Map<string, EnglishNote[]>();
+  const byCategory = new Map<string, NoteSummary[]>();
   const updatedAt = new Map<string, number>();
 
   for (const note of notes) {
-    const category = getNoteCategoryKey(note);
-
-    if (!plan.isVisible(category)) {
+    if (!plan.isVisible(note.categoryKey)) {
       continue;
     }
 
-    const bucket = byCategory.get(category) ?? [];
+    const bucket = byCategory.get(note.categoryKey) ?? [];
 
     bucket[bucket.length] = note;
-    byCategory.set(category, bucket);
-    updatedAt.set(note.name, getNoteUpdatedAt(note));
+    byCategory.set(note.categoryKey, bucket);
+    updatedAt.set(note.name, toNoteTimestamp(note.updatedAt));
   }
 
   return plan.columns.map(({ key, label }) => ({
@@ -134,29 +101,29 @@ export const groupNotesByCategory = (
 };
 
 /**
- * 把笔记摊平成表格的一行一篇：只保留会在页面上展示的分类，分类中文标题、目标知识点与
- * 时间文案在这里一次算好，组件只管渲染，不在 cell 里重复解析正文。
+ * 把笔记摊平成表格的一行一篇：只保留会在页面上展示的分类，分类中文标题、
+ * 时间文案在这里一次算好，组件只管渲染，不在 cell 里重复换算。
  * 排序交给 `sortNoteRows`，摊平结果本身不带顺序含义。
  */
 export const toNoteRows = (
-  notes: EnglishNote[],
+  notes: NoteSummary[],
   plan: NoteCategoryPlan,
 ): NoteRow[] =>
   notes.flatMap((note) => {
-    const categoryKey = getNoteCategoryKey(note);
+    const { categoryKey } = note;
 
     if (!plan.isVisible(categoryKey)) {
       return [];
     }
 
-    const updatedAt = getNoteUpdatedAt(note);
+    const updatedAt = toNoteTimestamp(note.updatedAt);
 
     return [
       {
         note,
         categoryKey,
         categoryLabel: plan.labels.get(categoryKey) ?? categoryKey,
-        topicLabel: getNoteTopic(note),
+        topicLabel: note.topic,
         updatedLabel: formatNoteUpdatedAt(updatedAt),
         updatedAt,
       },

@@ -19,7 +19,7 @@
  */
 
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Modal } from '@mantine/core';
+import { Loader, Modal } from '@mantine/core';
 import Markdown from 'react-markdown';
 
 import { cx } from '@/utils/cx';
@@ -52,6 +52,7 @@ const MarkdownPreviewModal = ({
   opened,
   title,
   markdown,
+  loading = false,
   position,
   relativePath,
   onClose,
@@ -126,11 +127,12 @@ const MarkdownPreviewModal = ({
     ),
     [renderedMarkdown],
   );
-  /** 正文渲染出来后才能测量 / 跟踪标题：编辑态只有草稿预览时满足 */
-  const bodyReady = opened && (!editing.editing || showingDraftPreview);
+  /** 正文渲染出来后才能测量 / 跟踪标题：编辑态只有草稿预览时满足；正文还在取时什么都没有 */
+  const bodyReady =
+    opened && !loading && (!editing.editing || showingDraftPreview);
 
   useArrowNavigation({
-    enabled: opened && !editing.editing,
+    enabled: opened && !editing.editing && !loading,
     onNext,
     onPrevious,
   });
@@ -211,12 +213,12 @@ const MarkdownPreviewModal = ({
       size="min(980px, 92vw)"
       title={
         <TitleBar
-          canEdit={Boolean(onSave)}
+          canEdit={Boolean(onSave) && !loading}
           editing={editing}
           fullscreen={fullscreen}
           onNext={onNext}
           onPrevious={onPrevious}
-          onRefresh={onRefresh ? refresh : null}
+          onRefresh={onRefresh && !loading ? refresh : null}
           onStartEdit={startEditing}
           onToggleFullscreen={toggleFullscreen}
           position={position}
@@ -235,12 +237,19 @@ const MarkdownPreviewModal = ({
       <div className={styles.workspace}>
         <OutlineNav
           activeIndex={bodyReady ? activeIndex : editorActiveIndex}
-          disabled={!opened}
+          disabled={!opened || loading}
           fullscreen={fullscreen}
           headings={outline}
           onSelect={scrollToHeading}
         />
         <div className={styles.pane}>
+          {/* 正文还在取：只放一个居中的加载指示，不渲染空 Markdown，也不给编辑入口 */}
+          {loading ? (
+            <div aria-busy="true" className={styles.loadingBody}>
+              <Loader size="sm" />
+            </div>
+          ) : null}
+
           {/*
            * 编辑插槽在预览草稿时只隐藏、不卸载：草稿、撤销栈和光标位置都留在编辑器里，
            * 点「取消」回到编辑模式时接着改，不用把草稿重新解析一遍。
@@ -260,7 +269,7 @@ const MarkdownPreviewModal = ({
             </div>
           ) : null}
 
-          {!editing.editing || showingDraftPreview ? (
+          {!loading && (!editing.editing || showingDraftPreview) ? (
             <article
               className={cx(styles.prose, fullscreen && styles.proseWide)}
               ref={attachBody}

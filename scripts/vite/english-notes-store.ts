@@ -110,15 +110,118 @@ const listNoteNames = async (repoDir: string): Promise<string[]> => {
     .map((entry) => entry.name);
 };
 
-/** 汇总笔记目录下的全部笔记，按最后修改时间倒序 */
-export const collectNotes = async (
+/** 正文「基础信息」表里的记录 ID 行：`<tr><td>记录 ID / 试卷 ID</td><td>errors:xxx</td></tr>` */
+const RECORD_ID_PATTERN = /记录 ID[^<]{0,40}<\/td>\s*<td>([^<]*)<\/td>/u;
+
+/** 正文「基础信息」表里的更新时间行：`<tr><td>笔记更新时间</td><td>2026-11-08 14:39</td></tr>` */
+const NOTE_UPDATED_AT_PATTERN = /笔记更新时间[\s\S]{0,40}?<td>([^<]+)/u;
+
+/** 正文「基础信息」表里的目标知识点行：`<tr><td>目标知识点</td><td>out west 不是 outwest</td></tr>` */
+const NOTE_TOPIC_PATTERN = /目标知识点[\s\S]{0,40}?<td>([^<]*)</u;
+
+/** 取出第一个捕获组并去空白；没匹配到返回空串 */
+const readCell = (pattern: RegExp, content: string): string =>
+  (pattern.exec(content)?.[1] ?? '').trim();
+
+/** 从正文的记录 ID 取分类键：`errors:xxx` → `errors`；取不到返回空串 */
+export const categoryKeyFromContent = (content: string): string => {
+  const recordId = readCell(RECORD_ID_PATTERN, content);
+  const separator = recordId.indexOf(':');
+
+  return separator > 0 ? recordId.slice(0, separator).trim() : '';
+};
+
+/**
+ * 从文件名取分类键：`errors-back-west-spacing.md` → `errors`。
+ * 只在正文没有记录 ID 时兜底，正常笔记以正文为准。
+ */
+export const categoryKeyFromName = (name: string): string => {
+  const separator = name.indexOf('-');
+
+  return separator > 0 ? name.slice(0, separator) : '';
+};
+
+/** 一篇笔记的分类键：正文优先，文件名兜底 */
+export const noteCategoryKey = (content: string, name: string): string =>
+  categoryKeyFromContent(content) || categoryKeyFromName(name);
+
+/** 「2026-11-08 14:39」这类正文时间补成可解析的串；已经带 T 的按原样解析 */
+const toIsoDateTime = (text: string): string => {
+  const trimmed = text.trim();
+  const iso = trimmed.includes('T') ? trimmed : trimmed.replace(' ', 'T');
+
+  return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/u.test(iso) ? `${iso}:00` : iso;
+};
+
+/**
+ * 笔记更新时间（ISO 串）：优先取正文基础信息表里的字段——那是学习记录自己的更新时间，
+ * 仓库被复制、拉取或换机器后文件 mtime 会跟着变，用它排序会让顺序跳来跳去；
+ * 正文里没有这个字段（或解析不出来）时才回落到文件 mtime。
+ */
+export const noteUpdatedAt = (content: string, mtimeIso: string): string => {
+  const fromContent = readCell(NOTE_UPDATED_AT_PATTERN, content);
+  const parsed = fromContent
+    ? Date.parse(toIsoDateTime(fromContent))
+    : Number.NaN;
+
+  return Number.isNaN(parsed) ? mtimeIso : new Date(parsed).toISOString();
+};
+
+/** 笔记的目标知识点（正文基础信息表里的字段），取不到返回空串 */
+export const noteTopic = (content: string): string =>
+  readCell(NOTE_TOPIC_PATTERN, content);
+
+/** 列表用的笔记摘要：不带正文，只带页面要展示与排序的字段 */
+export type NoteSummary = {
+  /** 文件名，如 errors-back-west-spacing.md */
+  name: string;
+  /** 分类键，如 errors；正文记录 ID 优先，文件名兜底 */
+  categoryKey: string;
+  /** 目标知识点（摘自正文基础信息表）；缺失时为空串 */
+  topic: string;
+  /** 笔记更新时间（ISO 串）；正文里的「笔记更新时间」优先，缺失时回落文件 mtime */
+  updatedAt: string;
+};
+
+/** 列表摘要 + 正文，供单篇接口与构建产物使用 */
+export type NoteDetail = NoteSummary & {
+  /** Markdown 原文 */
+  content: string;
+};
+
+/** 把一篇笔记摊成列表摘要：解析三个派生字段，丢掉正文 */
+const toNoteSummary = ({
+  content,
+  name,
+  updatedAt,
+}: NoteSnapshot): NoteSummary => ({
+  categoryKey: noteCategoryKey(content, name),
+  name,
+  topic: noteTopic(content),
+  updatedAt: noteUpdatedAt(content, updatedAt),
+});
+
+/** 把一篇笔记摊成「摘要 + 正文」 */
+export const toNoteDetail = (note: NoteSnapshot): NoteDetail => ({
+  ...toNoteSummary(note),
+  content: note.content,
+});
+
+/**
+ * 汇总笔记目录下的全部笔记**摘要**，按笔记更新时间倒序。
+ *
+ * 列表只要摘要：正文留到打开某一篇时再按名取（见 docs/local-repo-data.md），
+ * 页面进首屏不再陪着几百篇正文一起下载。
+ */
+export const collectNoteSummaries = async (
   repoDir: string,
-): Promise<NoteSnapshot[]> => {
+): Promise<NoteSummary[]> => {
   const names = await listNoteNames(repoDir);
   const notes = await Promise.all(names.map((name) => readNote(repoDir, name)));
 
   return notes
     .filter((note): note is NoteSnapshot => note !== null)
+    .map((note) => toNoteSummary(note))
     .toSorted(
       (a, b) =>
         b.updatedAt.localeCompare(a.updatedAt) || a.name.localeCompare(b.name),

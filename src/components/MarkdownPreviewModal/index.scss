@@ -82,6 +82,15 @@
   display: none;
 }
 
+/* 正文还在取时的占位：只放一个居中的加载指示，不渲染空 Markdown */
+.loadingBody {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+
 /* 文档排版：表格、折叠讲解、引用都按笔记里的真实用法设计 */
 .prose {
   flex: 1 1 auto;

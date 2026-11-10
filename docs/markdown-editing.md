@@ -24,7 +24,7 @@
 
 页面侧的数据拼装见 `src/pages/English/index.tsx`（五列看板 → 弹窗预览，上一篇 / 下一篇只在本列内循环，
 打开时 `GET /api/english/notes?name=…` 只取这一篇，保存时 `PUT /api/english/notes` 写回
-`learning-record-notes/*.md`）；读盘链路见 `docs/local-repo-data.md`。
+`learning-record-notes/*.md`）；读盘链路（列表只发摘要、正文按名取）见 `docs/local-repo-data.md`。
 
 ## 新增一类可编辑文档
 

@@ -3,22 +3,22 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { getErrorMessage } from '@/utils/error';
 
 import type {
-  EnglishNote,
   NoteCategory,
+  NoteSummary,
   UseEnglishNotesResult,
 } from '../types';
 import { fetchEnglishNotes } from '../utils/notes-api';
 
-const EMPTY_NOTES: EnglishNote[] = [];
+const EMPTY_NOTES: NoteSummary[] = [];
 const EMPTY_CATEGORIES: NoteCategory[] = [];
 
 /**
- * 读取 learn-english 仓库 learning-record-notes 下的全部笔记。
+ * 读取 learn-english 仓库 learning-record-notes 下的全部笔记摘要（不含正文）。
  * 首次进入页面时自动读取；refresh 手动同步（显示 loading），
- * reload 静默同步，供打开预览前拉取仓库最新内容。
+ * reload 静默同步，供侧边栏刷新。
  */
 export const useEnglishNotes = (): UseEnglishNotesResult => {
-  const [notes, setNotes] = useState<EnglishNote[]>(EMPTY_NOTES);
+  const [notes, setNotes] = useState<NoteSummary[]>(EMPTY_NOTES);
   const [categories, setCategories] = useState<NoteCategory[]>(
     EMPTY_CATEGORIES,
   );
@@ -89,12 +89,12 @@ export const useEnglishNotes = (): UseEnglishNotesResult => {
     }
   }, [apply, fail]);
 
-  /** 单篇更新：保存或打开预览后只替换这一条，不整页重拉。 */
-  const applyNote = useCallback((note: EnglishNote) => {
+  /** 单篇摘要更新：保存或刷新单篇后只替换这一条，不整页重拉。 */
+  const applySummary = useCallback((summary: NoteSummary) => {
     setNotes((current) =>
-      current.some((item) => item.name === note.name)
-        ? current.map((item) => (item.name === note.name ? note : item))
-        : [note, ...current],
+      current.some((item) => item.name === summary.name)
+        ? current.map((item) => (item.name === summary.name ? summary : item))
+        : [summary, ...current],
     );
   }, []);
 
@@ -119,5 +119,5 @@ export const useEnglishNotes = (): UseEnglishNotesResult => {
     };
   }, [apply, fail]);
 
-  return { categories, notes, loading, error, refresh, reload, applyNote };
+  return { categories, notes, loading, error, refresh, reload, applySummary };
 };

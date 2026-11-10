@@ -5,11 +5,21 @@ import type { Plugin } from 'vite';
 
 import { commitNote } from './english-notes-commit.js';
 import {
-  collectNotes,
+  collectNoteSummaries,
   readCategoryConfig,
   readNote,
+  toNoteDetail,
   writeNote,
 } from './english-notes-store.js';
+
+/** 构建产物里列表索引的文件名（只含摘要与分类清单） */
+export const NOTES_INDEX_FILE = 'english-notes.index.json';
+
+/**
+ * 构建产物里每篇正文的目录：一篇一个静态文件，打开时按名取。
+ * 与笔记目录同名不同层：这个在构建产物里，那个在记录仓库里。
+ */
+export const NOTES_BODY_DIR = 'english-notes';
 
 /** 判断解析后的 JSON 是不是普通对象 */
 const isObject = (value: unknown): value is Record<string, unknown> =>
@@ -47,10 +57,11 @@ const nameFromUrl = (url: string | undefined): string | null => {
  * 暴露给前端，并把弹窗里的编辑写回源文件、提交记录仓库。
  *
  * - 开发服务器：
- *   - `GET /api/english/notes`：全部笔记（每次请求实时读盘）；
- *   - `GET /api/english/notes?name=<file>`：单篇笔记，打开预览 / 保存后只刷这一篇；
+ *   - `GET /api/english/notes`：全部笔记的**摘要**（每次请求实时读盘，不含正文）；
+ *   - `GET /api/english/notes?name=<file>`：单篇「摘要 + 正文」，打开预览 / 保存后只刷这一篇；
  *   - `PUT /api/english/notes`：写回源文件后自动提交该文件。
- * - 构建：全部笔记作为 `english-notes.json` 资源写进产物，供静态预览使用。
+ * - 构建：索引（分类清单 + 摘要）写进 `english-notes.index.json`，每篇正文单独落成
+ *   `english-notes/<文件名>`，供预览与静态部署按需取。
  *
  * 记录仓库默认取与本项目同级目录（`../learn-english`），
  * 可用环境变量 `ENGLISH_RECORDS_DIR` 指定其它路径。
@@ -60,17 +71,45 @@ export const englishNotes = (root: string): Plugin => {
     process.env.ENGLISH_RECORDS_DIR ?? path.join(root, '..', 'learn-english'),
   );
 
+  /** 是否处于构建：`emitFile` 只在构建期可用，开发期由中间件实时读盘 */
+  let isBuild = false;
+
   return {
     name: 'english-notes',
+    configResolved(config) {
+      isBuild = config.command === 'build';
+    },
     async buildStart() {
+      if (!isBuild) {
+        return;
+      }
+
+      const summaries = await collectNoteSummaries(repoDir);
+
+      // 首屏只读索引：分类清单 + 每篇摘要，不含正文
       this.emitFile({
         type: 'asset',
-        fileName: 'english-notes.json',
+        fileName: NOTES_INDEX_FILE,
         source: JSON.stringify({
           categories: await readCategoryConfig(repoDir),
-          notes: await collectNotes(repoDir),
+          notes: summaries,
         }),
       });
+
+      // 正文按篇落成独立静态文件，打开哪篇取哪篇，不再整包下发
+      for (const summary of summaries) {
+        const note = await readNote(repoDir, summary.name);
+
+        if (!note) {
+          continue;
+        }
+
+        this.emitFile({
+          type: 'asset',
+          fileName: `${NOTES_BODY_DIR}/${summary.name}`,
+          source: note.content,
+        });
+      }
     },
     configureServer(server) {
       // 该中间件先于 /api 代理执行，因此不会落到本机 agent 上。
@@ -92,7 +131,9 @@ export const englishNotes = (root: string): Plugin => {
                 return;
               }
 
-              res.end(JSON.stringify({ note }));
+              // 单篇接口回「摘要 + 正文」：保存后分类、知识点、时间可能一起变，
+              // 页面拿到这一份就能原地更新列表里的那条，不用整页重拉。
+              res.end(JSON.stringify({ note: toNoteDetail(note) }));
 
               return;
             }
@@ -100,7 +141,7 @@ export const englishNotes = (root: string): Plugin => {
             res.end(
               JSON.stringify({
                 categories: await readCategoryConfig(repoDir),
-                notes: await collectNotes(repoDir),
+                notes: await collectNoteSummaries(repoDir),
               }),
             );
           } catch (error) {
