@@ -176,9 +176,10 @@
   margin-bottom: 4px;
 }
 
+/* 加粗只换颜色、不加字重：正文里 strong 与普通文字同档粗细，靠墨色深浅区分 */
 .prose strong {
   color: var(--app-ink);
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .prose a {
