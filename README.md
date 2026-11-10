@@ -172,7 +172,8 @@ PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/Ma
   `README.md`），同时带出 `categories.json` 的分类清单，写完新笔记刷新页面即可看到，无需重启服务；
   `GET /api/english/notes?name=…` 只返回这一篇，弹窗打开时用它取最新正文，避免先显示旧内容再跳变。
 - 保存：`PUT /api/english/notes`（body `{ name, content }`）写完再自动提交记录仓库；
-  文件名必须匹配 `^[\p{L}\p{N}_.-]+\.md$`（允许带中文，如 `usage-after-不宜直接当-later-…`）
+  文件名必须匹配 `^([a-z]+)-([a-z0-9][a-z0-9-]*)\.md$`（与记录仓库 `check_note.py` 同一口径：
+  分类键小写字母、slug 只用小写 ASCII 字母 / 数字 / 连字符，中文主题在源仓库要意译成英文短语）
   且解析后仍落在笔记目录内，否则 400。
 - 构建：同一份内容作为 `english-notes.json` 写进产物，供预览与静态部署使用（只读快照，
   保存能力仅开发模式提供）。

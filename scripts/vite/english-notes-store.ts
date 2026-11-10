@@ -17,12 +17,18 @@ export const NOTE_EXTENSION = '.md';
 const EXCLUDED_FILES = new Set(['readme.md']);
 
 /**
- * 笔记文件名只能是这种形态，避免路径穿越。
- * 用 `\p{L}\p{N}` 而不是 `\w`：`\w` 只认 ASCII，带中文的文件名
- * （如 `usage-after-不宜直接当-later-连接后续动作.md`）会被判不合法，
- * 连读盘都读不出来，页面上就静默少一篇。这里仍不放行 `/`、`\` 与空白等字符。
+ * 笔记文件名只能是 `<category>-<slug>.md`，与记录仓库 `check_note.py` 同一口径：
+ * 分类键是小写字母，slug 只用小写 ASCII 字母、数字与连字符。
+ *
+ * 不再放行中文：中文 slug 会落成非 ASCII 文件名，源仓库的写入器与校验器都已拒收，
+ * 这里单方面宽容只会把源仓库的数据缺陷藏起来。顺带挡住 `/`、`\`、空白与 `..`
+ * 这类路径穿越写法。
  */
-const NOTE_NAME_PATTERN = /^[\p{L}\p{N}_.-]+\.md$/u;
+const NOTE_NAME_PATTERN = /^([a-z]+)-([a-z0-9][a-z0-9-]*)\.md$/;
+
+/** 文件名是否是合法笔记：只认 ASCII 的 `<category>-<slug>.md`，不含目录说明文件 */
+export const isNoteName = (name: string): boolean =>
+  NOTE_NAME_PATTERN.test(name) && !EXCLUDED_FILES.has(name.toLowerCase());
 
 /** 一篇笔记 */
 export type NoteSnapshot = {
@@ -40,10 +46,7 @@ const notesDirOf = (repoDir: string): string =>
 
 /** 校验文件名并返回安全的绝对路径；不合法直接抛错 */
 const resolveNoteFile = (repoDir: string, name: string): string => {
-  if (
-    !NOTE_NAME_PATTERN.test(name) ||
-    EXCLUDED_FILES.has(name.toLowerCase())
-  ) {
+  if (!isNoteName(name)) {
     throw new Error('这个文件不允许写入');
   }
 
