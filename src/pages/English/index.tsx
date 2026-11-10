@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActionIcon, Tooltip, UnstyledButton } from '@mantine/core';
 import { IconLayoutGrid, IconLayoutList } from '@tabler/icons-react';
 
@@ -140,7 +140,7 @@ const English = () => {
    * 点击表格列标题：同一列上反转方向，换一列时用它的自然默认
    * （更新时间默认新的在前，分类默认按看板列顺序）。
    */
-  const sortBy = (key: NotesSort['key']) => {
+  const sortBy = useCallback((key: NotesSort['key']) => {
     setSort((current) => {
       if (current.key === key) {
         return {
@@ -151,7 +151,7 @@ const English = () => {
 
       return { key, direction: key === 'updated' ? 'desc' : 'asc' };
     });
-  };
+  }, []);
 
   /** 当前是否为分列看板；图标与提示文案都按「切过去是什么」来写 */
   const isBoardView = view === 'board';

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { UnstyledButton } from '@mantine/core';
 
 import CopyIconButton from '@/components/CopyIconButton';
@@ -31,7 +32,7 @@ const ariaSortOf = (
  * 「分类」单元格的内容，不再当列标题。分类与更新时间两列标题可点击切换排序。
  * 表格外观（边框、表头吸顶、行 hover）由 `FreeTable` 统一给，这里只管列宽与内容。
  */
-const NotesTable = ({
+const NotesTable = memo(({
   rows,
   loading,
   error,
@@ -144,6 +145,6 @@ const NotesTable = ({
       </FreeTable>
     </div>
   );
-};
+});
 
 export default NotesTable;

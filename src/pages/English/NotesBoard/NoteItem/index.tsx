@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { UnstyledButton } from '@mantine/core';
 import { IconChevronRight } from '@tabler/icons-react';
 
@@ -18,8 +19,11 @@ import styles from './index.scss';
  * 列表里的一行：只露文件名（去掉重复的分类前缀），点击打开预览。
  * 放不下时 `TruncatedText` 收成省略号，悬停 / 聚焦时在行上方弹完整文件名。
  * 行右侧的复制图标与表格形式一致，复制的是同一条相对路径；只在悬停 / 聚焦这一行时浮现。
+ *
+ * 用 memo 兜住：一列可能有 200+ 行，打开弹窗只是 `active` 变了，
+ * 列表数据没变就不该让这一列每行都重跑一次 render（那是点开变卡的主因）。
  */
-const NoteItem = ({ note, category, onOpen }: NoteItemProps) => {
+const NoteItem = memo(({ note, category, onOpen }: NoteItemProps) => {
   const { base, extension } = splitNoteName(note.name);
   const display = stripCategoryPrefix(base, category);
   /** 列表里露出的完整文件名（不含列标题已经写明的分类前缀） */
@@ -52,6 +56,6 @@ const NoteItem = ({ note, category, onOpen }: NoteItemProps) => {
       />
     </li>
   );
-};
+});
 
 export default NoteItem;
