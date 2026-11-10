@@ -4,6 +4,10 @@
  * 供表格操作列与 Markdown 预览弹窗 header 共用。点击事件不向父级冒泡：
  * 嵌在「整行可点击」的表格里时，复制不会顺带打开那一行。
  * 复制失败（权限被拒且兜底也失败）只弹一条提示，不静默失败。
+ *
+ * tip 只在指针停在这个图标上时创建（见 `useHoverIntent`）：表格里几百行的复制按钮如果
+ * 各自常驻一个 Tooltip，光挂载就要建几百套浮动定位实例，而这些提示平时根本看不见。
+ * tip 挂在按钮旁边、由 `target` 指回去，出现与消失不会替换按钮元素。
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -12,6 +16,7 @@ import { ActionIcon, Tooltip } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconCheck, IconCopy } from '@tabler/icons-react';
 
+import { useHoverIntent } from '@/hooks/useHoverIntent';
 import { COPY_FEEDBACK_DURATION, copyText } from '@/utils/clipboard';
 import { cx } from '@/utils/cx';
 
@@ -29,6 +34,9 @@ const CopyIconButton = ({
   text,
 }: CopyIconButtonProps) => {
   const [copied, setCopied] = useState(false);
+  const [active, hoverHandlers] = useHoverIntent();
+  /** tip 的定位目标：就是下面这个按钮自己 */
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // 卸载时清掉复原定时器，避免对已卸载组件 setState
@@ -57,13 +65,15 @@ const CopyIconButton = ({
   };
 
   return (
-    <Tooltip label={copied ? copiedLabel : label} withArrow>
+    <>
       <ActionIcon
         aria-label={label}
         className={cx(styles.button, className)}
         onClick={(event) => void handleCopy(event)}
+        ref={buttonRef}
         size={size}
         variant="subtle"
+        {...hoverHandlers}
       >
         {copied ? (
           <IconCheck size={iconSize} stroke={1.9} />
@@ -71,7 +81,15 @@ const CopyIconButton = ({
           <IconCopy size={iconSize} stroke={1.9} />
         )}
       </ActionIcon>
-    </Tooltip>
+      {active ? (
+        <Tooltip
+          label={copied ? copiedLabel : label}
+          opened
+          target={buttonRef}
+          withArrow
+        />
+      ) : null}
+    </>
   );
 };
 

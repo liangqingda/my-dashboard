@@ -15,8 +15,6 @@ export type TruncatedTextProps = {
   inline?: boolean;
   /** 传入后渲染成 button（可点击的条目）；不传则是普通 span */
   onClick?: () => void;
-  /** tip 打开延迟（毫秒），默认 0：不用等浏览器原生提示那一秒 */
-  openDelay?: number;
   /** tip 出现方向，默认 right（正右侧）；贴边或被遮挡的场景按需改成 top 等 */
   position?: FloatingPosition;
 };

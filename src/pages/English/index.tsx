@@ -6,8 +6,9 @@ import MarkdownPreviewModal from '@/components/MarkdownPreviewModal';
 import MenuContentLayout from '@/layouts/MenuContentLayout';
 import { useStoredState } from '@/hooks/useStoredState';
 import { onPageRefresh } from '@/utils/page-refresh';
+import { cx } from '@/utils/cx';
 
-import type { EnglishNote, NotesSort } from './types';
+import type { EnglishNote, NotesSort, NotesViewMode } from './types';
 import {
   DEFAULT_NOTE_SORT,
   VIEW_MODE_CODEC,
@@ -45,6 +46,14 @@ const English = () => {
     VIEW_MODE_STORAGE_KEY,
     VIEW_MODE_CODEC,
   );
+  /**
+   * 已经挂载过的展示形式：第一次切换过去时才挂载一份，之后两边都留着，
+   * 来回切只切显隐，不再把几百个条目整棵拆掉重建。
+   */
+  const [mounted, setMounted] = useState<Record<NotesViewMode, boolean>>(() => ({
+    board: view === 'board',
+    table: view === 'table',
+  }));
   /** 表格视图的排序状态：默认按更新时间倒序 */
   const [sort, setSort] = useState<NotesSort>(DEFAULT_NOTE_SORT);
   /** 打开请求的序号：连点两篇时只认最后一次 */
@@ -166,9 +175,18 @@ const English = () => {
     void openNote(scopeNotes[next].name);
   };
 
-  /** 切换展示形式：分列看板 ⇄ 表格平铺。 */
+  /**
+   * 切换展示形式：分列看板 ⇄ 表格平铺。
+   * 切过去的那一份第一次要挂载一次（几百个条目建一遍 DOM，这一次免不了），
+   * 之后就靠 `mounted` 留着，切回来不再重新挂载。
+   */
   const toggleView = () => {
-    setView(view === 'board' ? 'table' : 'board');
+    const next: NotesViewMode = view === 'board' ? 'table' : 'board';
+
+    setView(next);
+    setMounted((current) =>
+      current[next] ? current : { ...current, [next]: true },
+    );
   };
 
   /**
@@ -230,23 +248,29 @@ const English = () => {
           </div>
         ) : null}
 
-        {isBoardView ? (
-          <NotesBoard
-            columns={columns}
-            error={error}
-            loading={loading}
-            onOpen={openNote}
-          />
-        ) : (
-          <NotesTable
-            error={error}
-            loading={loading}
-            onOpen={openNote}
-            onSort={sortBy}
-            rows={rows}
-            sort={sort}
-          />
-        )}
+        {mounted.board ? (
+          <div className={cx(styles.pane, !isBoardView && styles.hiddenPane)}>
+            <NotesBoard
+              columns={columns}
+              error={error}
+              loading={loading}
+              onOpen={openNote}
+            />
+          </div>
+        ) : null}
+
+        {mounted.table ? (
+          <div className={cx(styles.pane, isBoardView && styles.hiddenPane)}>
+            <NotesTable
+              error={error}
+              loading={loading}
+              onOpen={openNote}
+              onSort={sortBy}
+              rows={rows}
+              sort={sort}
+            />
+          </div>
+        ) : null}
       </MenuContentLayout>
 
       <MarkdownPreviewModal

@@ -38,3 +38,17 @@
 .viewToggle:hover {
   color: var(--app-accent);
 }
+
+/* 展示形式各占一个面板：切过去的那一份第一次挂载后就一直留着，来回切只切显隐，
+   不再把几百个条目整棵拆掉重建，滚动位置也一并留在原地 */
+.pane {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* 隐藏的那一份不参与布局与绘制；DOM 保留，切回来不用重新挂载 */
+.hiddenPane {
+  display: none;
+}
