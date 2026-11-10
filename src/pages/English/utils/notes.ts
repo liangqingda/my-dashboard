@@ -6,11 +6,14 @@ import { formatDateTime } from '@/utils/format';
 
 import type {
   EnglishNote,
+  NoteCategoryPlan,
   NoteColumn,
   NoteRow,
   NotesSort,
 } from '../types';
-import { NOTE_CATEGORIES, NOTES_DIR } from '../constants';
+import { NOTES_DIR } from '../constants';
+
+import { getNoteCategoryKey } from './category';
 
 /** 正文「基础信息」表里的更新时间行：`<tr><td>笔记更新时间</td><td>2026-11-08 14:39</td></tr>` */
 const NOTE_UPDATED_AT_PATTERN = /笔记更新时间[\s\S]{0,40}?<td>([^<]+)</u;
@@ -28,13 +31,6 @@ const toIsoDateTime = (text: string): string => {
   const iso = trimmed.includes('T') ? trimmed : trimmed.replace(' ', 'T');
 
   return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/u.test(iso) ? `${iso}:00` : iso;
-};
-
-/** 从文件名取分类前缀：`errors-back-west-spacing.md` → `errors`。 */
-export const getNoteCategory = (name: string): string => {
-  const separator = name.indexOf('-');
-
-  return separator > 0 ? name.slice(0, separator) : '';
 };
 
 /**
@@ -75,25 +71,6 @@ export const getNoteTopic = (note: EnglishNote): string =>
 const formatNoteUpdatedAt = (updatedAt: number): string =>
   updatedAt > 0 ? formatDateTime(updatedAt) : '';
 
-/** 分类前缀 → 中文标题；表格行的「分类」单元格用它 */
-const CATEGORY_LABELS = new Map(
-  NOTE_CATEGORIES.map(({ key, label }) => [key, label]),
-);
-
-/** 分类前缀 → 声明顺序；「分类」列排序按看板列顺序，而不是中文拼音序 */
-const CATEGORY_ORDERS = new Map(
-  NOTE_CATEGORIES.map(({ key }, index) => [key, index]),
-);
-
-/** 看板只展示 NOTE_CATEGORIES 里的前缀；`paper`（套题）等未开列的前缀不展示，也不参与翻页计数。 */
-const BOARD_CATEGORIES: ReadonlySet<string> = new Set(
-  NOTE_CATEGORIES.map((category) => category.key),
-);
-
-/** 这篇笔记是否属于看板展示的某一列。 */
-export const isBoardNote = (name: string): boolean =>
-  BOARD_CATEGORIES.has(getNoteCategory(name));
-
 /** 把文件名拆成主名与扩展名，扩展名弱化展示。 */
 export const splitNoteName = (
   name: string,
@@ -121,16 +98,20 @@ export const stripCategoryPrefix = (base: string, category: string): string =>
  * 排序时只查表，不在比较函数里反复解析正文。每列按更新时间倒序（新的在前），
  * 同一时间再按文件名升序，保证刷新前后顺序稳定。
  *
+ * 列的顺序与标题来自 `plan`（记录仓库的分类清单），本函数不维护分类表；
  * 空列也返回（笔记为空），由看板自己决定「这一列为空」还是「整目录为空」。
  */
-export const groupNotesByCategory = (notes: EnglishNote[]): NoteColumn[] => {
+export const groupNotesByCategory = (
+  notes: EnglishNote[],
+  plan: NoteCategoryPlan,
+): NoteColumn[] => {
   const byCategory = new Map<string, EnglishNote[]>();
   const updatedAt = new Map<string, number>();
 
   for (const note of notes) {
-    const category = getNoteCategory(note.name);
+    const category = getNoteCategoryKey(note);
 
-    if (!BOARD_CATEGORIES.has(category)) {
+    if (!plan.isVisible(category)) {
       continue;
     }
 
@@ -141,7 +122,7 @@ export const groupNotesByCategory = (notes: EnglishNote[]): NoteColumn[] => {
     updatedAt.set(note.name, getNoteUpdatedAt(note));
   }
 
-  return NOTE_CATEGORIES.map(({ key, label }) => ({
+  return plan.columns.map(({ key, label }) => ({
     key,
     label,
     notes: (byCategory.get(key) ?? []).toSorted(
@@ -153,38 +134,54 @@ export const groupNotesByCategory = (notes: EnglishNote[]): NoteColumn[] => {
 };
 
 /**
- * 把笔记摊平成表格的一行一篇：只保留看板展示的分类，分类中文标题、目标知识点与
+ * 把笔记摊平成表格的一行一篇：只保留会在页面上展示的分类，分类中文标题、目标知识点与
  * 时间文案在这里一次算好，组件只管渲染，不在 cell 里重复解析正文。
  * 排序交给 `sortNoteRows`，摊平结果本身不带顺序含义。
  */
-export const toNoteRows = (notes: EnglishNote[]): NoteRow[] =>
-  notes.filter((note) => isBoardNote(note.name)).map((note) => {
-    const categoryKey = getNoteCategory(note.name);
+export const toNoteRows = (
+  notes: EnglishNote[],
+  plan: NoteCategoryPlan,
+): NoteRow[] =>
+  notes.flatMap((note) => {
+    const categoryKey = getNoteCategoryKey(note);
+
+    if (!plan.isVisible(categoryKey)) {
+      return [];
+    }
+
     const updatedAt = getNoteUpdatedAt(note);
 
-    return {
-      note,
-      categoryKey,
-      categoryLabel: CATEGORY_LABELS.get(categoryKey) ?? '',
-      topicLabel: getNoteTopic(note),
-      updatedLabel: formatNoteUpdatedAt(updatedAt),
-      updatedAt,
-    };
+    return [
+      {
+        note,
+        categoryKey,
+        categoryLabel: plan.labels.get(categoryKey) ?? categoryKey,
+        topicLabel: getNoteTopic(note),
+        updatedLabel: formatNoteUpdatedAt(updatedAt),
+        updatedAt,
+      },
+    ];
   });
 
 /**
  * 按当前排序状态给表格行排序：
- * 「更新时间」按时间戳比较，「分类」按看板列顺序（错题→短语→…）而不是中文拼音序，
+ * 「更新时间」按时间戳比较，「分类」按分类清单里的列顺序而不是中文拼音序，
  * 随后方向取反；主键相同时固定按更新时间倒序、再按文件名升序，保证顺序稳定。
  */
-export const sortNoteRows = (rows: NoteRow[], sort: NotesSort): NoteRow[] => {
+export const sortNoteRows = (
+  rows: NoteRow[],
+  sort: NotesSort,
+  plan: NoteCategoryPlan,
+): NoteRow[] => {
   const factor = sort.direction === 'asc' ? 1 : -1;
+  /** 未在清单里的分类排在最后；不可能出现时用列数兜住 */
+  const orderOf = (key: string): number =>
+    plan.orders.get(key) ?? plan.columns.length;
 
   return rows.toSorted((a, b) => {
     const primary =
       sort.key === 'category'
-        ? (CATEGORY_ORDERS.get(a.categoryKey) ?? NOTE_CATEGORIES.length) -
-          (CATEGORY_ORDERS.get(b.categoryKey) ?? NOTE_CATEGORIES.length)
+        ? orderOf(a.categoryKey) - orderOf(b.categoryKey)
         : a.updatedAt - b.updatedAt;
 
     if (primary !== 0) {

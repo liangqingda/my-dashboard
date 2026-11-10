@@ -2,10 +2,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { getErrorMessage } from '@/utils/error';
 
-import type { EnglishNote, UseEnglishNotesResult } from '../types';
+import type {
+  EnglishNote,
+  NoteCategory,
+  UseEnglishNotesResult,
+} from '../types';
 import { fetchEnglishNotes } from '../utils/notes-api';
 
 const EMPTY_NOTES: EnglishNote[] = [];
+const EMPTY_CATEGORIES: NoteCategory[] = [];
 
 /**
  * 读取 learn-english 仓库 learning-record-notes 下的全部笔记。
@@ -14,6 +19,9 @@ const EMPTY_NOTES: EnglishNote[] = [];
  */
 export const useEnglishNotes = (): UseEnglishNotesResult => {
   const [notes, setNotes] = useState<EnglishNote[]>(EMPTY_NOTES);
+  const [categories, setCategories] = useState<NoteCategory[]>(
+    EMPTY_CATEGORIES,
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const requestId = useRef(0);
@@ -29,6 +37,7 @@ export const useEnglishNotes = (): UseEnglishNotesResult => {
       }
 
       setNotes(snapshot.notes);
+      setCategories(snapshot.categories);
       setError(null);
       setLoading(false);
     },
@@ -110,5 +119,5 @@ export const useEnglishNotes = (): UseEnglishNotesResult => {
     };
   }, [apply, fail]);
 
-  return { notes, loading, error, refresh, reload, applyNote };
+  return { categories, notes, loading, error, refresh, reload, applyNote };
 };

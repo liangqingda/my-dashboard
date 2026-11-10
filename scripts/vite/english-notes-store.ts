@@ -123,6 +123,92 @@ export const collectNotes = async (
 };
 
 /**
+ * 分类清单文件名，与笔记同放一个目录。
+ * 分类的键、中文标题、展示顺序与「是否在看板展示」只由记录仓库的这一份维护，
+ * 本项目不再硬编码分类表：记录仓库加一个分类，这里自动跟着出现。
+ */
+export const CATEGORY_CONFIG_FILE = 'categories.json';
+
+/** 分类清单里的一项 */
+export type CategoryConfigEntry = {
+  /** 分类键，与笔记正文里的记录 ID 前缀一致，如 `errors` */
+  key: string;
+  /** 看板列标题与表格「分类」单元格的中文文案 */
+  label: string;
+  /** 是否不在看板与表格里展示（如套题 `paper`）；缺省即展示 */
+  hidden: boolean;
+};
+
+/** 判断解析后的 JSON 是不是普通对象 */
+const isObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+/** 把清单里的单项归一化；键或标题缺失时丢弃，不让脏数据混进列标题 */
+const normalizeCategoryEntry = (raw: unknown): CategoryConfigEntry | null => {
+  if (!isObject(raw)) {
+    return null;
+  }
+
+  const key = typeof raw.key === 'string' ? raw.key.trim() : '';
+  const label = typeof raw.label === 'string' ? raw.label.trim() : '';
+
+  if (!key || !label) {
+    return null;
+  }
+
+  return { key, label, hidden: raw.hidden === true };
+};
+
+/**
+ * 读取记录仓库的分类清单：`learning-record-notes/categories.json`。
+ *
+ * 文件缺失、不是合法 JSON 或结构不对时都按「没有清单」返回空数组，
+ * 页面据此回落成「按笔记里出现的分类键自动分列、标题直接用键名」，不因此白屏。
+ * 同一键出现两次时只认第一次。
+ */
+export const readCategoryConfig = async (
+  repoDir: string,
+): Promise<CategoryConfigEntry[]> => {
+  let text: string;
+
+  try {
+    text = await readFile(
+      path.resolve(notesDirOf(repoDir), CATEGORY_CONFIG_FILE),
+      'utf8',
+    );
+  } catch {
+    return [];
+  }
+
+  let data: unknown;
+
+  try {
+    data = JSON.parse(text);
+  } catch {
+    return [];
+  }
+
+  const list = isObject(data) && Array.isArray(data.categories)
+    ? data.categories
+    : [];
+  const seen = new Set<string>();
+  const entries: CategoryConfigEntry[] = [];
+
+  for (const raw of list) {
+    const entry = normalizeCategoryEntry(raw);
+
+    if (!entry || seen.has(entry.key)) {
+      continue;
+    }
+
+    seen.add(entry.key);
+    entries[entries.length] = entry;
+  }
+
+  return entries;
+};
+
+/**
  * 把正文写回笔记目录下的某个文件，返回写后的修改时间。
  * 只允许写 `learning-record-notes/` 内、文件名符合规则的 Markdown 文件。
  */

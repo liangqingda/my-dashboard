@@ -10,8 +10,20 @@
 | 文件 | 职责 |
 | --- | --- |
 | `scripts/vite/english-notes.ts` | 路由壳：只做请求解析与响应 |
-| `scripts/vite/english-notes-store.ts` | 读写与校验：落盘、结构校验、文件名合法性 |
+| `scripts/vite/english-notes-store.ts` | 读写与校验：落盘、结构校验、文件名合法性、读分类清单 |
 | `scripts/vite/english-notes-commit.ts` | 自动提交：把这一次改动提交到 `../learn-english` |
+
+## 分类清单不在本项目
+
+笔记的分类键、中文标题、看板列顺序与「是否展示」只有一份来源：记录仓库的
+`learning-record-notes/categories.json`。`english-notes-store.ts` 把它和笔记一起读出来，
+随 `{ notes, categories }` 一起返回（开发接口与构建快照都带），前端只消费、不维护分类表。
+
+- **不要在 `src/pages/English/constants.ts` 里再写一份分类数组**：那样记录仓库加分类，
+  页面会把新前缀的笔记静默隐藏。
+- 清单缺失或格式不对时按空数组处理，前端回落为「按笔记里出现的分类键成列、标题用键名」；
+  笔记里出现、清单没声明的键同样成列，按键名追加在末尾。
+- 清单里标 `hidden` 的分类（如套题 `paper`）不进看板与表格，也不占翻页计数。
 
 ## 前端取数
 

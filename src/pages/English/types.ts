@@ -17,17 +17,24 @@ export type EnglishNote = {
 export type EnglishNotesSnapshot = {
   /** 全部笔记，按最后修改时间倒序 */
   notes: EnglishNote[];
+  /** 记录仓库声明的分类清单（键、标题、顺序、是否展示），缺失时为空数组 */
+  categories: NoteCategory[];
 };
 
 /** 笔记列表的展示形式：分列看板 / 表格平铺 */
 export type NotesViewMode = 'board' | 'table';
 
-/** 笔记文件名里的分类前缀与中文标题 */
+/**
+ * 一个分类：键来自笔记正文的记录 ID 前缀（如 `errors:xxx` → `errors`），
+ * 中文标题与顺序来自记录仓库的分类清单，本项目只负责读取。
+ */
 export type NoteCategory = {
-  /** 文件名前缀，如 errors */
+  /** 分类键，如 errors */
   key: string;
-  /** 列标题 */
+  /** 列标题与表格「分类」单元格的文案 */
   label: string;
+  /** 记录仓库声明该分类不在看板与表格里展示（如套题 paper）；缺省即展示 */
+  hidden?: boolean;
 };
 
 /** 看板的一列：分类 + 该列按「笔记更新时间」倒序排列的笔记 */
@@ -36,11 +43,26 @@ export type NoteColumn = NoteCategory & {
   notes: EnglishNote[];
 };
 
+/**
+ * 一次算好、看板与表格共用的分类方案：
+ * 有哪些列、每列的标题、列之间的顺序，以及某篇笔记的分类是否要在页面上展示。
+ */
+export type NoteCategoryPlan = {
+  /** 展示用的分类列，顺序即看板列顺序与表格「分类」列的排序顺序 */
+  columns: NoteCategory[];
+  /** 分类键 → 中文标题 */
+  labels: ReadonlyMap<string, string>;
+  /** 分类键 → 在列顺序里的下标 */
+  orders: ReadonlyMap<string, number>;
+  /** 该分类键是否要在看板 / 表格里展示 */
+  isVisible: (key: string) => boolean;
+};
+
 /** 表格平铺的一行：一行一篇笔记，分类、目标知识点和时间作为单元格内容 */
 export type NoteRow = {
   /** 这一行对应的笔记 */
   note: EnglishNote;
-  /** 分类前缀，如 errors；排序按 NOTE_CATEGORIES 里的定义顺序 */
+  /** 分类键，如 errors；排序按分类清单里的声明顺序 */
   categoryKey: string;
   /** 分类中文标题，如「错题」 */
   categoryLabel: string;
@@ -78,6 +100,8 @@ export type SavedNoteResult = {
 export type UseEnglishNotesResult = {
   /** 全部笔记，按最后修改时间倒序 */
   notes: EnglishNote[];
+  /** 记录仓库声明的分类清单；读取失败时保留上一次的结果 */
+  categories: NoteCategory[];
   /** 是否正在读取 */
   loading: boolean;
   /** 读取失败的原因 */
@@ -145,6 +169,8 @@ export type MarkdownBlock = MarkdownTableBlock | MarkdownTextBlock;
 export type RawNotesPayload = {
   /** 笔记列表 */
   notes: unknown;
+  /** 分类清单，可能缺失 */
+  categories?: unknown;
 };
 
 /** 单篇笔记接口的原始 payload */

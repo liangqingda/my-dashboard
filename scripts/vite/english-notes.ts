@@ -4,7 +4,12 @@ import type { IncomingMessage as HttpRequest } from 'node:http';
 import type { Plugin } from 'vite';
 
 import { commitNote } from './english-notes-commit.js';
-import { collectNotes, readNote, writeNote } from './english-notes-store.js';
+import {
+  collectNotes,
+  readCategoryConfig,
+  readNote,
+  writeNote,
+} from './english-notes-store.js';
 
 /** 判断解析后的 JSON 是不是普通对象 */
 const isObject = (value: unknown): value is Record<string, unknown> =>
@@ -61,7 +66,10 @@ export const englishNotes = (root: string): Plugin => {
       this.emitFile({
         type: 'asset',
         fileName: 'english-notes.json',
-        source: JSON.stringify({ notes: await collectNotes(repoDir) }),
+        source: JSON.stringify({
+          categories: await readCategoryConfig(repoDir),
+          notes: await collectNotes(repoDir),
+        }),
       });
     },
     configureServer(server) {
@@ -89,7 +97,12 @@ export const englishNotes = (root: string): Plugin => {
               return;
             }
 
-            res.end(JSON.stringify({ notes: await collectNotes(repoDir) }));
+            res.end(
+              JSON.stringify({
+                categories: await readCategoryConfig(repoDir),
+                notes: await collectNotes(repoDir),
+              }),
+            );
           } catch (error) {
             res.statusCode = 500;
             res.end(

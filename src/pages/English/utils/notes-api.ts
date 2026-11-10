@@ -7,6 +7,7 @@
 import type {
   EnglishNote,
   EnglishNotesSnapshot,
+  NoteCategory,
   RawNotePayload,
   RawNotesPayload,
   SavedNoteResult,
@@ -42,8 +43,46 @@ const normalizeNote = (raw: unknown): EnglishNote | null => {
   };
 };
 
-/** 把原始 payload 归一化为页面直接消费的笔记集合。 */
+/** 归一化一个分类项：键或标题缺失、键重复时丢弃，不让脏数据混进列标题 */
+const normalizeCategory = (raw: unknown): NoteCategory | null => {
+  if (!isObject(raw)) {
+    return null;
+  }
+
+  const key = asString(raw.key).trim();
+  const label = asString(raw.label).trim();
+
+  if (!key || !label) {
+    return null;
+  }
+
+  return raw.hidden === true ? { hidden: true, key, label } : { key, label };
+};
+
+/** 归一化分类清单：只认第一次出现的键 */
+const normalizeCategories = (raw: unknown): NoteCategory[] => {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+
+  const seen = new Set<string>();
+
+  return raw.flatMap((item) => {
+    const category = normalizeCategory(item);
+
+    if (!category || seen.has(category.key)) {
+      return [];
+    }
+
+    seen.add(category.key);
+
+    return [category];
+  });
+};
+
+/** 把原始 payload 归一化为页面直接消费的笔记集合与分类清单。 */
 const normalize = (payload: RawNotesPayload): EnglishNotesSnapshot => ({
+  categories: normalizeCategories(payload.categories),
   notes: Array.isArray(payload.notes)
     ? payload.notes.flatMap((raw) => {
         const note = normalizeNote(raw);

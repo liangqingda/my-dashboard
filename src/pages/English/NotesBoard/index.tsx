@@ -15,6 +15,17 @@ const NotesBoard = ({ columns, loading, error, onOpen }: NotesBoardProps) => {
   /** 首次读取还没数据，先不报 0，避免「错题 (0)」这种误导 */
   const showCount = !(loading && total === 0);
 
+  // 一列都没有时（分类清单和笔记都还读不到）也要给出加载 / 空态，否则整块区域是空白
+  if (columns.length === 0) {
+    return (
+      <div className={styles.board}>
+        <section className={styles.column}>
+          <NotesPlaceholder error={error} loading={loading} total={total} />
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.board}>
       {columns.map((column) => (

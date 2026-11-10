@@ -14,7 +14,7 @@
     "component:new": "node scripts/new-component.mjs",
     "preview": "vite preview",
     "prepare": "husky",
-    "test": "node --test agent/*.test.mjs",
+    "test": "node --test agent/*.test.mjs && node --experimental-strip-types --test tests/unit/*.test.mts",
     "test:e2e": "playwright test",
     "check:structure": "node scripts/check-structure.mjs",
     "check:scss": "liangqingda-check-scss src",

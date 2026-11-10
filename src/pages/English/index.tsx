@@ -17,11 +17,10 @@ import { useEnglishNotes } from './hooks/useEnglishNotes';
 import NoteEditor from './NoteEditor';
 import NotesBoard from './NotesBoard';
 import NotesTable from './NotesTable';
+import { buildCategoryPlan, getNoteCategoryKey } from './utils/category';
 import {
-  getNoteCategory,
   getNoteRelativePath,
   groupNotesByCategory,
-  isBoardNote,
   sortNoteRows,
   toNoteRows,
 } from './utils/notes';
@@ -34,7 +33,7 @@ const NO_NOTES: EnglishNote[] = [];
 
 /** 英语练习页：把 learning-record-notes 下的笔记按分类分列展示，整页不滚动。 */
 const English = () => {
-  const { notes, loading, error, refresh, reload, applyNote } =
+  const { categories, notes, loading, error, refresh, reload, applyNote } =
     useEnglishNotes();
   /** 当前预览的笔记（存内容而不是文件名，打开时就能拿到最新正文） */
   const [active, setActive] = useState<EnglishNote | null>(null);
@@ -51,17 +50,23 @@ const English = () => {
   /** 打开请求的序号：连点两篇时只认最后一次 */
   const openSeq = useRef(0);
 
-  /** 只看板上真正展示的笔记：未开列的前缀（如 `paper`）不占翻页计数 */
-  const boardNotes = useMemo(
-    () => notes.filter((note) => isBoardNote(note.name)),
-    [notes],
+  /**
+   * 分类方案一次算好：列有哪些、标题、顺序都由记录仓库的分类清单决定，
+   * 清单里没出现、但笔记里出现的分类键也会成一列，不会静默消失。
+   */
+  const plan = useMemo(
+    () => buildCategoryPlan(notes, categories),
+    [notes, categories],
   );
-  /** 五列一次算好，看板与翻页共用同一份结果（每列只排一次序） */
-  const columns = useMemo(() => groupNotesByCategory(boardNotes), [boardNotes]);
+  /** 各列一次算好，看板与翻页共用同一份结果（每列只排一次序） */
+  const columns = useMemo(
+    () => groupNotesByCategory(notes, plan),
+    [notes, plan],
+  );
   /** 表格视图的行：一行一篇，按当前排序状态排好 */
   const rows = useMemo(
-    () => sortNoteRows(toNoteRows(boardNotes), sort),
-    [boardNotes, sort],
+    () => sortNoteRows(toNoteRows(notes, plan), sort, plan),
+    [notes, plan, sort],
   );
   /** 表格里的可见顺序，翻页与计数在表格视图下也走这一份 */
   const rowNotes = useMemo(() => rows.map((row) => row.note), [rows]);
@@ -79,7 +84,7 @@ const English = () => {
       return rowNotes;
     }
 
-    const key = getNoteCategory(active.name);
+    const key = getNoteCategoryKey(active);
 
     return columns.find((column) => column.key === key)?.notes ?? NO_NOTES;
   }, [active, columns, rowNotes, view]);
