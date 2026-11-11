@@ -75,12 +75,13 @@
 /*
  * hover / 聚焦只给底色 + 一条主色标线，不再原地摊开长标题：
  * 摊开会挤动下方标题、也让目录高度跳动，完整标题统一交给 tip。
- * 底色用比目录列（与正文同纸）更亮的 surface：浅色主题下是一枚白色滑块，
- * 暗色主题下略深一档，两种主题都能从静止态里浮出来。
+ * 底色取主色最浅一档（accent-soft），不用纯白：目录列已经和正文同纸，
+ * 白底滑块比纸面亮出一大截，看着像贴了张卡片；主色浅底和纸面同色系，只略染一层。
+ * 与「当前小节」的 accent-soft-strong 一起构成纸面 → hover → 选中的递进。
  */
 .item:hover,
 .item:focus-visible {
-  background: var(--app-surface);
+  background: var(--app-accent-soft);
   color: var(--app-ink);
   box-shadow: inset 2px 0 0 var(--app-accent);
 }
