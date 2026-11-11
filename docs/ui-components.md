@@ -17,6 +17,7 @@
 | 单行输入 | `TextInput` |
 | 多行输入（普通表单） | `Textarea` |
 | 下拉单选 / 多选 | `Select` / `MultiSelect` |
+| 日期选择 | `@mantine/dates` 的 `DatePicker`（内联日历）/ `DatePickerInput`（带弹层的日期输入）；全站日历口径（中文、周一为第一天）由 `src/main.tsx` 的 `DatesProvider` 统一给，不要自己拼日历或改用原生 `type="date"` |
 | 分段切换（视图模式、日志类别） | `SegmentedControl` |
 | 悬停 / 聚焦提示 | `Tooltip`（截断后的完整内容走 `TruncatedText`）；**列表里成百上千个条目不要给每条常驻一个 `Tooltip`**，用 `@/hooks/useHoverIntent` 在被指到时才挂一个（`target` 指向被指的节点，不替换它），`TruncatedText` 与 `CopyIconButton` 已内置这套做法 |
 | 加载中 | `Loader`（占位骨架 `Skeleton`） |

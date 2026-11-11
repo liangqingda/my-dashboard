@@ -245,3 +245,41 @@ export type UseNoteFilterResult = {
   /** 预览态取正文：没条件时原样返回，有条件时交给筛选函数 */
   apply: (markdown: string) => string;
 };
+
+/**
+ * 列表筛选的时间范围：全部时间 / 最近 1 小时 / 最近 1 天 / 最近 1 周 /
+ * 最近 1 个月 / 指定某一天。口径都按笔记更新时间算。
+ */
+export type NotesTimeRange = 'all' | 'hour' | 'day' | 'week' | 'month' | 'date';
+
+/** 列表筛选条件：时间范围 + 指定日期 + 分类 */
+export type NotesFilterCondition = {
+  /** 时间范围 */
+  range: NotesTimeRange;
+  /** 指定日期，`YYYY-MM-DD`；只有 `range === 'date'` 时参与筛选，其余档位保留上次选的那天 */
+  date: string;
+  /** 分类键；空串表示全部分类 */
+  categoryKey: string;
+};
+
+/** 列表筛选 hook 暴露的状态与动作（见 `hooks/useNotesFilter.ts`） */
+export type UseNotesFilterResult = {
+  /** 当前时间范围 */
+  range: NotesTimeRange;
+  /** 当前指定日期 */
+  date: string;
+  /** 当前分类键，空串表示全部分类 */
+  categoryKey: string;
+  /** 是否有条件生效（决定 header 筛选图标的高亮与空结果文案） */
+  active: boolean;
+  /** 改时间范围（写回 localStorage；切到「指定日期」时补上今天的日期） */
+  setRange: (range: NotesTimeRange) => void;
+  /** 改指定日期（写回 localStorage） */
+  setDate: (date: string) => void;
+  /** 改分类（写回 localStorage） */
+  setCategoryKey: (key: string) => void;
+  /** 清空条件：回到「全部时间 + 全部分类」 */
+  reset: () => void;
+  /** 按当前条件过滤笔记摘要：没条件时原样返回 */
+  apply: (notes: NoteSummary[]) => NoteSummary[];
+};

@@ -11,10 +11,10 @@ import { useStoredState } from '@/hooks/useStoredState';
 
 import type { NoteFilterScope, UseNoteFilterResult } from '../types';
 import {
-  FILTER_KEYWORD_CODEC,
   FILTER_KEYWORD_STORAGE_KEY,
   FILTER_SCOPE_CODEC,
   FILTER_SCOPE_STORAGE_KEY,
+  TEXT_CODEC,
 } from '../constants';
 import { filterNoteMarkdown } from '../utils/filter-markdown';
 
@@ -25,7 +25,7 @@ export const useNoteFilter = (): UseNoteFilterResult => {
   );
   const [keyword, setKeyword] = useStoredState<string>(
     FILTER_KEYWORD_STORAGE_KEY,
-    FILTER_KEYWORD_CODEC,
+    TEXT_CODEC,
   );
 
   /** 有条件生效：决定弹窗图标高亮，以及筛空后显示提示而不是一片空白 */

@@ -12,6 +12,8 @@ export type NotesBoardProps = {
   loading: boolean;
   /** 读取失败的原因；有错误时不出「还没有笔记」的空态 */
   error: string | null;
+  /** 列表筛选是否生效：生效时空态说「没有符合条件的笔记」 */
+  filtered?: boolean;
   /** 打开某一篇笔记的预览 */
   onOpen: (name: string) => Promise<void>;
 };

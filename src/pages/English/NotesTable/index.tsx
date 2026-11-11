@@ -36,6 +36,7 @@ const NotesTable = memo(({
   rows,
   loading,
   error,
+  filtered,
   onOpen,
   onSort,
   sort,
@@ -135,6 +136,7 @@ const NotesTable = memo(({
               <FreeTable.Td colSpan={5}>
                 <NotesPlaceholder
                   error={error}
+                  filtered={filtered}
                   loading={loading}
                   total={rows.length}
                 />

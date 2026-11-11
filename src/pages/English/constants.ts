@@ -10,7 +10,7 @@
 import { createChoiceCodec } from '@/utils/local-storage';
 import type { StoredCodec } from '@/utils/local-storage';
 
-import type { NoteFilterScope, NotesSort, NotesViewMode } from './types';
+import type { NoteFilterScope, NotesSort, NotesTimeRange, NotesViewMode } from './types';
 
 /** 表格视图的默认排序：按「笔记更新时间」倒序，新的在最上面 */
 export const DEFAULT_NOTE_SORT: NotesSort = {
@@ -54,8 +54,38 @@ export const FILTER_SCOPE_CODEC = createChoiceCodec<NoteFilterScope>(
   'all',
 );
 
-/** 关键词的编解码：原样存字符串，没写过就是空串 */
-export const FILTER_KEYWORD_CODEC: StoredCodec<string> = {
+/**
+ * 原样存字符串的编解码：没写过就是空串。
+ * 预览关键词、列表的指定日期与分类键都用它——三者都只是「一段原样保留的文本」。
+ */
+export const TEXT_CODEC: StoredCodec<string> = {
   decode: (raw) => raw ?? '',
   encode: (value) => value,
 };
+
+/**
+ * 列表筛选里「分类」的两个特殊值。
+ *
+ * - `ALL_CATEGORIES`：不按分类筛（真实分类键来自正文记录 ID 前缀，不会长成这样）；
+ * - `UNCATEGORIZED_CATEGORY`：只看认不出分类的那些笔记（它们的分类键是空串，
+ *   而空串在状态里另有含义——「不按分类筛」，所以得换一个值来指代）。
+ */
+export const ALL_CATEGORIES = '__all__';
+
+export const UNCATEGORIZED_CATEGORY = '__uncategorized__';
+
+/**
+ * 列表筛选的存储键：时间范围、指定日期、分类分三个键存。
+ * 和预览筛选一样黏住——刷新页面重新进入仍沿用上次的条件。
+ */
+export const NOTES_FILTER_RANGE_STORAGE_KEY = 'my-dashboard:english:notes-filter-range';
+
+export const NOTES_FILTER_DATE_STORAGE_KEY = 'my-dashboard:english:notes-filter-date';
+
+export const NOTES_FILTER_CATEGORY_STORAGE_KEY = 'my-dashboard:english:notes-filter-category';
+
+/** 时间范围的编解码：只认六档，写坏的存储值回落「全部时间」 */
+export const NOTES_FILTER_RANGE_CODEC = createChoiceCodec<NotesTimeRange>(
+  ['all', 'hour', 'day', 'week', 'month', 'date'],
+  'all',
+);

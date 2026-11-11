@@ -8,6 +8,8 @@ export type NotesPlaceholderProps = {
   columnTotal?: number;
   /** 读取失败的原因；有错误时不出「还没有笔记」的空态 */
   error: string | null;
+  /** 列表筛选是否生效：生效时把「目录里还没有笔记」换成「没有符合条件的笔记」 */
+  filtered?: boolean;
   /** 是否正在读取 */
   loading: boolean;
   /** 可见的笔记总数，0 才说明整目录为空 */

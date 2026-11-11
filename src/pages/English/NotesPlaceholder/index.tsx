@@ -12,6 +12,7 @@ import styles from './index.scss';
 const NotesPlaceholder = ({
   columnTotal,
   error,
+  filtered = false,
   loading,
   total,
 }: NotesPlaceholderProps) => {
@@ -24,11 +25,19 @@ const NotesPlaceholder = ({
   }
 
   if (total === 0) {
-    return <p className={styles.empty}>笔记目录里还没有 Markdown 文件</p>;
+    return (
+      <p className={styles.empty}>
+        {filtered ? '没有符合当前筛选条件的笔记' : '笔记目录里还没有 Markdown 文件'}
+      </p>
+    );
   }
 
   if (columnTotal === 0) {
-    return <p className={styles.empty}>这一列还没有笔记</p>;
+    return (
+      <p className={styles.empty}>
+        {filtered ? '这一列没有符合条件的笔记' : '这一列还没有笔记'}
+      </p>
+    );
   }
 
   return null;

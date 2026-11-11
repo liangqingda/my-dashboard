@@ -22,6 +22,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { Loader, Modal, Text } from '@mantine/core';
 import Markdown from 'react-markdown';
 
+import FilterButton from '@/components/FilterButton';
 import { cx } from '@/utils/cx';
 import { extractMarkdownOutline } from '@/utils/markdown-outline';
 
@@ -31,7 +32,6 @@ import type {
 } from './types';
 import TitleBar from './TitleBar';
 import OutlineNav from './OutlineNav';
-import FilterButton from './FilterButton';
 import { HEADING_SELECTOR, REHYPE_PLUGINS, REMARK_PLUGINS } from './constants';
 import { useActiveHeadingIndex } from './hooks/useActiveHeadingIndex';
 import { useArrowNavigation } from './hooks/useArrowNavigation';
@@ -236,6 +236,7 @@ const MarkdownPreviewModal = ({
     filter && !loading ? (
       <FilterButton
         active={filter.active}
+        label="筛选正文"
         onChange={setFilterOpen}
         opened={filterOpen}
       >
