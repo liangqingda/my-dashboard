@@ -1,17 +1,17 @@
 /**
  * 英语笔记预览的筛选面板（弹窗 header 的筛选按钮点开就是这个）。
  *
- * 三档范围 + 关键词，改动即时生效、不用点「应用」。
+ * 范围一档下拉 + 关键词，改动即时生效、不用点「应用」。
  * 面板本身无状态：条件由页面持有并持久化（见 `hooks/useNoteFilter`），
  * 这里只把改动交回去——「换一篇、刷新页面仍保留筛选」因此只有一处实现。
  */
 
-import { ActionIcon, Group, Radio, Stack, Text, TextInput, UnstyledButton } from '@mantine/core';
+import { ActionIcon, Group, Select, Stack, Text, TextInput, UnstyledButton } from '@mantine/core';
 import { IconSearch, IconX } from '@tabler/icons-react';
 
 import { FILTER_SCOPE_CODEC } from '../constants';
 
-import { RADIO_STYLES, SCOPE_OPTIONS } from './constants';
+import { SCOPE_OPTIONS, SCOPE_SELECT_DATA } from './constants';
 import type { NoteFilterProps } from './types';
 
 import styles from './index.scss';
@@ -29,30 +29,30 @@ const NoteFilter = ({
 }: NoteFilterProps) => {
   /** 有没有条件生效：没有时「重置」置灰，点了也没东西可清（口径与 hook 里的 active 一致） */
   const active = scope !== 'all' || keyword.trim() !== '';
+  /** 收起时只留一档名字，选中的这一档到底筛掉什么，靠这句单行说明补上 */
+  const scopeHint = SCOPE_OPTIONS.find((option) => option.value === scope)?.description;
 
   return (
     <Stack gap="sm">
-      <Radio.Group
-        label="筛选范围"
-        onChange={(value: string) =>
-          onScopeChange(FILTER_SCOPE_CODEC.decode(value))
-        }
-        size="xs"
-        value={scope}
-      >
-        {/* gap 收到 4：每项自身已经有两行，项与项之间不用再留一大段 */}
-        <Stack gap={4}>
-          {SCOPE_OPTIONS.map((option) => (
-            <Radio
-              description={option.description}
-              key={option.value}
-              label={option.label}
-              styles={RADIO_STYLES}
-              value={option.value}
-            />
-          ))}
-        </Stack>
-      </Radio.Group>
+      <Stack gap={4}>
+        <Select
+          allowDeselect={false}
+          // 面板本身已在弹层里，下拉再套一层 Portal 会被当成「点在外面」把面板关掉
+          comboboxProps={{ withinPortal: false }}
+          data={SCOPE_SELECT_DATA}
+          label="筛选范围"
+          onChange={(value) => {
+            if (value !== null) {
+              onScopeChange(FILTER_SCOPE_CODEC.decode(value));
+            }
+          }}
+          size="xs"
+          value={scope}
+        />
+        <Text c="dimmed" size="xs">
+          {scopeHint}
+        </Text>
+      </Stack>
       <TextInput
         label="关键词"
         leftSection={<IconSearch size={ICON_SIZE} stroke={ICON_STROKE} />}
