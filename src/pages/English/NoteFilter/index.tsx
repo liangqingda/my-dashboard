@@ -11,7 +11,7 @@ import { IconSearch, IconX } from '@tabler/icons-react';
 
 import { FILTER_SCOPE_CODEC } from '../constants';
 
-import { SCOPE_OPTIONS, SCOPE_SELECT_DATA } from './constants';
+import { FIELD_STYLES, SCOPE_OPTIONS, SCOPE_SELECT_DATA } from './constants';
 import type { NoteFilterProps } from './types';
 
 import styles from './index.scss';
@@ -47,6 +47,7 @@ const NoteFilter = ({
             }
           }}
           size="xs"
+          styles={FIELD_STYLES}
           value={scope}
         />
         <Text c="dimmed" size="xs">
@@ -71,6 +72,7 @@ const NoteFilter = ({
           )
         }
         size="xs"
+        styles={FIELD_STYLES}
         value={keyword}
       />
       {/* 底部一句边界说明 + 重置：让「只筛预览」这件事当场可见 */}

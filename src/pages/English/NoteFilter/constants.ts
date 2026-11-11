@@ -1,3 +1,5 @@
+import type { CSSProperties } from '@mantine/core';
+
 import type { NoteFilterScopeOption } from './types';
 
 /** 筛选面板上的三档：顺序即展示顺序，文案与筛选口径（见 `utils/filter-markdown`）对齐 */
@@ -24,3 +26,11 @@ export const SCOPE_SELECT_DATA = SCOPE_OPTIONS.map(({ label, value }) => ({
   label,
   value,
 }));
+
+/**
+ * 字段标题与控件之间再加一点：组件库只靠标题行高留白（13px 字站在 1.55 行高里），
+ * 视觉上贴着输入框。补 4px 的标题下外边距，面板里「筛选范围 / 关键词」两处用同一份。
+ */
+export const FIELD_STYLES: Record<'label', CSSProperties> = {
+  label: { marginBottom: 4 },
+};
