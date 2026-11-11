@@ -11,7 +11,7 @@ import { IconSearch, IconX } from '@tabler/icons-react';
 
 import { FILTER_SCOPE_CODEC } from '../constants';
 
-import { SCOPE_OPTIONS } from './constants';
+import { RADIO_STYLES, SCOPE_OPTIONS } from './constants';
 import type { NoteFilterProps } from './types';
 
 import styles from './index.scss';
@@ -40,12 +40,14 @@ const NoteFilter = ({
         size="xs"
         value={scope}
       >
-        <Stack gap={6}>
+        {/* gap 收到 4：每项自身已经有两行，项与项之间不用再留一大段 */}
+        <Stack gap={4}>
           {SCOPE_OPTIONS.map((option) => (
             <Radio
               description={option.description}
               key={option.value}
               label={option.label}
+              styles={RADIO_STYLES}
               value={option.value}
             />
           ))}
