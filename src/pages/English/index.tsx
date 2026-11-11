@@ -3,6 +3,7 @@ import { ActionIcon, Tooltip, UnstyledButton } from '@mantine/core';
 import { IconLayoutGrid, IconLayoutList } from '@tabler/icons-react';
 
 import MarkdownPreviewModal from '@/components/MarkdownPreviewModal';
+import type { MarkdownPreviewFilter } from '@/components/MarkdownPreviewModal';
 import MenuContentLayout from '@/layouts/MenuContentLayout';
 import { useStoredState } from '@/hooks/useStoredState';
 import { onPageRefresh } from '@/utils/page-refresh';
@@ -16,7 +17,9 @@ import {
 } from './constants';
 import { useActiveNote } from './hooks/useActiveNote';
 import { useEnglishNotes } from './hooks/useEnglishNotes';
+import { useNoteFilter } from './hooks/useNoteFilter';
 import NoteEditor from './NoteEditor';
+import NoteFilter from './NoteFilter';
 import NotesBoard from './NotesBoard';
 import NotesTable from './NotesTable';
 import { buildCategoryPlan } from './utils/category';
@@ -107,6 +110,45 @@ const English = () => {
     active === null
       ? -1
       : scopeNotes.findIndex((note) => note.name === active.name);
+
+  /** 预览正文的筛选条件：范围 + 关键词，记在 localStorage，换篇 / 刷新都保留 */
+  const {
+    active: filterActive,
+    apply: applyFilter,
+    keyword: filterKeyword,
+    reset: resetFilter,
+    scope: filterScope,
+    setKeyword: setFilterKeyword,
+    setScope: setFilterScope,
+  } = useNoteFilter();
+  /**
+   * 交给弹窗的筛选槽：筛选语义（错题 / 习题 / 关键词）与持久化都在这一页，
+   * 弹窗只管图标按钮、就近弹层与「编辑态不筛」。
+   */
+  const previewFilter = useMemo<MarkdownPreviewFilter>(
+    () => ({
+      active: filterActive,
+      apply: applyFilter,
+      render: () => (
+        <NoteFilter
+          keyword={filterKeyword}
+          onKeywordChange={setFilterKeyword}
+          onReset={resetFilter}
+          onScopeChange={setFilterScope}
+          scope={filterScope}
+        />
+      ),
+    }),
+    [
+      applyFilter,
+      filterActive,
+      filterKeyword,
+      filterScope,
+      resetFilter,
+      setFilterKeyword,
+      setFilterScope,
+    ],
+  );
 
   // 页面头部「刷新当前页面」按钮：重新读取仓库里的笔记
   useEffect(() => onPageRefresh(reload), [reload]);
@@ -222,6 +264,7 @@ const English = () => {
 
       <MarkdownPreviewModal
         Editor={NoteEditor}
+        filter={previewFilter}
         loading={noteLoading}
         markdown={activeBody ?? ''}
         onClose={closeNote}

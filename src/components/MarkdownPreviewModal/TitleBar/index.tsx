@@ -31,6 +31,7 @@ const ICON_STROKE = 1.9;
 const TitleBar = ({
   canEdit,
   editing,
+  filterButton,
   fullscreen,
   onNext,
   onPrevious,
@@ -98,6 +99,8 @@ const TitleBar = ({
               text={relativePath}
             />
           ) : null}
+          {/* 筛选正文：图标按钮 + 就近弹层，筛什么由调用方给 */}
+          {filterButton}
           {/* 刷新预览内容：正文从盘里读时才有效，编辑中刷了只会把草稿盖掉 */}
           {onRefresh ? (
             <Tooltip label="刷新预览内容" withArrow>

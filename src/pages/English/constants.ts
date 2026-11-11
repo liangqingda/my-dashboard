@@ -8,8 +8,9 @@
  */
 
 import { createChoiceCodec } from '@/utils/local-storage';
+import type { StoredCodec } from '@/utils/local-storage';
 
-import type { NotesSort, NotesViewMode } from './types';
+import type { NoteFilterScope, NotesSort, NotesViewMode } from './types';
 
 /** 表格视图的默认排序：按「笔记更新时间」倒序，新的在最上面 */
 export const DEFAULT_NOTE_SORT: NotesSort = {
@@ -38,3 +39,23 @@ export const VIEW_MODE_CODEC = createChoiceCodec<NotesViewMode>(
 
 /** 笔记编辑器的撤销栈保留步数 */
 export const UNDO_DEPTH = 50;
+
+/**
+ * 预览筛选的存储键：范围与关键词分两个键存。
+ * 筛选条件要黏住——换一篇笔记、刷新页面都沿用上次的选择，不必重新点一遍。
+ */
+export const FILTER_SCOPE_STORAGE_KEY = 'my-dashboard:english:filter-scope';
+
+export const FILTER_KEYWORD_STORAGE_KEY = 'my-dashboard:english:filter-keyword';
+
+/** 筛选范围的编解码：只认三种范围，写坏的存储值回落「全部内容」 */
+export const FILTER_SCOPE_CODEC = createChoiceCodec<NoteFilterScope>(
+  ['all', 'exercise', 'wrong'],
+  'all',
+);
+
+/** 关键词的编解码：原样存字符串，没写过就是空串 */
+export const FILTER_KEYWORD_CODEC: StoredCodec<string> = {
+  decode: (raw) => raw ?? '',
+  encode: (value) => value,
+};

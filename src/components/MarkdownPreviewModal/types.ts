@@ -2,7 +2,7 @@
  * Markdown 预览弹窗的类型契约：调用方传什么、编辑器插槽收什么。
  */
 
-import type { ComponentType } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 
 import type { MarkdownOutlineHeading, MarkdownOutlineNode } from '@/utils/markdown-outline';
 
@@ -35,7 +35,7 @@ export type MarkdownEditorProps = {
   onHandleReady?: (handle: MarkdownEditorHandle | null) => void;
 };
 
-/** 预览弹窗标题栏的入参：翻篇、复制路径、刷新、全屏与编辑操作全在这一行 */
+/** 预览弹窗标题栏的入参：翻篇、复制路径、筛选、刷新、全屏与编辑操作全在这一行 */
 export type TitleBarProps = {
   /** 文档标题（通常是文件名） */
   title: string;
@@ -43,6 +43,8 @@ export type TitleBarProps = {
   relativePath?: string;
   /** 当前位置；不传就不显示计数 */
   position?: { index: number; total: number };
+  /** 已经拼好的筛选按钮（图标 + 就近弹层）；不传就不显示 */
+  filterButton?: ReactNode;
   /** 上一篇；null / 不传表示没有相邻文档 */
   onPrevious?: (() => void) | null;
   /** 下一篇；null / 不传表示没有相邻文档 */
@@ -104,6 +106,32 @@ export type MarkdownPreviewModalProps = {
    * 通用组件不假设任何文档结构，编辑逻辑归调用方（见 personalize-edit-markdown）。
    */
   Editor?: ComponentType<MarkdownEditorProps>;
+  /**
+   * 预览态的内容筛选（关键词、只看某一类小节…）。不传就不出现筛选按钮。
+   * 筛选只作用在「读」：编辑态与保存永远用未筛选的原文，避免把筛过的正文写回文件。
+   */
+  filter?: MarkdownPreviewFilter;
+};
+
+/** 筛选面板渲染时能拿到的东西 */
+export type MarkdownFilterRenderProps = {
+  /** 收起弹层；筛选即时生效，面板一般用不到，留给「应用型」筛选备用 */
+  close: () => void;
+};
+
+/**
+ * 预览态的内容筛选。
+ *
+ * 弹窗不知道具体文档的结构，只负责三件事：header 的筛选图标按钮、就近弹出的面板、
+ * 以及「编辑态不筛、保存不写筛后结果」这条边界；筛什么、怎么持久化都归调用方。
+ */
+export type MarkdownPreviewFilter = {
+  /** 是否有筛选条件生效：只影响图标高亮与「没有匹配内容」的空结果提示 */
+  active: boolean;
+  /** 把正文筛成要渲染的 Markdown；返回值只在预览态使用 */
+  apply: (markdown: string) => string;
+  /** 弹层内容，由调用方给出筛选控件 */
+  render: (props: MarkdownFilterRenderProps) => ReactNode;
 };
 
 /** header 操作组的入参：编辑 / 预览 / 保存 / 放弃改动与状态提示所需的状态 */

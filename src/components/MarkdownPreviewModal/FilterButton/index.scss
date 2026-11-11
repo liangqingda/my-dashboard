@@ -1,0 +1,24 @@
+/* 筛选按钮：与标题栏其它图标同档，只有「筛选生效」时换成主色 */
+
+.button {
+  flex: 0 0 auto;
+  color: var(--app-ink-faint);
+}
+
+.button:hover:not(:disabled) {
+  color: var(--app-accent);
+}
+
+/* 有筛选生效：常态就用主色，一眼能看出这篇是筛过的 */
+.active {
+  color: var(--app-accent);
+}
+
+.active:hover:not(:disabled) {
+  color: var(--app-accent-strong);
+}
+
+/* 弹层内容由调用方给，这里只定内边距，不预设控件样式 */
+.dropdown {
+  padding: 12px;
+}

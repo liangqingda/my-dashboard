@@ -216,3 +216,32 @@ export type RawNotePayload = {
   /** 一篇笔记 */
   note: unknown;
 };
+
+/** 预览正文的筛选范围：全部内容 / 只看习题 / 只看错题 */
+export type NoteFilterScope = 'all' | 'exercise' | 'wrong';
+
+/** 预览正文的筛选条件：范围 + 关键词（关键词为空表示不按关键词筛） */
+export type NoteFilterCondition = {
+  /** 筛选范围 */
+  scope: NoteFilterScope;
+  /** 关键词；空串表示不按关键词筛 */
+  keyword: string;
+};
+
+/** 预览筛选 hook 暴露的状态与动作（见 `hooks/useNoteFilter.ts`） */
+export type UseNoteFilterResult = {
+  /** 当前范围 */
+  scope: NoteFilterScope;
+  /** 当前关键词 */
+  keyword: string;
+  /** 是否有条件生效（决定弹窗图标高亮与空结果提示） */
+  active: boolean;
+  /** 改范围（写回 localStorage） */
+  setScope: (scope: NoteFilterScope) => void;
+  /** 改关键词（写回 localStorage） */
+  setKeyword: (keyword: string) => void;
+  /** 清空条件：回到「全部内容 + 无关键词」 */
+  reset: () => void;
+  /** 预览态取正文：没条件时原样返回，有条件时交给筛选函数 */
+  apply: (markdown: string) => string;
+};
