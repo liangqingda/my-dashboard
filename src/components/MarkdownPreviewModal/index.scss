@@ -187,7 +187,7 @@
   margin-bottom: 4px;
 }
 
-/* 加粗只换颜色、不加字重：用比标题墨色（--app-ink）再深一档的 --app-ink-strong 区分 */
+/* 加粗只换颜色、不加字重：用夹在正文与标题之间的 --app-ink-strong，避免和标题一样亮 */
 .prose strong {
   color: var(--app-ink-strong);
   font-weight: 400;
