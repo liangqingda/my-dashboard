@@ -352,7 +352,7 @@ const MarkdownPreviewModal = ({
 
           {!loading && (!editing.editing || showingDraftPreview) && !filterEmpty ? (
             <article
-              className={cx(styles.prose, fullscreen && styles.proseWide)}
+              className={cx(styles.prose, fullscreen && styles.proseFullscreen)}
               ref={attachBody}
             >
               {bodyContent}

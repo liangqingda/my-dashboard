@@ -102,23 +102,32 @@
   text-align: center;
 }
 
-/* 文档排版：表格、折叠讲解、引用都按笔记里的真实用法设计 */
+/*
+ * 文档排版：表格、折叠讲解、引用都按笔记里的真实用法设计。
+ * 各档字号统一写成 `calc(基准 + var(--prose-grow))`，非全屏为 0、全屏加 2px（见 .proseFullscreen），
+ * 只改一次变量就能让正文整体放大，不必逐条改字号。
+ */
 .prose {
+  --prose-grow: 0px;
+
   flex: 1 1 auto;
   min-height: 0;
   padding: 22px 26px 18px;
   overflow-y: auto;
   overscroll-behavior: contain;
   color: var(--app-ink-soft);
-  font-size: 0.86rem;
+  font-size: calc(0.86rem + var(--prose-grow));
   line-height: 1.85;
 }
 
 /*
  * 全屏下屏幕可能很宽：正文行宽收到一栏就读得动的宽度并居中，
  * 只放大可读的纵向空间，不把每行拉成一整屏。
+ * 同时正文整档放大 2px——远距离阅读更清楚；header 与左侧目录不跟着变（目录自己用 --outline-shrink 管）。
  */
-.proseWide {
+.proseFullscreen {
+  --prose-grow: 2px;
+
   padding-inline: max(26px, calc((100% - 1020px) / 2));
 }
 
@@ -126,7 +135,7 @@
   margin: 0 0 16px;
   color: var(--app-ink);
   font-family: var(--app-serif);
-  font-size: 1.26rem;
+  font-size: calc(1.26rem + var(--prose-grow));
   font-weight: 600;
   line-height: 1.45;
   scroll-margin-top: 12px;
@@ -136,7 +145,7 @@
   margin: 26px 0 10px;
   color: var(--app-ink);
   font-family: var(--app-serif);
-  font-size: 1.02rem;
+  font-size: calc(1.02rem + var(--prose-grow));
   font-weight: 600;
   line-height: 1.5;
   scroll-margin-top: 12px;
@@ -150,7 +159,7 @@
 .prose h3 {
   margin: 20px 0 8px;
   color: var(--app-ink);
-  font-size: 0.92rem;
+  font-size: calc(0.92rem + var(--prose-grow));
   font-weight: 600;
   scroll-margin-top: 12px;
 }
@@ -158,7 +167,7 @@
 .prose h4 {
   margin: 16px 0 6px;
   color: var(--app-ink);
-  font-size: 0.86rem;
+  font-size: calc(0.86rem + var(--prose-grow));
   font-weight: 600;
 }
 
@@ -215,7 +224,7 @@
   width: 100%;
   margin: 0 0 14px;
   border-collapse: collapse;
-  font-size: 0.78rem;
+  font-size: calc(0.78rem + var(--prose-grow));
   font-variant-numeric: tabular-nums;
 }
 
@@ -272,7 +281,7 @@
 
 .prose summary {
   color: var(--app-accent);
-  font-size: 0.78rem;
+  font-size: calc(0.78rem + var(--prose-grow));
   cursor: pointer;
 }
 
