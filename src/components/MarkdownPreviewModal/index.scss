@@ -26,12 +26,12 @@
   border-radius: 0;
 }
 
-/* header 与正文同底色，只用一条线分隔 */
+/* header 与正文同底色，只用一条线分隔；上下内边距 6px，行高交给里面的按钮，整体紧凑 */
 .header {
   position: relative;
   flex: 0 0 auto;
   overflow: visible;
-  padding: 11px 10px 11px 12px;
+  padding: 6px 10px 6px 12px;
   border-bottom: 1px solid var(--app-line);
   background: transparent;
 }
