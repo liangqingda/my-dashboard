@@ -10,7 +10,8 @@
   --app-surface-subtle: #eef2f0;
   --app-surface-hover: #e9f1ee;
 
-  /* ink */
+  /* ink：strong 比 ink 再深一档，用于要和标题（ink）拉开距离的加粗强调 */
+  --app-ink-strong: #0a1412;
   --app-ink: #172522;
   --app-ink-soft: #5b6b66;
   --app-ink-faint: #64766e;
@@ -56,6 +57,7 @@ html[data-mantine-color-scheme='dark'] {
   --app-surface-subtle: #1d2724;
   --app-surface-hover: #22302c;
 
+  --app-ink-strong: #f6fbf8;
   --app-ink: #e6eee9;
   --app-ink-soft: #9aa9a3;
   --app-ink-faint: #9aa9a3;
