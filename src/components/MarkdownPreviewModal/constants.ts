@@ -14,6 +14,22 @@ export const SAVED_HINT_DURATION = 3000;
  */
 export const FULLSCREEN_STORAGE_KEY = 'my-dashboard:markdown-preview:fullscreen';
 
+/**
+ * 正文字号微调存在 localStorage 的键：存的只是「比各模式默认字号再大 / 小多少 px」这一段，
+ * 全屏自带的那 2px 由 CSS 负责（见 index.scss 的 `--prose-grow`），两者互不覆盖。
+ */
+export const PROSE_FONT_STORAGE_KEY =
+  'my-dashboard:markdown-preview:prose-font-offset';
+
+/** 正文字号微调的步长（px）：点一下加减一档 */
+export const PROSE_FONT_STEP = 1;
+
+/** 微调下限（px）：最多比默认字号小 2px */
+export const PROSE_FONT_MIN = -2;
+
+/** 微调上限（px）：最多比默认字号大 6px */
+export const PROSE_FONT_MAX = 6;
+
 /** 没有定制编辑器时的提示：告诉用户可以去定制，而不是不给入口 */
 export const NO_EDITOR_MESSAGE =
   '这类 Markdown 还没有定制编辑器。用 personalize-edit-markdown skill 可以为它写一套编辑逻辑。';

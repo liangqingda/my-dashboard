@@ -5,20 +5,23 @@
  * 它统一了文档排版、上一篇 / 下一篇导航（header 标题左侧按钮 + ← / → 快捷键）、
  * 弹窗左侧固定的标题目录 sidebar（文档内 h1–h4 目录，随弹窗高度拉伸、目录自身滚动，
  * 滚动正文时跟随高亮当前小节）、header 右侧的一排操作：复制文档的相对路径（调用方给路径）、
+ * 筛选正文（口径由调用方给）、正文字号（跨篇记住的阅读偏好）、
  * 全屏预览（把整个框体铺满视口放大阅读空间，再点一次或按 Esc 退出）
  * 与编辑 / 预览 / 保存 / 放弃改动，全部只留图标 + tooltip。
  * 组件只负责编辑态与保存流程，不知道文档结构和文件落在哪里：
  * 具体怎么编辑由调用方通过 `Editor` 插槽传入，没有定制编辑器时给出定制提示。
  *
  * 这里的职责只有 Modal 骨架与装配：
- * - 标题栏一行（翻篇 / 计数 / 文件名 / 复制路径 / 刷新 / 全屏）→ `title-bar`
+ * - 标题栏一行（翻篇 / 计数 / 文件名 / 复制路径 / 筛选 / 字号 / 刷新 / 全屏）→ `title-bar`
  * - 标题目录 sidebar → `outline-nav`
+ * - 正文字号按钮与弹层 → `prose-font-control`（状态在 `hooks/use-prose-font-scale`）
  * - header 右侧的操作与状态提示 → `header-actions`
  * - 编辑态状态机 → `hooks/use-note-editing`
  * - 翻篇快捷键 → `hooks/use-arrow-navigation`
  */
 
 import { useCallback, useMemo, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { Loader, Modal, Text } from '@mantine/core';
 import Markdown from 'react-markdown';
 
@@ -32,12 +35,14 @@ import type {
 } from './types';
 import TitleBar from './TitleBar';
 import OutlineNav from './OutlineNav';
+import ProseFontControl from './ProseFontControl';
 import { HEADING_SELECTOR, REHYPE_PLUGINS, REMARK_PLUGINS } from './constants';
 import { useActiveHeadingIndex } from './hooks/useActiveHeadingIndex';
 import { useArrowNavigation } from './hooks/useArrowNavigation';
 import { useCloseRequest } from './hooks/useCloseRequest';
 import { useDocumentScrollReset } from './hooks/useDocumentScrollReset';
 import { useModalFullscreen } from './hooks/useModalFullscreen';
+import { useProseFontScale } from './hooks/useProseFontScale';
 import { useRefreshPreview } from './hooks/useRefreshPreview';
 import { useNoteEditing } from './hooks/useNoteEditing';
 
@@ -67,10 +72,10 @@ const MarkdownPreviewModal = ({
 }: MarkdownPreviewModalProps) => {
   const bodyRef = useRef<HTMLElement | null>(null);
   /**
-   * 筛选弹层是否打开：由弹窗持有，换篇、进编辑、加载新正文时统一收起，
-   * 免得面板留在屏上说的还是上一篇的事。
+   * header 上的就近弹层：同一时刻只开一块（筛选用 'filter'、字号用 'font'），
+   * 由弹窗持有是为了换篇、刷新、进编辑、关弹窗时统一收起——面板说的永远是当前这一次阅读。
    */
-  const [filterOpen, setFilterOpen] = useState(false);
+  const [panel, setPanel] = useState<'filter' | 'font' | null>(null);
   /** 编辑态正文不渲染，目录定位靠定制编辑器交上来的 `revealHeading` */
   const editorHandleRef = useRef<MarkdownEditorHandle | null>(null);
   /** 编辑态目录的激活项：最近一次跳到的标题（正文没渲染，算不出滚动位置） */
@@ -90,6 +95,11 @@ const MarkdownPreviewModal = ({
   /** 全屏开关与全屏时的 Esc 语义都在这个 hook 里；它是记住的偏好，关闭弹窗也不重置 */
   const { fullscreen, toggle: toggleFullscreen } = useModalFullscreen();
 
+  /** 正文字号的用户偏移：跨篇、跨会话记住，叠在常规 / 全屏各自的默认字号上 */
+  const proseFont = useProseFontScale();
+  /** 偏移以 CSS 变量下发到正文自身，与模式默认的 `--prose-grow` 在同一条 calc 里相加 */
+  const proseStyle = { '--prose-extra': `${proseFont.offset}px` } as CSSProperties;
+
   /** 刷新按钮的 loading 与失败提示都在这个 hook 里 */
   const { refresh, refreshing } = useRefreshPreview(onRefresh);
 
@@ -107,10 +117,10 @@ const MarkdownPreviewModal = ({
     previewing: editing.previewing,
   });
 
-  /** 进入编辑时清掉目录激活项与筛选弹层：新的一轮不该还亮着上一轮跳到的位置 */
+  /** 进入编辑时清掉目录激活项与 header 弹层：新的一轮不该还亮着上一轮跳到的位置 */
   const startEditing = () => {
     setEditorActiveIndex(-1);
-    setFilterOpen(false);
+    setPanel(null);
     editing.startEditing();
   };
 
@@ -160,21 +170,21 @@ const MarkdownPreviewModal = ({
     opened && !loading && (!editing.editing || showingDraftPreview);
 
   /**
-   * 翻篇 / 刷新前收起筛选弹层：面板里的条件只属于当前这一篇，
+   * 翻篇 / 刷新前收起 header 弹层：面板里的条件只属于当前这一篇，
    * 内容已经换掉了还挂在屏上，容易让人以为筛的是新的一篇。
    */
-  const withFilterClosed = (action: (() => void) | null | undefined) =>
+  const withPanelsClosed = (action: (() => void) | null | undefined) =>
     action
       ? () => {
-          setFilterOpen(false);
+          setPanel(null);
           action();
         }
       : action;
 
   useArrowNavigation({
     enabled: opened && !editing.editing && !loading,
-    onNext: withFilterClosed(onNext),
-    onPrevious: withFilterClosed(onPrevious),
+    onNext: withPanelsClosed(onNext),
+    onPrevious: withPanelsClosed(onPrevious),
   });
 
   /** 滚动正文时跟踪当前小节，供标题目录高亮 */
@@ -237,12 +247,24 @@ const MarkdownPreviewModal = ({
       <FilterButton
         active={filter.active}
         label="筛选正文"
-        onChange={setFilterOpen}
-        opened={filterOpen}
+        onChange={(next) => setPanel(next ? 'filter' : null)}
+        opened={panel === 'filter'}
       >
-        {filter.render({ close: () => setFilterOpen(false) })}
+        {filter.render({ close: () => setPanel(null) })}
       </FilterButton>
     ) : null;
+
+  /**
+   * 正文字号按钮：正文在取时不出（没有可读的正文），编辑态同样由文档操作组一起收掉。
+   * 加减档位与持久化都在 `useProseFontScale` 里，这里只把状态递给按钮。
+   */
+  const fontControl = loading ? null : (
+    <ProseFontControl
+      onChange={(next) => setPanel(next ? 'font' : null)}
+      opened={panel === 'font'}
+      scale={proseFont}
+    />
+  );
 
   /*
    * 编辑态（含草稿预览）关不掉：关闭按钮不渲染，Esc / 点遮罩统一走 `requestClose`（不关、只提示）。
@@ -254,7 +276,7 @@ const MarkdownPreviewModal = ({
    * 弹窗关掉时内容会卸载，弹层状态留着会在重新打开时自己弹出来。
    */
   const handleClose = () => {
-    setFilterOpen(false);
+    setPanel(null);
     requestClose();
   };
 
@@ -272,7 +294,7 @@ const MarkdownPreviewModal = ({
         title: styles.title,
       }}
       closeButtonProps={{ 'aria-label': '关闭预览' }}
-      closeOnEscape={!fullscreen && !filterOpen}
+      closeOnEscape={!fullscreen && panel === null}
       fullScreen={fullscreen}
       onClose={handleClose}
       opened={opened}
@@ -285,11 +307,12 @@ const MarkdownPreviewModal = ({
           canEdit={Boolean(onSave) && !loading}
           editing={editing}
           filterButton={filterButton}
+          fontControl={fontControl}
           fullscreen={fullscreen}
-          onNext={withFilterClosed(onNext)}
-          onPrevious={withFilterClosed(onPrevious)}
+          onNext={withPanelsClosed(onNext)}
+          onPrevious={withPanelsClosed(onPrevious)}
           onRefresh={
-            onRefresh && !loading ? withFilterClosed(refresh) : null
+            onRefresh && !loading ? withPanelsClosed(refresh) : null
           }
           onStartEdit={startEditing}
           onToggleFullscreen={toggleFullscreen}
@@ -354,6 +377,7 @@ const MarkdownPreviewModal = ({
             <article
               className={cx(styles.prose, fullscreen && styles.proseFullscreen)}
               ref={attachBody}
+              style={proseStyle}
             >
               {bodyContent}
             </article>

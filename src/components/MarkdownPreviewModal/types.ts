@@ -4,7 +4,12 @@
 
 import type { ComponentType, ReactNode } from 'react';
 
-import type { MarkdownOutlineHeading, MarkdownOutlineNode } from '@/utils/markdown-outline';
+import type {
+  MarkdownOutlineHeading,
+  MarkdownOutlineNode,
+} from '@/utils/markdown-outline';
+
+import type { ProseFontScale } from './hooks/useProseFontScale';
 
 /**
  * 定制编辑器可选实现的能力：按标题目录的下标把自己那一节滚进视野。
@@ -35,6 +40,16 @@ export type MarkdownEditorProps = {
   onHandleReady?: (handle: MarkdownEditorHandle | null) => void;
 };
 
+/** 正文字号调节的入参：字号状态整包来自 `useProseFontScale`，按钮只管弹层与呈现 */
+export type ProseFontControlProps = {
+  /** 当前偏移与加减 / 复位动作 */
+  scale: ProseFontScale;
+  /** 弹层是否打开 */
+  opened: boolean;
+  /** 弹层开合（点图标、点外部、Esc 都会走到这里） */
+  onChange: (opened: boolean) => void;
+};
+
 /** 预览弹窗标题栏的入参：翻篇、复制路径、筛选、刷新、全屏与编辑操作全在这一行 */
 export type TitleBarProps = {
   /** 文档标题（通常是文件名） */
@@ -45,6 +60,8 @@ export type TitleBarProps = {
   position?: { index: number; total: number };
   /** 已经拼好的筛选按钮（图标 + 就近弹层）；不传就不显示 */
   filterButton?: ReactNode;
+  /** 已经拼好的正文字号按钮（图标 + 就近弹层）；不传就不显示 */
+  fontControl?: ReactNode;
   /** 上一篇；null / 不传表示没有相邻文档 */
   onPrevious?: (() => void) | null;
   /** 下一篇；null / 不传表示没有相邻文档 */

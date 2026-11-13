@@ -1,6 +1,6 @@
 /**
  * 预览弹窗的标题栏：左侧上一篇 / 下一篇与文件名，右侧分成两段操作——
- * 「文档操作」（复制相对路径 / 刷新 / 全屏）与「编辑流程」（编辑 / 预览 / 保存 / 放弃改动，
+ * 「文档操作」（复制相对路径 / 筛选 / 正文字号 / 刷新 / 全屏）与「编辑流程」（编辑 / 预览 / 保存 / 放弃改动，
  * 在 HeaderActions 里），两段之间一条竖线隔开。
  * 编辑态（含草稿预览）只留编辑流程：文档操作整组不渲染，往这一组新增按钮不必再各判一次。
  * 这里只管排布与图标尺寸，编辑态语义归 HeaderActions 与弹窗自己的状态机。
@@ -32,6 +32,7 @@ const TitleBar = ({
   canEdit,
   editing,
   filterButton,
+  fontControl,
   fullscreen,
   onNext,
   onPrevious,
@@ -45,7 +46,7 @@ const TitleBar = ({
 }: TitleBarProps) => {
   /**
    * 编辑态与草稿预览都算「正在改这篇文档」：header 只留退出、预览、保存，
-   * 文档操作组（复制路径 / 刷新 / 全屏，以及以后加进这一组的按钮）整套不出现。
+   * 文档操作组（复制路径 / 筛选 / 字号 / 刷新 / 全屏，以及以后加进这一组的按钮）整套不出现。
    */
   const documentActionsVisible = !editing.editing;
 
@@ -101,6 +102,8 @@ const TitleBar = ({
           ) : null}
           {/* 筛选正文：图标按钮 + 就近弹层，筛什么由调用方给 */}
           {filterButton}
+          {/* 正文字号：图标按钮 + 就近弹层，调的是阅读偏好（跨篇记住） */}
+          {fontControl}
           {/* 刷新预览内容：正文从盘里读时才有效，编辑中刷了只会把草稿盖掉 */}
           {onRefresh ? (
             <Tooltip label="刷新预览内容" withArrow>
