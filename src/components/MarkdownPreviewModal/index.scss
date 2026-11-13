@@ -26,11 +26,17 @@
   border-radius: 0;
 }
 
-/* header 与正文同底色，只用一条线分隔；上下内边距 6px，行高交给里面的按钮，整体紧凑 */
-.header {
+/*
+ * header 与正文同底色，只用一条线分隔；上下内边距 6px，行高交给里面的按钮，整体紧凑。
+ * 用 `.content .header` 双类名而不是单个 `.header`：Mantine 自己给 modal header 垫了
+ * `min-height: calc(3.75rem * scale)`（60px）与它那套 padding，单类名要靠 CSS 加载顺序才盖得住，
+ * 双类名直接赢，header 高度才真的由内容决定。
+ */
+.content .header {
   position: relative;
   flex: 0 0 auto;
   overflow: visible;
+  min-height: 0;
   padding: 6px 10px 6px 12px;
   border-bottom: 1px solid var(--app-line);
   background: transparent;
