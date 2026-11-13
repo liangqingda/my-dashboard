@@ -1,8 +1,9 @@
 /* 标题目录：弹窗左侧固定的 sidebar，占一列、自身滚动；单条的样式在 Item 目录 */
 
 /*
- * 目录列：宽度固定、高度跟着工作区走（父级 flex 给的），
- * 只用右侧一条细线与正文分开——目录是阅读辅助，不做成带阴影的浮层。
+ * 目录列：宽度可拖（`--outline-width` 由组件按偏好写在行内，没拖过时用各模式的默认），
+ * 高度跟着工作区走（父级 flex 给的），只用右侧一条细线与正文分开——
+ * 目录是阅读辅助，不做成带阴影的浮层。
  * 底色跟正文同一张纸（`--preview-paper` 由弹窗 `.content` 下发），不再用纯白
  * 把这一列从纸面上抬起来：浅色主题下白底一侧比正文亮一档，看着像另开的一块面板。
  * 字号基准按全屏写（Item 目录），非全屏用 --outline-shrink 整体减 2px，
@@ -11,21 +12,104 @@
 .nav {
   --outline-shrink: 2px;
 
+  position: relative;
   display: flex;
-  flex: 0 0 184px;
+  flex: 0 0 var(--outline-width, 184px);
   flex-direction: column;
-  gap: 8px;
+  min-width: 0;
   min-height: 0;
   padding: 14px 4px 14px 14px;
   border-right: 1px solid var(--app-line);
   background: var(--preview-paper, var(--app-surface-subtle));
 }
 
+/* 目录内容：收起时整块隐藏，只留拖动条那条窄轨 */
+.inner {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
 /* 全屏预览：目录全展开后层级更深，列跟着放宽、字号回到基准，标题不至于一进来就被省略 */
 .navFullscreen {
   --outline-shrink: 0px;
 
-  flex: 0 0 300px;
+  flex: 0 0 var(--outline-width, 300px);
+}
+
+/*
+ * 收起：宽度归零、内容整块隐藏，只剩右边缘那条 1px 分界线当窄轨的视觉提示。
+ * 拖动条是绝对定位在列边缘外的，这里不能用 overflow: hidden 把它一起裁掉。
+ */
+.navCollapsed {
+  flex-basis: 0;
+  width: 0;
+  padding: 0;
+}
+
+.navCollapsed .inner {
+  display: none;
+}
+
+/*
+ * 拖动条：压在目录列右侧那条分界线上，11px 宽的热区，指针落在里面就能左右拖。
+ * 平时不显形，hover / 聚焦 / 拖动时才浮出一条短竖线，不跟目录内容抢注意力。
+ */
+.handle {
+  position: absolute;
+  top: 0;
+  right: -5px;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 11px;
+  color: var(--app-ink-faint);
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.handle::before {
+  content: '';
+  width: 2px;
+  height: 26px;
+  border-radius: 1px;
+  background: var(--app-line-strong);
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.handle:hover::before,
+.handle:focus-visible::before,
+.handle:active::before {
+  opacity: 1;
+}
+
+.handle:focus-visible {
+  outline: 1px solid var(--app-accent);
+  outline-offset: -1px;
+}
+
+/*
+ * 收起后的窄轨：列宽已经归零，拖动条改成从列的右边缘往正文里铺 13px，
+ * 顶着正文左内边距那条空白带（不会压到文字）。平时只露一个向右的箭头，
+ * 点一下或往右拖就能还原。
+ */
+.handleCollapsed {
+  left: 1px;
+  right: auto;
+  width: 13px;
+}
+
+.handleCollapsed::before {
+  display: none;
+}
+
+.handleCollapsed:hover,
+.handleCollapsed:focus-visible {
+  color: var(--app-accent);
 }
 
 /* 列的标题：说明这一列是什么，不参与跳转 */
@@ -78,6 +162,7 @@
  * 窄屏：父级 .workspace 在同一断点改成纵向，目录挪到正文上方的一条横带，
  * 最多占三成高度，剩下的高度留给正文。全屏在这里也要收掉固定宽度，
  * 否则 flex-basis 会变成这一横带的高度。
+ * 横带没有「拖窄」这回事，拖动条整个隐藏；收起偏好也不生效，横带照常显示。
  */
 @media (max-width: 720px) {
   .nav,
@@ -87,5 +172,19 @@
     padding: 10px 12px 8px;
     border-right: 0;
     border-bottom: 1px solid var(--app-line);
+  }
+
+  .navCollapsed {
+    flex-basis: auto;
+    width: auto;
+    padding: 10px 12px 8px;
+  }
+
+  .navCollapsed .inner {
+    display: flex;
+  }
+
+  .handle {
+    display: none;
   }
 }

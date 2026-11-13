@@ -182,6 +182,14 @@ export type OutlineNavProps = {
   onSelect: (index: number) => void;
 };
 
+/** 目录宽度偏好：收起时仍记住展开过的宽度，点窄轨能还原回去 */
+export type OutlineWidthPreference = {
+  /** 展开时的宽度（px）；`null` 表示还没拖过，用各模式自己的默认宽度 */
+  width: number | null;
+  /** 是否收起（宽度归零，只留左边一条窄轨） */
+  collapsed: boolean;
+};
+
 /** 标题导航某一层的入参：渲染这一层的节点，展开时递归渲染下一层 */
 export type OutlineNavListProps = {
   /** 这一层的节点 */

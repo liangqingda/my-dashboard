@@ -4,9 +4,12 @@
  * 目录自己占一列、自身滚动，不跟正文一起滚走，也不需要外部拿正文高度来封顶。
  * 有子标题的节点在标题右侧带折叠图标：常规只展开第一个节点和它下面的第一个子级，
  * 全屏预览时默认全部展开（列也放宽）；点标题只会「展开」不会「收起」，收起只能由右侧图标触发。
+ * 列宽可以拖右边缘调整，拖到接近左边就收起成一条窄轨（见 `hooks/useOutlineWidth`）。
  */
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
+import { IconChevronRight } from '@tabler/icons-react';
 
 import { cx } from '@/utils/cx';
 import { buildMarkdownOutlineTree } from '@/utils/markdown-outline';
@@ -15,6 +18,7 @@ import type { MarkdownOutlineNode } from '@/utils/markdown-outline';
 import type { OutlineNavProps } from '../types';
 
 import OutlineNavList from './List';
+import { useOutlineWidth } from './hooks/useOutlineWidth';
 import { findOutlineKeyPath } from './utils';
 
 import styles from './index.scss';
@@ -86,6 +90,8 @@ const OutlineNav = ({
   onSelect,
 }: OutlineNavProps) => {
   const tree = useMemo(() => buildMarkdownOutlineTree(headings), [headings]);
+  const navRef = useRef<HTMLDivElement | null>(null);
+  const { width, collapsed, handleProps } = useOutlineWidth(navRef);
   /** 默认展开集合要在下面的派生里当基准，算一次缓存住：全屏全开，常规只开前两层 */
   const defaultExpanded = useMemo(
     () => (fullscreen ? allExpandedKeys(tree) : defaultExpandedKeys(tree)),
@@ -171,20 +177,39 @@ const OutlineNav = ({
       className={cx(
         styles.nav,
         fullscreen && styles.navFullscreen,
+        collapsed && styles.navCollapsed,
         disabled && styles.disabled,
       )}
+      ref={navRef}
+      style={
+        width === null
+          ? undefined
+          : ({ '--outline-width': `${width}px` } as CSSProperties)
+      }
     >
-      <span className={styles.label}>目录</span>
-      <OutlineNavList
-        activeIndex={activeIndex}
-        className={styles.list}
-        disabled={disabled}
-        expanded={expanded}
-        nodes={tree}
-        onExpand={expand}
-        onSelect={onSelect}
-        onToggle={toggle}
-      />
+      <div className={styles.inner}>
+        <span className={styles.label}>目录</span>
+        <OutlineNavList
+          activeIndex={activeIndex}
+          className={styles.list}
+          disabled={disabled}
+          expanded={expanded}
+          nodes={tree}
+          onExpand={expand}
+          onSelect={onSelect}
+          onToggle={toggle}
+        />
+      </div>
+      <div
+        aria-label={collapsed ? '展开标题目录' : '拖拽调整目录宽度'}
+        aria-orientation="vertical"
+        className={cx(styles.handle, collapsed && styles.handleCollapsed)}
+        role="separator"
+        tabIndex={0}
+        {...handleProps}
+      >
+        {collapsed ? <IconChevronRight aria-hidden size={13} /> : null}
+      </div>
     </div>
   );
 };
