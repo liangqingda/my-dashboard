@@ -4,7 +4,8 @@
 
 .header {
   border-bottom: 1px solid var(--app-line);
-  background: var(--app-surface);
+  /* 顶栏与侧栏共用同一个底色，避免出现一条更亮的白条 */
+  background: var(--app-surface-subtle);
 }
 
 .navbar {
