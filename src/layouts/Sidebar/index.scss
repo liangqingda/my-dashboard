@@ -1,10 +1,12 @@
 .list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: var(--app-space-md);
+  gap: 2px;
+  padding: 6px;
 }
 
+/* 导航项自身的内边距也收一档，跟着侧栏紧凑 */
 .link {
   border-radius: var(--mantine-radius-md);
+  padding: 6px 8px;
 }

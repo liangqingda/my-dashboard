@@ -2,7 +2,6 @@ import {
   ActionIcon,
   Burger,
   Group,
-  Text,
   Title,
   Tooltip,
   useComputedColorScheme,
@@ -19,7 +18,7 @@ const Header = ({ menuOpened, onToggleMenu }: HeaderProps) => {
   const isDark = useComputedColorScheme('light') === 'dark';
 
   return (
-    <Group className={styles.inner} gap="md" h="100%" wrap="nowrap">
+    <Group className={styles.inner} gap="sm" h="100%" wrap="nowrap">
       <Burger
         aria-controls="main-navigation"
         aria-expanded={menuOpened}
@@ -27,30 +26,27 @@ const Header = ({ menuOpened, onToggleMenu }: HeaderProps) => {
         hiddenFrom="sm"
         onClick={onToggleMenu}
         opened={menuOpened}
-        size="sm"
+        size="xs"
       />
-      <Group className={styles.brand} gap="sm" wrap="nowrap">
+      <Group className={styles.brand} gap={8} wrap="nowrap">
         <span aria-hidden="true" className={styles.brandMark}>
-          <IconLayoutDashboard size={20} stroke={2} />
+          <IconLayoutDashboard size={14} stroke={2} />
         </span>
         <Title className={styles.title} order={1}>
           My Dashboard
         </Title>
-        <Text className={styles.tagline} component="span">
-          personal overview
-        </Text>
       </Group>
 
-      <Group gap="xs" ml="auto" wrap="nowrap">
+      <Group gap={4} ml="auto" wrap="nowrap">
         <Tooltip label={isDark ? '切换到亮色主题' : '切换到暗色主题'} withArrow>
           <ActionIcon
             aria-label={isDark ? '切换到亮色主题' : '切换到暗色主题'}
             className={styles.iconButton}
             onClick={() => setColorScheme(isDark ? 'light' : 'dark')}
-            size="lg"
+            size={26}
             variant="subtle"
           >
-            {isDark ? <IconSun size={20} /> : <IconMoon size={20} />}
+            {isDark ? <IconSun size={15} /> : <IconMoon size={15} />}
           </ActionIcon>
         </Tooltip>
       </Group>

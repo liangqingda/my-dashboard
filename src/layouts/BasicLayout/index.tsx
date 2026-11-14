@@ -29,7 +29,7 @@ const BasicLayout = ({ children }: BasicLayoutProps) => {
   return (
     <AppShell
       className={styles.app}
-      header={{ height: 56 }}
+      header={{ height: 44 }}
       navbar={{ breakpoint: 'sm', width: 184, collapsed: { mobile: !opened } }}
       padding={0}
       withBorder={false}

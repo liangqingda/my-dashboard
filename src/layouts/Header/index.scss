@@ -1,5 +1,5 @@
 .inner {
-  padding: 0 var(--app-space-lg);
+  padding: 0 var(--app-space-md);
 }
 
 .brand {
@@ -10,21 +10,15 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--mantine-radius-md);
+  width: 24px;
+  height: 24px;
+  border-radius: var(--mantine-radius-sm);
   background: var(--app-accent-soft);
   color: var(--app-accent);
 }
 
 .title {
-  font-size: 1.1rem;
-  white-space: nowrap;
-}
-
-.tagline {
-  color: var(--app-ink-faint);
-  font-size: 0.8rem;
+  font-size: 0.95rem;
   white-space: nowrap;
 }
 
@@ -34,16 +28,12 @@
 
 @media (max-width: 48em) {
   .inner {
-    padding: 0 var(--app-space-md);
+    padding: 0 var(--app-space-sm);
     gap: 8px;
   }
 
-  .tagline {
-    display: none;
-  }
-
   .title {
-    font-size: 1rem;
+    font-size: 0.9rem;
   }
 
   .brandMark {
