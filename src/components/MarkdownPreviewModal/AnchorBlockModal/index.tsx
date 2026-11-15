@@ -123,12 +123,13 @@ const AnchorBlockModal = ({
         content: cx(
           previewStyles.content,
           styles.blockContent,
-          fullscreen && previewStyles.contentFullscreen,
+          fullscreen && styles.blockFullscreen,
         ),
         header: previewStyles.header,
         title: previewStyles.title,
       }}
       closeButtonProps={{ 'aria-label': '关闭区块预览' }}
+      fullScreen={fullscreen}
       onClose={onClose}
       opened={opened}
       overlayProps={{ backgroundOpacity: 0.4, blur: 2 }}
