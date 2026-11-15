@@ -1,8 +1,10 @@
 /**
  * 同文档链接的图标按钮：点一下在图标下方弹出两个与锚点有关的设置。
  *
- * 两组都是短句、只能二选一，所以都用单选组（一档就是一个点击动作，不用先展开再选）；
- * 尺寸收一档、标签与圆点水平居中——弹层窄，按默认 sm 的圆点 + 20px 行高会显得空。
+ * 与筛选面板同一套外观（`NoteFilter`）：字段标题在上、下拉在下、选中项的口径用一行说明补在下面；
+ * 因此这里也用 `Select`（`size="xs"`、标题下留 4px、下拉不进门户），不手写单选组。
+ * 下拉**不放进门户**（`comboboxProps={{ withinPortal: false }}`）：门户里的列表在 popover 看来是
+ * 「外面」，点选项会先把弹层关掉，选择动作就丢了。
  *
  * 落地的两个偏好：
  * 1. 点链接之后怎么办（`behavior`）：滚过去 / 弹窗打开那一块；
@@ -11,8 +13,9 @@
  * 阅读偏好，不跟着某一篇走；这里只管按钮外观、弹层开合与把选中的值递上去。
  */
 
-import { Divider, Radio, Stack, Text } from '@mantine/core';
+import { Select, Stack, Text } from '@mantine/core';
 import { IconAnchor } from '@tabler/icons-react';
+import type { CSSProperties } from 'react';
 
 import IconPopoverButton from '@/components/IconPopoverButton';
 
@@ -26,44 +29,46 @@ import {
   ANCHOR_NAV_SCOPES,
 } from '../constants';
 
-import styles from './index.scss';
-
 /** 与标题栏其它图标同档的图标尺寸 / 线宽 */
 const ICON_SIZE = 15;
 const ICON_STROKE = 1.9;
 
-/** 弹层宽度：两句说明 + 两组两档短标签，排得开又不至于空 */
-const DROPDOWN_WIDTH = 240;
+/** 弹层宽度：与筛选面板同宽（272），两个字段都排得开 */
+const DROPDOWN_WIDTH = 272;
 
-/** 点击行为两档的文案：说结果，不让人猜「弹窗打开区块」是什么意思 */
-const BEHAVIOR_LABEL: Record<AnchorLinkBehavior, string> = {
-  jump: '跳转到锚点',
-  modal: '弹窗打开该区块',
+/**
+ * 字段标题与下拉之间补 4px：组件库只靠标题行高留白，视觉上贴着控件。
+ * 与筛选面板的 `FIELD_STYLES` 同一份口径。
+ */
+const FIELD_STYLES: Record<'label', CSSProperties> = {
+  label: { marginBottom: 4 },
 };
 
-/** 前后切换口径两档的文案：第一档是「全文都算」，第二档是「只算这一处目录里的链接」 */
-const SCOPE_LABEL: Record<AnchorNavScope, string> = {
-  all: '切换全文所有链接',
-  section: '只切换同一处的链接',
+/** 两档行为：档名给下拉，口径说明单列一行（塞进选项会把下拉撑宽） */
+const BEHAVIOR_OPTIONS: Record<
+  AnchorLinkBehavior,
+  { description: string; label: string }
+> = {
+  jump: { description: '滚到锚点位置，左侧目录跟着高亮', label: '跳转到锚点' },
+  modal: { description: '把锚点指向的那一节单独开窗', label: '弹窗打开该区块' },
+};
+
+/** 两种切换口径：同上，档名进下拉、口径说明单列一行 */
+const SCOPE_OPTIONS: Record<AnchorNavScope, { description: string; label: string }> = {
+  all: { description: '按链接顺序切换全文所有链接指向的区块', label: '切换全文所有链接' },
+  section: { description: '只算同一处目录里的链接，如「讲解」里那两条', label: '只切换同一处链接' },
 };
 
 /** 选项顺序与枚举一致，值只有一份来源（`constants.ts`） */
-const BEHAVIOR_OPTIONS = ANCHOR_LINK_BEHAVIORS.map((behavior) => ({
-  label: BEHAVIOR_LABEL[behavior],
+const BEHAVIOR_DATA = ANCHOR_LINK_BEHAVIORS.map((behavior) => ({
+  label: BEHAVIOR_OPTIONS[behavior].label,
   value: behavior,
 }));
 
-const SCOPE_OPTIONS = ANCHOR_NAV_SCOPES.map((scope) => ({
-  label: SCOPE_LABEL[scope],
+const SCOPE_DATA = ANCHOR_NAV_SCOPES.map((scope) => ({
+  label: SCOPE_OPTIONS[scope].label,
   value: scope,
 }));
-
-/** 两组共用同一套尺寸与对齐：圆点与文字水平居中、标签收一档 */
-const RADIO_CLASS_NAMES = {
-  body: styles.body,
-  label: styles.label,
-  labelWrapper: styles.labelWrapper,
-};
 
 const AnchorLinkControl = ({
   behavior,
@@ -73,17 +78,17 @@ const AnchorLinkControl = ({
   opened,
   scope,
 }: AnchorLinkControlProps) => {
-  /** 单选组给回来的是字符串，先对回枚举里的那一档，拿不到就不动 */
-  const handleBehaviorChange = (value: string) => {
-    const option = BEHAVIOR_OPTIONS.find((item) => item.value === value);
+  /** 下拉给回来的是字符串或 null，先对回枚举里的那一档，拿不到就不动 */
+  const handleBehaviorChange = (value: string | null) => {
+    const option = BEHAVIOR_DATA.find((item) => item.value === value);
 
     if (option) {
       onBehaviorChange(option.value);
     }
   };
 
-  const handleScopeChange = (value: string) => {
-    const option = SCOPE_OPTIONS.find((item) => item.value === value);
+  const handleScopeChange = (value: string | null) => {
+    const option = SCOPE_DATA.find((item) => item.value === value);
 
     if (option) {
       onScopeChange(option.value);
@@ -100,40 +105,37 @@ const AnchorLinkControl = ({
       opened={opened}
       width={DROPDOWN_WIDTH}
     >
-      <Stack gap={6}>
-        <Text c="dimmed" size="xs">
-          点同文档链接（#锚点）时
-        </Text>
-        <Radio.Group onChange={handleBehaviorChange} value={behavior}>
-          <Stack gap={4}>
-            {BEHAVIOR_OPTIONS.map((option) => (
-              <Radio
-                classNames={RADIO_CLASS_NAMES}
-                key={option.value}
-                label={option.label}
-                size="xs"
-                value={option.value}
-              />
-            ))}
-          </Stack>
-        </Radio.Group>
-        <Divider className={styles.divider} />
-        <Text c="dimmed" size="xs">
-          区块预览里前后切换
-        </Text>
-        <Radio.Group onChange={handleScopeChange} value={scope}>
-          <Stack gap={4}>
-            {SCOPE_OPTIONS.map((option) => (
-              <Radio
-                classNames={RADIO_CLASS_NAMES}
-                key={option.value}
-                label={option.label}
-                size="xs"
-                value={option.value}
-              />
-            ))}
-          </Stack>
-        </Radio.Group>
+      <Stack gap="sm">
+        <Stack gap={4}>
+          <Select
+            allowDeselect={false}
+            comboboxProps={{ withinPortal: false }}
+            data={BEHAVIOR_DATA}
+            label="点链接之后"
+            onChange={handleBehaviorChange}
+            size="xs"
+            styles={FIELD_STYLES}
+            value={behavior}
+          />
+          <Text c="dimmed" size="xs">
+            {BEHAVIOR_OPTIONS[behavior].description}
+          </Text>
+        </Stack>
+        <Stack gap={4}>
+          <Select
+            allowDeselect={false}
+            comboboxProps={{ withinPortal: false }}
+            data={SCOPE_DATA}
+            label="区块预览切换范围"
+            onChange={handleScopeChange}
+            size="xs"
+            styles={FIELD_STYLES}
+            value={scope}
+          />
+          <Text c="dimmed" size="xs">
+            {SCOPE_OPTIONS[scope].description}
+          </Text>
+        </Stack>
       </Stack>
     </IconPopoverButton>
   );
