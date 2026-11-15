@@ -5,7 +5,7 @@
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 
-import type { AnchorLinkBehavior } from './types';
+import type { AnchorLinkBehavior, AnchorNavScope } from './types';
 
 /** 「已保存」提示停留时长（毫秒） */
 export const SAVED_HINT_DURATION = 3000;
@@ -63,6 +63,16 @@ export const ACTIVE_HEADING_OFFSET = 16;
  * 换篇、关掉重开、刷新页面后都保持上次的样子。
  */
 export const ANCHOR_LINK_STORAGE_KEY = 'my-dashboard:markdown-preview:anchor-link';
+
+/** 子区域预览前后切换口径的存储键 */
+export const ANCHOR_NAV_SCOPE_STORAGE_KEY =
+  'my-dashboard:markdown-preview:anchor-nav-scope';
+
+/** 可选的两种切换口径：全文所有链接 / 只同一处目录里的链接 */
+export const ANCHOR_NAV_SCOPES: readonly AnchorNavScope[] = ['all', 'section'];
+
+/** 默认切换口径：按链接顺序切换全文所有区块（等于旧行为） */
+export const DEFAULT_ANCHOR_NAV_SCOPE: AnchorNavScope = 'all';
 
 /** 可选的两档行为：跳过去 / 弹窗打开那一块 */
 export const ANCHOR_LINK_BEHAVIORS: readonly AnchorLinkBehavior[] = [

@@ -14,7 +14,7 @@ import {
   stripInlineMarkup,
 } from '@/utils/markdown-outline';
 
-import type { MarkdownAnchorBlock } from '../types';
+import type { AnchorNavScope, MarkdownAnchorBlock } from '../types';
 
 /** 参与分节的标题层级：与标题目录、正文标题选择器一致（h1–h4） */
 const HEADING_PATTERN = /^(#{1,4})\s+(.+)$/u;
@@ -50,6 +50,11 @@ type AnchorScan = {
   headings: HeadingLine[];
   /** 被同文档链接指向的锚点 id，按第一次被链接到的顺序 */
   targets: Set<string>;
+  /**
+   * 锚点 id → **指向它的第一条链接**所在的上级标题行号（-1 表示在第一个标题之前）。
+   * 同一处目录里的链接同值，子区域预览的 `section` 口径就按它分组。
+   */
+  linkGroups: Map<string, number>;
 };
 
 /**
@@ -60,8 +65,11 @@ type AnchorScan = {
 const scanAnchors = (lines: string[]): AnchorScan => {
   const headings: HeadingLine[] = [];
   const anchorLines = new Map<string, number>();
+  const linkGroups = new Map<string, number>();
   const targets = new Set<string>();
   let inFence = false;
+  /** 当前所在小节的标题行号：链接归到「它上面最近的那个标题」 */
+  let sectionLine = -1;
 
   lines.forEach((line, index) => {
     if (FENCE_PATTERN.test(line.trimStart())) {
@@ -82,6 +90,7 @@ const scanAnchors = (lines: string[]): AnchorScan => {
         line: index,
         text: heading[2],
       };
+      sectionLine = index;
     }
 
     // 同一个 id 只认第一次定义：重复定义时以第一处为准
@@ -93,14 +102,23 @@ const scanAnchors = (lines: string[]): AnchorScan => {
 
     for (const link of line.matchAll(MD_LINK_PATTERN)) {
       targets.add(link[1]);
+
+      // 只记第一次：同一处目录通常只列一遍，后面重复出现的链接不改变分组
+      if (!linkGroups.has(link[1])) {
+        linkGroups.set(link[1], sectionLine);
+      }
     }
 
     for (const link of line.matchAll(HTML_LINK_PATTERN)) {
       targets.add(link[1]);
+
+      if (!linkGroups.has(link[1])) {
+        linkGroups.set(link[1], sectionLine);
+      }
     }
   });
 
-  return { anchorLines, headings, targets };
+  return { anchorLines, headings, linkGroups, targets };
 };
 
 /** 锚点落在第几个标题：它前面的最后一个标题（锚点写在标题行里时就是这一行） */
@@ -175,7 +193,7 @@ export const collectAnchorBlocks = (
   markdown: string,
 ): MarkdownAnchorBlock[] => {
   const lines = markdown.replace(/\r\n/gu, '\n').split('\n');
-  const { anchorLines, headings, targets } = scanAnchors(lines);
+  const { anchorLines, headings, linkGroups, targets } = scanAnchors(lines);
   const blocks: MarkdownAnchorBlock[] = [];
 
   if (targets.size === 0) {
@@ -201,6 +219,7 @@ export const collectAnchorBlocks = (
     endLine: number,
     heading: HeadingLine | null,
     parentTitle: string,
+    linkGroup: number,
   ): MarkdownAnchorBlock | null => {
     const bodyStart = heading ? startLine + 1 : startLine;
     // 只去掉开头那几行空行：块里第一条内容若本来就是缩进代码，`trimStart` 会把缩进吃掉、改掉它的意思
@@ -218,6 +237,7 @@ export const collectAnchorBlocks = (
       anchor,
       headings: extractMarkdownOutline(source),
       level: heading ? heading.level : 0,
+      linkGroup,
       markdown: source,
       parentTitle,
       startLine,
@@ -238,7 +258,14 @@ export const collectAnchorBlocks = (
     if (headingIndex < 0) {
       if (!openingDone) {
         openingDone = true;
-        const opening = toBlock(anchor, 0, firstHeadingLine, null, '');
+        const opening = toBlock(
+          anchor,
+          0,
+          firstHeadingLine,
+          null,
+          '',
+          linkGroups.get(anchor) ?? -1,
+        );
 
         if (opening) {
           blocks[blocks.length] = opening;
@@ -254,6 +281,7 @@ export const collectAnchorBlocks = (
         findSectionEnd(headings, headingIndex, lines.length),
         heading,
         findParentTitle(headings, headingIndex),
+        linkGroups.get(anchor) ?? -1,
       );
 
       if (block) {
@@ -263,4 +291,33 @@ export const collectAnchorBlocks = (
   }
 
   return blocks;
+};
+
+/**
+ * 按切换口径取「这一次能前后切换到的区块」在列表里的下标。
+ *
+ * - `all`：全文所有链接指向的区块，按链接出现的顺序（默认，等于旧行为）；
+ * - `section`：只保留与当前区块**同一处目录**里的那几个链接（`linkGroup` 相同），
+ *   例：`## 讲解` 里列了两轮复习的链接，就只在这两块之间切换，计数也只有 2。
+ *
+ * @param blocks 整篇的区块列表（`collectAnchorBlocks` 的结果）
+ * @param anchor 当前区块的锚点 id
+ * @param scope 切换口径
+ * @returns 可切换区块的下标，按列表原顺序；找不到当前区块时退回整篇
+ */
+export const listAnchorBlockPeers = (
+  blocks: MarkdownAnchorBlock[],
+  anchor: string,
+  scope: AnchorNavScope,
+): number[] => {
+  const current = blocks.find((block) => block.anchor === anchor);
+  const peers: number[] = [];
+
+  blocks.forEach((block, index) => {
+    if (scope === 'all' || current === undefined || block.linkGroup === current.linkGroup) {
+      peers[peers.length] = index;
+    }
+  });
+
+  return peers;
 };

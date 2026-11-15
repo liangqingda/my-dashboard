@@ -75,6 +75,10 @@ export type TitleBarProps = {
   anchorBehavior: AnchorLinkBehavior;
   /** 换一种同文档链接的点击行为（跨篇记住） */
   onAnchorBehaviorChange: (behavior: AnchorLinkBehavior) => void;
+  /** 子区域预览的前后切换口径 */
+  anchorScope: AnchorNavScope;
+  /** 换一种前后切换口径（跨篇记住） */
+  onAnchorScopeChange: (scope: AnchorNavScope) => void;
   /** 文档里有没有同文档锚点链接：没有可点的链接，锚点按钮就不出 */
   hasAnchorLinks: boolean;
   /** 正文是否还在取：加载中收掉筛选、字号与锚点按钮（没有正文可读） */
@@ -185,6 +189,13 @@ export type MarkdownPreviewFilter = {
 export type AnchorLinkBehavior = 'jump' | 'modal';
 
 /**
+ * 子区域预览的前后切换口径：`all` 按链接顺序切换全文所有链接指向的区块，
+ * `section` 只切换「同一处目录里的那几个链接」指向的区块（计数就是这一处的链接数）。
+ * 例：`## 讲解` 里列了两轮复习的链接，选 `section` 时计数只有 2，只能在这两个里切换。
+ */
+export type AnchorNavScope = 'all' | 'section';
+
+/**
  * 同文档锚点链接指向的一个内容区块：某一节标题下的全部内容。
  *
  * 子区域预览弹窗一次只看一块；「跳到 h2 就展示整个 h2 小节（含 h3）」这条
@@ -203,6 +214,11 @@ export type MarkdownAnchorBlock = {
   markdown: string;
   /** 区块内的标题目录，给子区域预览弹窗的 sidebar 用 */
   headings: MarkdownOutlineHeading[];
+  /**
+   * 指向这一块的链接所在的上级标题行号（-1 表示在第一个标题之前）。
+   * 同值就是「同一处目录里的链接」，`section` 口径按它分组，前后切换不出这一组。
+   */
+  linkGroup: number;
   /** 区块首行在整篇里的行号：按它排正文顺序 */
   startLine: number;
 };
@@ -211,12 +227,16 @@ export type MarkdownAnchorBlock = {
 export type AnchorLinkControlProps = {
   /** 当前点击行为 */
   behavior: AnchorLinkBehavior;
+  /** 子区域预览的前后切换口径 */
+  scope: AnchorNavScope;
   /** 弹层是否打开 */
   opened: boolean;
   /** 弹层开合（点图标、点外部、Esc 都会走到这里） */
   onChange: (opened: boolean) => void;
   /** 选中的新行为；写存储归调用方 */
   onBehaviorChange: (behavior: AnchorLinkBehavior) => void;
+  /** 选中的新切换口径；写存储归调用方 */
+  onScopeChange: (scope: AnchorNavScope) => void;
 };
 
 /** 子区域预览弹窗 header 的入参：前后切换、计数、区块标题与两项阅读操作 */
@@ -253,10 +273,12 @@ export type AnchorBlockModalProps = {
 
 /** 子区域预览的装配入参：位置与边界都在这一层算 */
 export type AnchorBlockPreviewProps = {
-  /** 文档里被链接指向的区块，按正文顺序 */
+  /** 文档里被链接指向的区块，按链接出现的顺序 */
   blocks: MarkdownAnchorBlock[];
   /** 当前打开第几块；null 表示关着 */
   index: number | null;
+  /** 前后切换口径：全文所有区块 / 只同一处链接指向的区块 */
+  scope: AnchorNavScope;
   /** 关闭子预览 */
   onClose: () => void;
   /** 换到第 index 块 */

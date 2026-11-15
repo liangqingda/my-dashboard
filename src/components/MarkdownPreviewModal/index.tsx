@@ -39,6 +39,7 @@ import { collectAnchorBlocks } from './utils/anchor-blocks';
 import { withSideEffect } from './utils/with-side-effect';
 import { useAnchorBlockNavigation } from './hooks/useAnchorBlockNavigation';
 import { useAnchorLinkBehavior } from './hooks/useAnchorLinkBehavior';
+import { useAnchorNavScope } from './hooks/useAnchorNavScope';
 import { useCloseRequest } from './hooks/useCloseRequest';
 import { useModalFullscreen } from './hooks/useModalFullscreen';
 import { useNoteEditing } from './hooks/useNoteEditing';
@@ -121,6 +122,8 @@ const MarkdownPreviewModal = ({
 
   /** 同文档链接的点击行为：跨篇记住的阅读偏好 */
   const anchorLink = useAnchorLinkBehavior();
+  /** 子区域预览的前后切换口径：同样是跨篇记住的阅读偏好 */
+  const anchorScope = useAnchorNavScope();
   /**
    * 子区域预览的开合与正文链接点击：它开在主预览上面，
    * 点链接时按当前行为决定「跳过去」还是「弹窗打开那一块」。
@@ -198,6 +201,7 @@ const MarkdownPreviewModal = ({
         title={
           <TitleBar
             anchorBehavior={anchorLink.behavior}
+            anchorScope={anchorScope.scope}
             canEdit={Boolean(onSave) && !loading}
             editing={editing}
             filter={filter}
@@ -207,6 +211,7 @@ const MarkdownPreviewModal = ({
             loading={loading}
             nextButtonRef={nextButtonRef}
             onAnchorBehaviorChange={anchorLink.setBehavior}
+            onAnchorScopeChange={anchorScope.setScope}
             onNext={withPanelsClosed(onNext)}
             onPanelChange={setPanel}
             onPrevious={withPanelsClosed(onPrevious)}
@@ -248,6 +253,7 @@ const MarkdownPreviewModal = ({
         index={anchorBlock.index}
         onClose={anchorBlock.close}
         onIndexChange={anchorBlock.setIndex}
+        scope={anchorScope.scope}
       />
     </>
   );

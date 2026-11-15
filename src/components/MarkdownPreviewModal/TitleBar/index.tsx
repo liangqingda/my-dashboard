@@ -33,6 +33,7 @@ const ICON_STROKE = 1.9;
 
 const TitleBar = ({
   anchorBehavior,
+  anchorScope,
   canEdit,
   editing,
   filter,
@@ -42,6 +43,7 @@ const TitleBar = ({
   loading,
   nextButtonRef,
   onAnchorBehaviorChange,
+  onAnchorScopeChange,
   onNext,
   onPanelChange,
   onPrevious,
@@ -138,7 +140,9 @@ const TitleBar = ({
               behavior={anchorBehavior}
               onBehaviorChange={onAnchorBehaviorChange}
               onChange={(next) => onPanelChange(next ? 'anchor' : null)}
+              onScopeChange={onAnchorScopeChange}
               opened={panel === 'anchor'}
+              scope={anchorScope}
             />
           ) : null}
           {/* 刷新预览内容：正文从盘里读时才有效，编辑中刷了只会把草稿盖掉 */}
