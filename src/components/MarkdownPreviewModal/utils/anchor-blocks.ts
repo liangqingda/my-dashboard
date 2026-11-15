@@ -162,14 +162,25 @@ export const collectAnchorBlocks = (
     return line === undefined ? [] : [{ anchor, line }];
   });
 
-  /** 从某几行凑出一块：源文本 + 这一块自己的标题目录 */
+  /**
+   * 从某几行凑出一块：源文本 + 这一块自己的标题目录。
+   *
+   * 有标题时**不把标题行写进正文**：这一节的标题已经显示在子区域预览的 header 上，
+   * 正文再来一遍就是重复；块内目录也因此只列下属标题（h2 之下的 h3…）。
+   */
   const toBlock = (
     anchor: string,
     startLine: number,
     endLine: number,
     heading: HeadingLine | null,
   ): MarkdownAnchorBlock | null => {
-    const source = lines.slice(startLine, endLine).join('\n').trimEnd();
+    const bodyStart = heading ? startLine + 1 : startLine;
+    // 只去掉开头那几行空行：块里第一条内容若本来就是缩进代码，`trimStart` 会把缩进吃掉、改掉它的意思
+    const source = lines
+      .slice(bodyStart, endLine)
+      .join('\n')
+      .replace(/^\n+/u, '')
+      .trimEnd();
 
     if (!source) {
       return null;

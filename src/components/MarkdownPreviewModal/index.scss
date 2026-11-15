@@ -17,8 +17,14 @@
  * 标题栏照旧钉在顶部，正文与目录各自占满剩下的高度。
  * 两条类名一起写是为了压过 Mantine 自己的 `.content` 高度与圆角。
  */
+/*
+ * 全屏预览：高度铺满视口、宽度收在 90vw（左右各留一道缝，能看出这是「在页面里放大」而不是换了一屏），
+ * 由 Mantine inner 的 `justify-content: center` 居中。
+ * `flex` 也要写：全屏时 Mantine 给的是 `--modal-content-flex: 0 0 100%`，只设 `width` 会被 flex-basis 压回满宽。
+ */
 .content.contentFullscreen {
-  width: 100vw;
+  flex: 0 0 90vw;
+  width: 90vw;
   height: 100dvh;
   max-height: 100dvh;
   margin: 0;
