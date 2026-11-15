@@ -14,55 +14,63 @@ import {
   noteUpdatedAt,
 } from '../../scripts/vite/english-notes-store.ts';
 
-/** 合法的笔记文件名：`<category>-<slug>.md`，slug 只用小写 ASCII */
+/** 合法的笔记路径：`<category>/<category>-<slug>.md`，目录与文件名前缀一致，slug 只用小写 ASCII */
 const LEGAL = [
-  'errors-wait-missing-preposition-for.md',
-  'vocabulary-headquarters.md',
-  'phrases-dish-out.md',
-  'grammar-modal-verb-base-form.md',
-  'usage-cannot-vs-cant.md',
-  'errors-modal-verb-takes-base-form.md',
+  'errors/errors-wait-missing-preposition-for.md',
+  'vocabulary/vocabulary-headquarters.md',
+  'phrases/phrases-dish-out.md',
+  'grammar/grammar-modal-verb-base-form.md',
+  'usage/usage-cannot-vs-cant.md',
+  'paper/paper-cet6-2026-11.md',
 ];
 
-/** 不合法的文件名：中文、大写、下划线、无分类前缀，以及路径穿越写法 */
+/** 不合法的路径：中文、大写、下划线、目录与前缀不一致、缺少分类目录，以及路径穿越写法 */
 const ILLEGAL = [
-  'errors-wait-后遗漏介词-for.md',
-  'grammar-情态动词后使用动词原形.md',
-  'errors-Foo-Bar.md',
-  'errors-foo_bar.md',
-  'headquarters.md',
-  'errors-foo.json',
-  'readme.md',
+  'errors/errors-wait-后遗漏介词-for.md',
+  'grammar/grammar-情态动词后使用动词原形.md',
+  'errors/errors-Foo-Bar.md',
+  'errors/errors-foo_bar.md',
+  'errors/headquarters.md',
+  'errors/errors-foo.json',
+  'errors/readme.md',
+  'errors/grammar-foo.md',
+  'errors-foo.md',
+  'categories.json',
   '../package.json',
   '/etc/passwd',
-  'errors-../package.md',
-  'errors -foo.md',
+  'errors/../package.md',
+  'errors/errors -foo.md',
 ];
 
 describe('笔记文件名校验', () => {
-  it('接受与记录仓库同口径的 ASCII 文件名', () => {
+  it('接受与记录仓库同口径的分类目录 + ASCII 文件名', () => {
     for (const name of LEGAL) {
       assert.equal(isNoteName(name), true, name);
     }
   });
 
   it('拒绝中文 slug，避免预览层放行源仓库已拒收的文件名', () => {
-    assert.equal(isNoteName('errors-wait-后遗漏介词-for.md'), false);
-    assert.equal(isNoteName('grammar-情态动词后使用动词原形.md'), false);
+    assert.equal(isNoteName('errors/errors-wait-后遗漏介词-for.md'), false);
+    assert.equal(isNoteName('grammar/grammar-情态动词后使用动词原形.md'), false);
   });
 
   it('拒绝大写、下划线、缺少分类前缀与非 Markdown 文件', () => {
-    assert.equal(isNoteName('errors-Foo-Bar.md'), false);
-    assert.equal(isNoteName('errors-foo_bar.md'), false);
-    assert.equal(isNoteName('headquarters.md'), false);
-    assert.equal(isNoteName('errors-foo.json'), false);
+    assert.equal(isNoteName('errors/errors-Foo-Bar.md'), false);
+    assert.equal(isNoteName('errors/errors-foo_bar.md'), false);
+    assert.equal(isNoteName('errors/headquarters.md'), false);
+    assert.equal(isNoteName('errors/errors-foo.json'), false);
+  });
+
+  it('拒绝目录与文件名前缀不一致，以及旧版平铺路径', () => {
+    assert.equal(isNoteName('errors/grammar-foo.md'), false);
+    assert.equal(isNoteName('errors-foo.md'), false);
   });
 
   it('拒绝路径穿越与目录说明文件', () => {
     assert.equal(isNoteName('../package.json'), false);
     assert.equal(isNoteName('/etc/passwd'), false);
-    assert.equal(isNoteName('errors-../package.md'), false);
-    assert.equal(isNoteName('readme.md'), false);
+    assert.equal(isNoteName('errors/../package.md'), false);
+    assert.equal(isNoteName('errors/readme.md'), false);
   });
 });
 
@@ -152,14 +160,15 @@ describe('列表摘要', () => {
     const repo = await mkdtemp(path.join(tmpdir(), 'my-dashboard-notes-'));
     const notesDir = path.join(repo, 'learning-record-notes');
 
-    await mkdir(notesDir);
+    await mkdir(path.join(notesDir, 'errors'), { recursive: true });
+    await mkdir(path.join(notesDir, 'usage'), { recursive: true });
     await writeFile(
-      path.join(notesDir, 'errors-a.md'),
+      path.join(notesDir, 'errors', 'errors-a.md'),
       noteText('errors:a', 'a vs the', '2026-11-08 14:39'),
       'utf8',
     );
     await writeFile(
-      path.join(notesDir, 'usage-b.md'),
+      path.join(notesDir, 'usage', 'usage-b.md'),
       noteText('usage:b', '', '2026-11-07 09:00'),
       'utf8',
     );
@@ -173,7 +182,7 @@ describe('列表摘要', () => {
 
       // 列表接口只发摘要：正文不能再混进来（否则首屏又得陪着几百篇正文一起下载）
       assert.equal('content' in first, false);
-      assert.equal(first.name, 'errors-a.md');
+      assert.equal(first.name, 'errors/errors-a.md');
       assert.equal(first.categoryKey, 'errors');
       assert.equal(first.topic, 'a vs the');
       assert.equal(
@@ -183,7 +192,7 @@ describe('列表摘要', () => {
       // 正文时间新的在前，与列表页「新的在上」一致
       assert.deepEqual(
         summaries.map((summary) => summary.name),
-        ['errors-a.md', 'usage-b.md'],
+        ['errors/errors-a.md', 'usage/usage-b.md'],
       );
     } finally {
       await rm(repo, { force: true, recursive: true });

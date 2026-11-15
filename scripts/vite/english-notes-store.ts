@@ -17,22 +17,23 @@ export const NOTE_EXTENSION = '.md';
 const EXCLUDED_FILES = new Set(['readme.md']);
 
 /**
- * 笔记文件名只能是 `<category>-<slug>.md`，与记录仓库 `check_note.py` 同一口径：
- * 分类键是小写字母，slug 只用小写 ASCII 字母、数字与连字符。
- *
+ * 笔记按分类分目录存放：`<category>/<category>-<slug>.md`，目录名必须等于文件名前缀。
+ * 与记录仓库 `check_note.py` 同一口径；slug 只放行小写 ASCII 字母、数字与连字符。
  * 不再放行中文：中文 slug 会落成非 ASCII 文件名，源仓库的写入器与校验器都已拒收，
- * 这里单方面宽容只会把源仓库的数据缺陷藏起来。顺带挡住 `/`、`\`、空白与 `..`
- * 这类路径穿越写法。
+ * 这里单方面宽容只会把源仓库的数据缺陷藏起来。顺带挡住 `..`、空白与多余层级。
  */
-const NOTE_NAME_PATTERN = /^([a-z]+)-([a-z0-9][a-z0-9-]*)\.md$/;
+const NOTE_PATH_PATTERN = /^([a-z]+)\/([a-z]+)-([a-z0-9][a-z0-9-]*)\.md$/;
 
-/** 文件名是否是合法笔记：只认 ASCII 的 `<category>-<slug>.md`，不含目录说明文件 */
-export const isNoteName = (name: string): boolean =>
-  NOTE_NAME_PATTERN.test(name) && !EXCLUDED_FILES.has(name.toLowerCase());
+/** 笔记是否是合法路径：`<category>/<category>-<slug>.md`，目录与文件名前缀必须一致 */
+export const isNoteName = (name: string): boolean => {
+  const match = NOTE_PATH_PATTERN.exec(name);
+
+  return match !== null && match[1] === match[2];
+};
 
 /** 一篇笔记 */
 export type NoteSnapshot = {
-  /** 文件名，如 errors-back-west-spacing.md */
+  /** 相对笔记目录的路径，如 errors/errors-back-west-spacing.md */
   name: string;
   /** Markdown 原文 */
   content: string;
@@ -44,7 +45,7 @@ export type NoteSnapshot = {
 const notesDirOf = (repoDir: string): string =>
   path.resolve(repoDir, NOTES_DIR);
 
-/** 校验文件名并返回安全的绝对路径；不合法直接抛错 */
+/** 校验笔记路径并返回安全的绝对路径；不合法直接抛错 */
 const resolveNoteFile = (repoDir: string, name: string): string => {
   if (!isNoteName(name)) {
     throw new Error('这个文件不允许写入');
@@ -89,25 +90,55 @@ export const readNote = async (
   }
 };
 
-/** 目录下全部笔记文件名（已排除说明文件） */
+/**
+ * 目录下全部笔记的相对路径（`<category>/<name>.md`，已排除说明文件）。
+ * 只扫一层分类目录：`learning-record-notes/` 根下只放 `categories.json` 与 `README.md`。
+ */
 const listNoteNames = async (repoDir: string): Promise<string[]> => {
+  const dir = notesDirOf(repoDir);
   let entries: Dirent[] = [];
 
   try {
-    entries = await readdir(notesDirOf(repoDir), { withFileTypes: true });
+    entries = await readdir(dir, { withFileTypes: true });
   } catch {
     // 目录不存在时按空笔记集处理，页面会给出空态。
     return [];
   }
 
-  return entries
-    .filter(
-      (entry) =>
-        entry.isFile() &&
-        entry.name.toLowerCase().endsWith(NOTE_EXTENSION) &&
-        !EXCLUDED_FILES.has(entry.name.toLowerCase()),
-    )
-    .map((entry) => entry.name);
+  const names: string[] = [];
+
+  for (const entry of entries) {
+    if (!entry.isDirectory()) {
+      continue;
+    }
+
+    const category = entry.name;
+
+    if (!/^[a-z]+$/.test(category)) {
+      continue;
+    }
+
+    let files: Dirent[] = [];
+
+    try {
+      files = await readdir(path.join(dir, category), { withFileTypes: true });
+    } catch {
+      continue;
+    }
+
+    for (const file of files) {
+      if (
+        file.isFile() &&
+        file.name.toLowerCase().endsWith(NOTE_EXTENSION) &&
+        !EXCLUDED_FILES.has(file.name.toLowerCase()) &&
+        isNoteName(`${category}/${file.name}`)
+      ) {
+        names[names.length] = `${category}/${file.name}`;
+      }
+    }
+  }
+
+  return names;
 };
 
 /** 正文「基础信息」表里的记录 ID 行：`<tr><td>记录 ID / 试卷 ID</td><td>errors:xxx</td></tr>` */
@@ -132,13 +163,15 @@ export const categoryKeyFromContent = (content: string): string => {
 };
 
 /**
- * 从文件名取分类键：`errors-back-west-spacing.md` → `errors`。
+ * 从文件名取分类键：`errors/errors-back-west-spacing.md` → `errors`。
  * 只在正文没有记录 ID 时兜底，正常笔记以正文为准。
+ * 取相对路径的最后一段，分类目录本身不参与解析。
  */
 export const categoryKeyFromName = (name: string): string => {
-  const separator = name.indexOf('-');
+  const fileName = name.slice(name.lastIndexOf('/') + 1);
+  const separator = fileName.indexOf('-');
 
-  return separator > 0 ? name.slice(0, separator) : '';
+  return separator > 0 ? fileName.slice(0, separator) : '';
 };
 
 /** 一篇笔记的分类键：正文优先，文件名兜底 */
@@ -173,7 +206,7 @@ export const noteTopic = (content: string): string =>
 
 /** 列表用的笔记摘要：不带正文，只带页面要展示与排序的字段 */
 export type NoteSummary = {
-  /** 文件名，如 errors-back-west-spacing.md */
+  /** 相对笔记目录的路径，如 errors/errors-back-west-spacing.md */
   name: string;
   /** 分类键，如 errors；正文记录 ID 优先，文件名兜底 */
   categoryKey: string;
@@ -316,7 +349,7 @@ export const readCategoryConfig = async (
 
 /**
  * 把正文写回笔记目录下的某个文件，返回写后的修改时间。
- * 只允许写 `learning-record-notes/` 内、文件名符合规则的 Markdown 文件。
+ * 只允许写 `learning-record-notes/<category>/` 内、路径符合规则的 Markdown 文件。
  */
 export const writeNote = async (
   repoDir: string,

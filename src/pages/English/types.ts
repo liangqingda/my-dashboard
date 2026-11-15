@@ -9,7 +9,7 @@
  * 前端不再重复扫正文（口径见 `docs/local-repo-data.md`）。
  */
 export type NoteSummary = {
-  /** 文件名，如 errors-back-west-spacing.md */
+  /** 相对笔记目录的路径，如 errors/errors-back-west-spacing.md */
   name: string;
   /** 分类键，如 errors；正文记录 ID 优先，文件名兜底 */
   categoryKey: string;
@@ -25,7 +25,7 @@ export type NoteSummary = {
  * 静态快照只有正文，摘要继续用列表里那条。
  */
 export type NoteBody = {
-  /** 文件名 */
+  /** 相对笔记目录的路径 */
   name: string;
   /** Markdown 原文 */
   content: string;

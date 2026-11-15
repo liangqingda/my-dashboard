@@ -25,6 +25,18 @@
   笔记里出现、清单没声明的键同样成列，按键名追加在末尾。
 - 清单里标 `hidden` 的分类（如套题 `paper`）不进看板与表格，也不占翻页计数。
 
+## 笔记按分类分目录
+
+记录仓库的笔记放在 `learning-record-notes/<category>/<category>-<slug>.md`，目录名与文件名前缀
+必须一致（`errors/errors-back-west-spacing.md`），目录根只放 `categories.json` 与 `README.md`。
+读盘侧据此做三件事：
+
+- `isNoteName` 校验的是**相对笔记目录的路径**：`<category>/<category>-<slug>.md`，目录与前缀不一致、
+  旧版平铺名（`errors-foo.md`）、路径穿越写法一律拒绝；
+- 列表摘要的 `name` 就是这条相对路径（`errors/errors-a.md`），前端不要自己拼目录；
+- 构建产物按同一路径落文件（`english-notes/<category>/<file>.md`），前端取正文时逐段编码，
+  整串 `encodeURIComponent` 会把 `/` 编成 `%2F`，静态文件与中间件都取不到。
+
 ## 列表只发摘要，正文按名取
 
 列表要展示的只有「文件名 / 分类 / 目标知识点 / 笔记更新时间」，正文只在打开某一篇时才有用。
@@ -33,7 +45,7 @@
 | 取数入口 | 内容 | 用途 |
 | --- | --- | --- |
 | `GET /api/english/notes`（构建期 `english-notes.index.json`） | 分类清单 + 每篇**摘要** | 首屏列表 |
-| `GET /api/english/notes?name=…`（构建期 `english-notes/<文件名>`） | 这一篇的摘要 + 正文 | 打开预览、保存后重取 |
+| `GET /api/english/notes?name=…`（构建期 `english-notes/<category>/<文件名>`） | 这一篇的摘要 + 正文 | 打开预览、保存后重取 |
 
 - 摘要里的 `categoryKey` / `topic` / `updatedAt` 由 `english-notes-store.ts` 读盘时解析好
   （正文基础信息表优先，分类缺失回落文件名、时间缺失回落文件 mtime）。**前端不要再扫正文**：
@@ -51,10 +63,10 @@
 ## 写操作的底线
 
 1. **只在开发模式可用**（生产构建不暴露写接口）；
-2. **必须校验文件名**：禁路径穿越（`..`、绝对路径、分隔符），禁写目录说明文件；文件名口径与
-   记录仓库的 `check_note.py` 一致——只认 `<category>-<slug>.md`，分类键小写字母、slug 只用小写
-   ASCII 字母 / 数字 / 连字符。中文 slug 在源仓库写入时就被拒收，这里不再放行，否则预览层会比
-   数据源头更宽容，等于替源仓库藏缺陷；
+2. **必须校验路径**：禁路径穿越（`..`、绝对路径、多余层级），禁写 `categories.json` 与目录说明文件；
+   路径口径与记录仓库的 `check_note.py` 一致——只认 `<category>/<category>-<slug>.md`，目录名必须等于
+   文件名前缀，分类键小写字母、slug 只用小写 ASCII 字母 / 数字 / 连字符。中文 slug 在源仓库写入时
+   就被拒收，这里不再放行，否则预览层会比数据源头更宽容，等于替源仓库藏缺陷；
 3. 保存落盘后由同一个中间件把该文件提交到 `learn-english`：只 stage 这一个文件，提交信息半固定为
    `docs(notes): 手动编辑 <文件名去扩展名>` + 固定正文「通过 my-dashboard 的 Markdown 预览弹窗保存」；
 4. 内容无变化时不产生空提交；提交失败不阻断保存，原因回传到 header 的保存状态提示（红色文案）。

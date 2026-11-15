@@ -18,7 +18,7 @@ import { NOTES_DIR } from '../constants';
 
 /**
  * 笔记在 learn-english 仓库里的相对路径，如
- * `learning-record-notes/errors-back-west-spacing.md`。
+ * `learning-record-notes/errors/errors-back-west-spacing.md`。
  *
  * 表格的「操作」列与预览弹窗 header 复制出去的就是这一串：相对于记录仓库根目录，
  * 粘进终端、编辑器或另一个 agent 都能直接定位到文件，不依赖本机绝对路径。
@@ -40,7 +40,7 @@ export const toNoteTimestamp = (updatedAt: string): number => {
 const formatNoteUpdatedAt = (updatedAt: number): string =>
   updatedAt > 0 ? formatDateTime(updatedAt) : '';
 
-/** 把文件名拆成主名与扩展名，扩展名弱化展示。 */
+/** 把笔记路径拆成主名与扩展名，扩展名弱化展示。分类目录不参与展示。 */
 export const splitNoteName = (
   name: string,
 ): {
@@ -49,13 +49,14 @@ export const splitNoteName = (
   /** 扩展名，含点号；没有扩展名时为空串 */
   extension: string;
 } => {
-  const index = name.lastIndexOf('.');
+  const fileName = name.slice(name.lastIndexOf('/') + 1);
+  const index = fileName.lastIndexOf('.');
 
   if (index <= 0) {
-    return { base: name, extension: '' };
+    return { base: fileName, extension: '' };
   }
 
-  return { base: name.slice(0, index), extension: name.slice(index) };
+  return { base: fileName.slice(0, index), extension: fileName.slice(index) };
 };
 
 /** 列标题已经写明分类，列表里去掉重复的分类前缀。 */

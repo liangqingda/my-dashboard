@@ -154,11 +154,11 @@ PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/Ma
 
 ## 英语页
 
-「英语」页只展示同级目录 `../learn-english` 仓库 `learning-record-notes/` 下的 Markdown
-笔记：分列看板，一列一类，列有哪些、列标题与列顺序都由记录仓库的分类清单决定（见下），
+「英语」页只展示同级目录 `../learn-english` 仓库 `learning-record-notes/<category>/` 下的
+Markdown 笔记（目录名与文件名前缀一致）：分列看板，一列一类，列有哪些、列标题与列顺序都由记录仓库的分类清单决定（见下），
 整页不滚动、每列各自纵向滚动，列内按「笔记更新时间」倒序；列表只露出文件名，点文件名在弹窗里看全文。
 右上角图标可切到表格平铺（按分类 / 更新时间排序），每行末尾的「操作」列有一个复制图标，
-点一下复制这一篇的相对路径（`learning-record-notes/<文件名>`，相对记录仓库根目录）。
+点一下复制这一篇的相对路径（`learning-record-notes/<category>/<文件名>`，相对记录仓库根目录）。
 
 **分类不由本项目定义**：每篇的分类键取自正文基础信息表里的「记录 ID / 试卷 ID」前缀
 （`errors:foo` → `errors`；正文没有这一行时回落成文件名第一个 `-` 之前的部分）。分类的中文标题、
@@ -168,16 +168,16 @@ PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/Ma
 
 数据不经过本机 agent，由 Vite 插件 `scripts/vite/english-notes.ts` 直接读盘：
 
-- 开发：`GET /api/english/notes` 每次请求实时读取该目录下的 `*.md`（排除目录自带的
-  `README.md`），返回**列表摘要**（文件名 + 分类键 + 目标知识点 + 笔记更新时间）与
+- 开发：`GET /api/english/notes` 每次请求实时读取各分类子目录里的 `*.md`（不读目录根下的
+  `categories.json` / `README.md`），返回**列表摘要**（相对路径 + 分类键 + 目标知识点 + 笔记更新时间）与
   `categories.json` 的分类清单，写完新笔记刷新页面即可看到，无需重启服务；
   `GET /api/english/notes?name=…` 只返回这一篇（摘要 + 正文），弹窗打开时用它取正文。
 - 保存：`PUT /api/english/notes`（body `{ name, content }`）写完再自动提交记录仓库；
-  文件名必须匹配 `^([a-z]+)-([a-z0-9][a-z0-9-]*)\.md$`（与记录仓库 `check_note.py` 同一口径：
-  分类键小写字母、slug 只用小写 ASCII 字母 / 数字 / 连字符，中文主题在源仓库要意译成英文短语）
-  且解析后仍落在笔记目录内，否则 400。
+  路径必须匹配 `^([a-z]+)/\1-([a-z0-9][a-z0-9-]*)\.md$` 形态（分类目录与文件名前缀一致，与记录仓库
+  `check_note.py` 同一口径：分类键小写字母、slug 只用小写 ASCII 字母 / 数字 / 连字符，中文主题在源仓库
+  要意译成英文短语）且解析后仍落在该分类目录内，否则 400。
 - 构建：索引（分类清单 + 每篇摘要）写成 `english-notes.index.json`，每篇正文单独落成
-  `english-notes/<文件名>`，供预览与静态部署按需取（只读快照，保存能力仅开发模式提供）。
+  `english-notes/<category>/<文件名>`，供预览与静态部署按需取（只读快照，保存能力仅开发模式提供）。
 - 列表只带摘要，正文不随列表下发：打开某一篇时才按名取。弹窗先出来，正文
   **超过 200 ms 还没到**才亮加载态（快到的情况直接填正文，不闪一下转圈）。
   摘要里的三个派生字段（分类键、目标知识点、笔记更新时间）由插件读盘时解析好，前端不再扫正文。

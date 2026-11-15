@@ -29,6 +29,16 @@ const LIST_ENDPOINT = import.meta.env.DEV
 const BODY_DIR = 'english-notes';
 
 /**
+ * 把笔记相对路径按段编码：`errors/errors-x.md` → `errors/errors-x.md`。
+ * 不能用整串 `encodeURIComponent`：目录分隔符会被编成 `%2F`，静态文件与中间件都取不到。
+ */
+const encodeNotePath = (name: string): string =>
+  name
+    .split('/')
+    .map((segment) => encodeURIComponent(segment))
+    .join('/');
+
+/**
  * 取数请求的缓存策略：开发态必须实时（仓库随时在改），
  * 构建产物是静态文件，交给浏览器 / CDN 正常缓存，别每次进页面重下。
  */
@@ -192,7 +202,7 @@ export const fetchEnglishNote = async (
   }
 
   const response = await fetch(
-    `/${BODY_DIR}/${encodeURIComponent(name)}`,
+    `/${BODY_DIR}/${encodeNotePath(name)}`,
     { ...REQUEST_INIT, signal },
   );
 
