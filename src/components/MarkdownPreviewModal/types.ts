@@ -2,7 +2,7 @@
  * Markdown 预览弹窗的类型契约：调用方传什么、编辑器插槽收什么。
  */
 
-import type { ComponentType, ReactNode } from 'react';
+import type { ComponentType, ReactNode, Ref, RefObject } from 'react';
 
 import type {
   MarkdownOutlineHeading,
@@ -66,6 +66,12 @@ export type TitleBarProps = {
   onPrevious?: (() => void) | null;
   /** 下一篇；null / 不传表示没有相邻文档 */
   onNext?: (() => void) | null;
+  /**
+   * 翻篇按钮的 ref：快捷键翻篇时弹窗把焦点挪到对应那一侧的按钮上，
+   * 焦点环就成了「这次往哪边走」的指示（否则焦点会停在弹窗打开时的第一个按钮上）。
+   */
+  previousButtonRef?: Ref<HTMLButtonElement>;
+  nextButtonRef?: Ref<HTMLButtonElement>;
   /** 刷新正文；null 表示不提供（编辑中本来也不显示） */
   onRefresh?: (() => void) | null;
   /** 刷新按钮是否在 loading */
@@ -324,6 +330,24 @@ export type NavigationShortcutParams = {
   onPrevious?: (() => void) | null;
   /** 下一篇 */
   onNext?: (() => void) | null;
+};
+
+/** 翻篇导航的入参：快捷键开关 + 两个翻篇动作（都已收好 header 弹层） */
+export type StepNavigationParams = {
+  /** 是否启用快捷键（弹窗打开、不在编辑态、不在加载中） */
+  enabled: boolean;
+  /** 上一篇动作；null / 不传表示没有相邻文档 */
+  onPrevious?: (() => void) | null;
+  /** 下一篇动作；null / 不传表示没有相邻文档 */
+  onNext?: (() => void) | null;
+};
+
+/** 翻篇导航交出的东西：两个按钮的 ref 交给标题栏挂载 */
+export type StepNavigationState = {
+  /** 上一篇按钮的 ref */
+  previousButtonRef: RefObject<HTMLButtonElement | null>;
+  /** 下一篇按钮的 ref */
+  nextButtonRef: RefObject<HTMLButtonElement | null>;
 };
 
 /** 关闭请求的入参：决定「照常关」还是「拦下来并提示」 */

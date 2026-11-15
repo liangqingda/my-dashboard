@@ -34,12 +34,14 @@ const TitleBar = ({
   filterButton,
   fontControl,
   fullscreen,
+  nextButtonRef,
   onNext,
   onPrevious,
   onRefresh,
   onStartEdit,
   onToggleFullscreen,
   position,
+  previousButtonRef,
   refreshing,
   relativePath,
   title,
@@ -62,6 +64,7 @@ const TitleBar = ({
         className={styles.stepButton}
         disabled={!onPrevious || editing.editing}
         onClick={onPrevious ?? undefined}
+        ref={previousButtonRef}
         size="sm"
         variant="subtle"
       >
@@ -72,6 +75,7 @@ const TitleBar = ({
         className={styles.stepButton}
         disabled={!onNext || editing.editing}
         onClick={onNext ?? undefined}
+        ref={nextButtonRef}
         size="sm"
         variant="subtle"
       >

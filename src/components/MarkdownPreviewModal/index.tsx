@@ -17,7 +17,7 @@
  * - 正文字号按钮与弹层 → `prose-font-control`（状态在 `hooks/use-prose-font-scale`）
  * - header 右侧的操作与状态提示 → `header-actions`
  * - 编辑态状态机 → `hooks/use-note-editing`
- * - 翻篇快捷键 → `hooks/use-navigation-shortcuts`
+ * - 翻篇快捷键与按钮焦点 → `hooks/use-step-navigation`
  */
 
 import { useCallback, useMemo, useRef, useState } from 'react';
@@ -37,13 +37,14 @@ import TitleBar from './TitleBar';
 import OutlineNav from './OutlineNav';
 import ProseFontControl from './ProseFontControl';
 import { HEADING_SELECTOR, REHYPE_PLUGINS, REMARK_PLUGINS } from './constants';
+import { withSideEffect } from './utils';
 import { useActiveHeadingIndex } from './hooks/useActiveHeadingIndex';
-import { useNavigationShortcuts } from './hooks/useNavigationShortcuts';
 import { useCloseRequest } from './hooks/useCloseRequest';
 import { useDocumentScrollReset } from './hooks/useDocumentScrollReset';
 import { useModalFullscreen } from './hooks/useModalFullscreen';
 import { useProseFontScale } from './hooks/useProseFontScale';
 import { useRefreshPreview } from './hooks/useRefreshPreview';
+import { useStepNavigation } from './hooks/useStepNavigation';
 import { useNoteEditing } from './hooks/useNoteEditing';
 
 import styles from './index.scss';
@@ -87,10 +88,7 @@ const MarkdownPreviewModal = ({
     },
     [],
   );
-  /**
-   * 正文节点同时存一份 state：弹窗内容比 header 晚一帧挂载，
-   * 滚动跟踪和高度测量都要等节点真正挂上再建监听，只靠 ref 会在 ref 还空时跑完 effect。
-   */
+  /** 正文节点同时存一份 state：弹窗内容比 header 晚一帧挂载，只靠 ref 会让 effect 在 ref 还空时跑完 */
   const [bodyElement, setBodyElement] = useState<HTMLElement | null>(null);
   /** 全屏开关与全屏时的 Esc 语义都在这个 hook 里；它是记住的偏好，关闭弹窗也不重置 */
   const { fullscreen, toggle: toggleFullscreen } = useModalFullscreen();
@@ -169,19 +167,12 @@ const MarkdownPreviewModal = ({
   const bodyReady =
     opened && !loading && (!editing.editing || showingDraftPreview);
 
-  /**
-   * 翻篇 / 刷新前收起 header 弹层：面板里的条件只属于当前这一篇，
-   * 内容已经换掉了还挂在屏上，容易让人以为筛的是新的一篇。
-   */
+  /** 翻篇 / 刷新前先收起 header 弹层：面板里的条件只属于当前这一篇（理由见 `utils.ts`） */
   const withPanelsClosed = (action: (() => void) | null | undefined) =>
-    action
-      ? () => {
-          setPanel(null);
-          action();
-        }
-      : action;
+    withSideEffect(() => setPanel(null), action);
 
-  useNavigationShortcuts({
+  /** 翻篇按钮的焦点与快捷键一起管：焦点落在对应那一侧，焦点环就是这次往哪边走 */
+  const { nextButtonRef, previousButtonRef } = useStepNavigation({
     enabled: opened && !editing.editing && !loading,
     onNext: withPanelsClosed(onNext),
     onPrevious: withPanelsClosed(onPrevious),
@@ -309,6 +300,7 @@ const MarkdownPreviewModal = ({
           filterButton={filterButton}
           fontControl={fontControl}
           fullscreen={fullscreen}
+          nextButtonRef={nextButtonRef}
           onNext={withPanelsClosed(onNext)}
           onPrevious={withPanelsClosed(onPrevious)}
           onRefresh={
@@ -317,6 +309,7 @@ const MarkdownPreviewModal = ({
           onStartEdit={startEditing}
           onToggleFullscreen={toggleFullscreen}
           position={position}
+          previousButtonRef={previousButtonRef}
           refreshing={refreshing}
           relativePath={relativePath}
           title={title}
