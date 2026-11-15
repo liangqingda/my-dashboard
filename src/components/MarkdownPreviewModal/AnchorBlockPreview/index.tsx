@@ -3,10 +3,12 @@
  *
  * 真正看内容的界面在 `AnchorBlockModal`，这一层只管位置与边界：
  * 按当前口径（全文所有链接 / 只同一处目录里的链接）算出「这一次能切到哪几块」，
- * 到头的那一侧给 `null`（按钮置灰），下标越界（换篇后正文变短）时当作关着。
+ * 首尾**贯穿**——最后一块的「下一个」回到第一块、第一块的「上一个」跳到最末一块，
+ * 所以两侧按钮不会因为「到头」而置灰；只有一块可切时（`total <= 1`）才没有下一处可去。
+ * 下标越界（换篇后正文变短）时当作关着。
  *
  * 快捷键也挂在这里：子预览开着时，`]` / → 切下一块、`[` / ← 切上一块，跟 header 上那两个
- * 图标按钮同一套键位。主预览的「翻篇」快捷键在同一时刻是停用的（那边翻的是文档），
+ * 图标按钮同一套键位，同样贯穿。主预览的「翻篇」快捷键在同一时刻是停用的（那边翻的是文档），
  * 所以这两组键不会打架。
  */
 
@@ -27,9 +29,15 @@ const AnchorBlockPreview = ({
   const peers = block ? listAnchorBlockPeers(blocks, block.anchor, scope) : [];
   /** 当前块在这条列表里的位置；-1 表示没对上，按关着处理 */
   const cursor = index === null ? -1 : peers.indexOf(index);
-  const previous = cursor > 0 ? peers[cursor - 1] : null;
-  const next =
-    cursor >= 0 && cursor < peers.length - 1 ? peers[cursor + 1] : null;
+  /** 能不能换到别的一块：只有一块时前后都是它自己，给了也没意义 */
+  const canSwitch = cursor >= 0 && peers.length > 1;
+  /** 贯穿取邻：下标回绕一圈，首尾相接（这里不用取模的负值写法，读起来更直白） */
+  const previous = canSwitch
+    ? peers[cursor === 0 ? peers.length - 1 : cursor - 1]
+    : null;
+  const next = canSwitch
+    ? peers[cursor === peers.length - 1 ? 0 : cursor + 1]
+    : null;
 
   /**
    * 只在子预览开着时接管按键：关了就得把 `]` / → 还给底下的翻篇。
