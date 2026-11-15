@@ -136,10 +136,37 @@ const findSectionEnd = (
 };
 
 /**
- * 收集文档里被同文档链接指向的区块，按正文顺序排。
+ * 某一节的上级标题：往上找第一个层级更小的标题（h2 的上级就是它所属的那一个 h1）。
+ *
+ * 子区域预览把它接在区块标题后面，用来交代「这一节是哪一轮的内容」——
+ * 例：`本轮习题 · 2026-11-15 12:05 · 复习`。
+ */
+const findParentTitle = (headings: HeadingLine[], index: number): string => {
+  const { level } = headings[index];
+  let cursor = index - 1;
+
+  while (cursor >= 0) {
+    const candidate = headings[cursor];
+
+    if (candidate.level < level) {
+      return stripInlineMarkup(candidate.text);
+    }
+
+    cursor -= 1;
+  }
+
+  return '';
+};
+
+/**
+ * 收集文档里被同文档链接指向的区块。
  *
  * 「区块」指某一节标题下的全部内容：从标题行到下一个同级或更高级标题之前，
  * 所以跳到 h2 拿走的是整个 h2 小节（含它下面的 h3），跳到 h3 只拿 h3 小节。
+ *
+ * **顺序按链接出现的先后**，不按标题在正文里的位置：笔记的目录区（`<!-- round-index -->`
+ * 那一串链接）本来就按「复习轮次倒序 / 分类」排，前后切换要跟着目录读到的顺序走，
+ * 才算「上一个 / 下一个链接指向的区块」。
  *
  * @param markdown Markdown 原文（用未筛选的正文，筛选只影响「读」）
  * @returns 区块列表；同一节被多个链接指向时只留第一条，没有锚点链接时为空数组
@@ -173,6 +200,7 @@ export const collectAnchorBlocks = (
     startLine: number,
     endLine: number,
     heading: HeadingLine | null,
+    parentTitle: string,
   ): MarkdownAnchorBlock | null => {
     const bodyStart = heading ? startLine + 1 : startLine;
     // 只去掉开头那几行空行：块里第一条内容若本来就是缩进代码，`trimStart` 会把缩进吃掉、改掉它的意思
@@ -191,6 +219,7 @@ export const collectAnchorBlocks = (
       headings: extractMarkdownOutline(source),
       level: heading ? heading.level : 0,
       markdown: source,
+      parentTitle,
       startLine,
       title: heading ? stripInlineMarkup(heading.text) : '',
     };
@@ -198,46 +227,40 @@ export const collectAnchorBlocks = (
 
   /** 整篇没有标题时，第一个标题的行号按文档结尾算 */
   const firstHeadingLine = headings.length === 0 ? lines.length : headings[0].line;
-  /** 第一个标题之前就被指向的锚点：那一块是文档开头到第一个标题之前 */
-  const opening = located.find(({ line }) => line < firstHeadingLine);
+  /** 已经产出过区块的标题：同一节被多个链接指向时看的是同一块内容 */
+  const usedHeadings = new Set<number>();
+  /** 第一个标题之前的锚点只认一条：那一段内容只有一份 */
+  let openingDone = false;
 
-  if (opening) {
-    const block = toBlock(opening.anchor, 0, firstHeadingLine, null);
-
-    if (block) {
-      blocks[blocks.length] = block;
-    }
-  }
-
-  /** 每个标题只认第一个落在它这一节的锚点：同一节被多个链接指向时看的是同一块内容 */
-  const anchorByHeading = new Map<number, string>();
-
-  located.forEach(({ anchor, line }) => {
+  for (const { anchor, line } of located) {
     const headingIndex = resolveHeadingIndex(headings, line);
 
-    if (headingIndex >= 0 && !anchorByHeading.has(headingIndex)) {
-      anchorByHeading.set(headingIndex, anchor);
+    if (headingIndex < 0) {
+      if (!openingDone) {
+        openingDone = true;
+        const opening = toBlock(anchor, 0, firstHeadingLine, null, '');
+
+        if (opening) {
+          blocks[blocks.length] = opening;
+        }
+      }
+    } else if (!usedHeadings.has(headingIndex)) {
+      usedHeadings.add(headingIndex);
+
+      const heading = headings[headingIndex];
+      const block = toBlock(
+        anchor,
+        heading.line,
+        findSectionEnd(headings, headingIndex, lines.length),
+        heading,
+        findParentTitle(headings, headingIndex),
+      );
+
+      if (block) {
+        blocks[blocks.length] = block;
+      }
     }
-  });
-
-  headings.forEach((heading, headingIndex) => {
-    const anchor = anchorByHeading.get(headingIndex);
-
-    if (!anchor) {
-      return;
-    }
-
-    const block = toBlock(
-      anchor,
-      heading.line,
-      findSectionEnd(headings, headingIndex, lines.length),
-      heading,
-    );
-
-    if (block) {
-      blocks[blocks.length] = block;
-    }
-  });
+  }
 
   return blocks;
 };

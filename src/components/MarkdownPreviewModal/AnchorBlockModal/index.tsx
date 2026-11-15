@@ -58,7 +58,13 @@ const AnchorBlockModal = ({
   const proseStyle = { '--prose-extra': `${proseFont.offset}px` } as CSSProperties;
 
   const headings = block ? block.headings : NO_HEADINGS;
-  const title = block ? block.title || block.anchor : '';
+  /**
+   * header 标题：区块标题 + 它所处的那一节（上一级标题），
+   * 如「本轮习题 · 2026-11-15 12:05 · 复习」——同一篇里好几轮复习时靠它分清这一块是哪一轮的。
+   */
+  const title = block
+    ? [block.title || block.anchor, block.parentTitle].filter(Boolean).join(' · ')
+    : '';
 
   /** 面板说的永远是「当前这一块」的字号：换块后按归属算作收起 */
   const fontOpened =
