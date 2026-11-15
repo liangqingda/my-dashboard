@@ -124,7 +124,7 @@ const TitleBar = ({
             </Tooltip>
           ) : null}
           <Tooltip
-            label={fullscreen ? '退出全屏（Esc）' : '全屏预览'}
+            label={fullscreen ? '退出全屏' : '全屏预览'}
             withArrow
           >
             <ActionIcon

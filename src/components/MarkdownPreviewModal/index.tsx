@@ -6,7 +6,7 @@
  * 弹窗左侧固定的标题目录 sidebar（文档内 h1–h4 目录，随弹窗高度拉伸、目录自身滚动，
  * 滚动正文时跟随高亮当前小节）、header 右侧的一排操作：复制文档的相对路径（调用方给路径）、
  * 筛选正文（口径由调用方给）、正文字号（跨篇记住的阅读偏好）、
- * 全屏预览（把整个框体铺满视口放大阅读空间，再点一次或按 Esc 退出）
+ * 全屏预览（把整个框体铺满视口放大阅读空间，再点一次切回常规）
  * 与编辑 / 预览 / 保存 / 放弃改动，全部只留图标 + tooltip。
  * 组件只负责编辑态与保存流程，不知道文档结构和文件落在哪里：
  * 具体怎么编辑由调用方通过 `Editor` 插槽传入，没有定制编辑器时给出定制提示。
@@ -90,7 +90,7 @@ const MarkdownPreviewModal = ({
   );
   /** 正文节点同时存一份 state：弹窗内容比 header 晚一帧挂载，只靠 ref 会让 effect 在 ref 还空时跑完 */
   const [bodyElement, setBodyElement] = useState<HTMLElement | null>(null);
-  /** 全屏开关与全屏时的 Esc 语义都在这个 hook 里；它是记住的偏好，关闭弹窗也不重置 */
+  /** 全屏开关：记住的展示偏好，关闭弹窗也不重置；Esc 不归它管，永远是关弹窗 */
   const { fullscreen, toggle: toggleFullscreen } = useModalFullscreen();
 
   /** 正文字号的用户偏移：跨篇、跨会话记住，叠在常规 / 全屏各自的默认字号上 */
@@ -274,6 +274,8 @@ const MarkdownPreviewModal = ({
   /*
    * Esc 的归属：筛选弹层开着时只收面板（`closeOnEscape` 关掉），
    * 否则两层浮层一起响应，按一下 Esc 弹窗也关了。
+   * 全屏不参与判定：Esc 一律关掉弹窗，全屏跟着一起关——同一个键在两种模式下意思不同，
+   * 用户只会记住那一次「按了没关掉」。
    */
   return (
     <Modal
@@ -285,7 +287,7 @@ const MarkdownPreviewModal = ({
         title: styles.title,
       }}
       closeButtonProps={{ 'aria-label': '关闭预览' }}
-      closeOnEscape={!fullscreen && panel === null}
+      closeOnEscape={panel === null}
       fullScreen={fullscreen}
       onClose={handleClose}
       opened={opened}
