@@ -158,7 +158,3 @@ export const sortNoteRows = (
     return b.updatedAt - a.updatedAt || a.note.name.localeCompare(b.note.name);
   });
 };
-
-/** 判断事件目标是不是正在输入的控件（那里交给浏览器自己的撤销） */
-export const isTypingTarget = (target: EventTarget | null): boolean =>
-  target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement;

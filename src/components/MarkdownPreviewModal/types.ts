@@ -316,8 +316,8 @@ export type NoteEditingState = {
   keepEditing: () => void;
 };
 
-/** 方向键翻篇的入参 */
-export type ArrowNavigationParams = {
+/** 翻篇快捷键的入参：方括号与方向键共用一套 */
+export type NavigationShortcutParams = {
   /** 是否启用（弹窗打开且不在编辑态） */
   enabled: boolean;
   /** 上一篇 */

@@ -2,7 +2,7 @@
  * Markdown 预览弹窗（公共组件）。
  *
  * 全站所有 Markdown 弹窗预览都必须使用这个组件，不要各自拼装 Modal 与渲染器：
- * 它统一了文档排版、上一篇 / 下一篇导航（header 标题左侧按钮 + ← / → 快捷键）、
+ * 它统一了文档排版、上一篇 / 下一篇导航（header 标题左侧按钮 + `[` / `]` 与 ← / → 快捷键）、
  * 弹窗左侧固定的标题目录 sidebar（文档内 h1–h4 目录，随弹窗高度拉伸、目录自身滚动，
  * 滚动正文时跟随高亮当前小节）、header 右侧的一排操作：复制文档的相对路径（调用方给路径）、
  * 筛选正文（口径由调用方给）、正文字号（跨篇记住的阅读偏好）、
@@ -17,7 +17,7 @@
  * - 正文字号按钮与弹层 → `prose-font-control`（状态在 `hooks/use-prose-font-scale`）
  * - header 右侧的操作与状态提示 → `header-actions`
  * - 编辑态状态机 → `hooks/use-note-editing`
- * - 翻篇快捷键 → `hooks/use-arrow-navigation`
+ * - 翻篇快捷键 → `hooks/use-navigation-shortcuts`
  */
 
 import { useCallback, useMemo, useRef, useState } from 'react';
@@ -38,7 +38,7 @@ import OutlineNav from './OutlineNav';
 import ProseFontControl from './ProseFontControl';
 import { HEADING_SELECTOR, REHYPE_PLUGINS, REMARK_PLUGINS } from './constants';
 import { useActiveHeadingIndex } from './hooks/useActiveHeadingIndex';
-import { useArrowNavigation } from './hooks/useArrowNavigation';
+import { useNavigationShortcuts } from './hooks/useNavigationShortcuts';
 import { useCloseRequest } from './hooks/useCloseRequest';
 import { useDocumentScrollReset } from './hooks/useDocumentScrollReset';
 import { useModalFullscreen } from './hooks/useModalFullscreen';
@@ -181,7 +181,7 @@ const MarkdownPreviewModal = ({
         }
       : action;
 
-  useArrowNavigation({
+  useNavigationShortcuts({
     enabled: opened && !editing.editing && !loading,
     onNext: withPanelsClosed(onNext),
     onPrevious: withPanelsClosed(onPrevious),
