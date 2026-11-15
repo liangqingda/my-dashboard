@@ -2,7 +2,13 @@
  * Markdown 预览弹窗的类型契约：调用方传什么、编辑器插槽收什么。
  */
 
-import type { ComponentType, ReactNode, Ref, RefObject } from 'react';
+import type {
+  ComponentType,
+  MouseEvent,
+  ReactNode,
+  Ref,
+  RefObject,
+} from 'react';
 
 import type {
   MarkdownOutlineHeading,
@@ -50,6 +56,9 @@ export type ProseFontControlProps = {
   onChange: (opened: boolean) => void;
 };
 
+/** header 的就近弹层：同一时刻只开一块 */
+export type PreviewPanel = 'anchor' | 'filter' | 'font';
+
 /** 预览弹窗标题栏的入参：翻篇、复制路径、筛选、刷新、全屏与编辑操作全在这一行 */
 export type TitleBarProps = {
   /** 文档标题（通常是文件名） */
@@ -58,10 +67,22 @@ export type TitleBarProps = {
   relativePath?: string;
   /** 当前位置；不传就不显示计数 */
   position?: { index: number; total: number };
-  /** 已经拼好的筛选按钮（图标 + 就近弹层）；不传就不显示 */
-  filterButton?: ReactNode;
-  /** 已经拼好的正文字号按钮（图标 + 就近弹层）；不传就不显示 */
-  fontControl?: ReactNode;
+  /** 预览态的内容筛选（按钮与就近弹层由标题栏渲染）；不传就没有筛选按钮 */
+  filter?: MarkdownPreviewFilter;
+  /** 正文字号的用户偏移（px） */
+  fontScale: ProseFontScale;
+  /** 同文档链接的点击行为：`jump` 跳过去，`modal` 弹窗打开那一块 */
+  anchorBehavior: AnchorLinkBehavior;
+  /** 换一种同文档链接的点击行为（跨篇记住） */
+  onAnchorBehaviorChange: (behavior: AnchorLinkBehavior) => void;
+  /** 文档里有没有同文档锚点链接：没有可点的链接，锚点按钮就不出 */
+  hasAnchorLinks: boolean;
+  /** 正文是否还在取：加载中收掉筛选、字号与锚点按钮（没有正文可读） */
+  loading: boolean;
+  /** 当前打开的 header 弹层：同一时刻只开一块 */
+  panel: PreviewPanel | null;
+  /** 打开 / 收起 header 弹层（点图标、点外部、Esc 都走到这里） */
+  onPanelChange: (panel: PreviewPanel | null) => void;
   /** 上一篇；null / 不传表示没有相邻文档 */
   onPrevious?: (() => void) | null;
   /** 下一篇；null / 不传表示没有相邻文档 */
@@ -155,6 +176,118 @@ export type MarkdownPreviewFilter = {
   apply: (markdown: string) => string;
   /** 弹层内容，由调用方给出筛选控件 */
   render: (props: MarkdownFilterRenderProps) => ReactNode;
+};
+
+/**
+ * 同文档锚点链接的点击行为：`jump` 在当前正文里滚过去，
+ * `modal` 把链接指向的那一节内容单独开窗预览。
+ */
+export type AnchorLinkBehavior = 'jump' | 'modal';
+
+/**
+ * 同文档锚点链接指向的一个内容区块：某一节标题下的全部内容。
+ *
+ * 子区域预览弹窗一次只看一块；「跳到 h2 就展示整个 h2 小节（含 h3）」这条
+ * 边界由 `collectAnchorBlocks` 算好，组件只负责渲染。
+ */
+export type MarkdownAnchorBlock = {
+  /** 锚点 id（链接里 `#` 之后的片段，不含 `#`）；同一节被多个链接指向时取第一条 */
+  anchor: string;
+  /** 区块标题（含行内标记已被剥掉的标题原文）；区块前面没有标题时为空串 */
+  title: string;
+  /** 标题层级 1–4；区块边界按它算（到下一个同级或更高级标题为止），没有标题时为 0 */
+  level: number;
+  /** 区块源文本（含标题行），直接交给渲染器 */
+  markdown: string;
+  /** 区块内的标题目录，给子区域预览弹窗的 sidebar 用 */
+  headings: MarkdownOutlineHeading[];
+  /** 区块首行在整篇里的行号：按它排正文顺序 */
+  startLine: number;
+};
+
+/** 「同文档链接打开方式」图标按钮的入参 */
+export type AnchorLinkControlProps = {
+  /** 当前点击行为 */
+  behavior: AnchorLinkBehavior;
+  /** 弹层是否打开 */
+  opened: boolean;
+  /** 弹层开合（点图标、点外部、Esc 都会走到这里） */
+  onChange: (opened: boolean) => void;
+  /** 选中的新行为；写存储归调用方 */
+  onBehaviorChange: (behavior: AnchorLinkBehavior) => void;
+};
+
+/** 子区域预览弹窗 header 的入参：前后切换、计数、区块标题与两项阅读操作 */
+export type AnchorBlockHeaderProps = {
+  /** 区块标题（取自它的标题行）；区块前面没有标题时是锚点 id */
+  title: string;
+  /** 当前是第几块 / 共几块；null 表示没有可切换的列表 */
+  position: { index: number; total: number } | null;
+  /** 前一块；null 表示到头 */
+  onPrevious: (() => void) | null;
+  /** 后一块；null 表示到头 */
+  onNext: (() => void) | null;
+  /** 已经拼好的正文字号按钮（图标 + 就近弹层） */
+  fontControl: ReactNode;
+  /** 是否全屏中 */
+  fullscreen: boolean;
+  /** 切换全屏 */
+  onToggleFullscreen: () => void;
+};
+
+/** 子区域预览弹窗的对外入参：弹窗只认「当前是哪一块」 */
+export type AnchorBlockModalProps = {
+  /** 要展示的区块；null 表示关着 */
+  block: MarkdownAnchorBlock | null;
+  /** 这一块在文档里的位置；null 表示没有列表 */
+  position: { index: number; total: number } | null;
+  /** 前一块；null 表示到头或没开 */
+  onPrevious: (() => void) | null;
+  /** 后一块；null 表示到头或没开 */
+  onNext: (() => void) | null;
+  /** 关闭子预览 */
+  onClose: () => void;
+};
+
+/** 子区域预览的装配入参：位置与边界都在这一层算 */
+export type AnchorBlockPreviewProps = {
+  /** 文档里被链接指向的区块，按正文顺序 */
+  blocks: MarkdownAnchorBlock[];
+  /** 当前打开第几块；null 表示关着 */
+  index: number | null;
+  /** 关闭子预览 */
+  onClose: () => void;
+  /** 换到第 index 块 */
+  onIndexChange: (index: number) => void;
+};
+
+/**
+ * 正文工作区的入参：目录 + 阅读 / 编辑区。
+ *
+ * 正文的渲染、筛选、目录与标题定位都由工作区自己算——它们只服务于「看这一篇」，
+ * 弹窗不必知道中间过程；弹窗只给原文、筛选口径和阅读偏好。
+ */
+export type PreviewWorkspaceProps = {
+  /** 要渲染的 Markdown：预览草稿时是草稿，其余时候是正文 */
+  markdown: string;
+  /** 正文是否还在取 */
+  loading: boolean;
+  /** 弹窗是否打开（没开就不跟踪滚动、也不复位） */
+  opened: boolean;
+  /** 文档标题：换篇时用它判断要不要把正文滚回顶部 */
+  title: string;
+  /** 全屏预览：目录全展开、正文放大 */
+  fullscreen: boolean;
+  /** 正文字号的用户偏移（px） */
+  fontOffset: number;
+  /** 预览态的内容筛选；不传或编辑态就不筛 */
+  filter?: MarkdownPreviewFilter;
+  /** 编辑态状态机：决定编辑区出不出、草稿预览时是否只隐藏 */
+  editing: NoteEditingState;
+  /** 这一类文档的定制编辑器；不传就没有编辑区 */
+  Editor?: ComponentType<MarkdownEditorProps>;
+  /** 正文里的点击（同文档链接在弹窗这一层接管） */
+  onBodyClick: (event: MouseEvent<HTMLElement>) => void;
 };
 
 /** header 操作组的入参：编辑 / 预览 / 保存 / 放弃改动与状态提示所需的状态 */

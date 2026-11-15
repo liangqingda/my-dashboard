@@ -5,6 +5,8 @@
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 
+import type { AnchorLinkBehavior } from './types';
+
 /** 「已保存」提示停留时长（毫秒） */
 export const SAVED_HINT_DURATION = 3000;
 
@@ -55,3 +57,18 @@ export const HEADING_SELECTOR = 'h1, h2, h3, h4';
 
 /** 判定「已滚到某个标题」的参考线：正文区顶边往下 16px 内的标题算作当前小节 */
 export const ACTIVE_HEADING_OFFSET = 16;
+
+/**
+ * 同文档锚点链接的点击行为放在 localStorage 的键：属于「怎么看链接」的阅读偏好，
+ * 换篇、关掉重开、刷新页面后都保持上次的样子。
+ */
+export const ANCHOR_LINK_STORAGE_KEY = 'my-dashboard:markdown-preview:anchor-link';
+
+/** 可选的两档行为：跳过去 / 弹窗打开那一块 */
+export const ANCHOR_LINK_BEHAVIORS: readonly AnchorLinkBehavior[] = [
+  'jump',
+  'modal',
+];
+
+/** 默认沿用原有行为：在当前正文里跳过去 */
+export const DEFAULT_ANCHOR_LINK_BEHAVIOR: AnchorLinkBehavior = 'jump';

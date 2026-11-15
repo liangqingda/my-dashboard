@@ -1,0 +1,67 @@
+/* 子区域预览弹窗的标题行：左侧切换 + 计数 + 区块标题，右侧字号与全屏 */
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding-inline-end: 10px;
+}
+
+/* 前后切换：与主预览的翻篇按钮同一档外观 */
+.stepButton {
+  flex: 0 0 auto;
+  color: var(--app-ink-faint);
+}
+
+.stepButton:hover {
+  color: var(--app-accent);
+}
+
+/* 计数紧跟在切换按钮右边 */
+.position {
+  flex: 0 0 auto;
+  min-width: 3.2em;
+  color: var(--app-ink-faint);
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * 区块标题：这一节的标题原文，比文件名轻一档——
+ * 它回答的是「现在在看哪一块」，不是「在看哪一篇」。
+ */
+.blockTitle {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--app-ink);
+  font-family: var(--app-serif);
+  font-size: 0.94rem;
+  line-height: 1.4;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 标题之后吃掉剩余空间，把字号与全屏顶到最右 */
+.titleGap {
+  flex: 1 1 auto;
+  min-width: 8px;
+}
+
+/* 右侧阅读操作：字号 + 全屏，组内间距沿用标题栏那一档 */
+.actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.fullscreenButton {
+  flex: 0 0 auto;
+  color: var(--app-ink-faint);
+}
+
+.fullscreenButton:hover {
+  color: var(--app-accent);
+}

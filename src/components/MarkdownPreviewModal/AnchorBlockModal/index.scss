@@ -1,0 +1,13 @@
+/*
+ * 子区域预览弹窗只加增量样式：框体、header、工作区与正文排版全部复用主预览的模块
+ * （见 index.tsx 里 `previewStyles` 的用法），这里只写这一个弹窗独有的部分。
+ */
+
+/*
+ * 框体比主预览矮一档：它开在主预览上面，留一道边就能看出「底下那篇还在」，
+ * 不至于把整屏盖成另一篇文档。全屏时由 `.contentFullscreen` 覆盖成整屏。
+ */
+.blockContent {
+  height: 74dvh;
+  max-height: 82dvh;
+}

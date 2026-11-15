@@ -16,10 +16,13 @@ import {
 } from '@tabler/icons-react';
 
 import CopyIconButton from '@/components/CopyIconButton';
+import FilterButton from '@/components/FilterButton';
 import { cx } from '@/utils/cx';
 
 import type { TitleBarProps } from '../types';
+import AnchorLinkControl from '../AnchorLinkControl';
 import PreviewHeaderActions from '../HeaderActions';
+import ProseFontControl from '../ProseFontControl';
 
 import styles from './index.scss';
 
@@ -29,17 +32,23 @@ const STEP_ICON_SIZE = 16;
 const ICON_STROKE = 1.9;
 
 const TitleBar = ({
+  anchorBehavior,
   canEdit,
   editing,
-  filterButton,
-  fontControl,
+  filter,
+  fontScale,
   fullscreen,
+  hasAnchorLinks,
+  loading,
   nextButtonRef,
+  onAnchorBehaviorChange,
   onNext,
+  onPanelChange,
   onPrevious,
   onRefresh,
   onStartEdit,
   onToggleFullscreen,
+  panel,
   position,
   previousButtonRef,
   refreshing,
@@ -104,10 +113,34 @@ const TitleBar = ({
               text={relativePath}
             />
           ) : null}
-          {/* 筛选正文：图标按钮 + 就近弹层，筛什么由调用方给 */}
-          {filterButton}
+          {/* 筛选正文：图标按钮 + 就近弹层，筛什么由调用方给；加载中没有正文可筛 */}
+          {filter && !loading ? (
+            <FilterButton
+              active={filter.active}
+              label="筛选正文"
+              onChange={(next) => onPanelChange(next ? 'filter' : null)}
+              opened={panel === 'filter'}
+            >
+              {filter.render({ close: () => onPanelChange(null) })}
+            </FilterButton>
+          ) : null}
           {/* 正文字号：图标按钮 + 就近弹层，调的是阅读偏好（跨篇记住） */}
-          {fontControl}
+          {loading ? null : (
+            <ProseFontControl
+              onChange={(next) => onPanelChange(next ? 'font' : null)}
+              opened={panel === 'font'}
+              scale={fontScale}
+            />
+          )}
+          {/* 同文档链接打开方式：图标按钮 + 就近弹层，值同样是跨篇记住的阅读偏好 */}
+          {hasAnchorLinks && !loading ? (
+            <AnchorLinkControl
+              behavior={anchorBehavior}
+              onBehaviorChange={onAnchorBehaviorChange}
+              onChange={(next) => onPanelChange(next ? 'anchor' : null)}
+              opened={panel === 'anchor'}
+            />
+          ) : null}
           {/* 刷新预览内容：正文从盘里读时才有效，编辑中刷了只会把草稿盖掉 */}
           {onRefresh ? (
             <Tooltip label="刷新预览内容" withArrow>

@@ -30,8 +30,16 @@ export type MarkdownOutlineNode = {
   children: MarkdownOutlineNode[];
 };
 
-/** 去掉标题里的内联 Markdown 标记，留住可读文本。 */
-const stripInlineMarkup = (text: string): string =>
+/**
+ * 去掉一行文本里的内联 Markdown 标记（以及行内的 HTML 标签），留住可读文本。
+ *
+ * 标题、链接的两个调用方（标题目录与锚点区块）共用这一份口径：
+ * 标题行里可能挂着 `<a id="…"></a>`，也可能带 `**`、反引号，两边算出来的标题要一模一样。
+ *
+ * @param text 原始标题文本
+ * @returns 纯文本；只剩标记时返回空串
+ */
+export const stripInlineMarkup = (text: string): string =>
   text
     .replace(/<\/?[^>]+>/g, '')
     .replace(/[*_`~]/g, '')
