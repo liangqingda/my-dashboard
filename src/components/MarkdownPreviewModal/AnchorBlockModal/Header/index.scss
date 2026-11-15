@@ -14,7 +14,19 @@
   color: var(--app-ink-faint);
 }
 
-.stepButton:hover {
+/*
+ * 到头那一侧（`disabled`）：Mantine 会给禁用的 ActionIcon 抹一层 `--mantine-color-disabled`
+ * 的灰底 + 描边，这一排图标按钮平时是透明的，突然多出一块底色，看着像「上一个被选中了」。
+ * 这里只留「变淡 + 不能点」，底色与描边都去掉。
+ */
+.stepButton:disabled {
+  border-color: transparent;
+  background: transparent;
+  color: var(--app-ink-faint);
+  opacity: 0.4;
+}
+
+.stepButton:not(:disabled):hover {
   color: var(--app-accent);
 }
 
