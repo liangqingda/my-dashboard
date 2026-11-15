@@ -251,6 +251,10 @@ export type AnchorBlockHeaderProps = {
   onNext: (() => void) | null;
   /** 已经拼好的正文字号按钮（图标 + 就近弹层） */
   fontControl: ReactNode;
+  /** 「前一块」按钮的 ref：按键切换时把焦点挪过去，焦点环落在这次走的方向上 */
+  previousButtonRef?: RefObject<HTMLButtonElement | null>;
+  /** 「后一块」按钮的 ref：同上 */
+  nextButtonRef?: RefObject<HTMLButtonElement | null>;
   /** 是否全屏中 */
   fullscreen: boolean;
   /** 切换全屏 */
@@ -261,6 +265,10 @@ export type AnchorBlockHeaderProps = {
 export type AnchorBlockModalProps = {
   /** 要展示的区块；null 表示关着 */
   block: MarkdownAnchorBlock | null;
+  /** 「前一块」按钮的 ref：透传给 header，按键切换时把焦点挪过去 */
+  previousButtonRef?: RefObject<HTMLButtonElement | null>;
+  /** 「后一块」按钮的 ref：同上 */
+  nextButtonRef?: RefObject<HTMLButtonElement | null>;
   /** 这一块在文档里的位置；null 表示没有列表 */
   position: { index: number; total: number } | null;
   /** 前一块；null 表示到头或没开 */

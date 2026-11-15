@@ -38,10 +38,12 @@ const NO_HEADINGS: MarkdownOutlineHeading[] = [];
 
 const AnchorBlockModal = ({
   block,
+  nextButtonRef,
   onClose,
   onNext,
   onPrevious,
   position,
+  previousButtonRef,
 }: AnchorBlockModalProps) => {
   const opened = block !== null;
   const bodyRef = useRef<HTMLElement | null>(null);
@@ -152,10 +154,12 @@ const AnchorBlockModal = ({
             />
           }
           fullscreen={fullscreen}
+          nextButtonRef={nextButtonRef}
           onNext={onNext}
           onPrevious={onPrevious}
           onToggleFullscreen={toggle}
           position={position}
+          previousButtonRef={previousButtonRef}
           title={title}
         />
       }
