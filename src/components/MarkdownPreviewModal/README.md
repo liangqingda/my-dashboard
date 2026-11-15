@@ -58,10 +58,11 @@ header 文档操作组里的筛选图标按钮（排在复制路径之后、刷�
 正文里的同文档链接（`href` 以 `#` 开头）有两种行为，由 header 文档操作组里的锚点图标按钮切换
 （排在正文字号之后、刷新之前），**值是跨篇、跨会话记住的阅读偏好**（`localStorage`，
 键见 `constants.ts` 的 `ANCHOR_LINK_STORAGE_KEY`；默认 `jump`，等于浏览器原行为）。
-弹层里就是一个 `Select`（宽 220，`allowDeselect: false`），点开按钮时下拉**已经聚焦并展开**
-（`autoFocus` + Mantine 默认的 `openOnFocus`），选一档就收起——少一次点击；
-下拉**不进门户**（`comboboxProps={{ withinPortal: false }}`）：门户里的列表在 popover 眼里算「外面」，
-点选项会先把弹层关掉、选择动作就丢了：
+弹层里是一组单选（`Radio.Group`，宽 220）：两档都是短句，一档就是一个点击动作，
+不用像下拉那样「先展开再选」。尺寸与对齐按弹层宽度收过：
+`size="xs"`（圆点 16px）、标签 13px / 行高 18px、圆点与文字水平居中
+（Mantine 的 body 默认 `align-items: stretch`，不写居中时圆点会贴顶、看起来比文字高）；
+弹层开着时切换档位不收起，点图标或点外面才关：
 
 | 行为 | 点了同文档链接 |
 | --- | --- |
