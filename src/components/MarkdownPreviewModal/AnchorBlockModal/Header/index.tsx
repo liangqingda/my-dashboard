@@ -25,12 +25,10 @@ const ICON_STROKE = 1.9;
 const AnchorBlockHeader = ({
   fontControl,
   fullscreen,
-  nextButtonRef,
   onNext,
   onPrevious,
   onToggleFullscreen,
   position,
-  previousButtonRef,
   title,
 }: AnchorBlockHeaderProps) => (
   <div className={styles.titleRow}>
@@ -39,7 +37,6 @@ const AnchorBlockHeader = ({
       className={styles.stepButton}
       disabled={!onPrevious}
       onClick={onPrevious ?? undefined}
-      ref={previousButtonRef}
       size="sm"
       variant="subtle"
     >
@@ -50,7 +47,6 @@ const AnchorBlockHeader = ({
       className={styles.stepButton}
       disabled={!onNext}
       onClick={onNext ?? undefined}
-      ref={nextButtonRef}
       size="sm"
       variant="subtle"
     >

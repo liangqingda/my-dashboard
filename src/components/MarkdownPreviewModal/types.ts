@@ -2,13 +2,7 @@
  * Markdown 预览弹窗的类型契约：调用方传什么、编辑器插槽收什么。
  */
 
-import type {
-  ComponentType,
-  MouseEvent,
-  ReactNode,
-  Ref,
-  RefObject,
-} from 'react';
+import type { ComponentType, MouseEvent, ReactNode } from 'react';
 
 import type {
   MarkdownOutlineHeading,
@@ -95,8 +89,6 @@ export type TitleBarProps = {
    * 翻篇按钮的 ref：快捷键翻篇时弹窗把焦点挪到对应那一侧的按钮上，
    * 焦点环就成了「这次往哪边走」的指示（否则焦点会停在弹窗打开时的第一个按钮上）。
    */
-  previousButtonRef?: Ref<HTMLButtonElement>;
-  nextButtonRef?: Ref<HTMLButtonElement>;
   /** 刷新正文；null 表示不提供（编辑中本来也不显示） */
   onRefresh?: (() => void) | null;
   /** 刷新按钮是否在 loading */
@@ -251,10 +243,6 @@ export type AnchorBlockHeaderProps = {
   onNext: (() => void) | null;
   /** 已经拼好的正文字号按钮（图标 + 就近弹层） */
   fontControl: ReactNode;
-  /** 「前一块」按钮的 ref：按键切换时把焦点挪过去，焦点环落在这次走的方向上 */
-  previousButtonRef?: RefObject<HTMLButtonElement | null>;
-  /** 「后一块」按钮的 ref：同上 */
-  nextButtonRef?: RefObject<HTMLButtonElement | null>;
   /** 是否全屏中 */
   fullscreen: boolean;
   /** 切换全屏 */
@@ -265,10 +253,6 @@ export type AnchorBlockHeaderProps = {
 export type AnchorBlockModalProps = {
   /** 要展示的区块；null 表示关着 */
   block: MarkdownAnchorBlock | null;
-  /** 「前一块」按钮的 ref：透传给 header，按键切换时把焦点挪过去 */
-  previousButtonRef?: RefObject<HTMLButtonElement | null>;
-  /** 「后一块」按钮的 ref：同上 */
-  nextButtonRef?: RefObject<HTMLButtonElement | null>;
   /** 这一块在文档里的位置；null 表示没有列表 */
   position: { index: number; total: number } | null;
   /** 前一块；null 表示到头或没开 */
@@ -505,14 +489,6 @@ export type StepNavigationParams = {
   onPrevious?: (() => void) | null;
   /** 下一篇动作；null / 不传表示没有相邻文档 */
   onNext?: (() => void) | null;
-};
-
-/** 翻篇导航交出的东西：两个按钮的 ref 交给标题栏挂载 */
-export type StepNavigationState = {
-  /** 上一篇按钮的 ref */
-  previousButtonRef: RefObject<HTMLButtonElement | null>;
-  /** 下一篇按钮的 ref */
-  nextButtonRef: RefObject<HTMLButtonElement | null>;
 };
 
 /** 关闭请求的入参：决定「照常关」还是「拦下来并提示」 */

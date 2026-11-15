@@ -10,8 +10,6 @@
  * 所以这两组键不会打架。
  */
 
-import { useRef } from 'react';
-
 import type { AnchorBlockPreviewProps } from '../types';
 import AnchorBlockModal from '../AnchorBlockModal';
 import { useNavigationShortcuts } from '../hooks/useNavigationShortcuts';
@@ -25,9 +23,6 @@ const AnchorBlockPreview = ({
   scope,
 }: AnchorBlockPreviewProps) => {
   const block = index !== null && index < blocks.length ? blocks[index] : null;
-  /** header 那两个切换按钮：按键切换时把焦点挪过去，焦点环落在这次走的方向上 */
-  const previousButtonRef = useRef<HTMLButtonElement | null>(null);
-  const nextButtonRef = useRef<HTMLButtonElement | null>(null);
   /** 这一轮能切到哪几块（下标）：`section` 口径只含同一处目录里的那几个链接 */
   const peers = block ? listAnchorBlockPeers(blocks, block.anchor, scope) : [];
   /** 当前块在这条列表里的位置；-1 表示没对上，按关着处理 */
@@ -36,34 +31,23 @@ const AnchorBlockPreview = ({
   const next =
     cursor >= 0 && cursor < peers.length - 1 ? peers[cursor + 1] : null;
 
-  /** 只在子预览开着时接管按键：关了就得把 `]` / → 还给底下的翻篇 */
+  /**
+   * 只在子预览开着时接管按键：关了就得把 `]` / → 还给底下的翻篇。
+   * 按键只切块、不把焦点挪到按钮上（焦点环全站关闭，见 `src/main.tsx`）。
+   */
   useNavigationShortcuts({
     enabled: block !== null,
-    onNext:
-      next === null
-        ? null
-        : () => {
-            nextButtonRef.current?.focus();
-            onIndexChange(next);
-          },
-    onPrevious:
-      previous === null
-        ? null
-        : () => {
-            previousButtonRef.current?.focus();
-            onIndexChange(previous);
-          },
+    onNext: next === null ? null : () => onIndexChange(next),
+    onPrevious: previous === null ? null : () => onIndexChange(previous),
   });
 
   return (
     <AnchorBlockModal
       block={block}
-      nextButtonRef={nextButtonRef}
       onClose={onClose}
       onNext={next === null ? null : () => onIndexChange(next)}
       onPrevious={previous === null ? null : () => onIndexChange(previous)}
       position={cursor < 0 ? null : { index: cursor + 1, total: peers.length }}
-      previousButtonRef={previousButtonRef}
     />
   );
 };

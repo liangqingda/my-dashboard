@@ -16,6 +16,13 @@ import '@/styles/global.scss';
 
 const theme = createTheme({
   defaultRadius: 'md',
+  /*
+   * 焦点环全站关掉：这个项目里按钮大多是「键盘快捷键也能触发」的图标按钮
+   * （md 预览的上一篇 / 下一篇、目录、全屏…），快捷键触发后按钮上再亮一圈主色焦点环，
+   * 看起来像是「刚才点的是这个按钮」。输入框的聚焦提示不靠这圈环——Mantine 用
+   * `--input-bd-focus` 换边框色，所以关掉环不影响「输入框正在输入」的可读性。
+   */
+  focusRing: 'never',
   fontFamily:
     'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
   fontFamilyMonospace:

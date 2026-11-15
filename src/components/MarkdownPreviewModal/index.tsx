@@ -45,7 +45,7 @@ import { useModalFullscreen } from './hooks/useModalFullscreen';
 import { useNoteEditing } from './hooks/useNoteEditing';
 import { useProseFontScale } from './hooks/useProseFontScale';
 import { useRefreshPreview } from './hooks/useRefreshPreview';
-import { useStepNavigation } from './hooks/useStepNavigation';
+import { useNavigationShortcuts } from './hooks/useNavigationShortcuts';
 
 import styles from './index.scss';
 
@@ -144,10 +144,14 @@ const MarkdownPreviewModal = ({
     withSideEffect(closeOverlays, action);
 
   /**
-   * 翻篇按钮的焦点与快捷键一起管：焦点落在对应那一侧，焦点环就是这次往哪边走。
-   * 子区域预览开着时停用：那时的 `]` / → 不该把底下那一篇偷偷换掉。
+   * 翻篇快捷键。子区域预览开着时停用：那时的 `]` / → 归子预览切块，
+   * 不该把底下那一篇偷偷换掉。
+   *
+   * 按键只执行动作、**不把焦点挪到按钮上**：键盘触发完按钮上再留一圈焦点环，
+   * 看着像「刚才点的是这个按钮」，还会改掉后面的 Tab 起点；全站也关了焦点环
+   * （`focusRing: 'never'`，见 `src/main.tsx`）。
    */
-  const { nextButtonRef, previousButtonRef } = useStepNavigation({
+  useNavigationShortcuts({
     enabled:
       opened && !editing.editing && !loading && anchorBlock.index === null,
     onNext: withPanelsClosed(onNext),
@@ -209,7 +213,6 @@ const MarkdownPreviewModal = ({
             fullscreen={fullscreen}
             hasAnchorLinks={anchorBlocks.length > 0}
             loading={loading}
-            nextButtonRef={nextButtonRef}
             onAnchorBehaviorChange={anchorLink.setBehavior}
             onAnchorScopeChange={anchorScope.setScope}
             onNext={withPanelsClosed(onNext)}
@@ -222,7 +225,6 @@ const MarkdownPreviewModal = ({
             onToggleFullscreen={toggleFullscreen}
             panel={panel}
             position={position}
-            previousButtonRef={previousButtonRef}
             refreshing={refreshing}
             relativePath={relativePath}
             title={title}
