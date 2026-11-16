@@ -229,10 +229,15 @@
   margin: 0;
 }
 
+/* 表格整体描一圈外框并收 8px 圆角：要圆角就不能用 collapse（合并边框不参与圆角裁剪），
+   改成 separate + 零间距，行与行之间仍是 1px 单线 */
 .prose table {
   width: 100%;
   margin: 0 0 14px;
-  border-collapse: collapse;
+  border: 1px solid var(--app-line);
+  border-radius: 8px;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: calc(0.78rem + var(--prose-grow) + var(--prose-extra));
   font-variant-numeric: tabular-nums;
 }
@@ -255,6 +260,15 @@
 
 .prose tbody tr:last-child td {
   border-bottom: 0;
+}
+
+/* 末行 hover 底色要跟着外框圆角收进去，否则两个角会戳出表格的圆弧 */
+.prose tbody tr:last-child td:first-child {
+  border-bottom-left-radius: 8px;
+}
+
+.prose tbody tr:last-child td:last-child {
+  border-bottom-right-radius: 8px;
 }
 
 .prose code {
