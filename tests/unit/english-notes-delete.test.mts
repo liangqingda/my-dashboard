@@ -1,228 +1,212 @@
 import assert from 'node:assert/strict';
-import {
-  mkdir,
-  mkdtemp,
-  readFile,
-  rm,
-  stat,
-  writeFile,
-} from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, it } from 'node:test';
 
-import { deleteLearningRecord } from '../../scripts/vite/english-notes-records.ts';
-import { deleteNote, noteRecordId } from '../../scripts/vite/english-notes-store.ts';
+import { deleteNote } from '../../scripts/vite/english-notes-delete.ts';
 
-/** 造一段带记录 ID 的笔记正文（只有删除要读的那一行） */
-const noteText = (id: string): string =>
+/**
+ * 造一个临时「记录仓库」，里面放一份假的删除脚本。
+ *
+ * 真脚本在 `../learn-english` 里，一跑就会真的改记录库，单测不能碰它；假脚本只回
+ * 指定的 stdout / stderr，用来测中间件这边的命令拼装与结果收敛。
+ */
+const makeRepo = async (body: string): Promise<string> => {
+  const repo = await mkdtemp(path.join(tmpdir(), 'my-dashboard-delete-'));
+  const script = path.join(
+    repo,
+    'learn-from-english',
+    'scripts',
+    'learning_records.py',
+  );
+
+  await mkdir(path.dirname(script), { recursive: true });
+  await writeFile(script, body, 'utf8');
+
+  return repo;
+};
+
+/** 一次删除的入参：仓库相对笔记路径（笔记目录 + 分类 + 文件名） */
+const NOTE = 'learning-record-notes/errors/errors-a.md';
+
+/** 一份正常的脚本输出 */
+const scriptPayload = (record: unknown, extra: object = {}): object => ({
+  note: 'learning-record-notes/errors/errors-a.md',
+  note_deleted: true,
+  record: record,
+  record_error: null,
+  record_id: 'errors:a',
+  ...extra,
+});
+
+/** 把 JS 值转成脚本里 `json.loads(...)` 能读的字面量（两侧都是 JSON 字符串） */
+const literal = (value: unknown): string => JSON.stringify(JSON.stringify(value));
+
+/** 假脚本：把给定对象打到 stdout */
+const printing = (payload: unknown): string =>
   [
-    '## 基础信息',
-    '',
-    '<table>',
-    `<tr><td>记录 ID / 试卷 ID</td><td>${id}</td></tr>`,
-    '</table>',
-    '',
-    '## 讲解',
+    'import json',
+    `payload = json.loads(${literal(payload)})`,
+    'print(json.dumps(payload))',
     '',
   ].join('\n');
 
-/** 建一个临时记录仓库 */
-const makeRepo = async (): Promise<string> =>
-  mkdtemp(path.join(tmpdir(), 'my-dashboard-delete-'));
+/** 假脚本：按 argparse 的写法报错并返回退出码 2 */
+const failing = (reason: string): string =>
+  [
+    'import sys',
+    'print("usage: learning_records.py [-h] ...", file=sys.stderr)',
+    `print("learning_records.py: error: ${reason}", file=sys.stderr)`,
+    'sys.exit(2)',
+    '',
+  ].join('\n');
 
-/** 写一份 JSON：与仓库脚本同一形态（缩进两格 + 结尾换行） */
-const writeJson = async (file: string, data: unknown): Promise<void> => {
-  await mkdir(path.dirname(file), { recursive: true });
-  await writeFile(file, `${JSON.stringify(data, null, 2)}\n`, 'utf8');
+/** 假脚本：直接往 stdout 写一段非 JSON */
+const garbage = (): string => ['print("<not json>")', ''].join('\n');
+
+/** 删掉临时仓库 */
+const cleanup = async (repo: string): Promise<void> => {
+  await rm(repo, { force: true, recursive: true });
 };
 
-/** 静默判断文件是否还在 */
-const exists = async (file: string): Promise<boolean> => {
-  try {
-    await stat(file);
-
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-/** 一份未掌握记录文件（对象形态） */
-const learningDatabase = (
-  records: Record<string, unknown>,
-  revision = 7,
-): Record<string, unknown> => ({
-  schema_version: 2,
-  revision,
-  category: 'errors',
-  records,
-});
-
-/** 一条最小可用记录 */
-const record = (id: string, title: string): Record<string, unknown> => ({
-  id,
-  category: 'errors',
-  key: id.slice(id.indexOf(':') + 1),
-  status: 'learning',
-  title,
-});
-
-describe('笔记的记录 ID', () => {
-  it('从正文基础信息表里取出来', () => {
-    assert.equal(noteRecordId(noteText('errors:a-b')), 'errors:a-b');
-  });
-
-  it('没有基础信息表时返回空串（这种笔记只有 md 可删）', () => {
-    assert.equal(noteRecordId('## 讲解\n\n没有基础信息表'), '');
-  });
-});
-
-describe('删除笔记 md', () => {
-  it('删掉源文件，并把记录 ID 交出来', async () => {
-    const repo = await makeRepo();
-    const file = path.join(
-      repo,
-      'learning-record-notes',
-      'errors',
-      'errors-a.md',
-    );
-
-    await mkdir(path.dirname(file), { recursive: true });
-    await writeFile(file, noteText('errors:a'), 'utf8');
-
-    try {
-      const deleted = await deleteNote(repo, 'errors/errors-a.md');
-
-      assert.equal(deleted.recordId, 'errors:a');
-      assert.equal(await exists(file), false);
-    } finally {
-      await rm(repo, { force: true, recursive: true });
-    }
-  });
-
-  it('路径不合法时直接拒绝，不碰别的文件', async () => {
-    const repo = await makeRepo();
-
-    try {
-      await assert.rejects(
-        deleteNote(repo, '../package.json'),
-        /这个文件不允许删除/u,
-      );
-    } finally {
-      await rm(repo, { force: true, recursive: true });
-    }
-  });
-
-  it('文件已经不在了时给出人话原因，而不是 ENOENT', async () => {
-    const repo = await makeRepo();
-
-    try {
-      await assert.rejects(
-        deleteNote(repo, 'errors/errors-gone.md'),
-        /这篇笔记已经不在了/u,
-      );
-    } finally {
-      await rm(repo, { force: true, recursive: true });
-    }
-  });
-});
-
-describe('删除学习记录', () => {
-  it('未掌握库是对象形态：只删这一条，revision 加一，别的记录不动', async () => {
-    const repo = await makeRepo();
-    const file = path.join(repo, 'learning-records', 'errors.json');
-
-    await writeJson(
-      file,
-      learningDatabase({
-        'errors:a': record('errors:a', 'a 的错题'),
-        'errors:b': record('errors:b', 'b 的错题'),
-      }),
+describe('删除笔记：调用记录仓库的脚本', () => {
+  it('正常删除时把记录与改动文件收敛出来', async () => {
+    const repo = await makeRepo(
+      printing(
+        scriptPayload({
+          category: 'errors',
+          file: 'learning-records/errors.json',
+          id: 'errors:a',
+          mastered: false,
+          status: 'learning',
+          title: 'a 的错题',
+        }),
+      ),
     );
 
     try {
-      const deleted = await deleteLearningRecord(repo, 'errors:a');
+      const deleted = await deleteNote(repo, NOTE);
 
       assert.deepEqual(deleted, {
-        file: 'learning-records/errors.json',
-        id: 'errors:a',
-        mastered: false,
+        record: {
+          file: 'learning-records/errors.json',
+          id: 'errors:a',
+          mastered: false,
+        },
       });
-
-      const saved = JSON.parse(await readFile(file, 'utf8')) as {
-        revision: number;
-        records: Record<string, unknown>;
-      };
-
-      assert.equal(saved.revision, 8);
-      assert.deepEqual(Object.keys(saved.records), ['errors:b']);
     } finally {
-      await rm(repo, { force: true, recursive: true });
+      await cleanup(repo);
     }
   });
 
-  it('未掌握库没有这条时去已掌握库：数组形态只少一条', async () => {
-    const repo = await makeRepo();
-
-    await writeJson(
-      path.join(repo, 'learning-records', 'errors.json'),
-      learningDatabase({ 'errors:other': record('errors:other', '别的错题') }),
+  it('记录没删成时把原因原样带回，record 为 null', async () => {
+    const repo = await makeRepo(
+      printing(
+        scriptPayload(null, {
+          record_error:
+            '记录 ID 与笔记文件不一致，已保留记录只删笔记：errors:other',
+        }),
+      ),
     );
-    await writeJson(
-      path.join(repo, 'mastered-learning-records', 'errors.json'),
+
+    try {
+      const deleted = await deleteNote(repo, NOTE);
+
+      assert.equal(deleted.record, null);
+      assert.match(deleted.recordError ?? '', /记录 ID 与笔记文件不一致/u);
+    } finally {
+      await cleanup(repo);
+    }
+  });
+
+  it('笔记路径按笔记目录拼成仓库相对路径再交给脚本', async () => {
+    const expected = [
+      'delete-note',
+      '--note',
+      'learning-record-notes/errors/errors-a.md',
+    ];
+    // 假脚本自己核对参数：拼错了就退出 2，测试里会看到那条说明
+    const expectedArgv = literal(expected);
+    const probePayload = literal(scriptPayload(null, { record_id: '' }));
+    const repo = await makeRepo(
       [
-        { id: 'errors:a', title: 'a 的错题', mastered_at: '2026-07-30T16:43:44+08:00' },
-        { id: 'errors:b', title: 'b 的错题', mastered_at: '2026-07-31T16:43:44+08:00' },
-      ],
+        'import json',
+        'import sys',
+        `expected = json.loads(${expectedArgv})`,
+        'if sys.argv[1:] != expected:',
+        '    print("learning_records.py: error: bad argv " + str(sys.argv[1:]), file=sys.stderr)',
+        '    sys.exit(2)',
+        `payload = json.loads(${probePayload})`,
+        'print(json.dumps(payload))',
+        '',
+      ].join('\n'),
     );
 
     try {
-      const deleted = await deleteLearningRecord(repo, 'errors:a');
+      const deleted = await deleteNote(repo, NOTE);
 
-      assert.deepEqual(deleted, {
-        file: 'mastered-learning-records/errors.json',
-        id: 'errors:a',
-        mastered: true,
-      });
+      assert.equal(deleted.record, null);
+    } finally {
+      await cleanup(repo);
+    }
+  });
 
-      const saved = JSON.parse(
-        await readFile(path.join(repo, 'mastered-learning-records', 'errors.json'), 'utf8'),
-      ) as { id: string }[];
+  it('脚本报错时把 stderr 最后一行的原因翻成一句话', async () => {
+    const repo = await makeRepo(
+      failing('note does not exist: errors/errors-a.md'),
+    );
 
-      // 数组形态写回时仍是数组，只少这一条
-      assert.deepEqual(
-        saved.map((item) => item.id),
-        ['errors:b'],
+    try {
+      await assert.rejects(
+        deleteNote(repo, NOTE),
+        /note does not exist: errors\/errors-a\.md/u,
       );
     } finally {
-      await rm(repo, { force: true, recursive: true });
+      await cleanup(repo);
     }
   });
 
-  it('两处都没有这条记录时返回 null，文件一个字节都不改', async () => {
-    const repo = await makeRepo();
-    const file = path.join(repo, 'learning-records', 'errors.json');
-    const before = `${JSON.stringify(learningDatabase({ 'errors:b': record('errors:b', 'b') }), null, 2)}\n`;
-
-    await writeJson(file, learningDatabase({ 'errors:b': record('errors:b', 'b') }));
+  it('脚本没确认删除时按失败处理', async () => {
+    const repo = await makeRepo(
+      printing(scriptPayload(null, { note_deleted: false })),
+    );
 
     try {
-      assert.equal(await deleteLearningRecord(repo, 'errors:missing'), null);
-      assert.equal(await readFile(file, 'utf8'), before);
+      await assert.rejects(
+        deleteNote(repo, NOTE),
+        /没有确认这次删除/u,
+      );
     } finally {
-      await rm(repo, { force: true, recursive: true });
+      await cleanup(repo);
     }
   });
 
-  it('分类前缀不合法时不去碰任何文件', async () => {
-    const repo = await makeRepo();
+  it('stdout 不是 JSON 时不当成成功', async () => {
+    const repo = await makeRepo(garbage());
 
     try {
-      assert.equal(await deleteLearningRecord(repo, '../errors:a'), null);
-      assert.equal(await deleteLearningRecord(repo, 'a'), null);
+      await assert.rejects(
+        deleteNote(repo, NOTE),
+        /没有返回可读的结果/u,
+      );
     } finally {
-      await rm(repo, { force: true, recursive: true });
+      await cleanup(repo);
+    }
+  });
+
+  it('记录删掉了却没回文件路径时按失败处理，不静默少提交一份文件', async () => {
+    const repo = await makeRepo(
+      printing(scriptPayload({ id: 'errors:a', status: 'mastered' })),
+    );
+
+    try {
+      await assert.rejects(
+        deleteNote(repo, NOTE),
+        /没有告诉改的是哪份文件/u,
+      );
+    } finally {
+      await cleanup(repo);
     }
   });
 });

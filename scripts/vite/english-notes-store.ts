@@ -2,7 +2,7 @@
  * learn-english 笔记目录的读写：只认 Markdown 文件，写操作必须留在笔记目录内。
  */
 
-import { readFile, readdir, stat, unlink, writeFile } from 'node:fs/promises';
+import { readFile, readdir, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import type { Dirent } from 'node:fs';
@@ -79,7 +79,7 @@ export const readNote = async (
   let file: string;
 
   try {
-    file = resolveNoteFile(repoDir, name);
+    file = resolveNoteFile(repoDir, name, '读取');
   } catch {
     return null;
   }
@@ -211,8 +211,6 @@ export const noteTopic = (content: string): string =>
   readCell(NOTE_TOPIC_PATTERN, content);
 
 /** 笔记的记录 ID（正文基础信息表里的 `errors:xxx`），取不到返回空串 */
-export const noteRecordId = (content: string): string =>
-  readCell(RECORD_ID_PATTERN, content);
 
 /** 列表用的笔记摘要：不带正文，只带页面要展示与排序的字段 */
 export type NoteSummary = {
@@ -373,40 +371,4 @@ export const writeNote = async (
   const info = await stat(file);
 
   return { updatedAt: info.mtime.toISOString() };
-};
-
-/** 删掉一篇笔记后拿到的东西：记录 ID 交给记录库那边继续删 */
-export type DeletedNote = {
-  /** 这一篇对应的记录 ID；正文没有基础信息表时为空串（那时只有 md 可删） */
-  recordId: string;
-};
-
-/**
- * 删除笔记的源文件。
- *
- * 只删 md：学习记录（`learning-records` / `mastered-learning-records`）按记录 ID
- * 交给 `english-notes-records.ts` 另删，提交与推送见 `english-notes-commit.ts`——
- * 三件事各自出错时互不掩盖，页面能说清「md 删了、记录没找到」这种中间状态。
- */
-export const deleteNote = async (
-  repoDir: string,
-  name: string,
-): Promise<DeletedNote> => {
-  const file = resolveNoteFile(repoDir, name, '删除');
-
-  let content: string;
-
-  try {
-    content = await readFile(file, 'utf8');
-  } catch {
-    throw new Error('这篇笔记已经不在了');
-  }
-
-  try {
-    await unlink(file);
-  } catch {
-    throw new Error('删除笔记失败，文件可能被其它程序占用');
-  }
-
-  return { recordId: noteRecordId(content) };
 };

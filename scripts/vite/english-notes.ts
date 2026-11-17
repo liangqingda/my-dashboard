@@ -4,11 +4,10 @@ import type { IncomingMessage as HttpRequest } from 'node:http';
 import type { Plugin } from 'vite';
 
 import { commitNote, commitNoteDeletion } from './english-notes-commit.js';
-import { deleteLearningRecord } from './english-notes-records.js';
-import type { DeletedRecord } from './english-notes-records.js';
+import { deleteNote } from './english-notes-delete.js';
 import {
+  NOTES_DIR,
   collectNoteSummaries,
-  deleteNote,
   readCategoryConfig,
   readNote,
   toNoteDetail,
@@ -207,20 +206,12 @@ export const englishNotes = (root: string): Plugin => {
               throw new Error('缺少文件名');
             }
 
-            const { recordId } = await deleteNote(repoDir, name);
-            // 记录可能落在未掌握库或已掌握库，也可能这篇笔记本来就没有记录
-            let record: DeletedRecord | null = null;
-            let recordError: string | null = null;
-
-            try {
-              record = recordId
-                ? await deleteLearningRecord(repoDir, recordId)
-                : null;
-            } catch (error) {
-              // 记录删失败不掩盖 md 已删的事实，原样带回原因
-              recordError =
-                error instanceof Error ? error.message : '学习记录删除失败';
-            }
+            // md 与它的记录都由记录仓库的脚本删：这里只负责让它跑起来、
+            // 再把「记录删没删」原样带回页面，不自己碰记录 JSON
+            const { record, recordError } = await deleteNote(
+              repoDir,
+              `${NOTES_DIR}/${name}`,
+            );
 
             const commit = await commitNoteDeletion(
               repoDir,

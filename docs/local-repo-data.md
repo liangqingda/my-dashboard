@@ -11,7 +11,7 @@
 | --- | --- |
 | `scripts/vite/english-notes.ts` | 路由壳：只做请求解析与响应 |
 | `scripts/vite/english-notes-store.ts` | 读写与校验：落盘、结构校验、文件名合法性、读分类清单 |
-| `scripts/vite/english-notes-records.ts` | 学习记录的删除：`learning-records` / `mastered-learning-records` 里那一条 |
+| `scripts/vite/english-notes-delete.ts` | 删除一篇笔记：跑记录仓库的 `learning_records.py delete-note`，把它的结果收敛成页面要的形状 |
 | `scripts/vite/english-notes-commit.ts` | 自动提交：把这一次改动提交到 `../learn-english`（删除流程提交后还会推送） |
 
 ## 分类清单不在本项目
@@ -72,20 +72,26 @@
    `docs(notes): 手动编辑 <文件名去扩展名>` + 固定正文「通过 my-dashboard 的 Markdown 预览弹窗保存」；
 4. 内容无变化时不产生空提交；提交失败不阻断保存，原因回传到 header 的保存状态提示（红色文案）。
 
-## 删除一篇笔记：md + 学习记录一起删，删完提交并推送
+## 删除一篇笔记：调记录仓库的脚本，再提交并推送
 
 `DELETE /api/english/notes?name=…`（仅开发模式，前端只在 `import.meta.env.DEV` 里给入口）。
-一次删除是三件独立的事，**各自失败互不掩盖**，结果原样回传前端：
 
-| 步骤 | 做什么 | 失败时 |
+md 与它的学习记录两半都在记录仓库里，所以**删除动作交给记录仓库自己的脚本**
+（`python3 learn-from-english/scripts/learning_records.py delete-note --note learning-record-notes/<name>`，
+cwd 是记录仓库根目录）。本项目不实现删除，只做三件事：
+
+| 步骤 | 谁做 | 失败时 |
 | --- | --- | --- |
-| 1 | 校验路径后删 `learning-record-notes/<category>/<file>.md` | 抛错，后面两步不执行 |
-| 2 | 从正文基础信息表的「记录 ID」取 `<category>:<slug>`，去 `learning-records/<category>.json` 取不到再找 `mastered-learning-records/<category>.json`，只删这一条 | 找不到记录不算失败：md 已删，只回「没有找到对应的学习记录」；写盘失败也只回原因（`recordError`），不挡第 3 步 |
-| 3 | `git add` 这两个文件 → `git commit`（`docs(notes): 删除 <文件名去扩展名>`）→ `git push` | 提交 / 推送失败不阻断删除，原因回传前端 |
+| 1 | `english-notes-delete.ts` 拼命令、跑脚本、把 stdout 的 JSON 收敛成 `{ recordId, record, recordError }` | 抛错给前端，后面不执行；脚本报错原因取 stderr 最后一行（`... error: <原因>`） |
+| 2 | 脚本自己：校验路径 → 删 md → 按正文「记录 ID」删那条记录 | md 已删、记录没删成时脚本回 `record_error` 而不是退出，本项目原样带给页面（`recordError`） |
+| 3 | `english-notes-commit.ts`：`git add` 这次改的两个文件 → `git commit`（`docs(notes): 删除 <文件名去扩展名>`）→ `git push` | 提交 / 推送失败不阻断删除，原因回传前端 |
 
-- **记录文件按读到的原形态写回**：未掌握库是 `{ schema_version, revision, category, records: { <id>: … } }`，
-  删一条后 `revision` 加一（与 `learning_records_tool/store.py` 的写入口径一致）；已掌握库旧文件是记录数组、
-  新文件与上面同形，数组仍是数组、对象仍是对象，只删这一条，不替源仓库重排整份文件；
+- **为什么不在本项目改记录 JSON**：记录写入有它自己的规矩（文件锁、`revision` 加一、未掌握 / 已掌握
+  拆分、原子替换），复制一份写回逻辑必然和源仓库漂移；脚本是源仓库唯一允许改 `learning-records/*.json`
+  的口子。契约（输出字段、路径校验、错 ID 不误删别人知识点）写在源仓库 `README.md` 的
+  「删除记录与笔记」；
+- **只提交脚本报出来的那份记录文件**：`record.file` 由脚本给（`learning-records/<category>.json` 或
+  `mastered-learning-records/<category>.json`），本项目不再自己判断记录落在哪一侧；
 - **推送只在删除流程里做**：手动保存仍旧只提交、不替用户推；删除一次改动 md 与记录两处，删完推上去远端
   才不会留着一篇已经不存在的笔记。没配上游分支时跳过推送并说明原因，不算失败；
 - **前端只拿到「记录删没删 / 提交 hash / 推送失败原因」**，据此给一条提示（已删除 + 已提交 + 是否推送成功），
