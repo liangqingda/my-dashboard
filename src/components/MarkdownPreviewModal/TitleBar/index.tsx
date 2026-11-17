@@ -177,9 +177,13 @@ const TitleBar = ({
               )}
             </ActionIcon>
           </Tooltip>
-          {/* 删除这篇文档：调用方给了删除能力才出；日常与同排图标同色，红色只留给确认层的删除按钮 */}
+          {/* 删除这篇文档：调用方给了删除能力才出；常态与 hover 都不变色，红色只留给确认层的删除按钮 */}
           {onRemove ? (
-            <HeaderIconAction label="删除这篇文档" onClick={onRemove}>
+            <HeaderIconAction
+              label="删除这篇文档"
+              onClick={onRemove}
+              tone="plain"
+            >
               <IconTrash size={ICON_SIZE} stroke={ICON_STROKE} />
             </HeaderIconAction>
           ) : null}
