@@ -8,6 +8,7 @@ import { deleteNote } from './english-notes-delete.js';
 import {
   NOTES_DIR,
   collectNoteSummaries,
+  isNoteName,
   readCategoryConfig,
   readNote,
   toNoteDetail,
@@ -26,6 +27,35 @@ export const NOTES_BODY_DIR = 'english-notes';
 /** 判断解析后的 JSON 是不是普通对象 */
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
+
+/**
+ * 把删除失败的原因翻成页面能直接显示的一句话。
+ *
+ * 删除动作在记录仓库的脚本里，它报错是英文（argparse 的原文）；这里按原因归类，
+ * 认得出的一律给中文，认不出的保留原文并加前缀，不把英文句子直接丢给用户。
+ */
+const deleteFailureMessage = (error: unknown): string => {
+  const message = error instanceof Error ? error.message : '';
+
+  // 本项目自己抛的原因本来就是中文，原样给出去
+  if (/^[\u4e00-\u9fa5]/u.test(message)) {
+    return message;
+  }
+
+  if (/^note does not exist/u.test(message)) {
+    return '这篇笔记已经不在了';
+  }
+
+  if (/^cannot read note categories/u.test(message)) {
+    return '读不到笔记分类清单，已拒绝删除';
+  }
+
+  if (/^note (must|directory|file name)/u.test(message)) {
+    return '这个文件不允许删除';
+  }
+
+  return message ? `删除失败：${message}` : '删除英语笔记失败';
+};
 
 /** 读取请求体并解析为 JSON，超过 1 MB 直接拒绝 */
 const readJsonBody = async (req: HttpRequest): Promise<unknown> => {
@@ -206,6 +236,12 @@ export const englishNotes = (root: string): Plugin => {
               throw new Error('缺少文件名');
             }
 
+            // 名字先在本项目按笔记路径规则过一遍：脚本也会再校验，但那一步
+            // 要起进程才能拿到结果，明显不合法的请求没必要跑一趟
+            if (!isNoteName(name)) {
+              throw new Error('这个文件不允许删除');
+            }
+
             // md 与它的记录都由记录仓库的脚本删：这里只负责让它跑起来、
             // 再把「记录删没删」原样带回页面，不自己碰记录 JSON
             const { record, recordError } = await deleteNote(
@@ -222,12 +258,7 @@ export const englishNotes = (root: string): Plugin => {
             res.end(JSON.stringify({ commit, name, record, recordError }));
           } catch (error) {
             res.statusCode = 400;
-            res.end(
-              JSON.stringify({
-                message:
-                  error instanceof Error ? error.message : '删除英语笔记失败',
-              }),
-            );
+            res.end(JSON.stringify({ message: deleteFailureMessage(error) }));
           }
 
           return;

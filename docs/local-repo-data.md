@@ -82,7 +82,7 @@ cwd 是记录仓库根目录）。本项目不实现删除，只做三件事：
 
 | 步骤 | 谁做 | 失败时 |
 | --- | --- | --- |
-| 1 | `english-notes-delete.ts` 拼命令、跑脚本、把 stdout 的 JSON 收敛成 `{ recordId, record, recordError }` | 抛错给前端，后面不执行；脚本报错原因取 stderr 最后一行（`... error: <原因>`） |
+| 1 | 先按笔记路径规则校验 `name`（`isNoteName`），再由 `english-notes-delete.ts` 拼命令、跑脚本（上限 30s）、把 stdout 的 JSON 收敛成 `{ record, recordError }` 并核对脚本回显的路径 | 抛错给前端，后面不执行；路由把原因翻成中文（脚本原文是英文）；脚本卡在 `.records.lock` 上超时会被掐断并提示稍后重试 |
 | 2 | 脚本自己：校验路径 → 删 md → 按正文「记录 ID」删那条记录 | md 已删、记录没删成时脚本回 `record_error` 而不是退出，本项目原样带给页面（`recordError`） |
 | 3 | `english-notes-commit.ts`：`git add` 这次改的两个文件 → `git commit`（`docs(notes): 删除 <文件名去扩展名>`）→ `git push` | 提交 / 推送失败不阻断删除，原因回传前端 |
 
@@ -96,7 +96,10 @@ cwd 是记录仓库根目录）。本项目不实现删除，只做三件事：
   才不会留着一篇已经不存在的笔记。没配上游分支时跳过推送并说明原因，不算失败；
 - **前端只拿到「记录删没删 / 提交 hash / 推送失败原因」**，据此给一条提示（已删除 + 已提交 + 是否推送成功），
   不把中间状态改成一句「已删除」；
-- 提交带 pathspec，只提交这次删掉的两个文件，不捎上仓库里其它预暂存改动。
+- 提交带 pathspec，只提交这次删掉的两个文件，不捎上仓库里其它预暂存改动；
+- **失败原因要说中文**：脚本用 argparse 报错（`note does not exist: …` / `cannot read note categories …`），
+  `deleteFailureMessage` 按原因归类成「这篇笔记已经不在了」「读不到笔记分类清单，已拒绝删除」等，
+  认不出的保留原文并加「删除失败：」前缀，不把英文句子直接丢给页面。
 
 ## 笔记内容出问题：改源头 md，不在预览层打补丁
 

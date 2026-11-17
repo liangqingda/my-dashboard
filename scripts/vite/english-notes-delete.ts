@@ -18,6 +18,14 @@ const runPython = promisify(execFile);
 /** 记录仓库里那个删除脚本的相对路径 */
 const DELETE_SCRIPT = 'learn-from-english/scripts/learning_records.py';
 
+/**
+ * 脚本最长跑多久。
+ *
+ * 脚本要抢记录库的 `.records.lock`：另一个进程（复习写入）持锁时它会一直等，
+ * 不设上限的话这个 HTTP 请求就跟着一起挂住，页面只会看到一个转不完的圈。
+ */
+const SCRIPT_TIMEOUT_MS = 30_000;
+
 /** 删除结果里的记录：删到一条才有，没删到（本来就没有）为 null */
 export type DeletedRecordInfo = {
   /** 记录 ID，如 `errors:a-few-kinds-of-food-plural` */
@@ -47,6 +55,11 @@ const isObject = (value: unknown): value is Record<string, unknown> =>
  * 取不到就退回 Node 自己的错误（例如机器上没有 python3）。
  */
 const scriptError = (error: unknown): string => {
+  // 超时不是脚本自己报的错：stderr 可能是空的，先说清是被谁掐断的
+  if (isObject(error) && error.killed === true) {
+    return '删除脚本超时（记录库可能正被其它操作占用），请稍后重试';
+  }
+
   const stderr =
     isObject(error) && typeof error.stderr === 'string' ? error.stderr : '';
 
@@ -63,7 +76,7 @@ const scriptError = (error: unknown): string => {
 };
 
 /** 收敛脚本 stdout 的 JSON；认不出的结果按失败处理，不猜「应该成功了」 */
-const parseDeletedNote = (stdout: string): DeletedNote => {
+const parseDeletedNote = (note: string, stdout: string): DeletedNote => {
   let payload: unknown;
 
   try {
@@ -74,6 +87,11 @@ const parseDeletedNote = (stdout: string): DeletedNote => {
 
   if (!isObject(payload) || payload.note_deleted !== true) {
     throw new Error('删除脚本没有确认这次删除');
+  }
+
+  // 脚本会把它实际删掉的路径回显一遍：对不上说明删的不是我们要求的那个文件
+  if (typeof payload.note === 'string' && payload.note !== note) {
+    throw new Error('删除脚本报告的路径与请求不一致');
   }
 
   const rawRecord = isObject(payload.record) ? payload.record : null;
@@ -102,7 +120,8 @@ const parseDeletedNote = (stdout: string): DeletedNote => {
  * @param repoDir 记录仓库根目录
  * @param note 笔记相对仓库根目录的路径，如 `learning-record-notes/errors/errors-a.md`
  * @returns md 已删的结果，附带记录删没删 / 没删成的原因
- * @throws 路径不合法、笔记不存在、脚本不可用、记录库损坏时抛错（md 可能已经删了）
+ * @throws 路径不合法、笔记不存在、脚本不可用、超时：这类失败发生在删文件之前，md 还在；
+ *   只有脚本删完 md 之后写记录时崩掉（极少见）才会出现「抛错但 md 已删」
  */
 export const deleteNote = async (
   repoDir: string,
@@ -114,11 +133,11 @@ export const deleteNote = async (
     ({ stdout } = await runPython(
       'python3',
       [DELETE_SCRIPT, 'delete-note', '--note', note],
-      { cwd: repoDir },
+      { cwd: repoDir, timeout: SCRIPT_TIMEOUT_MS },
     ));
   } catch (error) {
     throw new Error(scriptError(error));
   }
 
-  return parseDeletedNote(stdout);
+  return parseDeletedNote(note, stdout);
 };

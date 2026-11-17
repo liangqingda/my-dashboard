@@ -182,6 +182,23 @@ describe('删除笔记：调用记录仓库的脚本', () => {
     }
   });
 
+  it('脚本回显的路径与请求不一致时不当成成功', async () => {
+    const repo = await makeRepo(
+      printing(
+        scriptPayload(null, { note: 'learning-record-notes/errors/errors-b.md' }),
+      ),
+    );
+
+    try {
+      await assert.rejects(
+        deleteNote(repo, NOTE),
+        /报告的路径与请求不一致/u,
+      );
+    } finally {
+      await cleanup(repo);
+    }
+  });
+
   it('stdout 不是 JSON 时不当成成功', async () => {
     const repo = await makeRepo(garbage());
 
