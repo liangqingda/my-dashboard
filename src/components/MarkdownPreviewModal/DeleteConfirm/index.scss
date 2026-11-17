@@ -1,5 +1,5 @@
 /*
- * 删除确认层：分三段——标题区（危险语气图标 + 标题 + 被删文档的路径）、说明块、收口行。
+ * 删除确认层：只有两段——标题区（标题 + 被删文档的路径）与说明块，按钮收在最后一行。
  * 路径不塞进标题里：文件名一长就会把「？」挤到下一行，独立成一行 monospace 更好读。
  */
 
@@ -33,35 +33,11 @@
   padding: 14px 20px 18px;
 }
 
-.head {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-/* 危险语气图标：软红底 + 红图标，比一上来就是纯红实底克制 */
-.badge {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  background: var(--app-status-danger-soft);
-  color: var(--app-status-danger);
-}
-
-.headText {
-  min-width: 0;
-  padding-top: 1px;
-}
-
 /*
- * 标题与路径的颜色、字号写在这里，选择器带上父级（`.headText`）：
+ * 标题与路径的字号 / 行高写在这里，选择器带上 `.content .title` 前缀：
  * Mantine 的 Text 用自己的类把字号 / 行高写在元素上，同权重的单类名会被它的加载顺序左右。
  */
-.headText .headTitle {
+.content .title .headTitle {
   color: var(--app-ink);
   font-size: 15px;
   font-weight: 600;
@@ -69,7 +45,7 @@
 }
 
 /* 路径：monospace + 弱色，长路径按任意位置折行，不会撑破标题块 */
-.headText .headPath {
+.content .title .headPath {
   color: var(--app-ink-faint);
   font-family: var(--mantine-font-family-monospace);
   font-size: 12px;
@@ -91,19 +67,11 @@
   line-height: 1.75;
 }
 
-/* 收口行：一条细线把「读」和「做」分开，左侧 Esc 提示，右侧两个按钮 */
+/* 收口行：一条细线把「读」和「做」分开，按钮靠右收在最后一行 */
 .footer {
   margin-top: 16px;
   padding-top: 14px;
   border-top: 1px solid var(--app-line);
-}
-
-.hint {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--app-ink-faint);
-  font-size: 12px;
 }
 
 /*
