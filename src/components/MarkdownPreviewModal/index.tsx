@@ -7,7 +7,8 @@
  * 滚动正文时跟随高亮当前小节）、header 右侧的一排操作：复制文档的相对路径（调用方给路径）、
  * 筛选正文（口径由调用方给）、正文字号（跨篇记住的阅读偏好）、同文档锚点链接的打开方式、
  * 全屏预览（把整个框体铺满视口放大阅读空间，再点一次切回常规）、
- * 删除这篇文档（调用方给二次确认说明与删除动作，点一下先问一遍）
+ * 删除这篇文档（调用方给二次确认说明与删除动作，点一下先问一遍；
+ * 预览态按 Delete / Backspace 同样唤出这一层确认，不会一按就删）
  * 与编辑 / 预览 / 保存 / 放弃改动，全部只留图标 + tooltip。
  * 组件只负责编辑态与保存流程，不知道文档结构和文件落在哪里：
  * 具体怎么编辑由调用方通过 `Editor` 插槽传入，没有定制编辑器时给出定制提示。
@@ -48,6 +49,7 @@ import { useNoteEditing } from './hooks/useNoteEditing';
 import { useProseFontScale } from './hooks/useProseFontScale';
 import { useRefreshPreview } from './hooks/useRefreshPreview';
 import { useRemoveRequest } from './hooks/useRemoveRequest';
+import { useRemoveShortcut } from './hooks/useRemoveShortcut';
 import { useNavigationShortcuts } from './hooks/useNavigationShortcuts';
 
 import styles from './index.scss';
@@ -167,6 +169,25 @@ const MarkdownPreviewModal = ({
       opened && !editing.editing && !loading && anchorBlock.index === null,
     onNext: withPanelsClosed(onNext),
     onPrevious: withPanelsClosed(onPrevious),
+  });
+
+  /**
+   * 删除快捷键：预览态按 Delete / Backspace 打开二次确认层，与点 header 那个垃圾桶走同一条路。
+   *
+   * 只在「真的能删」的时候响应：有删除能力、非编辑态、正文已就位，
+   * 且 header 弹层、子区域预览、确认层都没开着——那些层开着时键盘属于它们。
+   */
+  useRemoveShortcut({
+    enabled:
+      opened &&
+      remove !== undefined &&
+      !editing.editing &&
+      !loading &&
+      panel === null &&
+      anchorBlock.index === null &&
+      !removal.confirming,
+    // `request` 本身非空（enabled 已经要求传了 remove），`withPanelsClosed` 的联合返回在这里收窄回动作
+    onRequest: () => withPanelsClosed(removal.request)?.(),
   });
 
   /** 进入编辑时清掉弹层与子区域预览：新的一轮不该还亮着上一轮的位置 */

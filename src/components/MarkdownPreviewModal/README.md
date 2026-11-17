@@ -26,7 +26,7 @@
 | `onSave` | `(markdown: string) => Promise<{ notice?: string }>`（可选） | 提供后才出现「编辑」；落盘由调用方实现，抛错则显示为保存失败，返回的 `notice` 追加在「已保存」提示后 |
 | `Editor` | `ComponentType<MarkdownEditorProps>`（可选） | 这一类文档的定制编辑器；不传则点「编辑」只给定制提示 |
 | `filter` | `MarkdownPreviewFilter`（可选） | 预览态的内容筛选槽：传了才出现 header 的筛选图标按钮与就近弹层；筛什么、怎么持久化由调用方给。编辑态与保存始终用未筛选的原文 |
-| `remove` | `{ description: string; confirm: () => Promise<void> }`（可选） | 提供后才出现 header 的删除图标按钮：点一下先弹二次确认（`DeleteConfirm`），确认后调用 `confirm`。删什么、删完怎么关弹窗与刷新列表都由调用方决定，组件只给「先问一遍」这一层 |
+| `remove` | `{ description: string; confirm: () => Promise<void> }`（可选） | 提供后才出现 header 的删除图标按钮：点一下或按 `Delete` / `Backspace` 先弹二次确认（`DeleteConfirm`），确认后调用 `confirm`。删什么、删完怎么关弹窗与刷新列表都由调用方决定，组件只给「先问一遍」这一层 |
 
 ## 行为细节
 
@@ -197,11 +197,26 @@ header 文档操作组**最后一个**图标（垃圾桶，颜色与同排图标
 不做红色实底或常态描红，红色只出现在确认层的删除按钮上），
 **调用方传 `remove` 才出现**，加载中没有正文可删所以也不出现；编辑态与草稿预览随整组收掉。
 
-- **点一下不开删**：先弹二次确认层（`DeleteConfirm`，叠在主预览上面的一层 `Modal`），
-  标题是「删除「<文件名>」？」；正文说明由调用方给（`remove.description`），组件不写死
+- **点一下不开删**：先弹二次确认层（`DeleteConfirm`，叠在主预览上面的一层 `Modal`，
+  宽 420、框体底色取 `--app-surface`）；正文说明由调用方给（`remove.description`），组件不写死
   「删了什么、能不能撤回」——组件的另一处调用方可能根本不是删文件；
-- 确认层两个出口：`取消`（只收这一层）与 `删除`（红色主按钮，调用 `remove.confirm()`，
-  返回 Promise 时按钮显示 loading，期间 `取消`、Esc、点遮罩都不可用，避免删到一半又点走）；
+- **确认层分三段**：标题区（软红底的垃圾桶图标 + 「删除这个文档？」+ 被删文档的 `title` 原文）、
+  说明块、收口行。**文件名不塞进标题**：路径一长会把「？」挤到下一行，所以标题只说「删这个文档」，
+  路径另起一行 monospace 弱色（`overflow-wrap: anywhere`，长路径按任意位置折行）；
+- 说明块自带一层软底与细边（`--app-surface-subtle` + `--app-line`），读起来是一段引注；
+  收口行一条细线（`--app-line`）把「读」和「做」分开，左侧 `Kbd Esc` + 「取消」提示、右侧两个按钮；
+- 确认层两个出口：`取消`（只收这一层）与 `删除`（危险实底主按钮，调用 `remove.confirm()`，
+  返回 Promise 时按钮显示 loading，期间 `取消`、Esc、点遮罩、左侧 Esc 提示一起收起，
+  避免删到一半又点走）。删除按钮**只改 `--button-bg` / `--button-hover` / `--button-color`
+  三个组件库变量**（取 `--app-status-danger-fill(-hover)`，暗色另有一档深底保证白字可读），
+  不覆写 `background`：hover、loading、disabled 仍由组件库自己算；Mantine 自带那档红偏亮，
+  与项目的墨绿 / 陶红不搭，所以换成项目令牌；
+- **快捷键 `Delete` / `Backspace`**（`hooks/useRemoveShortcut`）：预览态按一下直接打开这一层确认，
+  与点垃圾桶**走同一条路**（都经过 `removal.request`），**不会一按就删**。
+  两个键都认是因为 macOS 键盘上印着「delete」的那颗发出来的是 `Backspace`。
+  只在「真的能删」时响应：调用方传了 `remove`、非编辑态 / 草稿预览、`loading` 为假，
+  且 header 弹层、子区域预览、确认层都没开着；带 ⌘ / Ctrl / Alt 的组合键放行，正在输入时
+  （`@/utils/typing-target`）不抢字符；
 - **删除失败的归属**：`confirm` 抛错由 `useRemoveRequest` 弹一条红色通知，确认层收起、
   正文与弹窗留在原处——不能先关掉弹窗再说「其实没删」；
 - **删除成功不归组件管**：调用方在 `confirm` 里关弹窗、把这一篇从列表里摘掉、提示提交 / 推送状态；
