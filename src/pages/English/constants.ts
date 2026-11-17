@@ -41,13 +41,13 @@ export const VIEW_MODE_CODEC = createChoiceCodec<NotesViewMode>(
 export const UNDO_DEPTH = 50;
 
 /**
- * 删除笔记的二次确认文案：讲清删什么、删完还会提交推送、真删错了从哪找回。
+ * 删除笔记的二次确认文案：只说删的是什么（Markdown 与 Record 都会从记录仓库删掉）。
  *
- * 不写「删除后无法恢复」：这次删除会单独提交到记录仓库，要恢复就去 git 历史里把那次提交
- * revert 回来，说成不可恢复只会吓人一跳、也不符合事实。
+ * 不再展开「删完会自动提交推送、删错了可以从这次提交里找回」那几句：
+ * 确认层的作用是让人看清删什么，不是解释仓库流程。
  */
 export const NOTE_DELETE_DESCRIPTION =
-  '这篇笔记的 Markdown 会从 learn-english 仓库删除，它在 learning-records 或 mastered-learning-records 里的学习记录也会一起删掉；删完会自动提交并推送，删错了可以从这次提交里找回。';
+  '这篇笔记的 Markdown 以及 Record 会从 learn-english 仓库删除。';
 
 /**
  * 预览筛选的存储键：范围与关键词分两个键存。
