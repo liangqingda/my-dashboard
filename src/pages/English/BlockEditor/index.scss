@@ -35,7 +35,6 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
 }
 
 /* 编辑器网格按内容定宽，不铺满整行：用父级限定提高特异性，盖住基础表格的 100% */
@@ -74,45 +73,13 @@
   outline: none;
 }
 
-/* 行操作列 */
-.rowTools {
-  width: 30px;
-  padding: 0 2px;
-  text-align: right;
-}
-
-.rowRemove {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
+/* 脚本同步字段行：只读，不响应 hover / 聚焦，颜色压淡 */
+.cellInput:disabled {
+  background: transparent;
   color: var(--app-ink-faint);
-  font-size: 0.78rem;
-  line-height: 1;
-}
-
-.rowRemove:hover:not(:disabled) {
-  background: var(--app-accent-soft);
-  color: var(--app-status-danger);
-}
-
-.rowRemove:disabled {
-  opacity: 0.35;
   cursor: default;
 }
 
-/* 表尾加行 */
-.addRow {
-  padding: 3px 10px;
-  border: 1px dashed var(--app-line-strong);
-  border-radius: 4px;
-  color: var(--app-ink-faint);
-  font-size: 0.72rem;
-}
-
-.addRow:hover {
-  border-color: var(--app-accent);
-  color: var(--app-accent);
+.cellInput:disabled:hover {
+  background: transparent;
 }

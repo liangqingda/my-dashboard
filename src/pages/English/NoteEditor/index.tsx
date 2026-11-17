@@ -52,7 +52,7 @@ const NoteEditor = ({
   );
   /** 原文件用 CRLF 时写回也用它，不把整个文件的换行都换掉 */
   const [usesCrlf] = useState(() => markdown.includes('\r\n'));
-  /** 结构操作（删行 / 加行 / 改格）的撤销栈；文本框里的撤销仍走浏览器原生 */
+  /** 单元格 / 文本改动的撤销栈；文本框里的撤销仍走浏览器原生 */
   const history = useRef<MarkdownBlock[][]>([]);
   const rootRef = useRef<HTMLDivElement | null>(null);
 

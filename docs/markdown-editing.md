@@ -16,8 +16,9 @@
 | `src/pages/English/BlockEditor` | 受控控件：按块渲染编辑界面 |
 | `src/pages/English/utils/markdown-blocks.ts` | 解析与回写：正文 ↔ 块 |
 
-做法是把正文切成块，表格解析成行 / 单元格矩阵用受控网格编辑（可删行、加行、改单元格），
-其余块编辑自己的源码片段，保存时按块重拼 Markdown。
+做法是把正文切成块，表格解析成行 / 单元格矩阵用受控网格编辑（只改单元格；脚本同步的字段行
+整行只读，行结构不在这里增删——信息表的行由记录仓库和笔记脚本按模板维护），其余块编辑自己的
+源码片段，保存时按块重拼 Markdown。
 
 `NoteEditor` 实现 `onHandleReady`，用 `findBlockIndexForHeading` 把标题换算成块下标，再把该块滚进视野并
 聚焦——编辑态正文不渲染，目录只能由编辑器自己定位。
@@ -56,5 +57,5 @@
 pnpm check:md   # scripts/md-roundtrip.mts，夹具在 scripts/fixtures/md/
 ```
 
-它检查「原文 → parse → serialize」逐字一致、该降级的没有结构化、删行 / 加行只动目标行。
+它检查「原文 → parse → serialize」逐字一致、该降级的没有结构化、矩阵里手动增删行时只动目标行。
 `pnpm lint` 已包含这一步。

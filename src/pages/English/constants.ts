@@ -41,6 +41,25 @@ export const VIEW_MODE_CODEC = createChoiceCodec<NotesViewMode>(
 export const UNDO_DEPTH = 50;
 
 /**
+ * 信息表里由记录仓库 / 脚本同步的字段行：编辑器里整行只读。
+ *
+ * 口径对齐 learn-english `check_note.py` 的模板（基础信息行 / 轮次信息行 / 菜单项信息行）：
+ * 这些值由记录与 `sync` 写回，手改了下次同步也会被覆盖；基础信息里唯一可编辑的是「目标知识点」。
+ */
+export const READONLY_NOTE_ROW_LABELS: readonly string[] = [
+  '记录 ID / 试卷 ID',
+  '累计复习次数',
+  '下次复习',
+  '笔记生成时间',
+  '笔记更新时间',
+  '生成时间',
+  '分类 · 状态变化',
+  '本轮得分',
+  '题量与错题数',
+  '主观题得分',
+];
+
+/**
  * 删除笔记的二次确认文案：只说删的是什么（Markdown 与 Record 都会从记录仓库删掉）。
  *
  * 不再展开「删完会自动提交推送、删错了可以从这次提交里找回」那几句：
