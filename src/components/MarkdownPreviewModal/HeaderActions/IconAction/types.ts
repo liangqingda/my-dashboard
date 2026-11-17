@@ -5,7 +5,7 @@
 import type { ReactNode } from 'react';
 
 /** 标题栏图标操作按钮的语气：决定颜色，不改形状 */
-export type HeaderIconActionTone = 'normal' | 'accent' | 'danger' | 'plain';
+export type HeaderIconActionTone = 'normal' | 'accent' | 'danger';
 
 /** 图标操作的入参 */
 export type HeaderIconActionProps = {
@@ -13,7 +13,7 @@ export type HeaderIconActionProps = {
   label: string;
   /** 图标元素 */
   children: ReactNode;
-  /** 语气：常规（hover 变主色）/ 主操作 / 危险 / 不变色 */
+  /** 语气：常规 / 主操作 / 危险 */
   tone?: HeaderIconActionTone;
   /** 禁用（如保存中不接受其它操作） */
   disabled?: boolean;

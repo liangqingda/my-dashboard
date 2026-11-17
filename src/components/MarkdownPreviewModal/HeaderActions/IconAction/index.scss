@@ -27,12 +27,3 @@
   background: var(--app-status-danger-soft);
   color: var(--app-status-danger);
 }
-
-/* 不变色（删除）：常态与 hover 都是弱色，颜色变化留给其它图标当「可点」的反馈 */
-.plain {
-  color: var(--app-ink-faint);
-}
-
-.plain:hover:not(:disabled) {
-  color: var(--app-ink-faint);
-}

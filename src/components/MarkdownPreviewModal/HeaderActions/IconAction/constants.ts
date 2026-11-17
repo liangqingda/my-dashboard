@@ -12,5 +12,4 @@ export const TONE_CLASS: Record<HeaderIconActionTone, string | undefined> = {
   normal: undefined,
   accent: styles.accent,
   danger: styles.danger,
-  plain: styles.plain,
 };
