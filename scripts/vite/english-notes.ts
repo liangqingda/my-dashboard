@@ -3,9 +3,12 @@ import path from 'node:path';
 import type { IncomingMessage as HttpRequest } from 'node:http';
 import type { Plugin } from 'vite';
 
-import { commitNote } from './english-notes-commit.js';
+import { commitNote, commitNoteDeletion } from './english-notes-commit.js';
+import { deleteLearningRecord } from './english-notes-records.js';
+import type { DeletedRecord } from './english-notes-records.js';
 import {
   collectNoteSummaries,
+  deleteNote,
   readCategoryConfig,
   readNote,
   toNoteDetail,
@@ -59,7 +62,8 @@ const nameFromUrl = (url: string | undefined): string | null => {
  * - 开发服务器：
  *   - `GET /api/english/notes`：全部笔记的**摘要**（每次请求实时读盘，不含正文）；
  *   - `GET /api/english/notes?name=<file>`：单篇「摘要 + 正文」，打开预览 / 保存后只刷这一篇；
- *   - `PUT /api/english/notes`：写回源文件后自动提交该文件。
+ *   - `PUT /api/english/notes`：写回源文件后自动提交该文件；
+ *   - `DELETE /api/english/notes?name=<file>`：删掉这一篇 md 与它的学习记录，提交并推送。
  * - 构建：索引（分类清单 + 摘要）写进 `english-notes.index.json`，每篇正文单独落成
  *   `english-notes/<文件名>`，供预览与静态部署按需取。
  *
@@ -187,6 +191,50 @@ export const englishNotes = (root: string): Plugin => {
               JSON.stringify({
                 message:
                   error instanceof Error ? error.message : '写入英语笔记失败',
+              }),
+            );
+          }
+
+          return;
+        }
+
+        // 删除一篇笔记：md 与它的学习记录一起删，删完提交并推送。
+        if (req.method === 'DELETE') {
+          try {
+            const name = nameFromUrl(req.url);
+
+            if (!name) {
+              throw new Error('缺少文件名');
+            }
+
+            const { recordId } = await deleteNote(repoDir, name);
+            // 记录可能落在未掌握库或已掌握库，也可能这篇笔记本来就没有记录
+            let record: DeletedRecord | null = null;
+            let recordError: string | null = null;
+
+            try {
+              record = recordId
+                ? await deleteLearningRecord(repoDir, recordId)
+                : null;
+            } catch (error) {
+              // 记录删失败不掩盖 md 已删的事实，原样带回原因
+              recordError =
+                error instanceof Error ? error.message : '学习记录删除失败';
+            }
+
+            const commit = await commitNoteDeletion(
+              repoDir,
+              name,
+              record?.file,
+            );
+
+            res.end(JSON.stringify({ commit, name, record, recordError }));
+          } catch (error) {
+            res.statusCode = 400;
+            res.end(
+              JSON.stringify({
+                message:
+                  error instanceof Error ? error.message : '删除英语笔记失败',
               }),
             );
           }

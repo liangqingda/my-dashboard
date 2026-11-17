@@ -6,7 +6,8 @@
  * 弹窗左侧固定的标题目录 sidebar（文档内 h1–h4 目录，随弹窗高度拉伸、目录自身滚动，
  * 滚动正文时跟随高亮当前小节）、header 右侧的一排操作：复制文档的相对路径（调用方给路径）、
  * 筛选正文（口径由调用方给）、正文字号（跨篇记住的阅读偏好）、同文档锚点链接的打开方式、
- * 全屏预览（把整个框体铺满视口放大阅读空间，再点一次切回常规）
+ * 全屏预览（把整个框体铺满视口放大阅读空间，再点一次切回常规）、
+ * 删除这篇文档（调用方给二次确认说明与删除动作，点一下先问一遍）
  * 与编辑 / 预览 / 保存 / 放弃改动，全部只留图标 + tooltip。
  * 组件只负责编辑态与保存流程，不知道文档结构和文件落在哪里：
  * 具体怎么编辑由调用方通过 `Editor` 插槽传入，没有定制编辑器时给出定制提示。
@@ -33,6 +34,7 @@ import { cx } from '@/utils/cx';
 
 import type { MarkdownPreviewModalProps, PreviewPanel } from './types';
 import TitleBar from './TitleBar';
+import DeleteConfirm from './DeleteConfirm';
 import PreviewWorkspace from './PreviewWorkspace';
 import AnchorBlockPreview from './AnchorBlockPreview';
 import { collectAnchorBlocks } from './utils/anchor-blocks';
@@ -45,6 +47,7 @@ import { useModalFullscreen } from './hooks/useModalFullscreen';
 import { useNoteEditing } from './hooks/useNoteEditing';
 import { useProseFontScale } from './hooks/useProseFontScale';
 import { useRefreshPreview } from './hooks/useRefreshPreview';
+import { useRemoveRequest } from './hooks/useRemoveRequest';
 import { useNavigationShortcuts } from './hooks/useNavigationShortcuts';
 
 import styles from './index.scss';
@@ -58,6 +61,7 @@ export type {
   MarkdownEditorProps,
   MarkdownPreviewFilter,
   MarkdownPreviewModalProps,
+  MarkdownPreviewRemove,
 } from './types';
 
 const MarkdownPreviewModal = ({
@@ -74,6 +78,7 @@ const MarkdownPreviewModal = ({
   onRefresh,
   onSave,
   Editor,
+  remove,
 }: MarkdownPreviewModalProps) => {
   /**
    * header 上的就近弹层：同一时刻只开一块（筛选用 `filter`、字号用 `font`、
@@ -88,6 +93,12 @@ const MarkdownPreviewModal = ({
   const proseFont = useProseFontScale();
   /** 刷新按钮的 loading 与失败提示都在这个 hook 里 */
   const { refresh, refreshing } = useRefreshPreview(onRefresh);
+
+  /**
+   * 删除请求：点 header 的删除按钮先弹二次确认，确认后才真的删。
+   * 确认层开着时 Esc 与焦点都归它（主弹窗这一层让开），删除失败只收确认层、正文留着。
+   */
+  const removal = useRemoveRequest({ remove });
 
   const editing = useNoteEditing({
     documentTitle: title,
@@ -194,7 +205,9 @@ const MarkdownPreviewModal = ({
           title: styles.title,
         }}
         closeButtonProps={{ 'aria-label': '关闭预览' }}
-        closeOnEscape={panel === null && anchorBlock.index === null}
+        closeOnEscape={
+          panel === null && anchorBlock.index === null && !removal.confirming
+        }
         fullScreen={fullscreen}
         onClose={handleClose}
         opened={opened}
@@ -221,6 +234,9 @@ const MarkdownPreviewModal = ({
             onRefresh={
               onRefresh && !loading ? withPanelsClosed(refresh) : null
             }
+            onRemove={
+              remove && !loading ? withPanelsClosed(removal.request) : null
+            }
             onStartEdit={startEditing}
             onToggleFullscreen={toggleFullscreen}
             panel={panel}
@@ -231,7 +247,7 @@ const MarkdownPreviewModal = ({
           />
         }
         transitionProps={{ duration: 140, transition: 'fade' }}
-        trapFocus={anchorBlock.index === null}
+        trapFocus={anchorBlock.index === null && !removal.confirming}
         withCloseButton={!editing.editing}
       >
         {/* 正文工作区：左侧目录 + 右侧阅读 / 编辑区；筛选 / 渲染 / 目录定位都归它 */}
@@ -248,6 +264,16 @@ const MarkdownPreviewModal = ({
           title={title}
         />
       </Modal>
+
+      {/* 删除确认层：开在主预览上面；取消只收这一层，确认后删除动作由调用方执行 */}
+      <DeleteConfirm
+        description={remove?.description ?? ''}
+        loading={removal.removing}
+        onCancel={removal.cancel}
+        onConfirm={removal.confirm}
+        opened={removal.confirming}
+        title={title}
+      />
 
       {/* 子区域预览：开在主预览上面，只看一块内容；Esc 只关它，底下这一篇留着 */}
       <AnchorBlockPreview

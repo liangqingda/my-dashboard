@@ -1,6 +1,6 @@
 /**
  * 预览弹窗的标题栏：左侧上一篇 / 下一篇与文件名，右侧分成两段操作——
- * 「文档操作」（复制相对路径 / 筛选 / 正文字号 / 刷新 / 全屏）与「编辑流程」（编辑 / 预览 / 保存 / 放弃改动，
+ * 「文档操作」（复制相对路径 / 筛选 / 正文字号 / 刷新 / 全屏 / 删除）与「编辑流程」（编辑 / 预览 / 保存 / 放弃改动，
  * 在 HeaderActions 里），两段之间一条竖线隔开。
  * 编辑态（含草稿预览）只留编辑流程：文档操作整组不渲染，往这一组新增按钮不必再各判一次。
  * 这里只管排布与图标尺寸，编辑态语义归 HeaderActions 与弹窗自己的状态机。
@@ -13,6 +13,7 @@ import {
   IconMaximize,
   IconMinimize,
   IconRefresh,
+  IconTrash,
 } from '@tabler/icons-react';
 
 import CopyIconButton from '@/components/CopyIconButton';
@@ -22,6 +23,7 @@ import { cx } from '@/utils/cx';
 import type { TitleBarProps } from '../types';
 import AnchorLinkControl from '../AnchorLinkControl';
 import PreviewHeaderActions from '../HeaderActions';
+import HeaderIconAction from '../HeaderActions/IconAction';
 import ProseFontControl from '../ProseFontControl';
 
 import styles from './index.scss';
@@ -47,6 +49,7 @@ const TitleBar = ({
   onPanelChange,
   onPrevious,
   onRefresh,
+  onRemove,
   onStartEdit,
   onToggleFullscreen,
   panel,
@@ -174,6 +177,16 @@ const TitleBar = ({
               )}
             </ActionIcon>
           </Tooltip>
+          {/* 删除这篇文档：调用方给了删除能力才出，点一下先弹二次确认（危险操作只描红） */}
+          {onRemove ? (
+            <HeaderIconAction
+              label="删除这篇文档"
+              onClick={onRemove}
+              tone="danger"
+            >
+              <IconTrash size={ICON_SIZE} stroke={ICON_STROKE} />
+            </HeaderIconAction>
+          ) : null}
         </div>
       ) : null}
       {/* 文档操作与编辑流程之间一条竖线；编辑态只剩编辑流程，不画 */}

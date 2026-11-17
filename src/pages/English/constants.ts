@@ -41,6 +41,13 @@ export const VIEW_MODE_CODEC = createChoiceCodec<NotesViewMode>(
 export const UNDO_DEPTH = 50;
 
 /**
+ * 删除笔记的二次确认文案：讲清删什么、能不能撤回、删完还会提交推送。
+ * 这条属于记录仓库的数据口径，留在页面（弹窗只负责把这段原样显示出来）。
+ */
+export const NOTE_DELETE_DESCRIPTION =
+  '这篇笔记的 Markdown 会从 learn-english 仓库删除，它在 learning-records 或 mastered-learning-records 里的学习记录也会一起删掉；删除后无法恢复，删完会自动提交并推送。';
+
+/**
  * 预览筛选的存储键：范围与关键词分两个键存。
  * 筛选条件要黏住——换一篇笔记、刷新页面都沿用上次的选择，不必重新点一遍。
  */

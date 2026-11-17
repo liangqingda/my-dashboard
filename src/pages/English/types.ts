@@ -44,6 +44,18 @@ export type EnglishNotesSnapshot = {
 /** 笔记列表的展示形式：分列看板 / 表格平铺 */
 export type NotesViewMode = 'board' | 'table';
 
+/** 展示形式 hook 暴露的状态与动作（见 `hooks/useNotesViewMode.ts`） */
+export type UseNotesViewModeResult = {
+  /** 当前展示形式 */
+  view: NotesViewMode;
+  /** 当前是否为分列看板（图标与提示文案都按「切过去是什么」写） */
+  isBoardView: boolean;
+  /** 已经挂载过的展示形式：切过的都留着，来回切只切显隐 */
+  mounted: Record<NotesViewMode, boolean>;
+  /** 在两种展示形式之间切换 */
+  toggle: () => void;
+};
+
 /**
  * 一个分类：键来自笔记正文的记录 ID 前缀（如 `errors:xxx` → `errors`），
  * 中文标题与顺序来自记录仓库的分类清单，本项目只负责读取。
@@ -116,6 +128,20 @@ export type SavedNoteResult = {
   commitHash?: string;
 };
 
+/** 删除笔记后插件返回的结果：记录删没删 + 自动提交 / 推送的状态 */
+export type DeletedNoteResult = {
+  /** 记录仓库里有没有删掉对应的学习记录；false 表示这篇没有记录（或记录已经不在库里） */
+  recordDeleted: boolean;
+  /** 学习记录删失败的原因（md 那时已经删掉了，这个不能一起吞掉） */
+  recordError?: string;
+  /** 自动提交失败的原因；成功或没有可提交内容时为空 */
+  commitError?: string;
+  /** 自动提交的短 hash */
+  commitHash?: string;
+  /** 自动推送失败的原因：没配上游分支，或 git push 自己报的错 */
+  pushError?: string;
+};
+
 /** 笔记读取 hook 暴露的状态 */
 export type UseEnglishNotesResult = {
   /** 全部笔记摘要，按笔记更新时间倒序 */
@@ -132,9 +158,11 @@ export type UseEnglishNotesResult = {
   reload: () => Promise<void>;
   /** 用单篇的最新摘要替换列表里的那一条（保存后分类 / 知识点 / 时间可能变；不在列表里就插到最前） */
   applySummary: (summary: NoteSummary) => void;
+  /** 从列表里去掉一篇（删除后不必整页重拉） */
+  removeSummary: (name: string) => void;
 };
 
-/** 当前打开的那一篇：取正文 / 保存 / 刷新共用的状态与动作（见 `hooks/useActiveNote.ts`） */
+/** 当前打开的那一篇：取正文 / 保存 / 刷新 / 删除共用的状态与动作（见 `hooks/useActiveNote.ts`） */
 export type UseActiveNoteResult = {
   /** 当前打开的笔记摘要；null 表示弹窗关闭 */
   active: NoteSummary | null;
@@ -150,6 +178,8 @@ export type UseActiveNoteResult = {
   save: (markdown: string) => Promise<{ notice?: string }>;
   /** 重取当前这一篇 */
   refresh: () => Promise<void>;
+  /** 删除当前这一篇（md + 学习记录），成功后关弹窗并把它从列表里摘掉 */
+  remove: () => Promise<void>;
 };
 
 /** 表格单元格 */

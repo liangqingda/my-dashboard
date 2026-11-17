@@ -98,6 +98,14 @@ export const useEnglishNotes = (): UseEnglishNotesResult => {
     );
   }, []);
 
+  /**
+   * 一篇被删掉了：直接从列表里摘掉。
+   * 不必整页重拉——列表已经知道这篇不在了，重拉只会换回同一份结果再闪一下 loading。
+   */
+  const removeSummary = useCallback((name: string) => {
+    setNotes((current) => current.filter((item) => item.name !== name));
+  }, []);
+
   useEffect(() => {
     const controller = new AbortController();
     const current = requestId.current + 1;
@@ -119,5 +127,14 @@ export const useEnglishNotes = (): UseEnglishNotesResult => {
     };
   }, [apply, fail]);
 
-  return { categories, notes, loading, error, refresh, reload, applySummary };
+  return {
+    applySummary,
+    categories,
+    error,
+    loading,
+    notes,
+    refresh,
+    reload,
+    removeSummary,
+  };
 };

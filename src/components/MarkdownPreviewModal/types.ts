@@ -93,6 +93,8 @@ export type TitleBarProps = {
   onRefresh?: (() => void) | null;
   /** 刷新按钮是否在 loading */
   refreshing: boolean;
+  /** 删除当前文档；null 表示不提供（加载中、编辑态、调用方没给删除能力） */
+  onRemove?: (() => void) | null;
   /** 是否全屏预览中 */
   fullscreen: boolean;
   /** 切换全屏 */
@@ -151,6 +153,46 @@ export type MarkdownPreviewModalProps = {
    * 筛选只作用在「读」：编辑态与保存永远用未筛选的原文，避免把筛过的正文写回文件。
    */
   filter?: MarkdownPreviewFilter;
+  /**
+   * 删除这篇文档。不传就没有删除按钮——删什么、删完怎么刷新都由调用方决定，
+   * 弹窗只负责「点一下先问一遍」这一层。
+   */
+  remove?: MarkdownPreviewRemove;
+};
+
+/**
+ * 删除这篇文档：二次确认的说明与真正删除的动作都由调用方给。
+ *
+ * 组件不知道文档落在哪里，也不知道删一篇会牵连哪些东西（学习记录、提交、推送），
+ * 所以只收两句人话：确认层里说什么，以及用户点「删除」之后做什么。
+ */
+export type MarkdownPreviewRemove = {
+  /** 二次确认里的说明：删掉会发生什么 */
+  description: string;
+  /** 用户确认后执行；抛错按失败提示，成功后由调用方关弹窗、刷新列表 */
+  confirm: () => Promise<void>;
+};
+
+/** 删除请求的入参：只认调用方给的那一份删除能力 */
+export type RemoveRequestParams = {
+  /** 调用方提供的删除能力；不提供时按钮根本不渲染 */
+  remove?: MarkdownPreviewRemove;
+};
+
+/** 删除确认层的入参 */
+export type DeleteConfirmProps = {
+  /** 是否打开 */
+  opened: boolean;
+  /** 文档标题：确认层标题里点名删的是哪一篇 */
+  title: string;
+  /** 删掉会发生什么，由调用方给 */
+  description: string;
+  /** 是否正在删：按钮显示 loading，取消与 Esc 暂时不可用 */
+  loading: boolean;
+  /** 取消删除 */
+  onCancel: () => void;
+  /** 确认删除 */
+  onConfirm: () => void;
 };
 
 /** 筛选面板渲染时能拿到的东西 */

@@ -1,0 +1,6 @@
+/* 删除确认层：说明文字比标题轻一档，读起来是「一句补充」而不是又一层标题 */
+
+.description {
+  color: var(--app-ink-soft);
+  line-height: 1.7;
+}

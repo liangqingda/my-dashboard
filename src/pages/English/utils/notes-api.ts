@@ -7,6 +7,7 @@
  */
 
 import type {
+  DeletedNoteResult,
   EnglishNotesSnapshot,
   NoteBody,
   NoteCategory,
@@ -218,6 +219,31 @@ export const fetchEnglishNote = async (
 };
 
 /**
+ * 读失败响应里的 `message`；响应不是 JSON 时保留默认文案。
+ * 保存与删除共用：两边都只有一个「HTTP 状态 + 人话原因」的失败体。
+ */
+const readErrorMessage = async (
+  response: Response,
+  fallback: string,
+): Promise<string> => {
+  try {
+    const payload: unknown = await response.json();
+
+    if (
+      isObject(payload) &&
+      typeof payload.message === 'string' &&
+      payload.message
+    ) {
+      return payload.message;
+    }
+  } catch {
+    // 响应不是 JSON 时保留默认文案。
+  }
+
+  return fallback;
+};
+
+/**
  * 把编辑后的 Markdown 写回源文件，并由插件把改动提交到记录仓库（仅开发模式可用）。
  * 保存成功后需要重新读取一次这一篇，页面才会拿到新的正文与摘要。
  */
@@ -256,17 +282,56 @@ export const saveEnglishNote = async (
     throw new Error('静态预览不支持编辑，请在开发模式下保存');
   }
 
-  let message = `保存失败（HTTP ${response.status}）`;
+  throw new Error(
+    await readErrorMessage(response, `保存失败（HTTP ${response.status}）`),
+  );
+};
 
-  try {
-    const payload: unknown = await response.json();
-
-    if (isObject(payload) && typeof payload.message === 'string') {
-      message = payload.message || message;
-    }
-  } catch {
-    // 响应不是 JSON 时保留默认文案。
+/**
+ * 删除一篇笔记：插件先把 md 和学习记录一起删掉，再自动提交并推送（仅开发模式可用）。
+ * 页面靠返回值说清「记录删没删」「提交 / 推送成没成」，不把中间状态藏起来。
+ */
+export const deleteEnglishNote = async (
+  name: string,
+): Promise<DeletedNoteResult> => {
+  if (!import.meta.env.DEV) {
+    throw new Error('静态预览不支持删除，请在开发模式下操作');
   }
 
-  throw new Error(message);
+  const response = await fetch(
+    `${LIST_ENDPOINT}?name=${encodeURIComponent(name)}`,
+    { ...REQUEST_INIT, method: 'DELETE' },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await readErrorMessage(response, `删除失败（HTTP ${response.status}）`),
+    );
+  }
+
+  let payload: unknown;
+
+  try {
+    payload = await response.json();
+  } catch {
+    return { recordDeleted: false };
+  }
+
+  if (!isObject(payload)) {
+    return { recordDeleted: false };
+  }
+
+  const commit = isObject(payload.commit) ? payload.commit : null;
+
+  return {
+    commitError:
+      typeof commit?.error === 'string' ? commit.error : undefined,
+    commitHash: typeof commit?.hash === 'string' ? commit.hash : undefined,
+    pushError:
+      typeof commit?.pushError === 'string' ? commit.pushError : undefined,
+    // 记录对象只有真删到一条时才回来；删失败时 md 已经删了，原因单独带回
+    recordDeleted: isObject(payload.record),
+    recordError:
+      typeof payload.recordError === 'string' ? payload.recordError : undefined,
+  };
 };

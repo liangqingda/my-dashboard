@@ -6,20 +6,16 @@ import FilterButton from '@/components/FilterButton';
 import MarkdownPreviewModal from '@/components/MarkdownPreviewModal';
 import type { MarkdownPreviewFilter } from '@/components/MarkdownPreviewModal';
 import MenuContentLayout from '@/layouts/MenuContentLayout';
-import { useStoredState } from '@/hooks/useStoredState';
 import { onPageRefresh } from '@/utils/page-refresh';
 import { cx } from '@/utils/cx';
 
-import type { NoteSummary, NotesSort, NotesViewMode } from './types';
-import {
-  DEFAULT_NOTE_SORT,
-  VIEW_MODE_CODEC,
-  VIEW_MODE_STORAGE_KEY,
-} from './constants';
+import type { NoteSummary, NotesSort } from './types';
+import { DEFAULT_NOTE_SORT, NOTE_DELETE_DESCRIPTION } from './constants';
 import { useActiveNote } from './hooks/useActiveNote';
 import { useEnglishNotes } from './hooks/useEnglishNotes';
 import { useNoteFilter } from './hooks/useNoteFilter';
 import { useNotesFilter } from './hooks/useNotesFilter';
+import { useNotesViewMode } from './hooks/useNotesViewMode';
 import NoteEditor from './NoteEditor';
 import NoteFilter from './NoteFilter';
 import NotesBoard from './NotesBoard';
@@ -40,9 +36,17 @@ const NO_NOTES: NoteSummary[] = [];
 
 /** 英语练习页：把 learning-record-notes 下的笔记按分类分列展示，整页不滚动。 */
 const English = () => {
-  const { categories, notes, loading, error, refresh, reload, applySummary } =
-    useEnglishNotes();
-  /** 当前打开的笔记与它的正文：取正文、翻篇、保存、刷新都在这个 hook 里 */
+  const {
+    categories,
+    notes,
+    loading,
+    error,
+    refresh,
+    reload,
+    applySummary,
+    removeSummary,
+  } = useEnglishNotes();
+  /** 当前打开的笔记与它的正文：取正文、翻篇、保存、刷新、删除都在这个 hook 里 */
   const {
     active,
     content: activeBody,
@@ -51,23 +55,17 @@ const English = () => {
     close: closeNote,
     save: saveActive,
     refresh: refreshActive,
-  } = useActiveNote({ notes, onSummary: applySummary });
+    remove: removeActive,
+  } = useActiveNote({
+    notes,
+    onDeleted: removeSummary,
+    onSummary: applySummary,
+  });
   /**
    * 展示形式：分列看板 / 表格平铺，用 header 右侧图标按钮切换。
-   * 记在 localStorage 里，刷新页面重新进入后保持上次切换到的形态。
+   * 记在 localStorage 里，切过的形态都留着，来回切只切显隐（见 `useNotesViewMode`）。
    */
-  const [view, setView] = useStoredState(
-    VIEW_MODE_STORAGE_KEY,
-    VIEW_MODE_CODEC,
-  );
-  /**
-   * 已经挂载过的展示形式：第一次切换过去时才挂载一份，之后两边都留着，
-   * 来回切只切显隐，不再把几百个条目整棵拆掉重建。
-   */
-  const [mounted, setMounted] = useState<Record<NotesViewMode, boolean>>(() => ({
-    board: view === 'board',
-    table: view === 'table',
-  }));
+  const { isBoardView, mounted, toggle: toggleView, view } = useNotesViewMode();
   /** 表格视图的排序状态：默认按更新时间倒序 */
   const [sort, setSort] = useState<NotesSort>(DEFAULT_NOTE_SORT);
   /** 列表筛选弹层是否打开：由页面持有，切视图、刷新时不留下一个悬着的面板 */
@@ -199,20 +197,6 @@ const English = () => {
   };
 
   /**
-   * 切换展示形式：分列看板 ⇄ 表格平铺。
-   * 切过去的那一份第一次要挂载一次（几百个条目建一遍 DOM，这一次免不了），
-   * 之后就靠 `mounted` 留着，切回来不再重新挂载。
-   */
-  const toggleView = () => {
-    const next: NotesViewMode = view === 'board' ? 'table' : 'board';
-
-    setView(next);
-    setMounted((current) =>
-      current[next] ? current : { ...current, [next]: true },
-    );
-  };
-
-  /**
    * 点击表格列标题：同一列上反转方向，换一列时用它的自然默认
    * （更新时间默认新的在前，分类默认按看板列顺序）。
    */
@@ -228,9 +212,6 @@ const English = () => {
       return { key, direction: key === 'updated' ? 'desc' : 'asc' };
     });
   }, []);
-
-  /** 当前是否为分列看板；图标与提示文案都按「切过去是什么」来写 */
-  const isBoardView = view === 'board';
 
   return (
     <>
@@ -338,6 +319,12 @@ const English = () => {
             : undefined
         }
         relativePath={active ? getNoteRelativePath(active.name) : undefined}
+        remove={
+          // 删除要落盘到记录仓库，只在开发模式（有中间件）里给入口
+          import.meta.env.DEV && activeBody !== null
+            ? { confirm: removeActive, description: NOTE_DELETE_DESCRIPTION }
+            : undefined
+        }
         title={active?.name ?? ''}
       />
     </>

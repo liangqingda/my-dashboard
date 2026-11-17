@@ -11,7 +11,8 @@
 | --- | --- |
 | `scripts/vite/english-notes.ts` | 路由壳：只做请求解析与响应 |
 | `scripts/vite/english-notes-store.ts` | 读写与校验：落盘、结构校验、文件名合法性、读分类清单 |
-| `scripts/vite/english-notes-commit.ts` | 自动提交：把这一次改动提交到 `../learn-english` |
+| `scripts/vite/english-notes-records.ts` | 学习记录的删除：`learning-records` / `mastered-learning-records` 里那一条 |
+| `scripts/vite/english-notes-commit.ts` | 自动提交：把这一次改动提交到 `../learn-english`（删除流程提交后还会推送） |
 
 ## 分类清单不在本项目
 
@@ -70,6 +71,26 @@
 3. 保存落盘后由同一个中间件把该文件提交到 `learn-english`：只 stage 这一个文件，提交信息半固定为
    `docs(notes): 手动编辑 <文件名去扩展名>` + 固定正文「通过 my-dashboard 的 Markdown 预览弹窗保存」；
 4. 内容无变化时不产生空提交；提交失败不阻断保存，原因回传到 header 的保存状态提示（红色文案）。
+
+## 删除一篇笔记：md + 学习记录一起删，删完提交并推送
+
+`DELETE /api/english/notes?name=…`（仅开发模式，前端只在 `import.meta.env.DEV` 里给入口）。
+一次删除是三件独立的事，**各自失败互不掩盖**，结果原样回传前端：
+
+| 步骤 | 做什么 | 失败时 |
+| --- | --- | --- |
+| 1 | 校验路径后删 `learning-record-notes/<category>/<file>.md` | 抛错，后面两步不执行 |
+| 2 | 从正文基础信息表的「记录 ID」取 `<category>:<slug>`，去 `learning-records/<category>.json` 取不到再找 `mastered-learning-records/<category>.json`，只删这一条 | 找不到记录不算失败：md 已删，只回「没有找到对应的学习记录」；写盘失败也只回原因（`recordError`），不挡第 3 步 |
+| 3 | `git add` 这两个文件 → `git commit`（`docs(notes): 删除 <文件名去扩展名>`）→ `git push` | 提交 / 推送失败不阻断删除，原因回传前端 |
+
+- **记录文件按读到的原形态写回**：未掌握库是 `{ schema_version, revision, category, records: { <id>: … } }`，
+  删一条后 `revision` 加一（与 `learning_records_tool/store.py` 的写入口径一致）；已掌握库旧文件是记录数组、
+  新文件与上面同形，数组仍是数组、对象仍是对象，只删这一条，不替源仓库重排整份文件；
+- **推送只在删除流程里做**：手动保存仍旧只提交、不替用户推；删除不可撤销，删完推上去远端才不会留着一篇
+  已经不存在的笔记。没配上游分支时跳过推送并说明原因，不算失败；
+- **前端只拿到「记录删没删 / 提交 hash / 推送失败原因」**，据此给一条提示（已删除 + 已提交 + 是否推送成功），
+  不把中间状态改成一句「已删除」；
+- 提交带 pathspec，只提交这次删掉的两个文件，不捎上仓库里其它预暂存改动。
 
 ## 笔记内容出问题：改源头 md，不在预览层打补丁
 

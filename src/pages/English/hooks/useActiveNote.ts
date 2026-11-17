@@ -1,5 +1,5 @@
 /**
- * 当前打开的笔记：按名取正文、翻篇、保存后重取、header 刷新。
+ * 当前打开的笔记：按名取正文、翻篇、保存后重取、header 刷新、删除。
  *
  * 列表只带摘要，所以「这一篇的正文」是一份独立状态：打开 / 翻篇 / 保存 / 刷新
  * 都走这一套流程，并共用同一个请求序号，连点时只认最后一次（早到的响应直接丢掉）。
@@ -10,8 +10,12 @@ import { notifications } from '@mantine/notifications';
 
 import { getErrorMessage } from '@/utils/error';
 
-import type { NoteSummary, UseActiveNoteResult } from '../types';
-import { fetchEnglishNote, saveEnglishNote } from '../utils/notes-api';
+import type { DeletedNoteResult, NoteSummary, UseActiveNoteResult } from '../types';
+import {
+  deleteEnglishNote,
+  fetchEnglishNote,
+  saveEnglishNote,
+} from '../utils/notes-api';
 
 /** 取数失败时的兜底文案 */
 const READ_ERROR_FALLBACK = '读取笔记正文失败';
@@ -29,7 +33,76 @@ type UseActiveNoteParams = {
   notes: NoteSummary[];
   /** 摘要可能变了（保存后分类 / 知识点 / 时间会变），交回列表去替换那一条 */
   onSummary: (summary: NoteSummary) => void;
+  /** 一篇被删掉了，交回列表把它摘掉 */
+  onDeleted: (name: string) => void;
 };
+
+/** 删除结果的第一段：这一篇到底删掉了什么 */
+const describeDeletedHead = ({
+  recordDeleted,
+  recordError,
+}: DeletedNoteResult): string => {
+  if (recordDeleted) {
+    return '笔记与学习记录已删除';
+  }
+
+  if (recordError) {
+    return `笔记已删除，但学习记录删除失败：${recordError}`;
+  }
+
+  return '笔记已删除（没有找到对应的学习记录）';
+};
+
+/** 删除结果的后一段：提交 / 推送到了哪一步；没提交就没有这一段 */
+const describeDeletedCommit = ({
+  commitError,
+  commitHash,
+  pushError,
+}: DeletedNoteResult): string[] => {
+  if (commitError) {
+    return [`自动提交失败：${commitError}`];
+  }
+
+  if (!commitHash) {
+    return [];
+  }
+
+  return [
+    `已提交 ${commitHash}`,
+    pushError ? `未推送：${pushError}` : '已推送到远端',
+  ];
+};
+
+/** 提示的颜色：记录没删成是错误，提交 / 推送没成是警告，其余算成功 */
+const describeDeletedColor = ({
+  recordError,
+  commitError,
+  pushError,
+}: DeletedNoteResult): string => {
+  if (recordError) {
+    return 'red';
+  }
+
+  return commitError || pushError ? 'orange' : 'teal';
+};
+
+/**
+ * 删除成功的提示：说清删了什么、提交推送到哪一步。
+ *
+ * 三件事都可能是「部分成功」：md 删了但记录没删成、提交失败、提交成功但推送失败。
+ * 一条「已删除」盖过去，用户会以为远端也干净了。
+ */
+const describeDeleted = (
+  result: DeletedNoteResult,
+): {
+  message: string;
+  color: string;
+} => ({
+  color: describeDeletedColor(result),
+  message: [describeDeletedHead(result), ...describeDeletedCommit(result)].join(
+    '；',
+  ),
+});
 
 /** 两条摘要是否完全一致：一致就不用回灌列表，省一次整份看板的重算与重渲染 */
 const isSameSummary = (current: NoteSummary, next: NoteSummary): boolean =>
@@ -45,6 +118,7 @@ const isSameSummary = (current: NoteSummary, next: NoteSummary): boolean =>
 export const useActiveNote = ({
   notes,
   onSummary,
+  onDeleted,
 }: UseActiveNoteParams): UseActiveNoteResult => {
   const [active, setActive] = useState<NoteSummary | null>(null);
   const [content, setContent] = useState<string | null>(null);
@@ -200,5 +274,26 @@ export const useActiveNote = ({
     await readActive(active.name);
   }, [active, readActive]);
 
-  return { active, close, content, loading, open, refresh, save };
+  /**
+   * 删除当前这一篇：md 与学习记录由插件一起删，删完自动提交并推送。
+   * 成功后关弹窗、把它从列表里摘掉，并用一条提示交代提交 / 推送到了哪一步；
+   * 失败原样抛出（确认层收起、正文留着，不让弹窗先关掉再说「其实没删」）。
+   */
+  const remove = useCallback(async () => {
+    if (!active) {
+      return;
+    }
+
+    const { name } = active;
+    const deleted = await deleteEnglishNote(name);
+
+    close();
+    onDeleted(name);
+
+    const { color, message } = describeDeleted(deleted);
+
+    notifications.show({ color, message, title: '已删除' });
+  }, [active, close, onDeleted]);
+
+  return { active, close, content, loading, open, refresh, remove, save };
 };
