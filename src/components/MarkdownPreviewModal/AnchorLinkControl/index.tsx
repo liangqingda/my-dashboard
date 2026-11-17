@@ -1,10 +1,8 @@
 /**
  * 同文档链接的图标按钮：点一下在图标下方弹出两个与锚点有关的设置。
  *
- * 与筛选面板同一套外观（`NoteFilter`）：字段标题在上、下拉在下、选中项的口径用一行说明补在下面；
- * 因此这里也用 `Select`（`size="xs"`、标题下留 4px、下拉不进门户），不手写单选组。
- * 下拉**不放进门户**（`comboboxProps={{ withinPortal: false }}`）：门户里的列表在 popover 看来是
- * 「外面」，点选项会先把弹层关掉，选择动作就丢了。
+ * 两个字段都走公共的 `FreeSelectField`（标题在上、下拉在下、选中项的口径用一行灰字补在下面），
+ * 与筛选面板是同一套外观与同一条「下拉不进门户」的规矩——都收在那一个组件里，这里只给选项与说明。
  *
  * 落地的两个偏好：
  * 1. 点链接之后怎么办（`behavior`）：滚过去 / 弹窗打开那一块；
@@ -13,10 +11,10 @@
  * 阅读偏好，不跟着某一篇走；这里只管按钮外观、弹层开合与把选中的值递上去。
  */
 
-import { Select, Stack, Text } from '@mantine/core';
+import { Stack } from '@mantine/core';
 import { IconAnchor } from '@tabler/icons-react';
-import type { CSSProperties } from 'react';
 
+import FreeSelectField from '@/components/FreeSelectField';
 import IconPopoverButton from '@/components/IconPopoverButton';
 
 import type {
@@ -35,14 +33,6 @@ const ICON_STROKE = 1.9;
 
 /** 弹层宽度：与筛选面板同宽（272），两个字段都排得开 */
 const DROPDOWN_WIDTH = 272;
-
-/**
- * 字段标题与下拉之间补 4px：组件库只靠标题行高留白，视觉上贴着控件。
- * 与筛选面板的 `FIELD_STYLES` 同一份口径。
- */
-const FIELD_STYLES: Record<'label', CSSProperties> = {
-  label: { marginBottom: 4 },
-};
 
 /** 两档行为：档名给下拉，口径说明单列一行（塞进选项会把下拉撑宽） */
 const BEHAVIOR_OPTIONS: Record<
@@ -78,8 +68,11 @@ const AnchorLinkControl = ({
   opened,
   scope,
 }: AnchorLinkControlProps) => {
-  /** 下拉给回来的是字符串或 null，先对回枚举里的那一档，拿不到就不动 */
-  const handleBehaviorChange = (value: string | null) => {
+  /**
+   * 下拉给回来的是档名文本，先对回枚举里的那一档再上报：
+   * 对不上（数据与选项漂了）就当没点，不把不合法的值写进阅读偏好。
+   */
+  const handleBehaviorChange = (value: string) => {
     const option = BEHAVIOR_DATA.find((item) => item.value === value);
 
     if (option) {
@@ -87,7 +80,7 @@ const AnchorLinkControl = ({
     }
   };
 
-  const handleScopeChange = (value: string | null) => {
+  const handleScopeChange = (value: string) => {
     const option = SCOPE_DATA.find((item) => item.value === value);
 
     if (option) {
@@ -106,36 +99,20 @@ const AnchorLinkControl = ({
       width={DROPDOWN_WIDTH}
     >
       <Stack gap="sm">
-        <Stack gap={4}>
-          <Select
-            allowDeselect={false}
-            comboboxProps={{ withinPortal: false }}
-            data={BEHAVIOR_DATA}
-            label="点链接之后"
-            onChange={handleBehaviorChange}
-            size="xs"
-            styles={FIELD_STYLES}
-            value={behavior}
-          />
-          <Text c="dimmed" size="xs">
-            {BEHAVIOR_OPTIONS[behavior].description}
-          </Text>
-        </Stack>
-        <Stack gap={4}>
-          <Select
-            allowDeselect={false}
-            comboboxProps={{ withinPortal: false }}
-            data={SCOPE_DATA}
-            label="区块预览切换范围"
-            onChange={handleScopeChange}
-            size="xs"
-            styles={FIELD_STYLES}
-            value={scope}
-          />
-          <Text c="dimmed" size="xs">
-            {SCOPE_OPTIONS[scope].description}
-          </Text>
-        </Stack>
+        <FreeSelectField
+          data={BEHAVIOR_DATA}
+          description={BEHAVIOR_OPTIONS[behavior].description}
+          label="点链接之后"
+          onChange={handleBehaviorChange}
+          value={behavior}
+        />
+        <FreeSelectField
+          data={SCOPE_DATA}
+          description={SCOPE_OPTIONS[scope].description}
+          label="区块预览切换范围"
+          onChange={handleScopeChange}
+          value={scope}
+        />
       </Stack>
     </IconPopoverButton>
   );

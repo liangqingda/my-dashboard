@@ -18,11 +18,13 @@
 ## 行为
 
 - 改动即时生效，不需要点「应用」；改的是预览，不改笔记原文（面板底部写明这一点）。
-- 范围用一档下拉（`Select`）而不是三行单选：272px 的面板里，三行「档名 + 口径」太占高度。
+- 范围用一档下拉（`FreeSelectField`）而不是三行单选：272px 的面板里，三行「档名 + 口径」太占高度。
   下拉收起后只剩当前档名，口径由下拉下方一行灰字补上（数据见 `constants.ts` 的
   `SCOPE_OPTIONS` / `SCOPE_SELECT_DATA`）——想改口径文案只改前者，下拉选项自动跟着变。
-- 下拉的 `comboboxProps.withinPortal` 必须为 `false`：面板本身已在弹层里，
-  下拉再套一层 Portal 会被弹层的「点在外面就收」判定成外部点击，一点选项面板就没了。
+- 下拉的 `comboboxProps.withinPortal` 必须为 `false`（由 `FreeSelectField` 统一挡掉）：面板本身已在
+  弹层里，下拉再套一层 Portal 会被弹层的「点在外面就收」判定成外部点击，一点选项面板就没了。
 - 一条都不命中时，由弹窗在正文区提示「没有符合当前筛选条件的内容」（不在面板里报）。
-- 「重置」回到「全部内容 + 空关键词」；没有条件生效时置灰。
-- 弹层由公共的 `src/components/FilterButton` 渲染，本组件只管里面的控件。
+- 底部「说明 + 重置」用公共的 `FreePanelFooter`；「重置」回到「全部内容 + 空关键词」，
+  没有条件生效时置灰。
+- 弹层由公共的 `src/components/FilterButton` 渲染；字段组与下拉外观、字段间距（4px）分别在
+  `src/components/FreeSelectField` 与 `IconPopoverButton/constants.ts` 里，本组件不复制样式。

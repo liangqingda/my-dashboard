@@ -6,17 +6,21 @@
  * 这里只把改动交回去——「刷新页面仍沿用上次的条件」因此只有一处实现。
  * 与预览弹窗里的正文筛选（`NoteFilter`）互不相干：这一份只决定列表显示哪些笔记。
  *
- * 日历用 `@mantine/dates` 的 `DatePicker`（内联渲染、不带自己的弹层）：
+ * 两个下拉与底部收尾都走公共的 `FreeSelectField` / `FreePanelFooter`，
+ * 这一页只定「筛什么」。日历用 `@mantine/dates` 的 `DatePicker`（内联渲染、不带自己的弹层）：
  * 面板本身就是一个弹层，里面再套一层 Portal 会被判成「点在外面」而把面板收掉。
  */
 
-import { Button, Group, Select, Stack, Text } from '@mantine/core';
+import { Stack } from '@mantine/core';
 import { DatePicker } from '@mantine/dates';
 import dayjs from 'dayjs';
 
+import FreePanelFooter from '@/components/FreePanelFooter';
+import FreeSelectField from '@/components/FreeSelectField';
+
 import { ALL_CATEGORIES, NOTES_FILTER_RANGE_CODEC, UNCATEGORIZED_CATEGORY } from '../constants';
 
-import { FIELD_STYLES, RANGE_OPTIONS, RANGE_SELECT_DATA } from './constants';
+import { RANGE_OPTIONS, RANGE_SELECT_DATA } from './constants';
 import type { NotesFilterProps } from './types';
 
 import styles from './index.scss';
@@ -56,26 +60,13 @@ const NotesFilter = ({
 
   return (
     <Stack gap="sm">
-      <Stack gap={4}>
-        <Select
-          allowDeselect={false}
-          // 面板本身已在弹层里，下拉再套一层 Portal 会被当成「点在外面」把面板关掉
-          comboboxProps={{ withinPortal: false }}
-          data={RANGE_SELECT_DATA}
-          label="时间范围"
-          onChange={(value) => {
-            if (value !== null) {
-              onRangeChange(NOTES_FILTER_RANGE_CODEC.decode(value));
-            }
-          }}
-          size="xs"
-          styles={FIELD_STYLES}
-          value={range}
-        />
-        <Text c="dimmed" size="xs">
-          {rangeHint}
-        </Text>
-      </Stack>
+      <FreeSelectField
+        data={RANGE_SELECT_DATA}
+        description={rangeHint}
+        label="时间范围"
+        onChange={(value) => onRangeChange(NOTES_FILTER_RANGE_CODEC.decode(value))}
+        value={range}
+      />
 
       {/* 选了「指定日期」就把日历摊在下面：点一档就能直接选哪一天，不用再点一次 */}
       {range === 'date' ? (
@@ -91,35 +82,21 @@ const NotesFilter = ({
         />
       ) : null}
 
-      <Select
-        allowDeselect={false}
-        comboboxProps={{ withinPortal: false }}
+      <FreeSelectField
         data={categoryData}
         label="分类"
-        onChange={(value) => {
-          if (value !== null) {
-            onCategoryChange(value === ALL_CATEGORIES ? '' : value);
-          }
-        }}
-        size="xs"
-        styles={FIELD_STYLES}
+        onChange={(value) =>
+          onCategoryChange(value === ALL_CATEGORIES ? '' : value)
+        }
         value={categoryValue}
       />
 
       {/* 底部一句边界说明 + 重置：让「只筛列表」这件事当场可见 */}
-      <Group gap={8} justify="space-between" wrap="nowrap">
-        <Text c="dimmed" size="xs">
-          只影响列表，不动笔记
-        </Text>
-        <Button
-          disabled={!active}
-          onClick={onReset}
-          size="compact-xs"
-          variant="subtle"
-        >
-          重置
-        </Button>
-      </Group>
+      <FreePanelFooter
+        disabled={!active}
+        hint="只影响列表，不动笔记"
+        onReset={onReset}
+      />
     </Stack>
   );
 };

@@ -1,5 +1,3 @@
-import type { CSSProperties } from '@mantine/core';
-
 import type { NotesRangeOption } from './types';
 
 /** 时间范围的六档：顺序即展示顺序，口径都是「按笔记更新时间」 */
@@ -41,11 +39,3 @@ export const RANGE_SELECT_DATA = RANGE_OPTIONS.map(({ label, value }) => ({
   label,
   value,
 }));
-
-/**
- * 字段标题与控件之间再加一点：组件库只靠标题行高留白（13px 字站在 1.55 行高里），
- * 视觉上贴着输入框。与预览弹窗的筛选面板用同一份数值。
- */
-export const FIELD_STYLES: Record<'label', CSSProperties> = {
-  label: { marginBottom: 4 },
-};

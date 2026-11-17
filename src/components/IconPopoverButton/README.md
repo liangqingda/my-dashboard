@@ -10,10 +10,18 @@
 | props | `icon`（图标节点）、`label`（`aria-label` 与默认 tooltip 文案）、`hint`（覆盖 tooltip，需要写进当前状态时传）、`active`（生效时常态用主色，且没传 `hint` 时 tooltip 追加「（已生效）」）、`opened` / `onChange`、`width`（默认 272）、`children`（弹层内容，内边距 12px） |
 | 不负责 | 开合时机（换篇、切视图、关弹窗时收起由调用方管）、Esc 归属、持久化 |
 
+## 字段间距（`constants.ts`）
+
+`PANEL_FIELD_STYLES`（`{ label: { marginBottom: 4 } }`）：弹层面板里「标题 + 控件」的字段间距。
+组件库只靠标题行高留白，视觉上会贴着控件，所以统一补 4px。`FreeSelectField` 里的 `Select`、
+`NoteFilter` 里的 `TextInput` 用的都是它——**不要再各自复制一份同值常量**。
+它放在这里，是因为它管的是「弹层面板里的字段」，而不是某一个控件。
+
 ## 注意
 
 - 弹层内部如果用 `Select`，必须显式 `comboboxProps={{ withinPortal: false }}`：
   下拉再套一层 Portal 会被弹层的「点在外面就收」判成外部点击，一点选项面板就没了。
+  这条已经收进 `FreeSelectField`，新写字段先用那个组件。
 - 面板里的日历控件（`@mantine/dates` 的 `DatePicker`）是内联渲染、不带自己的弹层，
   同样是为了避开这层嵌套判定。
 - 同一屏开多块面板时，互斥（同时只开一块）由调用方维护，本组件不管。

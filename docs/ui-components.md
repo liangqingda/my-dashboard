@@ -42,6 +42,9 @@
   Mantine `Table` 就会出现两套外观，也算违反约定。
 - **不复制样式**：业务组件要改外观通过 props / 自己的 `index.scss` 加增量，不把 `FreeXxx`
   的规则抄一遍。
+- **配置对象也算样式**：`{ label: { marginBottom: 4 } }` 这种「同一套外观的 params」出现第二处
+  就上提成一份常量，别在每个调用方各复制一份——复制的那几份注释里往往还写着「同一份口径」，
+  那正是该上提的信号。
 - **不接第二套渲染栈**：已经该用 `MarkdownPreviewModal` 的场景，页面里再出现 `react-markdown`
   直连、或另起 `Modal` + 渲染器，等同于复制整套组件。
 
@@ -55,14 +58,20 @@
 目录结构与其它组件一致（见 `docs/code-splitting.md`）：`index.tsx` + `index.scss` +
 `types.ts`，一个 `index.tsx` 只放一个组件。
 
-## FreeTable（示例，也是现有唯一的 Free 组件）
+## 现有的 Free 组件
 
-| 项 | 约定 |
-| --- | --- |
-| 包什么 | Mantine `Table` + 项目外观：`--app-line` 底边框、表头小字号字段色与 `--app-line-strong` 下边线、表头吸顶、行 hover `--app-surface-hover` |
-| 取分段组件 | 统一用 `FreeTable.Thead` / `Tbody` / `Tr` / `Th` / `Td`，业务侧不再 import Mantine 的 `Table` |
-| props | 透传 Mantine `TableProps`（`className`、`layout`、`stickyHeader`、`tabularNums` 等）；`compact` 只收紧内边距，给编辑器这类密排网格用 |
-| 不做 | 不接分页、排序、虚拟滚动——那是业务组件的事（`NotesTable` 自己管 `onSort` 与 `aria-sort`） |
+| 组件 | 统一了什么 | 不管什么 |
+| --- | --- | --- |
+| `FreeTable` | Mantine `Table` + 项目外观：边框、表头、吸顶、行 hover；取分段统一走 `Thead` / `Tbody` / `Tr` / `Th` / `Td` | 不接分页、排序、虚拟滚动（那是业务组件的事） |
+| `FreeSelectField` | 弹层面板里的字段组：标题 + 一档下拉 + 一行口径说明；尺寸档、字段间距、下拉不进门户 | 选项、当前值、说明文案、编解码、选中后的状态 |
+| `FreePanelFooter` | 弹层面板底部一行：左侧边界说明 + 右侧「重置」（组件库 `Button` subtle 小号） | 说明文案、置灰口径、重置动作 |
+
+`FreeSelectField` / `FreePanelFooter` 的契约（props、锁定项的取值理由、坑）写在各自目录的
+`README.md`——判据：只有改它的人才需要读 → 跟代码走。`FreeTable` 的约定就在本文件（它是
+样式基线的示例）：props 透传 Mantine `TableProps`，`compact` 只收紧内边距。
+
+**这套「哪些提公共、提到哪一层」的判据不在本文件**，见 `docs/reuse-boundaries.md`：
+本文件管「UI 形态怎么选」，那份管「UI 与逻辑各自该不该提公共」。
 
 ## 例外：编辑器表层的输入控件
 

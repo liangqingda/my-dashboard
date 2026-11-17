@@ -1,18 +1,7 @@
-/* 筛选面板：只给「重置」这类文字按钮定样式，控件本体与间距都用组件库 */
-
-.reset {
-  flex: 0 0 auto;
-  padding: 0;
-  color: var(--app-accent);
-  font-size: 0.78rem;
-}
-
-.reset:hover:not(:disabled) {
-  color: var(--app-accent-strong);
-}
-
-/* 没有条件可清：置灰并去掉手型，避免点一个什么都不做的按钮 */
-.reset:disabled {
-  color: var(--app-ink-faint);
-  cursor: default;
-}
+/*
+ * 本面板没有自己的样式：字段组、下拉与底部「说明 + 重置」都在公共件里
+ * （`FreeSelectField` / `FreePanelFooter` / `IconPopoverButton/constants.ts`）。
+ *
+ * 保留这个空壳文件是因为 `pages/<Page>/` 下的组件目录要求 `index.tsx` + `index.scss` 成对
+ * （见 `docs/code-splitting.md`）；哪天这一页真要加增量样式，写在这里，别回头去改公共件。
+ */

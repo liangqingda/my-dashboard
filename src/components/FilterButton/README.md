@@ -12,7 +12,10 @@
 
 ## 注意
 
-- 弹层内部如果用 `Select`，必须显式 `comboboxProps={{ withinPortal: false }}`：
-  下拉再套一层 Portal 会被弹层的「点在外面就收」判成外部点击，一点选项面板就没了。
+- 弹层里要放字段组，直接用 `FreeSelectField`（标题 + 下拉 + 一行口径说明）：其中「下拉不进门户」
+  （`comboboxProps={{ withinPortal: false }}`）与字段间距都收在那一个组件里——下拉再套一层 Portal
+  会被弹层的「点在外面就收」判成外部点击，一点选项面板就没了。
+- 面板底部那句边界说明 + 「重置」用 `FreePanelFooter`，别各页各写一份（一处手写
+  `UnstyledButton`、一处用 `Button` 就是这么漂出来的）。
 - 弹层内容里的日历控件（`@mantine/dates` 的 `DatePicker`）是内联渲染、不带自己的弹层，
   同样是为了避开这层嵌套判定。
