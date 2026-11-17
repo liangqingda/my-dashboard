@@ -28,7 +28,7 @@
  */
 
 import { useMemo, useState } from 'react';
-import { Modal } from '@mantine/core';
+import { FocusTrap, Modal } from '@mantine/core';
 
 import { cx } from '@/utils/cx';
 
@@ -250,6 +250,13 @@ const MarkdownPreviewModal = ({
         trapFocus={anchorBlock.index === null && !removal.confirming}
         withCloseButton={!editing.editing}
       >
+        {/*
+         * 初始焦点先落到这个隐藏节点：focus trap 激活时默认把焦点给弹窗内第一个
+         * 可聚焦元素，翻篇按钮 disabled 时会落到 header 第一个图标按钮上，把它的
+         * focus 型 tooltip 撞成常驻。`data-autofocus` 节点优先被 trap 选中，
+         * 手动按 Tab 时才进入按钮序列（那时才是真实键盘聚焦）。
+         */}
+        <FocusTrap.InitialFocus />
         {/* 正文工作区：左侧目录 + 右侧阅读 / 编辑区；筛选 / 渲染 / 目录定位都归它 */}
         <PreviewWorkspace
           Editor={Editor}

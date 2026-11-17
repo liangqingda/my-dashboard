@@ -333,6 +333,11 @@ header 的操作缩成「返回编辑」「保存」；点「返回编辑」回�
 关闭入口、遮罩行为、焦点进出弹窗都按 Mantine `Modal` 的既有能力处理，自定义按钮一律带
 `aria-label`（与 tooltip 同一句话）。
 
+**初始焦点不落到 header 图标上**：focus trap 激活时默认聚焦弹窗内第一个可聚焦元素，翻篇按钮
+disabled 时会落到第一个图标按钮上，把复制按钮那类 focus 型 tooltip 撞成常驻。弹窗内放一个
+`FocusTrap.InitialFocus`（`data-autofocus` 隐藏节点）让 trap 先选中它；只有用户手动按
+Tab 进入按钮序列时，才是真实键盘聚焦、tooltip 才该打开。
+
 `Esc` 的语义**只有一个：关掉弹窗**，任何外观状态下都不变：
 
 | 当时状态 | 按 Esc |
