@@ -15,7 +15,7 @@
 | 想抽公共 / 判一段 UI 与逻辑各自该不该提、提到哪一层（整块、只提 UI 壳、只提逻辑） | `docs/reuse-boundaries.md` |
 | 新建或改造任何 Markdown / 文档预览，动弹窗排版 / 标题导航 / 全屏 / header 操作 | `src/components/MarkdownPreviewModal/README.md` |
 | 新建或改造某类文档的编辑器、改块解析与回写、跑 `pnpm check:md` | `docs/markdown-editing.md` |
-| 新增或修改本机仓库读写（`../learn-english` 等）、动 `scripts/vite/*` 与自动提交、笔记数据修源头 | `docs/local-repo-data.md` |
+| 要在 `../learn-english` 这类目标仓库里加能力 / 改它的代码或数据、新增或修改本机仓库读写、动 `scripts/vite/*` 与自动提交、笔记数据修源头 | `docs/local-repo-data.md` |
 | 收尾 / 提交 / 交付前 | `docs/self-check.md` |
 
 ## 硬约束速览
