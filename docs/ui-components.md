@@ -17,6 +17,8 @@
 | 单行输入 | `TextInput` |
 | 多行输入（普通表单） | `Textarea` |
 | 下拉单选 / 多选 | `Select` / `MultiSelect` |
+| 弹层面板里的字段（标题 + 下拉 + 一行口径说明） | `FreeSelectField` |
+| 弹层面板底部（一句边界说明 + 重置） | `FreePanelFooter` |
 | 日期选择 | `@mantine/dates` 的 `DatePicker`（内联日历）/ `DatePickerInput`（带弹层的日期输入）；全站日历口径（中文、周一为第一天）由 `src/main.tsx` 的 `DatesProvider` 统一给，不要自己拼日历或改用原生 `type="date"` |
 | 分段切换（视图模式、日志类别） | `SegmentedControl` |
 | 悬停 / 聚焦提示 | `Tooltip`（截断后的完整内容走 `TruncatedText`）；**列表里成百上千个条目不要给每条常驻一个 `Tooltip`**，用 `@/hooks/useHoverIntent` 在被指到时才挂一个（`target` 指向被指的节点，不替换它），`TruncatedText` 与 `CopyIconButton` 已内置这套做法 |
@@ -52,8 +54,22 @@
 
 | 类型 | 命名 | 位置 |
 | --- | --- | --- |
-| 基础 UI 基建 | `Free` 前缀 + 组件名（`FreeTable`、`FreeModal`…） | `src/components/FreeXxx/` |
+| 基础 UI 基建（包组件库、上项目基线） | `Free` 前缀 + 组件名（`FreeTable`、`FreeSelectField`…） | `src/components/FreeXxx/` |
+| 通用能力件（单一职责、不属于某个页面） | 能力语义，**不挂 `Free`**（`CopyIconButton`、`TruncatedText`…） | `src/components/<Name>/` |
 | 业务组件 | 业务语义（`NotesTable`、`TableEditor`…），不挂 `Free` | `src/pages/<Page>/<Name>/` |
+
+**`Free` 前缀只给「组件库某个组件 + 项目基线」的壳**：名字里能看出包的是 Table / Select / Modal，
+它锁的是这个组件的尺寸档、边框、表头、间距这类外观。三条判据从上往下问：
+
+1. 它是不是把某个组件库组件包成「项目默认长相 / 默认行为」？是 → `FreeXxx`。
+2. 它是不是一个单一能力的通用件，名字回答「干什么」而不是「包的谁」？是 → 不挂 `Free`
+   （复制、截断提示、图标弹层、文档预览这些是一套能力，不是一套外观）。
+3. props 里出现只有某一页才成立的语义（某页的筛选项、某页的文档结构）？→ 它不该在
+   `src/components`，回 `src/pages/<Page>/`（判据见 `docs/reuse-boundaries.md` 的形态 ④）。
+
+`FreePanelFooter` 是 1 的边缘案例，归类按「锁定了什么外观」定：它锁的是「面板底部布局 +
+`Button` subtle 小号」这套外观（不是某个 Mantine 组件），所以留 `Free`；同理，新写的面板级排布件
+只要**跨页面复用同一套长相**就按这一类走，否则当能力件或留页面。
 
 目录结构与其它组件一致（见 `docs/code-splitting.md`）：`index.tsx` + `index.scss` +
 `types.ts`，一个 `index.tsx` 只放一个组件。
