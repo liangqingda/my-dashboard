@@ -5,6 +5,7 @@ import type { Plugin } from 'vite';
 
 import { commitNote, commitNoteDeletion } from './english-notes-commit.js';
 import { deleteNote } from './english-notes-delete.js';
+import { writeNoteFile } from './english-notes-write.js';
 import {
   NOTES_DIR,
   collectNoteSummaries,
@@ -12,7 +13,6 @@ import {
   readCategoryConfig,
   readNote,
   toNoteDetail,
-  writeNote,
 } from './english-notes-store.js';
 
 /** 构建产物里列表索引的文件名（只含摘要与分类清单） */
@@ -210,10 +210,27 @@ export const englishNotes = (root: string): Plugin => {
               throw new Error('正文必须是字符串');
             }
 
-            const { updatedAt } = await writeNote(repoDir, name, content);
+            // 名字先按本项目的笔记路径规则过一遍：脚本也会校验，但那要起进程，
+            // 明显不合法的请求没必要跑一趟
+            if (!isNoteName(name)) {
+              throw new Error('这个文件不允许写入');
+            }
+
+            // 整篇正文交给记录仓库的笔记脚本写：它在锁内落盘并校验，
+            // 校验不过就回滚并把问题行带回来，本项目不自己检查 md 格式
+            await writeNoteFile(repoDir, `${NOTES_DIR}/${name}`, content);
+
+            const saved = await readNote(repoDir, name);
+
+            if (!saved) {
+              throw new Error('写入后读不到这篇笔记');
+            }
+
             const commit = await commitNote(repoDir, name);
 
-            res.end(JSON.stringify({ commit, name, updatedAt }));
+            res.end(
+              JSON.stringify({ commit, name, updatedAt: saved.updatedAt }),
+            );
           } catch (error) {
             res.statusCode = 400;
             res.end(

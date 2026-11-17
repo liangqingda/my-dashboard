@@ -2,7 +2,7 @@
  * learn-english 笔记目录的读写：只认 Markdown 文件，写操作必须留在笔记目录内。
  */
 
-import { readFile, readdir, stat, writeFile } from 'node:fs/promises';
+import { readFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 
 import type { Dirent } from 'node:fs';
@@ -46,12 +46,8 @@ const notesDirOf = (repoDir: string): string =>
   path.resolve(repoDir, NOTES_DIR);
 
 /** 校验笔记路径并返回安全的绝对路径；不合法直接抛错 */
-const resolveNoteFile = (
-  repoDir: string,
-  name: string,
-  action = '写入',
-): string => {
-  const rejected = `这个文件不允许${action}`;
+const resolveNoteFile = (repoDir: string, name: string): string => {
+  const rejected = '这个文件不允许读取';
 
   if (!isNoteName(name)) {
     throw new Error(rejected);
@@ -79,7 +75,7 @@ export const readNote = async (
   let file: string;
 
   try {
-    file = resolveNoteFile(repoDir, name, '读取');
+    file = resolveNoteFile(repoDir, name);
   } catch {
     return null;
   }
@@ -353,22 +349,4 @@ export const readCategoryConfig = async (
   }
 
   return entries;
-};
-
-/**
- * 把正文写回笔记目录下的某个文件，返回写后的修改时间。
- * 只允许写 `learning-record-notes/<category>/` 内、路径符合规则的 Markdown 文件。
- */
-export const writeNote = async (
-  repoDir: string,
-  name: string,
-  content: string,
-): Promise<{ updatedAt: string }> => {
-  const file = resolveNoteFile(repoDir, name);
-
-  await writeFile(file, content, 'utf8');
-
-  const info = await stat(file);
-
-  return { updatedAt: info.mtime.toISOString() };
 };

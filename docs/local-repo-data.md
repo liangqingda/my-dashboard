@@ -10,7 +10,8 @@
 | 文件 | 职责 |
 | --- | --- |
 | `scripts/vite/english-notes.ts` | 路由壳：只做请求解析与响应 |
-| `scripts/vite/english-notes-store.ts` | 读写与校验：落盘、结构校验、文件名合法性、读分类清单 |
+| `scripts/vite/english-notes-store.ts` | 只读侧：读盘、解析摘要、文件名合法性、读分类清单 |
+| `scripts/vite/english-notes-write.ts` | 保存一篇笔记：跑记录仓库的 `note.py write`，把「写没写进去 / 校验问题」收敛成页面要的形状 |
 | `scripts/vite/english-notes-delete.ts` | 删除一篇笔记：跑记录仓库的 `learning_records.py delete-note`，把它的结果收敛成页面要的形状 |
 | `scripts/vite/english-notes-commit.ts` | 自动提交：把这一次改动提交到 `../learn-english`（删除流程提交后还会推送） |
 
@@ -68,9 +69,15 @@
    路径口径与记录仓库的 `check_note.py` 一致——只认 `<category>/<category>-<slug>.md`，目录名必须等于
    文件名前缀，分类键小写字母、slug 只用小写 ASCII 字母 / 数字 / 连字符。中文 slug 在源仓库写入时
    就被拒收，这里不再放行，否则预览层会比数据源头更宽容，等于替源仓库藏缺陷；
-3. 保存落盘后由同一个中间件把该文件提交到 `learn-english`：只 stage 这一个文件，提交信息半固定为
+3. **正文交给记录仓库的笔记脚本落盘与校验**（`python3 take-english-study-notes/scripts/note.py write
+   --file learning-record-notes/<name> --content-file <临时草稿>`，cwd 是记录仓库根目录）：
+   脚本在 `learning-record-notes/.notes.lock` 排他锁内先原子写入候选正文、再跑 `check_note.py`，
+   **校验不过立刻回滚成保存前的正文**并把 `check.issues` 返回（退出码 1）——本项目只把问题行拼成一句
+   `笔记校验未通过，已撤销保存。第 N 行：…` 回给页面，**不自己写 md、也不自己判断格式**。
+   校验器不可用时脚本照写并回 `note_status: unverified`；
+4. 写入成功后由同一个中间件把该文件提交到 `learn-english`：只 stage 这一个文件，提交信息半固定为
    `docs(notes): 手动编辑 <文件名去扩展名>` + 固定正文「通过 my-dashboard 的 Markdown 预览弹窗保存」；
-4. 内容无变化时不产生空提交；提交失败不阻断保存，原因回传到 header 的保存状态提示（红色文案）。
+5. 内容无变化时不产生空提交；提交失败不阻断保存，原因回传到 header 的保存状态提示（红色文案）。
 
 ## 删除一篇笔记：调记录仓库的脚本，再提交并推送
 
