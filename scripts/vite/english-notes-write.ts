@@ -2,7 +2,7 @@
  * 保存一篇笔记：整篇正文交给记录仓库的笔记脚本写。
  *
  * 为什么不在中间件直接 `writeFile`：笔记有格式规则（模板、折叠块、索引块、追踪行），
- * 由 `take-english-study-notes/scripts/note.py write` 在锁内「落盘 → 校验 → 不过就回滚」
+ * 由 `skills/take-english-study-notes/scripts/note.py write` 在锁内「落盘 → 校验 → 不过就回滚」
  * 才是唯一合法入口；本项目自己写盘等于绕过校验，畸形 md 会直接进仓库。
  *
  * 这里只做三件事：把正文落到临时文件、跑脚本、把校验问题拼成一行人话。
@@ -17,8 +17,11 @@ import { promisify } from 'node:util';
 
 const runPython = promisify(execFile);
 
-/** 记录仓库里那个笔记脚本的相对路径（契约 `commands.writeNote.script` 同一处来源） */
-export const NOTE_SCRIPT = 'take-english-study-notes/scripts/note.py';
+/**
+ * 记录仓库里那个笔记脚本的相对路径（契约 `commands.writeNote.script` 同一处来源）。
+ * skill 目录统一收在记录仓库的 `skills/` 下，路径前缀必须带上，否则契约核对会直接失败。
+ */
+export const NOTE_SCRIPT = 'skills/take-english-study-notes/scripts/note.py';
 
 /** 校验器报的一处问题：行号 + 说明 */
 export type NoteIssue = {

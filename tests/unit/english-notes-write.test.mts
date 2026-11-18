@@ -5,6 +5,7 @@ import path from 'node:path';
 import { describe, it } from 'node:test';
 
 import {
+  NOTE_SCRIPT,
   describeIssues,
   writeNoteFile,
 } from '../../scripts/vite/english-notes-write.ts';
@@ -14,10 +15,12 @@ import {
  *
  * 真脚本在 `../learn-english` 里，一跑就会真的改笔记，单测不能碰它；假脚本只回
  * 指定 stdout / stderr，用来测中间件这边的命令拼装与结果收敛。
+ *
+ * 假脚本的落点直接按脚本的仓库相对路径（`NOTE_SCRIPT`）拼，脚本换目录时这里自动跟上。
  */
 const makeRepo = async (body: string): Promise<string> => {
   const repo = await mkdtemp(path.join(tmpdir(), 'my-dashboard-write-'));
-  const script = path.join(repo, 'take-english-study-notes', 'scripts', 'note.py');
+  const script = path.join(repo, NOTE_SCRIPT);
 
   await mkdir(path.dirname(script), { recursive: true });
   await writeFile(script, body, 'utf8');

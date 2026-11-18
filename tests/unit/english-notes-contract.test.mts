@@ -19,11 +19,11 @@ const CONTRACT = {
   categoriesFile: 'learning-record-notes/categories.json',
   commands: {
     writeNote: {
-      script: 'take-english-study-notes/scripts/note.py',
+      script: 'skills/take-english-study-notes/scripts/note.py',
       args: ['write'],
     },
     deleteNote: {
-      script: 'learn-from-english/scripts/learning_records.py',
+      script: 'skills/learn-from-english/scripts/learning_records.py',
       args: ['delete-note'],
     },
   },

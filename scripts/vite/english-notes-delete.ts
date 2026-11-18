@@ -1,6 +1,6 @@
 /**
  * 删除一篇笔记：md 与它的学习记录两半都在记录仓库里，所以这件事交给记录仓库自己的脚本
- * `learn-from-english/scripts/learning_records.py delete-note`。
+ * `skills/learn-from-english/scripts/learning_records.py delete-note`。
  *
  * 为什么不让中间件自己删：记录那一半的写入有它的规矩（文件锁、revision、未掌握 / 已掌握
  * 拆分、原子替换），外部复制一份写回逻辑迟早和源仓库漂移；脚本也是源仓库唯一允许改
@@ -15,8 +15,11 @@ import { promisify } from 'node:util';
 
 const runPython = promisify(execFile);
 
-/** 记录仓库里那个删除脚本的相对路径（契约 `commands.deleteNote.script` 同一处来源） */
-export const DELETE_SCRIPT = 'learn-from-english/scripts/learning_records.py';
+/**
+ * 记录仓库里那个删除脚本的相对路径（契约 `commands.deleteNote.script` 同一处来源）。
+ * 与写入脚本同口径：skill 目录都挂在记录仓库的 `skills/` 下。
+ */
+export const DELETE_SCRIPT = 'skills/learn-from-english/scripts/learning_records.py';
 
 /**
  * 脚本最长跑多久。

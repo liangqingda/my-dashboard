@@ -123,7 +123,7 @@
    路径口径与记录仓库的 `check_note.py` 一致——只认 `<category>/<category>-<slug>.md`，目录名必须等于
    文件名前缀，分类键小写字母、slug 只用小写 ASCII 字母 / 数字 / 连字符。中文 slug 在源仓库写入时
    就被拒收，这里不再放行，否则预览层会比数据源头更宽容，等于替源仓库藏缺陷；
-3. **正文交给记录仓库的笔记脚本落盘与校验**（`python3 take-english-study-notes/scripts/note.py write
+3. **正文交给记录仓库的笔记脚本落盘与校验**（`python3 skills/take-english-study-notes/scripts/note.py write
    --file learning-record-notes/<name> --content-file <临时草稿>`，cwd 是记录仓库根目录）：
    脚本在 `learning-record-notes/.notes.lock` 排他锁内先原子写入候选正文、再跑 `check_note.py`，
    **校验不过立刻回滚成保存前的正文**并把 `check.issues` 返回（退出码 1）——本项目只把问题行拼成一句
@@ -138,7 +138,7 @@
 `DELETE /api/english/notes?name=…`（仅开发模式，前端只在 `import.meta.env.DEV` 里给入口）。
 
 md 与它的学习记录两半都在记录仓库里，所以**删除动作交给记录仓库自己的脚本**
-（`python3 learn-from-english/scripts/learning_records.py delete-note --note learning-record-notes/<name>`，
+（`python3 skills/learn-from-english/scripts/learning_records.py delete-note --note learning-record-notes/<name>`，
 cwd 是记录仓库根目录）。本项目不实现删除，只做三件事：
 
 | 步骤 | 谁做 | 失败时 |
