@@ -37,11 +37,16 @@ type UseActiveNoteParams = {
   onDeleted: (name: string) => void;
 };
 
-/** 删除结果的第一段：这一篇到底删掉了什么 */
+/** 删除结果的第一段：这一篇到底删掉了什么 / 留住了什么 */
 const describeDeletedHead = ({
   recordDeleted,
   recordError,
+  recordKept,
 }: DeletedNoteResult): string => {
+  if (recordKept) {
+    return '笔记已删除，学习记录已保留';
+  }
+
   if (recordDeleted) {
     return '笔记与学习记录已删除';
   }
@@ -275,25 +280,29 @@ export const useActiveNote = ({
   }, [active, readActive]);
 
   /**
-   * 删除当前这一篇：md 与学习记录由插件一起删，删完自动提交并推送。
-   * 成功后关弹窗、把它从列表里摘掉，并用一条提示交代提交 / 推送到了哪一步；
+   * 删除当前这一篇：md 与学习记录默认由插件一起删；`keepRecord` 为真时只删 md，
+   * 记录留在库里。删完自动提交（并推送），成功后关弹窗、把它从列表里摘掉，
+   * 并用一条提示交代记录删没删 / 留没留、提交 / 推送到了哪一步；
    * 失败原样抛出（确认层收起、正文留着，不让弹窗先关掉再说「其实没删」）。
    */
-  const remove = useCallback(async () => {
-    if (!active) {
-      return;
-    }
+  const remove = useCallback(
+    async (keepRecord = false) => {
+      if (!active) {
+        return;
+      }
 
-    const { name } = active;
-    const deleted = await deleteEnglishNote(name);
+      const { name } = active;
+      const deleted = await deleteEnglishNote(name, keepRecord);
 
-    close();
-    onDeleted(name);
+      close();
+      onDeleted(name);
 
-    const { color, message } = describeDeleted(deleted);
+      const { color, message } = describeDeleted(deleted);
 
-    notifications.show({ color, message, title: '已删除' });
-  }, [active, close, onDeleted]);
+      notifications.show({ color, message, title: '已删除' });
+    },
+    [active, close, onDeleted],
+  );
 
   return { active, close, content, loading, open, refresh, remove, save };
 };

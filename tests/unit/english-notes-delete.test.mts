@@ -94,6 +94,7 @@ describe('删除笔记：调用记录仓库的脚本', () => {
           id: 'errors:a',
           mastered: false,
         },
+        recordKept: false,
       });
     } finally {
       await cleanup(repo);
@@ -147,6 +148,41 @@ describe('删除笔记：调用记录仓库的脚本', () => {
       const deleted = await deleteNote(repo, NOTE);
 
       assert.equal(deleted.record, null);
+    } finally {
+      await cleanup(repo);
+    }
+  });
+
+  it('只删 Markdown 时加 --keep-record，并把 record_kept 收敛出来', async () => {
+    const expected = [
+      'delete-note',
+      '--note',
+      'learning-record-notes/errors/errors-a.md',
+      '--keep-record',
+    ];
+    const expectedArgv = literal(expected);
+    const probePayload = literal(scriptPayload(null, { record_kept: true }));
+    // 假脚本同时核对参数：漏了开关或顺序不对都会退出 2
+    const repo = await makeRepo(
+      [
+        'import json',
+        'import sys',
+        `expected = json.loads(${expectedArgv})`,
+        'if sys.argv[1:] != expected:',
+        '    print("learning_records.py: error: bad argv " + str(sys.argv[1:]), file=sys.stderr)',
+        '    sys.exit(2)',
+        `payload = json.loads(${probePayload})`,
+        'print(json.dumps(payload))',
+        '',
+      ].join('\n'),
+    );
+
+    try {
+      const deleted = await deleteNote(repo, NOTE, { keepRecord: true });
+
+      assert.equal(deleted.record, null);
+      assert.equal(deleted.recordKept, true);
+      assert.equal(deleted.recordError, undefined);
     } finally {
       await cleanup(repo);
     }

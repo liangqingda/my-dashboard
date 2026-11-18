@@ -164,13 +164,38 @@ export type MarkdownPreviewModalProps = {
  * 删除这篇文档：二次确认的说明与真正删除的动作都由调用方给。
  *
  * 组件不知道文档落在哪里，也不知道删一篇会牵连哪些东西（学习记录、提交、推送），
- * 所以只收两句人话：确认层里说什么，以及用户点「删除」之后做什么。
+ * 所以只收人话：确认层里说什么、底部那个开关备不备，以及用户点「删除」之后做什么。
  */
 export type MarkdownPreviewRemove = {
   /** 二次确认里的说明：删掉会发生什么 */
   description: string;
-  /** 用户确认后执行；抛错按失败提示，成功后由调用方关弹窗、刷新列表 */
-  confirm: () => Promise<void>;
+  /**
+   * 可选：确认层左下角的开关（如「只删 Markdown，保留记录」）。
+   * 勾选后说明块换成 `option.description`，开关状态随 `confirm` 的参数回给调用方。
+   */
+  option?: MarkdownPreviewRemoveOption;
+  /**
+   * 用户确认后执行；参数是底部开关是否被勾选（没有开关时恒为 `false`）。
+   * 抛错按失败提示，成功后由调用方关弹窗、刷新列表。
+   */
+  confirm: (optionChecked: boolean) => Promise<void>;
+};
+
+/**
+ * 删除确认层左下角的可选开关：勾上就换一种删法。
+ *
+ * 组件不解释这个开关「意味着什么」——文案与勾上后的动作都由调用方给，
+ * 它只负责画一个 checkbox、把勾选状态带进 `confirm`。
+ */
+export type MarkdownPreviewRemoveOption = {
+  /** checkbox 右侧的主提示（一句话说清勾上之后删什么） */
+  label: string;
+  /** 主提示下方的补充说明：点明勾上与不勾的后果差别；不传就只显示主提示 */
+  hint?: string;
+  /** 勾选后替换说明块的文案：这时会发生什么 */
+  description: string;
+  /** 初始是否勾选；默认不勾，每次打开确认层都回到这个值 */
+  defaultChecked?: boolean;
 };
 
 /** 删除请求的入参：只认调用方给的那一份删除能力 */
@@ -195,7 +220,13 @@ export type DeleteConfirmProps = {
   title: string;
   /** 删掉会发生什么，由调用方给 */
   description: string;
-  /** 是否正在删：按钮显示 loading，取消与 Esc 暂时不可用 */
+  /** 左下角的可选开关；不传就只有说明块与两个出口 */
+  option?: MarkdownPreviewRemoveOption;
+  /** 开关当前是否勾选（状态由弹窗持有，每次打开确认层回到默认值） */
+  optionChecked: boolean;
+  /** 勾选状态变化 */
+  onOptionChange: (checked: boolean) => void;
+  /** 是否正在删：按钮显示 loading，取消、开关与 Esc 暂时不可用 */
   loading: boolean;
   /** 取消删除 */
   onCancel: () => void;

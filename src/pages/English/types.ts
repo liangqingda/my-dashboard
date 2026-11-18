@@ -132,6 +132,8 @@ export type SavedNoteResult = {
 export type DeletedNoteResult = {
   /** 记录仓库里有没有删掉对应的学习记录；false 表示这篇没有记录（或记录已经不在库里） */
   recordDeleted: boolean;
+  /** 这次只删了 md、记录按用户要求留着了；false 表示没有可保留的记录 */
+  recordKept: boolean;
   /** 学习记录删失败的原因（md 那时已经删掉了，这个不能一起吞掉） */
   recordError?: string;
   /** 自动提交失败的原因；成功或没有可提交内容时为空 */
@@ -178,8 +180,8 @@ export type UseActiveNoteResult = {
   save: (markdown: string) => Promise<{ notice?: string }>;
   /** 重取当前这一篇 */
   refresh: () => Promise<void>;
-  /** 删除当前这一篇（md + 学习记录），成功后关弹窗并把它从列表里摘掉 */
-  remove: () => Promise<void>;
+  /** 删除当前这一篇（md + 学习记录，`keepRecord` 为真时只删 md），成功后关弹窗并把它从列表里摘掉 */
+  remove: (keepRecord?: boolean) => Promise<void>;
 };
 
 /** 表格单元格 */

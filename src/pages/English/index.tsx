@@ -10,7 +10,7 @@ import { onPageRefresh } from '@/utils/page-refresh';
 import { cx } from '@/utils/cx';
 
 import type { NoteSummary, NotesSort } from './types';
-import { DEFAULT_NOTE_SORT, NOTE_DELETE_DESCRIPTION } from './constants';
+import { DEFAULT_NOTE_SORT, createNoteRemove } from './constants';
 import { useActiveNote } from './hooks/useActiveNote';
 import { useEnglishNotes } from './hooks/useEnglishNotes';
 import { useNoteFilter } from './hooks/useNoteFilter';
@@ -322,7 +322,7 @@ const English = () => {
         remove={
           // 删除要落盘到记录仓库，只在开发模式（有中间件）里给入口
           import.meta.env.DEV && activeBody !== null
-            ? { confirm: removeActive, description: NOTE_DELETE_DESCRIPTION }
+            ? createNoteRemove(removeActive)
             : undefined
         }
         title={active?.name ?? ''}

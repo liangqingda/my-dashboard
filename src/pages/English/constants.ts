@@ -7,6 +7,7 @@
  * 本项目不需要改代码。
  */
 
+import type { MarkdownPreviewRemove } from '@/components/MarkdownPreviewModal';
 import { createChoiceCodec } from '@/utils/local-storage';
 import type { StoredCodec } from '@/utils/local-storage';
 
@@ -67,6 +68,36 @@ export const READONLY_NOTE_ROW_LABELS: readonly string[] = [
  */
 export const NOTE_DELETE_DESCRIPTION =
   '这篇笔记的 Markdown 以及 Record 会从 learn-english 仓库删除。';
+
+/**
+ * 删除确认层左下角的开关：勾上就只删 Markdown，把 Record 留在记录库里。
+ *
+ * 「保留」意味着这个知识点之后还能继续复习，只是不再有这篇笔记做它的可读副本；
+ * 勾选后说明块换成下面那句，让人在按下删除之前就看到这次会少删一样东西。
+ */
+export const NOTE_DELETE_KEEP_RECORD_OPTION = {
+  description:
+    '这篇笔记的 Markdown 会从 learn-english 仓库删除，记录库里的 Record 原样保留。',
+  hint: '勾上只清掉笔记文件；不勾会把 Record 一起删掉，这个知识点之后得重新学。',
+  label: '只删 Markdown，保留 Record',
+};
+
+/**
+ * 交给预览弹窗的删除能力：说明文案与那个「保留 Record」开关在这里装配。
+ *
+ * 页面只判断「现在能不能删」（开发模式 + 正文已到），确认层说什么、勾上之后删什么
+ * 都由这份契约决定；`confirm` 收的是开关状态（见 `useActiveNote.remove`）。
+ *
+ * @param confirm 用户确认后真正执行删除（参数是开关是否勾选）
+ * @returns 预览弹窗的 `remove` 入参
+ */
+export const createNoteRemove = (
+  confirm: (keepRecord: boolean) => Promise<void>,
+): MarkdownPreviewRemove => ({
+  confirm,
+  description: NOTE_DELETE_DESCRIPTION,
+  option: NOTE_DELETE_KEEP_RECORD_OPTION,
+});
 
 /**
  * 预览筛选的存储键：范围与关键词分两个键存。

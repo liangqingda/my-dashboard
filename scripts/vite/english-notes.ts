@@ -102,6 +102,14 @@ const nameFromUrl = (url: string | undefined): string | null => {
   return value && value.length > 0 ? value : null;
 };
 
+/** 从查询串取一个开关：`?keepRecord=1` 为真，其余（含没带）为假 */
+const flagFromUrl = (url: string | undefined, key: string): boolean => {
+  const query = url?.split('?')[1] ?? '';
+  const value = new URLSearchParams(query).get(key);
+
+  return value === '1' || value === 'true';
+};
+
 /**
  * 英语笔记插件：把 learn-english 仓库 learning-record-notes 下的 Markdown
  * 暴露给前端，并把弹窗里的编辑写回源文件、提交记录仓库。
@@ -110,7 +118,8 @@ const nameFromUrl = (url: string | undefined): string | null => {
  *   - `GET /api/english/notes`：全部笔记的**摘要**（每次请求实时读盘，不含正文）；
  *   - `GET /api/english/notes?name=<file>`：单篇「摘要 + 正文」，打开预览 / 保存后只刷这一篇；
  *   - `PUT /api/english/notes`：写回源文件后自动提交该文件；
- *   - `DELETE /api/english/notes?name=<file>`：删掉这一篇 md 与它的学习记录，提交并推送。
+ *   - `DELETE /api/english/notes?name=<file>`：删掉这一篇 md 与它的学习记录，提交并推送；
+ *     带 `keepRecord=1` 时只删 md，学习记录留在记录库里。
  * - 构建：索引（分类清单 + 摘要）写进 `english-notes.index.json`，每篇正文单独落成
  *   `english-notes/<文件名>`，供预览与静态部署按需取。
  *
@@ -316,10 +325,13 @@ export const englishNotes = (root: string): Plugin => {
             }
 
             // md 与它的记录都由记录仓库的脚本删：这里只负责让它跑起来、
-            // 再把「记录删没删」原样带回页面，不自己碰记录 JSON
-            const { record, recordError } = await deleteNote(
+            // 再把「记录删没删 / 留着没留着」原样带回页面，不自己碰记录 JSON。
+            // `keepRecord=1` 时只删 md，记录留在库里。
+            const keepRecord = flagFromUrl(req.url, 'keepRecord');
+            const { record, recordError, recordKept } = await deleteNote(
               repoDir,
               `${NOTES_DIR}/${name}`,
+              { keepRecord },
             );
 
             const commit = await commitNoteDeletion(
@@ -328,7 +340,9 @@ export const englishNotes = (root: string): Plugin => {
               record?.file,
             );
 
-            res.end(JSON.stringify({ commit, name, record, recordError }));
+            res.end(
+              JSON.stringify({ commit, name, record, recordError, recordKept }),
+            );
           } catch (error) {
             res.statusCode = 400;
             res.end(JSON.stringify({ message: deleteFailureMessage(error) }));

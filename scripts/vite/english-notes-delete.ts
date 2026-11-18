@@ -43,6 +43,8 @@ export type DeletedRecordInfo = {
 export type DeletedNote = {
   /** 这条记录是这次一起删掉的；null 表示没有可删的记录 */
   record: DeletedRecordInfo | null;
+  /** 这次只删 md、记录按用户要求留着了；没有可保留的记录时为 false */
+  recordKept: boolean;
   /** 记录那一半没删成的原因（如记录 ID 与文件名不一致）：md 那时已经删了 */
   recordError?: string;
 };
@@ -114,7 +116,15 @@ const parseDeletedNote = (note: string, stdout: string): DeletedNote => {
   const recordError =
     typeof payload.record_error === 'string' ? payload.record_error : '';
 
-  return recordError ? { record, recordError } : { record };
+  return recordError
+    ? { record, recordError, recordKept: payload.record_kept === true }
+    : { record, recordKept: payload.record_kept === true };
+};
+
+/** 删除请求的选项：勾了「只删 Markdown」时保留记录 */
+export type DeleteNoteOptions = {
+  /** 只删 md，记录留在记录库里；记录仓库回 `record_kept` 表示确实保留了一条 */
+  keepRecord?: boolean;
 };
 
 /**
@@ -122,20 +132,28 @@ const parseDeletedNote = (note: string, stdout: string): DeletedNote => {
  *
  * @param repoDir 记录仓库根目录
  * @param note 笔记相对仓库根目录的路径，如 `learning-record-notes/errors/errors-a.md`
- * @returns md 已删的结果，附带记录删没删 / 没删成的原因
+ * @param options `keepRecord` 为真时只删 md，记录保留（脚本的 `--keep-record`）
+ * @returns md 已删的结果，附带记录删没删 / 保留没保留 / 没删成的原因
  * @throws 路径不合法、笔记不存在、脚本不可用、超时：这类失败发生在删文件之前，md 还在；
  *   只有脚本删完 md 之后写记录时崩掉（极少见）才会出现「抛错但 md 已删」
  */
 export const deleteNote = async (
   repoDir: string,
   note: string,
+  { keepRecord = false }: DeleteNoteOptions = {},
 ): Promise<DeletedNote> => {
   let stdout: string;
 
   try {
     ({ stdout } = await runPython(
       'python3',
-      [DELETE_SCRIPT, 'delete-note', '--note', note],
+      [
+        DELETE_SCRIPT,
+        'delete-note',
+        '--note',
+        note,
+        ...(keepRecord ? ['--keep-record'] : []),
+      ],
       { cwd: repoDir, timeout: SCRIPT_TIMEOUT_MS },
     ));
   } catch (error) {

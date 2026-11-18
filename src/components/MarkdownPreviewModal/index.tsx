@@ -64,6 +64,7 @@ export type {
   MarkdownPreviewFilter,
   MarkdownPreviewModalProps,
   MarkdownPreviewRemove,
+  MarkdownPreviewRemoveOption,
 } from './types';
 
 const MarkdownPreviewModal = ({
@@ -299,7 +300,10 @@ const MarkdownPreviewModal = ({
         loading={removal.removing}
         onCancel={removal.cancel}
         onConfirm={removal.confirm}
+        onOptionChange={removal.setOptionChecked}
         opened={removal.confirming}
+        option={remove?.option}
+        optionChecked={removal.optionChecked}
         title={title}
       />
 

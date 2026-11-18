@@ -288,20 +288,31 @@ export const saveEnglishNote = async (
 };
 
 /**
- * 删除一篇笔记：插件先把 md 和学习记录一起删掉，再自动提交并推送（仅开发模式可用）。
- * 页面靠返回值说清「记录删没删」「提交 / 推送成没成」，不把中间状态藏起来。
+ * 删除一篇笔记：插件先按 `keepRecord` 决定「连记录一起删」还是「只删 md」，
+ * 再自动提交并推送（仅开发模式可用）。
+ * 页面靠返回值说清「记录删没删 / 留着没留着」「提交 / 推送成没成」，不把中间状态藏起来。
+ *
+ * @param name 笔记相对笔记目录的路径，如 `errors/errors-a.md`
+ * @param keepRecord 为真时只删 md，学习记录留在记录库里
  */
 export const deleteEnglishNote = async (
   name: string,
+  keepRecord = false,
 ): Promise<DeletedNoteResult> => {
   if (!import.meta.env.DEV) {
     throw new Error('静态预览不支持删除，请在开发模式下操作');
   }
 
-  const response = await fetch(
-    `${LIST_ENDPOINT}?name=${encodeURIComponent(name)}`,
-    { ...REQUEST_INIT, method: 'DELETE' },
-  );
+  const query = new URLSearchParams({ name });
+
+  if (keepRecord) {
+    query.set('keepRecord', '1');
+  }
+
+  const response = await fetch(`${LIST_ENDPOINT}?${query.toString()}`, {
+    ...REQUEST_INIT,
+    method: 'DELETE',
+  });
 
   if (!response.ok) {
     throw new Error(
@@ -314,11 +325,11 @@ export const deleteEnglishNote = async (
   try {
     payload = await response.json();
   } catch {
-    return { recordDeleted: false };
+    return { recordDeleted: false, recordKept: false };
   }
 
   if (!isObject(payload)) {
-    return { recordDeleted: false };
+    return { recordDeleted: false, recordKept: false };
   }
 
   const commit = isObject(payload.commit) ? payload.commit : null;
@@ -331,6 +342,8 @@ export const deleteEnglishNote = async (
       typeof commit?.pushError === 'string' ? commit.pushError : undefined,
     // 记录对象只有真删到一条时才回来；删失败时 md 已经删了，原因单独带回
     recordDeleted: isObject(payload.record),
+    // 勾了「只删 Markdown」且确实有一条记录被留下
+    recordKept: payload.recordKept === true,
     recordError:
       typeof payload.recordError === 'string' ? payload.recordError : undefined,
   };

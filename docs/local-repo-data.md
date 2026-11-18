@@ -136,6 +136,8 @@
 ## 删除一篇笔记：调记录仓库的脚本，再提交并推送
 
 `DELETE /api/english/notes?name=…`（仅开发模式，前端只在 `import.meta.env.DEV` 里给入口）。
+带 `keepRecord=1` 时只删 md、记录留在库里（页面删除确认层左下角那个「只删 Markdown，保留 Record」
+开关勾上时走这条），提交与推送照常，只是这次只有 md 一个文件变。
 
 md 与它的学习记录两半都在记录仓库里，所以**删除动作交给记录仓库自己的脚本**
 （`python3 skills/learn-from-english/scripts/learning_records.py delete-note --note learning-record-notes/<name>`，
@@ -144,7 +146,7 @@ cwd 是记录仓库根目录）。本项目不实现删除，只做三件事：
 | 步骤 | 谁做 | 失败时 |
 | --- | --- | --- |
 | 1 | 先按笔记路径规则校验 `name`（`isNoteName`），再由 `english-notes-delete.ts` 拼命令、跑脚本（上限 30s）、把 stdout 的 JSON 收敛成 `{ record, recordError }` 并核对脚本回显的路径 | 抛错给前端，后面不执行；路由把原因翻成中文（脚本原文是英文）；脚本卡在 `.records.lock` 上超时会被掐断并提示稍后重试 |
-| 2 | 脚本自己：校验路径 → 删 md → 按正文「记录 ID」删那条记录 | md 已删、记录没删成时脚本回 `record_error` 而不是退出，本项目原样带给页面（`recordError`） |
+| 2 | 脚本自己：校验路径 → 删 md → 按正文「记录 ID」删那条记录（`keepRecord` 时只删 md、记录原样留着） | md 已删、记录没删成时脚本回 `record_error` 而不是退出，本项目原样带给页面（`recordError`） |
 | 3 | `english-notes-commit.ts`：`git add` 这次改的两个文件 → `git commit`（`docs(notes): 删除 <文件名去扩展名>`）→ `git push` | 提交 / 推送失败不阻断删除，原因回传前端 |
 
 - **为什么不在本项目改记录 JSON**：记录写入有它自己的规矩（文件锁、`revision` 加一、未掌握 / 已掌握
@@ -155,8 +157,11 @@ cwd 是记录仓库根目录）。本项目不实现删除，只做三件事：
   `mastered-learning-records/<category>.json`），本项目不再自己判断记录落在哪一侧；
 - **推送只在删除流程里做**：手动保存仍旧只提交、不替用户推；删除一次改动 md 与记录两处，删完推上去远端
   才不会留着一篇已经不存在的笔记。没配上游分支时跳过推送并说明原因，不算失败；
-- **前端只拿到「记录删没删 / 提交 hash / 推送失败原因」**，据此给一条提示（已删除 + 已提交 + 是否推送成功），
+- **前端只拿到「记录删没删 / 留着没留着 / 提交 hash / 推送失败原因」**，据此给一条提示（已删除 + 已提交 + 是否推送成功），
   不把中间状态改成一句「已删除」；
+- **`record_kept` 与 `record_error` 不是一回事**：请求带 `keepRecord` 时脚本回 `record_kept: true`
+  （确实有一条本来会被删掉的记录被留下；没有记录 ID 的笔记回 `false`），这时不校验 ID、也不给
+  `record_error`；`record_error` 只表示「本想删但没删成」。页面按这两个字段分别说「记录已保留」与「记录删除失败」；
 - 提交带 pathspec，只提交这次删掉的两个文件，不捎上仓库里其它预暂存改动；
 - **失败原因要说中文**：脚本用 argparse 报错（`note does not exist: …` / `cannot read note categories …`），
   `deleteFailureMessage` 按原因归类成「这篇笔记已经不在了」「读不到笔记分类清单，已拒绝删除」等，
