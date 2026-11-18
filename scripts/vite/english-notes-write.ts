@@ -17,8 +17,8 @@ import { promisify } from 'node:util';
 
 const runPython = promisify(execFile);
 
-/** 记录仓库里那个笔记脚本的相对路径 */
-const NOTE_SCRIPT = 'take-english-study-notes/scripts/note.py';
+/** 记录仓库里那个笔记脚本的相对路径（契约 `commands.writeNote.script` 同一处来源） */
+export const NOTE_SCRIPT = 'take-english-study-notes/scripts/note.py';
 
 /** 校验器报的一处问题：行号 + 说明 */
 export type NoteIssue = {

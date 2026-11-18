@@ -189,6 +189,10 @@ Markdown 笔记（目录名与文件名前缀一致）：分列看板，一列�
 ENGLISH_RECORDS_DIR=/path/to/learn-english pnpm dev
 ```
 
+读写之前先核对记录仓库根的 `contract.json`：它声明契约版本、Python、笔记目录、分类清单与写 / 删两个命令。
+`pnpm dev` 启动时对不上只打 warn，英语接口每次请求返回 500 + 原因（服务页等其它页面照常可用，补上文件后
+无需重启）；`pnpm build` 直接失败，不把读歪的快照发出去。记录仓库改这些值必须同时把 `contractVersion` +1。
+
 Markdown 弹窗预览统一使用公共组件 `src/components/MarkdownPreviewModal`
 （选型见 `docs/ui-components.md`，行为见 `src/components/MarkdownPreviewModal/README.md`）：文档排版、表格与 `<details>` 折叠块、header 标题左侧的上一个 / 下一个、
 `←` / `→` 快捷键，弹窗左侧固定的标题目录 sidebar，header 右侧的「复制相对路径」按钮，以及把框体

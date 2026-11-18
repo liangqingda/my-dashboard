@@ -15,8 +15,8 @@ import { promisify } from 'node:util';
 
 const runPython = promisify(execFile);
 
-/** 记录仓库里那个删除脚本的相对路径 */
-const DELETE_SCRIPT = 'learn-from-english/scripts/learning_records.py';
+/** 记录仓库里那个删除脚本的相对路径（契约 `commands.deleteNote.script` 同一处来源） */
+export const DELETE_SCRIPT = 'learn-from-english/scripts/learning_records.py';
 
 /**
  * 脚本最长跑多久。

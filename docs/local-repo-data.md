@@ -45,6 +45,30 @@
 **不做兜底**：目标仓库脚本拒绝（校验不过、路径不合法）时，本项目的正确反应是把原因带回去，
 不是在这边补一段「先自己写进去再想办法」。
 
+## 契约文件：记录仓库声明，本项目核对
+
+本机仓库的数据不能照着印象读：`../learn-english/contract.json` 由记录仓库自己声明本工作台依赖的
+那几件事，`scripts/vite/english-notes-contract.ts` 逐项核对，对不上就把差异说出来，而不是让页面
+「正常但为空」。
+
+| 字段 | 本项目对应的来源 |
+| --- | --- |
+| `contractVersion` | `english-notes-contract.ts` 的 `CONTRACT_VERSION`（本项目支持的版本） |
+| `python` | 写 / 删脚本跑 `python3` |
+| `notesDir` | `english-notes-store.ts` 的 `NOTES_DIR` |
+| `categoriesFile` | `NOTES_DIR` + `CATEGORY_CONFIG_FILE` |
+| `commands.writeNote` | `english-notes-write.ts` 的 `NOTE_SCRIPT` + `write` |
+| `commands.deleteNote` | `english-notes-delete.ts` 的 `DELETE_SCRIPT` + `delete-note` |
+
+- 脚本路径、笔记目录、分类清单文件只在各自的模块里写一份，契约与它们比，本项目内部不再抄第二份；
+- 时机：`pnpm dev` 启动时对不上只在日志里 warn，英语接口每次请求都重新核对并回 500 + 原因，
+  其它页面不受影响；`pnpm build` 直接失败（构建产物整份来自记录仓库，契约不对就不发快照）；
+- 每次请求都读一遍契约（几行 JSON，成本远低于一次笔记读盘）：记录仓库改了契约，页面立刻报差异，
+  不必等重启；
+- 记录仓库改了上面任一字段都要把 `contractVersion` +1，本项目先改 `CONTRACT_VERSION` 再改对应常量；
+- 记录仓库侧由 `RepoContractTest`（`learn-from-english/tests/test_rule_invariants.py`）保证声明与
+  实际目录 / 子命令一致，契约写歪了它先失败。
+
 ## 分类清单不在本项目
 
 笔记的分类键、中文标题、看板列顺序与「是否展示」只有一份来源：记录仓库的
