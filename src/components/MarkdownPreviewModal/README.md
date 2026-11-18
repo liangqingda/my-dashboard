@@ -223,10 +223,11 @@ header 文档操作组**最后一个**图标（垃圾桶，颜色与同排图标
 - **删除失败的归属**：`confirm` 抛错由 `useRemoveRequest` 弹一条红色通知，确认层收起、
   正文与弹窗留在原处——不能先关掉弹窗再说「其实没删」；
 - **勾选项（`remove.choices`）**：说明块下方**紧凑一行**（`Checkbox` 取 `size="xs"`，每项自带 4px / 8px
-  内边距当可点区域，行整体左移 8px 让方框与说明块左边界对齐；挤得下就并排、挤不下折行）。
+  内边距当可点区域，不做负边距；挤得下就并排、挤不下折行）。
   每项只显示 `label` 一个词（如「Markdown」「Record」），细节挂在 `hint` 上——鼠标 hover 出 tooltip，
-  不给正文多占一行小字。**整项都是 hover / 可点区域**：浅底（`--app-surface-hover`）+ 圆角，
-  `focus-within` 也给同一层底；删除中（input 被禁用）不给底、`cursor: not-allowed`。
+  不给正文多占一行小字。**整项都是 hover / 可点区域**：浅底（`--app-surface-hover`）+ 圆角 + 小手
+  （`cursor: pointer`，连子元素的默认箭头也盖掉），`focus-within` 也给同一层底；
+  删除中（input 被禁用）不给底、`cursor: not-allowed`。
   方框与文字的纵向对齐靠 root 的 `align-items: center` + label 的 `padding-top: 0` 兜住——
   Mantine 默认顶部对齐，label 比 14px 方框高时会歪一截。`defaultChecked` 决定每次打开确认层时的
   初始勾选（默认都不勾）。**说明块可以传函数**：`description(checkedKeys)` 按当前勾选现算，所以勾选一变
