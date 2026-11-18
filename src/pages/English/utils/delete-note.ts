@@ -55,7 +55,7 @@ export const describeNoteDelete = (checkedKeys: readonly string[]): string => {
   }
 
   if (mode === 'markdown') {
-    return '只删笔记，学习状态保留：这条仍会按计划复习，但笔记会在后续复习中重新生成。';
+    return '只删笔记，学习状态保留：这条仍会按计划复习，且笔记会在后续复习中重新生成。';
   }
 
   if (mode === 'record') {
