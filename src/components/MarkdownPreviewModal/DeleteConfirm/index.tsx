@@ -78,7 +78,7 @@ const DeleteConfirm = ({
                 multiline
                 openDelay={200}
                 position="top"
-                w={230}
+                w={250}
                 withArrow
               >
                 <Checkbox

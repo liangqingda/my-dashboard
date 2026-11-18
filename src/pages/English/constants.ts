@@ -76,12 +76,12 @@ export const READONLY_NOTE_ROW_LABELS: readonly string[] = [
 export const NOTE_DELETE_CHOICES = [
   {
     defaultChecked: true,
-    hint: '这篇笔记的 Markdown 文件',
+    hint: '原文：讲解、例句和历次复习笔记；路径可复制，粘贴给复习就是一轮练习',
     key: 'markdown',
     label: 'Markdown',
   },
   {
-    hint: '记录库里这条学习记录',
+    hint: '学习状态：复习次数、下次复习、是否掌握，不含原文',
     key: 'record',
     label: 'Record',
   },
