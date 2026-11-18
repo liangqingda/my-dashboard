@@ -6,6 +6,7 @@ import type { Plugin } from 'vite';
 import { commitNote, commitNoteDeletion } from './english-notes-commit.js';
 import { assertContract } from './english-notes-contract.js';
 import { deleteNote, DELETE_SCRIPT } from './english-notes-delete.js';
+import type { DeleteNoteMode } from './english-notes-delete.js';
 import { writeNoteFile, NOTE_SCRIPT } from './english-notes-write.js';
 import {
   CATEGORY_CONFIG_FILE,
@@ -102,12 +103,12 @@ const nameFromUrl = (url: string | undefined): string | null => {
   return value && value.length > 0 ? value : null;
 };
 
-/** 从查询串取一个开关：`?keepRecord=1` 为真，其余（含没带）为假 */
-const flagFromUrl = (url: string | undefined, key: string): boolean => {
+/** 从查询串取删除范围：`?mode=markdown|record`，其余（含没带）一律按两边都删 */
+const deleteModeFromUrl = (url: string | undefined): DeleteNoteMode => {
   const query = url?.split('?')[1] ?? '';
-  const value = new URLSearchParams(query).get(key);
+  const value = new URLSearchParams(query).get('mode');
 
-  return value === '1' || value === 'true';
+  return value === 'markdown' || value === 'record' ? value : 'both';
 };
 
 /**
@@ -119,7 +120,7 @@ const flagFromUrl = (url: string | undefined, key: string): boolean => {
  *   - `GET /api/english/notes?name=<file>`：单篇「摘要 + 正文」，打开预览 / 保存后只刷这一篇；
  *   - `PUT /api/english/notes`：写回源文件后自动提交该文件；
  *   - `DELETE /api/english/notes?name=<file>`：删掉这一篇 md 与它的学习记录，提交并推送；
- *     带 `keepRecord=1` 时只删 md，学习记录留在记录库里。
+ *     带 `mode=markdown` 只删 md、记录留在记录库里，带 `mode=record` 只删记录、md 留着。
  * - 构建：索引（分类清单 + 摘要）写进 `english-notes.index.json`，每篇正文单独落成
  *   `english-notes/<文件名>`，供预览与静态部署按需取。
  *
@@ -325,23 +326,28 @@ export const englishNotes = (root: string): Plugin => {
             }
 
             // md 与它的记录都由记录仓库的脚本删：这里只负责让它跑起来、
-            // 再把「记录删没删 / 留着没留着」原样带回页面，不自己碰记录 JSON。
-            // `keepRecord=1` 时只删 md，记录留在库里。
-            const keepRecord = flagFromUrl(req.url, 'keepRecord');
-            const { record, recordError, recordKept } = await deleteNote(
-              repoDir,
-              `${NOTES_DIR}/${name}`,
-              { keepRecord },
-            );
+            // 再把「这边删没删 / 那边留没留」原样带回页面，不自己碰记录 JSON。
+            // `mode=markdown|record` 各留一边，没带就是两边都删。
+            const mode = deleteModeFromUrl(req.url);
+            const { noteDeleted, record, recordError, recordKept } =
+              await deleteNote(repoDir, `${NOTES_DIR}/${name}`, { mode });
 
             const commit = await commitNoteDeletion(
               repoDir,
               name,
               record?.file,
+              { noteDeleted },
             );
 
             res.end(
-              JSON.stringify({ commit, name, record, recordError, recordKept }),
+              JSON.stringify({
+                commit,
+                name,
+                noteDeleted,
+                record,
+                recordError,
+                recordKept,
+              }),
             );
           } catch (error) {
             res.statusCode = 400;

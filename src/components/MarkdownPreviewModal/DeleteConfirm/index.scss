@@ -68,7 +68,7 @@
 }
 
 /*
- * 收口行：一条细线把「读」和「做」分开。开关靠左、按钮靠右，
+ * 收口行：一条细线把「读」和「做」分开。勾选项靠左、按钮靠右，
  * 说明可以折行，按钮组不让位。
  */
 .footer {
@@ -80,30 +80,30 @@
   border-top: 1px solid var(--app-line);
 }
 
-/* 开关占满按钮组剩下的宽度；内容过长时在自己的列里折行 */
-.option {
+/* 勾选列占满按钮组剩下的宽度；内容过长时在自己的列里折行 */
+.choices {
   flex: 1;
   min-width: 0;
 }
 
 /*
  * 主提示与补充说明：Mantine 给 Checkbox 自己的字号写在 `label` / `description` 上，
- * 用 `.option` 前缀把它压回本项目的一档（主提示与说明块同档，补充说明再小一号）。
+ * 用 `.choices` 前缀把它压回本项目的一档（主提示与说明块同档，补充说明再小一号）。
  */
-.option .optionLabel {
+.choices .choiceLabel {
   color: var(--app-ink-soft);
   font-size: 13px;
   line-height: 1.6;
 }
 
-.option .optionHint {
+.choices .choiceHint {
   margin-top: 2px;
   color: var(--app-ink-faint);
   font-size: 12px;
   line-height: 1.6;
 }
 
-/* 按钮靠右：没有开关时也留在原位 */
+/* 按钮靠右：没有勾选项时也留在原位 */
 .actions {
   flex: 0 0 auto;
   margin-left: auto;

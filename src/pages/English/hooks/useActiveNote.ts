@@ -10,7 +10,12 @@ import { notifications } from '@mantine/notifications';
 
 import { getErrorMessage } from '@/utils/error';
 
-import type { DeletedNoteResult, NoteSummary, UseActiveNoteResult } from '../types';
+import type {
+  DeletedNoteResult,
+  NoteDeleteMode,
+  NoteSummary,
+  UseActiveNoteResult,
+} from '../types';
 import {
   deleteEnglishNote,
   fetchEnglishNote,
@@ -37,8 +42,9 @@ type UseActiveNoteParams = {
   onDeleted: (name: string) => void;
 };
 
-/** 删除结果的第一段：这一篇到底删掉了什么 / 留住了什么 */
+/** 删除结果的第一段：这一篇删掉了什么 / 留住了什么 */
 const describeDeletedHead = ({
+  noteDeleted,
   recordDeleted,
   recordError,
   recordKept,
@@ -47,15 +53,21 @@ const describeDeletedHead = ({
     return '笔记已删除，学习记录已保留';
   }
 
-  if (recordDeleted) {
+  if (noteDeleted && recordDeleted) {
     return '笔记与学习记录已删除';
   }
 
-  if (recordError) {
-    return `笔记已删除，但学习记录删除失败：${recordError}`;
+  if (noteDeleted) {
+    return recordError
+      ? `笔记已删除，但学习记录删除失败：${recordError}`
+      : '笔记已删除（没有找到对应的学习记录）';
   }
 
-  return '笔记已删除（没有找到对应的学习记录）';
+  if (recordDeleted) {
+    return '学习记录已删除，笔记保留';
+  }
+
+  return '没有删除任何内容';
 };
 
 /** 删除结果的后一段：提交 / 推送到了哪一步；没提交就没有这一段 */
@@ -280,22 +292,27 @@ export const useActiveNote = ({
   }, [active, readActive]);
 
   /**
-   * 删除当前这一篇：md 与学习记录默认由插件一起删；`keepRecord` 为真时只删 md，
-   * 记录留在库里。删完自动提交（并推送），成功后关弹窗、把它从列表里摘掉，
-   * 并用一条提示交代记录删没删 / 留没留、提交 / 推送到了哪一步；
+   * 删除当前这一篇：默认两边都删；`mode` 为 `markdown` 只删 md、记录留在库里，
+   * 为 `record` 只删记录、md 留作练习材料。删完自动提交（并推送），成功后关弹窗，
+   * 删掉 md 时再把它从列表里摘掉（只删记录时这一篇还在，列表得留着），
+   * 并用一条提示交代删了什么 / 留了什么、提交 / 推送到了哪一步；
    * 失败原样抛出（确认层收起、正文留着，不让弹窗先关掉再说「其实没删」）。
    */
   const remove = useCallback(
-    async (keepRecord = false) => {
+    async (mode: NoteDeleteMode = 'both') => {
       if (!active) {
         return;
       }
 
       const { name } = active;
-      const deleted = await deleteEnglishNote(name, keepRecord);
+      const deleted = await deleteEnglishNote(name, mode);
 
       close();
-      onDeleted(name);
+
+      // 只删记录时笔记文件原样还在：列表里这一篇不能跟着消失
+      if (deleted.noteDeleted) {
+        onDeleted(name);
+      }
 
       const { color, message } = describeDeleted(deleted);
 

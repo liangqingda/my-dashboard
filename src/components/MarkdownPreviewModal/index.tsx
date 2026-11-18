@@ -64,7 +64,7 @@ export type {
   MarkdownPreviewFilter,
   MarkdownPreviewModalProps,
   MarkdownPreviewRemove,
-  MarkdownPreviewRemoveOption,
+  MarkdownPreviewRemoveChoice,
 } from './types';
 
 const MarkdownPreviewModal = ({
@@ -296,14 +296,14 @@ const MarkdownPreviewModal = ({
 
       {/* 删除确认层：开在主预览上面；取消只收这一层，确认后删除动作由调用方执行 */}
       <DeleteConfirm
+        checkedKeys={removal.checkedKeys}
+        choices={remove?.choices}
         description={remove?.description ?? ''}
         loading={removal.removing}
         onCancel={removal.cancel}
+        onCheckedKeysChange={removal.setCheckedKeys}
         onConfirm={removal.confirm}
-        onOptionChange={removal.setOptionChecked}
         opened={removal.confirming}
-        option={remove?.option}
-        optionChecked={removal.optionChecked}
         title={title}
       />
 

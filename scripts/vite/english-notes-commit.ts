@@ -153,15 +153,23 @@ const pushRepo = async (
  * @param repoDir 记录仓库根目录
  * @param name 笔记相对路径，如 errors/errors-a.md
  * @param recordFile 记录文件相对仓库根目录的路径；这次没删到记录时不传
+ * @param options `noteDeleted` 为假表示只删了记录（md 还在）：不 stage md，提交标题按「记录」写
  */
 export const commitNoteDeletion = async (
   repoDir: string,
   name: string,
   recordFile?: string,
+  { noteDeleted = true }: { noteDeleted?: boolean } = {},
 ): Promise<CommitResult> => {
   const relative = `${NOTES_DIR}/${name}`;
-  const paths = recordFile ? [relative, recordFile] : [relative];
-  const subject = `docs(notes): 删除 ${path.basename(name, NOTE_EXTENSION)}`;
+  const stem = path.basename(name, NOTE_EXTENSION);
+  const paths = [
+    ...(noteDeleted ? [relative] : []),
+    ...(recordFile ? [recordFile] : []),
+  ];
+  const subject = noteDeleted
+    ? `docs(notes): 删除 ${stem}`
+    : `docs(records): 删除 ${stem} 的学习记录`;
 
   try {
     await runGit('git', ['add', '--', ...paths], { cwd: repoDir });

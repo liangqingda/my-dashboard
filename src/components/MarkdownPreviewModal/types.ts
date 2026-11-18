@@ -164,37 +164,38 @@ export type MarkdownPreviewModalProps = {
  * 删除这篇文档：二次确认的说明与真正删除的动作都由调用方给。
  *
  * 组件不知道文档落在哪里，也不知道删一篇会牵连哪些东西（学习记录、提交、推送），
- * 所以只收人话：确认层里说什么、底部那个开关备不备，以及用户点「删除」之后做什么。
+ * 所以只收人话：确认层里说什么、左下角列哪几个「这次删什么」的勾选项，
+ * 以及用户点「删除」之后做什么。
  */
 export type MarkdownPreviewRemove = {
-  /** 二次确认里的说明：删掉会发生什么 */
-  description: string;
   /**
-   * 可选：确认层左下角的开关（如「只删 Markdown，保留记录」）。
-   * 勾选后说明块换成 `option.description`，开关状态随 `confirm` 的参数回给调用方。
+   * 二次确认里的说明：删掉会发生什么。
+   * 传函数时按当前勾中的 key 现算——勾选项一变，说明块跟着变。
    */
-  option?: MarkdownPreviewRemoveOption;
+  description: string | ((checkedKeys: readonly string[]) => string);
   /**
-   * 用户确认后执行；参数是底部开关是否被勾选（没有开关时恒为 `false`）。
-   * 抛错按失败提示，成功后由调用方关弹窗、刷新列表。
+   * 可选：确认层左下角的勾选项（可多个，竖排）。没有可选的就不传，
+   * 也不出勾选这一块，`confirm` 收到的就是空数组。
    */
-  confirm: (optionChecked: boolean) => Promise<void>;
+  choices?: readonly MarkdownPreviewRemoveChoice[];
+  /** 用户确认后执行；参数是勾中的 choice key（没勾任何一项时按钮不可点） */
+  confirm: (checkedKeys: readonly string[]) => Promise<void>;
 };
 
 /**
- * 删除确认层左下角的可选开关：勾上就换一种删法。
+ * 删除确认层左下角的一个勾选项：勾上就代表「这次删它」。
  *
- * 组件不解释这个开关「意味着什么」——文案与勾上后的动作都由调用方给，
- * 它只负责画一个 checkbox、把勾选状态带进 `confirm`。
+ * 组件不解释这个 key「意味着什么」——文案与勾选后的动作都由调用方给，
+ * 它只负责画 checkbox、把勾中的 key 集合带进 `confirm`。
  */
-export type MarkdownPreviewRemoveOption = {
-  /** checkbox 右侧的主提示（一句话说清勾上之后删什么） */
+export type MarkdownPreviewRemoveChoice = {
+  /** 稳定标识，随 `confirm` 回给调用方（如 `markdown` / `record`） */
+  key: string;
+  /** checkbox 右侧的主提示（一项一句话，如「Markdown」「Record」） */
   label: string;
-  /** 主提示下方的补充说明：点明勾上与不勾的后果差别；不传就只显示主提示 */
+  /** 主提示下方的补充说明：这一项指的是什么；不传就只显示主提示 */
   hint?: string;
-  /** 勾选后替换说明块的文案：这时会发生什么 */
-  description: string;
-  /** 初始是否勾选；默认不勾，每次打开确认层都回到这个值 */
+  /** 初始是否勾选；默认不勾，每次打开确认层都回到这里 */
   defaultChecked?: boolean;
 };
 
@@ -218,15 +219,15 @@ export type DeleteConfirmProps = {
   opened: boolean;
   /** 文档标题：确认层标题里点名删的是哪一篇 */
   title: string;
-  /** 删掉会发生什么，由调用方给 */
-  description: string;
-  /** 左下角的可选开关；不传就只有说明块与两个出口 */
-  option?: MarkdownPreviewRemoveOption;
-  /** 开关当前是否勾选（状态由弹窗持有，每次打开确认层回到默认值） */
-  optionChecked: boolean;
-  /** 勾选状态变化 */
-  onOptionChange: (checked: boolean) => void;
-  /** 是否正在删：按钮显示 loading，取消、开关与 Esc 暂时不可用 */
+  /** 删掉会发生什么，由调用方给（函数形式按当前勾选现算） */
+  description: string | ((checkedKeys: readonly string[]) => string);
+  /** 左下角的勾选项；不传就只有说明块与两个出口 */
+  choices?: readonly MarkdownPreviewRemoveChoice[];
+  /** 当前勾中的 key（状态由弹窗持有，每次打开确认层回到各自的默认值） */
+  checkedKeys: readonly string[];
+  /** 勾选集合变化 */
+  onCheckedKeysChange: (keys: string[]) => void;
+  /** 是否正在删：按钮显示 loading，取消、勾选与 Esc 暂时不可用 */
   loading: boolean;
   /** 取消删除 */
   onCancel: () => void;

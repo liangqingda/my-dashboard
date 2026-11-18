@@ -129,7 +129,12 @@ export type SavedNoteResult = {
 };
 
 /** 删除笔记后插件返回的结果：记录删没删 + 自动提交 / 推送的状态 */
+/** 删除范围：Markdown 与 Record 各能单独留下，所以一共三种 */
+export type NoteDeleteMode = 'both' | 'markdown' | 'record';
+
 export type DeletedNoteResult = {
+  /** 这篇笔记的 Markdown 这次删掉了没有 */
+  noteDeleted: boolean;
   /** 记录仓库里有没有删掉对应的学习记录；false 表示这篇没有记录（或记录已经不在库里） */
   recordDeleted: boolean;
   /** 这次只删了 md、记录按用户要求留着了；false 表示没有可保留的记录 */
@@ -180,8 +185,8 @@ export type UseActiveNoteResult = {
   save: (markdown: string) => Promise<{ notice?: string }>;
   /** 重取当前这一篇 */
   refresh: () => Promise<void>;
-  /** 删除当前这一篇（md + 学习记录，`keepRecord` 为真时只删 md），成功后关弹窗并把它从列表里摘掉 */
-  remove: (keepRecord?: boolean) => Promise<void>;
+  /** 删除当前这一篇（两边都删，`mode` 可只删一边），成功后关弹窗并把它从列表里摘掉 */
+  remove: (mode?: NoteDeleteMode) => Promise<void>;
 };
 
 /** 表格单元格 */

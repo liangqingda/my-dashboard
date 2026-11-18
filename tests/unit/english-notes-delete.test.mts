@@ -89,11 +89,13 @@ describe('删除笔记：调用记录仓库的脚本', () => {
       const deleted = await deleteNote(repo, NOTE);
 
       assert.deepEqual(deleted, {
+        noteDeleted: true,
         record: {
           file: 'learning-records/errors.json',
           id: 'errors:a',
           mastered: false,
         },
+        recordError: undefined,
         recordKept: false,
       });
     } finally {
@@ -153,7 +155,7 @@ describe('删除笔记：调用记录仓库的脚本', () => {
     }
   });
 
-  it('只删 Markdown 时加 --keep-record，并把 record_kept 收敛出来', async () => {
+  it('只删 Markdown（mode=markdown）时加 --keep-record，并把 record_kept 收敛出来', async () => {
     const expected = [
       'delete-note',
       '--note',
@@ -178,11 +180,62 @@ describe('删除笔记：调用记录仓库的脚本', () => {
     );
 
     try {
-      const deleted = await deleteNote(repo, NOTE, { keepRecord: true });
+      const deleted = await deleteNote(repo, NOTE, { mode: 'markdown' });
 
+      assert.equal(deleted.noteDeleted, true);
       assert.equal(deleted.record, null);
       assert.equal(deleted.recordKept, true);
       assert.equal(deleted.recordError, undefined);
+    } finally {
+      await cleanup(repo);
+    }
+  });
+
+  it('只删 Record（mode=record）时加 --keep-note，md 未删也照样收下结果', async () => {
+    const expected = [
+      'delete-note',
+      '--note',
+      'learning-record-notes/errors/errors-a.md',
+      '--keep-note',
+    ];
+    const expectedArgv = literal(expected);
+    const probePayload = literal(
+      scriptPayload(
+        {
+          category: 'errors',
+          file: 'learning-records/errors.json',
+          id: 'errors:a',
+          mastered: false,
+          status: 'learning',
+          title: 'a 的错题',
+        },
+        { note_deleted: false },
+      ),
+    );
+    const repo = await makeRepo(
+      [
+        'import json',
+        'import sys',
+        `expected = json.loads(${expectedArgv})`,
+        'if sys.argv[1:] != expected:',
+        '    print("learning_records.py: error: bad argv " + str(sys.argv[1:]), file=sys.stderr)',
+        '    sys.exit(2)',
+        `payload = json.loads(${probePayload})`,
+        'print(json.dumps(payload))',
+        '',
+      ].join('\n'),
+    );
+
+    try {
+      const deleted = await deleteNote(repo, NOTE, { mode: 'record' });
+
+      assert.equal(deleted.noteDeleted, false);
+      assert.deepEqual(deleted.record, {
+        file: 'learning-records/errors.json',
+        id: 'errors:a',
+        mastered: false,
+      });
+      assert.equal(deleted.recordKept, false);
     } finally {
       await cleanup(repo);
     }

@@ -11,7 +11,14 @@ import type { MarkdownPreviewRemove } from '@/components/MarkdownPreviewModal';
 import { createChoiceCodec } from '@/utils/local-storage';
 import type { StoredCodec } from '@/utils/local-storage';
 
-import type { NoteFilterScope, NotesSort, NotesTimeRange, NotesViewMode } from './types';
+import type {
+  NoteDeleteMode,
+  NoteFilterScope,
+  NotesSort,
+  NotesTimeRange,
+  NotesViewMode,
+} from './types';
+import { describeNoteDelete, runNoteDelete } from './utils/delete-note';
 
 /** 表格视图的默认排序：按「笔记更新时间」倒序，新的在最上面 */
 export const DEFAULT_NOTE_SORT: NotesSort = {
@@ -61,42 +68,40 @@ export const READONLY_NOTE_ROW_LABELS: readonly string[] = [
 ];
 
 /**
- * 删除笔记的二次确认文案：只说删的是什么（Markdown 与 Record 都会从记录仓库删掉）。
+ * 删除确认层左下角的两个勾选项：勾谁删谁，两个都勾就是两边一起删。
  *
- * 不再展开「删完会自动提交推送、删错了可以从这次提交里找回」那几句：
- * 确认层的作用是让人看清删什么，不是解释仓库流程。
+ * 默认只勾 Markdown——「删掉这篇笔记」是常见意图，Record 要删得自己再勾一下；
+ * 两项都不勾时确认层没有可删的内容，删除按钮不可点。
  */
-export const NOTE_DELETE_DESCRIPTION =
-  '这篇笔记的 Markdown 以及 Record 会从 learn-english 仓库删除。';
+export const NOTE_DELETE_CHOICES = [
+  {
+    defaultChecked: true,
+    hint: '这篇笔记的 Markdown 文件',
+    key: 'markdown',
+    label: 'Markdown',
+  },
+  {
+    hint: '记录库里这条学习记录',
+    key: 'record',
+    label: 'Record',
+  },
+];
 
 /**
- * 删除确认层左下角的开关：勾上就只删 Markdown，把 Record 留在记录库里。
- *
- * 「保留」意味着这个知识点之后还能继续复习，只是不再有这篇笔记做它的可读副本；
- * 勾选后说明块换成下面那句，让人在按下删除之前就看到这次会少删一样东西。
- */
-export const NOTE_DELETE_KEEP_RECORD_OPTION = {
-  description:
-    '这篇笔记的 Markdown 会从 learn-english 仓库删除，记录库里的 Record 原样保留。',
-  hint: '勾上只清掉笔记文件；不勾会把 Record 一起删掉，这个知识点之后得重新学。',
-  label: '只删 Markdown，保留 Record',
-};
-
-/**
- * 交给预览弹窗的删除能力：说明文案与那个「保留 Record」开关在这里装配。
+ * 交给预览弹窗的删除能力：勾选项、说明文案与删除范围在这里装配。
  *
  * 页面只判断「现在能不能删」（开发模式 + 正文已到），确认层说什么、勾上之后删什么
- * 都由这份契约决定；`confirm` 收的是开关状态（见 `useActiveNote.remove`）。
+ * 都由这份契约决定；`confirm` 收的是勾中的 key，这里再翻成删除范围（见 `useActiveNote.remove`）。
  *
- * @param confirm 用户确认后真正执行删除（参数是开关是否勾选）
+ * @param run 用户确认后真正执行删除（参数是删除范围）
  * @returns 预览弹窗的 `remove` 入参
  */
 export const createNoteRemove = (
-  confirm: (keepRecord: boolean) => Promise<void>,
+  run: (mode: NoteDeleteMode) => Promise<void>,
 ): MarkdownPreviewRemove => ({
-  confirm,
-  description: NOTE_DELETE_DESCRIPTION,
-  option: NOTE_DELETE_KEEP_RECORD_OPTION,
+  choices: NOTE_DELETE_CHOICES,
+  confirm: (checkedKeys) => runNoteDelete(checkedKeys, run),
+  description: describeNoteDelete,
 });
 
 /**

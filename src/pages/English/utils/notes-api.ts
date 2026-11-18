@@ -11,6 +11,7 @@ import type {
   EnglishNotesSnapshot,
   NoteBody,
   NoteCategory,
+  NoteDeleteMode,
   NoteSummary,
   RawNotePayload,
   RawNotesPayload,
@@ -288,16 +289,16 @@ export const saveEnglishNote = async (
 };
 
 /**
- * 删除一篇笔记：插件先按 `keepRecord` 决定「连记录一起删」还是「只删 md」，
+ * 删除一篇笔记：插件按 `mode` 决定删 Markdown、删 Record 还是两边都删，
  * 再自动提交并推送（仅开发模式可用）。
- * 页面靠返回值说清「记录删没删 / 留着没留着」「提交 / 推送成没成」，不把中间状态藏起来。
+ * 页面靠返回值说清「这边删没删、那边留没留」「提交 / 推送成没成」，不把中间状态藏起来。
  *
  * @param name 笔记相对笔记目录的路径，如 `errors/errors-a.md`
- * @param keepRecord 为真时只删 md，学习记录留在记录库里
+ * @param mode 删除范围：两边都删（默认）/ 只删 Markdown / 只删 Record
  */
 export const deleteEnglishNote = async (
   name: string,
-  keepRecord = false,
+  mode: NoteDeleteMode = 'both',
 ): Promise<DeletedNoteResult> => {
   if (!import.meta.env.DEV) {
     throw new Error('静态预览不支持删除，请在开发模式下操作');
@@ -305,8 +306,8 @@ export const deleteEnglishNote = async (
 
   const query = new URLSearchParams({ name });
 
-  if (keepRecord) {
-    query.set('keepRecord', '1');
+  if (mode !== 'both') {
+    query.set('mode', mode);
   }
 
   const response = await fetch(`${LIST_ENDPOINT}?${query.toString()}`, {
@@ -325,11 +326,11 @@ export const deleteEnglishNote = async (
   try {
     payload = await response.json();
   } catch {
-    return { recordDeleted: false, recordKept: false };
+    throw new Error('删除结果读不出来，请刷新列表确认删没删掉');
   }
 
   if (!isObject(payload)) {
-    return { recordDeleted: false, recordKept: false };
+    throw new Error('删除结果读不出来，请刷新列表确认删没删掉');
   }
 
   const commit = isObject(payload.commit) ? payload.commit : null;
@@ -340,9 +341,10 @@ export const deleteEnglishNote = async (
     commitHash: typeof commit?.hash === 'string' ? commit.hash : undefined,
     pushError:
       typeof commit?.pushError === 'string' ? commit.pushError : undefined,
+    noteDeleted: payload.noteDeleted === true,
     // 记录对象只有真删到一条时才回来；删失败时 md 已经删了，原因单独带回
     recordDeleted: isObject(payload.record),
-    // 勾了「只删 Markdown」且确实有一条记录被留下
+    // 勾了「保留 Record」且确实有一条记录被留下
     recordKept: payload.recordKept === true,
     recordError:
       typeof payload.recordError === 'string' ? payload.recordError : undefined,

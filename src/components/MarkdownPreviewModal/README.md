@@ -26,7 +26,7 @@
 | `onSave` | `(markdown: string) => Promise<{ notice?: string }>`（可选） | 提供后才出现「编辑」；落盘由调用方实现，抛错则显示为保存失败，返回的 `notice` 追加在「已保存」提示后 |
 | `Editor` | `ComponentType<MarkdownEditorProps>`（可选） | 这一类文档的定制编辑器；不传则点「编辑」只给定制提示 |
 | `filter` | `MarkdownPreviewFilter`（可选） | 预览态的内容筛选槽：传了才出现 header 的筛选图标按钮与就近弹层；筛什么、怎么持久化由调用方给。编辑态与保存始终用未筛选的原文 |
-| `remove` | `{ description: string; option?: MarkdownPreviewRemoveOption; confirm: (optionChecked: boolean) => Promise<void> }`（可选） | 提供后才出现 header 的删除图标按钮：点一下或按 `Delete` / `Backspace` 先弹二次确认（`DeleteConfirm`），确认后调用 `confirm`，参数是确认层左下角那个开关是否被勾选（没传 `option` 时恒为 `false`）。删什么、删完怎么关弹窗与刷新列表都由调用方决定，组件只给「先问一遍」这一层与那个可选开关 |
+| `remove` | `{ description: string \| ((checkedKeys: readonly string[]) => string); choices?: readonly MarkdownPreviewRemoveChoice[]; confirm: (checkedKeys: readonly string[]) => Promise<void> }`（可选） | 提供后才出现 header 的删除图标按钮：点一下或按 `Delete` / `Backspace` 先弹二次确认（`DeleteConfirm`），确认后调用 `confirm`，参数是确认层左下角勾中的 key 数组（没传 `choices` 时为空数组）。删什么、删完怎么关弹窗与刷新列表都由调用方决定，组件只给「先问一遍」这一层与那组可选勾选项 |
 
 ## 行为细节
 
@@ -201,7 +201,7 @@ header 文档操作组**最后一个**图标（垃圾桶，颜色与同排图标
   宽 420、框体底色取 `--app-surface`）；正文说明由调用方给（`remove.description`），组件不写死
   「删了什么、能不能撤回」——组件的另一处调用方可能根本不是删文件；
 - **确认层只有两段**：标题区（「删除这个文档？」+ 被删文档的 `title` 原文）、说明块，
-  最后一行左边是可选的开关（`remove.option`）、右边收着两个按钮。
+  最后一行左边是可选的勾选列（`remove.choices`）、右边收着两个按钮。
   **不挂危险语气图标、也不在按钮旁写 `Esc` 键帽提示**——一段说明 + 两个出口就够了。
   **文件名不塞进标题**：路径一长会把「？」挤到下一行，所以标题只说「删这个文档」，
   路径另起一行 monospace 弱色（`overflow-wrap: anywhere`，长路径按任意位置折行）；
@@ -221,12 +221,15 @@ header 文档操作组**最后一个**图标（垃圾桶，颜色与同排图标
   （`@/utils/typing-target`）不抢字符；
 - **删除失败的归属**：`confirm` 抛错由 `useRemoveRequest` 弹一条红色通知，确认层收起、
   正文与弹窗留在原处——不能先关掉弹窗再说「其实没删」；
-- **可选开关（`remove.option`）**：确认层最后一行**左边是 checkbox、右边收着两个按钮**
-  （`label` 是 checkbox 右侧的主提示，`hint` 是它下面一行弱色小字，说清勾上 / 不勾的后果差别）；
-  **勾上后说明块换成 `option.description`**，让「这次会少删一样东西」在按下删除之前就看得见。
-  开关状态由 `useRemoveRequest` 持有：每次打开确认层都回到 `option.defaultChecked`（默认不勾），
-  不跨次记住；勾选结果作为 `confirm(optionChecked)` 的参数交给调用方，组件不解释它意味着什么
-  （「保留记录」这类语义归调用方）。没有传 `option` 时这一行只有按钮，靠 `margin-left: auto` 依旧贴右；
+- **勾选项（`remove.choices`）**：确认层最后一行**左边竖排 checkbox、右边收着两个按钮**。
+  每项 `label` 是 checkbox 右侧的主提示（一行一个，如「Markdown」「Record」），`hint` 是它下面
+  一行的弱色小字，说清这一项指的是什么；`defaultChecked` 决定每次打开确认层时的初始勾选
+  （默认都不勾）。**说明块可以传函数**：`description(checkedKeys)` 按当前勾选现算，所以勾选一变
+  「这次删什么、留什么」在按下删除之前就跟着变。**一项都没勾时删除按钮 `disabled`**——没有可删的
+  内容。勾选集合由 `useRemoveRequest` 持有，每次打开都回到各项的 `defaultChecked`、不跨次记住，
+  确认时作为 `confirm(checkedKeys)` 的参数交给调用方，组件不解释 key 意味着什么
+  （「Markdown / Record 各留哪一边」这类语义归调用方）。没有传 `choices` 时这一行只有按钮，
+  靠 `margin-left: auto` 依旧贴右；
 - **删除成功不归组件管**：调用方在 `confirm` 里关弹窗、把这一篇从列表里摘掉、提示提交 / 推送状态；
 - **嵌套浮层边界**：确认层开着时主预览 `closeOnEscape={false}`、`trapFocus={false}`，
   Esc 与 Tab 先落在确认层上（与子区域预览同一套口径）。
