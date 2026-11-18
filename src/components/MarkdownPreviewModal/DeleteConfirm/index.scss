@@ -1,5 +1,5 @@
 /*
- * 删除确认层：只有两段——标题区（标题 + 被删文档的路径）与说明块，按钮收在最后一行。
+ * 删除确认层：标题区（标题 + 被删文档的路径）→ 说明块 → 勾选项 → 一条细线 → 靠右的按钮。
  * 路径不塞进标题里：文件名一长就会把「？」挤到下一行，独立成一行 monospace 更好读。
  */
 
@@ -55,7 +55,7 @@
 
 /*
  * 说明块：软底 + 细边，读起来是一段引注而不是又一段正文。
- * 说明文案由调用方给，这里只负责它和下面按钮的分界。
+ * 说明文案由调用方给，这里只负责它和下面勾选项、按钮的分界。
  */
 .body .description {
   padding: 12px 14px;
@@ -68,27 +68,17 @@
 }
 
 /*
- * 收口行：一条细线把「读」和「做」分开。勾选项靠左、按钮靠右，
- * 说明可以折行，按钮组不让位。
+ * 勾选项：紧贴说明块下方、与说明块左边界对齐的一行。
+ * 只留主提示，细节交给 hover 的 tooltip——勾选项不该比说明块更抢眼。
  */
-.footer {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid var(--app-line);
-}
-
-/* 勾选列占满按钮组剩下的宽度；内容过长时在自己的列里折行 */
 .choices {
-  flex: 1;
-  min-width: 0;
+  display: flex;
+  margin-top: 12px;
 }
 
 /*
- * 主提示与补充说明：Mantine 给 Checkbox 自己的字号写在 `label` / `description` 上，
- * 用 `.choices` 前缀把它压回本项目的一档（主提示与说明块同档，补充说明再小一号）。
+ * 主提示的字号：Mantine 给 Checkbox 自己的 label 写了字号与行高，
+ * 用 `.choices` 前缀把它压回说明块旁该有的一档。
  */
 .choices .choiceLabel {
   color: var(--app-ink-soft);
@@ -96,17 +86,11 @@
   line-height: 1.6;
 }
 
-.choices .choiceHint {
-  margin-top: 2px;
-  color: var(--app-ink-faint);
-  font-size: 12px;
-  line-height: 1.6;
-}
-
-/* 按钮靠右：没有勾选项时也留在原位 */
-.actions {
-  flex: 0 0 auto;
-  margin-left: auto;
+/* 收口行：一条细线把「选」和「做」分开，按钮靠右 */
+.footer {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--app-line);
 }
 
 /*

@@ -5,15 +5,15 @@
  * 给一组可选的「这次删什么」勾选项（同样只画 checkbox，语义在调用方），
  * 以及给两个出口——取消 / 删除。确认后真正删除的动作也在调用方手里。
  *
- * 排版上只有两段：标题区（「删除这个文档？」+ 被删文档的路径）与说明块，最后一行左边竖排勾选项、
- * 右边收着两个按钮。标题里不塞长路径：文件名一长就会把「？」挤到下一行，路径独立成一行
- * monospace 更好读。
+ * 排版按「先读、再选、最后做」：标题区（「删除这个文档？」+ 被删文档的路径）→ 说明块 →
+ * 勾选项（紧凑一行，只在 hover 时用 tooltip 补一句这东西指什么）→ 一条细线 →
+ * 靠右的两个按钮。勾选项不塞进按钮行：那一行留给「取消 / 删除」，选择本身属于内容区。
  *
  * 勾选项一变，说明块就按调用方给的函数重算——「这次会少删哪一样」在按下删除之前就看得见。
  * 一项都没勾时没有可删的东西，删除按钮直接不可点。
  */
 
-import { Button, Checkbox, Group, Modal, Stack, Text } from '@mantine/core';
+import { Button, Checkbox, Group, Modal, Text, Tooltip } from '@mantine/core';
 
 import type { DeleteConfirmProps } from '../types';
 
@@ -62,38 +62,39 @@ const DeleteConfirm = ({
       withCloseButton={!loading}
     >
       <Text className={styles.description}>{text}</Text>
-      <div className={styles.footer}>
-        {/* 勾选项靠左、按钮靠右：说明可以折行，按钮组不让位（没有勾选项时按钮靠右由 .actions 兜住） */}
-        {choices ? (
-          <Checkbox.Group
-            className={styles.choices}
-            onChange={onCheckedKeysChange}
-            value={[...checkedKeys]}
-          >
-            <Stack gap={6}>
-              {choices.map((choice) => (
+      {/* 勾选项：紧凑一行，细节靠 hover 的 tooltip 补，不占正文位置 */}
+      {choices ? (
+        <Checkbox.Group
+          className={styles.choices}
+          onChange={onCheckedKeysChange}
+          value={[...checkedKeys]}
+        >
+          <Group gap={16} wrap="wrap">
+            {choices.map((choice) => (
+              <Tooltip
+                disabled={!choice.hint}
+                key={choice.key}
+                label={choice.hint}
+                multiline
+                openDelay={200}
+                position="top"
+                w={230}
+                withArrow
+              >
                 <Checkbox
-                  classNames={{
-                    description: styles.choiceHint,
-                    label: styles.choiceLabel,
-                  }}
-                  description={choice.hint}
+                  classNames={{ label: styles.choiceLabel }}
                   disabled={loading}
-                  key={choice.key}
                   label={choice.label}
-                  size="sm"
+                  size="xs"
                   value={choice.key}
                 />
-              ))}
-            </Stack>
-          </Checkbox.Group>
-        ) : null}
-        <Group
-          className={styles.actions}
-          gap="sm"
-          justify="flex-end"
-          wrap="nowrap"
-        >
+              </Tooltip>
+            ))}
+          </Group>
+        </Checkbox.Group>
+      ) : null}
+      <div className={styles.footer}>
+        <Group gap="sm" justify="flex-end" wrap="nowrap">
           <Button disabled={loading} onClick={onCancel} size="sm" variant="default">
             取消
           </Button>

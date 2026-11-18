@@ -174,7 +174,7 @@ export type MarkdownPreviewRemove = {
    */
   description: string | ((checkedKeys: readonly string[]) => string);
   /**
-   * 可选：确认层左下角的勾选项（可多个，竖排）。没有可选的就不传，
+   * 可选：说明块下方的勾选项（紧凑一行，hover 出 tooltip）。没有可选的就不传，
    * 也不出勾选这一块，`confirm` 收到的就是空数组。
    */
   choices?: readonly MarkdownPreviewRemoveChoice[];
@@ -183,17 +183,18 @@ export type MarkdownPreviewRemove = {
 };
 
 /**
- * 删除确认层左下角的一个勾选项：勾上就代表「这次删它」。
+ * 删除确认层的一个勾选项：勾上就代表「这次删它」。
  *
  * 组件不解释这个 key「意味着什么」——文案与勾选后的动作都由调用方给，
- * 它只负责画 checkbox、把勾中的 key 集合带进 `confirm`。
+ * 它只负责画 checkbox（只有 `label` 一个词，细节挂在 hover 的 tooltip 上）
+ * 与把勾中的 key 集合带进 `confirm`。
  */
 export type MarkdownPreviewRemoveChoice = {
   /** 稳定标识，随 `confirm` 回给调用方（如 `markdown` / `record`） */
   key: string;
-  /** checkbox 右侧的主提示（一项一句话，如「Markdown」「Record」） */
+  /** 主提示（就一个词，如「Markdown」「Record」） */
   label: string;
-  /** 主提示下方的补充说明：这一项指的是什么；不传就只显示主提示 */
+  /** hover 时用 tooltip 补一句这一项指的是什么；不传就不出 tooltip */
   hint?: string;
   /** 初始是否勾选；默认不勾，每次打开确认层都回到这里 */
   defaultChecked?: boolean;
@@ -221,7 +222,7 @@ export type DeleteConfirmProps = {
   title: string;
   /** 删掉会发生什么，由调用方给（函数形式按当前勾选现算） */
   description: string | ((checkedKeys: readonly string[]) => string);
-  /** 左下角的勾选项；不传就只有说明块与两个出口 */
+  /** 说明块下方的勾选项；不传就只有说明块与两个出口 */
   choices?: readonly MarkdownPreviewRemoveChoice[];
   /** 当前勾中的 key（状态由弹窗持有，每次打开确认层回到各自的默认值） */
   checkedKeys: readonly string[];
