@@ -43,23 +43,23 @@ export const runNoteDelete = (
 /**
  * 按勾选说清这次删什么、留什么；一项都没勾时直说没有可删的。
  *
- * 文案按两边各自的真实作用写：Markdown 是知识点的原文（讲解、例句、历次复习笔记，
- * 复制它的相对路径粘贴给复习就是一轮练习）；Record 只是学习状态（复习次数、
- * 下次复习、是否掌握），不带原文。
+ * 文案按两边各自的真实作用写：Markdown 是知识点原文（只删它时学习状态还在，
+ * 后续复习会把笔记重新生成）；Record 只是学习状态（只删它时笔记还在，
+ * 复制笔记路径发给 learn-english 仍能复习这个知识点）。
  */
 export const describeNoteDelete = (checkedKeys: readonly string[]): string => {
   const mode = toNoteDeleteMode(checkedKeys);
 
   if (mode === 'both') {
-    return '原文和学习状态一起清掉，这条知识点退出复习库。';
+    return '笔记和学习状态一起清掉：这条知识点退出复习库，笔记也不会再重新生成。';
   }
 
   if (mode === 'markdown') {
-    return '只删原文，学习状态保留：这条仍会按计划复习，但读不到笔记内容了。';
+    return '只删笔记，学习状态保留：这条仍会按计划复习，但笔记会在后续复习中重新生成。';
   }
 
   if (mode === 'record') {
-    return '只删学习状态，原文保留：复制 Markdown 路径粘贴过来，就能直接开始复习。';
+    return '只删学习状态，笔记保留：复制笔记路径到 learn-english project 仍可复习此知识点。';
   }
 
   return '一项都没勾：没有要删除的内容。';
