@@ -68,22 +68,50 @@
 }
 
 /*
- * 勾选项：紧贴说明块下方、与说明块左边界对齐的一行。
- * 只留主提示，细节交给 hover 的 tooltip——勾选项不该比说明块更抢眼。
+ * 勾选项：紧贴说明块下方的一行。每项自带 4px / 8px 内边距当可点区域，
+ * 行整体左移同样的 8px，让 checkbox 方块与说明块的左边界对齐。
  */
 .choices {
   display: flex;
-  margin-top: 12px;
+  margin-top: 10px;
+  margin-left: -8px;
 }
 
 /*
- * 主提示的字号：Mantine 给 Checkbox 自己的 label 写了字号与行高，
- * 用 `.choices` 前缀把它压回说明块旁该有的一档。
+ * 整项（含 label 旁边的空白）都是可点、可 hover 的区域：给一层浅底 + 圆角，
+ * 鼠标移上去才知道这里能点。纵向居中由 `align-items: center` 兜住——
+ * Mantine 默认按顶部对齐，label 字号比 14px 的方框高时会歪一截。
+ */
+.choices .choiceRoot {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+/* hover 与键盘落点用同一层底：不是只有鼠标才看得见可点区 */
+.choices .choiceRoot:hover,
+.choices .choiceRoot:focus-within {
+  background: var(--app-surface-hover);
+}
+
+/* 删除中整项不可点（内部的 input 被禁用）：不给 hover 底，免得看起来还能改选 */
+.choices .choiceRoot:has(input:disabled) {
+  background: transparent;
+  cursor: not-allowed;
+}
+
+/*
+ * 主提示的字号与行高：Mantine 给 Checkbox 自己的 label 写了字号 / 行高与上边距，
+ * 用 `.choices` 前缀把它们压回这一档——行高与 14px 方框接近，配上一行居中才不会错位。
  */
 .choices .choiceLabel {
+  padding-top: 0;
   color: var(--app-ink-soft);
   font-size: 13px;
-  line-height: 1.6;
+  line-height: 1.5;
 }
 
 /* 收口行：一条细线把「选」和「做」分开，按钮靠右 */

@@ -69,7 +69,7 @@ const DeleteConfirm = ({
           onChange={onCheckedKeysChange}
           value={[...checkedKeys]}
         >
-          <Group gap={16} wrap="wrap">
+          <Group gap={4} wrap="wrap">
             {choices.map((choice) => (
               <Tooltip
                 disabled={!choice.hint}
@@ -82,7 +82,10 @@ const DeleteConfirm = ({
                 withArrow
               >
                 <Checkbox
-                  classNames={{ label: styles.choiceLabel }}
+                  classNames={{
+                    label: styles.choiceLabel,
+                    root: styles.choiceRoot,
+                  }}
                   disabled={loading}
                   label={choice.label}
                   size="xs"
