@@ -12,10 +12,14 @@
 - **header 顺序（固定）**：翻页与计数 → 标题 → `headerActions` → 全屏 → `headerTail` →
   竖线 → `headerSecondary` → Mantine 关闭按钮。
   竖线只在 `headerActions` / `headerTail` 与 `headerSecondary` 同时存在时才有。
-- **退出键**：`Esc` 与 **空格** 都关窗（空格会 `preventDefault`，不让浏览器把它当成「点当前焦点按钮」
-  —— 那正是「按空格莫名翻到下一条 / 切了全屏」的来源）。两者同一套放行口径：带 ⌘ / Ctrl / Alt
-  的组合键不拦、正在输入（输入框 / 可编辑区）不拦、按住连发不算；`closeOnSpace` 默认跟随
-  `closeOnEscape`，编辑态与上层浮层开着时一起失效。
+- **键盘口径统一在这里**（`hooks/useModalShortcuts`），业务弹窗不各自补快捷键：
+  - `Esc`：关窗（Mantine 的 `closeOnEscape`）；
+  - **空格**：关窗，并 `preventDefault` 掉浏览器「空格 = 点击当前焦点按钮」——焦点常留在 header
+    图标上，不拦的话按空格会莫名翻到下一条 / 切了全屏；`closeOnSpace` 默认跟随 `closeOnEscape`；
+  - **`[` / `【`、`←` 上一个；`]` / `】`、`→` 下一个**：有 `nav` 且未禁用时；
+  - **`F`**：切换全屏（有全屏按钮时）。
+  放行口径：带 ⌘ / Ctrl / Alt 的组合键不拦、正在输入（输入框 / 可编辑区）不拦、按住连发不算；
+  翻页与全屏可由 `shortcutsEnabled` 整组收掉（加载中、上层浮层开着时）。
 - **正文区**：`.body` 是 flex 纵向容器（`flex: 1 1 auto; min-height: 0`），正文自己决定怎么滚
   （`ScrollArea` 或整块不滚）；全屏由调用方持有状态（正文排版要用），这里只画按钮。
 
@@ -39,6 +43,7 @@
 | `fullscreen` | `{ active, onToggle }`；不传则不显示全屏按钮 |
 | `closeButton` | 是否显示关闭按钮，默认显示（编辑态这类「关不掉」的场景传 `false`） |
 | `closeOnEscape` / `closeOnSpace` / `trapFocus` | Esc 与空格是否关窗（`closeOnSpace` 默认跟随 `closeOnEscape`）、上层浮层开着时由调用方关掉，避免一下全关 / 焦点被抢、是否锁焦点 |
+| `shortcutsEnabled` | 默认 `true`；加载中、上层浮层开着时传 `false`，一次收掉翻页与 `F` 全屏（空格另由 `closeOnSpace` 把关） |
 | `size` / `centered` / `closeLabel` | 宽度档（默认 `min(980px, 92vw)`）、是否垂直居中、关闭按钮的 `aria-label` |
 | `contentClassName` / `bodyClassName` | 只加增量类名，复制框体 / header 样式不算 |
 

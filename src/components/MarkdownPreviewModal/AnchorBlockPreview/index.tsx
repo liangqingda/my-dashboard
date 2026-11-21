@@ -1,21 +1,66 @@
 /**
- * 子区域预览的装配：把「当前是第几块」翻成弹窗要的 props，前后切换也在这里走。
+ * 子区域预览：同文档链接指向的那一节单独开窗阅读（含「当前是第几块」与前后切换）。
  *
- * 真正看内容的界面在 `AnchorBlockModal`，这一层只管位置与边界：
- * 按当前口径（全文所有链接 / 只同一处目录里的链接）算出「这一次能切到哪几块」，
+ * 弹窗外壳统一走 `@/components/FreeModal`：翻页 / 计数 / 标题 / 字号 / 全屏 / 关闭
+ * 都由外壳排布，这里只给标题、字号控件与正文，并让它比主预览矮一档、全屏时四周留缝
+ * （它叠在主预览上面，得看得出「底下那篇还在」）。正文排版复用主预览的样式模块。
+ *
+ * 翻页按当前口径（全文所有链接 / 只同一处目录里的链接）算出「这一次能切到哪几块」，
  * 首尾**贯穿**——最后一块的「下一个」回到第一块、第一块的「上一个」跳到最末一块，
  * 所以两侧按钮不会因为「到头」而置灰；只有一块可切时（`total <= 1`）才没有下一处可去。
  * 下标越界（换篇后正文变短）时当作关着。
  *
- * 快捷键也挂在这里：子预览开着时，`]` / → 切下一块、`[` / ← 切上一块，跟 header 上那两个
- * 图标按钮同一套键位，同样贯穿。主预览的「翻篇」快捷键在同一时刻是停用的（那边翻的是文档），
- * 所以这两组键不会打架。
+ * 快捷键由 `FreeModal` 统一接管（`[` / ← 上一块、`]` / → 下一块、`F` 全屏、空格 / Esc 关窗），
+ * 这一层不自己监听；主预览在子预览开着的这段时间把整套键收掉（`shortcutsEnabled={false}`），
+ * 所以两组键不会打架。
  */
 
+import { useCallback, useMemo, useRef, useState } from 'react';
+import type { CSSProperties, MouseEvent } from 'react';
+import { FocusTrap } from '@mantine/core';
+import Markdown from 'react-markdown';
+
+import FreeModal from '@/components/FreeModal';
+import { useModalFullscreen } from '@/components/FreeModal/hooks/useModalFullscreen';
+import { cx } from '@/utils/cx';
+import type { MarkdownOutlineHeading } from '@/utils/markdown-outline';
+
 import type { AnchorBlockPreviewProps } from '../types';
-import AnchorBlockModal from '../AnchorBlockModal';
-import { useNavigationShortcuts } from '../hooks/useNavigationShortcuts';
+import OutlineNav from '../OutlineNav';
+import ProseFontControl from '../ProseFontControl';
+import {
+  FULLSCREEN_STORAGE_KEY,
+  REHYPE_PLUGINS,
+  REMARK_PLUGINS,
+} from '../constants';
+import { useActiveHeadingIndex } from '../hooks/useActiveHeadingIndex';
+import { useDocumentScrollReset } from '../hooks/useDocumentScrollReset';
+import { useProseFontScale } from '../hooks/useProseFontScale';
 import { listAnchorBlockPeers } from '../utils/anchor-blocks';
+import {
+  getClickedAnchor,
+  scrollToAnchor,
+  scrollToHeading,
+} from '../utils/prose-navigation';
+
+import previewStyles from '../index.scss';
+
+/** 稳定的空标题列表：没打开时目录不该因为一个新数组而重算 */
+const NO_HEADINGS: MarkdownOutlineHeading[] = [];
+
+/** 常规态框体比主预览矮一档：上面那层只盖住大半屏，底下那篇还看得见 */
+const CONTENT_STYLE: CSSProperties = {
+  height: '74dvh',
+  maxHeight: '82dvh',
+};
+
+/** 全屏态四周留缝：它叠在主预览上面，铺满就没法分清在看哪一层 */
+const FULLSCREEN_CONTENT_STYLE: CSSProperties = {
+  flex: '0 0 95vw',
+  width: '95vw',
+  height: '95dvh',
+  maxHeight: '95dvh',
+};
 
 const AnchorBlockPreview = ({
   blocks,
@@ -39,24 +84,145 @@ const AnchorBlockPreview = ({
     ? peers[cursor === peers.length - 1 ? 0 : cursor + 1]
     : null;
 
+  /** 全屏与字号都是「怎么看」的偏好，和主预览共用存储，换一块也不重置 */
+  const { fullscreen, toggle } = useModalFullscreen(FULLSCREEN_STORAGE_KEY);
+  const proseFont = useProseFontScale();
+  const proseStyle = { '--prose-extra': `${proseFont.offset}px` } as CSSProperties;
+
+  const bodyRef = useRef<HTMLElement | null>(null);
+  /** 正文节点同时存一份 state：节点挂载 / 卸载时让依赖它的 effect 重建 */
+  const [bodyElement, setBodyElement] = useState<HTMLElement | null>(null);
   /**
-   * 只在子预览开着时接管按键：关了就得把 `]` / → 还给底下的翻篇。
-   * 按键只切块、不把焦点挪到按钮上（焦点环全站关闭，见 `src/main.tsx`）。
+   * 字号弹层：记着它是「为哪一块」打开的，换块之后自然算作收起——
+   * 用记录归属的派生状态，而不是在 effect 里 setState（那会多渲染一轮）。
    */
-  useNavigationShortcuts({
+  const [fontPanel, setFontPanel] = useState({ anchor: '', opened: false });
+
+  const headings = block ? block.headings : NO_HEADINGS;
+  /**
+   * header 标题：区块标题 + 它所处的那一节（上一级标题），
+   * 如「本轮习题 · 2026-11-15 12:05 · 复习」——同一篇里好几轮复习时靠它分清这一块是哪一轮的。
+   */
+  const heading = block
+    ? [block.title || block.anchor, block.parentTitle].filter(Boolean).join(' · ')
+    : '';
+
+  /** 面板说的永远是「当前这一块」的字号：换块后按归属算作收起 */
+  const fontOpened =
+    block !== null && fontPanel.anchor === block.anchor && fontPanel.opened;
+
+  /** 开合字号弹层，同时记下它属于哪一块 */
+  const setFontOpened = (open: boolean) => {
+    setFontPanel({ anchor: block ? block.anchor : '', opened: open });
+  };
+
+  /** 正文只随区块重建：`react-markdown` 每次渲染都要重新解析整段 */
+  const bodyContent = useMemo(
+    () =>
+      block ? (
+        <Markdown rehypePlugins={REHYPE_PLUGINS} remarkPlugins={REMARK_PLUGINS}>
+          {block.markdown}
+        </Markdown>
+      ) : null,
+    [block],
+  );
+
+  /** 滚动正文时跟踪当前小节，供这一块自己的目录高亮 */
+  const activeIndex = useActiveHeadingIndex({
+    container: bodyElement,
     enabled: block !== null,
-    onNext: next === null ? null : () => onIndexChange(next),
-    onPrevious: previous === null ? null : () => onIndexChange(previous),
+    headings,
   });
 
+  /** 换块时正文回到顶部：上一块读到一半的位置不该留给下一块 */
+  useDocumentScrollReset(bodyRef, block ? block.anchor : '', block !== null);
+
+  /**
+   * 正文节点的 callback ref：ref 对象给需要即时读取的地方用，
+   * state 负责在节点挂载 / 卸载时触发依赖它的 effect 重建。
+   * 必须是稳定引用——每次渲染换一个新函数会让 React 反复卸载 / 重挂这个 ref。
+   */
+  const attachBody = useCallback((node: HTMLElement | null) => {
+    bodyRef.current = node;
+    setBodyElement(node);
+  }, []);
+
+  /**
+   * 区块里的同文档链接：只在这一块内部跳，不再往下开第三层弹窗。
+   * 拦下来是必需的——否则点一下会把地址栏改成 `#…`。
+   */
+  const handleClick = (event: MouseEvent<HTMLElement>) => {
+    const anchor = getClickedAnchor(event.target);
+
+    if (!anchor) {
+      return;
+    }
+
+    event.preventDefault();
+    scrollToAnchor(bodyRef.current, anchor);
+  };
+
+  /**
+   * 切块的 `[` / `]` 与 ← / → 不在这里监听：`FreeModal` 按 `nav` 统一接管，
+   * 关了自然就把按键还给底下的翻篇。
+   */
+
   return (
-    <AnchorBlockModal
-      block={block}
+    <FreeModal
+      closeLabel="关闭区块预览"
+      contentStyle={fullscreen ? FULLSCREEN_CONTENT_STYLE : CONTENT_STYLE}
+      fullscreen={{ active: fullscreen, onToggle: toggle }}
+      headerActions={
+        <ProseFontControl
+          onChange={setFontOpened}
+          opened={fontOpened}
+          scale={proseFont}
+        />
+      }
+      nav={
+        cursor < 0
+          ? undefined
+          : {
+              index: cursor + 1,
+              nextLabel: '下一个链接区块',
+              onNext: next === null ? null : () => onIndexChange(next),
+              onPrevious: previous === null ? null : () => onIndexChange(previous),
+              previousLabel: '上一个链接区块',
+              total: peers.length,
+            }
+      }
       onClose={onClose}
-      onNext={next === null ? null : () => onIndexChange(next)}
-      onPrevious={previous === null ? null : () => onIndexChange(previous)}
-      position={cursor < 0 ? null : { index: cursor + 1, total: peers.length }}
-    />
+      opened={block !== null}
+      size="min(880px, 88vw)"
+      title={heading}
+    >
+      <FocusTrap.InitialFocus />
+      {/* 工作区与主预览同一套：左侧目录占一列、右侧正文各自滚动 */}
+      <div className={previewStyles.workspace}>
+        <OutlineNav
+          activeIndex={activeIndex}
+          disabled={block === null}
+          fullscreen={fullscreen}
+          headings={headings}
+          onSelect={(headingIndex) => scrollToHeading(bodyRef.current, headingIndex)}
+        />
+        <div className={previewStyles.pane}>
+          {block ? (
+            <article
+              className={cx(
+                previewStyles.prose,
+                fullscreen && previewStyles.proseFullscreen,
+              )}
+              onClick={handleClick}
+              ref={attachBody}
+              style={proseStyle}
+            >
+              {bodyContent}
+            </article>
+          ) : null}
+        </div>
+      </div>
+    </FreeModal>
   );
 };
 

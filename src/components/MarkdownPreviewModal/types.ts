@@ -2,7 +2,7 @@
  * Markdown 预览弹窗的类型契约：调用方传什么、编辑器插槽收什么。
  */
 
-import type { ComponentType, MouseEvent, ReactNode } from 'react';
+import type { ComponentType, MouseEvent } from 'react';
 
 import type {
   MarkdownOutlineHeading,
@@ -245,38 +245,6 @@ export type AnchorLinkControlProps = {
   onScopeChange: (scope: AnchorNavScope) => void;
 };
 
-/** 子区域预览弹窗 header 的入参：前后切换、计数、区块标题与两项阅读操作 */
-export type AnchorBlockHeaderProps = {
-  /** 区块标题（取自它的标题行）；区块前面没有标题时是锚点 id */
-  title: string;
-  /** 当前是第几块 / 共几块；null 表示没有可切换的列表 */
-  position: { index: number; total: number } | null;
-  /** 前一块；null 表示到头 */
-  onPrevious: (() => void) | null;
-  /** 后一块；null 表示到头 */
-  onNext: (() => void) | null;
-  /** 已经拼好的正文字号按钮（图标 + 就近弹层） */
-  fontControl: ReactNode;
-  /** 是否全屏中 */
-  fullscreen: boolean;
-  /** 切换全屏 */
-  onToggleFullscreen: () => void;
-};
-
-/** 子区域预览弹窗的对外入参：弹窗只认「当前是哪一块」 */
-export type AnchorBlockModalProps = {
-  /** 要展示的区块；null 表示关着 */
-  block: MarkdownAnchorBlock | null;
-  /** 这一块在文档里的位置；null 表示没有列表 */
-  position: { index: number; total: number } | null;
-  /** 前一块；null 表示到头或没开 */
-  onPrevious: (() => void) | null;
-  /** 后一块；null 表示到头或没开 */
-  onNext: (() => void) | null;
-  /** 关闭子预览 */
-  onClose: () => void;
-};
-
 /** 子区域预览的装配入参：位置与边界都在这一层算 */
 export type AnchorBlockPreviewProps = {
   /** 文档里被链接指向的区块，按链接出现的顺序 */
@@ -487,16 +455,6 @@ export type NoteEditingState = {
   keepEditing: () => void;
 };
 
-/** 翻篇快捷键的入参：方括号与方向键共用一套 */
-export type NavigationShortcutParams = {
-  /** 是否启用（弹窗打开且不在编辑态） */
-  enabled: boolean;
-  /** 上一篇 */
-  onPrevious?: (() => void) | null;
-  /** 下一篇 */
-  onNext?: (() => void) | null;
-};
-
 /** 翻篇导航的入参：快捷键开关 + 两个翻篇动作（都已收好 header 弹层） */
 export type StepNavigationParams = {
   /** 是否启用快捷键（弹窗打开、不在编辑态、不在加载中） */
@@ -539,6 +497,4 @@ export type HeaderActionShortcutParams = {
   onCopy?: (() => void) | null;
   /** 刷新正文；不传表示没有刷新能力 */
   onRefresh?: (() => void) | null;
-  /** 切换全屏；不传表示不提供 */
-  onToggleFullscreen?: (() => void) | null;
 };

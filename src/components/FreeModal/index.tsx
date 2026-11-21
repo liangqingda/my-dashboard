@@ -18,7 +18,7 @@ import {
 
 import { cx } from '@/utils/cx';
 
-import { useCloseOnSpace } from './hooks/useCloseOnSpace';
+import { useModalShortcuts } from './hooks/useModalShortcuts';
 import type { FreeModalProps } from './types';
 
 import styles from './index.scss';
@@ -27,6 +27,9 @@ import styles from './index.scss';
 const ICON_SIZE = 15;
 const STEP_ICON_SIZE = 16;
 const ICON_STROKE = 1.9;
+
+/** 翻页的默认快捷键提示，只进 tooltip */
+const NAV_SHORTCUT_HINT = '[ / ← · ] / →';
 
 /**
  * 基础弹窗外壳。业务侧只管「标题是什么、右侧放哪些操作、正文是什么」，
@@ -41,6 +44,7 @@ const FreeModal = ({
   closeOnEscape = true,
   closeOnSpace,
   contentClassName,
+  contentStyle,
   fullscreen,
   headerActions,
   headerSecondary,
@@ -48,19 +52,29 @@ const FreeModal = ({
   nav,
   onClose,
   opened,
+  shortcutsEnabled = true,
   size = 'min(980px, 92vw)',
   title,
   trapFocus = true,
 }: FreeModalProps) => {
-  /** 空格关窗：默认与 Esc 同口径，编辑态 / 上层浮层开着时一并失效 */
-  useCloseOnSpace({
-    enabled: opened && (closeOnSpace ?? closeOnEscape),
+  /**
+   * 空格关窗与翻页 / 全屏快捷键：业务弹窗不用各自实现。
+   * 空格默认与 Esc 同口径；翻页与全屏由 `shortcutsEnabled` 整组把关。
+   */
+  useModalShortcuts({
+    closeOnSpace: closeOnSpace ?? closeOnEscape,
+    disabled: shortcutsEnabled === false,
+    enabled: opened,
+    nav,
     onClose,
+    onToggleFullscreen: fullscreen?.onToggle,
   });
 
+  /** 翻页 tooltip 的快捷键提示：业务侧没给就用这套统一的键位 */
+  const navHint = nav?.shortcutHint ?? NAV_SHORTCUT_HINT;
+
   /** tooltip 文案：带快捷键时括在文案后面，aria-label 仍是纯动作名 */
-  const tip = (label: string): string =>
-    nav?.shortcutHint ? `${label}（${nav.shortcutHint}）` : label;
+  const tip = (label: string): string => `${label}（${navHint}）`;
 
   return (
     <Modal
@@ -84,6 +98,7 @@ const FreeModal = ({
       padding={0}
       radius="md"
       size={size}
+      styles={{ content: contentStyle }}
       title={
         <div
           className={cx(

@@ -53,7 +53,6 @@ import { useAnchorLinkBehavior } from './hooks/useAnchorLinkBehavior';
 import { useAnchorNavScope } from './hooks/useAnchorNavScope';
 import { useCloseRequest } from './hooks/useCloseRequest';
 import { useHeaderActionShortcuts } from './hooks/useHeaderActionShortcuts';
-import { useNavigationShortcuts } from './hooks/useNavigationShortcuts';
 import { useNoteEditing } from './hooks/useNoteEditing';
 import { useProseFontScale } from './hooks/useProseFontScale';
 import { useRefreshPreview } from './hooks/useRefreshPreview';
@@ -68,7 +67,6 @@ export type {
 } from './types/filter';
 
 export type {
-  AnchorBlockModalProps,
   AnchorLinkBehavior,
   AnchorLinkControlProps,
   MarkdownAnchorBlock,
@@ -176,20 +174,9 @@ const MarkdownPreviewModal = ({
     withSideEffect(closeOverlays, action);
 
   /**
-   * 翻篇快捷键。子区域预览开着时停用：那时的 `]` / → 归子预览切块，
-   * 不该把底下那一篇偷偷换掉。
-   *
-   * 按键只执行动作、**不把焦点挪到按钮上**：键盘触发完按钮上再留一圈焦点环，
-   * 看着像「刚才点的是这个按钮」，还会改掉后面的 Tab 起点；全站也关了焦点环
-   * （`focusRing: 'never'`，见 `src/main.tsx`）。
+   * 翻篇快捷键（`[` / `]`、← / →）与全屏（`F`）都由 `FreeModal` 统一接管，
+   * 这里只负责在「子区域预览 / 确认层 / 加载中」时整组收掉。
    */
-  useNavigationShortcuts({
-    enabled:
-      opened && !editing.editing && !loading && anchorBlock.index === null,
-    onNext: withPanelsClosed(onNext),
-    onPrevious: withPanelsClosed(onPrevious),
-  });
-
   /**
    * 删除快捷键：预览态按 Delete / Backspace 打开二次确认层，与点 header 那个垃圾桶走同一条路。
    *
@@ -240,7 +227,8 @@ const MarkdownPreviewModal = ({
   }, []);
 
   /**
-   * header 操作快捷键：`a` 字号开合、`s` 筛选开合、`c` 复制路径、`r` 刷新、`f` 全屏。
+   * header 操作快捷键：`a` 字号开合、`s` 筛选开合、`c` 复制路径、`r` 刷新
+   * （翻篇与 `F` 全屏在 `FreeModal` 里统一处理）。
    * 子区域预览 / 删除确认层开着时停用——那时键盘归上面那一层；编辑态整组按钮都收掉。
    */
   useHeaderActionShortcuts({
@@ -253,7 +241,6 @@ const MarkdownPreviewModal = ({
     onToggleFilter: filter && !loading ? toggleFilterPanel : null,
     onCopy: relativePath ? handleCopyPath : null,
     onRefresh: onRefresh ? refresh : null,
-    onToggleFullscreen: toggleFullscreen,
   });
 
   /** 进入编辑时清掉弹层与子区域预览：新的一轮不该还亮着上一轮的位置 */
@@ -362,6 +349,9 @@ const MarkdownPreviewModal = ({
         }
         onClose={handleClose}
         opened={opened}
+        shortcutsEnabled={
+          !loading && anchorBlock.index === null && !removal.confirming
+        }
         title={title}
         trapFocus={anchorBlock.index === null && !removal.confirming}
       >

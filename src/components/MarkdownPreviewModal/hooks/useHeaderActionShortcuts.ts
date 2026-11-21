@@ -1,6 +1,8 @@
 /**
- * header 操作快捷键：`a` 开合字号面板、`s` 开合筛选面板、`c` 复制相对路径、
- * `r` 刷新正文、`f` 切换全屏。
+ * header 操作快捷键：`a` 开合字号面板、`s` 开合筛选面板、`c` 复制相对路径、`r` 刷新正文。
+ *
+ * 翻篇（`[` `]` / ← →）与 `f` 全屏不在这里：它们属于弹窗外壳的通用键位，统一在
+ * `FreeModal/hooks/useModalShortcuts` 里处理，业务侧不重复监听。
  *
  * 与翻篇 / 删除快捷键同一套放行口径：带 ⌘ / Ctrl / Alt 的组合键归浏览器或系统；
  * 正在输入（筛选面板输入框、可编辑区）时字符属于输入本身，不抢。大小写都认
@@ -21,8 +23,6 @@ const FILTER_KEY = 's';
 const COPY_KEY = 'c';
 /** 刷新正文 */
 const REFRESH_KEY = 'r';
-/** 切换全屏 */
-const FULLSCREEN_KEY = 'f';
 
 /** 监听 header 操作键，分别触发对应动作 */
 export function useHeaderActionShortcuts({
@@ -31,7 +31,6 @@ export function useHeaderActionShortcuts({
   onRefresh,
   onToggleFilter,
   onToggleFont,
-  onToggleFullscreen,
 }: HeaderActionShortcutParams): void {
   useEffect(() => {
     if (!enabled) {
@@ -76,13 +75,6 @@ export function useHeaderActionShortcuts({
           }
 
           break;
-        case FULLSCREEN_KEY:
-          if (onToggleFullscreen) {
-            event.preventDefault();
-            onToggleFullscreen();
-          }
-
-          break;
         default:
           break;
       }
@@ -91,5 +83,5 @@ export function useHeaderActionShortcuts({
     window.addEventListener('keydown', handleKeyDown);
 
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [enabled, onCopy, onRefresh, onToggleFilter, onToggleFont, onToggleFullscreen]);
+  }, [enabled, onCopy, onRefresh, onToggleFilter, onToggleFont]);
 }

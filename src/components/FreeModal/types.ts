@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 
 /** 上一个 / 下一个：某一端到头时传 null，按钮置灰 */
 export type FreeModalNav = {
@@ -53,6 +53,8 @@ export type FreeModalProps = {
   closeOnEscape?: boolean;
   /** 空格是否关闭，默认跟随 `closeOnEscape`（编辑态、上层浮层开着时一起收掉） */
   closeOnSpace?: boolean;
+  /** 整组收掉翻页 / 全屏快捷键（加载中、上层浮层开着时传 false） */
+  shortcutsEnabled?: boolean;
   /** 是否把焦点锁在弹窗里，默认是 */
   trapFocus?: boolean;
   /** 是否垂直居中，默认是 */
@@ -65,4 +67,9 @@ export type FreeModalProps = {
   contentClassName?: string;
   /** 追加到正文容器上的类名 */
   bodyClassName?: string;
+  /**
+   * 追加到框体上的内联尺寸：只给「同一套外观、但尺寸档不同」的场景用
+   * （如子区域预览比主预览矮一档、全屏时四周留缝），框体边框 / 圆角 / 底色仍归本组件。
+   */
+  contentStyle?: CSSProperties;
 };
