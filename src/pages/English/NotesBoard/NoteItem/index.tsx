@@ -2,8 +2,8 @@ import { memo } from 'react';
 import { UnstyledButton } from '@mantine/core';
 import { IconChevronRight } from '@tabler/icons-react';
 
-import CopyIconButton from '@/components/CopyIconButton';
-import TruncatedText from '@/components/TruncatedText';
+import CopyIconButton from '@/components/buttons/CopyIconButton';
+import TruncatedText from '@/components/texts/TruncatedText';
 
 import {
   getNoteRelativePath,

@@ -1,4 +1,4 @@
-import type { FreeModalNav } from '@/components/FreeModal/types';
+import type { FreeModalNav } from '@/components/modals/FreeModal/types';
 
 /** 记录详情弹窗的入参：翻页信息由页面按当前筛选结果给 */
 export type RecordDetailModalProps = {

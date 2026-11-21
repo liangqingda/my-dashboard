@@ -16,10 +16,10 @@
 | 阅读类弹窗（文档预览 / 条目详情） | `FreeModal`（业务弹窗基于它封装，见下文） |
 | 普通弹窗（说明 / 短表单 / 列表） | `FreeModal` 传 `height="auto"`（高度随内容、正文自己滚） |
 | 二次确认（删除 / 覆盖等不可逆操作） | `ConfirmModal`（基于 `FreeModal` 的通用业务组件：说明块 + 可选额外内容 + 取消 / 确认） |
-| 任何 Markdown / 文档预览 | `MarkdownPreviewModal`，不自己接渲染器（行为见 `src/components/MarkdownPreviewModal/README.md`） |
+| 任何 Markdown / 文档预览 | `MarkdownPreviewModal`，不自己接渲染器（行为见 `src/components/modals/MarkdownPreviewModal/README.md`） |
 
-**弹窗只有一扇壳**：`Modal` **只允许**出现在 `src/components/FreeModal` 内部，页面 / 业务组件
-一律 `@/components/FreeModal`（二次确认再基于它封 `ConfirmModal`），不 import Mantine `Modal`、
+**弹窗只有一扇壳**：`Modal` **只允许**出现在 `src/components/modals/FreeModal` 内部，页面 / 业务组件
+一律 `@/components/modals/FreeModal`（二次确认再基于它封 `ConfirmModal`），不 import Mantine `Modal`、
 也不 import `Modal.Root` 自己拼 header。`scripts/check-structure.mjs` 会扫这一条，命中即 lint 失败。
 | 单行输入 | `TextInput` |
 | 多行输入（普通表单） | `Textarea` |
@@ -41,7 +41,7 @@
 | 情况 | 做法 | 放哪 |
 | --- | --- | --- |
 | 组件库已有等价组件（表格、按钮、输入框、弹窗、提示） | 直接用组件库组件 | 就地 |
-| 同一个组件在**第二处**要同一套外观 / 行为 | 封装 `FreeXxx` 前端 UI 基建组件 | `src/components/FreeXxx/` |
+| 同一个组件在**第二处**要同一套外观 / 行为 | 封装 `FreeXxx` 前端 UI 基建组件 | `src/components/<分类>/FreeXxx/` |
 | 业务表格 / 弹窗有特殊列、特殊交互、特殊数据形态 | 基于 `FreeXxx`（没有就基于公共组件 / 组件库）再封一层业务组件 | `src/pages/<Page>/<Name>/` |
 
 - **不提前封装**：只在一处用、没有第二处要同款外观的，直接吃组件库，别造薄壳。
@@ -57,12 +57,38 @@
 - **不接第二套渲染栈**：已经该用 `MarkdownPreviewModal` 的场景，页面里再出现 `react-markdown`
   直连、或另起 `Modal` + 渲染器，等同于复制整套组件。
 
+## 公共组件按类型分目录
+
+`src/components` **不扁平铺**：公共组件先按类型进分类目录，再放组件目录——
+`src/components/<分类>/<组件>/`（例：`src/components/modals/FreeModal/index.tsx`）。
+
+| 分类目录 | 放什么 | 现有组件 |
+| --- | --- | --- |
+| `modals` | 弹窗外壳与弹窗类组件（阅读弹窗、二次确认） | `FreeModal`、`ConfirmModal`、`MarkdownPreviewModal` |
+| `buttons` | 按钮、图标按钮、按钮触发的弹层外壳 | `CopyIconButton`、`FilterButton`、`IconPopoverButton` |
+| `tables` | 表格基线 | `FreeTable` |
+| `fields` | 字段 / 输入控件组 | `FreeSelectField` |
+| `panels` | 面板级排布件（底栏、面板内布局） | `FreePanelFooter` |
+| `texts` | 文本展示与截断 | `TruncatedText` |
+| `feedback` | 加载、空态、提示这类状态呈现 | `PageLoading` |
+
+- **分类目录一律小写**（`@liangqingda/eslint-config` 1.8.0 起放行 `components` 下一层的分类名单，
+  名单在 `config/web-naming-rules.js`；进入分类目录后组件目录仍是 `PascalCase`）；
+  `scripts/check-structure.mjs` 再校验一次：`src/components` 下只允许上表这七个分类目录，
+  分类目录下只允许 `PascalCase` 组件目录且必须有 `index.tsx`。
+- **一个组件只进一个分类**：先看它包的是哪个组件库根组件（`Modal` → `modals`、`Button` / `ActionIcon`
+  → `buttons`、`Table` → `tables`），再看它回答的是哪类能力（文本截断 → `texts`，加载态 → `feedback`）。
+- **不新建「杂项」目录**：放不进上表的先回到三档判据——只有一处用就别提公共，直接用组件库。
+- **新增分类要走三处**：`scripts/check-structure.mjs` 的 `COMPONENT_GROUPS`、共享包
+  `config/web-naming-rules.js` 的 `reactComponentGroupDirectoryNames`（需发版）、本文件的表；
+  只改一处会出现「能建目录但 lint 拦」或「lint 放行但结构检查拦」。
+
 ## 命名与位置
 
 | 类型 | 命名 | 位置 |
 | --- | --- | --- |
-| 基础 UI 基建（包组件库、上项目基线） | `Free` 前缀 + 组件名（`FreeTable`、`FreeSelectField`…） | `src/components/FreeXxx/` |
-| 通用能力件（单一职责、不属于某个页面） | 能力语义，**不挂 `Free`**（`CopyIconButton`、`TruncatedText`…） | `src/components/<Name>/` |
+| 基础 UI 基建（包组件库、上项目基线） | `Free` 前缀 + 组件名（`FreeTable`、`FreeSelectField`…） | `src/components/<分类>/FreeXxx/` |
+| 通用能力件（单一职责、不属于某个页面） | 能力语义，**不挂 `Free`**（`CopyIconButton`、`TruncatedText`…） | `src/components/<分类>/<Name>/` |
 | 业务组件 | 业务语义（`NotesTable`、`TableEditor`…），不挂 `Free` | `src/pages/<Page>/<Name>/` |
 
 **`Free` 前缀只给「组件库某个组件 + 项目基线」的壳**：名字里能看出包的是 Table / Select / Modal，

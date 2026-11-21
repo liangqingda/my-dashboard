@@ -16,8 +16,8 @@
 
 | 形态 | UI | 逻辑 | 落点 | 调用方还留什么 |
 | --- | --- | --- | --- | --- |
-| ① UI 与逻辑都提公共 | 提 | 提 | `src/components/<Name>/`（带业务语义就是业务组件） | 只传数据与事件 |
-| ② 仅 UI 提公共，逻辑页面定制 | 提 | 留 | `src/components/FreeXxx/`（或既有的公共壳） | 传选项、文案、`render` / `children`、`onChange` |
+| ① UI 与逻辑都提公共 | 提 | 提 | `src/components/<分类>/<Name>/`（带业务语义就是业务组件） | 只传数据与事件 |
+| ② 仅 UI 提公共，逻辑页面定制 | 提 | 留 | `src/components/<分类>/FreeXxx/`（或既有的公共壳） | 传选项、文案、`render` / `children`、`onChange` |
 | ③ 仅逻辑提公共，UI 页面定制 | 留 | 提 | 纯函数 `src/utils/<kebab>.ts`；状态机 `hooks/`（要写说明就提升为 `hooks/<hook>/`） | 自己决定怎么画、画在哪 |
 | ④ 两者都不提 | 留 | 留 | `src/pages/<Page>/` | 全部 |
 
@@ -40,7 +40,8 @@
    「筛选笔记」（筛列表）与预览弹窗的「筛选正文」（筛正文）只共用按钮外壳，两份面板、两份持久化
    各留各的，这就是正确结果。
 2. **按形态选做法**，不要默认「整块复制」或「整块抽 hook」。能只提 UI 就别把语义一起搬进公共件。
-3. **落点**：UI → `src/components/<PascalCase>/`（纯外观壳用 `Free` 前缀）；纯函数 → `src/utils/<kebab-case>.ts`；
+3. **落点**：UI → `src/components/<分类>/<PascalCase>/`（纯外观壳用 `Free` 前缀；分类判据见
+   `docs/ui-components.md` 的「公共组件按类型分目录」）；纯函数 → `src/utils/<kebab-case>.ts`；
    只有一个页面在用但可分离的状态机 → 该页 `hooks/`；真跨页面才上 `src/hooks/`。
 4. **公共件里不许出现页面语义**：代码一旦按某页面的名词、字段、段落标记做判断，说明提过头了
    （注释里举某篇文档当例子不算）。`anchor-blocks.ts` 那句「不认任何文档语义、`<!-- round-index -->`

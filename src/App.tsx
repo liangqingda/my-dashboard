@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 
-import PageLoading from '@/components/PageLoading';
+import PageLoading from '@/components/feedback/PageLoading';
 import BasicLayout from '@/layouts/BasicLayout';
 
 import NotFound from '@/pages/Errors/NotFound';

@@ -47,7 +47,7 @@
 ### 筛选（内容由调用方定义）
 
 header 文档操作组里的筛选图标按钮（排在复制路径之后、刷新之前；编辑态随整组收掉），
-点一下在图标下方就近弹出面板（`src/components/FilterButton`：`bottom-end`、宽 272、带箭头；
+点一下在图标下方就近弹出面板（`src/components/buttons/FilterButton`：`bottom-end`、宽 272、带箭头；
 英语页 header 的「筛选笔记」用的是同一个按钮组件）。
 **弹窗不知道「错题」「习题」这类文档语义**：
 
@@ -77,7 +77,7 @@ header 文档操作组里的锚点图标按钮（排在正文字号之后、刷�
 弹层里是两组字段，**外观与筛选面板统一**：字段标题在上、下拉在下、选中档位的口径用一行灰字
 补在下面；`size="xs"`、标题下留 4px、宽 272（与筛选弹层同宽），弹层开着时切换档位不收起，
 点图标或点外面才关。这套字段外观（含「下拉不进门户」那条规矩：门户里的列表在 popover 眼里算
-「外面」，点选项会先把弹层关掉）统一由 `src/components/FreeSelectField` 给，本组件只提供
+「外面」，点选项会先把弹层关掉）统一由 `src/components/fields/FreeSelectField` 给，本组件只提供
 选项与说明文案，不再自己拼 `Select` + 字段间距常量。
 
 **点链接之后怎么办**：
@@ -122,7 +122,7 @@ header 文档操作组里的锚点图标按钮（排在正文字号之后、刷�
 ### 子区域预览（锚点区块弹窗，`AnchorBlockPreview`）
 
 `modal` 行为下的那一层弹窗就是 `AnchorBlockPreview` 自己：它算「当前第几块」与前后边界，
-同时把界面交给 `@/components/FreeModal` 组装（和主预览、记录详情同一套外壳，
+同时把界面交给 `@/components/modals/FreeModal` 组装（和主预览、记录详情同一套外壳，
 不再自己拼 `Modal` 与 header 行）：
 
 | 位置 | 内容 |
@@ -218,7 +218,7 @@ header 右侧的复制图标按钮（排在刷新之前、只在预览态出现�
 
 - 点一下把这串相对路径（相对文档所在记录仓库根目录，如 `learning-record-notes/x.md`）写进剪贴板，
   图标 1.5 秒内变成对勾；尺寸与同排图标同档（15px / sm），**编辑态与草稿预览不显示**；
-- 路径由调用方拼，组件不假设文件落在哪里（按钮本体是公共的 `src/components/CopyIconButton`）。
+- 路径由调用方拼，组件不假设文件落在哪里（按钮本体是公共的 `src/components/buttons/CopyIconButton`）。
 
 ### 删除
 

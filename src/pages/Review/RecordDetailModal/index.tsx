@@ -1,7 +1,7 @@
 import { ScrollArea } from '@mantine/core';
 
-import FreeModal from '@/components/FreeModal';
-import { useModalFullscreen } from '@/components/FreeModal/hooks/useModalFullscreen';
+import FreeModal from '@/components/modals/FreeModal';
+import { useModalFullscreen } from '@/components/modals/FreeModal/hooks/useModalFullscreen';
 
 import RecordDetailBody from '../RecordDetailBody';
 import { RECORD_FULLSCREEN_STORAGE_KEY } from '../constants';

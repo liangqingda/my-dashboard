@@ -7,7 +7,7 @@
  * 本项目不需要改代码。
  */
 
-import type { MarkdownPreviewRemove } from '@/components/MarkdownPreviewModal';
+import type { MarkdownPreviewRemove } from '@/components/modals/MarkdownPreviewModal';
 import { createChoiceCodec } from '@/utils/local-storage';
 import type { StoredCodec } from '@/utils/local-storage';
 

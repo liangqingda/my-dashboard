@@ -2,8 +2,8 @@ import { memo } from 'react';
 import { ActionIcon, Badge, Tooltip } from '@mantine/core';
 import { IconTrash } from '@tabler/icons-react';
 
-import FreeTable from '@/components/FreeTable';
-import TruncatedText from '@/components/TruncatedText';
+import FreeTable from '@/components/tables/FreeTable';
+import TruncatedText from '@/components/texts/TruncatedText';
 import { formatDateTime } from '@/utils/format';
 
 import { EMPTY_CELL, STATUS_COLORS, STATUS_LABELS } from '../constants';

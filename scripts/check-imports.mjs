@@ -67,13 +67,33 @@ function parseImports(source) {
 }
 
 /** 页面 / 组件 / 布局目录自身的根，用于「内部必须相对路径」判断 */
-const OWN_ROOT_PATTERN = /^src\/(pages|components|layouts)\/([^/]+)\//u;
+const OWN_ROOT_PATTERNS = [
+  /^src\/pages\/([^/]+)\//u,
+  // 公共组件按类型分目录：src/components/<分类>/<组件>/
+  /^src\/components\/([^/]+)\/([^/]+)\//u,
+  /^src\/layouts\/([^/]+)\//u,
+];
+
+/** 取当前文件所属的「自身根」别名前缀，不属于页面 / 组件 / 布局目录时返回 null */
+function getOwnAliasPrefix(rel) {
+  const [pagesMatch, componentsMatch, layoutsMatch] = OWN_ROOT_PATTERNS.map(
+    (pattern) => pattern.exec(rel),
+  );
+
+  if (componentsMatch) {
+    return `@/components/${componentsMatch[1]}/${componentsMatch[2]}/`;
+  }
+
+  if (pagesMatch) return `@/pages/${pagesMatch[1]}/`;
+  if (layoutsMatch) return `@/layouts/${layoutsMatch[1]}/`;
+
+  return null;
+}
 
 function checkFile(file) {
   const rel = path.relative(ROOT, file).split(path.sep).join('/');
   const source = readFileSync(file, 'utf8');
-  const ownMatch = OWN_ROOT_PATTERN.exec(rel);
-  const ownPrefix = ownMatch ? `@/${ownMatch[1]}/${ownMatch[2]}/` : null;
+  const ownPrefix = getOwnAliasPrefix(rel);
 
   if (!ownPrefix) return;
 

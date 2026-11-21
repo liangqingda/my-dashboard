@@ -1,4 +1,4 @@
-import type { MarkdownFilterNavigation } from '@/components/MarkdownPreviewModal';
+import type { MarkdownFilterNavigation } from '@/components/modals/MarkdownPreviewModal';
 
 import type { NoteFilterScope } from '../types';
 

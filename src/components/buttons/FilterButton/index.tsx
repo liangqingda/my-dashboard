@@ -8,7 +8,7 @@
 
 import { IconFilter } from '@tabler/icons-react';
 
-import IconPopoverButton from '@/components/IconPopoverButton';
+import IconPopoverButton from '@/components/buttons/IconPopoverButton';
 
 import type { FilterButtonProps } from './types';
 

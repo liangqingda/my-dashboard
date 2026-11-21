@@ -19,7 +19,7 @@
  *   header 左侧按正文顺序前后切换、右侧只有字号 / 全屏 / 关闭。
  *
  * 这里的职责只有组装：
- * - 弹窗外壳（框体 / header / 正文区 / 全屏 / 翻篇计数）→ `@/components/FreeModal`（本组件不再自带 Modal）
+ * - 弹窗外壳（框体 / header / 正文区 / 全屏 / 翻篇计数）→ `@/components/modals/FreeModal`（本组件不再自带 Modal）
  * - header 第一组阅读类操作 → `document-actions`
  * - header 第二组编辑流程 → `HeaderActions`
  * - 正文工作区（标题目录 + 阅读 / 编辑区）→ `preview-workspace`
@@ -35,9 +35,9 @@ import { FocusTrap } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconTrash } from '@tabler/icons-react';
 
-import { COPY_FAILED_NOTICE_ID } from '@/components/CopyIconButton/constants';
-import FreeModal from '@/components/FreeModal';
-import { useModalFullscreen } from '@/components/FreeModal/hooks/useModalFullscreen';
+import { COPY_FAILED_NOTICE_ID } from '@/components/buttons/CopyIconButton/constants';
+import FreeModal from '@/components/modals/FreeModal';
+import { useModalFullscreen } from '@/components/modals/FreeModal/hooks/useModalFullscreen';
 import { COPY_FEEDBACK_DURATION, copyText } from '@/utils/clipboard';
 
 import type { MarkdownFilterNavigation } from './types/filter';

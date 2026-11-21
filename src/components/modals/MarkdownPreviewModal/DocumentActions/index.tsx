@@ -9,8 +9,8 @@
 import { ActionIcon, Tooltip } from '@mantine/core';
 import { IconRefresh } from '@tabler/icons-react';
 
-import CopyIconButton from '@/components/CopyIconButton';
-import FilterButton from '@/components/FilterButton';
+import CopyIconButton from '@/components/buttons/CopyIconButton';
+import FilterButton from '@/components/buttons/FilterButton';
 
 import AnchorLinkControl from '../AnchorLinkControl';
 import ProseFontControl from '../ProseFontControl';

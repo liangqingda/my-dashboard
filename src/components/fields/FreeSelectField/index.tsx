@@ -11,7 +11,7 @@
 
 import { Select, Stack, Text } from '@mantine/core';
 
-import { PANEL_FIELD_STYLES } from '@/components/IconPopoverButton/constants';
+import { PANEL_FIELD_STYLES } from '@/components/buttons/IconPopoverButton/constants';
 
 import type { FreeSelectFieldProps } from './types';
 

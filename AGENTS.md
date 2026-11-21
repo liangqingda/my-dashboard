@@ -12,9 +12,9 @@
 | 新增 / 拆分文件、决定函数 / 类型 / 常量 / 说明文档放哪，目录与文件命名、import 分组 | `docs/code-splitting.md` |
 | 想写一段「好像别处也有」的工具函数（错误文案、时间、class、复制） | `docs/shared-utils.md` |
 | 想新装一个依赖，或想自己写一段「社区 / `@mantine/hooks` 好像也有」的函数、hook | `docs/dependencies.md` |
-| 新写任何 UI：直接用组件库还是封 `FreeXxx`、业务表格 / 弹窗怎么落 | `docs/ui-components.md` |
+| 新写任何 UI：直接用组件库还是封 `FreeXxx`、公共组件放哪个分类目录、业务表格 / 弹窗怎么落 | `docs/ui-components.md` |
 | 想抽公共 / 判一段 UI 与逻辑各自该不该提、提到哪一层（整块、只提 UI 壳、只提逻辑） | `docs/reuse-boundaries.md` |
-| 新建或改造任何 Markdown / 文档预览，动弹窗排版 / 标题导航 / 全屏 / header 操作 | `src/components/MarkdownPreviewModal/README.md` |
+| 新建或改造任何 Markdown / 文档预览，动弹窗排版 / 标题导航 / 全屏 / header 操作 | `src/components/modals/MarkdownPreviewModal/README.md` |
 | 新建或改造某类文档的编辑器、改块解析与回写、跑 `pnpm check:md` | `docs/markdown-editing.md` |
 | 要在 `../learn-english` 这类目标仓库里加能力 / 改它的代码或数据、新增或修改本机仓库读写、动 `scripts/vite/*` 与自动提交、笔记数据修源头 | `docs/local-repo-data.md` |
 | 收尾 / 提交 / 交付前 | `docs/self-check.md` |

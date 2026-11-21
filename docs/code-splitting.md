@@ -27,7 +27,7 @@
 
 | 对象 | 放哪 |
 | --- | --- |
-| 组件规格（契约、行为细节、样式约定） | `src/components/<Name>/README.md`；页面自己的业务组件同理放页面目录 |
+| 组件规格（契约、行为细节、样式约定） | `src/components/<分类>/<Name>/README.md`；页面自己的业务组件同理放页面目录 |
 | hook 说明（触发条件、竞态处理、为什么这么写） | 该 hook 的目录：`hooks/use-notes/index.ts` + `README.md` |
 | 跨组件 / 跨页面的约定与流程（本文件、布局、复用、自检…） | `docs/` 对应文件 |
 
@@ -43,6 +43,8 @@ hook 默认一个文件（`hooks/useXxx.ts`）；**一旦要为它写说明，�
   公共组件同样适用（`MarkdownPreviewModal` 现拆成 `types.ts` / `constants.ts` / `hooks/` /
   `DocumentActions/` / `PreviewOverlays/` / `OutlineNav/` / `HeaderActions/`，样式也随组件各自走）。
 - 组件目录内**不嵌套** `components/` 层，子组件目录直接放父组件目录下。
+- 公共组件先按类型进分类目录：`src/components/<分类>/<组件>/`（分类名单与判据见
+  `docs/ui-components.md` 的「公共组件按类型分目录」），分类目录小写、组件目录 `PascalCase`。
 - 每个组件目录 `index.tsx` + `index.scss` 成对存在（CSS Module 类名自动 camelCase）；
   需要写规格时同目录放 `README.md`。
 - 在组件里定义的局部变量不要与 import 进来的组件 / 函数同名。例如两个图标别名不要叫
@@ -51,6 +53,9 @@ hook 默认一个文件（`hooks/useXxx.ts`）；**一旦要为它写说明，�
 ## 命名（ESLint 强制，来自 `@liangqingda/eslint-config`）
 
 - PascalCase 目录模式根：`pages`、`components`、`layouts`、`views`，其下**所有后代目录**一律 PascalCase；
+  唯一例外是 `components` 的**直接下级分类目录**（`modals`、`buttons`、`tables`…，名单在共享包
+  `config/web-naming-rules.js`），它们用小写，进入之后组件目录仍是 PascalCase（清单见
+  `docs/ui-components.md`）；
 - kebab-case 模式根：`utils`、`types`、`hooks`、`store`、`constants`、`consts`；
 - 直接位于 `hooks/` 下的文件必须 `useXxx`（camelCase）；
 - 主文件名只允许 PascalCase 于 `.jsx` / `.tsx` / `.vue`；PascalCase 树内的文件级例外仅
@@ -61,7 +66,7 @@ hook 默认一个文件（`hooks/useXxx.ts`）；**一旦要为它写说明，�
 
 ## 引用规则
 
-- 页面 / 组件目录内部用相对路径；
+- 页面 / 组件目录内部用相对路径（公共组件的「自己这一层」指 `src/components/<分类>/<组件>/`）；
 - 跨出所属目录一律用 `@/` 别名（`@` → `src`），结构检查会拦穿过页面目录的相对导入；
 - 不造 barrel 文件，直接从具体文件导入。
 

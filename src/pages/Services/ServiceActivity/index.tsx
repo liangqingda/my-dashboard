@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button, Text } from '@mantine/core';
 import { IconClock } from '@tabler/icons-react';
 
-import FreeModal from '@/components/FreeModal';
+import FreeModal from '@/components/modals/FreeModal';
 import { useServices } from '@/services/hooks/useServices';
 import { formatDateTime } from '@/utils/format';
 

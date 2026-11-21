@@ -1,4 +1,4 @@
-import FreeTable from '@/components/FreeTable';
+import FreeTable from '@/components/tables/FreeTable';
 
 import type { MarkdownBlock } from '../types';
 import { replaceAt } from '../utils/array';

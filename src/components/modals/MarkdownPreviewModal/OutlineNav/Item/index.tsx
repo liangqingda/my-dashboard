@@ -8,7 +8,7 @@ import { useEffect, useRef } from 'react';
 import { UnstyledButton } from '@mantine/core';
 import { IconChevronDown } from '@tabler/icons-react';
 
-import TruncatedText from '@/components/TruncatedText';
+import TruncatedText from '@/components/texts/TruncatedText';
 import { cx } from '@/utils/cx';
 
 import type { OutlineNavItemProps } from '../../types';

@@ -1,8 +1,8 @@
 import { memo } from 'react';
 import { UnstyledButton } from '@mantine/core';
 
-import CopyIconButton from '@/components/CopyIconButton';
-import FreeTable from '@/components/FreeTable';
+import CopyIconButton from '@/components/buttons/CopyIconButton';
+import FreeTable from '@/components/tables/FreeTable';
 import { cx } from '@/utils/cx';
 
 import { EMPTY_CELL } from '../constants';

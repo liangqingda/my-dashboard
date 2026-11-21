@@ -12,7 +12,7 @@
 
 import { Button, Group } from '@mantine/core';
 
-import FreeModal from '@/components/FreeModal';
+import FreeModal from '@/components/modals/FreeModal';
 
 import type { ConfirmModalProps } from './types';
 

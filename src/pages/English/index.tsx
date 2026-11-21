@@ -2,9 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActionIcon, Tooltip, UnstyledButton } from '@mantine/core';
 import { IconLayoutGrid, IconLayoutList } from '@tabler/icons-react';
 
-import FilterButton from '@/components/FilterButton';
-import MarkdownPreviewModal from '@/components/MarkdownPreviewModal';
-import type { MarkdownPreviewFilter } from '@/components/MarkdownPreviewModal';
+import FilterButton from '@/components/buttons/FilterButton';
+import MarkdownPreviewModal from '@/components/modals/MarkdownPreviewModal';
+import type { MarkdownPreviewFilter } from '@/components/modals/MarkdownPreviewModal';
 import MenuContentLayout from '@/layouts/MenuContentLayout';
 import { onPageRefresh } from '@/utils/page-refresh';
 import { cx } from '@/utils/cx';

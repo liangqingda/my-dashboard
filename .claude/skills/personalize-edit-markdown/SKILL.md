@@ -1,6 +1,6 @@
 ---
 name: personalize-edit-markdown
-description: 为某一类 Markdown 文档定制「就地编辑」能力。当某个页面的 Markdown 预览弹窗（src/components/MarkdownPreviewModal）需要编辑、而当前还没有定制编辑器、或现有定制编辑器撑不住新文档结构时使用。负责把这一类文档的解析 / 编辑 / 回写逻辑做进它自己的 feature 目录，并把定制编辑器接到弹窗的 Editor 插槽。
+description: 为某一类 Markdown 文档定制「就地编辑」能力。当某个页面的 Markdown 预览弹窗（src/components/modals/MarkdownPreviewModal）需要编辑、而当前还没有定制编辑器、或现有定制编辑器撑不住新文档结构时使用。负责把这一类文档的解析 / 编辑 / 回写逻辑做进它自己的 feature 目录，并把定制编辑器接到弹窗的 Editor 插槽。
 ---
 
 # personalize-edit-markdown
@@ -12,14 +12,14 @@ description: 为某一类 Markdown 文档定制「就地编辑」能力。当某
 
 | 位置 | 负责 | 不负责 |
 |---|---|---|
-| `src/components/MarkdownPreviewModal` | 预览渲染、上一篇/下一篇、标题目录、footer、编辑态开关、保存与「已保存」提示 | 任何文档结构假设、解析、回写 |
+| `src/components/modals/MarkdownPreviewModal` | 预览渲染、上一篇/下一篇、标题目录、footer、编辑态开关、保存与「已保存」提示 | 任何文档结构假设、解析、回写 |
 | `<feature>/<xxx>-editor`（你来建） | 把正文变成可编辑界面、把编辑结果拼回 Markdown | 弹窗、按钮、保存落盘 |
 | 页面 | 组织数据、`onSave` 落盘、把 `Editor` 传给弹窗 | 文档解析 |
 
 契约（由公共组件导出，直接复用，别自己再定义一份）：
 
 ```ts
-// 来自 @/components/MarkdownPreviewModal
+// 来自 @/components/modals/MarkdownPreviewModal
 export type MarkdownEditorProps = {
   /** 进入编辑时的正文快照 */
   markdown: string;
@@ -73,4 +73,4 @@ export type MarkdownEditorProps = {
 - [ ] 改一处只有一处变化；删行 / 加行只影响目标行
 - [ ] 不认识的写法降级为源码编辑，原标签没被转义或吞掉
 - [ ] `pnpm typecheck` / `eslint` / `pnpm build` 全绿
-- [ ] 没有把编辑逻辑塞回 `src/components/MarkdownPreviewModal`
+- [ ] 没有把编辑逻辑塞回 `src/components/modals/MarkdownPreviewModal`

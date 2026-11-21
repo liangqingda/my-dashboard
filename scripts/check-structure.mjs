@@ -5,7 +5,8 @@
  * 作为 lint 的一部分执行，强制模块组织约定，补 ESLint 管不到的「目录结构」：
  *  1. src/features 已废弃，出现即报错（页面代码就近写在 src/pages/<Page>/ 里）
  *  2. 含 index.tsx 的组件目录必须同时有 index.scss
- *  3. pages 下不得嵌套 components/ 目录（子组件直接放父组件目录）
+ *  3. pages 下不得嵌套 components/ 目录（子组件直接放父页面目录）
+ *  3.1 公共组件按类型分目录：src/components/<分类>/<组件>，分类只允许固定名单的小写目录
  *  4. 页面内相对导入不得跨出该页面目录，跨目录一律用 @/ 别名
  *  5. 菜单页（由 Sidebar navItems + App.tsx 路由自动解析）必须用 src/layouts/MenuContentLayout
  *     包内容，页面样式不得再定义 .page
@@ -32,11 +33,24 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = path.join(ROOT, 'src');
 const LEGACY_FEATURES = path.join(SRC, 'features');
 const PAGES = path.join(SRC, 'pages');
+const COMPONENTS = path.join(SRC, 'components');
 const CODE_EXTS = ['.ts', '.tsx'];
 const AGENTS_FILE = path.join(ROOT, 'AGENTS.md');
 const CLAUDE_FILE = path.join(ROOT, 'CLAUDE.md');
 const DOCS = path.join(ROOT, 'docs');
 const ENTRY_MAX_LINES = 100;
+
+/** 公共组件的分类目录：src/components/<分类>/<组件>，分类用小写，组件目录用 PascalCase */
+const COMPONENT_GROUPS = new Set([
+  'buttons',
+  'feedback',
+  'fields',
+  'modals',
+  'panels',
+  'tables',
+  'texts',
+]);
+const PASCAL_CASE = /^[A-Z][a-zA-Z0-9]*$/;
 
 const errors = [];
 
@@ -404,7 +418,7 @@ function checkEntryDocs() {
  * 迟早出现「这扇窗和别的窗不一样」——这里直接拦成结构错误。
  */
 function checkModalShells() {
-  const allowDirs = [path.join(SRC, 'components', 'FreeModal')];
+  const allowDirs = [path.join(SRC, 'components', 'modals', 'FreeModal')];
 
   for (const file of collectFiles(SRC, CODE_EXTS)) {
     const allowed = allowDirs.some((dir) => file.startsWith(`${dir}${path.sep}`));
@@ -419,15 +433,61 @@ function checkModalShells() {
         /\bModal\b/.test(line)
       ) {
         errors.push(
-          `[结构] ${path.relative(ROOT, file)}:${index + 1} 直接引用了 Mantine Modal：弹窗一律走 @/components/FreeModal（普通弹窗用 height="auto"，二次确认再基于它封 ConfirmModal）`,
+          `[结构] ${path.relative(ROOT, file)}:${index + 1} 直接引用了 Mantine Modal：弹窗一律走 @/components/modals/FreeModal（普通弹窗用 height="auto"，二次确认再基于它封 ConfirmModal）`,
         );
       }
     });
   }
 }
 
+/**
+ * 公共组件按类型分目录存放：src/components/<分类>/<组件>/。
+ * 分类目录用小写固定名单（modals、buttons、tables…），组件目录用 PascalCase 且带 index.tsx；
+ * src/components 下不允许直接放组件目录或散文件，避免「一部分分了类、一部分又平铺回去」。
+ */
+function checkComponents() {
+  if (!existsSync(COMPONENTS)) return;
+
+  for (const entry of readdirSync(COMPONENTS, { withFileTypes: true })) {
+    const rel = `src/components/${entry.name}`;
+
+    if (!entry.isDirectory()) {
+      errors.push(`[结构] ${rel} 是文件：公共组件要放进分类目录，src/components 下不放散文件`);
+      continue;
+    }
+
+    if (!COMPONENT_GROUPS.has(entry.name)) {
+      errors.push(
+        `[结构] ${rel} 不是分类目录：公共组件一律按类型放 modals / buttons / tables / fields / panels / texts / feedback，新分类要先补 docs/ui-components.md 与 scripts/check-structure.mjs`,
+      );
+      continue;
+    }
+
+    const groupDir = path.join(COMPONENTS, entry.name);
+
+    for (const child of readdirSync(groupDir, { withFileTypes: true })) {
+      const childRel = `src/components/${entry.name}/${child.name}`;
+
+      if (!child.isDirectory()) {
+        errors.push(`[结构] ${childRel} 是文件：分类目录下只放组件目录`);
+        continue;
+      }
+
+      if (!PASCAL_CASE.test(child.name)) {
+        errors.push(`[结构] ${childRel} 组件目录必须是 PascalCase`);
+        continue;
+      }
+
+      if (!existsSync(path.join(groupDir, child.name, 'index.tsx'))) {
+        errors.push(`[结构] ${childRel} 缺 index.tsx（一个组件一个目录，入口为 index.tsx）`);
+      }
+    }
+  }
+}
+
 checkNoFeatures();
 checkPages();
+checkComponents();
 checkMenuPages();
 checkEntryDocs();
 checkModalShells();
@@ -439,5 +499,5 @@ if (errors.length > 0) {
 }
 
 console.log(
-  '[✓] 结构检查通过：pages 目录组织、菜单页布局、Modal 封装壳与入口文档索引符合约定',
+  '[✓] 结构检查通过：pages 目录组织、公共组件分类目录、菜单页布局、Modal 封装壳与入口文档索引符合约定',
 );

@@ -15,7 +15,7 @@
 
 import { Checkbox, Group, Text, Tooltip } from '@mantine/core';
 
-import ConfirmModal from '@/components/ConfirmModal';
+import ConfirmModal from '@/components/modals/ConfirmModal';
 
 import type { DeleteConfirmProps } from '../types';
 

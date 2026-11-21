@@ -9,7 +9,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ActionIcon, Button } from '@mantine/core';
 import { IconRefresh, IconTerminal2 } from '@tabler/icons-react';
 
-import FreeModal from '@/components/FreeModal';
+import FreeModal from '@/components/modals/FreeModal';
 import { fetchCliCommands } from '@/services/api';
 import { useServices } from '@/services/hooks/useServices';
 import type { CliCommand } from '@/services/types';

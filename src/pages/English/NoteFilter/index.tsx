@@ -18,10 +18,10 @@ import type { KeyboardEvent } from 'react';
 import { ActionIcon, Stack, TextInput } from '@mantine/core';
 import { IconSearch, IconX } from '@tabler/icons-react';
 
-import FreePanelFooter from '@/components/FreePanelFooter';
-import FreeSelectField from '@/components/FreeSelectField';
-import { PANEL_FIELD_STYLES } from '@/components/IconPopoverButton/constants';
-import type { MarkdownFilterNavigation } from '@/components/MarkdownPreviewModal';
+import FreePanelFooter from '@/components/panels/FreePanelFooter';
+import FreeSelectField from '@/components/fields/FreeSelectField';
+import { PANEL_FIELD_STYLES } from '@/components/buttons/IconPopoverButton/constants';
+import type { MarkdownFilterNavigation } from '@/components/modals/MarkdownPreviewModal';
 
 import { FILTER_SCOPE_CODEC } from '../constants';
 

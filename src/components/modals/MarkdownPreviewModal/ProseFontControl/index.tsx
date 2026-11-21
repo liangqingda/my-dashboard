@@ -8,7 +8,7 @@
 import { ActionIcon, Button, Group, Stack, Text } from '@mantine/core';
 import { IconMinus, IconPlus, IconTypography } from '@tabler/icons-react';
 
-import IconPopoverButton from '@/components/IconPopoverButton';
+import IconPopoverButton from '@/components/buttons/IconPopoverButton';
 
 import type { ProseFontControlProps } from '../types';
 

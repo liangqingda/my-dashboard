@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-import type { MarkdownEditorProps } from '@/components/MarkdownPreviewModal';
+import type { MarkdownEditorProps } from '@/components/modals/MarkdownPreviewModal';
 import { isTypingTarget } from '@/utils/typing-target';
 
 import type { MarkdownBlock } from '../types';

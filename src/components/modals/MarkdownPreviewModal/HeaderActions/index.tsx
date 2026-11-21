@@ -15,7 +15,7 @@ import {
   IconTrash,
 } from '@tabler/icons-react';
 
-import TruncatedText from '@/components/TruncatedText';
+import TruncatedText from '@/components/texts/TruncatedText';
 import { cx } from '@/utils/cx';
 
 import type { PreviewHeaderActionsProps } from '../types';

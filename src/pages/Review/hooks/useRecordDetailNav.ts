@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-import type { FreeModalNav } from '@/components/FreeModal/types';
+import type { FreeModalNav } from '@/components/modals/FreeModal/types';
 
 import type { RecordSummary } from '../types';
 

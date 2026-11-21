@@ -31,7 +31,7 @@
    进入后保持；只把页面根元素 `position: fixed` 铺满视口（覆盖顶栏与侧栏）来放大展示空间，
    页面内部结构与内容不变；再点一次、按 `F` 或全屏时按 Esc 退出（Esc 退出同时写回存储）。
    **页面不要再自己造这两个按钮，也不要在页面里写全屏逻辑**。刷新时的加载占位
-   `src/components/PageLoading` 按同一份存储（`@/utils/page-fullscreen`）提前判断：目标页是全屏
+   `src/components/feedback/PageLoading` 按同一份存储（`@/utils/page-fullscreen`）提前判断：目标页是全屏
    就先铺满视口盖住外壳，避免页面 chunk 尚未挂载时先闪一下非全屏界面。
 5. 页面自己的操作按钮（如服务页「重启 agent」）通过 `actions` prop 传入，排在上述两个内置
    按钮之前；按钮组件就近放在该页面目录下（`src/pages/<Page>/<Button>/`）。
@@ -39,7 +39,7 @@
 ## 页面呈现
 
 页面默认只展示文件名、标题这类索引信息；正文细节交给预览层（`MarkdownPreviewModal`，见
-`src/components/MarkdownPreviewModal/README.md`），不要把全文平铺在页面上。页面本身只做数据拼装与状态编排。
+`src/components/modals/MarkdownPreviewModal/README.md`），不要把全文平铺在页面上。页面本身只做数据拼装与状态编排。
 
 **列表数据既然已经全量取回，就直接整份渲染**：复习库的摘要是首屏一次取到的（几百条、gzip 几十 KB），
 页面不再做「首屏 N 行 + 滚动追加」——那只是把已经到手的数据藏起来，还要多养一套量视口高度、追加行数、

@@ -15,8 +15,8 @@ import { Stack } from '@mantine/core';
 import { DatePicker } from '@mantine/dates';
 import dayjs from 'dayjs';
 
-import FreePanelFooter from '@/components/FreePanelFooter';
-import FreeSelectField from '@/components/FreeSelectField';
+import FreePanelFooter from '@/components/panels/FreePanelFooter';
+import FreeSelectField from '@/components/fields/FreeSelectField';
 
 import { ALL_CATEGORIES, NOTES_FILTER_RANGE_CODEC, UNCATEGORIZED_CATEGORY } from '../constants';
 

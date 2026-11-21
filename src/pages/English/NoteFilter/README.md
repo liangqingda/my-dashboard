@@ -29,5 +29,5 @@
 - 一条都不命中时，由弹窗在正文区提示「没有符合当前筛选条件的内容」（不在面板里报）。
 - 底部「说明 + 重置」用公共的 `FreePanelFooter`；「重置」回到「全部内容 + 空关键词」，
   没有条件生效时置灰。
-- 弹层由公共的 `src/components/FilterButton` 渲染；字段组与下拉外观、字段间距（4px）分别在
-  `src/components/FreeSelectField` 与 `IconPopoverButton/constants.ts` 里，本组件不复制样式。
+- 弹层由公共的 `src/components/buttons/FilterButton` 渲染；字段组与下拉外观、字段间距（4px）分别在
+  `src/components/fields/FreeSelectField` 与 `IconPopoverButton/constants.ts` 里，本组件不复制样式。
