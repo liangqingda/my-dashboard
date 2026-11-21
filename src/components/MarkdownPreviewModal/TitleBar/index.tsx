@@ -42,6 +42,7 @@ const TitleBar = ({
   fontScale,
   fullscreen,
   hasAnchorLinks,
+  highlightNavigation,
   loading,
   onAnchorBehaviorChange,
   onAnchorScopeChange,
@@ -122,7 +123,10 @@ const TitleBar = ({
               onChange={(next) => onPanelChange(next ? 'filter' : null)}
               opened={panel === 'filter'}
             >
-              {filter.render({ close: () => onPanelChange(null) })}
+              {filter.render({
+                close: () => onPanelChange(null),
+                navigation: highlightNavigation,
+              })}
             </FilterButton>
           ) : null}
           {/* 正文字号：图标按钮 + 就近弹层，调的是阅读偏好（跨篇记住） */}

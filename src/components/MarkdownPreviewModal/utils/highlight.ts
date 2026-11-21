@@ -118,8 +118,12 @@ const wrapMatchesInNode = (node: Text, pattern: RegExp): void => {
  *
  * @param root 正文容器
  * @param keyword 已 trim 的关键词；非空
+ * @returns 打出来的高亮标记，按正文顺序排列；没有命中时为空数组
  */
-export const highlightKeyword = (root: HTMLElement, keyword: string): void => {
+export const highlightKeyword = (
+  root: HTMLElement,
+  keyword: string,
+): HTMLElement[] => {
   const pattern = new RegExp(escapeRegExp(keyword), 'gui');
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
     acceptNode(node) {
@@ -141,4 +145,8 @@ export const highlightKeyword = (root: HTMLElement, keyword: string): void => {
   for (const node of targets) {
     wrapMatchesInNode(node, pattern);
   }
+
+  return Array.from(
+    root.querySelectorAll<HTMLElement>(`mark[${HIGHLIGHT_ATTR}]`),
+  );
 };

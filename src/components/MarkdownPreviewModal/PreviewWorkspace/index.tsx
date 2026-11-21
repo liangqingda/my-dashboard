@@ -10,7 +10,7 @@
  * 工作区是弹窗内部结构的一部分，不另立一套排版。
  */
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Loader, Text } from '@mantine/core';
 import Markdown from 'react-markdown';
@@ -40,6 +40,7 @@ const PreviewWorkspace = ({
   loading,
   markdown,
   onBodyClick,
+  onHighlightNavigation,
   opened,
   title,
 }: PreviewWorkspaceProps) => {
@@ -106,12 +107,19 @@ const PreviewWorkspace = ({
   /** 关键词命中片段高亮：只在预览态、正文就绪后打标，编辑态（含草稿预览）不标 */
   const highlightEnabled = Boolean(filter) && !editing.editing && bodyReady;
 
-  useKeywordHighlight(
+  const highlightNavigation = useKeywordHighlight(
     bodyElement,
     filter?.keyword ?? '',
     visibleMarkdown,
     highlightEnabled,
   );
+
+  /** 导航对象回传给 header 筛选面板；非预览态 / 卸载时回传 null，不留上一篇的句柄 */
+  useEffect(() => {
+    onHighlightNavigation?.(highlightEnabled ? highlightNavigation : null);
+
+    return () => onHighlightNavigation?.(null);
+  }, [highlightEnabled, highlightNavigation, onHighlightNavigation]);
 
   /**
    * 正文节点的 callback ref：ref 对象给需要即时读取的地方（弹窗找锚点）用，

@@ -10,6 +10,10 @@ import type {
 } from '@/utils/markdown-outline';
 
 import type { ProseFontScale } from './hooks/useProseFontScale';
+import type {
+  MarkdownFilterNavigation,
+  MarkdownPreviewFilter,
+} from './types/filter';
 
 /**
  * 定制编辑器可选实现的能力：按标题目录的下标把自己那一节滚进视野。
@@ -97,6 +101,8 @@ export type TitleBarProps = {
   onRemove?: (() => void) | null;
   /** 是否全屏预览中 */
   fullscreen: boolean;
+  /** 关键词匹配导航；注入筛选面板挂回车 / Shift+回车切换，无导航时为 null */
+  highlightNavigation: MarkdownFilterNavigation | null;
   /** 切换全屏 */
   onToggleFullscreen: () => void;
   /** 调用方是否提供编辑能力（决定「编辑」图标出不出来） */
@@ -236,32 +242,6 @@ export type DeleteConfirmProps = {
   onConfirm: () => void;
 };
 
-/** 筛选面板渲染时能拿到的东西 */
-export type MarkdownFilterRenderProps = {
-  /** 收起弹层；筛选即时生效，面板一般用不到，留给「应用型」筛选备用 */
-  close: () => void;
-};
-
-/**
- * 预览态的内容筛选。
- *
- * 弹窗不知道具体文档的结构，只负责三件事：header 的筛选图标按钮、就近弹出的面板、
- * 以及「编辑态不筛、保存不写筛后结果」这条边界；筛什么、怎么持久化都归调用方。
- */
-export type MarkdownPreviewFilter = {
-  /** 是否有筛选条件生效：只影响图标高亮与「没有匹配内容」的空结果提示 */
-  active: boolean;
-  /** 把正文筛成要渲染的 Markdown；返回值只在预览态使用 */
-  apply: (markdown: string) => string;
-  /**
-   * 关键词：预览态在正文里把命中片段包成 `mark` 高亮；不传 / 空串表示不高亮。
-   * 匹配口径与 `apply` 一致（不区分大小写），只作用于预览，不写回笔记。
-   */
-  keyword?: string;
-  /** 弹层内容，由调用方给出筛选控件 */
-  render: (props: MarkdownFilterRenderProps) => ReactNode;
-};
-
 /**
  * 同文档锚点链接的点击行为：`jump` 在当前正文里滚过去，
  * `modal` 把链接指向的那一节内容单独开窗预览。
@@ -382,6 +362,8 @@ export type PreviewWorkspaceProps = {
   title: string;
   /** 全屏预览：目录全展开、正文放大 */
   fullscreen: boolean;
+  /** 关键词匹配导航就绪后回传给弹窗层；卸载 / 无导航时回传 null */
+  onHighlightNavigation?: (navigation: MarkdownFilterNavigation | null) => void;
   /** 正文字号的用户偏移（px） */
   fontOffset: number;
   /** 预览态的内容筛选；不传或编辑态就不筛 */

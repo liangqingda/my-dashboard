@@ -224,6 +224,12 @@
   color: inherit;
 }
 
+/* 当前所在的命中：主色实底 + 对比字色，与其余命中拉开一档 */
+.prose mark[data-current] {
+  background: var(--app-accent);
+  color: var(--app-accent-contrast);
+}
+
 .prose blockquote {
   margin: 0 0 12px;
   padding: 8px 14px;

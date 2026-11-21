@@ -33,6 +33,7 @@ import { FocusTrap, Modal } from '@mantine/core';
 
 import { cx } from '@/utils/cx';
 
+import type { MarkdownFilterNavigation } from './types/filter';
 import type { MarkdownPreviewModalProps, PreviewPanel } from './types';
 import TitleBar from './TitleBar';
 import DeleteConfirm from './DeleteConfirm';
@@ -55,13 +56,17 @@ import { useNavigationShortcuts } from './hooks/useNavigationShortcuts';
 import styles from './index.scss';
 
 export type {
+  MarkdownFilterNavigation,
+  MarkdownPreviewFilter,
+} from './types/filter';
+
+export type {
   AnchorBlockModalProps,
   AnchorLinkBehavior,
   AnchorLinkControlProps,
   MarkdownAnchorBlock,
   MarkdownEditorHandle,
   MarkdownEditorProps,
-  MarkdownPreviewFilter,
   MarkdownPreviewModalProps,
   MarkdownPreviewRemove,
   MarkdownPreviewRemoveChoice,
@@ -89,6 +94,10 @@ const MarkdownPreviewModal = ({
    * 面板说的永远是当前这一次阅读。
    */
   const [panel, setPanel] = useState<PreviewPanel | null>(null);
+
+  /** 正文关键词匹配导航：工作区打标后回传，header 筛选面板挂回车切换 */
+  const [highlightNavigation, setHighlightNavigation] =
+    useState<MarkdownFilterNavigation | null>(null);
 
   /** 全屏开关：记住的展示偏好，关闭弹窗也不重置；Esc 不归它管，永远是关弹窗 */
   const { fullscreen, toggle: toggleFullscreen } = useModalFullscreen();
@@ -247,6 +256,7 @@ const MarkdownPreviewModal = ({
             fontScale={proseFont}
             fullscreen={fullscreen}
             hasAnchorLinks={anchorBlocks.length > 0}
+            highlightNavigation={highlightNavigation}
             loading={loading}
             onAnchorBehaviorChange={anchorLink.setBehavior}
             onAnchorScopeChange={anchorScope.setScope}
@@ -289,6 +299,7 @@ const MarkdownPreviewModal = ({
           loading={loading}
           markdown={renderedMarkdown}
           onBodyClick={anchorBlock.handleBodyClick}
+          onHighlightNavigation={setHighlightNavigation}
           opened={opened}
           title={title}
         />

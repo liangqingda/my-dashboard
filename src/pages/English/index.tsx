@@ -162,9 +162,10 @@ const English = () => {
       active: filterActive,
       apply: applyFilter,
       keyword: filterKeyword,
-      render: () => (
+      render: ({ navigation }) => (
         <NoteFilter
           keyword={filterKeyword}
+          navigation={navigation}
           onKeywordChange={setFilterKeyword}
           onReset={resetFilter}
           onScopeChange={setFilterScope}
