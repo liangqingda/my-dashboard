@@ -104,6 +104,15 @@ const Review = () => {
   /** 详情的开合、翻页与计数（范围是全部筛选结果，和列表计数一致） */
   const detail = useRecordDetailNav({ records: visibleRecords });
 
+  /**
+   * 详情里正开着的那条摘要：删除要从摘要里取标题（确认框要说清删的是哪一条）。
+   * 关着或记录已被筛掉时为 null，详情 header 也就不给删除入口。
+   */
+  const activeRecord =
+    detail.activeIndex >= 0
+      ? (visibleRecords[detail.activeIndex] ?? null)
+      : null;
+
   /** 筛选项变了：滚动位置回顶、关掉详情，从新结果的第一条看起 */
   const resetList = useCallback(() => {
     detail.resetDetail();
@@ -225,8 +234,12 @@ const Review = () => {
       </Stack>
 
       <RecordDetailModal
+        confirming={pendingDelete !== null}
         nav={detail.nav}
         onClose={detail.closeDetail}
+        onRequestDelete={
+          activeRecord === null ? null : () => requestDelete(activeRecord)
+        }
         recordId={detail.activeId}
         title={detail.activeTitle}
       />

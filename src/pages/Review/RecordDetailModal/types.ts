@@ -10,4 +10,11 @@ export type RecordDetailModalProps = {
   nav: FreeModalNav;
   /** 关闭弹窗 */
   onClose: () => void;
+  /**
+   * 打开删除确认（删的是当前开着的这一条）；不传就不显示删除入口。
+   * 确认层与真正的删除动作归页面，这里只给一个请求。
+   */
+  onRequestDelete?: (() => void) | null;
+  /** 删除确认层是否开着：开着时 Esc、快捷键与焦点都让给确认层 */
+  confirming?: boolean;
 };

@@ -18,12 +18,12 @@ import { useState } from 'react';
 import { FocusTrap } from '@mantine/core';
 import { IconTrash } from '@tabler/icons-react';
 
+import HeaderIconAction from '@/components/buttons/HeaderIconAction';
 import FreeModal from '@/components/modals/FreeModal';
 import { useModalFullscreen } from '@/components/modals/FreeModal/hooks/useModalFullscreen';
 
 import type { MarkdownPreviewModalProps, PreviewPanel } from './types';
 import DocumentActions from './DocumentActions';
-import HeaderIconAction from './HeaderActions/IconAction';
 import PreviewHeaderActions from './HeaderActions';
 import PreviewOverlays from './PreviewOverlays';
 import PreviewWorkspace from './PreviewWorkspace';

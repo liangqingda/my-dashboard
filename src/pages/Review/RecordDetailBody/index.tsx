@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Badge, Group, Loader, Stack, Text } from '@mantine/core';
 
-import CopyIconButton from '@/components/buttons/CopyIconButton';
 import FreeTable from '@/components/tables/FreeTable';
 import { getErrorMessage } from '@/utils/error';
 import { formatDateTime } from '@/utils/format';
@@ -134,7 +133,6 @@ const RecordDetailBody = ({ recordId }: RecordDetailBodyProps) => {
           <Badge size="xs" variant="outline">
             {formatScore(detail.masteryScore)} 分
           </Badge>
-          <CopyIconButton label="复制记录 ID" text={detail.id} />
         </Group>
       </Stack>
 

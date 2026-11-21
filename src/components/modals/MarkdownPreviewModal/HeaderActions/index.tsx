@@ -15,12 +15,11 @@ import {
   IconTrash,
 } from '@tabler/icons-react';
 
+import HeaderIconAction from '@/components/buttons/HeaderIconAction';
 import TruncatedText from '@/components/texts/TruncatedText';
 import { cx } from '@/utils/cx';
 
 import type { PreviewHeaderActionsProps } from '../types';
-
-import HeaderIconAction from './IconAction';
 
 import styles from './index.scss';
 

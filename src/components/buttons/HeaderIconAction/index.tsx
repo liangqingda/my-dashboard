@@ -1,6 +1,9 @@
 /**
  * 标题栏里的一个图标操作：图标不自解释，所以 tooltip 与 aria-label 用同一句人话；
  * 颜色按语气分档，形状（尺寸 / 变体）保持一致，标题栏里不出现大小不一的按钮。
+ *
+ * md 预览弹窗与记录详情弹窗的 header 共用这一份：同一套尺寸档、同一套 tooltip 口径，
+ * 「删除」这类排在最右的操作在两边长得一样。
  */
 
 import { ActionIcon, Tooltip } from '@mantine/core';
