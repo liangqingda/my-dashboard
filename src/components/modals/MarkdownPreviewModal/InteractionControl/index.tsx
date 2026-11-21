@@ -1,0 +1,175 @@
+/**
+ * 「文档内交互方式」的图标按钮：点一下在图标下方弹出两组与「点一下会怎样」有关的设置。
+ *
+ * 字段都走公共的 `FreeSelectField`（标题在上、下拉在下、选中项的说明用一行灰字补在下面），
+ * 与筛选面板是同一套外观与同一条「下拉不进门户」的规矩——都收在那一个组件里，
+ * 这里只给选项、分组与说明文案。
+ *
+ * 两组偏好（都是跨篇记住的阅读偏好，写在 localStorage）：
+ * 1. 同文档链接（`[文字](#锚点)`）：点链接之后滚过去 / 弹窗读那一节；子区域预览能前后切到哪些链接；
+ * 2. 折叠块（`<details>`，笔记里的场景对话原文、故事原文）：点标题之后原地展开 / 弹窗读。
+ *    只有一个折叠块里真有内容时这一组才有意义，所以文档里没有折叠块时整组不渲染。
+ *
+ * 值怎么存归弹窗（`useAnchorLinkBehavior` / `useAnchorNavScope` / `useDetailsBlockBehavior`），
+ * 这里只管按钮外观、弹层开合与把选中的值递上去。
+ */
+
+import { Divider, Group, Stack, Text } from '@mantine/core';
+import { IconHandClick } from '@tabler/icons-react';
+
+import FreeSelectField from '@/components/fields/FreeSelectField';
+import IconPopoverButton from '@/components/buttons/IconPopoverButton';
+
+import type {
+  AnchorLinkBehavior,
+  AnchorNavScope,
+  DetailsBlockBehavior,
+  InteractionControlProps,
+} from '../types';
+import {
+  ANCHOR_LINK_BEHAVIORS,
+  ANCHOR_NAV_SCOPES,
+  DETAILS_BLOCK_BEHAVIORS,
+} from '../constants';
+
+/** 与标题栏其它图标同档的图标尺寸 / 线宽 */
+const ICON_SIZE = 15;
+const ICON_STROKE = 1.9;
+
+/** 弹层宽度：与筛选面板同宽（272），两组字段都排得开 */
+const DROPDOWN_WIDTH = 272;
+
+/** 分组小标题：比字段标题淡一档，只负责把两组分开 */
+const GROUP_LABEL_PROPS = { fw: 600, size: 'xs' } as const;
+
+/** 两档链接行为：档名给下拉，口径说明单列一行（塞进选项会把下拉撑宽） */
+const ANCHOR_BEHAVIOR_OPTIONS: Record<
+  AnchorLinkBehavior,
+  { description: string; label: string }
+> = {
+  jump: { description: '滚到锚点位置，左侧目录跟着高亮', label: '跳转到锚点' },
+  modal: { description: '把锚点指向的那一节单独开窗', label: '弹窗打开该区块' },
+};
+
+/** 两种切换口径：同上，档名进下拉、口径说明单列一行 */
+const SCOPE_OPTIONS: Record<AnchorNavScope, { description: string; label: string }> = {
+  all: { description: '按链接顺序切换全文所有链接指向的区块', label: '切换全文所有链接' },
+  section: { description: '只算同一处目录里的链接，如「讲解」里那两条', label: '只切换同一处链接' },
+};
+
+/** 两档折叠块行为：原地展开保留浏览器默认，弹窗预览把这一段单独读 */
+const DETAILS_BEHAVIOR_OPTIONS: Record<
+  DetailsBlockBehavior,
+  { description: string; label: string }
+> = {
+  expand: { description: '在正文里直接展开这一段，与浏览器默认行为一致', label: '原地展开' },
+  modal: { description: '叠一层弹窗单独读，正文里的折叠块保持收着', label: '弹窗预览' },
+};
+
+/** 选项顺序与枚举一致，值只有一份来源（`constants.ts`） */
+const ANCHOR_BEHAVIOR_DATA = ANCHOR_LINK_BEHAVIORS.map((behavior) => ({
+  label: ANCHOR_BEHAVIOR_OPTIONS[behavior].label,
+  value: behavior,
+}));
+
+const SCOPE_DATA = ANCHOR_NAV_SCOPES.map((scope) => ({
+  label: SCOPE_OPTIONS[scope].label,
+  value: scope,
+}));
+
+const DETAILS_BEHAVIOR_DATA = DETAILS_BLOCK_BEHAVIORS.map((behavior) => ({
+  label: DETAILS_BEHAVIOR_OPTIONS[behavior].label,
+  value: behavior,
+}));
+
+const InteractionControl = ({
+  anchorBehavior,
+  anchorScope,
+  detailsBehavior,
+  hasAnchorLinks,
+  hasDetailBlocks,
+  onAnchorBehaviorChange,
+  onAnchorScopeChange,
+  onChange,
+  onDetailsBehaviorChange,
+  opened,
+}: InteractionControlProps) => {
+  /**
+   * 下拉给回来的是档名文本，先对回枚举里的那一档再上报：
+   * 对不上（数据与选项漂了）就当没点，不把不合法的值写进阅读偏好。
+   */
+  const pickValue = <Value extends string>(
+    data: readonly { label: string; value: Value }[],
+    value: string,
+    report: (next: Value) => void,
+  ) => {
+    const option = data.find((item) => item.value === value);
+
+    if (option) {
+      report(option.value);
+    }
+  };
+
+  /** 有一组真按「弹窗预览」走时图标换主色，与筛选生效同一个表达 */
+  const active = anchorBehavior === 'modal' || detailsBehavior === 'modal';
+
+  return (
+    <IconPopoverButton
+      active={active}
+      hint={active ? '文档内交互方式（有弹窗预览）' : '文档内交互方式'}
+      icon={<IconHandClick size={ICON_SIZE} stroke={ICON_STROKE} />}
+      label="文档内交互方式"
+      onChange={onChange}
+      opened={opened}
+      width={DROPDOWN_WIDTH}
+    >
+      <Stack gap={12}>
+        {hasAnchorLinks ? (
+          <Stack gap={8}>
+            <Text {...GROUP_LABEL_PROPS}>同文档链接</Text>
+            <FreeSelectField
+              data={ANCHOR_BEHAVIOR_DATA}
+              description={ANCHOR_BEHAVIOR_OPTIONS[anchorBehavior].description}
+              label="点链接之后"
+              onChange={(value) =>
+                pickValue(ANCHOR_BEHAVIOR_DATA, value, onAnchorBehaviorChange)
+              }
+              value={anchorBehavior}
+            />
+            <FreeSelectField
+              data={SCOPE_DATA}
+              description={SCOPE_OPTIONS[anchorScope].description}
+              label="区块预览切换范围"
+              onChange={(value) =>
+                pickValue(SCOPE_DATA, value, onAnchorScopeChange)
+              }
+              value={anchorScope}
+            />
+          </Stack>
+        ) : null}
+        {hasAnchorLinks && hasDetailBlocks ? <Divider /> : null}
+        {hasDetailBlocks ? (
+          <Stack gap={8}>
+            <Group gap={6} wrap="nowrap">
+              <Text {...GROUP_LABEL_PROPS}>折叠块</Text>
+              <Text c="dimmed" size="xs">
+                如场景对话原文、故事原文
+              </Text>
+            </Group>
+            <FreeSelectField
+              data={DETAILS_BEHAVIOR_DATA}
+              description={DETAILS_BEHAVIOR_OPTIONS[detailsBehavior].description}
+              label="点标题之后"
+              onChange={(value) =>
+                pickValue(DETAILS_BEHAVIOR_DATA, value, onDetailsBehaviorChange)
+              }
+              value={detailsBehavior}
+            />
+          </Stack>
+        ) : null}
+      </Stack>
+    </IconPopoverButton>
+  );
+};
+
+export default InteractionControl;

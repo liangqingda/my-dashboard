@@ -1,6 +1,6 @@
 /**
  * 预览弹窗 header 的第一组操作（阅读类）：复制相对路径 / 筛选正文 / 正文字号 /
- * 同文档锚点链接 / 刷新正文。
+ * 文档内交互方式（同文档链接 + 折叠块）/ 刷新正文。
  *
  * 只管排布与出现条件；每个按钮自己带弹层与状态。全屏与删除不在这里——
  * 全屏归弹窗外壳（`FreeModal`），删除排在全屏之后（见弹窗的 `headerTail`）。
@@ -12,7 +12,7 @@ import { IconRefresh } from '@tabler/icons-react';
 import CopyIconButton from '@/components/buttons/CopyIconButton';
 import FilterButton from '@/components/buttons/FilterButton';
 
-import AnchorLinkControl from '../AnchorLinkControl';
+import InteractionControl from '../InteractionControl';
 import ProseFontControl from '../ProseFontControl';
 
 import type { DocumentActionsProps } from './types';
@@ -26,13 +26,16 @@ const ICON_STROKE = 1.9;
 const DocumentActions = ({
   anchorBehavior,
   anchorScope,
+  detailsBehavior,
   filter,
   fontScale,
   hasAnchorLinks,
+  hasDetailBlocks,
   highlightNavigation,
   loading,
   onAnchorBehaviorChange,
   onAnchorScopeChange,
+  onDetailsBehaviorChange,
   onPanelChange,
   onRefresh,
   panel,
@@ -73,15 +76,22 @@ const DocumentActions = ({
         shortcut="A"
       />
     )}
-    {/* 同文档链接打开方式：值同样是跨篇记住的阅读偏好 */}
-    {hasAnchorLinks && !loading ? (
-      <AnchorLinkControl
-        behavior={anchorBehavior}
-        onBehaviorChange={onAnchorBehaviorChange}
-        onChange={(next) => onPanelChange(next ? 'anchor' : null)}
-        onScopeChange={onAnchorScopeChange}
-        opened={panel === 'anchor'}
-        scope={anchorScope}
+    {/*
+       * 文档内交互方式：链接与折叠块各一组，值都是跨篇记住的阅读偏好。
+       * 文档里两类都没有就不出这个按钮——没有可点的东西，设置也无从验证
+       */}
+    {(hasAnchorLinks || hasDetailBlocks) && !loading ? (
+      <InteractionControl
+        anchorBehavior={anchorBehavior}
+        anchorScope={anchorScope}
+        detailsBehavior={detailsBehavior}
+        hasAnchorLinks={hasAnchorLinks}
+        hasDetailBlocks={hasDetailBlocks}
+        onAnchorBehaviorChange={onAnchorBehaviorChange}
+        onAnchorScopeChange={onAnchorScopeChange}
+        onChange={(next) => onPanelChange(next ? 'interaction' : null)}
+        onDetailsBehaviorChange={onDetailsBehaviorChange}
+        opened={panel === 'interaction'}
       />
     ) : null}
     {/* 刷新正文：正文从盘里读时才有效，编辑中刷了只会把草稿盖掉 */}

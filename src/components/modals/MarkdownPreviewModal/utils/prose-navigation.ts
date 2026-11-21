@@ -44,6 +44,55 @@ export const getClickedAnchor = (target: EventTarget | null): string | null => {
 };
 
 /**
+ * 从一次点击里认出「折叠块的 summary」。
+ *
+ * 只有点在标题行上才算：`<details>` 已经展开时点正文不该重新开窗，
+ * 点在 summary 里那些内联标记（加粗、高亮）上也仍算点到标题——`closest` 会往上找。
+ *
+ * @param target 事件目标（`event.target`）
+ * @returns summary 节点；不是折叠块标题时返回 null
+ */
+export const getClickedSummary = (
+  target: EventTarget | null,
+): HTMLElement | null => {
+  if (!(target instanceof HTMLElement)) {
+    return null;
+  }
+
+  const summary = target.closest('summary');
+
+  return summary instanceof HTMLElement ? summary : null;
+};
+
+/**
+ * 点的这个 summary 是正文里第几个折叠块。
+ *
+ * 顺序按「最外层的 `<details>`」算，与 `collectDetailBlocks` 扫源文本时的口径一致；
+ * 里层的嵌套折叠块不计入，所以下标不会因为它多了一层而错位。
+ *
+ * @param container 正文节点（`event.currentTarget`）
+ * @param summary 点到的 summary
+ * @returns 下标（从 0 开始）；找不出对应折叠块时返回 null
+ */
+export const findDetailBlockIndex = (
+  container: HTMLElement | null,
+  summary: HTMLElement,
+): number | null => {
+  const host = summary.closest('details');
+
+  if (!container || !host) {
+    return null;
+  }
+
+  const hosts = Array.from(container.querySelectorAll('details')).filter(
+    (element) => !element.parentElement?.closest('details'),
+  );
+  const index = hosts.indexOf(host);
+
+  return index >= 0 ? index : null;
+};
+
+/**
  * 滚到正文里的某个锚点。
  *
  * @param container 正文节点（它自己就是滚动容器）

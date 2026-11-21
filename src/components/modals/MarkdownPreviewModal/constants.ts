@@ -5,7 +5,7 @@
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 
-import type { AnchorLinkBehavior, AnchorNavScope } from './types';
+import type { AnchorLinkBehavior, AnchorNavScope, DetailsBlockBehavior } from './types';
 
 /** 「已保存」提示停留时长（毫秒） */
 export const SAVED_HINT_DURATION = 3000;
@@ -91,3 +91,19 @@ export const ANCHOR_LINK_BEHAVIORS: readonly AnchorLinkBehavior[] = [
 
 /** 默认沿用原有行为：在当前正文里跳过去 */
 export const DEFAULT_ANCHOR_LINK_BEHAVIOR: AnchorLinkBehavior = 'jump';
+
+/**
+ * 折叠块（`<details>`）里那段内容的点击行为放在 localStorage 的键：与链接一样是
+ * 「怎么看文档里的东西」的阅读偏好，换篇、关掉重开、刷新页面后都保持上次的样子。
+ */
+export const DETAILS_BLOCK_STORAGE_KEY =
+  'my-dashboard:markdown-preview:details-block';
+
+/** 可选的两档折叠块行为：原地展开 / 弹窗预览 */
+export const DETAILS_BLOCK_BEHAVIORS: readonly DetailsBlockBehavior[] = [
+  'expand',
+  'modal',
+];
+
+/** 默认沿用原有行为：点了就在正文里展开 */
+export const DEFAULT_DETAILS_BLOCK_BEHAVIOR: DetailsBlockBehavior = 'expand';

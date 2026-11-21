@@ -3,10 +3,16 @@
  *
  * 都开在主预览之上、各自只收自己那一层——取消删除不关预览，Esc 关子区域预览时
  * 底下这一篇同样留着。主预览只负责把状态交给这里，不参与它们的排版。
+ *
+ * 子区域预览有两个入口，共用同一层弹窗（`SectionPreview`）：
+ * - 同文档链接指向的一节：能前后切到哪几节按 `all` / `section` 口径算；
+ * - 折叠块里的正文：能前后切到全文所有折叠块。
+ * 两份的当前下标互不相干，同一时刻只会开着一个（上层盖住主预览时点不到正文）。
  */
 
-import AnchorBlockPreview from '../AnchorBlockPreview';
 import DeleteConfirm from '../DeleteConfirm';
+import SectionPreview from '../SectionPreview';
+import { listAnchorBlockPeers } from '../utils/anchor-blocks';
 
 import type { PreviewOverlaysProps } from './types';
 
@@ -14,33 +20,61 @@ const PreviewOverlays = ({
   anchorBlock,
   anchorBlocks,
   anchorScope,
+  detailBlock,
+  detailBlocks,
   remove,
   removal,
   title,
-}: PreviewOverlaysProps) => (
-  <>
-    {/* 删除确认层：开在主预览上面；取消只收这一层，确认后删除动作由调用方执行 */}
-    <DeleteConfirm
-      checkedKeys={removal.checkedKeys}
-      choices={remove?.choices}
-      description={remove?.description ?? ''}
-      loading={removal.removing}
-      onCancel={removal.cancel}
-      onCheckedKeysChange={removal.setCheckedKeys}
-      onConfirm={removal.confirm}
-      opened={removal.confirming}
-      title={title}
-    />
+}: PreviewOverlaysProps) => {
+  /** 当前打开的那一节锚点区块；关着时为 null */
+  const anchorSection =
+    anchorBlock.index === null ? null : anchorBlocks[anchorBlock.index];
+  /** 按当前口径能前后切到的那些节 */
+  const anchorPeers = anchorSection
+    ? listAnchorBlockPeers(anchorBlocks, anchorSection.anchor, anchorScope)
+    : [];
+  /** 折叠块按正文顺序排成一列，前后切换就是相邻的那一段 */
+  const detailPeers =
+    detailBlock.index === null ? [] : detailBlocks.map((_, index) => index);
 
-    {/* 子区域预览：开在主预览上面，只看一块内容；Esc 只关它，底下这一篇留着 */}
-    <AnchorBlockPreview
-      blocks={anchorBlocks}
-      index={anchorBlock.index}
-      onClose={anchorBlock.close}
-      onIndexChange={anchorBlock.setIndex}
-      scope={anchorScope}
-    />
-  </>
-);
+  return (
+    <>
+      {/* 删除确认层：开在主预览上面；取消只收这一层，确认后删除动作由调用方执行 */}
+      <DeleteConfirm
+        checkedKeys={removal.checkedKeys}
+        choices={remove?.choices}
+        description={remove?.description ?? ''}
+        loading={removal.removing}
+        onCancel={removal.cancel}
+        onCheckedKeysChange={removal.setCheckedKeys}
+        onConfirm={removal.confirm}
+        opened={removal.confirming}
+        title={title}
+      />
+
+      {/* 子区域预览：开在主预览上面，只看一段内容；Esc 只关它，底下这一篇留着 */}
+      <SectionPreview
+        index={anchorBlock.index}
+        nextLabel="下一个链接区块"
+        onClose={anchorBlock.close}
+        onIndexChange={anchorBlock.setIndex}
+        peers={anchorPeers}
+        previousLabel="上一个链接区块"
+        sections={anchorBlocks}
+      />
+
+      {/* 折叠块预览：summary 点出来的那一段，样式 / 键位 / 字号全与上一份同一套 */}
+      <SectionPreview
+        index={detailBlock.index}
+        nextLabel="下一个折叠块"
+        onClose={detailBlock.close}
+        onIndexChange={detailBlock.setIndex}
+        peers={detailPeers}
+        previousLabel="上一个折叠块"
+        sections={detailBlocks}
+      />
+    </>
+  );
+};
 
 export default PreviewOverlays;

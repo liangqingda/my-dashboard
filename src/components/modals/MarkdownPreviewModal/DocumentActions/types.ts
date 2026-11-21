@@ -2,6 +2,7 @@ import type { ProseFontScale } from '../hooks/useProseFontScale';
 import type {
   AnchorLinkBehavior,
   AnchorNavScope,
+  DetailsBlockBehavior,
   PreviewPanel,
 } from '../types';
 import type {
@@ -9,7 +10,7 @@ import type {
   MarkdownPreviewFilter,
 } from '../types/filter';
 
-/** 预览态 header 第一组操作（阅读类）的入参：复制 / 筛选 / 字号 / 锚点 / 刷新 */
+/** 预览态 header 第一组操作（阅读类）的入参：复制 / 筛选 / 字号 / 文档内交互 / 刷新 */
 export type DocumentActionsProps = {
   /** 文档的相对路径；不传就没有复制按钮 */
   relativePath?: string;
@@ -25,8 +26,14 @@ export type DocumentActionsProps = {
   anchorScope: AnchorNavScope;
   /** 换一种前后切换口径（跨篇记住） */
   onAnchorScopeChange: (scope: AnchorNavScope) => void;
+  /** 折叠块里那段内容的点击行为 */
+  detailsBehavior: DetailsBlockBehavior;
+  /** 换一种折叠块行为（跨篇记住） */
+  onDetailsBehaviorChange: (behavior: DetailsBlockBehavior) => void;
   /** 文档里有没有同文档锚点链接 */
   hasAnchorLinks: boolean;
+  /** 文档里有没有折叠块 */
+  hasDetailBlocks: boolean;
   /** 正文是否还在取 */
   loading: boolean;
   /** 当前打开的 header 弹层 */

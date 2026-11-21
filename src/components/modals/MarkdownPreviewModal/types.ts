@@ -57,7 +57,7 @@ export type ProseFontControlProps = {
 };
 
 /** header 的就近弹层：同一时刻只开一块 */
-export type PreviewPanel = 'anchor' | 'filter' | 'font';
+export type PreviewPanel = 'filter' | 'font' | 'interaction';
 
 /** 预览弹窗的对外 props */
 export type MarkdownPreviewModalProps = {
@@ -202,24 +202,40 @@ export type AnchorLinkBehavior = 'jump' | 'modal';
 export type AnchorNavScope = 'all' | 'section';
 
 /**
+ * 折叠块（`<details>`）里那段内容的点击行为：`expand` 在正文里直接展开，
+ * `modal` 叠一层弹窗单独读（正文里的折叠块保持收着）。
+ */
+export type DetailsBlockBehavior = 'expand' | 'modal';
+
+/**
+ * 子区域预览渲染的一段内容：它不讲「这段内容打哪来」——
+ * 同文档链接指向的一节与折叠块（`<details>`）里的正文都套在这个形状上，
+ * 弹窗只负责把这一段读出来，翻页范围由调用方算好传进来。
+ */
+export type MarkdownPreviewSection = {
+  /** 稳定标识：换块、记住「面板属于哪一块」都按它 */
+  key: string;
+  /** 区块标题（含行内标记已被剥掉）；没有标题时为空串，header 退回显示 `key` */
+  title: string;
+  /** 区块所处的上级标题（如「2026-11-15 12:05 · 复习」）；没有上级时为空串 */
+  parentTitle: string;
+  /** 区块源文本，直接交给渲染器 */
+  markdown: string;
+  /** 区块内的标题目录，给子区域预览弹窗的 sidebar 用 */
+  headings: MarkdownOutlineHeading[];
+};
+
+/**
  * 同文档锚点链接指向的一个内容区块：某一节标题下的全部内容。
  *
  * 子区域预览弹窗一次只看一块；「跳到 h2 就展示整个 h2 小节（含 h3）」这条
  * 边界由 `collectAnchorBlocks` 算好，组件只负责渲染。
  */
-export type MarkdownAnchorBlock = {
+export type MarkdownAnchorBlock = MarkdownPreviewSection & {
   /** 锚点 id（链接里 `#` 之后的片段，不含 `#`）；同一节被多个链接指向时取第一条 */
   anchor: string;
-  /** 区块标题（含行内标记已被剥掉的标题原文）；区块前面没有标题时为空串 */
-  title: string;
-  /** 区块所处那一节的上级标题（h2 的上级是它所属的 h1，如「2026-11-15 12:05 · 复习」）；没有上级时为空串 */
-  parentTitle: string;
   /** 标题层级 1–4；区块边界按它算（到下一个同级或更高级标题为止），没有标题时为 0 */
   level: number;
-  /** 区块源文本（含标题行），直接交给渲染器 */
-  markdown: string;
-  /** 区块内的标题目录，给子区域预览弹窗的 sidebar 用 */
-  headings: MarkdownOutlineHeading[];
   /**
    * 指向这一块的链接所在的上级标题行号（-1 表示在第一个标题之前）。
    * 同值就是「同一处目录里的链接」，`section` 口径按它分组，前后切换不出这一组。
@@ -229,33 +245,62 @@ export type MarkdownAnchorBlock = {
   startLine: number;
 };
 
-/** 「同文档链接打开方式」图标按钮的入参 */
-export type AnchorLinkControlProps = {
-  /** 当前点击行为 */
-  behavior: AnchorLinkBehavior;
+/**
+ * 折叠块（`<details><summary>…</summary>…</details>`）里的一段内容。
+ *
+ * 与锚点区块同一副形状（`MarkdownPreviewSection`），所以共用同一层子区域预览：
+ * header 只显示 summary 那句话，正文是 summary 之下、`</details>` 之前的全部内容
+ * （里面再套的折叠块原样留着，在子预览里按浏览器默认行为展开）。
+ */
+export type MarkdownDetailBlock = MarkdownPreviewSection;
+
+/**
+ * 「文档内交互方式」图标按钮的入参：同文档链接一组、折叠块一组。
+ *
+ * 文档里只有其中一类时，另一组不渲染——没有可点的东西，那一档设置也无从验证。
+ */
+export type InteractionControlProps = {
+  /** 同文档链接的点击行为 */
+  anchorBehavior: AnchorLinkBehavior;
   /** 子区域预览的前后切换口径 */
-  scope: AnchorNavScope;
+  anchorScope: AnchorNavScope;
+  /** 折叠块里那段内容的点击行为 */
+  detailsBehavior: DetailsBlockBehavior;
+  /** 文档里有没有同文档锚点链接 */
+  hasAnchorLinks: boolean;
+  /** 文档里有没有折叠块 */
+  hasDetailBlocks: boolean;
   /** 弹层是否打开 */
   opened: boolean;
   /** 弹层开合（点图标、点外部、Esc 都会走到这里） */
   onChange: (opened: boolean) => void;
-  /** 选中的新行为；写存储归调用方 */
-  onBehaviorChange: (behavior: AnchorLinkBehavior) => void;
+  /** 选中的新链接行为；写存储归调用方 */
+  onAnchorBehaviorChange: (behavior: AnchorLinkBehavior) => void;
   /** 选中的新切换口径；写存储归调用方 */
-  onScopeChange: (scope: AnchorNavScope) => void;
+  onAnchorScopeChange: (scope: AnchorNavScope) => void;
+  /** 选中的新折叠块行为；写存储归调用方 */
+  onDetailsBehaviorChange: (behavior: DetailsBlockBehavior) => void;
 };
 
-/** 子区域预览的装配入参：位置与边界都在这一层算 */
-export type AnchorBlockPreviewProps = {
-  /** 文档里被链接指向的区块，按链接出现的顺序 */
-  blocks: MarkdownAnchorBlock[];
-  /** 当前打开第几块；null 表示关着 */
+/** 子区域预览的装配入参：这一段内容与「能切到哪几段」都由调用方算好 */
+export type SectionPreviewProps = {
+  /** 可切换的全部区块（锚点区块 / 折叠块），按正文顺序 */
+  sections: readonly MarkdownPreviewSection[];
+  /** 当前打开第几段；null 表示关着 */
   index: number | null;
-  /** 前后切换口径：全文所有区块 / 只同一处链接指向的区块 */
-  scope: AnchorNavScope;
+  /**
+   * 这一次能前后切换到的下标，按 `sections` 的顺序；只算得出一段时就放当前这一个。
+   * 锚点区块按 `section` / `all` 口径算，折叠块就是全文所有折叠块——
+   * 「哪些算一组」是文档语义，归调用方，组件不猜。
+   */
+  peers: readonly number[];
+  /** 上一个按钮的文案，默认「上一个区块」 */
+  previousLabel?: string;
+  /** 下一个按钮的文案，默认「下一个区块」 */
+  nextLabel?: string;
   /** 关闭子预览 */
   onClose: () => void;
-  /** 换到第 index 块 */
+  /** 换到第 index 段 */
   onIndexChange: (index: number) => void;
 };
 

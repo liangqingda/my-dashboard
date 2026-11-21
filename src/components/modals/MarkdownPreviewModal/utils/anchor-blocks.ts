@@ -236,6 +236,7 @@ export const collectAnchorBlocks = (
     return {
       anchor,
       headings: extractMarkdownOutline(source),
+      key: anchor,
       level: heading ? heading.level : 0,
       linkGroup,
       markdown: source,
