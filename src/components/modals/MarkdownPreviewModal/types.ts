@@ -396,8 +396,10 @@ export type PreviewHeaderActionsProps = {
 
 /** 标题目录 sidebar 的入参 */
 export type OutlineNavProps = {
-  /** 文档内标题列表 */
+  /** 文档内标题列表（筛选时是未筛选的完整目录，被筛掉的项在 `hiddenIndices` 里） */
   headings: MarkdownOutlineHeading[];
+  /** 这些下标对应的标题在正文里已被筛掉：置灰、点击不跳转；不传表示都在 */
+  hiddenIndices?: ReadonlySet<number>;
   /** 当前小节是第几条标题（-1 表示还判不出）；用来高亮并展开所在分支 */
   activeIndex: number;
   /** 编辑态下置灰不可点 */
@@ -420,6 +422,8 @@ export type OutlineWidthPreference = {
 export type OutlineNavListProps = {
   /** 这一层的节点 */
   nodes: MarkdownOutlineNode[];
+  /** 正文里已被筛掉的标题下标：这一层的条目据此置灰 */
+  hiddenIndices?: ReadonlySet<number>;
   /** 当前小节是第几条标题（-1 表示还判不出） */
   activeIndex: number;
   /** 编辑态下禁用 */
@@ -442,6 +446,8 @@ export type OutlineNavListProps = {
 export type OutlineNavItemProps = {
   /** 是否就是当前所在的这一节 */
   active: boolean;
+  /** 这一节在正文里已被筛掉：置灰、不可点（筛完的正文里没有它的位置） */
+  hidden: boolean;
   /** 编辑态下禁用跳转 */
   disabled: boolean;
   /** 有子标题：标题右侧显示折叠图标 */

@@ -129,3 +129,12 @@
   background: var(--app-accent-soft-strong);
   box-shadow: inset 2px 0 0 var(--app-accent);
 }
+
+/* 被筛掉的标题：留在目录里交代结构，但淡一档、不给 hover，一眼看出点不动 */
+.hidden {
+  opacity: 0.45;
+}
+
+.hidden:hover .item {
+  color: inherit;
+}

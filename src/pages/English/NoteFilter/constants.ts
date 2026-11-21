@@ -8,7 +8,7 @@ export const SCOPE_OPTIONS: NoteFilterScopeOption[] = [
     value: 'all',
   },
   {
-    description: '只留「讲解」这一节，藏起基础信息与习题',
+    description: '留所有讲解与讲解要点，藏起基础信息与题目',
     label: '只看讲解',
     value: 'explain',
   },

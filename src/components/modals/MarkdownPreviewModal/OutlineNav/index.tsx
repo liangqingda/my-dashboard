@@ -85,6 +85,7 @@ type ExpansionState = {
 const OutlineNav = ({
   activeIndex,
   headings,
+  hiddenIndices,
   disabled,
   fullscreen,
   onSelect,
@@ -194,6 +195,7 @@ const OutlineNav = ({
           className={styles.list}
           disabled={disabled}
           expanded={expanded}
+          hiddenIndices={hiddenIndices}
           nodes={tree}
           onExpand={expand}
           onSelect={onSelect}

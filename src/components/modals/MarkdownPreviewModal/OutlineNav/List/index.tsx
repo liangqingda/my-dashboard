@@ -19,6 +19,7 @@ const OutlineNavList = ({
   depth = TOP_DEPTH,
   disabled,
   expanded,
+  hiddenIndices,
   nodes,
   onExpand,
   onSelect,
@@ -36,6 +37,7 @@ const OutlineNavList = ({
             disabled={disabled}
             expanded={isExpanded}
             hasChildren={hasChildren}
+            hidden={hiddenIndices?.has(node.index) ?? false}
             level={node.heading.level}
             onSelect={() => {
               // 点标题：先跳转，顺手把子标题展开；收起只能点右侧图标
@@ -54,6 +56,7 @@ const OutlineNavList = ({
               depth={depth + 1}
               disabled={disabled}
               expanded={expanded}
+              hiddenIndices={hiddenIndices}
               nodes={node.children}
               onExpand={onExpand}
               onSelect={onSelect}
