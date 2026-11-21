@@ -81,12 +81,12 @@ type ExpansionState = {
   overrides: ReadonlyMap<string, boolean>;
 };
 
-/** 只有一个标题时没有导航价值，直接不渲染 */
+/** 只有一个标题时没有导航价值，直接不渲染（调用方要求保留时除外，见 `forceVisible`） */
 const OutlineNav = ({
   activeIndex,
   headings,
-  hiddenIndices,
   disabled,
+  forceVisible = false,
   fullscreen,
   onSelect,
 }: OutlineNavProps) => {
@@ -139,7 +139,7 @@ const OutlineNav = ({
     return next;
   }, [activePath, defaultExpanded, expansion, fullscreen, tree]);
 
-  if (headings.length <= 1) {
+  if (headings.length <= 1 && !forceVisible) {
     return null;
   }
 
@@ -195,7 +195,6 @@ const OutlineNav = ({
           className={styles.list}
           disabled={disabled}
           expanded={expanded}
-          hiddenIndices={hiddenIndices}
           nodes={tree}
           onExpand={expand}
           onSelect={onSelect}

@@ -23,7 +23,6 @@ const OutlineNavItem = ({
   disabled,
   expanded,
   hasChildren,
-  hidden,
   level,
   onSelect,
   onToggle,
@@ -47,14 +46,12 @@ const OutlineNavItem = ({
         styles.row,
         LEVEL_CLASS[level],
         active && styles.active,
-        hidden && styles.hidden,
       )}
       ref={rowRef}
     >
-      {/* 被筛掉的标题留在目录里只为交代结构：置灰、不响应点击（正文里没有它的位置） */}
       <TruncatedText
         className={styles.item}
-        disabled={disabled || hidden}
+        disabled={disabled}
         onClick={onSelect}
         text={text}
       />

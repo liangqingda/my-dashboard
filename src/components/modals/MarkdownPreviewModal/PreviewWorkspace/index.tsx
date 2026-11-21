@@ -25,7 +25,6 @@ import type {
 import OutlineNav from '../OutlineNav';
 import { REHYPE_PLUGINS, REMARK_PLUGINS } from '../constants';
 import { scrollToHeading } from '../utils/prose-navigation';
-import { alignOutlines } from '../utils/outline-alignment';
 import { useActiveHeadingIndex } from '../hooks/useActiveHeadingIndex';
 import { useDocumentScrollReset } from '../hooks/useDocumentScrollReset';
 import { useKeywordHighlight } from '../hooks/useKeywordHighlight';
@@ -73,40 +72,16 @@ const PreviewWorkspace = ({
     !editing.editing &&
     markdown.trim() !== '' &&
     visibleMarkdown.trim() === '';
-  /** 标题只在显示内容变化时重算，工作区内的其它状态变化不必重扫全文 */
+  /**
+   * 标题只在显示内容变化时重算，工作区内的其它状态变化不必重扫全文。
+   * 吃的是 `visibleMarkdown`：筛选时目录只列筛后正文里的标题，屏上有什么、目录就有什么。
+   */
   const outline = useMemo(
     () => extractMarkdownOutline(visibleMarkdown),
     [visibleMarkdown],
   );
-  /** 筛选是否正在裁剪正文：只有这时目录才与屏上内容不一致 */
+  /** 筛选是否正在裁剪正文：这时正文可能只剩一两节，目录列仍要留着，不能整列消失 */
   const filtering = Boolean(filter?.active) && !editing.editing;
-  /**
-   * 目录按未筛选的正文算：筛选只裁「读什么」，左栏要留住整篇的结构（只留一节时也不该整列消失）。
-   * 被筛掉的标题仍在目录里，只是置灰、点不动（见 `hiddenIndices`）。
-   */
-  const fullOutline = useMemo(
-    () => (filtering ? extractMarkdownOutline(markdown) : null),
-    [filtering, markdown],
-  );
-  /** 两份目录的下标对齐：目录项 → 可见标题、可见标题 → 目录项 */
-  const alignment = useMemo(
-    () => (fullOutline ? alignOutlines(fullOutline, outline) : null),
-    [fullOutline, outline],
-  );
-  /** 目录上真正渲染的那份标题列表 */
-  const sidebarHeadings = fullOutline ?? outline;
-  /** 正文里已被筛掉的标题下标：目录里据此置灰 */
-  const hiddenIndices = useMemo(() => {
-    const hidden = new Set<number>();
-
-    alignment?.indices.forEach((visibleIndex, index) => {
-      if (visibleIndex < 0) {
-        hidden.add(index);
-      }
-    });
-
-    return hidden;
-  }, [alignment]);
   /**
    * 正文只随内容重建：`react-markdown` 每次渲染都会重新解析整篇（长文档几十毫秒），
    * 工作区内部状态（正文节点挂载、编辑态切换）变化时不该再解析一遍。
@@ -130,11 +105,6 @@ const PreviewWorkspace = ({
     enabled: bodyReady,
     headings: outline,
   });
-  /** 目录高亮用的是全量目录的下标；筛选时把可见下标翻回去 */
-  const sidebarActive =
-    alignment && activeIndex >= 0
-      ? (alignment.reverse[activeIndex] ?? -1)
-      : activeIndex;
 
   /** 换篇 / 重新打开时正文回到顶部：不复位就把上一篇的位置留给下一篇 */
   useDocumentScrollReset(bodyRef, title, opened);
@@ -182,32 +152,25 @@ const PreviewWorkspace = ({
       return;
     }
 
-    /** 目录下标是全量那份：筛选时先翻成可见正文的下标，被筛掉的直接不动作 */
-    const target = alignment ? (alignment.indices[index] ?? -1) : index;
-
-    if (target < 0) {
-      return;
-    }
-
     if (editing.editing && !showingDraftPreview) {
-      if (editorHandleRef.current?.revealHeading(target)) {
-        setEditorActiveIndex(target);
+      if (editorHandleRef.current?.revealHeading(index)) {
+        setEditorActiveIndex(index);
       }
 
       return;
     }
 
-    scrollToHeading(bodyRef.current, target);
+    scrollToHeading(bodyRef.current, index);
   };
 
   return (
     <div className={styles.workspace}>
       <OutlineNav
-        activeIndex={bodyReady ? sidebarActive : editorActiveIndex}
+        activeIndex={bodyReady ? activeIndex : editorActiveIndex}
         disabled={!opened || loading}
+        forceVisible={filtering && outline.length > 0}
         fullscreen={fullscreen}
-        headings={sidebarHeadings}
-        hiddenIndices={hiddenIndices}
+        headings={outline}
         onSelect={jumpToHeading}
       />
       <div className={styles.pane}>
