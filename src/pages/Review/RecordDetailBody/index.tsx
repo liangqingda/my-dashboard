@@ -194,6 +194,7 @@ const RecordDetailBody = ({ recordId }: RecordDetailBodyProps) => {
         </Stack>
       ) : null}
       <Stack gap={4}>
+        {field('记录 ID', detail.id)}
         {field('掌握分', formatScore(detail.masteryScore))}
         {field('复习次数', String(detail.reviewCount))}
         {field('学习次数', String(detail.learnedCount))}
