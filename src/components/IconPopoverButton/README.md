@@ -7,7 +7,7 @@
 | --- | --- |
 | 位置 | 图标下方就近弹出：`position="bottom-end"`、`offset={8}`、带箭头、`withinPortal` |
 | 尺寸 | 与标题栏图标同档：`ActionIcon size="sm" variant="subtle"`；图标尺寸由调用方给 |
-| props | `icon`（图标节点）、`label`（`aria-label` 与默认 tooltip 文案）、`hint`（覆盖 tooltip，需要写进当前状态时传）、`active`（生效时常态用主色，且没传 `hint` 时 tooltip 追加「（已生效）」）、`opened` / `onChange`、`width`（默认 272）、`children`（弹层内容，内边距 12px） |
+| props | `icon`（图标节点）、`label`（`aria-label` 与默认 tooltip 文案）、`hint`（覆盖 tooltip，需要写进当前状态时传）、`active`（生效时常态用主色，且没传 `hint` 时 tooltip 追加「（已生效）」）、`shortcut`（触发该按钮的快捷键，tooltip 末尾追加「（键位）」；没有快捷键就不传）、`opened` / `onChange`、`width`（默认 272）、`children`（弹层内容，内边距 12px） |
 | 不负责 | 开合时机（换篇、切视图、关弹窗时收起由调用方管）、Esc 归属、持久化 |
 
 ## 字段间距（`constants.ts`）

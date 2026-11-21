@@ -6,7 +6,7 @@
 
 | 项 | 约定 |
 | --- | --- |
-| props | `label`（tooltip / aria-label 文案，生效时自动加「（已生效）」）、`active`（生效时图标换主色）、`opened` / `onChange`、`width`（放日历等宽控件时放宽，默认 272） |
+| props | `label`（tooltip / aria-label 文案，生效时自动加「（已生效）」）、`active`（生效时图标换主色）、`shortcut`（触发按钮的快捷键，tooltip 末尾追加键位；没有就不传）、`opened` / `onChange`、`width`（放日历等宽控件时放宽，默认 272） |
 | 内容 | `children` 直接塞进弹层面板（内边距 12px，不预设控件样式） |
 | 不负责 | 开合时机（换篇、切视图、关弹窗时收起由调用方管）、Esc 归属、条件持久化 |
 

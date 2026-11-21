@@ -72,26 +72,30 @@ const TitleBar = ({
         documentActionsVisible && styles.titleRowBeforeClose,
       )}
     >
-      <ActionIcon
-        aria-label="上一篇"
-        className={styles.stepButton}
-        disabled={!onPrevious || editing.editing}
-        onClick={onPrevious ?? undefined}
-        size="sm"
-        variant="subtle"
-      >
-        <IconChevronLeft size={STEP_ICON_SIZE} stroke={ICON_STROKE} />
-      </ActionIcon>
-      <ActionIcon
-        aria-label="下一篇"
-        className={styles.stepButton}
-        disabled={!onNext || editing.editing}
-        onClick={onNext ?? undefined}
-        size="sm"
-        variant="subtle"
-      >
-        <IconChevronRight size={STEP_ICON_SIZE} stroke={ICON_STROKE} />
-      </ActionIcon>
+      <Tooltip label="上一篇（[ / ←）" withArrow>
+        <ActionIcon
+          aria-label="上一篇"
+          className={styles.stepButton}
+          disabled={!onPrevious || editing.editing}
+          onClick={onPrevious ?? undefined}
+          size="sm"
+          variant="subtle"
+        >
+          <IconChevronLeft size={STEP_ICON_SIZE} stroke={ICON_STROKE} />
+        </ActionIcon>
+      </Tooltip>
+      <Tooltip label="下一篇（] / →）" withArrow>
+        <ActionIcon
+          aria-label="下一篇"
+          className={styles.stepButton}
+          disabled={!onNext || editing.editing}
+          onClick={onNext ?? undefined}
+          size="sm"
+          variant="subtle"
+        >
+          <IconChevronRight size={STEP_ICON_SIZE} stroke={ICON_STROKE} />
+        </ActionIcon>
+      </Tooltip>
       {position ? (
         <span className={styles.position}>
           {position.index} / {position.total}
@@ -110,7 +114,7 @@ const TitleBar = ({
           {relativePath ? (
             <CopyIconButton
               iconSize={ICON_SIZE}
-              label="复制相对路径"
+              label="复制相对路径（C）"
               size="sm"
               text={relativePath}
             />
@@ -122,6 +126,7 @@ const TitleBar = ({
               label="筛选正文"
               onChange={(next) => onPanelChange(next ? 'filter' : null)}
               opened={panel === 'filter'}
+              shortcut="S"
             >
               {filter.render({
                 close: () => onPanelChange(null),
@@ -135,6 +140,7 @@ const TitleBar = ({
               onChange={(next) => onPanelChange(next ? 'font' : null)}
               opened={panel === 'font'}
               scale={fontScale}
+              shortcut="A"
             />
           )}
           {/* 同文档链接打开方式：图标按钮 + 就近弹层，值同样是跨篇记住的阅读偏好 */}
@@ -150,7 +156,7 @@ const TitleBar = ({
           ) : null}
           {/* 刷新预览内容：正文从盘里读时才有效，编辑中刷了只会把草稿盖掉 */}
           {onRefresh ? (
-            <Tooltip label="刷新预览内容" withArrow>
+            <Tooltip label="刷新预览内容（R）" withArrow>
               <ActionIcon
                 aria-label="刷新预览内容"
                 className={styles.refreshButton}
@@ -164,7 +170,7 @@ const TitleBar = ({
             </Tooltip>
           ) : null}
           <Tooltip
-            label={fullscreen ? '退出全屏' : '全屏预览'}
+            label={fullscreen ? '退出全屏（F）' : '全屏预览（F）'}
             withArrow
           >
             <ActionIcon
@@ -183,7 +189,10 @@ const TitleBar = ({
           </Tooltip>
           {/* 删除这篇文档：调用方给了删除能力才出；与同排图标同色（常态弱色、hover 主色） */}
           {onRemove ? (
-            <HeaderIconAction label="删除这篇文档" onClick={onRemove}>
+            <HeaderIconAction
+              label="删除这篇文档（Delete）"
+              onClick={onRemove}
+            >
               <IconTrash size={ICON_SIZE} stroke={ICON_STROKE} />
             </HeaderIconAction>
           ) : null}

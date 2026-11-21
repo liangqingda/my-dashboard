@@ -24,9 +24,11 @@ const IconPopoverButton = ({
   label,
   onChange,
   opened,
+  shortcut,
   width = DROPDOWN_WIDTH,
 }: IconPopoverButtonProps) => {
-  const tooltip = hint ?? (active ? `${label}（已生效）` : label);
+  const stateText = hint ?? (active ? `${label}（已生效）` : label);
+  const tooltip = shortcut ? `${stateText}（${shortcut}）` : stateText;
 
   return (
     <Popover

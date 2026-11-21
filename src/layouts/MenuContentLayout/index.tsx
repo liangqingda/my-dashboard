@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router';
 import { ActionIcon, Title, Tooltip } from '@mantine/core';
 import { IconMaximize, IconMinimize, IconRefresh } from '@tabler/icons-react';
@@ -8,6 +8,7 @@ import { cx } from '@/utils/cx';
 import { FLAG_CODEC } from '@/utils/local-storage';
 import { pageFullscreenKey } from '@/utils/page-fullscreen';
 
+import { usePageActionShortcuts } from './hooks/usePageActionShortcuts';
 import { usePageRefresh } from './hooks/usePageRefresh';
 import type { MenuContentLayoutProps } from './types';
 
@@ -22,7 +23,7 @@ import styles from './index.scss';
  * 刷新通知当前页面重新取数，等取数结束再提示「已刷新 / 失败」，点了立刻转圈给出进行中的反馈；
  * 全屏状态按当前路由记在 localStorage（各菜单页互不影响），刷新页面重新进入后保持上次的状态，
  * 只把页面根元素铺满视口（覆盖顶栏与侧栏），页面内部结构、内容与正常状态完全一致，
- * 点了再点或按 Esc 退出。
+ * 点了再点、按 `F` 或全屏时按 Esc 退出。刷新按 `R`、全屏按 `F` 有同一套快捷键。
  * 页面自己的按钮（如服务页「重启 agent」）通过 `actions` 传入，排在这两个按钮之前。
  */
 const MenuContentLayout = ({
@@ -40,6 +41,16 @@ const MenuContentLayout = ({
     pageFullscreenKey(pathname),
     FLAG_CODEC,
   );
+
+  /** 页面容器：快捷键只响应落点在本页内的按键，弹窗等浮层接管焦点时放行 */
+  const pageRef = useRef<HTMLDivElement | null>(null);
+
+  /** 页面级快捷键：`R` 刷新、`F` 切换全屏，与 header 按钮走同一条回调 */
+  usePageActionShortcuts({
+    containerRef: pageRef,
+    onRefresh: refresh,
+    onToggleFullscreen: () => setFullscreen(!fullscreen),
+  });
 
   // 全屏期间才监听 Esc：只在铺满时才有「退出」语义，平时不抢按键
   useEffect(() => {
@@ -65,6 +76,7 @@ const MenuContentLayout = ({
         fill && styles.fill,
         fullscreen && styles.fullscreen,
       )}
+      ref={pageRef}
     >
       <div className={styles.titleBar}>
         <Title className={styles.title} order={2}>
@@ -72,7 +84,7 @@ const MenuContentLayout = ({
         </Title>
         <div className={styles.actions}>
           {actions}
-          <Tooltip label="刷新当前页面" withArrow>
+          <Tooltip label="刷新当前页面（R）" withArrow>
             <ActionIcon
               aria-label="刷新当前页面"
               className={styles.iconButton}
@@ -85,7 +97,9 @@ const MenuContentLayout = ({
             </ActionIcon>
           </Tooltip>
           <Tooltip
-            label={fullscreen ? '退出全屏（Esc）' : '全屏查看当前页面'}
+            label={
+              fullscreen ? '退出全屏（Esc / F）' : '全屏查看当前页面（F）'
+            }
             withArrow
           >
             <ActionIcon

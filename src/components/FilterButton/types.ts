@@ -12,6 +12,8 @@ export type FilterButtonProps = {
   opened: boolean;
   /** tooltip 与 aria-label 的文案（如「筛选正文」「筛选笔记」），生效时会追加「（已生效）」 */
   label: string;
+  /** 触发该按钮的快捷键（如 `S`）：tooltip 末尾追加键位；没有快捷键就不传 */
+  shortcut?: string;
   /** 弹层宽度；内容里放日历这类宽控件时由调用方放宽 */
   width?: number;
 };

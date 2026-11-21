@@ -32,26 +32,30 @@ const AnchorBlockHeader = ({
   title,
 }: AnchorBlockHeaderProps) => (
   <div className={styles.titleRow}>
-    <ActionIcon
-      aria-label="上一个链接区块"
-      className={styles.stepButton}
-      disabled={!onPrevious}
-      onClick={onPrevious ?? undefined}
-      size="sm"
-      variant="subtle"
-    >
-      <IconChevronLeft size={STEP_ICON_SIZE} stroke={ICON_STROKE} />
-    </ActionIcon>
-    <ActionIcon
-      aria-label="下一个链接区块"
-      className={styles.stepButton}
-      disabled={!onNext}
-      onClick={onNext ?? undefined}
-      size="sm"
-      variant="subtle"
-    >
-      <IconChevronRight size={STEP_ICON_SIZE} stroke={ICON_STROKE} />
-    </ActionIcon>
+    <Tooltip label="上一个链接区块（[ / ←）" withArrow>
+      <ActionIcon
+        aria-label="上一个链接区块"
+        className={styles.stepButton}
+        disabled={!onPrevious}
+        onClick={onPrevious ?? undefined}
+        size="sm"
+        variant="subtle"
+      >
+        <IconChevronLeft size={STEP_ICON_SIZE} stroke={ICON_STROKE} />
+      </ActionIcon>
+    </Tooltip>
+    <Tooltip label="下一个链接区块（] / →）" withArrow>
+      <ActionIcon
+        aria-label="下一个链接区块"
+        className={styles.stepButton}
+        disabled={!onNext}
+        onClick={onNext ?? undefined}
+        size="sm"
+        variant="subtle"
+      >
+        <IconChevronRight size={STEP_ICON_SIZE} stroke={ICON_STROKE} />
+      </ActionIcon>
+    </Tooltip>
     {position ? (
       <span className={styles.position}>
         {position.index} / {position.total}

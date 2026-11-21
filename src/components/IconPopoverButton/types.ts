@@ -11,6 +11,8 @@ export type IconPopoverButtonProps = {
   label: string;
   /** 覆盖 tooltip 文案：需要把当前状态写进提示时传（如「正文字号（+2px）」） */
   hint?: string;
+  /** 触发该按钮的快捷键（如 `S`）：tooltip 文案末尾追加「（键位）」；没有快捷键就不传 */
+  shortcut?: string;
   /** 是否有条件生效：为真时图标常态用主色；没传 hint 时 tooltip 追加「（已生效）」 */
   active?: boolean;
   /** 弹层是否打开 */

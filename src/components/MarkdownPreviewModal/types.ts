@@ -52,6 +52,8 @@ export type ProseFontControlProps = {
   opened: boolean;
   /** 弹层开合（点图标、点外部、Esc 都会走到这里） */
   onChange: (opened: boolean) => void;
+  /** 触发字号面板的快捷键（如 `A`）：tooltip 末尾追加键位；没有快捷键就不传 */
+  shortcut?: string;
 };
 
 /** header 的就近弹层：同一时刻只开一块 */

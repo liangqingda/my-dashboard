@@ -22,6 +22,7 @@ const FilterButton = ({
   label,
   onChange,
   opened,
+  shortcut,
   width,
 }: FilterButtonProps) => (
   <IconPopoverButton
@@ -30,6 +31,7 @@ const FilterButton = ({
     label={label}
     onChange={onChange}
     opened={opened}
+    shortcut={shortcut}
     width={width}
   >
     {children}

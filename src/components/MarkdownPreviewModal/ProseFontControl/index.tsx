@@ -23,6 +23,7 @@ const ProseFontControl = ({
   onChange,
   opened,
   scale,
+  shortcut,
 }: ProseFontControlProps) => {
   const { canDecrease, canIncrease, decrease, increase, offset, reset } = scale;
   const valueText = offset === 0 ? '默认' : `${offset > 0 ? '+' : ''}${offset}px`;
@@ -35,6 +36,7 @@ const ProseFontControl = ({
       label="调节正文字号"
       onChange={onChange}
       opened={opened}
+      shortcut={shortcut}
       width={DROPDOWN_WIDTH}
     >
       <Stack gap={10}>
