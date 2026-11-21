@@ -73,7 +73,6 @@ const RecordsTable = memo(
               <Tooltip label="删除这条记录" withArrow>
                 <ActionIcon
                   aria-label={`删除「${record.title}」`}
-                  className={styles.deleteButton}
                   color="red"
                   onClick={(event) => {
                     // 整行是打开入口：点删除只删，不打开详情

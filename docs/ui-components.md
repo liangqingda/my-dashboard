@@ -85,6 +85,10 @@
 `FreeSelectField` / `FreePanelFooter` 的契约（props、锁定项的取值理由、坑）写在各自目录的
 `README.md`——判据：只有改它的人才需要读 → 跟代码走。`FreeTable` 的约定就在本文件（它是
 样式基线的示例）：props 透传 Mantine `TableProps`，`compact` 只收紧内边距。
+单元格默认 `vertical-align: top`（编辑器那类多行内容要贴顶）；**单行内容 + 徽标 / 图标按钮的
+列表表格**在自己页面样式里加 `.row td { vertical-align: middle }`——行高被最高的图标按钮撑起来，
+贴顶会让文字明显偏上、行底留一截空白；操作列的图标按钮用 `th/td` 的 `text-align` 居中
+（`margin: auto` 在表格单元格里对 `inline-flex` 的 `ActionIcon` 不生效）。
 
 **这套「哪些提公共、提到哪一层」的判据不在本文件**，见 `docs/reuse-boundaries.md`：
 本文件管「UI 形态怎么选」，那份管「UI 与逻辑各自该不该提公共」。

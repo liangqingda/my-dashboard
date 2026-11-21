@@ -15,6 +15,14 @@
 
 .actionWidth {
   width: 3.5rem;
+  text-align: center;
+}
+
+/* 单元格垂直居中：基础表格默认贴顶（编辑器多行单元格要用），但这一页每格都是
+   单行的标题 / 徽标 / 时间 / 图标，行高被最高的图标按钮撑起来，贴顶会让文字偏上、
+   行底多出一截空白 */
+.row td {
+  vertical-align: middle;
 }
 
 /* 知识点单行截断，放不下时由 TruncatedText 在被指到时弹全称 */
@@ -32,11 +40,6 @@
   font-size: 0.74rem;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-}
-
-/* 删除按钮靠右，不跟着左边内容走 */
-.deleteButton {
-  margin-inline-start: auto;
 }
 
 /* 整行都是打开入口：行内任意位置（含分类、时间）点了就开详情 */
