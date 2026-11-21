@@ -3,53 +3,8 @@
  * 路径不塞进标题里：文件名一长就会把「？」挤到下一行，独立成一行 monospace 更好读。
  */
 
-/* 框体跟页面同一张纸：Mantine 默认那层灰在暗色下与工作台的墨绿底不是一家 */
-.content {
-  background: var(--app-surface);
-}
-
-/*
- * header 走自己的排版：上内边距 20px、左右 20px，标题块有两行所以顶部对齐。
- * 用 `.content .header` 双类名压过 Mantine 的 16px 内边距与 60px min-height，
- * 不依赖样式表的加载顺序。
- */
-.content .header {
-  align-items: flex-start;
-  min-height: 0;
-  padding: 20px 20px 0;
-  background: transparent;
-}
-
-/* 标题块占满剩余宽度，右侧留给关闭按钮 */
-.content .title {
-  flex: 1;
-  min-width: 0;
-  margin: 0;
-  line-height: 1.45;
-}
-
-/* 正文内边距：与 header 左右对齐，底部收得比顶部紧一点 */
-.content .body {
-  padding: 14px 20px 18px;
-}
-
-/*
- * 标题与路径的字号 / 行高写在这里，选择器带上 `.content .title` 前缀：
- * Mantine 的 Text 用自己的类把字号 / 行高写在元素上，同权重的单类名会被它的加载顺序左右。
- */
-.content .title .headTitle {
-  color: var(--app-ink);
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 1.45;
-}
-
-/* 路径：monospace + 弱色，长路径按任意位置折行，不会撑破标题块 */
-.content .title .headPath {
-  color: var(--app-ink-faint);
-  font-family: var(--mantine-font-family-monospace);
-  font-size: 12px;
-  line-height: 1.6;
+/* 标题第二行（被删文档的路径）：长路径按任意位置折行，不撑破标题块 */
+.dataPath {
   overflow-wrap: anywhere;
 }
 
@@ -57,7 +12,7 @@
  * 说明块：软底 + 细边，读起来是一段引注而不是又一段正文。
  * 说明文案由调用方给，这里只负责它和下面勾选项、按钮的分界。
  */
-.body .description {
+.description {
   padding: 12px 14px;
   border: 1px solid var(--app-line);
   border-radius: 10px;

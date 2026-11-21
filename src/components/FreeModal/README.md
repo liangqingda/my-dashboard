@@ -57,6 +57,11 @@ const { fullscreen, toggle } = useModalFullscreen(storageKey);
   `my-dashboard:review:fullscreen`）：md 预览与记录详情各记各的，互不干扰；
 - 状态由调用方持有，用来参与正文排版；`Esc` 永远关弹窗（连带退出全屏），不是切全屏。
 
+## 不是所有弹窗都用它
+
+高度随内容的普通弹窗（确认、说明、短表单、列表）走 `FreeDialog`——那扇固定 82dvh、
+翻篇与全屏齐全，套在小内容上会变成一块空荡荡的大窗。判据见 `docs/ui-components.md`。
+
 ## 基于它封装的业务弹窗
 
 - `MarkdownPreviewModal`：`DocumentActions` → `headerActions`、编辑流程 → `headerSecondary`、

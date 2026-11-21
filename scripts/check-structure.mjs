@@ -9,7 +9,8 @@
  *  4. 页面内相对导入不得跨出该页面目录，跨目录一律用 @/ 别名
  *  5. 菜单页（由 Sidebar navItems + App.tsx 路由自动解析）必须用 src/layouts/MenuContentLayout
  *     包内容，页面样式不得再定义 .page
- *  6. 入口文档 AGENTS.md 只放硬约束与索引：行数不超上限，docs/ 下的细则与索引一一对应，
+ *  6. Modal 只许出现在封装壳（FreeModal / FreeDialog）里，业务侧不得直连 Mantine Modal
+ *  7. 入口文档 AGENTS.md 只放硬约束与索引：行数不超上限，docs/ 下的细则与索引一一对应，
  *     索引里的文档路径（含跟代码走的组件 / hook README）必须真实存在；
  *     CLAUDE.md 只能是指向它的软链（两份内容会漂移）
  *
@@ -397,10 +398,42 @@ function checkEntryDocs() {
   }
 }
 
+/**
+ * Modal 只许出现在封装壳里：`FreeModal`（阅读窗）/ `FreeDialog`（普通对话窗）。
+ * 业务侧直接 import Mantine `Modal` 就等于绕开框体、header、键位与遮罩那一套基线，
+ * 迟早出现「这扇窗和别的窗不一样」——这里直接拦成结构错误。
+ */
+function checkModalShells() {
+  const allowDirs = [
+    path.join(SRC, 'components', 'FreeModal'),
+    path.join(SRC, 'components', 'FreeDialog'),
+  ];
+
+  for (const file of collectFiles(SRC, CODE_EXTS)) {
+    const allowed = allowDirs.some((dir) => file.startsWith(`${dir}${path.sep}`));
+
+    if (allowed) continue;
+
+    const lines = readFileSync(file, 'utf8').split('\n');
+
+    lines.forEach((line, index) => {
+      if (
+        line.includes("from '@mantine/core'") &&
+        /\bModal\b/.test(line)
+      ) {
+        errors.push(
+          `[结构] ${path.relative(ROOT, file)}:${index + 1} 直接引用了 Mantine Modal：弹窗一律走 @/components/FreeModal（阅读类）或 @/components/FreeDialog（普通弹窗）`,
+        );
+      }
+    });
+  }
+}
+
 checkNoFeatures();
 checkPages();
 checkMenuPages();
 checkEntryDocs();
+checkModalShells();
 
 if (errors.length > 0) {
   console.error('[×] 结构检查未通过：');
@@ -408,4 +441,6 @@ if (errors.length > 0) {
   process.exit(1);
 }
 
-console.log('[✓] 结构检查通过：pages 目录组织、菜单页布局与入口文档索引符合约定');
+console.log(
+  '[✓] 结构检查通过：pages 目录组织、菜单页布局、Modal 封装壳与入口文档索引符合约定',
+);

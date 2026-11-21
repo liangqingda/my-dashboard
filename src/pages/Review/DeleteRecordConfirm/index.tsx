@@ -1,4 +1,6 @@
-import { Button, Group, Modal, Stack, Text } from '@mantine/core';
+import { Button, Group, Stack, Text } from '@mantine/core';
+
+import FreeDialog from '@/components/FreeDialog';
 
 import type { DeleteRecordConfirmProps } from './types';
 
@@ -14,12 +16,14 @@ const DeleteRecordConfirm = ({
   onCancel,
   onConfirm,
 }: DeleteRecordConfirmProps) => (
-  <Modal
-    centered
+  <FreeDialog
+    closeButton={!loading}
+    closeLabel="关闭删除确认"
     closeOnClickOutside={!loading}
+    closeOnEscape={!loading}
     onClose={onCancel}
     opened={record !== null}
-    size="sm"
+    size={380}
     title="删除记录"
   >
     <Stack gap="md">
@@ -39,7 +43,7 @@ const DeleteRecordConfirm = ({
         </Button>
       </Group>
     </Stack>
-  </Modal>
+  </FreeDialog>
 );
 
 export default DeleteRecordConfirm;

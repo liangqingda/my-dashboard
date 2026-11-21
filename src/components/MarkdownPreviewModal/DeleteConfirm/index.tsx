@@ -13,7 +13,9 @@
  * 一项都没勾时没有可删的东西，删除按钮直接不可点。
  */
 
-import { Button, Checkbox, Group, Modal, Text, Tooltip } from '@mantine/core';
+import { Button, Checkbox, Group, Text, Tooltip } from '@mantine/core';
+
+import FreeDialog from '@/components/FreeDialog';
 
 import type { DeleteConfirmProps } from '../types';
 
@@ -36,30 +38,29 @@ const DeleteConfirm = ({
   const nothingChecked = choices !== undefined && checkedKeys.length === 0;
 
   return (
-    <Modal
-      centered
-      classNames={{
-        body: styles.body,
-        content: styles.content,
-        header: styles.header,
-        title: styles.title,
-      }}
-      closeButtonProps={{ 'aria-label': '关闭删除确认' }}
+    <FreeDialog
+      closeButton={!loading}
+      closeLabel="关闭删除确认"
       closeOnClickOutside={!loading}
       closeOnEscape={!loading}
       onClose={onCancel}
       opened={opened}
-      overlayProps={{ backgroundOpacity: 0.4, blur: 2 }}
-      radius="md"
       size={420}
       title={
         <div>
-          <Text className={styles.headTitle}>删除这个文档？</Text>
-          <Text className={styles.headPath}>{title}</Text>
+          <Text fw={600} size="sm">
+            删除这个文档？
+          </Text>
+          <Text
+            c="dimmed"
+            className={styles.dataPath}
+            ff="var(--mantine-font-family-monospace)"
+            size="xs"
+          >
+            {title}
+          </Text>
         </div>
       }
-      transitionProps={{ duration: 140, transition: 'fade' }}
-      withCloseButton={!loading}
     >
       <Text className={styles.description}>{text}</Text>
       {/* 勾选项：紧凑一行，细节靠 hover 的 tooltip 补，不占正文位置 */}
@@ -112,7 +113,7 @@ const DeleteConfirm = ({
           </Button>
         </Group>
       </div>
-    </Modal>
+    </FreeDialog>
   );
 };
 

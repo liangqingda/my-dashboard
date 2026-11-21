@@ -14,7 +14,13 @@
 | 长得像文字、或整行 / 整块可点的入口 | `UnstyledButton` |
 | 表格 | `FreeTable`（业务再包一层，见下文） |
 | 阅读类弹窗（文档预览 / 条目详情） | `FreeModal`（业务弹窗基于它封装，见下文） |
-| 弹窗 | `Modal`；任何 Markdown / 文档预览一律走 `MarkdownPreviewModal`（不自己接渲染器，行为见 `src/components/MarkdownPreviewModal/README.md`） |
+| 普通弹窗（确认 / 说明 / 短表单 / 列表） | `FreeDialog`（业务弹窗基于它封装，见下文） |
+| 任何 Markdown / 文档预览 | `MarkdownPreviewModal`，不自己接渲染器（行为见 `src/components/MarkdownPreviewModal/README.md`） |
+
+**弹窗只走这两扇壳**：`Modal` **只允许**出现在 `src/components/FreeModal` 与
+`src/components/FreeDialog` 内部，页面 / 业务组件一律 `@/components/FreeModal` 或
+`@/components/FreeDialog`，不 import Mantine `Modal`、不 import `Modal.Root` 拼 header。
+`scripts/check-structure.mjs` 会扫这一条，命中即 lint 失败——判断「该用哪扇」见下文两扇窗的分工表。
 | 单行输入 | `TextInput` |
 | 多行输入（普通表单） | `Textarea` |
 | 下拉单选 / 多选 | `Select` / `MultiSelect` |
@@ -68,8 +74,9 @@
 3. props 里出现只有某一页才成立的语义（某页的筛选项、某页的文档结构）？→ 它不该在
    `src/components`，回 `src/pages/<Page>/`（判据见 `docs/reuse-boundaries.md` 的形态 ④）。
 
-`FreeModal` 是 1 的典型例子：它包的就是 Mantine `Modal`，锁的是框体 / header / 正文区这套阅读窗外观；
-`MarkdownPreviewModal`、`Review/RecordDetailModal` 这类业务弹窗**只能基于它封装**，不再各自拼 `Modal`。
+`FreeModal` / `FreeDialog` 是 1 的典型例子：包的就是 Mantine `Modal`，锁的是框体 / header / 正文区这套外观；
+`MarkdownPreviewModal`、`Review/RecordDetailModal` 这类阅读弹窗基于 `FreeModal` 封装，
+删除确认、快捷命令、最近操作这类普通弹窗基于 `FreeDialog` 封装，**谁都不再各自拼 `Modal`**。
 `FreePanelFooter` 是 1 的边缘案例，归类按「锁定了什么外观」定：它锁的是「面板底部布局 +
 `Button` subtle 小号」这套外观（不是某个 Mantine 组件），所以留 `Free`；同理，新写的面板级排布件
 只要**跨页面复用同一套长相**就按这一类走，否则当能力件或留页面。
@@ -84,9 +91,10 @@
 | `FreeTable` | Mantine `Table` + 项目外观：边框、表头、吸顶、行 hover；取分段统一走 `Thead` / `Tbody` / `Tr` / `Th` / `Td` | 不接分页、排序、虚拟滚动（那是业务组件的事） |
 | `FreeSelectField` | 弹层面板里的字段组：标题 + 一档下拉 + 一行口径说明；尺寸档、字段间距、下拉不进门户 | 选项、当前值、说明文案、编解码、选中后的状态 |
 | `FreePanelFooter` | 弹层面板底部一行：左侧边界说明 + 右侧「重置」（组件库 `Button` subtle 小号） | 说明文案、置灰口径、重置动作 |
+| `FreeDialog` | 普通弹窗外壳：框体与遮罩、随内容的高度（上限 `88dvh`、正文自己滚）、紧凑 header（标题 + `headerActions` + 关闭按钮）、`size` 档位 | 标题文案、右上角操作的能力、正文内容与按钮排版（取消 / 确认写在正文末尾） |
 | `FreeModal` | 阅读类弹窗外壳：框体与遮罩、紧凑 header（顺序为翻页 → 标题 → 第一组操作 → 全屏 → 末尾位 → 第二组操作）、`82dvh` 正文区、全屏开关按钮；全屏偏好走它的 `useModalFullscreen(storageKey)` | 标题文案、翻页数据、各组按钮的能力、正文内容与滚动方式 |
 
-`FreeSelectField` / `FreePanelFooter` / `FreeModal` 的契约（props、锁定项的取值理由、坑）写在各自目录的
+`FreeSelectField` / `FreePanelFooter` / `FreeModal` / `FreeDialog` 的契约（props、锁定项的取值理由、坑）写在各自目录的
 `README.md`——判据：只有改它的人才需要读 → 跟代码走。`FreeTable` 的约定就在本文件（它是
 样式基线的示例）：props 透传 Mantine `TableProps`，`compact` 只收紧内边距。
 单元格默认 `vertical-align: top`（编辑器那类多行内容要贴顶）；**单行内容 + 徽标 / 图标按钮的
@@ -121,9 +129,22 @@ root 容器并带上自己的高度 / 内边距 / 边框体系，全部覆盖反
 - 必须在组件里写一行注释说明理由（写不清的就是「瞎写」）；
 - 只限编辑器表层，不扩散到普通表单——表单、搜索框、设置项一律用 `TextInput` / `Select` 等。
 
+## 同族组件：封了壳就只走壳
+
+`Modal` 是最容易漏的一个，规则对**所有** `FreeXxx` 同样成立：既然已经封了 `FreeTable` /
+`FreeSelectField` / `FreePanelFooter`，业务侧就只传数据与插槽，不再 import 底层的
+Mantine `Table` / `Select` / 自己拼一套底栏——两套外观迟早会漂，而且改基线时要改两处。
+
+- 已封壳的场景里出现底层组件 → 算缺陷，改成壳 + 缺 props 就先给壳加插槽；
+- 还没封、但**第二处**要同款外观 / 行为 → 按上文三档判据封 `FreeXxx`（连同键位、开合这类默认行为一起收）；
+- 只有一处用、没有第二处同款 → 继续直接用组件库，不造薄壳。
+
 ## 自检
 
 ```bash
+# 弹窗只能出现在两扇壳里（check-structure 已拦，这里是自查用）
+grep -rn "Modal" --include="*.tsx" src | grep "from '@mantine/core'"
+
 grep -rn "<table\|<button\|<input\|<select" --include="*.tsx" src
 ```
 
