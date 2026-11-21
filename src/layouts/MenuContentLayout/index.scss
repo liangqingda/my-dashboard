@@ -56,6 +56,29 @@
   color: var(--app-accent);
 }
 
+/* 刷新进行中：图标原地旋转。不要换成 ActionIcon 的 loading Loader——
+   那会把图标藏起来、再把按钮压成 disabled 低透明度，看起来就像按钮消失了 */
+.spinning svg {
+  animation: icon-spin 900ms linear infinite;
+}
+
+@keyframes icon-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 系统开启「减少动态效果」时不转，改用强调色说明正在刷新 */
+@media (prefers-reduced-motion: reduce) {
+  .spinning svg {
+    animation: none;
+  }
+
+  .spinning {
+    color: var(--app-accent);
+  }
+}
+
 .body {
   display: flex;
   flex: 1 1 auto;

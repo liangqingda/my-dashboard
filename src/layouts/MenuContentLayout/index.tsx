@@ -86,9 +86,12 @@ const MenuContentLayout = ({
           {actions}
           <Tooltip label="刷新当前页面（R）" withArrow>
             <ActionIcon
+              aria-busy={refreshing || undefined}
               aria-label="刷新当前页面"
-              className={styles.iconButton}
-              loading={refreshing}
+              className={cx(
+                styles.iconButton,
+                refreshing && styles.spinning,
+              )}
               onClick={refresh}
               size="sm"
               variant="subtle"
