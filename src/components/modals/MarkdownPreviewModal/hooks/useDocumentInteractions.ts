@@ -31,6 +31,8 @@ import type { DetailsBlockBehaviorState } from './useDetailsBlockBehavior';
 import { useDetailsBlockBehavior } from './useDetailsBlockBehavior';
 import type { DetailsBlockNavigationState } from './useDetailsBlockNavigation';
 import { useDetailsBlockNavigation } from './useDetailsBlockNavigation';
+import type { DetailsNavScopeState } from './useDetailsNavScope';
+import { useDetailsNavScope } from './useDetailsNavScope';
 
 /** 正文交互的入参 */
 export type DocumentInteractionsParams = {
@@ -53,8 +55,9 @@ export type DocumentInteractionsState = {
   /** 同文档链接的两份跨篇偏好 */
   anchorLink: AnchorLinkBehaviorState;
   anchorScope: AnchorNavScopeState;
-  /** 折叠块行为的跨篇偏好 */
+  /** 折叠块的两份跨篇偏好：点了之后的行为、子预览的切换口径 */
   detailsBlock: DetailsBlockBehaviorState;
+  detailsScope: DetailsNavScopeState;
   /** 链接区块子预览 */
   anchorBlock: AnchorBlockNavigationState;
   /** 折叠块子预览 */
@@ -98,6 +101,8 @@ export const useDocumentInteractions = ({
   const anchorScope = useAnchorNavScope();
   /** 折叠块里那段内容的点击行为：同样是跨篇记住的阅读偏好 */
   const detailsBlock = useDetailsBlockBehavior();
+  /** 折叠块子预览的前后切换口径：同上，跨篇记住 */
+  const detailsScope = useDetailsNavScope();
 
   /**
    * 折叠块子预览的开合与正文 summary 点击：它开在主预览上面，
@@ -145,6 +150,7 @@ export const useDocumentInteractions = ({
     detailBlock,
     detailBlocks,
     detailsBlock,
+    detailsScope,
     handleBodyClick,
     subPreviewOpen:
       anchorBlock.index !== null || detailBlock.index !== null,

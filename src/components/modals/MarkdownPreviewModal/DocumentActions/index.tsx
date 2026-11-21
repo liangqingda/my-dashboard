@@ -27,6 +27,7 @@ const DocumentActions = ({
   anchorBehavior,
   anchorScope,
   detailsBehavior,
+  detailsScope,
   filter,
   fontScale,
   hasAnchorLinks,
@@ -36,6 +37,7 @@ const DocumentActions = ({
   onAnchorBehaviorChange,
   onAnchorScopeChange,
   onDetailsBehaviorChange,
+  onDetailsScopeChange,
   onPanelChange,
   onRefresh,
   panel,
@@ -85,12 +87,14 @@ const DocumentActions = ({
         anchorBehavior={anchorBehavior}
         anchorScope={anchorScope}
         detailsBehavior={detailsBehavior}
+        detailsScope={detailsScope}
         hasAnchorLinks={hasAnchorLinks}
         hasDetailBlocks={hasDetailBlocks}
         onAnchorBehaviorChange={onAnchorBehaviorChange}
         onAnchorScopeChange={onAnchorScopeChange}
         onChange={(next) => onPanelChange(next ? 'interaction' : null)}
         onDetailsBehaviorChange={onDetailsBehaviorChange}
+        onDetailsScopeChange={onDetailsScopeChange}
         opened={panel === 'interaction'}
       />
     ) : null}

@@ -3,6 +3,7 @@ import type {
   AnchorLinkBehavior,
   AnchorNavScope,
   DetailsBlockBehavior,
+  DetailsNavScope,
   PreviewPanel,
 } from '../types';
 import type {
@@ -30,6 +31,10 @@ export type DocumentActionsProps = {
   detailsBehavior: DetailsBlockBehavior;
   /** 换一种折叠块行为（跨篇记住） */
   onDetailsBehaviorChange: (behavior: DetailsBlockBehavior) => void;
+  /** 折叠块子预览的前后切换口径 */
+  detailsScope: DetailsNavScope;
+  /** 换一种折叠块切换口径（跨篇记住） */
+  onDetailsScopeChange: (scope: DetailsNavScope) => void;
   /** 文档里有没有同文档锚点链接 */
   hasAnchorLinks: boolean;
   /** 文档里有没有折叠块 */

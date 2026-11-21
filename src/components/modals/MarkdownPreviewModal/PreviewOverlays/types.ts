@@ -3,6 +3,7 @@ import type { DetailsBlockNavigationState } from '../hooks/useDetailsBlockNaviga
 import type { RemoveRequestState } from '../hooks/useRemoveRequest';
 import type {
   AnchorNavScope,
+  DetailsNavScope,
   MarkdownAnchorBlock,
   MarkdownDetailBlock,
   MarkdownPreviewRemove,
@@ -25,6 +26,8 @@ export type PreviewOverlaysProps = {
   detailBlock: DetailsBlockNavigationState;
   /** 当前这篇的折叠块（`<details>` 里那段内容） */
   detailBlocks: MarkdownDetailBlock[];
+  /** 折叠块前后切换的口径 */
+  detailsScope: DetailsNavScope;
   /** 删除配置：不传就没有删除确认层 */
   remove?: MarkdownPreviewRemove;
   /** 删除确认层的状态 */

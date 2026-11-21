@@ -21,7 +21,9 @@ import {
   stripInlineMarkup,
 } from '@/utils/markdown-outline';
 
-import type { MarkdownDetailBlock } from '../types';
+import type { DetailsNavScope, MarkdownDetailBlock } from '../types';
+
+import { listScopePeers } from './scope-peers';
 
 /** 开标签：整行就是一个 `<details>`（允许带属性），行内夹着正文的写法不认 */
 const OPEN_TAG_PATTERN = /^<details\b[^>]*>/iu;
@@ -35,6 +37,9 @@ const SUMMARY_PATTERN = /^<summary\b[^>]*>(.*)<\/summary\s*>/iu;
 /** 代码围栏：里面的 `<details>` 只是例子 */
 const FENCE_PATTERN = /^(?:```|~~~)/u;
 
+/** 参与分组的标题层级：与标题目录、锚点区块一致（h1–h4） */
+const HEADING_PATTERN = /^#{1,4}\s+\S/u;
+
 /**
  * 把 `[startLine, endLine)` 这几行凑成一段折叠块内容。
  *
@@ -45,6 +50,7 @@ const FENCE_PATTERN = /^(?:```|~~~)/u;
  * @param startLine `<details>` 所在行号
  * @param endLine `</details>` 所在行号
  * @param index 这是第几个折叠块，用来给 `key` 与缺省标题
+ * @param groupLine 这一块所属小节的标题行号（-1 表示在第一个标题之前）
  * @returns 这一块内容；没有正文时返回 null
  */
 const toBlock = (
@@ -52,6 +58,7 @@ const toBlock = (
   startLine: number,
   endLine: number,
   index: number,
+  groupLine: number,
 ): MarkdownDetailBlock | null => {
   const firstLine = startLine + 1;
   /** `</details>` 之前第一行非空的行号：summary 只可能在这一行 */
@@ -78,6 +85,7 @@ const toBlock = (
   }
 
   return {
+    groupLine,
     headings: extractMarkdownOutline(markdown),
     key: `details-${index}`,
     markdown,
@@ -93,7 +101,10 @@ const toBlock = (
  * 顺序必须与渲染出来的 `<details>` 一致：正文里点了 summary 之后，
  * 是靠「它是第几个最外层 details」回查这里的下标（见 `utils/prose-navigation`）。
  *
- * @param markdown Markdown 原文（用未筛选的正文，筛选只影响「读」）
+ * 每块还记下「它上面最近的那个 h1–h4」的行号（`groupLine`）：同一小节下的折叠块同值，
+ * `section` 口径就只在这一组里前后切换（例：`## 完整场景对话` 下两个「场景对话原文」）。
+ *
+ * @param markdown Markdown 原文（用屏上真正渲染的那一份，见 `useDocumentInteractions`）
  * @returns 折叠块内容；没有、或都没正文时为空数组
  */
 export const collectDetailBlocks = (
@@ -105,6 +116,8 @@ export const collectDetailBlocks = (
   let depth = 0;
   /** 最外层 `<details>` 的行号；-1 表示没开着 */
   let startLine = -1;
+  /** 当前这一块所属小节的标题行号；-1 表示在第一个标题之前 */
+  let groupLine = -1;
   let inFence = false;
 
   lines.forEach((line, index) => {
@@ -131,6 +144,11 @@ export const collectDetailBlocks = (
     }
 
     if (!CLOSE_TAG_PATTERN.test(trimmed)) {
+      // 折叠块之外遇到标题：下面那些折叠块就归到这一节了（块内部的标题不换组）
+      if (depth === 0 && HEADING_PATTERN.test(trimmed)) {
+        groupLine = index;
+      }
+
       return;
     }
 
@@ -145,7 +163,7 @@ export const collectDetailBlocks = (
       return;
     }
 
-    const block = toBlock(lines, startLine, index, blocks.length);
+    const block = toBlock(lines, startLine, index, blocks.length, groupLine);
 
     if (block) {
       blocks[blocks.length] = block;
@@ -155,4 +173,30 @@ export const collectDetailBlocks = (
   });
 
   return blocks;
+};
+
+/**
+ * 按切换口径取「这一次能前后切换到的折叠块」在列表里的下标。
+ *
+ * - `all`：全文所有折叠块，按正文顺序（默认，等于上一版的行为）；
+ * - `section`：只保留与当前块**同一个标题小节**下的折叠块（`groupLine` 相同），
+ *   例：`## 完整场景对话` 下两个「场景对话原文」→ 计数只有 2，不会跳到「故事原文」。
+ *
+ * @param blocks 整篇的折叠块列表（`collectDetailBlocks` 的结果）
+ * @param index 当前打开第几块；null 表示关着
+ * @param scope 切换口径
+ * @returns 可切换折叠块的下标，按列表原顺序；认不出当前块或找不到同组时退回全文
+ */
+export const listDetailBlockPeers = (
+  blocks: MarkdownDetailBlock[],
+  index: number | null,
+  scope: DetailsNavScope,
+): number[] => {
+  const current = index === null ? undefined : blocks[index];
+
+  return listScopePeers(
+    blocks.map((block) => block.groupLine),
+    current ? current.groupLine : null,
+    scope,
+  );
 };

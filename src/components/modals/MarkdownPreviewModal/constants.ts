@@ -5,7 +5,12 @@
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 
-import type { AnchorLinkBehavior, AnchorNavScope, DetailsBlockBehavior } from './types';
+import type {
+  AnchorLinkBehavior,
+  AnchorNavScope,
+  DetailsBlockBehavior,
+  DetailsNavScope,
+} from './types';
 
 /** 「已保存」提示停留时长（毫秒） */
 export const SAVED_HINT_DURATION = 3000;
@@ -107,3 +112,16 @@ export const DETAILS_BLOCK_BEHAVIORS: readonly DetailsBlockBehavior[] = [
 
 /** 默认沿用原有行为：点了就在正文里展开 */
 export const DEFAULT_DETAILS_BLOCK_BEHAVIOR: DetailsBlockBehavior = 'expand';
+
+/**
+ * 折叠块子预览的前后切换口径放在 localStorage 的键：与链接那份并列，
+ * 都是「怎么看文档里的东西」的阅读偏好。
+ */
+export const DETAILS_NAV_SCOPE_STORAGE_KEY =
+  'my-dashboard:markdown-preview:details-scope';
+
+/** 可选的两种折叠块切换口径：全文所有折叠块 / 只同一小节里的那几个 */
+export const DETAILS_NAV_SCOPES: readonly DetailsNavScope[] = ['all', 'section'];
+
+/** 默认切换全文：等于上一版的行为（那时还没有这个设置） */
+export const DEFAULT_DETAILS_NAV_SCOPE: DetailsNavScope = 'all';

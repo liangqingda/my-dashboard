@@ -27,12 +27,14 @@ import type {
   AnchorLinkBehavior,
   AnchorNavScope,
   DetailsBlockBehavior,
+  DetailsNavScope,
   InteractionControlProps,
 } from '../types';
 import {
   ANCHOR_LINK_BEHAVIORS,
   ANCHOR_NAV_SCOPES,
   DETAILS_BLOCK_BEHAVIORS,
+  DETAILS_NAV_SCOPES,
 } from '../constants';
 
 import styles from './index.scss';
@@ -68,6 +70,18 @@ const DETAILS_BEHAVIOR_OPTIONS: Record<
   modal: { description: '叠一层弹窗单独读，正文里的折叠块保持收着', label: '弹窗预览' },
 };
 
+/** 两种折叠块切换口径：档名进下拉、口径说明单列一行 */
+const DETAILS_SCOPE_OPTIONS: Record<
+  DetailsNavScope,
+  { description: string; label: string }
+> = {
+  all: { description: '按正文顺序切换全文所有折叠块', label: '切换全文所有折叠块' },
+  section: {
+    description: '只算同一个标题小节下的折叠块，如「场景对话」那两块',
+    label: '只切换同一小节',
+  },
+};
+
 /** 选项顺序与枚举一致，值只有一份来源（`constants.ts`） */
 const ANCHOR_BEHAVIOR_DATA = ANCHOR_LINK_BEHAVIORS.map((behavior) => ({
   label: ANCHOR_BEHAVIOR_OPTIONS[behavior].label,
@@ -84,16 +98,23 @@ const DETAILS_BEHAVIOR_DATA = DETAILS_BLOCK_BEHAVIORS.map((behavior) => ({
   value: behavior,
 }));
 
+const DETAILS_SCOPE_DATA = DETAILS_NAV_SCOPES.map((scope) => ({
+  label: DETAILS_SCOPE_OPTIONS[scope].label,
+  value: scope,
+}));
+
 const InteractionControl = ({
   anchorBehavior,
   anchorScope,
   detailsBehavior,
+  detailsScope,
   hasAnchorLinks,
   hasDetailBlocks,
   onAnchorBehaviorChange,
   onAnchorScopeChange,
   onChange,
   onDetailsBehaviorChange,
+  onDetailsScopeChange,
   opened,
 }: InteractionControlProps) => {
   /**
@@ -173,6 +194,15 @@ const InteractionControl = ({
                 pickValue(DETAILS_BEHAVIOR_DATA, value, onDetailsBehaviorChange)
               }
               value={detailsBehavior}
+            />
+            <FreeSelectField
+              data={DETAILS_SCOPE_DATA}
+              description={DETAILS_SCOPE_OPTIONS[detailsScope].description}
+              label="折叠块预览切换范围"
+              onChange={(value) =>
+                pickValue(DETAILS_SCOPE_DATA, value, onDetailsScopeChange)
+              }
+              value={detailsScope}
             />
           </Stack>
         ) : null}

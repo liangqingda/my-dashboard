@@ -202,6 +202,13 @@ export type AnchorLinkBehavior = 'jump' | 'modal';
 export type AnchorNavScope = 'all' | 'section';
 
 /**
+ * 折叠块子预览的前后切换口径：`all` 按正文顺序切换全文所有折叠块，
+ * `section` 只切换「同一个标题小节下的那几个」折叠块（计数就是这一小节的块数）。
+ * 例：`## 看一套…场景对话` 下两个「场景对话原文」，选 `section` 时计数只有 2。
+ */
+export type DetailsNavScope = 'all' | 'section';
+
+/**
  * 折叠块（`<details>`）里那段内容的点击行为：`expand` 在正文里直接展开，
  * `modal` 叠一层弹窗单独读（正文里的折叠块保持收着）。
  */
@@ -252,7 +259,13 @@ export type MarkdownAnchorBlock = MarkdownPreviewSection & {
  * header 只显示 summary 那句话，正文是 summary 之下、`</details>` 之前的全部内容
  * （里面再套的折叠块原样留着，在子预览里按浏览器默认行为展开）。
  */
-export type MarkdownDetailBlock = MarkdownPreviewSection;
+export type MarkdownDetailBlock = MarkdownPreviewSection & {
+  /**
+   * 这一块所属小节的标题行号（-1 表示在第一个标题之前）：
+   * 折叠块就是「它上面最近的那个 h1–h4」，同值即同一个分组，`section` 口径按它分组。
+   */
+  groupLine: number;
+};
 
 /**
  * 「文档内交互方式」图标按钮的入参：同文档链接一组、折叠块一组。
@@ -266,6 +279,8 @@ export type InteractionControlProps = {
   anchorScope: AnchorNavScope;
   /** 折叠块里那段内容的点击行为 */
   detailsBehavior: DetailsBlockBehavior;
+  /** 折叠块子预览的前后切换口径 */
+  detailsScope: DetailsNavScope;
   /** 文档里有没有同文档锚点链接 */
   hasAnchorLinks: boolean;
   /** 文档里有没有折叠块 */
@@ -280,6 +295,8 @@ export type InteractionControlProps = {
   onAnchorScopeChange: (scope: AnchorNavScope) => void;
   /** 选中的新折叠块行为；写存储归调用方 */
   onDetailsBehaviorChange: (behavior: DetailsBlockBehavior) => void;
+  /** 选中的新折叠块切换口径；写存储归调用方 */
+  onDetailsScopeChange: (scope: DetailsNavScope) => void;
 };
 
 /** 子区域预览的装配入参：这一段内容与「能切到哪几段」都由调用方算好 */
@@ -290,7 +307,7 @@ export type SectionPreviewProps = {
   index: number | null;
   /**
    * 这一次能前后切换到的下标，按 `sections` 的顺序；只算得出一段时就放当前这一个。
-   * 锚点区块按 `section` / `all` 口径算，折叠块就是全文所有折叠块——
+   * 锚点区块按「同一处目录 / 全文」算，折叠块按「同一小节 / 全文」算——
    * 「哪些算一组」是文档语义，归调用方，组件不猜。
    */
   peers: readonly number[];

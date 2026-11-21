@@ -16,6 +16,8 @@ import {
 
 import type { AnchorNavScope, MarkdownAnchorBlock } from '../types';
 
+import { listScopePeers } from './scope-peers';
+
 /** 参与分节的标题层级：与标题目录、正文标题选择器一致（h1–h4） */
 const HEADING_PATTERN = /^(#{1,4})\s+(.+)$/u;
 
@@ -312,13 +314,10 @@ export const listAnchorBlockPeers = (
   scope: AnchorNavScope,
 ): number[] => {
   const current = blocks.find((block) => block.anchor === anchor);
-  const peers: number[] = [];
 
-  blocks.forEach((block, index) => {
-    if (scope === 'all' || current === undefined || block.linkGroup === current.linkGroup) {
-      peers[peers.length] = index;
-    }
-  });
-
-  return peers;
+  return listScopePeers(
+    blocks.map((block) => block.linkGroup),
+    current ? current.linkGroup : null,
+    scope,
+  );
 };

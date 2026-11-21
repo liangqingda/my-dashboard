@@ -13,6 +13,7 @@
 import DeleteConfirm from '../DeleteConfirm';
 import SectionPreview from '../SectionPreview';
 import { listAnchorBlockPeers } from '../utils/anchor-blocks';
+import { listDetailBlockPeers } from '../utils/details-blocks';
 
 import type { PreviewOverlaysProps } from './types';
 
@@ -22,6 +23,7 @@ const PreviewOverlays = ({
   anchorScope,
   detailBlock,
   detailBlocks,
+  detailsScope,
   remove,
   removal,
   title,
@@ -33,9 +35,12 @@ const PreviewOverlays = ({
   const anchorPeers = anchorSection
     ? listAnchorBlockPeers(anchorBlocks, anchorSection.anchor, anchorScope)
     : [];
-  /** 折叠块按正文顺序排成一列，前后切换就是相邻的那一段 */
-  const detailPeers =
-    detailBlock.index === null ? [] : detailBlocks.map((_, index) => index);
+  /** 按「全文 / 同一小节」口径算能切到的那几块折叠块 */
+  const detailPeers = listDetailBlockPeers(
+    detailBlocks,
+    detailBlock.index,
+    detailsScope,
+  );
 
   return (
     <>
