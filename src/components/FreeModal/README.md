@@ -12,6 +12,10 @@
 - **header 顺序（固定）**：翻页与计数 → 标题 → `headerActions` → 全屏 → `headerTail` →
   竖线 → `headerSecondary` → Mantine 关闭按钮。
   竖线只在 `headerActions` / `headerTail` 与 `headerSecondary` 同时存在时才有。
+- **退出键**：`Esc` 与 **空格** 都关窗（空格会 `preventDefault`，不让浏览器把它当成「点当前焦点按钮」
+  —— 那正是「按空格莫名翻到下一条 / 切了全屏」的来源）。两者同一套放行口径：带 ⌘ / Ctrl / Alt
+  的组合键不拦、正在输入（输入框 / 可编辑区）不拦、按住连发不算；`closeOnSpace` 默认跟随
+  `closeOnEscape`，编辑态与上层浮层开着时一起失效。
 - **正文区**：`.body` 是 flex 纵向容器（`flex: 1 1 auto; min-height: 0`），正文自己决定怎么滚
   （`ScrollArea` 或整块不滚）；全屏由调用方持有状态（正文排版要用），这里只画按钮。
 
@@ -34,7 +38,7 @@
 | `headerSecondary` | 第二组操作（如编辑流程），自动在它与前面一组之间画竖线 |
 | `fullscreen` | `{ active, onToggle }`；不传则不显示全屏按钮 |
 | `closeButton` | 是否显示关闭按钮，默认显示（编辑态这类「关不掉」的场景传 `false`） |
-| `closeOnEscape` / `trapFocus` | 上层浮层开着时由调用方关掉，避免一下全关 / 焦点被抢 |
+| `closeOnEscape` / `closeOnSpace` / `trapFocus` | Esc 与空格是否关窗（`closeOnSpace` 默认跟随 `closeOnEscape`）、上层浮层开着时由调用方关掉，避免一下全关 / 焦点被抢、是否锁焦点 |
 | `size` / `centered` / `closeLabel` | 宽度档（默认 `min(980px, 92vw)`）、是否垂直居中、关闭按钮的 `aria-label` |
 | `contentClassName` / `bodyClassName` | 只加增量类名，复制框体 / header 样式不算 |
 

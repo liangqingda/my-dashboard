@@ -404,3 +404,6 @@ Tab 进入按钮序列时，才是真实键盘聚焦、tooltip 才该打开。
 | 删除确认层开着 | 只收确认层，弹窗留着（`closeOnEscape` 由 `remove` 的 `confirming` 把关；删除中 Esc 不动作） |
 | 子区域预览开着 | 只关子预览，主弹窗留着（`closeOnEscape` 由 `anchorBlock.index` 把关） |
 | 编辑态 / 草稿预览 | 不关，只弹「编辑中不能关闭预览」的提示（`useCloseRequest`） |
+
+**空格与 Esc 同一口径**（同样封装在 `FreeModal` 里）：非编辑态按空格即关窗，并挡掉浏览器
+「空格 = 点击当前焦点按钮」的默认行为——否则焦点留在 header 图标上时按空格会莫名翻篇 / 切全屏。

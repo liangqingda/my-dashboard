@@ -18,6 +18,7 @@ import {
 
 import { cx } from '@/utils/cx';
 
+import { useCloseOnSpace } from './hooks/useCloseOnSpace';
 import type { FreeModalProps } from './types';
 
 import styles from './index.scss';
@@ -38,6 +39,7 @@ const FreeModal = ({
   closeButton = true,
   closeLabel = '关闭',
   closeOnEscape = true,
+  closeOnSpace,
   contentClassName,
   fullscreen,
   headerActions,
@@ -50,6 +52,12 @@ const FreeModal = ({
   title,
   trapFocus = true,
 }: FreeModalProps) => {
+  /** 空格关窗：默认与 Esc 同口径，编辑态 / 上层浮层开着时一并失效 */
+  useCloseOnSpace({
+    enabled: opened && (closeOnSpace ?? closeOnEscape),
+    onClose,
+  });
+
   /** tooltip 文案：带快捷键时括在文案后面，aria-label 仍是纯动作名 */
   const tip = (label: string): string =>
     nav?.shortcutHint ? `${label}（${nav.shortcutHint}）` : label;

@@ -51,6 +51,8 @@ export type FreeModalProps = {
   closeButton?: boolean;
   /** Esc 是否关闭，默认是；上层浮层打开时由调用方关掉 */
   closeOnEscape?: boolean;
+  /** 空格是否关闭，默认跟随 `closeOnEscape`（编辑态、上层浮层开着时一起收掉） */
+  closeOnSpace?: boolean;
   /** 是否把焦点锁在弹窗里，默认是 */
   trapFocus?: boolean;
   /** 是否垂直居中，默认是 */
