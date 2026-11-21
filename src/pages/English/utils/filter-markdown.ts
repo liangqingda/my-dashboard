@@ -4,7 +4,8 @@
  * 笔记的骨架是标题——`## 基础信息` / `## 讲解` / `## 本轮习题` / `### <题号>. <题型>`，
  * 所以按标题把正文切成块，只保留命中的块和它们的祖先标题：
  * - 只看讲解：留**所有讲解类小节**（`## 讲解`、各处的 `**讲解要点**`、场景对话 / 小故事 /
- *   对比 / 扩展这些说明性小节），只把基础信息表、题目块与整轮练习（只剩得分表那种）裁掉；
+ *   对比 / 扩展这些说明性小节），外加 `## 基础信息` 这一节（先交代这次练的是什么），
+ *   只把题目块与整轮练习（筛完只剩一张得分表那种）裁掉；
  * - 只看习题：只留 `###` 题目块，基础信息表、讲解、每轮的复习统计表一并消失；
  * - 只看错题：题目块里 `**判定**` 不是 ✅ 的那些（没写判定的不算错题，不硬塞进来）；
  * - 关键词：块内任意文本（含标题）命中才保留，与上面的范围条件叠加。
@@ -136,7 +137,7 @@ const isWrongAnswer = (chunk: MarkdownChunk): boolean => {
 /** 题目块：`### 1. 填空` / `### 2. 单项选择`；讲解类小节里的 `###` 小标题不算 */
 const QUESTION_HEADING = /^#{3}\s+\d+\s*[.．、]/u;
 
-/** 基础信息表那一节：元信息不该混进「只看讲解」 */
+/** 基础信息那一节：标题层级不定（有的在文首、有的挂在一轮练习下面），一律按标题文本认 */
 const INFO_HEADING = /^#{1,4}\s+.*基础信息/u;
 
 /**
@@ -210,13 +211,13 @@ export const filterNoteMarkdown = (
   /** 哪几块算「讲解」：先算一遍题目及其祖先，再逐块查表 */
   const { hasQuestion, question } = explainTables(chunks);
   const hit = chunks.map((chunk, index) => {
+    /** 基础信息这一节算讲解：哪怕它挂在一轮练习下面，也要跟着露出来 */
+    const info =
+      chunk.heading !== null && INFO_HEADING.test(chunk.heading);
     const inExplain =
       chunk.heading === null ||
-      !(
-        question[index] ||
-        hasQuestion[index] ||
-        INFO_HEADING.test(chunk.heading)
-      );
+      info ||
+      !(question[index] || hasQuestion[index]);
 
     return (
       matchesScope(chunk, condition.scope, inExplain) &&
