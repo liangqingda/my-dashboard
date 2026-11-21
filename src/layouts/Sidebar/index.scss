@@ -6,7 +6,13 @@
 }
 
 /* 导航项自身的内边距也收一档，跟着侧栏紧凑 */
-.link {
+.group {
   border-radius: var(--mantine-radius-md);
   padding: 6px 8px;
+}
+
+/* 分组子项比顶层收一档：挂在父项下面，不宜和顶层争同等的重量 */
+.child {
+  border-radius: var(--mantine-radius-md);
+  padding: 4px 8px;
 }
