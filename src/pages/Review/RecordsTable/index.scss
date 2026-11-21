@@ -1,0 +1,45 @@
+/* 记录表格：边框、表头与行 hover 由 FreeTable 负责，这里只补列宽与内容样式 */
+
+/* 分类、状态、更新时间、操作四列都放短内容，固定宽度；知识点占剩余宽度 */
+.categoryWidth {
+  width: 5.5rem;
+}
+
+.statusWidth {
+  width: 5.5rem;
+}
+
+.timeWidth {
+  width: 9.5rem;
+}
+
+.actionWidth {
+  width: 3.5rem;
+}
+
+/* 知识点单行截断，放不下时由 TruncatedText 在被指到时弹全称 */
+.title {
+  display: block;
+  padding: 0;
+  color: var(--app-ink);
+  font-size: 0.8rem;
+  text-align: left;
+}
+
+/* 时间列用等宽数字对齐 */
+.time {
+  color: var(--app-ink-soft);
+  font-size: 0.74rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* 删除按钮靠右，不跟着左边内容走 */
+.deleteButton {
+  margin-inline-start: auto;
+}
+
+/* 整行都是打开入口：行内任意位置（含分类、时间）点了就开详情 */
+.row {
+  cursor: pointer;
+}

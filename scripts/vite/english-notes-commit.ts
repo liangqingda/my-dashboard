@@ -216,3 +216,69 @@ export const commitNoteDeletion = async (
     return { error: firstLine(output, '提交失败') };
   }
 };
+
+/**
+ * 提交一次记录删除并推送。
+ *
+ * 记录仓库的提交约定是 `[records]: …`（只动 `learning-records/` 或
+ * `mastered-learning-records/` 时用这个前缀），所以这里不再沿用笔记那边的 `docs(...)`。
+ * 只 stage 被脚本改掉的那份记录文件；笔记文件没动（`delete-record` 不删笔记），不参与提交。
+ *
+ * @param repoDir 记录仓库根目录
+ * @param recordFile 记录文件相对仓库根目录的路径，如 `learning-records/grammar.json`
+ * @param id 记录 ID，只用于拼提交标题里的知识点名
+ */
+export const commitRecordDeletion = async (
+  repoDir: string,
+  recordFile: string,
+  id: string,
+): Promise<CommitResult> => {
+  const separator = id.indexOf(':');
+  const stem = separator >= 0 ? id.slice(separator + 1) : id;
+  const subject = `[records]: 删除 ${stem}`;
+
+  try {
+    await runGit('git', ['add', '--', recordFile], { cwd: repoDir });
+
+    const { stdout: staged } = await runGit(
+      'git',
+      ['diff', '--cached', '--name-only', '--', recordFile],
+      { cwd: repoDir },
+    );
+
+    if (!staged.trim()) {
+      return {};
+    }
+
+    await runGit(
+      'git',
+      [
+        'commit',
+        '-m',
+        subject,
+        '-m',
+        '通过 my-dashboard 的复习库删除',
+        // 带 pathspec：只提交这份记录文件，不把 index 里别的预暂存改动捎上
+        '--',
+        recordFile,
+      ],
+      { cwd: repoDir },
+    );
+
+    const { stdout } = await runGit('git', ['log', '-1', '--format=%h'], {
+      cwd: repoDir,
+    });
+
+    return { hash: stdout.trim(), subject, ...(await pushRepo(repoDir)) };
+  } catch (error) {
+    const output = gitOutput(error);
+
+    try {
+      await runGit('git', ['reset', '-q', '--', recordFile], { cwd: repoDir });
+    } catch {
+      // 撤暂存失败不影响删除结果，只是 index 会留着这次改动
+    }
+
+    return { error: firstLine(output, '提交失败') };
+  }
+};

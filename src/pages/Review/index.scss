@@ -1,6 +1,19 @@
-/* 复习库空态文案：内边距与标题由 MenuContentLayout 负责，数据区后续在子组件目录里 */
+/* 复习库页面布局：页面高度与内边距由 MenuContentLayout 负责，滚动只发生在列表里 */
 
+/* 撑满外壳内容区：筛选行固定，列表占剩余高度并自己滚 */
+.shell {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* 列表滚动区：表头吸顶跟着这个容器走 */
+.list {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* 空态文案，与列表上下留一点距离 */
 .empty {
-  margin: 6px 0 0;
+  margin-top: 6px;
   color: var(--app-ink-faint);
 }

@@ -1,12 +1,12 @@
 /**
  * 记录仓库契约：learn-english 在仓库根的 `contract.json` 里声明本项目依赖的那几件事
- * （契约版本、笔记目录、分类清单、两个写 / 删命令）。
+ * （契约版本、笔记 / 记录目录、分类清单、写 / 删命令）。
  *
  * 为什么先比一遍而不是直接拿来用：两边是各自独立的仓库，值一旦不一致，读盘会「正常但为空」、
  * 写盘会跑错命令，页面只看得到空白，根因却藏在两个仓库中间。这里在启动 / 构建时对一次，
  * 对不上就把差异逐条说出来。
  *
- * 期望值由调用方（`english-notes.ts`）按各模块的真实常量组装后传进来：本文件不导入同目录模块，
+ * 期望值由调用方（`english-contract.ts`）按各模块的真实常量组装后传进来：本文件不导入同目录模块，
  * 单测才能直接用 Node 的类型擦除跑起来。
  */
 
@@ -17,7 +17,7 @@ import path from 'node:path';
 export const CONTRACT_FILE = 'contract.json';
 
 /** 本项目实现的契约版本：记录仓库改契约时同步改这里，并跟进传进来的期望值 */
-export const CONTRACT_VERSION = 1;
+export const CONTRACT_VERSION = 2;
 
 /** 一条命令的声明：跑哪个脚本、第一个参数是哪个子命令 */
 export type ContractCommand = {
@@ -29,9 +29,12 @@ export type ContractCommand = {
 export type RepoExpectation = {
   python: string;
   notesDir: string;
+  recordsDir: string;
+  masteredRecordsDir: string;
   categoriesFile: string;
   writeNote: ContractCommand;
   deleteNote: ContractCommand;
+  deleteRecord: ContractCommand;
 };
 
 /** 判断解析后的 JSON 是不是普通对象 */
@@ -159,6 +162,18 @@ export const assertContract = async (
   );
   addProblem(
     problems,
+    diff('recordsDir', readText(raw.recordsDir), expected.recordsDir),
+  );
+  addProblem(
+    problems,
+    diff(
+      'masteredRecordsDir',
+      readText(raw.masteredRecordsDir),
+      expected.masteredRecordsDir,
+    ),
+  );
+  addProblem(
+    problems,
     diff(
       'categoriesFile',
       readText(raw.categoriesFile),
@@ -169,10 +184,16 @@ export const assertContract = async (
   const commands = isObject(raw.commands) ? raw.commands : {};
   const write = readCommand(commands.writeNote);
   const remove = readCommand(commands.deleteNote);
+  const removeRecord = readCommand(commands.deleteRecord);
 
   problems.push(
     ...commandProblems('commands.writeNote', write, expected.writeNote),
     ...commandProblems('commands.deleteNote', remove, expected.deleteNote),
+    ...commandProblems(
+      'commands.deleteRecord',
+      removeRecord,
+      expected.deleteRecord,
+    ),
   );
 
   if (problems.length > 0) {

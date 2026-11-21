@@ -16,6 +16,8 @@ const CONTRACT = {
   contractVersion: CONTRACT_VERSION,
   python: 'python3',
   notesDir: 'learning-record-notes',
+  recordsDir: 'learning-records',
+  masteredRecordsDir: 'mastered-learning-records',
   categoriesFile: 'learning-record-notes/categories.json',
   commands: {
     writeNote: {
@@ -26,6 +28,10 @@ const CONTRACT = {
       script: 'skills/learn-from-english/scripts/learning_records.py',
       args: ['delete-note'],
     },
+    deleteRecord: {
+      script: 'skills/learn-from-english/scripts/learning_records.py',
+      args: ['delete-record'],
+    },
   },
 };
 
@@ -33,9 +39,12 @@ const CONTRACT = {
 const EXPECTED: RepoExpectation = {
   python: CONTRACT.python,
   notesDir: CONTRACT.notesDir,
+  recordsDir: CONTRACT.recordsDir,
+  masteredRecordsDir: CONTRACT.masteredRecordsDir,
   categoriesFile: CONTRACT.categoriesFile,
   writeNote: CONTRACT.commands.writeNote,
   deleteNote: CONTRACT.commands.deleteNote,
+  deleteRecord: CONTRACT.commands.deleteRecord,
 };
 
 /** 造一个临时记录仓库目录，写入给定的契约内容（字符串原样写入，对象序列化） */
@@ -96,7 +105,7 @@ describe('记录仓库契约', () => {
       contractVersion: CONTRACT_VERSION + 1,
     });
 
-    assert.match(message ?? '', /contractVersion（契约 v2 \/ 本项目 v1）/u);
+    assert.match(message ?? '', /contractVersion（契约 v3 \/ 本项目 v2）/u);
   });
 
   it('版本号不是整数时当作缺失', async () => {
@@ -106,12 +115,17 @@ describe('记录仓库契约', () => {
   });
 
   it('目录或分类清单不一致时指名是哪个字段', async () => {
-    const message = await checkWith({
+    const categories = await checkWith({
       ...CONTRACT,
       categoriesFile: 'learning-record-notes/categories.yaml',
     });
+    const masteredDir = await checkWith({
+      ...CONTRACT,
+      masteredRecordsDir: 'mastered-records',
+    });
 
-    assert.match(message ?? '', /categoriesFile（契约/u);
+    assert.match(categories ?? '', /categoriesFile（契约/u);
+    assert.match(masteredDir ?? '', /masteredRecordsDir（契约/u);
   });
 
   it('写命令的脚本或子命令不一致时同样指名', async () => {
@@ -132,9 +146,23 @@ describe('记录仓库契约', () => {
         },
       },
     });
+    const recordArgs = await checkWith({
+      ...CONTRACT,
+      commands: {
+        ...CONTRACT.commands,
+        deleteRecord: {
+          ...CONTRACT.commands.deleteRecord,
+          args: ['remove-record'],
+        },
+      },
+    });
 
     assert.match(script ?? '', /commands\.writeNote\.script/u);
     assert.match(args ?? '', /commands\.deleteNote\.args（契约 remove-note /u);
+    assert.match(
+      recordArgs ?? '',
+      /commands\.deleteRecord\.args（契约 remove-record /u,
+    );
   });
 
   it('契约不是合法 JSON 或顶层不是对象时给出结构原因', async () => {

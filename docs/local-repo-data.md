@@ -13,6 +13,10 @@
 | `scripts/vite/english-notes-store.ts` | 只读侧：读盘、解析摘要、文件名合法性、读分类清单 |
 | `scripts/vite/english-notes-write.ts` | 保存一篇笔记：跑记录仓库的 `note.py write`，把「写没写进去 / 校验问题」收敛成页面要的形状 |
 | `scripts/vite/english-notes-delete.ts` | 删除一篇笔记：跑记录仓库的 `learning_records.py delete-note`，把它的结果收敛成页面要的形状 |
+| `scripts/vite/english-records.ts` | 复习库路由壳：`GET /api/english/records`（列表 / 按 ID 详情）、`DELETE`（删除记录），构建期产出记录快照 |
+| `scripts/vite/english-records-store.ts` | 记录库只读侧：合并学习 / 已掌握两个目录、按更新时间倒序、ID 与详情路径校验 |
+| `scripts/vite/english-records-delete.ts` | 删除一条记录：跑 `learning_records.py delete-record`，只删记录、笔记不动 |
+| `scripts/vite/english-contract.ts` | 契约期望值的唯一来源：`repoDirOf`、`REPO_EXPECTATION`、`contractIssue`（笔记与记录共用） |
 | `scripts/vite/english-notes-commit.ts` | 自动提交：把这一次改动提交到 `../learn-english`（删除流程提交后还会推送） |
 
 ## 要动别的仓库：能力放目标仓库，本项目只调用
@@ -56,9 +60,12 @@
 | `contractVersion` | `english-notes-contract.ts` 的 `CONTRACT_VERSION`（本项目支持的版本） |
 | `python` | 写 / 删脚本跑 `python3` |
 | `notesDir` | `english-notes-store.ts` 的 `NOTES_DIR` |
+| `recordsDir` | `english-records-store.ts` 的 `RECORDS_DIR` |
+| `masteredRecordsDir` | `english-records-store.ts` 的 `MASTERED_RECORDS_DIR` |
 | `categoriesFile` | `NOTES_DIR` + `CATEGORY_CONFIG_FILE` |
 | `commands.writeNote` | `english-notes-write.ts` 的 `NOTE_SCRIPT` + `write` |
 | `commands.deleteNote` | `english-notes-delete.ts` 的 `DELETE_SCRIPT` + `delete-note` |
+| `commands.deleteRecord` | `english-records-delete.ts` 的 `RECORD_SCRIPT` + `delete-record` |
 
 - 脚本路径、笔记目录、分类清单文件只在各自的模块里写一份，契约与它们比，本项目内部不再抄第二份；
 - 时机：`pnpm dev` 启动时对不上只在日志里 warn，英语接口每次请求都重新核对并回 500 + 原因，
@@ -110,6 +117,40 @@
   不一致的内容，比读失败更糟。
 - 静态构建下每篇正文是独立静态文件；取不到时页面明确报错并关弹窗，不用空正文冒充一篇。
 - 列表页的正文位有 loading 态（`MarkdownPreviewModal` 的 `loading`），取正文期间不给编辑 / 刷新入口。
+
+## 记录库（复习库页面）：合并两个目录，删除也交给记录仓库
+
+「复习库」页面（`src/pages/Review`）展示记录仓库的两份记录：
+
+| 目录 | 文件形态 | 状态 |
+| --- | --- | --- |
+| `learning-records/<category>.json` | 对象，记录在 `records` 映射下（键是记录 ID） | `learning` / `familiar` |
+| `mastered-learning-records/<category>.json` | 根节点就是记录数组 | 一律按 `mastered` |
+
+`english-records-store.ts` 把两边摊平成同一种 `RecordDetail`：已掌握记录字段更精简，缺失的
+复习次数 / 历史 / 下次复习时间在这里补成 0 / 空数组 / null，掌握分记 10。**页面不要自己判目录**。
+
+- **排序**：`updatedAt` 取 `last_reviewed_at / last_learned_at / mastered_at / first_learned_at`
+  里最新的一个，全库按它倒序（新的在前）；没有时间的记录排最后，同一时间按 ID 排，保证顺序稳定；
+- **容错**：ID 分类与文件名不一致、状态认不出的记录直接丢弃；单个分类文件坏掉只丢那一类，
+  不影响整页（与笔记读盘同一口径）；
+- **列表只发摘要**：`GET /api/english/records` 返回 `RecordSummary[]`（不带讲解 / 例句 / 复习历史），
+  打开某条时 `GET /api/english/records?id=<category>:<key>` 只读那一个分类文件取详情；
+- **构建产物**：`english-records.index.json`（摘要）与 `english-records/<category>/<key>.json`（详情），
+  前端 `records-api.ts` 的 `DETAIL_DIR` 必须与插件常量 `RECORDS_DETAIL_DIR` 一致；
+- **ID 口径**：`<category>:<key>`，分类小写字母、key 小写字母 / 数字 / 连字符，`isRecordId` 是唯一校验，
+  删除请求在拼命令前必须先过它（脚本自己也会再校验一次）。
+
+删除走 `DELETE /api/english/records?id=…`（仅开发模式）：`english-records-delete.ts` 跑
+`python3 skills/learn-from-english/scripts/learning_records.py delete-record --id <id>`（cwd 是记录仓库根，
+上限 30s），收敛成 `{ id, category, status, title, file, noteFile }` 并核对脚本回显的 ID；
+随后 `english-notes-commit.ts` 的 `commitRecordDeletion` 只 stage 脚本报出来的那份记录文件，
+提交标题 `[records]: 删除 <key>`，提交后推送（推送失败不阻断删除，原因回传页面）。
+
+- **只删记录、不删笔记**：记录删掉后笔记仍在，属于记录仓库自己的语义，本项目不额外动 md；
+- **脚本报「记录已不存在」时按成功口径提示**：翻译成「这条记录已经不在了」，不是错误；
+- **不在本项目改记录 JSON**：锁、`revision`、未掌握 / 已掌握拆分、原子替换都在源头脚本里，
+  与「删除一篇笔记」同一套理由。
 
 ## 前端取数
 

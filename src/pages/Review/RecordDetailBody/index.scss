@@ -1,0 +1,25 @@
+/* 详情正文、引文与统计行的样式：弹窗外壳在 RecordDetailModal 目录里 */
+
+.body {
+  color: var(--app-ink);
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.quote {
+  padding-left: 8px;
+  border-left: 2px solid var(--app-border);
+  color: var(--app-ink-soft);
+  font-style: italic;
+  white-space: pre-wrap;
+}
+
+.time {
+  color: var(--app-ink-soft);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.value {
+  overflow-wrap: anywhere;
+}
