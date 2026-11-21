@@ -135,6 +135,9 @@
 
 - 同类交互第二次出现在别的业务弹窗 / 页面 → 下沉到 `FreeXxx`（交互逻辑放它目录下的 `hooks/`），
   同时删掉上层那一份监听，绝不两边各写一遍；
+- **给已有弹窗新增 header 操作也按这条判**：先问「另一扇弹窗有没有这个操作、它是哪个键」——
+  有就一次上提（键位、通知与 tooltip 键位标注一起搬），不要只在当前这一处补按钮，
+  否则用户看到的就是「一边能用、另一边不能用」；
 - 业务组件只传数据与插槽（`nav` / `headerActions` / `onClose` …），自己不 `addEventListener`；
 - 键位与放行口径（⌘ / Ctrl / Alt 放行、输入中不抢字符、按住连发不算）只写一份，示例见
   `FreeModal/hooks/useModalShortcuts`，业务侧的整组开关走 `shortcutsEnabled` 这类中性 prop。

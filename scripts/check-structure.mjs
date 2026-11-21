@@ -11,7 +11,8 @@
  *  5. 菜单页（由 Sidebar navItems + App.tsx 路由自动解析）必须用 src/layouts/MenuContentLayout
  *     包内容，页面样式不得再定义 .page
  *  6. Modal 只许出现在封装壳（FreeModal）里，业务侧不得直连 Mantine Modal
- *  7. 入口文档 AGENTS.md 只放硬约束与索引：行数不超上限，docs/ 下的细则与索引一一对应，
+ *  7. 键盘监听只许出现在外壳 / 布局：业务页面与业务弹窗不得自己 addEventListener('keydown')
+ *  8. 入口文档 AGENTS.md 只放硬约束与索引：行数不超上限，docs/ 下的细则与索引一一对应，
  *     索引里的文档路径（含跟代码走的组件 / hook README）必须真实存在；
  *     CLAUDE.md 只能是指向它的软链（两份内容会漂移）
  *
@@ -441,6 +442,57 @@ function checkModalShells() {
 }
 
 /**
+ * 键盘监听只许出现在「外壳 / 布局」：键位是「同一时刻只能有一套」的交互，
+ * 业务页面或业务弹窗自己 `addEventListener('keydown')`，就会出现
+ * 「笔记预览能用、记录详情不能用」这类只在一边生效的键。
+ *
+ * 允许的位置与理由：
+ *  - `FreeModal/`：阅读窗整套键位（空格 / 翻篇 / `F` / `C` 复制 / `Delete` 删除）；
+ *  - `layouts/`：页面级 `R` / `F` 与全屏 Esc；
+ *  - `MarkdownPreviewModal/hooks/useHeaderActionShortcuts.ts`：预览 header 的 `a` / `s` / `r`
+ *    （开合字号 / 筛选面板、刷新正文，只在预览里有语义）。
+ *
+ * 新能力要键位：一律挂到 `FreeModal`（`copy` / `onRequestDelete` / `nav`），
+ * 不要在新位置补一份监听；确需业务层监听，先把它下沉到外壳再回来改这份名单。
+ */
+function checkKeyboardListeners() {
+  const allowDirs = [
+    path.join(SRC, 'components', 'modals', 'FreeModal'),
+    path.join(SRC, 'layouts'),
+  ];
+  const allowFiles = [
+    path.join(
+      SRC,
+      'components',
+      'modals',
+      'MarkdownPreviewModal',
+      'hooks',
+      'useHeaderActionShortcuts.ts',
+    ),
+  ];
+
+  for (const file of collectFiles(SRC, CODE_EXTS)) {
+    const allowed =
+      allowDirs.some((dir) => file.startsWith(`${dir}${path.sep}`)) ||
+      allowFiles.includes(file);
+
+    if (allowed) continue;
+
+    const lines = readFileSync(file, 'utf8').split('\n');
+
+    lines.forEach((line, index) => {
+      if (!line.includes('addEventListener') || !/['"]keydown['"]/.test(line)) {
+        return;
+      }
+
+      errors.push(
+        `[结构] ${path.relative(ROOT, file)}:${index + 1} 自己监听 keydown：键位一律挂在 FreeModal（copy / onRequestDelete / nav）或布局层，同一操作在所有弹窗键位与 tooltip 标注必须一致`,
+      );
+    });
+  }
+}
+
+/**
  * 公共组件按类型分目录存放：src/components/<分类>/<组件>/。
  * 分类目录用小写固定名单（modals、buttons、tables…），组件目录用 PascalCase 且带 index.tsx；
  * src/components 下不允许直接放组件目录或散文件，避免「一部分分了类、一部分又平铺回去」。
@@ -491,6 +543,7 @@ checkComponents();
 checkMenuPages();
 checkEntryDocs();
 checkModalShells();
+checkKeyboardListeners();
 
 if (errors.length > 0) {
   console.error('[×] 结构检查未通过：');
@@ -499,5 +552,5 @@ if (errors.length > 0) {
 }
 
 console.log(
-  '[✓] 结构检查通过：pages 目录组织、公共组件分类目录、菜单页布局、Modal 封装壳与入口文档索引符合约定',
+  '[✓] 结构检查通过：pages 目录组织、公共组件分类目录、菜单页布局、Modal 封装壳、键位归属与入口文档索引符合约定',
 );

@@ -50,7 +50,8 @@
 `@liangqingda/eslint-config` 的 `react-typed`：import 分组与空行、`@/pages/**` 排最后、
 值导入里的 type 单独成句、命名、单文件 300 行上限等，原 `eslint.config.js` 的项目层
 `import/order` 覆写已删除）、`scripts/check-structure.mjs`（features 废弃 / 页面组织 /
-菜单页布局 / 入口文档行数与索引对应 / `CLAUDE.md` 软链形态，项目事实不上提）、
+菜单页布局 / 键位归属（业务层不得监听 `keydown`）/ 入口文档行数与索引对应 /
+`CLAUDE.md` 软链形态，项目事实不上提）、
 `liangqingda-check-scss src`（共享包零依赖 CLI，样式块间空行 / 选择器列表 / 行尾空格 /
 类名：非 ASCII、数字或连字符开头、下划线、同文件混用 camelCase 与 kebab-case）、
 `scripts/check-imports.mjs`（只剩页面内部必须相对路径）与 `pnpm check:md`（Markdown 往返），
