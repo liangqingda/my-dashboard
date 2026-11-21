@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Button, Group, ScrollArea, Skeleton, Stack, Text } from '@mantine/core';
-import { useElementSize } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 
 import MenuContentLayout from '@/layouts/MenuContentLayout';
@@ -10,7 +9,6 @@ import { onPageRefresh } from '@/utils/page-refresh';
 import {
   ALL_CATEGORIES,
   DEFAULT_STATUS_FILTER,
-  LOAD_MORE_ROWS,
   SKELETON_ROWS,
 } from './constants';
 import type { StatusFilter } from './constants';
@@ -27,8 +25,6 @@ import {
   countLabel,
   describeDelete,
   filterRecords,
-  initialRowCount,
-  moreLabel,
   searchRecords,
 } from './utils/records';
 import { deleteReviewRecord } from './utils/records-api';
@@ -102,62 +98,20 @@ const Review = () => {
   const showSkeleton = loading && records.length === 0;
   const showEmpty = !showSkeleton && visibleRecords.length === 0;
 
-  /** 列表容器高度：用来算「刚好铺满一屏还多 5 条」的首屏行数 */
-  const { ref: listRef, height: listHeight } = useElementSize();
-  /** 滚到底部累计追加的行数；换筛选条件时归零，不让上一次的追加带进新结果 */
-  const [extraRows, setExtraRows] = useState(0);
   /** 列表滚动容器的视口：换筛选后把滚动位置拉回顶部，否则会停在上一份结果的中间 */
   const viewportRef = useRef<HTMLDivElement>(null);
 
-  /**
-   * 首屏只渲染一屏多一点（视口高度算出来的行数 + 5），滚到底再追加 20 行：
-   * 几百条一次性进 DOM 会拖慢首屏，又不必给一张几百行的表配分页控件。
-   * 详情翻页翻到还没渲染的条目时，也按这个首屏行数判断要不要补渲染。
-   */
-  const initialRows = initialRowCount(listHeight);
-  const limit = initialRows + extraRows;
-  const shownRecords = useMemo(
-    () => visibleRecords.slice(0, limit),
-    [limit, visibleRecords],
-  );
-  const hasMore = shownRecords.length < visibleRecords.length;
-
-  /** 滚到底：再放 20 行进来，已经到底了就什么都不做 */
-  const loadMore = useCallback(() => {
-    setExtraRows((current) => current + LOAD_MORE_ROWS);
-  }, []);
-
-  /** 让第 N 行进入渲染范围：详情翻到还没渲染的条目时用 */
-  const ensureRow = useCallback(
-    (index: number) => {
-      setExtraRows((current) =>
-        Math.max(current, index + 1 - initialRowCount(listHeight)),
-      );
-    },
-    [listHeight],
-  );
-
   /** 详情的开合、翻页与计数（范围是全部筛选结果，和列表计数一致） */
-  const detail = useRecordDetailNav({
-    ensureRows: ensureRow,
-    initialRows,
-    records: visibleRecords,
-  });
+  const detail = useRecordDetailNav({ records: visibleRecords });
 
-  /** 筛选项变了：追加行数归零、滚动位置回顶、关掉详情，从新结果的第一屏重新看起 */
+  /** 筛选项变了：滚动位置回顶、关掉详情，从新结果的第一条看起 */
   const resetList = useCallback(() => {
-    setExtraRows(0);
     detail.resetDetail();
     viewportRef.current?.scrollTo({ top: 0 });
   }, [detail]);
 
-  /** 计数文案：筛选命中数 + 还没渲染完时的「已显示 N 条」 */
-  const countText = [
-    countLabel(visibleRecords.length, records.length),
-    moreLabel(shownRecords.length, visibleRecords.length),
-  ]
-    .filter(Boolean)
-    .join(' · ');
+  /** 计数文案：筛选命中数与总数 */
+  const countText = countLabel(visibleRecords.length, records.length);
 
   /** 点删除图标：先弹确认框，不直接删 */
   const requestDelete = useCallback((record: RecordSummary) => {
@@ -254,22 +208,19 @@ const Review = () => {
         ) : null}
 
         {!showSkeleton && !showEmpty ? (
-          <div className={styles.listWrap} ref={listRef}>
-            <ScrollArea
-              className={styles.list}
-              onBottomReached={hasMore ? loadMore : undefined}
-              scrollbars="y"
-              type="auto"
-              viewportRef={viewportRef}
-            >
-              <RecordsTable
-                categoryLabels={categoryLabels}
-                onDelete={requestDelete}
-                onOpen={detail.openRecord}
-                records={shownRecords}
-              />
-            </ScrollArea>
-          </div>
+          <ScrollArea
+            className={styles.list}
+            scrollbars="y"
+            type="auto"
+            viewportRef={viewportRef}
+          >
+            <RecordsTable
+              categoryLabels={categoryLabels}
+              onDelete={requestDelete}
+              onOpen={detail.openRecord}
+              records={visibleRecords}
+            />
+          </ScrollArea>
         ) : null}
       </Stack>
 

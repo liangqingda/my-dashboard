@@ -4,14 +4,10 @@ import type { FreeModalNav } from '@/components/FreeModal/types';
 
 import type { RecordSummary } from '../types';
 
-/** `/Review` 详情导航的入参：列表结果、首屏行数与「补渲染」回调都由页面给 */
+/** `/Review` 详情导航的入参：当前筛选结果 */
 type Params = {
-  /** 当前筛选结果（全量，含还没渲染出来的行） */
+  /** 当前筛选结果，顺序与列表一致 */
   records: RecordSummary[];
-  /** 首屏行数（视口高度算出来的） */
-  initialRows: number;
-  /** 让第 N 行进入渲染范围：翻页翻到后面的条目时调用 */
-  ensureRows: (index: number) => void;
 };
 
 /** 详情导航对外暴露的状态与动作 */
@@ -35,14 +31,10 @@ type Result = {
 };
 
 /**
- * 复习库详情的开合与翻页：位置按筛选结果全量算，翻到还没渲染的行时
- * 先把渲染行数补到它那一行，回到列表时那一条才在。
+ * 复习库详情的开合与翻页：位置按筛选结果算。列表是整份渲染的，
+ * 翻页不需要再补渲染任何行。
  */
-export const useRecordDetailNav = ({
-  ensureRows,
-  initialRows,
-  records,
-}: Params): Result => {
+export const useRecordDetailNav = ({ records }: Params): Result => {
   const [activeId, setActiveId] = useState<string | null>(null);
 
   /** 打开第 N 条：越界的索引直接忽略 */
@@ -55,14 +47,8 @@ export const useRecordDetailNav = ({
       }
 
       setActiveId(record.id);
-
-      const needed = index + 1 - initialRows;
-
-      if (needed > 0) {
-        ensureRows(index);
-      }
     },
-    [ensureRows, initialRows, records],
+    [records],
   );
 
   const openRecord = useCallback(
@@ -88,8 +74,7 @@ export const useRecordDetailNav = ({
     activeId === null
       ? -1
       : records.findIndex((record) => record.id === activeId);
-  const activeTitle =
-    activeIndex >= 0 ? records[activeIndex].title : null;
+  const activeTitle = activeIndex >= 0 ? records[activeIndex].title : null;
 
   const nav: FreeModalNav = {
     index: activeIndex + 1,

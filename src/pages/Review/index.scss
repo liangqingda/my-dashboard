@@ -12,14 +12,6 @@
   min-height: 0;
 }
 
-/* 滚动区的量高容器：只为了量出可视高度，好算首屏渲染几行，自身不画任何样式 */
-.listWrap {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  min-height: 0;
-}
-
 /* 空态文案，与列表上下留一点距离 */
 .empty {
   margin-top: 6px;
