@@ -10,8 +10,9 @@
  * 所以两侧按钮不会因为「到头」而置灰；只有一块可切时（`total <= 1`）才没有下一处可去。
  * 下标越界（换篇后正文变短）时当作关着。
  *
- * 快捷键由 `FreeModal` 统一接管（`[` / ← 上一块、`]` / → 下一块、`F` 全屏、空格 / Esc 关窗），
- * 这一层不自己监听；主预览在子预览开着的这段时间把整套键收掉（`shortcutsEnabled={false}`），
+ * 快捷键分两层：翻页（`[` / ← 上一块、`]` / → 下一块）、`F` 全屏、空格 / Esc 关窗由
+ * `FreeModal` 统一接管；字号 `A` 走与主预览同一份 `useHeaderActionShortcuts`（这一层只挂
+ * 字号这一个能力）。主预览在子预览开着的这段时间把整套键收掉（`shortcutsEnabled={false}`），
  * 所以两组键不会打架。
  */
 
@@ -35,6 +36,7 @@ import {
 } from '../constants';
 import { useActiveHeadingIndex } from '../hooks/useActiveHeadingIndex';
 import { useDocumentScrollReset } from '../hooks/useDocumentScrollReset';
+import { useHeaderActionShortcuts } from '../hooks/useHeaderActionShortcuts';
 import { useProseFontScale } from '../hooks/useProseFontScale';
 import { listAnchorBlockPeers } from '../utils/anchor-blocks';
 import {
@@ -116,6 +118,15 @@ const AnchorBlockPreview = ({
     setFontPanel({ anchor: block ? block.anchor : '', opened: open });
   };
 
+  /** 快捷键开合字号面板：已开就收起，否则打开（与点字号按钮同一条路） */
+  const toggleFontPanel = useCallback(() => {
+    setFontPanel((current) => ({
+      anchor: block ? block.anchor : '',
+      opened:
+        block !== null && !(current.anchor === block.anchor && current.opened),
+    }));
+  }, [block]);
+
   /** 正文只随区块重建：`react-markdown` 每次渲染都要重新解析整段 */
   const bodyContent = useMemo(
     () =>
@@ -136,6 +147,15 @@ const AnchorBlockPreview = ({
 
   /** 换块时正文回到顶部：上一块读到一半的位置不该留给下一块 */
   useDocumentScrollReset(bodyRef, block ? block.anchor : '', block !== null);
+
+  /**
+   * 字号快捷键 `A`：与主预览同一套键位。筛选 / 复制 / 刷新这些能力这一层没有，
+   * hook 按回调可选挂接，不传的按键不动作；翻篇与 `F` 全屏归外壳 `FreeModal`。
+   */
+  useHeaderActionShortcuts({
+    enabled: block !== null,
+    onToggleFont: toggleFontPanel,
+  });
 
   /**
    * 正文节点的 callback ref：ref 对象给需要即时读取的地方用，
@@ -170,6 +190,8 @@ const AnchorBlockPreview = ({
   return (
     <FreeModal
       closeLabel="关闭区块预览"
+      /* 字号面板开着时 Esc 只收面板，不连这一层预览一起关（与主预览同一口径） */
+      closeOnEscape={!fontOpened}
       contentStyle={fullscreen ? FULLSCREEN_CONTENT_STYLE : CONTENT_STYLE}
       fullscreen={{ active: fullscreen, onToggle: toggle }}
       headerActions={
@@ -177,6 +199,7 @@ const AnchorBlockPreview = ({
           onChange={setFontOpened}
           opened={fontOpened}
           scale={proseFont}
+          shortcut="A"
         />
       }
       nav={
