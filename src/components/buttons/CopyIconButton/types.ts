@@ -10,8 +10,8 @@ export type CopyIconButtonProps = {
   label: string;
   /** 复制成功后的 tooltip 文案 */
   copiedLabel?: string;
-  /** 按钮尺寸；表格里与标题栏里都用 sm，需要放大时再传 */
-  size?: 'sm' | 'lg';
+  /** 按钮尺寸；表格与标题栏用 sm，字段行里贴着文字用 xs，需要放大时传 lg */
+  size?: 'xs' | 'sm' | 'lg';
   /** 图标像素尺寸，默认与标题栏同档 */
   iconSize?: number;
   /** 附加 class，供调用方补布局（如表格单元格里居中） */

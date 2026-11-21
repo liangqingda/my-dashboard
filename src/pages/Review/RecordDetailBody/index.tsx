@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import { Badge, Group, Loader, Stack, Text } from '@mantine/core';
 
+import CopyIconButton from '@/components/buttons/CopyIconButton';
 import FreeTable from '@/components/tables/FreeTable';
 import { getErrorMessage } from '@/utils/error';
 import { formatDateTime } from '@/utils/format';
@@ -24,8 +26,11 @@ const statusText = (status: string): string =>
     ? STATUS_LABELS[status as RecordStatus]
     : status || EMPTY_CELL;
 
-/** 一条「字段：值」行；值缺失时显示占位，不留空 */
-const field = (label: string, value: string) => (
+/**
+ * 一条「字段：值」行；值缺失时显示占位，不留空。
+ * `action` 是值后面紧跟的一个操作（目前只有记录 ID 后面的复制按钮）。
+ */
+const field = (label: string, value: string, action?: ReactNode) => (
   <Group gap={6} key={label} wrap="nowrap">
     <Text c="dimmed" size="xs" w={72}>
       {label}
@@ -33,6 +38,7 @@ const field = (label: string, value: string) => (
     <Text className={styles.value} size="xs">
       {value || EMPTY_CELL}
     </Text>
+    {action}
   </Group>
 );
 
@@ -194,7 +200,16 @@ const RecordDetailBody = ({ recordId }: RecordDetailBodyProps) => {
         </Stack>
       ) : null}
       <Stack gap={4}>
-        {field('记录 ID', detail.id)}
+        {field(
+          '记录 ID',
+          detail.id,
+          <CopyIconButton
+            iconSize={13}
+            label="复制记录 ID（C）"
+            size="xs"
+            text={detail.id}
+          />,
+        )}
         {field('掌握分', formatScore(detail.masteryScore))}
         {field('复习次数', String(detail.reviewCount))}
         {field('学习次数', String(detail.learnedCount))}
