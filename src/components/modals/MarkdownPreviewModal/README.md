@@ -480,9 +480,9 @@ header 的操作缩成「返回编辑」「保存」；点「返回编辑」回�
 `aria-label`（与 tooltip 同一句话）。
 
 **初始焦点不落到 header 图标上**：focus trap 激活时默认聚焦弹窗内第一个可聚焦元素，翻篇按钮
-disabled 时会落到第一个图标按钮上，把复制按钮那类 focus 型 tooltip 撞成常驻。弹窗内放一个
-`FocusTrap.InitialFocus`（`data-autofocus` 隐藏节点）让 trap 先选中它；只有用户手动按
-Tab 进入按钮序列时，才是真实键盘聚焦、tooltip 才该打开。
+disabled 时会落到第一个图标按钮上，把复制按钮那类 focus 型 tooltip 撞成常驻。这层由
+`FreeModal` 统一处理（内容最前面放 `FocusTrap.InitialFocus` 隐藏节点），本弹窗不再自己放；
+只有用户手动按 Tab 进入按钮序列时，才是真实键盘聚焦、tooltip 才该打开。
 
 `Esc` 的语义**只有一个：关掉弹窗**，任何外观状态下都不变：
 

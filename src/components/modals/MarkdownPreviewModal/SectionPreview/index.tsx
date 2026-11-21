@@ -19,7 +19,6 @@
 
 import { useCallback, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, MouseEvent } from 'react';
-import { FocusTrap } from '@mantine/core';
 import Markdown from 'react-markdown';
 
 import FreeModal from '@/components/modals/FreeModal';
@@ -224,7 +223,6 @@ const SectionPreview = ({
       size="min(880px, 88vw)"
       title={heading}
     >
-      <FocusTrap.InitialFocus />
       {/* 工作区与主预览同一套：左侧目录占一列、右侧正文各自滚动 */}
       <div className={previewStyles.workspace}>
         <OutlineNav

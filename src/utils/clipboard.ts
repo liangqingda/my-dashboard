@@ -24,6 +24,12 @@ export const copyText = async (text: string): Promise<boolean> => {
   }
 
   const textarea = document.createElement('textarea');
+  /*
+   * 兜底要临时把焦点挪给 textarea（execCommand 的 copy 认选区），完事得还回去，
+   * 否则焦点掉到 body：弹窗里的焦点陷阱会被打乱，再按快捷键时那颗按钮还可能亮出焦点环。
+   */
+  const previousFocus =
+    document.activeElement instanceof HTMLElement ? document.activeElement : null;
 
   textarea.value = text;
   textarea.setAttribute('readonly', '');
@@ -38,5 +44,6 @@ export const copyText = async (text: string): Promise<boolean> => {
     return false;
   } finally {
     textarea.remove();
+    previousFocus?.focus({ preventScroll: true });
   }
 };

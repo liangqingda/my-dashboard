@@ -8,7 +8,7 @@
  * 全屏状态由调用方持有（正文排版要跟着变），状态本身用 `hooks/useModalFullscreen` 记住。
  */
 
-import { ActionIcon, Modal, Tooltip } from '@mantine/core';
+import { ActionIcon, FocusTrap, Modal, Tooltip } from '@mantine/core';
 import {
   IconChevronLeft,
   IconChevronRight,
@@ -188,6 +188,13 @@ const FreeModal = ({
       trapFocus={trapFocus}
       withCloseButton={closeButton}
     >
+      {/*
+        初始焦点落在隐藏节点上（`data-autofocus` + `tabindex=-1`，全局样式不给它画焦点环）：
+        Mantine 的 FocusTrap 默认会把焦点给内容里第一颗可 Tab 的按钮，也就是 header 的
+        「上一条」——弹窗一开那颗按钮就被聚焦，之后按任何键它还会亮一圈主色焦点环，
+        看着像「刚才点的是它」。Tab 的第一个落点仍是第一颗真实控件。
+      */}
+      <FocusTrap.InitialFocus />
       {children}
     </Modal>
   );

@@ -15,7 +15,6 @@
  */
 
 import { useState } from 'react';
-import { FocusTrap } from '@mantine/core';
 import { IconTrash } from '@tabler/icons-react';
 
 import HeaderIconAction from '@/components/buttons/HeaderIconAction';
@@ -261,7 +260,6 @@ const MarkdownPreviewModal = ({
         title={title}
         trapFocus={!interactions.subPreviewOpen && !removal.confirming}
       >
-        <FocusTrap.InitialFocus />
         {/* 正文工作区：左侧目录 + 右侧阅读 / 编辑区；筛选 / 渲染 / 目录定位都归它 */}
         <PreviewWorkspace
           Editor={Editor}
