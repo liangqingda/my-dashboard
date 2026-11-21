@@ -31,6 +31,8 @@ export type RecordSummary = {
   updatedAt: string;
   /** 掌握分 0–10；未评过分为 null */
   masteryScore: number | null;
+  /** 已掌握记录的连续满分抽查次数；学习中的记录没有这个计数，为 null */
+  masteredTenStreak: number | null;
   /** 下次复习时间；已掌握或未排期为 null */
   nextReviewAt: string | null;
 };
@@ -69,8 +71,6 @@ export type RecordDetail = RecordSummary & {
   masteredAt: string | null;
   /** 遗忘次数 */
   lapseCount: number;
-  /** 已掌握记录的连续满分抽查计数；学习中为 null */
-  masteredTenStreak: number | null;
   /** 逐次复习记录，新的在前 */
   reviewHistory: ReviewHistoryEntry[];
 };

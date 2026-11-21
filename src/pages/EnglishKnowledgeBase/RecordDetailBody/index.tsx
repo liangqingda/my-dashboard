@@ -9,7 +9,7 @@ import { formatDateTime } from '@/utils/format';
 
 import { EMPTY_CELL, STATUS_COLORS, STATUS_LABELS } from '../constants';
 import type { RecordStatus } from '../types';
-import { formatScore } from '../utils/records';
+import { formatScore, formatTenStreak } from '../utils/records';
 import { fetchRecordDetail } from '../utils/records-api';
 
 import type { DetailState, RecordDetailBodyProps } from './types';
@@ -211,6 +211,7 @@ const RecordDetailBody = ({ recordId }: RecordDetailBodyProps) => {
           />,
         )}
         {field('掌握分', formatScore(detail.masteryScore))}
+        {field('连续满分', formatTenStreak(detail.masteredTenStreak))}
         {field('复习次数', String(detail.reviewCount))}
         {field('学习次数', String(detail.learnedCount))}
         {field('遗忘次数', String(detail.lapseCount))}

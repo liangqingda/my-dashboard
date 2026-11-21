@@ -136,6 +136,9 @@
   不影响整页（与笔记读盘同一口径）；
 - **列表只发摘要**：`GET /api/english/records` 返回 `RecordSummary[]`（不带讲解 / 例句 / 复习历史），
   打开某条时 `GET /api/english/records?id=<category>:<key>` 只读那一个分类文件取详情；
+- **连续满分计数**：已掌握记录的 `mastered_ten_streak`（连续 10 分抽查次数）随摘要一起下发，
+  列表的「连续满分」列与详情统计行都直接展示这个数；学习中的记录没有这个计数，前端显示占位而非 0。
+  清零与满额自动归档的规则住在记录仓库（见其 README），本项目**只读这个数**，不在本地再判一次阈值；
 - **构建产物**：`english-records.index.json`（摘要）与 `english-records/<category>/<key>.json`（详情），
   前端 `records-api.ts` 的 `DETAIL_DIR` 必须与插件常量 `RECORDS_DETAIL_DIR` 一致；
 - **ID 口径**：`<category>:<key>`，分类小写字母、key 小写字母 / 数字 / 连字符，`isRecordId` 是唯一校验，

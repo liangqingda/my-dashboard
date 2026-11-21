@@ -76,6 +76,10 @@ export const searchRecords = (
 export const formatScore = (score: number | null): string =>
   score === null ? EMPTY_CELL : score.toFixed(1);
 
+/** 连续满分抽查次数：学习中的记录没有这个计数，显示占位而不是 0 */
+export const formatTenStreak = (streak: number | null): string =>
+  streak === null ? EMPTY_CELL : `${streak} 次`;
+
 /** 筛选结果的计数文案：搜索 / 筛过之后显示「命中数 / 总数」 */
 export const countLabel = (shown: number, total: number): string =>
   shown === total ? `共 ${total} 条` : `筛出 ${shown} / ${total} 条`;

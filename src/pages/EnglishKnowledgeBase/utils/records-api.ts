@@ -96,6 +96,7 @@ const normalizeSummary = (raw: unknown): RecordSummary | null => {
   return {
     categoryKey: asString(raw.categoryKey),
     id,
+    masteredTenStreak: asNumberOrNull(raw.masteredTenStreak),
     masteryScore: asNumberOrNull(raw.masteryScore),
     nextReviewAt: asStringOrNull(raw.nextReviewAt),
     status,

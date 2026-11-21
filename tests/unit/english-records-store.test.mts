@@ -60,7 +60,7 @@ const MASTERED_GRAMMAR = [
     explanation: '已经掌握的一条',
     id: 'grammar:mastered-one',
     mastered_at: '2026-11-10T08:00:00Z',
-    mastered_ten_streak: 3,
+    mastered_ten_streak: 2,
     tags: ['时态', ''],
     title: '已掌握',
   },
@@ -128,7 +128,7 @@ describe('english-records-store', () => {
     assert.ok(mastered);
     assert.equal(mastered.status, 'mastered');
     assert.equal(mastered.masteryScore, 10);
-    assert.equal(mastered.masteredTenStreak, 3);
+    assert.equal(mastered.masteredTenStreak, 2);
     assert.equal(mastered.reviewCount, 0);
     assert.deepEqual(mastered.tags, ['时态']);
     assert.deepEqual(mastered.reviewHistory, []);
@@ -144,7 +144,7 @@ describe('english-records-store', () => {
     assert.ok(ids.length >= 4);
   });
 
-  it('摘要不下发讲解与例句', async () => {
+  it('摘要不下发讲解与例句，但带上连续满分计数', async () => {
     const summaries = await collectRecordSummaries(repoDir);
     const summary = summaries[0];
 
@@ -152,6 +152,13 @@ describe('english-records-store', () => {
     assert.equal('explanation' in summary, false);
     assert.equal('source' in summary, false);
     assert.equal('reviewHistory' in summary, false);
+    // 学习中的记录没有连续满分计数，列表按 null 显示占位
+    assert.equal(summary.masteredTenStreak, null);
+
+    const mastered = summaries.find((item) => item.id === 'grammar:mastered-one');
+
+    assert.ok(mastered);
+    assert.equal(mastered.masteredTenStreak, 2);
   });
 
   it('按 ID 取详情：先学习库，再已掌握库，取不到返回 null', async () => {

@@ -8,7 +8,7 @@ import TruncatedText from '@/components/texts/TruncatedText';
 import { formatDateTime } from '@/utils/format';
 
 import { EMPTY_CELL, STATUS_COLORS, STATUS_LABELS } from '../constants';
-import { categoryLabel } from '../utils/records';
+import { categoryLabel, formatTenStreak } from '../utils/records';
 
 import type { RecordsTableProps } from './types';
 
@@ -31,6 +31,9 @@ const RecordsTable = memo(
           </FreeTable.Th>
           <FreeTable.Th className={styles.statusWidth} scope="col">
             状态
+          </FreeTable.Th>
+          <FreeTable.Th className={styles.streakWidth} scope="col">
+            连续满分
           </FreeTable.Th>
           <FreeTable.Th className={styles.timeWidth} scope="col">
             最近更新
@@ -67,6 +70,9 @@ const RecordsTable = memo(
               >
                 {STATUS_LABELS[record.status]}
               </Badge>
+            </FreeTable.Td>
+            <FreeTable.Td className={styles.streak}>
+              {formatTenStreak(record.masteredTenStreak)}
             </FreeTable.Td>
             <FreeTable.Td className={styles.time}>
               {record.updatedAt ? formatDateTime(record.updatedAt) : EMPTY_CELL}
