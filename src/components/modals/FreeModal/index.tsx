@@ -45,6 +45,7 @@ const FreeModal = ({
   closeOnSpace,
   contentClassName,
   contentStyle,
+  copy,
   fullscreen,
   headerActions,
   headerSecondary,
@@ -52,6 +53,7 @@ const FreeModal = ({
   height = 'reading',
   nav,
   onClose,
+  onRequestDelete,
   opened,
   shortcutsEnabled = true,
   size = 'min(980px, 92vw)',
@@ -59,15 +61,18 @@ const FreeModal = ({
   trapFocus = true,
 }: FreeModalProps) => {
   /**
-   * 空格关窗与翻页 / 全屏快捷键：业务弹窗不用各自实现。
-   * 空格默认与 Esc 同口径；翻页与全屏由 `shortcutsEnabled` 整组把关。
+   * 空格关窗与翻页 / 全屏 / 复制 / 删除快捷键：业务弹窗不用各自实现。
+   * 空格默认与 Esc 同口径；其余键由 `shortcutsEnabled` 整组把关，复制与删除另按能力挂接。
    */
   useModalShortcuts({
     closeOnSpace: closeOnSpace ?? closeOnEscape,
+    copy: copy?.text,
+    copyMessage: copy?.message,
     disabled: shortcutsEnabled === false,
     enabled: opened,
     nav,
     onClose,
+    onRequestDelete,
     onToggleFullscreen: fullscreen?.onToggle,
   });
 

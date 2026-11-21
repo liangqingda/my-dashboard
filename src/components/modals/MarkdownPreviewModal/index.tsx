@@ -34,7 +34,6 @@ import { usePreviewHeaderActions } from './hooks/usePreviewHeaderActions';
 import { useProseFontScale } from './hooks/useProseFontScale';
 import { useRefreshPreview } from './hooks/useRefreshPreview';
 import { useRemoveRequest } from './hooks/useRemoveRequest';
-import { useRemoveShortcut } from './hooks/useRemoveShortcut';
 import { useDocumentInteractions } from './hooks/useDocumentInteractions';
 import { withSideEffect } from './utils/with-side-effect';
 
@@ -133,21 +132,7 @@ const MarkdownPreviewModal = ({
   const withPanelsClosed = (action: (() => void) | null | undefined) =>
     withSideEffect(closeOverlays, action);
 
-  /** 删除快捷键（Delete / Backspace）：与点 header 那个垃圾桶同一条路，先弹确认、不直接删 */
-  useRemoveShortcut({
-    enabled:
-      opened &&
-      remove !== undefined &&
-      !editing.editing &&
-      !loading &&
-      panel === null &&
-      !interactions.subPreviewOpen &&
-      !removal.confirming,
-    // `request` 本身非空（enabled 已经要求传了 remove），`withPanelsClosed` 的联合返回在这里收窄回动作
-    onRequest: () => withPanelsClosed(removal.request)?.(),
-  });
-
-  /** header 弹层快捷键（`a` / `s` / `c` / `r`）与筛选面板的命中导航，键位口径收在 hook 里 */
+  /** header 弹层快捷键（`a` / `s` / `r`）与筛选面板的命中导航，键位口径收在 hook 里 */
   const header = usePreviewHeaderActions({
     blocked: interactions.subPreviewOpen || removal.confirming,
     editing: editing.editing,
@@ -156,7 +141,6 @@ const MarkdownPreviewModal = ({
     opened,
     panel,
     refresh: onRefresh ? (withPanelsClosed(refresh) ?? null) : null,
-    relativePath,
     setPanel,
   });
 
@@ -185,6 +169,11 @@ const MarkdownPreviewModal = ({
         closeButton={!editing.editing}
         closeLabel="关闭预览"
         closeOnEscape={panel === null && !interactions.subPreviewOpen && !removal.confirming}
+        copy={
+          documentActionsVisible && relativePath
+            ? { message: '相对路径已复制', text: relativePath }
+            : undefined
+        }
         fullscreen={
           documentActionsVisible
             ? { active: fullscreen, onToggle: toggleFullscreen }
@@ -259,6 +248,14 @@ const MarkdownPreviewModal = ({
             : undefined
         }
         onClose={handleClose}
+        onRequestDelete={
+          documentActionsVisible &&
+          remove !== undefined &&
+          !loading &&
+          panel === null
+            ? (withPanelsClosed(removal.request) ?? null)
+            : null
+        }
         opened={opened}
         shortcutsEnabled={!loading && !interactions.subPreviewOpen && !removal.confirming}
         title={title}

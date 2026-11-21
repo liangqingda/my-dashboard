@@ -18,16 +18,22 @@
   - **空格**：关窗，并 `preventDefault` 掉浏览器「空格 = 点击当前焦点按钮」——焦点常留在 header
     图标上，不拦的话按空格会莫名翻到下一条 / 切了全屏；`closeOnSpace` 默认跟随 `closeOnEscape`；
   - **`[` / `【`、`←` 上一个；`]` / `】`、`→` 下一个**：有 `nav` 且未禁用时；
-  - **`F`**：切换全屏（有全屏按钮时）。
+  - **`F`**：切换全屏（有全屏按钮时）；
+  - **`C` 复制**：传了 `copy` 时把那段文本写进剪贴板，并给一条成功 / 失败提示（走固定通知 id）；
+  - **`Delete` / `Backspace` 删除**：传了 `onRequestDelete` 时触发它（调用方只打开二次确认层，
+    不在这里直接删）。两个键都认：macOS 键盘上印着 delete 的那颗发出来的就是 `Backspace`。
   放行口径：带 ⌘ / Ctrl / Alt 的组合键不拦、正在输入（输入框 / 可编辑区）不拦、按住连发不算；
-  翻页与全屏可由 `shortcutsEnabled` 整组收掉（加载中、上层浮层开着时）。
+  翻页、全屏、复制与删除可由 `shortcutsEnabled` 整组收掉（加载中、上层浮层开着时）。
+  复制与删除的键位收在外壳，是因为 md 预览与记录详情两扇阅读窗都要用同一套；
+  留在一处就会出现「笔记页能用、这边不能用」。
 - **正文区**：`.body` 是 flex 纵向容器（`flex: 1 1 auto; min-height: 0`），正文自己决定怎么滚
   （`ScrollArea` 或整块不滚）；全屏由调用方持有状态（正文排版要用），这里只画按钮。
 
 ## 它不管什么
 
 - 标题文案、翻页数据与范围（`nav.index / total / onPrevious / onNext` 由调用方算）；
-- 每个按钮的能力（复制、筛选、字号、编辑流程、删除都是调用方的组件，塞进对应插槽）；
+- 每个按钮的组件与能力（复制、筛选、字号、编辑流程、删除按钮都由调用方塞进对应插槽）；
+  外壳只管**键位**：复制复制什么、删除时怎么确认仍归调用方（`copy.text` 与 `onRequestDelete`）；
 - 正文内容与其滚动方式；
 - 全屏状态的存储（用下面的 `useModalFullscreen` 才记得住，不传 `fullscreen` 就没有全屏按钮）。
 
@@ -42,9 +48,11 @@
 | `headerTail` | 排在全屏之后的末尾位，保证「删除」始终在最右 |
 | `headerSecondary` | 第二组操作（如编辑流程），紧接在 `headerTail` 之后、关闭按钮的竖线之前 |
 | `fullscreen` | `{ active, onToggle }`；不传则不显示全屏按钮 |
+| `copy` | `{ text, message }`；传了就有 `C` 复制键（`text` 进剪贴板，`message` 是成功提示），与 header 的复制按钮同一口径 |
+| `onRequestDelete` | 传了就有 `Delete` / `Backspace` 删除键；只应打开二次确认层，不直接删 |
 | `closeButton` | 是否显示关闭按钮，默认显示（编辑态这类「关不掉」的场景传 `false`） |
 | `closeOnEscape` / `closeOnSpace` / `trapFocus` | Esc 与空格是否关窗（`closeOnSpace` 默认跟随 `closeOnEscape`）、上层浮层开着时由调用方关掉，避免一下全关 / 焦点被抢、是否锁焦点 |
-| `shortcutsEnabled` | 默认 `true`；加载中、上层浮层开着时传 `false`，一次收掉翻页与 `F` 全屏（空格另由 `closeOnSpace` 把关） |
+| `shortcutsEnabled` | 默认 `true`；加载中、上层浮层开着时传 `false`，一次收掉翻页、`F` 全屏、`C` 复制与删除键（空格另由 `closeOnSpace` 把关） |
 | `size` / `centered` / `closeLabel` | 宽度档（默认 `min(980px, 92vw)`）、是否垂直居中、关闭按钮的 `aria-label` |
 | `contentClassName` / `bodyClassName` | 只加增量类名，复制框体 / header 样式不算 |
 

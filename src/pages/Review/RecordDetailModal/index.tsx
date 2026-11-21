@@ -41,21 +41,27 @@ const RecordDetailModal = ({
       closeLabel="关闭记录详情"
       closeOnEscape={!confirming}
       closeOnSpace={!confirming}
+      copy={
+        recordId === null
+          ? undefined
+          : { message: '记录 ID 已复制', text: recordId }
+      }
       fullscreen={{ active: fullscreen, onToggle: toggle }}
       headerActions={
         recordId === null ? undefined : (
-          <CopyIconButton label="复制记录 ID" text={recordId} />
+          <CopyIconButton label="复制记录 ID（C）" text={recordId} />
         )
       }
       headerTail={
         recordId === null || !onRequestDelete ? undefined : (
-          <HeaderIconAction label="删除这条记录" onClick={onRequestDelete}>
+          <HeaderIconAction label="删除这条记录（Delete）" onClick={onRequestDelete}>
             <IconTrash size={ICON_SIZE} stroke={ICON_STROKE} />
           </HeaderIconAction>
         )
       }
       nav={recordId === null ? undefined : nav}
       onClose={onClose}
+      onRequestDelete={onRequestDelete ?? null}
       opened={recordId !== null}
       shortcutsEnabled={!confirming}
       size="min(760px, 92vw)"

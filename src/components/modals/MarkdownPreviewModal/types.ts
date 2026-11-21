@@ -158,14 +158,6 @@ export type RemoveRequestParams = {
   remove?: MarkdownPreviewRemove;
 };
 
-/** 删除快捷键的入参：预览态按 Delete 打开二次确认，不直接删 */
-export type RemoveShortcutParams = {
-  /** 是否响应按键：预览态、有删除能力、且没有别的浮层占着键盘时才开 */
-  enabled: boolean;
-  /** 打开二次确认层（与点 header 的删除按钮同一条路） */
-  onRequest: () => void;
-};
-
 /** 删除确认层的入参 */
 export type DeleteConfirmProps = {
   /** 是否打开 */
@@ -576,8 +568,6 @@ export type HeaderActionShortcutParams = {
   onToggleFont?: (() => void) | null;
   /** 开合筛选面板；不传表示没有筛选能力 */
   onToggleFilter?: (() => void) | null;
-  /** 复制相对路径；不传表示没有路径可复制 */
-  onCopy?: (() => void) | null;
   /** 刷新正文；不传表示没有刷新能力 */
   onRefresh?: (() => void) | null;
 };

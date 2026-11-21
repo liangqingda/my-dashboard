@@ -27,6 +27,18 @@ export type FreeModalFullscreen = {
   onToggle: () => void;
 };
 
+/**
+ * header「复制」能力的快捷键配置：给了文本，`C` 就把这段写进剪贴板。
+ * 文本与提示文案由调用方给（复制的是路径还是记录 ID 只有业务侧知道），
+ * 键位、通知 id 与成功反馈时长统一由外壳处理。
+ */
+export type FreeModalCopy = {
+  /** 要写进剪贴板的文本 */
+  text: string;
+  /** 复制成功的提示文案（如「相对路径已复制」） */
+  message: string;
+};
+
 /** 基础弹窗外壳的入参 */
 export type FreeModalProps = {
   /** 是否打开 */
@@ -47,6 +59,16 @@ export type FreeModalProps = {
   headerSecondary?: ReactNode;
   /** 全屏开关；不传则不显示全屏按钮 */
   fullscreen?: FreeModalFullscreen;
+  /**
+   * 复制能力：给了文本，`C` 键就把这段写进剪贴板（与 header 复制按钮同一口径）。
+   * 业务弹窗只决定「复制什么」，键位与通知归外壳。
+   */
+  copy?: FreeModalCopy;
+  /**
+   * 删除请求：给了回调，`Delete` / `Backspace` 就触发它。
+   * 只应打开二次确认层，不在这里直接删；确认层与真正的删除动作归调用方。
+   */
+  onRequestDelete?: (() => void) | null;
   /** 是否显示关闭按钮，默认显示 */
   closeButton?: boolean;
   /** Esc 是否关闭，默认是；上层浮层打开时由调用方关掉 */

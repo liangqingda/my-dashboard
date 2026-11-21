@@ -44,9 +44,6 @@ export const NO_EDITOR_MESSAGE =
 /** 「编辑中不能关闭」提示的固定 id：连按 Esc 只会刷新同一条，不叠一屏 */
 export const CLOSE_BLOCKED_NOTIFICATION_ID = 'markdown-preview-close-blocked';
 
-/** 快捷键复制相对路径成功提示的固定 id：连按不叠一屏 */
-export const COPY_SUCCESS_NOTICE_ID = 'markdown-preview-copy-success';
-
 /** 刷新成功提示的固定 id：连按不叠一屏 */
 export const REFRESH_SUCCESS_NOTICE_ID = 'markdown-preview-refresh-success';
 
