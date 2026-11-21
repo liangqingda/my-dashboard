@@ -1,0 +1,41 @@
+/*
+ * 弹层里的分组头部：早先分组标题和下面的字段标题都是 12px 常规字，两组读起来像并列的四个字段。
+ * 现在分组头部单独一套「小标签 + 主色竖标 + 横线」，字号更小、颜色更淡、带字距，
+ * 与 `FreeSelectField` 的字段标题（组件库默认字号、正文墨色）分开两档：
+ * 上面是「这一组讲什么」，下面是「这一项选什么」。
+ */
+
+/* 分组头的竖标：2px 主色条，给「这是一组」一个不靠字重的信号 */
+.groupMark {
+  flex: 0 0 auto;
+  width: 2px;
+  height: 10px;
+  border-radius: 1px;
+  background: var(--app-accent);
+  opacity: 0.55;
+}
+
+/* 分组名：11px + 字距 + 淡色，字号与颜色都低于字段标题一档，靠形状区分而不是靠加粗 */
+.groupTitle {
+  flex: 0 0 auto;
+  color: var(--app-ink-faint);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  line-height: 1;
+}
+
+/* 分组名右侧的横线：把这一组从视觉上框起来，也替掉了原来两条分组之间的 Divider */
+.groupRule {
+  flex: 1 1 auto;
+  align-self: center;
+  border-top: 1px solid var(--app-line);
+}
+
+/* 折叠块那组的说明行：挂在分组头下面一行，不挤在标题与横线之间抢位置 */
+.groupNote {
+  color: var(--app-ink-faint);
+  font-size: 11px;
+  line-height: 1.45;
+  opacity: 0.85;
+}

@@ -5,6 +5,9 @@
  * 与筛选面板是同一套外观与同一条「下拉不进门户」的规矩——都收在那一个组件里，
  * 这里只给选项、分组与说明文案。
  *
+ * 分组头单独一套样式（`index.scss` 的 `groupTitle` 等）：11px 淡色小标签 + 主色竖标 + 右侧横线，
+ * 与字段标题（组件库默认字号、正文墨色）明显分开两档——两者同档时读起来像并列的四个字段。
+ *
  * 两组偏好（都是跨篇记住的阅读偏好，写在 localStorage）：
  * 1. 同文档链接（`[文字](#锚点)`）：点链接之后滚过去 / 弹窗读那一节；子区域预览能前后切到哪些链接；
  * 2. 折叠块（`<details>`，笔记里的场景对话原文、故事原文）：点标题之后原地展开 / 弹窗读。
@@ -14,7 +17,7 @@
  * 这里只管按钮外观、弹层开合与把选中的值递上去。
  */
 
-import { Divider, Group, Stack, Text } from '@mantine/core';
+import { Box, Group, Stack, Text } from '@mantine/core';
 import { IconHandClick } from '@tabler/icons-react';
 
 import FreeSelectField from '@/components/fields/FreeSelectField';
@@ -32,15 +35,14 @@ import {
   DETAILS_BLOCK_BEHAVIORS,
 } from '../constants';
 
+import styles from './index.scss';
+
 /** 与标题栏其它图标同档的图标尺寸 / 线宽 */
 const ICON_SIZE = 15;
 const ICON_STROKE = 1.9;
 
 /** 弹层宽度：与筛选面板同宽（272），两组字段都排得开 */
 const DROPDOWN_WIDTH = 272;
-
-/** 分组小标题：比字段标题淡一档，只负责把两组分开 */
-const GROUP_LABEL_PROPS = { fw: 600, size: 'xs' } as const;
 
 /** 两档链接行为：档名给下拉，口径说明单列一行（塞进选项会把下拉撑宽） */
 const ANCHOR_BEHAVIOR_OPTIONS: Record<
@@ -123,10 +125,14 @@ const InteractionControl = ({
       opened={opened}
       width={DROPDOWN_WIDTH}
     >
-      <Stack gap={12}>
+      <Stack gap={16}>
         {hasAnchorLinks ? (
           <Stack gap={8}>
-            <Text {...GROUP_LABEL_PROPS}>同文档链接</Text>
+            <Group gap={6} wrap="nowrap">
+              <Box className={styles.groupMark} />
+              <Text className={styles.groupTitle}>同文档链接</Text>
+              <Box className={styles.groupRule} />
+            </Group>
             <FreeSelectField
               data={ANCHOR_BEHAVIOR_DATA}
               description={ANCHOR_BEHAVIOR_OPTIONS[anchorBehavior].description}
@@ -147,15 +153,18 @@ const InteractionControl = ({
             />
           </Stack>
         ) : null}
-        {hasAnchorLinks && hasDetailBlocks ? <Divider /> : null}
         {hasDetailBlocks ? (
           <Stack gap={8}>
-            <Group gap={6} wrap="nowrap">
-              <Text {...GROUP_LABEL_PROPS}>折叠块</Text>
-              <Text c="dimmed" size="xs">
-                如场景对话原文、故事原文
+            <Stack gap={4}>
+              <Group gap={6} wrap="nowrap">
+                <Box className={styles.groupMark} />
+                <Text className={styles.groupTitle}>折叠块</Text>
+                <Box className={styles.groupRule} />
+              </Group>
+              <Text className={styles.groupNote}>
+                场景对话原文、故事原文这类折叠块
               </Text>
-            </Group>
+            </Stack>
             <FreeSelectField
               data={DETAILS_BEHAVIOR_DATA}
               description={DETAILS_BEHAVIOR_OPTIONS[detailsBehavior].description}
