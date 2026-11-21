@@ -254,8 +254,8 @@ export type RawNotePayload = {
   note: unknown;
 };
 
-/** 预览正文的筛选范围：全部内容 / 只看习题 / 只看错题 */
-export type NoteFilterScope = 'all' | 'exercise' | 'wrong';
+/** 预览正文的筛选范围：全部内容 / 只看讲解 / 只看习题 / 只看错题 */
+export type NoteFilterScope = 'all' | 'explain' | 'exercise' | 'wrong';
 
 /** 预览正文的筛选条件：范围 + 关键词（关键词为空表示不按关键词筛） */
 export type NoteFilterCondition = {

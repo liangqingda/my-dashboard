@@ -3,6 +3,8 @@
  *
  * 笔记的骨架是标题——`## 基础信息` / `## 讲解` / `## 本轮习题` / `### <题号>. <题型>`，
  * 所以按标题把正文切成块，只保留命中的块和它们的祖先标题：
+ * - 只看讲解：只留标题里带「讲解」的那一节（笔记里的 `## 讲解`），连同它下面的小标题；
+ *   基础信息表、练习轮次与扩展一并消失；
  * - 只看习题：只留 `###` 题目块，基础信息表、讲解、每轮的复习统计表一并消失；
  * - 只看错题：题目块里 `**判定**` 不是 ✅ 的那些（没写判定的不算错题，不硬塞进来）；
  * - 关键词：块内任意文本（含标题）命中才保留，与上面的范围条件叠加。
@@ -131,10 +133,41 @@ const isWrongAnswer = (chunk: MarkdownChunk): boolean => {
   return false;
 };
 
-/** 范围条件：全部一律命中；习题只认题目块；错题再叠一层判定 */
-const matchesScope = (chunk: MarkdownChunk, scope: NoteFilterScope): boolean => {
+/** 「讲解」那一节的标题：标题文字里带「讲解」（笔记里就是 `## 讲解`，也兼容带长标题的变体） */
+const EXPLAIN_HEADING = /^#{1,4}\s+.*讲解/u;
+
+/**
+ * 这一块是不是「讲解」那一节：自己标题命中，或顺着父链往上有命中——
+ * 所以 `## 讲解` 下面挂的 h3 小标题（如「用法要点」）会跟着一起留下。
+ */
+const isExplainChunk = (chunks: MarkdownChunk[], index: number): boolean => {
+  let cursor = index;
+
+  while (cursor >= 0) {
+    const { heading, parent } = chunks[cursor];
+
+    if (heading !== null && EXPLAIN_HEADING.test(heading)) {
+      return true;
+    }
+
+    cursor = parent;
+  }
+
+  return false;
+};
+
+/** 范围条件：全部一律命中；讲解认「讲解」那一节；习题只认题目块；错题再叠一层判定 */
+const matchesScope = (
+  chunk: MarkdownChunk,
+  scope: NoteFilterScope,
+  inExplain: boolean,
+): boolean => {
   if (scope === 'all') {
     return true;
+  }
+
+  if (scope === 'explain') {
+    return inExplain;
   }
 
   if (chunk.level !== QUESTION_LEVEL) {
@@ -161,9 +194,12 @@ export const filterNoteMarkdown = (
 ): string => {
   const keyword = condition.keyword.trim().toLowerCase();
   const chunks = splitChunks(markdown);
+  /** 哪几块属于「讲解」那一节：只算一次，范围条件逐块查表 */
+  const explain = chunks.map((_, index) => isExplainChunk(chunks, index));
   const hit = chunks.map(
-    (chunk) =>
-      matchesScope(chunk, condition.scope) && matchesKeyword(chunk, keyword),
+    (chunk, index) =>
+      matchesScope(chunk, condition.scope, explain[index]) &&
+      matchesKeyword(chunk, keyword),
   );
   /** 只保留标题行的祖先块：命中题目之外的内容（基础信息、讲解、统计表）一律不出现 */
   const headingOnly = new Set<number>();

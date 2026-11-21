@@ -4,11 +4,12 @@
 （`pages/English/hooks/useNoteFilter`，两个 localStorage key 见页面 `constants.ts`），
 换一篇笔记、刷新页面都沿用上次的条件；面板只负责展示与回传。
 
-## 三档范围（筛选口径在 `pages/English/utils/filter-markdown.ts`）
+## 四档范围（筛选口径在 `pages/English/utils/filter-markdown.ts`）
 
 | 范围 | 留下什么 |
 | --- | --- |
 | 全部内容（`all`） | 全部小节，只叠加关键词 |
+| 只看讲解（`explain`） | 只留标题里带「讲解」的那一节（`## 讲解`）及其下属小标题，藏掉基础信息表、练习轮次与扩展；笔记里没有「讲解」这一节时结果为空，正文区给空结果提示 |
 | 只看习题（`exercise`） | 只留 `### <题号>. <题型>` 题目块，藏掉基础信息表、讲解、每轮的复习统计表 |
 | 只看错题（`wrong`） | 题目块里 `**判定**` 不是 ✅ 的（❌ 与 ⚠️ 都算；没写判定的不算错题，不硬塞进来） |
 
@@ -21,7 +22,7 @@
 - 字段顺序：关键词输入在上、范围下拉在下；面板随弹层挂载即聚焦关键词输入框，点开就能打字。
 - 关键词输入框挂回车导航：Enter 下一个命中、Shift+Enter 上一个，由弹窗层的 `navigation`
   滚动定位；输入框下方一行给「当前 / 总数」，零命中显示「无匹配」，无关键词不显示计数。
-- 范围用一档下拉（`FreeSelectField`）而不是三行单选：272px 的面板里，三行「档名 + 口径」太占高度。
+- 范围用一档下拉（`FreeSelectField`）而不是逐行单选：272px 的面板里，四行「档名 + 口径」太占高度。
   下拉收起后只剩当前档名，口径由下拉下方一行灰字补上（数据见 `constants.ts` 的
   `SCOPE_OPTIONS` / `SCOPE_SELECT_DATA`）——想改口径文案只改前者，下拉选项自动跟着变。
 - 下拉的 `comboboxProps.withinPortal` 必须为 `false`（由 `FreeSelectField` 统一挡掉）：面板本身已在

@@ -1,11 +1,16 @@
 import type { NoteFilterScopeOption } from './types';
 
-/** 筛选面板上的三档：顺序即展示顺序，文案与筛选口径（见 `utils/filter-markdown`）对齐 */
+/** 筛选面板上的四档：顺序即展示顺序，文案与筛选口径（见 `utils/filter-markdown`）对齐 */
 export const SCOPE_OPTIONS: NoteFilterScopeOption[] = [
   {
     description: '基础信息、讲解、统计表都在',
     label: '全部内容',
     value: 'all',
+  },
+  {
+    description: '只留「讲解」这一节，藏起基础信息与习题',
+    label: '只看讲解',
+    value: 'explain',
   },
   {
     description: '只留题目，藏起基础信息与讲解',

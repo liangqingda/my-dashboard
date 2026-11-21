@@ -112,9 +112,9 @@ export const FILTER_SCOPE_STORAGE_KEY = 'my-dashboard:english:filter-scope';
 
 export const FILTER_KEYWORD_STORAGE_KEY = 'my-dashboard:english:filter-keyword';
 
-/** 筛选范围的编解码：只认三种范围，写坏的存储值回落「全部内容」 */
+/** 筛选范围的编解码：只认这四种范围，写坏的存储值回落「全部内容」 */
 export const FILTER_SCOPE_CODEC = createChoiceCodec<NoteFilterScope>(
-  ['all', 'exercise', 'wrong'],
+  ['all', 'explain', 'exercise', 'wrong'],
   'all',
 );
 

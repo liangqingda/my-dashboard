@@ -28,7 +28,7 @@
 | ① | `FreeTable`、`FreeModal` 的关窗 / 翻篇 / 全屏键位与框体、`MarkdownPreviewModal` 的正文字号 / 锚点行为 | 两个页面要的是同一套行为，没有页面差异；键位这种「同一时刻只能有一套」的交互必须落在基础壳 |
 | ② | `ConfirmModal`（二次确认：说明 + 出口）、`IconPopoverButton`（弹层外壳）、`FilterButton`（筛选按钮）、`FreeSelectField`（字段组）、`FreePanelFooter`（底部说明 + 重置） | 长什么样、怎么开合是同一套；筛什么、说明写什么、点了做什么各页不同 |
 | ③ | `@/hooks/useStoredState`、`@/utils/format`、`pages/English/utils/filter-markdown`、`useProseFontScale` | 逻辑能共用，但界面上放哪、长什么样归页面 |
-| ④ | `NoteFilter` 的三档口径（错题 / 习题）、`NotesFilter` 的分类与日期口径、`NoteEditor` 的块编辑 | 语义只属于这一页 |
+| ④ | `NoteFilter` 的筛选口径（讲解 / 习题 / 错题）、`NotesFilter` 的分类与日期口径、`NoteEditor` 的块编辑 | 语义只属于这一页 |
 
 **②是最容易做错、也最值钱的一档**：它的产出必须是「壳 + 插槽」，不能顺手把某个页面的口径写进壳里
 （比如给 `FilterButton` 内置「错题 / 习题」两个筛选项）。壳只认 `active` / `onChange` / `children`
