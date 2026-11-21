@@ -39,6 +39,9 @@ export const NO_EDITOR_MESSAGE =
 /** 「编辑中不能关闭」提示的固定 id：连按 Esc 只会刷新同一条，不叠一屏 */
 export const CLOSE_BLOCKED_NOTIFICATION_ID = 'markdown-preview-close-blocked';
 
+/** 快捷键复制相对路径成功提示的固定 id：连按不叠一屏 */
+export const COPY_SUCCESS_NOTICE_ID = 'markdown-preview-copy-success';
+
 /** 编辑态想关弹窗时的提示：说清出口在哪，而不是让按键像坏了一样没反应 */
 export const CLOSE_BLOCKED_EDITING_MESSAGE =
 '先点 header 的返回箭头退出编辑，关闭按钮就回来了。';

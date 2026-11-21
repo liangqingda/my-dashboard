@@ -28,9 +28,12 @@
  * - 翻篇快捷键与按钮焦点 → `hooks/use-step-navigation`
  */
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { FocusTrap, Modal } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 
+import { COPY_FAILED_NOTICE_ID } from '@/components/CopyIconButton/constants';
+import { COPY_FEEDBACK_DURATION, copyText } from '@/utils/clipboard';
 import { cx } from '@/utils/cx';
 
 import type { MarkdownFilterNavigation } from './types/filter';
@@ -41,10 +44,12 @@ import PreviewWorkspace from './PreviewWorkspace';
 import AnchorBlockPreview from './AnchorBlockPreview';
 import { collectAnchorBlocks } from './utils/anchor-blocks';
 import { withSideEffect } from './utils/with-side-effect';
+import { COPY_SUCCESS_NOTICE_ID } from './constants';
 import { useAnchorBlockNavigation } from './hooks/useAnchorBlockNavigation';
 import { useAnchorLinkBehavior } from './hooks/useAnchorLinkBehavior';
 import { useAnchorNavScope } from './hooks/useAnchorNavScope';
 import { useCloseRequest } from './hooks/useCloseRequest';
+import { useHeaderActionShortcuts } from './hooks/useHeaderActionShortcuts';
 import { useModalFullscreen } from './hooks/useModalFullscreen';
 import { useNoteEditing } from './hooks/useNoteEditing';
 import { useProseFontScale } from './hooks/useProseFontScale';
@@ -198,6 +203,47 @@ const MarkdownPreviewModal = ({
       !removal.confirming,
     // `request` 本身非空（enabled 已经要求传了 remove），`withPanelsClosed` 的联合返回在这里收窄回动作
     onRequest: () => withPanelsClosed(removal.request)?.(),
+  });
+
+  /**
+   * 快捷键复制相对路径：成败都走固定通知 id，连按不叠一屏；成功反馈档位与按钮对勾同长。
+   * 按钮上的对勾状态复制组件内部持有，快捷键路径看不到，只能用通知给反馈。
+   */
+  const handleCopyPath = useCallback(() => {
+    if (!relativePath) {
+      return;
+    }
+
+    void copyText(relativePath).then((ok) => {
+      notifications.show({
+        id: ok ? COPY_SUCCESS_NOTICE_ID : COPY_FAILED_NOTICE_ID,
+        color: ok ? 'teal' : 'red',
+        title: ok ? '已复制' : '复制失败',
+        message: ok ? '相对路径已复制' : '复制失败，请手动复制',
+        autoClose: ok ? COPY_FEEDBACK_DURATION : false,
+      });
+    });
+  }, [relativePath]);
+
+  /** 快捷键开合筛选面板：已开筛选就收起，否则切到筛选（与点筛选按钮同一条路） */
+  const toggleFilterPanel = useCallback(() => {
+    setPanel((current) => (current === 'filter' ? null : 'filter'));
+  }, []);
+
+  /**
+   * header 操作快捷键：`s` 筛选开合、`c` 复制路径、`r` 刷新、`f` 全屏。
+   * 子区域预览 / 删除确认层开着时停用——那时键盘归上面那一层；编辑态整组按钮都收掉。
+   */
+  useHeaderActionShortcuts({
+    enabled:
+      opened &&
+      !editing.editing &&
+      anchorBlock.index === null &&
+      !removal.confirming,
+    onToggleFilter: filter && !loading ? toggleFilterPanel : null,
+    onCopy: relativePath ? handleCopyPath : null,
+    onRefresh: onRefresh ? refresh : null,
+    onToggleFullscreen: toggleFullscreen,
   });
 
   /** 进入编辑时清掉弹层与子区域预览：新的一轮不该还亮着上一轮的位置 */

@@ -580,3 +580,17 @@ export type ActiveHeadingParams = {
   /** 文档内标题列表：数量决定扫几个节点，引用变化表示换了一篇文档，需要重判 */
   headings: MarkdownOutlineHeading[];
 };
+
+/** header 操作快捷键的入参：s 筛选 / c 复制 / r 刷新 / f 全屏，各动作有能力才响应 */
+export type HeaderActionShortcutParams = {
+  /** 是否启用（预览态，编辑态与其它浮层都没占着键盘） */
+  enabled: boolean;
+  /** 开合筛选面板；不传表示没有筛选能力 */
+  onToggleFilter?: (() => void) | null;
+  /** 复制相对路径；不传表示没有路径可复制 */
+  onCopy?: (() => void) | null;
+  /** 刷新正文；不传表示没有刷新能力 */
+  onRefresh?: (() => void) | null;
+  /** 切换全屏；不传表示不提供 */
+  onToggleFullscreen?: (() => void) | null;
+};
