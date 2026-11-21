@@ -51,7 +51,7 @@ export const describeNoteDelete = (checkedKeys: readonly string[]): string => {
   const mode = toNoteDeleteMode(checkedKeys);
 
   if (mode === 'both') {
-    return '笔记和学习状态一起清掉：这条知识点退出复习库，笔记也不会再重新生成。';
+    return '笔记和学习状态一起清掉：这条知识点退出知识库，笔记也不会再重新生成。';
   }
 
   if (mode === 'markdown') {

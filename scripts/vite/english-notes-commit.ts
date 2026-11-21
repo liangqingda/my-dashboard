@@ -257,7 +257,7 @@ export const commitRecordDeletion = async (
         '-m',
         subject,
         '-m',
-        '通过 my-dashboard 的复习库删除',
+        '通过 my-dashboard 的知识库删除',
         // 带 pathspec：只提交这份记录文件，不把 index 里别的预暂存改动捎上
         '--',
         recordFile,

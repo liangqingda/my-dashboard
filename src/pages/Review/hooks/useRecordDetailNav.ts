@@ -31,7 +31,7 @@ type Result = {
 };
 
 /**
- * 复习库详情的开合与翻页：位置按筛选结果算。列表是整份渲染的，
+ * 知识库详情的开合与翻页：位置按筛选结果算。列表是整份渲染的，
  * 翻页不需要再补渲染任何行。
  */
 export const useRecordDetailNav = ({ records }: Params): Result => {

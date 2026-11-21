@@ -32,7 +32,7 @@ import { deleteReviewRecord } from './utils/records-api';
 import styles from './index.scss';
 
 /**
- * 复习库：把 learn-english 的 learning-records / mastered-learning-records 合并成一张表，
+ * 知识库：把 learn-english 的 learning-records / mastered-learning-records 合并成一张表，
  * 按更新时间倒序（中间件已排好）。点开看详情、右侧图标删除，取数与删除都走 Vite 中间件。
  */
 const Review = () => {
@@ -166,7 +166,7 @@ const Review = () => {
   };
 
   return (
-    <MenuContentLayout fill title="复习库">
+    <MenuContentLayout fill title="知识库">
       <Stack className={styles.shell} gap="sm">
         <RecordsToolbar
           category={categoryFilter}

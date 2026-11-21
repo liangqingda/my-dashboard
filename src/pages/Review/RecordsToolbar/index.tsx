@@ -20,7 +20,7 @@ import type { RecordsToolbarProps } from './types';
 import styles from './index.scss';
 
 /**
- * 复习库列表顶部的筛选行：状态分段、分类下拉、关键词搜索排一行，
+ * 知识库列表顶部的筛选行：状态分段、分类下拉、关键词搜索排一行，
  * 右侧显示计数（还没数据时显示「读取中…」）。筛选项归页面持有，这里只负责呈现与冒泡。
  */
 const RecordsToolbar = ({

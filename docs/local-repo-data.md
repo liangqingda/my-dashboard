@@ -13,7 +13,7 @@
 | `scripts/vite/english-notes-store.ts` | 只读侧：读盘、解析摘要、文件名合法性、读分类清单 |
 | `scripts/vite/english-notes-write.ts` | 保存一篇笔记：跑记录仓库的 `note.py write`，把「写没写进去 / 校验问题」收敛成页面要的形状 |
 | `scripts/vite/english-notes-delete.ts` | 删除一篇笔记：跑记录仓库的 `learning_records.py delete-note`，把它的结果收敛成页面要的形状 |
-| `scripts/vite/english-records.ts` | 复习库路由壳：`GET /api/english/records`（列表 / 按 ID 详情）、`DELETE`（删除记录），构建期产出记录快照 |
+| `scripts/vite/english-records.ts` | 知识库路由壳：`GET /api/english/records`（列表 / 按 ID 详情）、`DELETE`（删除记录），构建期产出记录快照 |
 | `scripts/vite/english-records-store.ts` | 记录库只读侧：合并学习 / 已掌握两个目录、按更新时间倒序、ID 与详情路径校验 |
 | `scripts/vite/english-records-delete.ts` | 删除一条记录：跑 `learning_records.py delete-record`，只删记录、笔记不动 |
 | `scripts/vite/english-contract.ts` | 契约期望值的唯一来源：`repoDirOf`、`REPO_EXPECTATION`、`contractIssue`（笔记与记录共用） |
@@ -118,9 +118,9 @@
 - 静态构建下每篇正文是独立静态文件；取不到时页面明确报错并关弹窗，不用空正文冒充一篇。
 - 列表页的正文位有 loading 态（`MarkdownPreviewModal` 的 `loading`），取正文期间不给编辑 / 刷新入口。
 
-## 记录库（复习库页面）：合并两个目录，删除也交给记录仓库
+## 记录库（知识库页面）：合并两个目录，删除也交给记录仓库
 
-「复习库」页面（`src/pages/Review`）展示记录仓库的两份记录：
+「知识库」页面（`src/pages/Review`）展示记录仓库的两份记录：
 
 | 目录 | 文件形态 | 状态 |
 | --- | --- | --- |

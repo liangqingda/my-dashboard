@@ -1,5 +1,5 @@
 /**
- * 复习库模块的数据访问层。
+ * 知识库模块的数据访问层。
  * 开发时走 Vite 插件的 `/api/english/records`（实时读取 learn-english 仓库），
  * 构建产物走 `english-records.index.json`（列表索引）+ `english-records/<category>/<key>.json`（按条详情）。
  *

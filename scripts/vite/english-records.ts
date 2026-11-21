@@ -1,5 +1,5 @@
 /**
- * 复习库插件：把 learn-english 的两个记录目录暴露给前端，并让页面能删掉一条记录。
+ * 知识库插件：把 learn-english 的两个记录目录暴露给前端，并让页面能删掉一条记录。
  *
  * - 开发服务器：
  *   - `GET /api/english/records`：分类清单 + 每条记录的**摘要**（按更新时间倒序，不含讲解正文）；
@@ -42,7 +42,7 @@ const idFromUrl = (url: string | undefined): string | null => {
 };
 
 /**
- * 复习库插件：读盘走 `english-records-store.ts`，删除走记录仓库脚本，
+ * 知识库插件：读盘走 `english-records-store.ts`，删除走记录仓库脚本，
  * 提交文案与推送状态留在 `english-notes-commit.ts`。
  */
 export const englishRecords = (root: string): Plugin => {
@@ -61,7 +61,7 @@ export const englishRecords = (root: string): Plugin => {
         return;
       }
 
-      // 契约对不上就停下构建：别把「读空了 / 读歪了」的复习库快照发布出去
+      // 契约对不上就停下构建：别把「读空了 / 读歪了」的知识库快照发布出去
       const issue = await contractIssue(repoDir);
 
       if (issue !== null) {

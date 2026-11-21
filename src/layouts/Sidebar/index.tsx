@@ -12,7 +12,7 @@ import type { NavGroupItem, NavItem, NavLinkItem, SidebarProps } from './types';
 import styles from './index.scss';
 
 /**
- * 侧栏导航：顶层是页面入口；同一类页面收进可展开分组（如「英语」下的笔记 / 复习库），
+ * 侧栏导航：顶层是页面入口；同一类页面收进可展开分组（如「英语」下的笔记 / 知识库），
  * 分组本身不跳转，只是把子页面并到一个入口下。分组与子项的顺序就是展示顺序。
  */
 const navItems: NavItem[] = [
@@ -23,7 +23,7 @@ const navItems: NavItem[] = [
     icon: IconLanguage,
     children: [
       { key: 'english-notes', label: '笔记', to: '/english/notes', icon: IconNotes },
-      { key: 'english-review', label: '复习库', to: '/english/review', icon: IconRepeat },
+      { key: 'english-review', label: '知识库', to: '/english/review', icon: IconRepeat },
     ],
   },
 ];

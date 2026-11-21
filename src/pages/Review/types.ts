@@ -1,5 +1,5 @@
 /**
- * 复习库模块的类型定义。
+ * 知识库模块的类型定义。
  * 数据来源为 learn-english 仓库的 `learning-records/` 与 `mastered-learning-records/`，
  * 由 Vite 中间件合并、按更新时间倒序后下发（见 `docs/local-repo-data.md`）。
  */
@@ -119,7 +119,7 @@ export type DeleteRecordResult = {
   commit: RecordCommit;
 };
 
-/** 复习库取数 hook 的返回 */
+/** 知识库取数 hook 的返回 */
 export type UseReviewRecordsResult = {
   /** 记录摘要，按更新时间倒序 */
   records: RecordSummary[];
