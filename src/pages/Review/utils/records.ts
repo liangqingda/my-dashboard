@@ -47,6 +47,31 @@ export const filterRecords = (
   );
 };
 
+/**
+ * 关键词搜索：标题、分类中文标题、记录 ID 三处任一处包含即命中，忽略大小写与首尾空白。
+ * 只过滤列表已有的摘要字段——不回服务端重查，也不为了搜索去把每条的讲解正文拉下来。
+ */
+export const searchRecords = (
+  records: RecordSummary[],
+  keyword: string,
+  categoryLabels: Map<string, string>,
+): RecordSummary[] => {
+  const needle = keyword.trim().toLowerCase();
+
+  if (!needle) {
+    return records;
+  }
+
+  return records.filter(
+    (record) =>
+      record.title.toLowerCase().includes(needle) ||
+      record.id.toLowerCase().includes(needle) ||
+      categoryLabel(categoryLabels, record.categoryKey)
+        .toLowerCase()
+        .includes(needle),
+  );
+};
+
 /** 掌握分展示：未评过分为占位，其余保留一位小数 */
 export const formatScore = (score: number | null): string =>
   score === null ? EMPTY_CELL : score.toFixed(1);

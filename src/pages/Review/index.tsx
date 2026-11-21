@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Button,
+  CloseButton,
   Group,
   ScrollArea,
   SegmentedControl,
@@ -9,9 +10,11 @@ import {
   Skeleton,
   Stack,
   Text,
+  TextInput,
 } from '@mantine/core';
 import { useElementSize } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
+import { IconSearch } from '@tabler/icons-react';
 
 import MenuContentLayout from '@/layouts/MenuContentLayout';
 import { getErrorMessage } from '@/utils/error';
@@ -20,6 +23,8 @@ import { onPageRefresh } from '@/utils/page-refresh';
 import {
   DEFAULT_STATUS_FILTER,
   LOAD_MORE_ROWS,
+  SEARCH_PLACEHOLDER,
+  SEARCH_WIDTH,
   SKELETON_ROWS,
   STATUS_FILTERS,
 } from './constants';
@@ -37,6 +42,7 @@ import {
   filterRecords,
   initialRowCount,
   moreLabel,
+  searchRecords,
 } from './utils/records';
 import { deleteReviewRecord } from './utils/records-api';
 
@@ -59,6 +65,8 @@ const Review = () => {
   );
   /** 分类筛选：空串表示全部 */
   const [categoryFilter, setCategoryFilter] = useState(ALL_CATEGORIES);
+  /** 关键词：只在列表已有的摘要字段里过滤，敲一个字符就即时生效 */
+  const [keyword, setKeyword] = useState('');
   /** 当前打开详情的记录 ID */
   const [activeId, setActiveId] = useState<string | null>(null);
   /** 等待确认删除的记录 */
@@ -96,10 +104,16 @@ const Review = () => {
     ];
   }, [categories, categoryLabels, records]);
 
-  /** 当前筛选结果：状态优先，再看分类；顺序沿用中间件的更新时间倒序 */
+  /** 关键词命中的记录：标题 / 分类标题 / 记录 ID 任一处包含即命中 */
+  const searchedRecords = useMemo(
+    () => searchRecords(records, keyword, categoryLabels),
+    [categoryLabels, keyword, records],
+  );
+
+  /** 当前筛选结果：先关键词，再状态与分类；顺序沿用中间件的更新时间倒序 */
   const visibleRecords = useMemo(
-    () => filterRecords(records, statusFilter, categoryFilter),
-    [categoryFilter, records, statusFilter],
+    () => filterRecords(searchedRecords, statusFilter, categoryFilter),
+    [categoryFilter, searchedRecords, statusFilter],
   );
 
   /** 首屏骨架 / 空态 / 列表三种形态先算好，JSX 里不再叠三元 */
@@ -223,6 +237,30 @@ const Review = () => {
               size="xs"
               value={categoryFilter}
               w={128}
+            />
+            <TextInput
+              aria-label="按关键词搜索记录"
+              leftSection={<IconSearch size={15} stroke={1.9} />}
+              onChange={(event) => {
+                setKeyword(event.currentTarget.value);
+                resetList();
+              }}
+              placeholder={SEARCH_PLACEHOLDER}
+              rightSection={
+                keyword ? (
+                  <CloseButton
+                    aria-label="清空搜索"
+                    onClick={() => {
+                      setKeyword('');
+                      resetList();
+                    }}
+                    size="xs"
+                  />
+                ) : null
+              }
+              size="xs"
+              value={keyword}
+              w={SEARCH_WIDTH}
             />
           </Group>
           <Text c="dimmed" size="xs">

@@ -41,6 +41,12 @@ export const STATUS_FILTERS: Array<{
 /** 默认筛选：先看全部，按更新时间倒序 */
 export const DEFAULT_STATUS_FILTER: StatusFilter = 'all';
 
+/** 关键词搜索框的占位文案：说明能搜哪几类字段 */
+export const SEARCH_PLACEHOLDER = '搜索标题 / 分类 / ID';
+
+/** 搜索框宽度：够放下常见关键词，又不把筛选行挤换行 */
+export const SEARCH_WIDTH = 208;
+
 /** 首屏骨架屏的行数：只为给一个「正在读」的形状，不假装有数据 */
 export const SKELETON_ROWS: readonly number[] = [0, 1, 2, 3, 4];
 
