@@ -76,15 +76,11 @@ const DETAILS_SCOPE_OPTIONS: Record<
   { description: string; label: string }
 > = {
   all: {
-    description: '按正文顺序切换全部 <details>，含练习题的「知识点讲解」',
-    label: '切换全文所有折叠块',
-  },
-  kind: {
-    description: '只算标题相同的折叠块，如各轮的「知识点讲解」「错题讲解」',
-    label: '切换全文同类折叠块',
+    description: '只在原文类折叠块之间按正文顺序切，如各段场景对话原文 → 故事原文',
+    label: '切换全文所有原文',
   },
   section: {
-    description: '只算同一个标题小节下的折叠块，如「场景对话」那两块',
+    description: '只算同一标题小节下的原文折叠块，如「场景对话」那两块',
     label: '只切换同一小节',
   },
 };
@@ -190,7 +186,7 @@ const InteractionControl = ({
                 <Box className={styles.groupRule} />
               </Group>
               <Text className={styles.groupNote}>
-                场景对话原文、故事原文这类折叠块
+                只作用于场景对话原文、故事原文这类原文折叠块；练习题的「知识点讲解」「错题讲解」仍按浏览器默认原地展开
               </Text>
             </Stack>
             <FreeSelectField

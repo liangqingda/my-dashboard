@@ -200,7 +200,7 @@ const MarkdownPreviewModal = ({
               filter={filter}
               fontScale={proseFont}
               hasAnchorLinks={interactions.anchorBlocks.length > 0}
-              hasDetailBlocks={interactions.detailBlocks.length > 0}
+              hasDetailBlocks={interactions.detailBlocks.some((b) => b.isOriginal)}
               highlightNavigation={header.highlightNavigation}
               loading={loading}
               onAnchorBehaviorChange={interactions.anchorLink.setBehavior}

@@ -4,6 +4,8 @@
  * 弹窗把「点了折叠块标题之后发生什么」收在这一处：
  * - `expand`：什么都不做，交给浏览器在原地展开（等于旧行为）；
  * - `modal`：认出这个 summary 属于第几个折叠块，交给子区域预览弹窗；
+ * - **只对原文类折叠块生效**（场景对话原文 / 故事原文）：练习题里的「知识点讲解」「错题讲解」
+ *   一律照浏览器默认原地展开，不受这档偏好影响；
  * - 认不出对应折叠块（比如正文与解析结果漂了）时同样退回原地展开，不让点击白按一下。
  *
  * 点在 `<details>` 已经展开的正文上不算点标题：只有 summary 归这里。
@@ -12,10 +14,7 @@
 import { useCallback, useState } from 'react';
 import type { MouseEvent } from 'react';
 
-import type {
-  DetailsBlockBehavior,
-  MarkdownPreviewSection,
-} from '../types';
+import type { DetailsBlockBehavior, MarkdownDetailBlock } from '../types';
 import {
   findDetailBlockIndex,
   getClickedSummary,
@@ -23,8 +22,8 @@ import {
 
 /** 折叠块导航的入参 */
 export type DetailsBlockNavigationParams = {
-  /** 文档里的折叠块，按正文顺序 */
-  blocks: readonly MarkdownPreviewSection[];
+  /** 文档里的折叠块，按正文顺序（含不属于原文类、不参与预览的那几块） */
+  blocks: readonly MarkdownDetailBlock[];
   /** 当前点击行为 */
   behavior: DetailsBlockBehavior;
   /** 打开子预览之前先收起 header 弹层（两层浮层不该同时开着） */
@@ -74,8 +73,8 @@ export const useDetailsBlockNavigation = ({
 
     const target = findDetailBlockIndex(event.currentTarget, summary);
 
-    // 没认出是哪一块时把点击还给浏览器：原地展开总比什么都不发生好
-    if (target === null || !blocks[target]) {
+    // 认不出、或不是原文类（练习题讲解等）时把点击还给浏览器：原地展开总比什么都不发生好
+    if (target === null || !blocks[target] || !blocks[target].isOriginal) {
       return false;
     }
 
