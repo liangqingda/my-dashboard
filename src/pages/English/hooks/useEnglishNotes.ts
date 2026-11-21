@@ -76,7 +76,10 @@ export const useEnglishNotes = (): UseEnglishNotesResult => {
       });
   }, [apply, fail]);
 
-  /** 静默重新读取：不切换 loading，用于侧边栏刷新。 */
+  /**
+   * 静默重新读取：不切换 loading，供页面刷新订阅。失败先记进页面错误条，再 rethrow
+   * 让 `onPageRefresh` 的发起方弹出「刷新失败」；被主动取消的 AbortError 不算失败。
+   */
   const reload = useCallback(async () => {
     const current = requestId.current + 1;
 
@@ -86,6 +89,12 @@ export const useEnglishNotes = (): UseEnglishNotesResult => {
       apply(await fetchEnglishNotes(), current);
     } catch (caught) {
       fail(caught, current);
+
+      if (caught instanceof DOMException && caught.name === 'AbortError') {
+        return;
+      }
+
+      throw caught;
     }
   }, [apply, fail]);
 

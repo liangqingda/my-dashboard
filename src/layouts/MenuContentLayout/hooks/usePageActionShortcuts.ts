@@ -4,7 +4,8 @@
  * 放行口径与弹窗快捷键一致：带 ⌘ / Ctrl / Alt 的组合键归浏览器或系统；正在输入
  * （输入框、文本域、可编辑区）时字符属于输入本身，不抢。事件落点不在本页容器内
  * （预览弹窗这类浮层接管了焦点）时也放行，避免弹窗打开时按键同时触发页面与弹窗
- * 两套操作。大小写都认（`R` / `r` 等价，大小写锁定不影响）。
+ * 两套操作；落点是 `body` / `<html>` 表示没聚焦任何控件，按页面内按键处理。
+ * 大小写都认（`R` / `r` 等价，大小写锁定不影响）。
  */
 
 import { useEffect, type RefObject } from 'react';
@@ -43,11 +44,16 @@ export function usePageActionShortcuts({
       }
 
       const container = containerRef.current;
+      const { target } = event;
+      /** 没聚焦任何控件时落点是 body / html：这属于页面内按键，不算浮层接管 */
+      const isRootTarget =
+        target === document.body || target === document.documentElement;
 
       if (
         container &&
-        event.target instanceof HTMLElement &&
-        !container.contains(event.target)
+        target instanceof HTMLElement &&
+        !isRootTarget &&
+        !container.contains(target)
       ) {
         return;
       }

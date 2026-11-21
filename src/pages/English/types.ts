@@ -161,7 +161,7 @@ export type UseEnglishNotesResult = {
   error: string | null;
   /** 重新读取一次（带动画与 loading 态） */
   refresh: () => void;
-  /** 静默重新读取全部笔记：不改 loading，用于侧边栏刷新 */
+  /** 静默重新读取全部笔记：不改 loading；失败会 reject，供页面刷新订阅方提示「刷新失败」 */
   reload: () => Promise<void>;
   /** 用单篇的最新摘要替换列表里的那一条（保存后分类 / 知识点 / 时间可能变；不在列表里就插到最前） */
   applySummary: (summary: NoteSummary) => void;
