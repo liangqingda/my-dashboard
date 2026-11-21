@@ -41,6 +41,11 @@
 页面默认只展示文件名、标题这类索引信息；正文细节交给预览层（`MarkdownPreviewModal`，见
 `src/components/MarkdownPreviewModal/README.md`），不要把全文平铺在页面上。页面本身只做数据拼装与状态编排。
 
+**长列表不做分页控件，按滚动增量渲染**：首屏只渲染「刚好铺满一屏的行数 + 5」（视口高度用
+`useElementSize` 量，行高按当前行样式估成常量），用户滚到 `ScrollArea` 底部时用
+`onBottomReached` 再追加 20 行；换筛选条件时把追加行数归零并把滚动位置拉回顶部。几百条一次性
+进 DOM 会让首屏明显变慢，分页按钮又不如「往下滚」自然。
+
 ## 新增一个菜单页
 
 1. 在 `src/layouts/Sidebar/index.tsx` 的 `navItems` 里加导航项；

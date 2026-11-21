@@ -43,3 +43,15 @@ export const DEFAULT_STATUS_FILTER: StatusFilter = 'all';
 
 /** 首屏骨架屏的行数：只为给一个「正在读」的形状，不假装有数据 */
 export const SKELETON_ROWS: readonly number[] = [0, 1, 2, 3, 4];
+
+/** 列表行高估值（7px 上下内边距 + 单行内容 + 1px 分隔线），只用于算首屏该展示多少条 */
+export const ROW_HEIGHT_PX = 36;
+
+/** 吸顶表头占掉的高度：算「一屏能放下几行」时先扣掉这一截 */
+export const TABLE_HEADER_PX = 30;
+
+/** 首屏在「刚好铺满一屏」之外多给的行数：让滚动条一出现就还有下一条可看 */
+export const OVERSCAN_ROWS = 5;
+
+/** 滚到底部一次追加的行数 */
+export const LOAD_MORE_ROWS = 20;

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Button,
@@ -10,13 +10,19 @@ import {
   Stack,
   Text,
 } from '@mantine/core';
+import { useElementSize } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 
 import MenuContentLayout from '@/layouts/MenuContentLayout';
 import { getErrorMessage } from '@/utils/error';
 import { onPageRefresh } from '@/utils/page-refresh';
 
-import { DEFAULT_STATUS_FILTER, SKELETON_ROWS, STATUS_FILTERS } from './constants';
+import {
+  DEFAULT_STATUS_FILTER,
+  LOAD_MORE_ROWS,
+  SKELETON_ROWS,
+  STATUS_FILTERS,
+} from './constants';
 import type { StatusFilter } from './constants';
 import DeleteRecordConfirm from './DeleteRecordConfirm';
 import { useReviewRecords } from './hooks/useReviewRecords';
@@ -29,6 +35,8 @@ import {
   countLabel,
   describeDelete,
   filterRecords,
+  initialRowCount,
+  moreLabel,
 } from './utils/records';
 import { deleteReviewRecord } from './utils/records-api';
 
@@ -98,6 +106,43 @@ const Review = () => {
   const showSkeleton = loading && records.length === 0;
   const showEmpty = !showSkeleton && visibleRecords.length === 0;
 
+  /** 列表容器高度：用来算「刚好铺满一屏还多 5 条」的首屏行数 */
+  const { ref: listRef, height: listHeight } = useElementSize();
+  /** 滚到底部累计追加的行数；换筛选条件时归零，不让上一次的追加带进新结果 */
+  const [extraRows, setExtraRows] = useState(0);
+  /** 列表滚动容器的视口：换筛选后把滚动位置拉回顶部，否则会停在上一份结果的中间 */
+  const viewportRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * 首屏只渲染一屏多一点（视口高度算出来的行数 + 5），滚到底再追加 20 行：
+   * 几百条一次性进 DOM 会拖慢首屏，又不必给一张几百行的表配分页控件。
+   */
+  const limit = initialRowCount(listHeight) + extraRows;
+  const shownRecords = useMemo(
+    () => visibleRecords.slice(0, limit),
+    [limit, visibleRecords],
+  );
+  const hasMore = shownRecords.length < visibleRecords.length;
+
+  /** 滚到底：再放 20 行进来，已经到底了就什么都不做 */
+  const loadMore = useCallback(() => {
+    setExtraRows((current) => current + LOAD_MORE_ROWS);
+  }, []);
+
+  /** 筛选项变了：追加行数归零、滚动位置回顶，从新结果的第一屏重新看起 */
+  const resetList = useCallback(() => {
+    setExtraRows(0);
+    viewportRef.current?.scrollTo({ top: 0 });
+  }, []);
+
+  /** 计数文案：筛选命中数 + 还没渲染完时的「已显示 N 条」 */
+  const countText = [
+    countLabel(visibleRecords.length, records.length),
+    moreLabel(shownRecords.length, visibleRecords.length),
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
   /** 点击整行 / 标题：打开详情 */
   const openRecord = useCallback((record: RecordSummary) => {
     setActiveId(record.id);
@@ -160,7 +205,10 @@ const Review = () => {
           <Group gap="sm" wrap="wrap">
             <SegmentedControl
               data={STATUS_FILTERS}
-              onChange={(value) => setStatusFilter(value)}
+              onChange={(value) => {
+                setStatusFilter(value);
+                resetList();
+              }}
               size="xs"
               value={statusFilter}
             />
@@ -168,16 +216,17 @@ const Review = () => {
               allowDeselect={false}
               aria-label="按分类筛选"
               data={categoryOptions}
-              onChange={(value) => setCategoryFilter(value ?? ALL_CATEGORIES)}
+              onChange={(value) => {
+                setCategoryFilter(value ?? ALL_CATEGORIES);
+                resetList();
+              }}
               size="xs"
               value={categoryFilter}
               w={128}
             />
           </Group>
           <Text c="dimmed" size="xs">
-            {loading && records.length === 0
-              ? '读取中…'
-              : countLabel(visibleRecords.length, records.length)}
+            {loading && records.length === 0 ? '读取中…' : countText}
           </Text>
         </Group>
         {error !== null ? (
@@ -208,14 +257,22 @@ const Review = () => {
         ) : null}
 
         {!showSkeleton && !showEmpty ? (
-          <ScrollArea className={styles.list} scrollbars="y" type="auto">
-            <RecordsTable
-              categoryLabels={categoryLabels}
-              onDelete={requestDelete}
-              onOpen={openRecord}
-              records={visibleRecords}
-            />
-          </ScrollArea>
+          <div className={styles.listWrap} ref={listRef}>
+            <ScrollArea
+              className={styles.list}
+              onBottomReached={hasMore ? loadMore : undefined}
+              scrollbars="y"
+              type="auto"
+              viewportRef={viewportRef}
+            >
+              <RecordsTable
+                categoryLabels={categoryLabels}
+                onDelete={requestDelete}
+                onOpen={openRecord}
+                records={shownRecords}
+              />
+            </ScrollArea>
+          </div>
         ) : null}
       </Stack>
 

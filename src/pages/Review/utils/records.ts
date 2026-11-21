@@ -3,7 +3,7 @@
  * 都不依赖 React，列表与详情共用同一套展示口径。
  */
 
-import { EMPTY_CELL } from '../constants';
+import { EMPTY_CELL, OVERSCAN_ROWS, ROW_HEIGHT_PX, TABLE_HEADER_PX } from '../constants';
 import type { StatusFilter } from '../constants';
 import type {
   RecordCategory,
@@ -54,6 +54,26 @@ export const formatScore = (score: number | null): string =>
 /** 筛选结果的计数文案：搜索 / 筛过之后显示「命中数 / 总数」 */
 export const countLabel = (shown: number, total: number): string =>
   shown === total ? `共 ${total} 条` : `筛出 ${shown} / ${total} 条`;
+
+/**
+ * 首屏该渲染多少行：视口高度扣掉吸顶表头，再按行高算出「刚好一屏」的行数，
+ * 额外多给 `OVERSCAN_ROWS` 行。高度还没量出来（0）时只给这多出来的几行，不铺满也不空着。
+ */
+export const initialRowCount = (viewportHeight: number): number => {
+  if (viewportHeight <= 0) {
+    return OVERSCAN_ROWS;
+  }
+
+  const rowsPerScreen = Math.floor(
+    Math.max(0, viewportHeight - TABLE_HEADER_PX) / ROW_HEIGHT_PX,
+  );
+
+  return rowsPerScreen + OVERSCAN_ROWS;
+};
+
+/** 还没渲染完时的补充文案：全部渲染出来就返回空串，由调用方决定拼不拼 */
+export const moreLabel = (rendered: number, matched: number): string =>
+  rendered >= matched ? '' : `已显示 ${rendered} 条`;
 
 /**
  * 删除后那条提示：记录已经删掉了，但提交 / 推送可能没成——一层层如实说，
