@@ -34,7 +34,7 @@ import styles from './index.scss';
 /** 稳定的空数组，避免每次渲染都换新引用 */
 const NO_NOTES: NoteSummary[] = [];
 
-/** 英语练习页：把 learning-record-notes 下的笔记按分类分列展示，整页不滚动。 */
+/** 英语笔记页：把 learning-record-notes 下的笔记按分类分列展示，整页不滚动。 */
 const English = () => {
   const {
     categories,
@@ -260,7 +260,7 @@ const English = () => {
           </>
         }
         fill
-        title="英语练习"
+        title="英语笔记"
       >
         {error ? (
           <div className={styles.errorBar}>

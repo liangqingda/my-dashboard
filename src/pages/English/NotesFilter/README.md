@@ -1,6 +1,6 @@
 # 列表筛选面板（`NotesFilter`）
 
-英语练习页 header 上「筛选笔记」按钮点开的那块面板。**面板本身无状态**：条件由页面持有并持久化
+英语笔记页 header 上「筛选笔记」按钮点开的那块面板。**面板本身无状态**：条件由页面持有并持久化
 （`pages/English/hooks/useNotesFilter`，三个 localStorage key 见页面 `constants.ts`），
 刷新页面重新进入后沿用上次的条件；面板只负责展示与回传。
 
