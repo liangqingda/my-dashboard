@@ -6,8 +6,8 @@ import BasicLayout from '@/layouts/BasicLayout';
 
 import NotFound from '@/pages/Errors/NotFound';
 
-const English = lazy(() => import('@/pages/English'));
-const Review = lazy(() => import('@/pages/Review'));
+const EnglishNotes = lazy(() => import('@/pages/EnglishNotes'));
+const EnglishKnowledgeBase = lazy(() => import('@/pages/EnglishKnowledgeBase'));
 const Services = lazy(() => import('@/pages/Services'));
 
 const App = () => (
@@ -19,8 +19,13 @@ const App = () => (
           <Route element={<Services />} path="/services" />
           {/* 英语分组的旧入口仍落在笔记页，避免历史上收藏的 /english 直接 404 */}
           <Route element={<Navigate replace to="/english/notes" />} path="/english" />
-          <Route element={<English />} path="/english/notes" />
-          <Route element={<Review />} path="/english/review" />
+          {/* 知识库改名前的旧路径（/english/review），同样留一条重定向 */}
+          <Route
+            element={<Navigate replace to="/english/knowledge-base" />}
+            path="/english/review"
+          />
+          <Route element={<EnglishNotes />} path="/english/notes" />
+          <Route element={<EnglishKnowledgeBase />} path="/english/knowledge-base" />
           <Route element={<NotFound />} path="*" />
         </Routes>
       </Suspense>

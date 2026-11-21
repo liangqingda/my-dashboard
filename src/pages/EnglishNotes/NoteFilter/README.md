@@ -1,10 +1,10 @@
 # 笔记筛选面板（`NoteFilter`）
 
 英语笔记预览弹窗里那块筛选面板的规格。**面板本身无状态**：条件由页面持有并持久化
-（`pages/English/hooks/useNoteFilter`，两个 localStorage key 见页面 `constants.ts`），
+（`pages/EnglishNotes/hooks/useNoteFilter`，两个 localStorage key 见页面 `constants.ts`），
 换一篇笔记、刷新页面都沿用上次的条件；面板只负责展示与回传。
 
-## 四档范围（筛选口径在 `pages/English/utils/filter-markdown.ts`）
+## 四档范围（筛选口径在 `pages/EnglishNotes/utils/filter-markdown.ts`）
 
 | 范围 | 留下什么 |
 | --- | --- |

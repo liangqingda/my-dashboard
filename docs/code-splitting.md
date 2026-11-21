@@ -52,6 +52,9 @@ hook 默认一个文件（`hooks/useXxx.ts`）；**一旦要为它写说明，�
 
 ## 命名（ESLint 强制，来自 `@liangqingda/eslint-config`）
 
+这一节只判**大小写与文件形态**（机器可判）；页面目录该叫什么、路由怎么定、菜单标题怎么对齐，
+见 `docs/pages.md` 的「页面目录、路由与菜单标题」。
+
 - PascalCase 目录模式根：`pages`、`components`、`layouts`、`views`，其下**所有后代目录**一律 PascalCase；
   唯一例外是 `components` 的**直接下级分类目录**（`modals`、`buttons`、`tables`…，名单在共享包
   `config/web-naming-rules.js`），它们用小写，进入之后组件目录仍是 PascalCase（清单见

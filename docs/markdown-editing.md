@@ -12,9 +12,9 @@
 
 | 位置 | 职责 |
 | --- | --- |
-| `src/pages/English/NoteEditor` | 适配层：把组件插槽接到块编辑器上 |
-| `src/pages/English/BlockEditor` | 受控控件：按块渲染编辑界面 |
-| `src/pages/English/utils/markdown-blocks.ts` | 解析与回写：正文 ↔ 块 |
+| `src/pages/EnglishNotes/NoteEditor` | 适配层：把组件插槽接到块编辑器上 |
+| `src/pages/EnglishNotes/BlockEditor` | 受控控件：按块渲染编辑界面 |
+| `src/pages/EnglishNotes/utils/markdown-blocks.ts` | 解析与回写：正文 ↔ 块 |
 
 做法是把正文切成块，表格解析成行 / 单元格矩阵用受控网格编辑（只改单元格；脚本同步的字段行
 整行只读，行结构不在这里增删——信息表的行由记录仓库和笔记脚本按模板维护），其余块编辑自己的
@@ -23,7 +23,7 @@
 `NoteEditor` 实现 `onHandleReady`，用 `findBlockIndexForHeading` 把标题换算成块下标，再把该块滚进视野并
 聚焦——编辑态正文不渲染，目录只能由编辑器自己定位。
 
-页面侧的数据拼装见 `src/pages/English/index.tsx`（五列看板 → 弹窗预览，上一篇 / 下一篇只在本列内循环，
+页面侧的数据拼装见 `src/pages/EnglishNotes/index.tsx`（五列看板 → 弹窗预览，上一篇 / 下一篇只在本列内循环，
 打开时 `GET /api/english/notes?name=…` 只取这一篇，保存时 `PUT /api/english/notes` 写回
 `learning-record-notes/*.md`）；读盘链路（列表只发摘要、正文按名取）见 `docs/local-repo-data.md`。
 

@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 import {
   parseMarkdownBlocks,
   serializeMarkdownBlocks,
-} from '../src/pages/English/utils/markdown-blocks.ts';
+} from '../src/pages/EnglishNotes/utils/markdown-blocks.ts';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const FIXTURES = path.join(ROOT, 'scripts', 'fixtures', 'md');

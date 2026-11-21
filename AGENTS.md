@@ -8,7 +8,7 @@
 
 | 场景 | 读 |
 | --- | --- |
-| 新增 / 改菜单页，动 `MenuContentLayout`、页面标题与内边距、页面呈现 | `docs/pages.md` |
+| 新增 / 改名或改路由 / 改菜单页，动 `MenuContentLayout`、页面标题与内边距、页面呈现 | `docs/pages.md` |
 | 新增 / 拆分文件、决定函数 / 类型 / 常量 / 说明文档放哪，目录与文件命名、import 分组 | `docs/code-splitting.md` |
 | 想写一段「好像别处也有」的工具函数（错误文案、时间、class、复制） | `docs/shared-utils.md` |
 | 想新装一个依赖，或想自己写一段「社区 / `@mantine/hooks` 好像也有」的函数、hook | `docs/dependencies.md` |

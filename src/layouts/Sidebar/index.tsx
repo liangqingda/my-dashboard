@@ -23,7 +23,12 @@ const navItems: NavItem[] = [
     icon: IconLanguage,
     children: [
       { key: 'english-notes', label: '笔记', to: '/english/notes', icon: IconNotes },
-      { key: 'english-review', label: '知识库', to: '/english/review', icon: IconRepeat },
+      {
+        key: 'english-knowledge-base',
+        label: '知识库',
+        to: '/english/knowledge-base',
+        icon: IconRepeat,
+      },
     ],
   },
 ];

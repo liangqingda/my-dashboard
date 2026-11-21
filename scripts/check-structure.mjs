@@ -238,7 +238,7 @@ function collectRouteMap() {
       }
     }
 
-    // const English = lazy(() => import('@/pages/English'))
+    // const EnglishNotes = lazy(() => import('@/pages/EnglishNotes'))
     if (
       ts.isVariableDeclaration(node) &&
       ts.isIdentifier(node.name) &&

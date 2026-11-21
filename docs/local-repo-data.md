@@ -82,7 +82,7 @@
 `learning-record-notes/categories.json`。`english-notes-store.ts` 把它和笔记一起读出来，
 随 `{ categories, notes }` 一起返回（开发接口与构建索引都带），前端只消费、不维护分类表。
 
-- **不要在 `src/pages/English/constants.ts` 里再写一份分类数组**：那样记录仓库加分类，
+- **不要在 `src/pages/EnglishNotes/constants.ts` 里再写一份分类数组**：那样记录仓库加分类，
   页面会把新前缀的笔记静默隐藏。
 - 清单缺失或格式不对时按空数组处理，前端回落为「按笔记里出现的分类键成列、标题用键名」；
   笔记里出现、清单没声明的键同样成列，按键名追加在末尾。
@@ -120,7 +120,7 @@
 
 ## 记录库（知识库页面）：合并两个目录，删除也交给记录仓库
 
-「知识库」页面（`src/pages/Review`）展示记录仓库的两份记录：
+「知识库」页面（`src/pages/EnglishKnowledgeBase`）展示记录仓库的两份记录：
 
 | 目录 | 文件形态 | 状态 |
 | --- | --- | --- |

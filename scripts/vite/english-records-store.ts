@@ -144,7 +144,7 @@ export const recordCategory = (id: string): string => {
 
 /**
  * 详情静态文件名（构建期一篇一个）：`<category>/<key>.json`。
- * 前端按同一规则拼 URL，改这里要同步 `src/pages/Review/utils/records-api.ts`。
+ * 前端按同一规则拼 URL，改这里要同步 `src/pages/EnglishKnowledgeBase/utils/records-api.ts`。
  */
 export const recordDetailPath = (id: string): string => {
   const separator = id.indexOf(':');

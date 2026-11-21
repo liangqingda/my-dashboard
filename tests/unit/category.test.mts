@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { buildCategoryPlan } from '../../src/pages/English/utils/category.ts';
+import { buildCategoryPlan } from '../../src/pages/EnglishNotes/utils/category.ts';
 
 /** 造一条最小摘要：只有分类方案关心的字段有意义 */
 const summary = (name: string, categoryKey: string) => ({
