@@ -76,8 +76,12 @@ const DETAILS_SCOPE_OPTIONS: Record<
   { description: string; label: string }
 > = {
   all: {
-    description: '只在原文类折叠块之间按正文顺序切，如各段场景对话原文 → 故事原文',
+    description: '按正文顺序切全文所有原文块，如场景对话原文 → 故事原文',
     label: '切换全文所有原文',
+  },
+  kind: {
+    description: '只算标题相同的原文块，如各段「场景对话原文」互切，跨小节也认',
+    label: '切换全文同类原文',
   },
   section: {
     description: '只算同一标题小节下的原文折叠块，如「场景对话」那两块',

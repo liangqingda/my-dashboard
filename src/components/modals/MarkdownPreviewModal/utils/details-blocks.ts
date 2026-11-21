@@ -102,6 +102,7 @@ const toBlock = (
     // 没有 summary 的折叠块（浏览器默认显示「详细信息」）给个能看懂的说法
     parentTitle: '',
     title: title || `折叠块 ${index + 1}`,
+    titleKey: normalizedTitle,
   };
 };
 
@@ -111,8 +112,9 @@ const toBlock = (
  * 顺序必须与渲染出来的 `<details>` 一致：正文里点了 summary 之后，
  * 是靠「它是第几个最外层 details」回查这里的下标（见 `utils/prose-navigation`）。
  *
- * 每块还记下 `groupLine`（它上面最近的那个 h1–h4 的行号，`section` 口径按它分组）
- * 与 `isOriginal`（是不是「原文类」，只有这类块参与折叠块预览的配置与前后切换）。
+ * 每块还记下 `groupLine`（它上面最近的那个 h1–h4 的行号，`section` 口径按它分组）、
+ * `titleKey`（去掉末尾序号的 summary，`kind` 口径按它分组）与 `isOriginal`
+ * （是不是「原文类」，只有这类块参与折叠块预览的配置与前后切换）。
  *
  * @param markdown Markdown 原文（用屏上真正渲染的那一份，见 `useDocumentInteractions`）
  * @returns 折叠块内容；没有、或都没正文时为空数组
@@ -191,6 +193,7 @@ export const collectDetailBlocks = (
  * **只算「原文类」折叠块**（`isOriginal`）：练习题的「知识点讲解」「错题讲解」不进这条序列，
  * 它们的点击也归浏览器原地展开。
  * - `all`：全文所有原文类折叠块，按正文顺序（场景对话原文 1 / 2 → 故事原文）；
+ * - `kind`：只保留与当前块**标题相同**的原文类折叠块（`titleKey` 相同），跨小节也认；
  * - `section`：只保留与当前块**同一个标题小节**下的原文类折叠块（`groupLine` 相同），
  *   例：`## 看一套…场景对话` 下两个「场景对话原文」→ 计数只有 2，不会跳到「故事原文」。
  *
@@ -204,16 +207,21 @@ export const listDetailBlockPeers = (
   index: number | null,
   scope: DetailsNavScope,
 ): number[] => {
-  const current = index === null ? undefined : blocks[index];
   /** 只有原文类块参与：练习题的讲解块即使被点开也不该进切换序列 */
   const eligible = blocks.flatMap((block, at) =>
     block.isOriginal ? [at] : [],
   );
 
-  // 先在原文类里按小节分组算，再把结果映射回 `sections` 的下标
+  /** `kind` 按标题分组、`section` 按小节行号分组，两种都算「同组」 */
+  const keyOf = (at: number): string | number =>
+    scope === 'kind' ? blocks[at].titleKey : blocks[at].groupLine;
+
+  const current = index !== null && blocks[index]?.isOriginal ? index : null;
+
+  // 先在原文类里按这一档的分组键算，再把结果映射回 `sections` 的下标
   return listScopePeers(
-    eligible.map((at) => blocks[at].groupLine),
-    current ? current.groupLine : null,
-    scope,
+    eligible.map(keyOf),
+    current === null ? null : keyOf(current),
+    scope === 'all' ? 'all' : 'section',
   ).map((at) => eligible[at]);
 };

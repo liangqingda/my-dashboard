@@ -202,13 +202,15 @@ export type AnchorLinkBehavior = 'jump' | 'modal';
 export type AnchorNavScope = 'all' | 'section';
 
 /**
- * 折叠块子预览的前后切换口径。**只算「原文类」折叠块**（标题以「原文」结尾，
+ * 折叠块子预览的前后切换口径。三档都**只算「原文类」折叠块**（标题以「原文」结尾，
  * 即笔记里的「场景对话原文 1 / 2」「故事原文」），练习题的「知识点讲解」「错题讲解」不参与：
  * - `all` 按正文顺序切换全文所有原文类折叠块（场景对话原文 → 故事原文）；
+ * - `kind` 只切换**标题相同**的原文类折叠块（去掉末尾序号再比），跨小节也认，
+ *   例：不同小节里各有「场景对话原文」时它们互为同类；
  * - `section` 只切换「同一个标题小节下的那几个」原文类折叠块，计数就是这一小节的块数，
  *   例：`## 看一套…场景对话` 下两个「场景对话原文」。
  */
-export type DetailsNavScope = 'all' | 'section';
+export type DetailsNavScope = 'all' | 'kind' | 'section';
 
 /**
  * 折叠块（`<details>`）里那段内容的点击行为：`expand` 在正文里直接展开，
@@ -273,6 +275,11 @@ export type MarkdownDetailBlock = MarkdownPreviewSection & {
    * 只有这类块受「文档内交互」里的折叠块配置管：点了弹窗预览、参与前后切换。
    */
   isOriginal: boolean;
+  /**
+   * 去掉末尾序号之后的 summary（如「场景对话原文 1」→「场景对话原文」）：
+   * 同值就是「同类折叠块」，`kind` 口径按它分组。
+   */
+  titleKey: string;
 };
 
 /**
