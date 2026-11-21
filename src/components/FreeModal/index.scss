@@ -1,0 +1,153 @@
+/* 基础弹窗外壳：框体、紧凑 header、正文区与全屏；业务弹窗只加自己的增量样式 */
+
+.content {
+  --preview-paper: var(--app-surface-subtle);
+
+  display: flex;
+  flex-direction: column;
+  height: 82dvh;
+  max-height: 88dvh;
+  overflow: hidden;
+  border: 1px solid var(--app-line-strong);
+  background: var(--preview-paper);
+}
+
+/*
+ * 全屏：铺满整个视口，去掉外边距、描边与圆角。
+ * 两条类名一起写是为了压过 Mantine 自己的 `.content` 高度与圆角。
+ */
+.content.contentFullscreen {
+  width: 100vw;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+/*
+ * header 与正文同底色，只用一条线分隔；上下 6px、行高交给里面的按钮，整体紧凑。
+ * 用 `.content .header` 双类名：Mantine 给 modal header 垫了 `min-height: calc(3.75rem * scale)`
+ * 与它那套 padding，单类名要靠 CSS 加载顺序才盖得住。
+ */
+.content .header {
+  position: relative;
+  flex: 0 0 auto;
+  overflow: visible;
+  min-height: 0;
+  padding: 6px 10px 6px 12px;
+  border-bottom: 1px solid var(--app-line);
+  background: transparent;
+}
+
+.title {
+  width: 100%;
+  margin: 0;
+}
+
+/* 正文区自身不滚动：滚动交给业务侧的正文 / 目录，弹窗没有 footer */
+.body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* header 一行：翻页 + 计数 + 标题 + 右侧操作组 */
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+/*
+ * 上一个 / 下一个：落在标题左侧。
+ * 到头那一侧（disabled）清掉 Mantine 抹的灰底与描边：这一排图标平时是透明的，
+ * 突然多一块底色看着像「那一个被选中了」；只留变淡 + 不能点。
+ */
+.stepButton {
+  flex: 0 0 auto;
+  color: var(--app-ink-faint);
+}
+
+.stepButton:disabled {
+  border-color: transparent;
+  background: transparent;
+  color: var(--app-ink-faint);
+  opacity: 0.4;
+}
+
+.stepButton:not(:disabled):hover {
+  color: var(--app-accent);
+}
+
+/* 计数紧跟在翻页按钮右边 */
+.position {
+  flex: 0 0 auto;
+  min-width: 3.2em;
+  color: var(--app-ink-faint);
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 标题：单行省略，占满中间剩余宽度之前先让给右侧操作组 */
+.fileName {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--app-ink);
+  font-family: var(--app-serif);
+  font-size: 0.94rem;
+  line-height: 1.4;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 标题之后吃掉剩余空间，把右侧操作组顶到最右 */
+.titleGap {
+  flex: 1 1 auto;
+  min-width: 8px;
+}
+
+/* 右侧操作组：组内间距与标题栏同一档 */
+.actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 全屏：常态弱色，hover 主色 */
+.iconButton {
+  flex: 0 0 auto;
+  color: var(--app-ink-faint);
+}
+
+.iconButton:hover {
+  color: var(--app-accent);
+}
+
+/* 竖分割线：把两组操作隔开 */
+.divider {
+  flex: 0 0 auto;
+  align-self: center;
+  width: 1px;
+  height: 18px;
+  margin-inline: 2px;
+  background: var(--app-line-strong);
+}
+
+/* 关闭按钮紧接在标题行之后：右端留一段间距，免得最后一个图标贴上去 */
+.titleRowBeforeClose {
+  padding-inline-end: 10px;
+}
+
+/* 窄屏：给关闭按钮留出位置，避免 header 文字被压住 */
+@media (max-width: 560px) {
+  .header {
+    padding-right: 40px;
+  }
+}

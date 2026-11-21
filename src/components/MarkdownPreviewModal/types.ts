@@ -59,62 +59,6 @@ export type ProseFontControlProps = {
 /** header 的就近弹层：同一时刻只开一块 */
 export type PreviewPanel = 'anchor' | 'filter' | 'font';
 
-/** 预览弹窗标题栏的入参：翻篇、复制路径、筛选、刷新、全屏与编辑操作全在这一行 */
-export type TitleBarProps = {
-  /** 文档标题（通常是文件名） */
-  title: string;
-  /** 相对的路径；不传就不显示复制按钮 */
-  relativePath?: string;
-  /** 当前位置；不传就不显示计数 */
-  position?: { index: number; total: number };
-  /** 预览态的内容筛选（按钮与就近弹层由标题栏渲染）；不传就没有筛选按钮 */
-  filter?: MarkdownPreviewFilter;
-  /** 正文字号的用户偏移（px） */
-  fontScale: ProseFontScale;
-  /** 同文档链接的点击行为：`jump` 跳过去，`modal` 弹窗打开那一块 */
-  anchorBehavior: AnchorLinkBehavior;
-  /** 换一种同文档链接的点击行为（跨篇记住） */
-  onAnchorBehaviorChange: (behavior: AnchorLinkBehavior) => void;
-  /** 子区域预览的前后切换口径 */
-  anchorScope: AnchorNavScope;
-  /** 换一种前后切换口径（跨篇记住） */
-  onAnchorScopeChange: (scope: AnchorNavScope) => void;
-  /** 文档里有没有同文档锚点链接：没有可点的链接，锚点按钮就不出 */
-  hasAnchorLinks: boolean;
-  /** 正文是否还在取：加载中收掉筛选、字号与锚点按钮（没有正文可读） */
-  loading: boolean;
-  /** 当前打开的 header 弹层：同一时刻只开一块 */
-  panel: PreviewPanel | null;
-  /** 打开 / 收起 header 弹层（点图标、点外部、Esc 都走到这里） */
-  onPanelChange: (panel: PreviewPanel | null) => void;
-  /** 上一篇；null / 不传表示没有相邻文档 */
-  onPrevious?: (() => void) | null;
-  /** 下一篇；null / 不传表示没有相邻文档 */
-  onNext?: (() => void) | null;
-  /**
-   * 翻篇按钮的 ref：快捷键翻篇时弹窗把焦点挪到对应那一侧的按钮上，
-   * 焦点环就成了「这次往哪边走」的指示（否则焦点会停在弹窗打开时的第一个按钮上）。
-   */
-  /** 刷新正文；null 表示不提供（编辑中本来也不显示） */
-  onRefresh?: (() => void) | null;
-  /** 刷新按钮是否在 loading */
-  refreshing: boolean;
-  /** 删除当前文档；null 表示不提供（加载中、编辑态、调用方没给删除能力） */
-  onRemove?: (() => void) | null;
-  /** 是否全屏预览中 */
-  fullscreen: boolean;
-  /** 关键词匹配导航；注入筛选面板挂回车 / Shift+回车切换，无导航时为 null */
-  highlightNavigation: MarkdownFilterNavigation | null;
-  /** 切换全屏 */
-  onToggleFullscreen: () => void;
-  /** 调用方是否提供编辑能力（决定「编辑」图标出不出来） */
-  canEdit: boolean;
-  /** 进入编辑（调用方顺带清掉目录激活项） */
-  onStartEdit: () => void;
-  /** 编辑态状态机，标题栏只读它的状态、调它的动作 */
-  editing: NoteEditingState;
-};
-
 /** 预览弹窗的对外 props */
 export type MarkdownPreviewModalProps = {
   /** 是否打开预览 */

@@ -18,8 +18,10 @@
  * - `modal`：把锚点指向的那一节（到下一个同级或更高级标题为止）单独开窗，
  *   header 左侧按正文顺序前后切换、右侧只有字号 / 全屏 / 关闭。
  *
- * 这里的职责只有 Modal 骨架与装配：
- * - 标题栏一行（翻篇 / 计数 / 文件名 / 文档操作 / 编辑流程）→ `title-bar`
+ * 这里的职责只有组装：
+ * - 弹窗外壳（框体 / header / 正文区 / 全屏 / 翻篇计数）→ `@/components/FreeModal`（本组件不再自带 Modal）
+ * - header 第一组阅读类操作 → `document-actions`
+ * - header 第二组编辑流程 → `HeaderActions`
  * - 正文工作区（标题目录 + 阅读 / 编辑区）→ `preview-workspace`
  * - 锚点区块的开合与链接点击 → `hooks/use-anchor-block-navigation` + `anchor-block-preview`
  * - 正文字号的状态 → `hooks/use-prose-font-scale`
@@ -29,36 +31,36 @@
  */
 
 import { useCallback, useMemo, useState } from 'react';
-import { FocusTrap, Modal } from '@mantine/core';
+import { FocusTrap } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
+import { IconTrash } from '@tabler/icons-react';
 
 import { COPY_FAILED_NOTICE_ID } from '@/components/CopyIconButton/constants';
+import FreeModal from '@/components/FreeModal';
+import { useModalFullscreen } from '@/components/FreeModal/hooks/useModalFullscreen';
 import { COPY_FEEDBACK_DURATION, copyText } from '@/utils/clipboard';
-import { cx } from '@/utils/cx';
 
 import type { MarkdownFilterNavigation } from './types/filter';
 import type { MarkdownPreviewModalProps, PreviewPanel } from './types';
-import TitleBar from './TitleBar';
-import DeleteConfirm from './DeleteConfirm';
+import DocumentActions from './DocumentActions';
+import HeaderIconAction from './HeaderActions/IconAction';
+import PreviewHeaderActions from './HeaderActions';
+import PreviewOverlays from './PreviewOverlays';
 import PreviewWorkspace from './PreviewWorkspace';
-import AnchorBlockPreview from './AnchorBlockPreview';
-import { collectAnchorBlocks } from './utils/anchor-blocks';
-import { withSideEffect } from './utils/with-side-effect';
-import { COPY_SUCCESS_NOTICE_ID } from './constants';
+import { COPY_SUCCESS_NOTICE_ID, FULLSCREEN_STORAGE_KEY } from './constants';
 import { useAnchorBlockNavigation } from './hooks/useAnchorBlockNavigation';
 import { useAnchorLinkBehavior } from './hooks/useAnchorLinkBehavior';
 import { useAnchorNavScope } from './hooks/useAnchorNavScope';
 import { useCloseRequest } from './hooks/useCloseRequest';
 import { useHeaderActionShortcuts } from './hooks/useHeaderActionShortcuts';
-import { useModalFullscreen } from './hooks/useModalFullscreen';
+import { useNavigationShortcuts } from './hooks/useNavigationShortcuts';
 import { useNoteEditing } from './hooks/useNoteEditing';
 import { useProseFontScale } from './hooks/useProseFontScale';
 import { useRefreshPreview } from './hooks/useRefreshPreview';
 import { useRemoveRequest } from './hooks/useRemoveRequest';
 import { useRemoveShortcut } from './hooks/useRemoveShortcut';
-import { useNavigationShortcuts } from './hooks/useNavigationShortcuts';
-
-import styles from './index.scss';
+import { collectAnchorBlocks } from './utils/anchor-blocks';
+import { withSideEffect } from './utils/with-side-effect';
 
 export type {
   MarkdownFilterNavigation,
@@ -105,7 +107,9 @@ const MarkdownPreviewModal = ({
     useState<MarkdownFilterNavigation | null>(null);
 
   /** 全屏开关：记住的展示偏好，关闭弹窗也不重置；Esc 不归它管，永远是关弹窗 */
-  const { fullscreen, toggle: toggleFullscreen } = useModalFullscreen();
+  const { fullscreen, toggle: toggleFullscreen } = useModalFullscreen(
+    FULLSCREEN_STORAGE_KEY,
+  );
   /** 正文字号的用户偏移：跨篇、跨会话记住，叠在常规 / 全屏各自的默认字号上 */
   const proseFont = useProseFontScale();
   /** 刷新按钮的 loading 与失败提示都在这个 hook 里 */
@@ -277,69 +281,90 @@ const MarkdownPreviewModal = ({
    * 全屏不参与判定：Esc 一律关掉弹窗，全屏跟着一起关——同一个键在两种模式下意思不同，
    * 用户只会记住那一次「按了没关掉」。
    */
+  /** 编辑态（含草稿预览）收掉阅读类操作与全屏：这时要看的是块编辑器 */
+  const documentActionsVisible = !editing.editing;
+
   return (
     <>
-      <Modal
-        centered
-        classNames={{
-          body: styles.body,
-          content: cx(styles.content, fullscreen && styles.contentFullscreen),
-          header: styles.header,
-          title: styles.title,
-        }}
-        closeButtonProps={{ 'aria-label': '关闭预览' }}
+      <FreeModal
+        closeButton={!editing.editing}
+        closeLabel="关闭预览"
         closeOnEscape={
           panel === null && anchorBlock.index === null && !removal.confirming
         }
-        fullScreen={fullscreen}
-        onClose={handleClose}
-        opened={opened}
-        overlayProps={{ backgroundOpacity: 0.5, blur: 2 }}
-        padding={0}
-        radius="md"
-        size="min(980px, 92vw)"
-        title={
-          <TitleBar
-            anchorBehavior={anchorLink.behavior}
-            anchorScope={anchorScope.scope}
+        fullscreen={
+          documentActionsVisible
+            ? { active: fullscreen, onToggle: toggleFullscreen }
+            : undefined
+        }
+        headerActions={
+          documentActionsVisible ? (
+            <DocumentActions
+              anchorBehavior={anchorLink.behavior}
+              anchorScope={anchorScope.scope}
+              filter={filter}
+              fontScale={proseFont}
+              hasAnchorLinks={anchorBlocks.length > 0}
+              highlightNavigation={highlightNavigation}
+              loading={loading}
+              onAnchorBehaviorChange={anchorLink.setBehavior}
+              onAnchorScopeChange={anchorScope.setScope}
+              onPanelChange={setPanel}
+              onRefresh={onRefresh ? (withPanelsClosed(refresh) ?? null) : null}
+              panel={panel}
+              refreshing={refreshing}
+              relativePath={relativePath}
+            />
+          ) : undefined
+        }
+        headerSecondary={
+          <PreviewHeaderActions
+            askDiscard={editing.askDiscard}
             canEdit={Boolean(onSave) && !loading}
-            editing={editing}
-            filter={filter}
-            fontScale={proseFont}
-            fullscreen={fullscreen}
-            hasAnchorLinks={anchorBlocks.length > 0}
-            highlightNavigation={highlightNavigation}
-            loading={loading}
-            onAnchorBehaviorChange={anchorLink.setBehavior}
-            onAnchorScopeChange={anchorScope.setScope}
-            onNext={withPanelsClosed(onNext)}
-            onPanelChange={setPanel}
-            onPrevious={withPanelsClosed(onPrevious)}
-            onRefresh={
-              onRefresh && !loading ? withPanelsClosed(refresh) : null
-            }
-            onRemove={
-              remove && !loading ? withPanelsClosed(removal.request) : null
-            }
+            editing={editing.editing}
+            onCancelEdit={editing.requestExitEditing}
+            onDiscard={editing.discardAndExitEditing}
+            onKeepEditing={editing.keepEditing}
+            onSaveEdit={editing.save}
             onStartEdit={startEditing}
-            onToggleFullscreen={toggleFullscreen}
-            panel={panel}
-            position={position}
-            refreshing={refreshing}
-            relativePath={relativePath}
-            title={title}
+            onStartPreview={editing.startPreview}
+            onStopPreview={editing.stopPreview}
+            previewing={editing.previewing}
+            saveError={editing.saveError}
+            saveNotice={editing.saveNotice}
+            savedAt={editing.savedAt}
+            saving={editing.saving}
           />
         }
-        transitionProps={{ duration: 140, transition: 'fade' }}
+        headerTail={
+          documentActionsVisible && remove && !loading ? (
+            <HeaderIconAction
+              label="删除这篇文档（Delete）"
+              onClick={withPanelsClosed(removal.request) ?? undefined}
+            >
+              <IconTrash size={15} stroke={1.9} />
+            </HeaderIconAction>
+          ) : undefined
+        }
+        nav={
+          position
+            ? {
+                disabled: editing.editing,
+                index: position.index,
+                nextLabel: '下一篇',
+                onNext: withPanelsClosed(onNext) ?? null,
+                onPrevious: withPanelsClosed(onPrevious) ?? null,
+                previousLabel: '上一篇',
+                shortcutHint: '[ / ← · ] / →',
+                total: position.total,
+              }
+            : undefined
+        }
+        onClose={handleClose}
+        opened={opened}
+        title={title}
         trapFocus={anchorBlock.index === null && !removal.confirming}
-        withCloseButton={!editing.editing}
       >
-        {/*
-         * 初始焦点先落到这个隐藏节点：focus trap 激活时默认把焦点给弹窗内第一个
-         * 可聚焦元素，翻篇按钮 disabled 时会落到 header 第一个图标按钮上，把它的
-         * focus 型 tooltip 撞成常驻。`data-autofocus` 节点优先被 trap 选中，
-         * 手动按 Tab 时才进入按钮序列（那时才是真实键盘聚焦）。
-         */}
         <FocusTrap.InitialFocus />
         {/* 正文工作区：左侧目录 + 右侧阅读 / 编辑区；筛选 / 渲染 / 目录定位都归它 */}
         <PreviewWorkspace
@@ -355,28 +380,15 @@ const MarkdownPreviewModal = ({
           opened={opened}
           title={title}
         />
-      </Modal>
+      </FreeModal>
 
-      {/* 删除确认层：开在主预览上面；取消只收这一层，确认后删除动作由调用方执行 */}
-      <DeleteConfirm
-        checkedKeys={removal.checkedKeys}
-        choices={remove?.choices}
-        description={remove?.description ?? ''}
-        loading={removal.removing}
-        onCancel={removal.cancel}
-        onCheckedKeysChange={removal.setCheckedKeys}
-        onConfirm={removal.confirm}
-        opened={removal.confirming}
+      <PreviewOverlays
+        anchorBlock={anchorBlock}
+        anchorBlocks={anchorBlocks}
+        anchorScope={anchorScope.scope}
+        removal={removal}
+        remove={remove}
         title={title}
-      />
-
-      {/* 子区域预览：开在主预览上面，只看一块内容；Esc 只关它，底下这一篇留着 */}
-      <AnchorBlockPreview
-        blocks={anchorBlocks}
-        index={anchorBlock.index}
-        onClose={anchorBlock.close}
-        onIndexChange={anchorBlock.setIndex}
-        scope={anchorScope.scope}
       />
     </>
   );

@@ -15,17 +15,21 @@ import type { CSSProperties, MouseEvent } from 'react';
 import { Modal } from '@mantine/core';
 import Markdown from 'react-markdown';
 
+import { useModalFullscreen } from '@/components/FreeModal/hooks/useModalFullscreen';
 import { cx } from '@/utils/cx';
 import type { MarkdownOutlineHeading } from '@/utils/markdown-outline';
 
 import type { AnchorBlockModalProps } from '../types';
 import OutlineNav from '../OutlineNav';
 import ProseFontControl from '../ProseFontControl';
-import { REHYPE_PLUGINS, REMARK_PLUGINS } from '../constants';
+import {
+  FULLSCREEN_STORAGE_KEY,
+  REHYPE_PLUGINS,
+  REMARK_PLUGINS,
+} from '../constants';
 import { getClickedAnchor, scrollToAnchor, scrollToHeading } from '../utils/prose-navigation';
 import { useActiveHeadingIndex } from '../hooks/useActiveHeadingIndex';
 import { useDocumentScrollReset } from '../hooks/useDocumentScrollReset';
-import { useModalFullscreen } from '../hooks/useModalFullscreen';
 import { useProseFontScale } from '../hooks/useProseFontScale';
 
 import AnchorBlockHeader from './Header';
@@ -53,7 +57,7 @@ const AnchorBlockModal = ({
   /** 正文节点同时存一份 state：节点挂载 / 卸载时让依赖它的 effect 重建 */
   const [bodyElement, setBodyElement] = useState<HTMLElement | null>(null);
   /** 全屏与字号都是「怎么看」的偏好，和主预览共用存储，换一块也不重置 */
-  const { fullscreen, toggle } = useModalFullscreen();
+  const { fullscreen, toggle } = useModalFullscreen(FULLSCREEN_STORAGE_KEY);
   const proseFont = useProseFontScale();
   const proseStyle = { '--prose-extra': `${proseFont.offset}px` } as CSSProperties;
 

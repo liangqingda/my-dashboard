@@ -1,0 +1,17 @@
+/* 预览态的第一组 header 操作：组内间距与标题栏同一档，样式只补刷新按钮的颜色 */
+
+.actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 刷新正文：常态弱色、hover 主色，与全屏 / 删除同档 */
+.refreshButton {
+  color: var(--app-ink-faint);
+}
+
+.refreshButton:hover {
+  color: var(--app-accent);
+}

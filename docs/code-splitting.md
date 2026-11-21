@@ -41,7 +41,7 @@ hook 默认一个文件（`hooks/useXxx.ts`）；**一旦要为它写说明，�
 
 - 单个 `index.tsx` 只放一个组件，**不得**堆多个组件；超长文件按五维拆开，
   公共组件同样适用（`MarkdownPreviewModal` 现拆成 `types.ts` / `constants.ts` / `hooks/` /
-  `TitleBar/` / `OutlineNav/` / `HeaderActions/`，样式也随组件各自走）。
+  `DocumentActions/` / `PreviewOverlays/` / `OutlineNav/` / `HeaderActions/`，样式也随组件各自走）。
 - 组件目录内**不嵌套** `components/` 层，子组件目录直接放父组件目录下。
 - 每个组件目录 `index.tsx` + `index.scss` 成对存在（CSS Module 类名自动 camelCase）；
   需要写规格时同目录放 `README.md`。

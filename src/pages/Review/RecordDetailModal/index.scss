@@ -1,1 +1,10 @@
-/* 详情弹窗外壳只负责开关与尺寸，正文样式在 RecordDetailBody 目录里 */
+/* 记录详情弹窗：滚动区与正文留白；框体、header 由 FreeModal 负责 */
+
+.scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.paper {
+  padding: 18px 22px 22px;
+}

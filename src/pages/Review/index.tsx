@@ -1,38 +1,25 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Alert,
-  Button,
-  CloseButton,
-  Group,
-  ScrollArea,
-  SegmentedControl,
-  Select,
-  Skeleton,
-  Stack,
-  Text,
-  TextInput,
-} from '@mantine/core';
+import { Alert, Button, Group, ScrollArea, Skeleton, Stack, Text } from '@mantine/core';
 import { useElementSize } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
-import { IconSearch } from '@tabler/icons-react';
 
 import MenuContentLayout from '@/layouts/MenuContentLayout';
 import { getErrorMessage } from '@/utils/error';
 import { onPageRefresh } from '@/utils/page-refresh';
 
 import {
+  ALL_CATEGORIES,
   DEFAULT_STATUS_FILTER,
   LOAD_MORE_ROWS,
-  SEARCH_PLACEHOLDER,
-  SEARCH_WIDTH,
   SKELETON_ROWS,
-  STATUS_FILTERS,
 } from './constants';
 import type { StatusFilter } from './constants';
 import DeleteRecordConfirm from './DeleteRecordConfirm';
+import { useRecordDetailNav } from './hooks/useRecordDetailNav';
 import { useReviewRecords } from './hooks/useReviewRecords';
 import RecordDetailModal from './RecordDetailModal';
 import RecordsTable from './RecordsTable';
+import RecordsToolbar from './RecordsToolbar';
 import type { RecordSummary } from './types';
 import {
   buildCategoryLabels,
@@ -47,9 +34,6 @@ import {
 import { deleteReviewRecord } from './utils/records-api';
 
 import styles from './index.scss';
-
-/** 分类下拉里「不按分类筛选」的选项，值为空串 */
-const ALL_CATEGORIES = '';
 
 /**
  * 复习库：把 learn-english 的 learning-records / mastered-learning-records 合并成一张表，
@@ -67,8 +51,6 @@ const Review = () => {
   const [categoryFilter, setCategoryFilter] = useState(ALL_CATEGORIES);
   /** 关键词：只在列表已有的摘要字段里过滤，敲一个字符就即时生效 */
   const [keyword, setKeyword] = useState('');
-  /** 当前打开详情的记录 ID */
-  const [activeId, setActiveId] = useState<string | null>(null);
   /** 等待确认删除的记录 */
   const [pendingDelete, setPendingDelete] = useState<RecordSummary | null>(null);
   /** 删除请求进行中 */
@@ -130,8 +112,10 @@ const Review = () => {
   /**
    * 首屏只渲染一屏多一点（视口高度算出来的行数 + 5），滚到底再追加 20 行：
    * 几百条一次性进 DOM 会拖慢首屏，又不必给一张几百行的表配分页控件。
+   * 详情翻页翻到还没渲染的条目时，也按这个首屏行数判断要不要补渲染。
    */
-  const limit = initialRowCount(listHeight) + extraRows;
+  const initialRows = initialRowCount(listHeight);
+  const limit = initialRows + extraRows;
   const shownRecords = useMemo(
     () => visibleRecords.slice(0, limit),
     [limit, visibleRecords],
@@ -143,11 +127,29 @@ const Review = () => {
     setExtraRows((current) => current + LOAD_MORE_ROWS);
   }, []);
 
-  /** 筛选项变了：追加行数归零、滚动位置回顶，从新结果的第一屏重新看起 */
+  /** 让第 N 行进入渲染范围：详情翻到还没渲染的条目时用 */
+  const ensureRow = useCallback(
+    (index: number) => {
+      setExtraRows((current) =>
+        Math.max(current, index + 1 - initialRowCount(listHeight)),
+      );
+    },
+    [listHeight],
+  );
+
+  /** 详情的开合、翻页与计数（范围是全部筛选结果，和列表计数一致） */
+  const detail = useRecordDetailNav({
+    ensureRows: ensureRow,
+    initialRows,
+    records: visibleRecords,
+  });
+
+  /** 筛选项变了：追加行数归零、滚动位置回顶、关掉详情，从新结果的第一屏重新看起 */
   const resetList = useCallback(() => {
     setExtraRows(0);
+    detail.resetDetail();
     viewportRef.current?.scrollTo({ top: 0 });
-  }, []);
+  }, [detail]);
 
   /** 计数文案：筛选命中数 + 还没渲染完时的「已显示 N 条」 */
   const countText = [
@@ -157,19 +159,9 @@ const Review = () => {
     .filter(Boolean)
     .join(' · ');
 
-  /** 点击整行 / 标题：打开详情 */
-  const openRecord = useCallback((record: RecordSummary) => {
-    setActiveId(record.id);
-  }, []);
-
   /** 点删除图标：先弹确认框，不直接删 */
   const requestDelete = useCallback((record: RecordSummary) => {
     setPendingDelete(record);
-  }, []);
-
-  /** 关掉详情弹窗 */
-  const closeDetail = useCallback(() => {
-    setActiveId(null);
   }, []);
 
   /** 取消删除：请求进行中时不允许关，避免用户以为取消了、实际正在删 */
@@ -191,9 +183,7 @@ const Review = () => {
 
       removeRecord(pendingDelete.id);
 
-      if (activeId === pendingDelete.id) {
-        setActiveId(null);
-      }
+      detail.closeIfDeleted(pendingDelete.id);
 
       const message = describeDelete(commit);
 
@@ -215,58 +205,27 @@ const Review = () => {
   return (
     <MenuContentLayout fill title="复习库">
       <Stack className={styles.shell} gap="sm">
-        <Group gap="sm" justify="space-between" wrap="wrap">
-          <Group gap="sm" wrap="wrap">
-            <SegmentedControl
-              data={STATUS_FILTERS}
-              onChange={(value) => {
-                setStatusFilter(value);
-                resetList();
-              }}
-              size="xs"
-              value={statusFilter}
-            />
-            <Select
-              allowDeselect={false}
-              aria-label="按分类筛选"
-              data={categoryOptions}
-              onChange={(value) => {
-                setCategoryFilter(value ?? ALL_CATEGORIES);
-                resetList();
-              }}
-              size="xs"
-              value={categoryFilter}
-              w={128}
-            />
-            <TextInput
-              aria-label="按关键词搜索记录"
-              leftSection={<IconSearch size={15} stroke={1.9} />}
-              onChange={(event) => {
-                setKeyword(event.currentTarget.value);
-                resetList();
-              }}
-              placeholder={SEARCH_PLACEHOLDER}
-              rightSection={
-                keyword ? (
-                  <CloseButton
-                    aria-label="清空搜索"
-                    onClick={() => {
-                      setKeyword('');
-                      resetList();
-                    }}
-                    size="xs"
-                  />
-                ) : null
-              }
-              size="xs"
-              value={keyword}
-              w={SEARCH_WIDTH}
-            />
-          </Group>
-          <Text c="dimmed" size="xs">
-            {loading && records.length === 0 ? '读取中…' : countText}
-          </Text>
-        </Group>
+        <RecordsToolbar
+          category={categoryFilter}
+          categoryOptions={categoryOptions}
+          countText={countText}
+          keyword={keyword}
+          loading={loading}
+          onCategoryChange={(value) => {
+            setCategoryFilter(value);
+            resetList();
+          }}
+          onKeywordChange={(value) => {
+            setKeyword(value);
+            resetList();
+          }}
+          onStatusChange={(value) => {
+            setStatusFilter(value);
+            resetList();
+          }}
+          status={statusFilter}
+          total={records.length}
+        />
         {error !== null ? (
           <Alert color="red" title="读取记录失败">
             <Group gap="sm" justify="space-between" wrap="nowrap">
@@ -306,7 +265,7 @@ const Review = () => {
               <RecordsTable
                 categoryLabels={categoryLabels}
                 onDelete={requestDelete}
-                onOpen={openRecord}
+                onOpen={detail.openRecord}
                 records={shownRecords}
               />
             </ScrollArea>
@@ -314,7 +273,12 @@ const Review = () => {
         ) : null}
       </Stack>
 
-      <RecordDetailModal onClose={closeDetail} recordId={activeId} />
+      <RecordDetailModal
+        nav={detail.nav}
+        onClose={detail.closeDetail}
+        recordId={detail.activeId}
+        title={detail.activeTitle}
+      />
       <DeleteRecordConfirm
         loading={deleting}
         onCancel={cancelDelete}

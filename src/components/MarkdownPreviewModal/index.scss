@@ -1,61 +1,4 @@
-/* Markdown 预览弹窗：框体、header 与正文排版；目录 sidebar 与 header 操作的样式在各自目录 */
-
-.content {
-  --preview-paper: var(--app-surface-subtle);
-
-  display: flex;
-  flex-direction: column;
-  height: 82dvh;
-  max-height: 88dvh;
-  overflow: hidden;
-  border: 1px solid var(--app-line-strong);
-  background: var(--preview-paper);
-}
-
-/*
- * 全屏预览：铺满整个视口，去掉外边距、描边与圆角，
- * 标题栏照旧钉在顶部，正文与目录各自占满剩下的高度。
- * 两条类名一起写是为了压过 Mantine 自己的 `.content` 高度与圆角。
- */
-.content.contentFullscreen {
-  width: 100vw;
-  height: 100dvh;
-  max-height: 100dvh;
-  margin: 0;
-  border: 0;
-  border-radius: 0;
-}
-
-/*
- * header 与正文同底色，只用一条线分隔；上下内边距 6px，行高交给里面的按钮，整体紧凑。
- * 用 `.content .header` 双类名而不是单个 `.header`：Mantine 自己给 modal header 垫了
- * `min-height: calc(3.75rem * scale)`（60px）与它那套 padding，单类名要靠 CSS 加载顺序才盖得住，
- * 双类名直接赢，header 高度才真的由内容决定。
- */
-.content .header {
-  position: relative;
-  flex: 0 0 auto;
-  overflow: visible;
-  min-height: 0;
-  padding: 6px 10px 6px 12px;
-  border-bottom: 1px solid var(--app-line);
-  background: transparent;
-}
-
-.title {
-  width: 100%;
-  margin: 0;
-}
-
-/* 正文区自身不滚动：滚动交给 .prose / .editor，弹窗没有 footer，正文直接到底 */
-.body {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  min-height: 0;
-  padding: 0;
-  overflow: hidden;
-}
+/* Markdown 预览弹窗：正文工作区与文档排版；框体、header 与正文区由 FreeModal 负责 */
 
 /*
  * 工作区：左侧标题目录 + 右侧阅读 / 编辑区。
@@ -353,10 +296,6 @@
 @media (max-width: 560px) {
   .prose {
     padding: 16px 16px 24px;
-  }
-
-  .header {
-    padding-right: 40px;
   }
 }
 

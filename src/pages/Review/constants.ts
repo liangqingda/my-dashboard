@@ -38,6 +38,9 @@ export const STATUS_FILTERS: Array<{
   { label: '已掌握', value: 'mastered' },
 ];
 
+/** 分类下拉里「不按分类筛选」的选项，值为空串 */
+export const ALL_CATEGORIES = '';
+
 /** 默认筛选：先看全部，按更新时间倒序 */
 export const DEFAULT_STATUS_FILTER: StatusFilter = 'all';
 
@@ -61,3 +64,6 @@ export const OVERSCAN_ROWS = 5;
 
 /** 滚到底部一次追加的行数 */
 export const LOAD_MORE_ROWS = 20;
+
+/** 记录详情弹窗的全屏偏好：与 md 预览各记各的，互不影响 */
+export const RECORD_FULLSCREEN_STORAGE_KEY = 'my-dashboard:review:fullscreen';
