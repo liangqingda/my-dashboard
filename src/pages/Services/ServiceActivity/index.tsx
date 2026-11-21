@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button, Text } from '@mantine/core';
 import { IconClock } from '@tabler/icons-react';
 
-import FreeDialog from '@/components/FreeDialog';
+import FreeModal from '@/components/FreeModal';
 import { useServices } from '@/services/hooks/useServices';
 import { formatDateTime } from '@/utils/format';
 
@@ -23,8 +23,9 @@ const ServiceActivity = () => {
       >
         最近操作
       </Button>
-      <FreeDialog
+      <FreeModal
         closeLabel="关闭最近操作"
+        height="auto"
         onClose={() => setOpened(false)}
         opened={opened}
         size="min(760px, 92vw)"
@@ -54,7 +55,7 @@ const ServiceActivity = () => {
             ))}
           </ul>
         )}
-      </FreeDialog>
+      </FreeModal>
     </>
   );
 };

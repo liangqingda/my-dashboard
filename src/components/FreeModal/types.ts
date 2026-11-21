@@ -59,6 +59,12 @@ export type FreeModalProps = {
   trapFocus?: boolean;
   /** 是否垂直居中，默认是 */
   centered?: boolean;
+  /**
+   * 高度模式：
+   * - `reading`（默认）：固定 `82dvh` 的阅读窗，翻篇 / 全屏 / 目录都用得上；
+   * - `auto`：高度随内容（上限 `88dvh`），正文自己滚，给确认、说明、短表单、列表这类普通弹窗。
+   */
+  height?: 'reading' | 'auto';
   /** 宽度档位，默认 `min(980px, 92vw)` */
   size?: number | string;
   /** 关闭按钮的 aria-label，默认「关闭」 */

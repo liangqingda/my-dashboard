@@ -13,9 +13,9 @@
  * 一项都没勾时没有可删的东西，删除按钮直接不可点。
  */
 
-import { Button, Checkbox, Group, Text, Tooltip } from '@mantine/core';
+import { Checkbox, Group, Text, Tooltip } from '@mantine/core';
 
-import FreeDialog from '@/components/FreeDialog';
+import ConfirmModal from '@/components/ConfirmModal';
 
 import type { DeleteConfirmProps } from '../types';
 
@@ -38,31 +38,29 @@ const DeleteConfirm = ({
   const nothingChecked = choices !== undefined && checkedKeys.length === 0;
 
   return (
-    <FreeDialog
-      closeButton={!loading}
+    <ConfirmModal
       closeLabel="关闭删除确认"
-      closeOnClickOutside={!loading}
-      closeOnEscape={!loading}
-      onClose={onCancel}
-      opened={opened}
-      size={420}
-      title={
-        <div>
-          <Text fw={600} size="sm">
-            删除这个文档？
-          </Text>
+      confirmDisabled={nothingChecked}
+      confirmLabel="删除"
+      danger
+      description={
+        <>
           <Text
-            c="dimmed"
             className={styles.dataPath}
             ff="var(--mantine-font-family-monospace)"
             size="xs"
           >
             {title}
           </Text>
-        </div>
+          <Text size="sm">{text}</Text>
+        </>
       }
+      loading={loading}
+      onCancel={onCancel}
+      onConfirm={onConfirm}
+      opened={opened}
+      title="删除这个文档？"
     >
-      <Text className={styles.description}>{text}</Text>
       {/* 勾选项：紧凑一行，细节靠 hover 的 tooltip 补，不占正文位置 */}
       {choices ? (
         <Checkbox.Group
@@ -97,23 +95,7 @@ const DeleteConfirm = ({
           </Group>
         </Checkbox.Group>
       ) : null}
-      <div className={styles.footer}>
-        <Group gap="sm" justify="flex-end" wrap="nowrap">
-          <Button disabled={loading} onClick={onCancel} size="sm" variant="default">
-            取消
-          </Button>
-          <Button
-            className={styles.deleteButton}
-            disabled={nothingChecked}
-            loading={loading}
-            onClick={onConfirm}
-            size="sm"
-          >
-            删除
-          </Button>
-        </Group>
-      </div>
-    </FreeDialog>
+    </ConfirmModal>
   );
 };
 

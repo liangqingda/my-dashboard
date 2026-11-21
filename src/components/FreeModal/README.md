@@ -57,10 +57,14 @@ const { fullscreen, toggle } = useModalFullscreen(storageKey);
   `my-dashboard:review:fullscreen`）：md 预览与记录详情各记各的，互不干扰；
 - 状态由调用方持有，用来参与正文排版；`Esc` 永远关弹窗（连带退出全屏），不是切全屏。
 
-## 不是所有弹窗都用它
+## 两种高度模式
 
-高度随内容的普通弹窗（确认、说明、短表单、列表）走 `FreeDialog`——那扇固定 82dvh、
-翻篇与全屏齐全，套在小内容上会变成一块空荡荡的大窗。判据见 `docs/ui-components.md`。
+- `height="reading"`（默认）：固定 `82dvh` 的阅读窗，配翻篇 / 全屏 / 目录；
+- `height="auto"`：高度随内容、上限 `88dvh`、正文自己滚（`.body` 自带 `overflow-y: auto`
+  与左右内边距），给说明、短表单、列表这类普通弹窗。
+
+`ConfirmModal`（二次确认）就是基于 `height="auto"` 这一档封的通用业务组件：说明块 +
+可选额外内容 + 取消 / 确认，业务侧不再各自拼确认框。
 
 ## 基于它封装的业务弹窗
 

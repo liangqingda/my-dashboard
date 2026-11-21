@@ -1,25 +1,12 @@
 /*
- * 删除确认层：标题区（标题 + 被删文档的路径）→ 说明块 → 勾选项 → 一条细线 → 靠右的按钮。
+ * 删除确认层：框体、header、说明块、收口线与按钮行都在 ConfirmModal 里，
+ * 这里只剩两样增量——被删文档的路径行（放在说明块第一行）和「这次删什么」的勾选项。
  * 路径不塞进标题里：文件名一长就会把「？」挤到下一行，独立成一行 monospace 更好读。
  */
 
-/* 标题第二行（被删文档的路径）：长路径按任意位置折行，不撑破标题块 */
+/* 说明块第一行（被删文档的路径）：长路径按任意位置折行，不撑破说明块 */
 .dataPath {
   overflow-wrap: anywhere;
-}
-
-/*
- * 说明块：软底 + 细边，读起来是一段引注而不是又一段正文。
- * 说明文案由调用方给，这里只负责它和下面勾选项、按钮的分界。
- */
-.description {
-  padding: 12px 14px;
-  border: 1px solid var(--app-line);
-  border-radius: 10px;
-  background: var(--app-surface-subtle);
-  color: var(--app-ink-soft);
-  font-size: 13px;
-  line-height: 1.75;
 }
 
 /*
@@ -72,21 +59,4 @@
   color: var(--app-ink-soft);
   font-size: 13px;
   line-height: 1.5;
-}
-
-/* 收口行：一条细线把「选」和「做」分开，按钮靠右 */
-.footer {
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px solid var(--app-line);
-}
-
-/*
- * 删除按钮走项目的危险实底令牌：Mantine 自带那档红偏亮，跟这套墨绿 / 陶红不搭。
- * 只改 `--button-*` 变量、不覆写背景：hover、loading、disabled 仍由组件库自己算。
- */
-.deleteButton {
-  --button-bg: var(--app-status-danger-fill);
-  --button-hover: var(--app-status-danger-fill-hover);
-  --button-color: var(--mantine-color-white);
 }

@@ -13,6 +13,15 @@
 }
 
 /*
+ * 高度随内容的普通弹窗（确认 / 说明 / 短表单）：不占固定高度，上限 88dvh，
+ * 正文自己滚。两条类名一起写是为了压过上面 `.content` 的 `82dvh`。
+ */
+.content.contentAuto {
+  height: auto;
+  max-height: 88dvh;
+}
+
+/*
  * 全屏：铺满整个视口，去掉外边距、描边与圆角。
  * 两条类名一起写是为了压过 Mantine 自己的 `.content` 高度与圆角。
  */
@@ -53,6 +62,12 @@
   min-height: 0;
   padding: 0;
   overflow: hidden;
+}
+
+/* 普通弹窗的正文：自己滚，左右内边距与 header 对齐 */
+.body.bodyAuto {
+  padding: 14px 16px 16px;
+  overflow-y: auto;
 }
 
 /* header 一行：翻页 + 计数 + 标题 + 右侧操作组 */

@@ -49,6 +49,7 @@ const FreeModal = ({
   headerActions,
   headerSecondary,
   headerTail,
+  height = 'reading',
   nav,
   onClose,
   opened,
@@ -80,9 +81,14 @@ const FreeModal = ({
     <Modal
       centered={centered}
       classNames={{
-        body: cx(styles.body, bodyClassName),
+        body: cx(
+          styles.body,
+          height === 'auto' && styles.bodyAuto,
+          bodyClassName,
+        ),
         content: cx(
           styles.content,
+          height === 'auto' && styles.contentAuto,
           fullscreen?.active && styles.contentFullscreen,
           contentClassName,
         ),

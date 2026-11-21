@@ -9,7 +9,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ActionIcon, Button } from '@mantine/core';
 import { IconRefresh, IconTerminal2 } from '@tabler/icons-react';
 
-import FreeDialog from '@/components/FreeDialog';
+import FreeModal from '@/components/FreeModal';
 import { fetchCliCommands } from '@/services/api';
 import { useServices } from '@/services/hooks/useServices';
 import type { CliCommand } from '@/services/types';
@@ -132,7 +132,7 @@ const QuickCommands = () => {
       >
         全局快捷命令
       </Button>
-      <FreeDialog
+      <FreeModal
         closeLabel="关闭全局快捷命令"
         headerActions={
           <ActionIcon
@@ -145,13 +145,14 @@ const QuickCommands = () => {
             <IconRefresh aria-hidden="true" size={18} />
           </ActionIcon>
         }
+        height="auto"
         onClose={() => setOpened(false)}
         opened={opened}
         size="min(820px, 92vw)"
         title="全局快捷命令"
       >
         {renderBody()}
-      </FreeDialog>
+      </FreeModal>
     </>
   );
 };
