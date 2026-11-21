@@ -43,6 +43,9 @@ const HEADING_PATTERN = /^#{1,4}\s+\S/u;
 /** summary 末尾的序号：`场景对话原文 2` 去掉之后才看得出它属于哪一类 */
 const TRAILING_ORDINAL = /(?:[\s·、#-]+|第\s*)(?:\d+|[０-９]+)\s*$/u;
 
+/** 标题里的副标题分隔符：`故事原文 · 五点十五分的卷帘门` 的「原文」在分隔符之前 */
+const TITLE_SEPARATOR = /\s*[·•—–｜|]\s*/u;
+
 /** 「原文类」折叠块的后缀：笔记里的「场景对话原文」「故事原文」都以此结尾 */
 const ORIGINAL_SUFFIX = '原文';
 
@@ -90,8 +93,15 @@ const toBlock = (
     return null;
   }
 
-  /** 去掉末尾序号后的标题：`场景对话原文 1` → `场景对话原文`，用来认「原文类」 */
-  const normalizedTitle = title.replace(TRAILING_ORDINAL, '').trim();
+  /**
+   * 认「原文类」用的标题主干：先切掉副标题（`故事原文 · 五点十五分的卷帘门`），
+   * 再去掉末尾序号（`场景对话原文 1` → `场景对话原文`）。
+   * 只留主干是必须的——原文类笔记的 summary 多半带一句场景说明，拿整句判结尾永远认不出来。
+   */
+  const normalizedTitle = title
+    .split(TITLE_SEPARATOR)[0]
+    .replace(TRAILING_ORDINAL, '')
+    .trim();
 
   return {
     groupLine,
@@ -113,7 +123,7 @@ const toBlock = (
  * 是靠「它是第几个最外层 details」回查这里的下标（见 `utils/prose-navigation`）。
  *
  * 每块还记下 `groupLine`（它上面最近的那个 h1–h4 的行号，`section` 口径按它分组）、
- * `titleKey`（去掉末尾序号的 summary，`kind` 口径按它分组）与 `isOriginal`
+ * `titleKey`（summary 的标题主干：去掉副标题与末尾序号，`kind` 口径按它分组）与 `isOriginal`
  * （是不是「原文类」，只有这类块参与折叠块预览的配置与前后切换）。
  *
  * @param markdown Markdown 原文（用屏上真正渲染的那一份，见 `useDocumentInteractions`）
