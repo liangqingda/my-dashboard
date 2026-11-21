@@ -10,8 +10,9 @@
 - **header**：紧凑版（上下内边距 6px，高度由行内最高按钮决定，约 41px），用 `.content .header`
   双类名压掉 Mantine 的 `min-height` —— 单类名会被它那套 padding / min-height 顶回来。
 - **header 顺序（固定）**：翻页与计数 → 标题 → `headerActions` → 全屏 → `headerTail` →
-  竖线 → `headerSecondary` → Mantine 关闭按钮。
-  竖线只在 `headerActions` / `headerTail` 与 `headerSecondary` 同时存在时才有。
+  `headerSecondary` → 竖线 → Mantine 关闭按钮。
+  竖线只有一条，画在**关闭按钮之前**（操作区与关闭的分界），组与组之间不再画线；
+  没有关闭按钮（`closeButton={false}`）或右侧一个图标都没渲染时也不画，免得留一条孤线。
 - **键盘口径统一在这里**（`hooks/useModalShortcuts`），业务弹窗不各自补快捷键：
   - `Esc`：关窗（Mantine 的 `closeOnEscape`）；
   - **空格**：关窗，并 `preventDefault` 掉浏览器「空格 = 点击当前焦点按钮」——焦点常留在 header
@@ -39,7 +40,7 @@
 | `nav` | `FreeModalNav`：`index`（从 1 起）、`total`、`onPrevious` / `onNext`（到头传 `null` 置灰）、`previousLabel` / `nextLabel`、`shortcutHint`（只进 tooltip）、`disabled`（整组禁用，如编辑中） |
 | `headerActions` | 第一组操作（阅读类：复制、筛选、刷新…） |
 | `headerTail` | 排在全屏之后的末尾位，保证「删除」始终在最右 |
-| `headerSecondary` | 第二组操作（如编辑流程），自动在它与前面一组之间画竖线 |
+| `headerSecondary` | 第二组操作（如编辑流程），紧接在 `headerTail` 之后、关闭按钮的竖线之前 |
 | `fullscreen` | `{ active, onToggle }`；不传则不显示全屏按钮 |
 | `closeButton` | 是否显示关闭按钮，默认显示（编辑态这类「关不掉」的场景传 `false`） |
 | `closeOnEscape` / `closeOnSpace` / `trapFocus` | Esc 与空格是否关窗（`closeOnSpace` 默认跟随 `closeOnEscape`）、上层浮层开着时由调用方关掉，避免一下全关 / 焦点被抢、是否锁焦点 |

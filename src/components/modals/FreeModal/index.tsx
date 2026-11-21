@@ -169,14 +169,13 @@ const FreeModal = ({
             </Tooltip>
           ) : null}
           {headerTail}
-          {headerSecondary ? (
-            <>
-              {/* 竖线只在前面确实有操作组时才画：编辑态整组收掉时不留一条孤线 */}
-              {headerActions || headerTail || fullscreen ? (
-                <span aria-hidden="true" className={styles.divider} />
-              ) : null}
-              {headerSecondary}
-            </>
+          {headerSecondary}
+          {/*
+            竖线只画在关闭按钮之前：它是「操作区 / 关闭」的分界，不和组与组的分隔混在一起。
+            没有关闭按钮（编辑态关不掉）、或右侧一个图标都没渲染时都不画，免得留一条孤线。
+          */}
+          {closeButton && (headerActions || headerTail || fullscreen || headerSecondary) ? (
+            <span aria-hidden="true" className={styles.divider} />
           ) : null}
         </div>
       }
