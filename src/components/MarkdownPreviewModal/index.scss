@@ -216,6 +216,14 @@
   text-underline-offset: 2px;
 }
 
+/* 筛选关键词命中片段：底色取比表格 hover 重一档的 accent-soft-strong，文字仍随正文墨色 */
+.prose mark {
+  padding: 0 1px;
+  border-radius: 2px;
+  background: var(--app-accent-soft-strong);
+  color: inherit;
+}
+
 .prose blockquote {
   margin: 0 0 12px;
   padding: 8px 14px;

@@ -27,6 +27,7 @@ import { REHYPE_PLUGINS, REMARK_PLUGINS } from '../constants';
 import { scrollToHeading } from '../utils/prose-navigation';
 import { useActiveHeadingIndex } from '../hooks/useActiveHeadingIndex';
 import { useDocumentScrollReset } from '../hooks/useDocumentScrollReset';
+import { useKeywordHighlight } from '../hooks/useKeywordHighlight';
 
 import styles from '../index.scss';
 
@@ -101,6 +102,16 @@ const PreviewWorkspace = ({
 
   /** 换篇 / 重新打开时正文回到顶部：不复位就把上一篇的位置留给下一篇 */
   useDocumentScrollReset(bodyRef, title, opened);
+
+  /** 关键词命中片段高亮：只在预览态、正文就绪后打标，编辑态（含草稿预览）不标 */
+  const highlightEnabled = Boolean(filter) && !editing.editing && bodyReady;
+
+  useKeywordHighlight(
+    bodyElement,
+    filter?.keyword ?? '',
+    visibleMarkdown,
+    highlightEnabled,
+  );
 
   /**
    * 正文节点的 callback ref：ref 对象给需要即时读取的地方（弹窗找锚点）用，

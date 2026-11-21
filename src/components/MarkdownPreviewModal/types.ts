@@ -253,6 +253,11 @@ export type MarkdownPreviewFilter = {
   active: boolean;
   /** 把正文筛成要渲染的 Markdown；返回值只在预览态使用 */
   apply: (markdown: string) => string;
+  /**
+   * 关键词：预览态在正文里把命中片段包成 `mark` 高亮；不传 / 空串表示不高亮。
+   * 匹配口径与 `apply` 一致（不区分大小写），只作用于预览，不写回笔记。
+   */
+  keyword?: string;
   /** 弹层内容，由调用方给出筛选控件 */
   render: (props: MarkdownFilterRenderProps) => ReactNode;
 };

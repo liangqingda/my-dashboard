@@ -161,6 +161,7 @@ const English = () => {
     () => ({
       active: filterActive,
       apply: applyFilter,
+      keyword: filterKeyword,
       render: () => (
         <NoteFilter
           keyword={filterKeyword}
