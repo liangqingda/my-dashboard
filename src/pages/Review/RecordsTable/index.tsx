@@ -1,7 +1,8 @@
 import { memo } from 'react';
-import { ActionIcon, Badge, Tooltip } from '@mantine/core';
+import { ActionIcon, Badge, Group, Tooltip } from '@mantine/core';
 import { IconTrash } from '@tabler/icons-react';
 
+import CopyIconButton from '@/components/buttons/CopyIconButton';
 import FreeTable from '@/components/tables/FreeTable';
 import TruncatedText from '@/components/texts/TruncatedText';
 import { formatDateTime } from '@/utils/format';
@@ -15,7 +16,8 @@ import styles from './index.scss';
 
 /**
  * 记录表格：一行一条记录。整行是打开入口（键盘走标题那个按钮），
- * 删除只占一个图标位，点它不会顺带打开详情。
+ * 操作列两个图标：复制记录 ID（复制给 learn-english 命令用）与删除，
+ * 两个按钮自己吞掉点击，不会顺带打开详情。
  * 表格外观（边框、表头吸顶、行 hover）由 `FreeTable` 统一给，这里只管列宽与内容。
  */
 const RecordsTable = memo(
@@ -69,22 +71,25 @@ const RecordsTable = memo(
             <FreeTable.Td className={styles.time}>
               {record.updatedAt ? formatDateTime(record.updatedAt) : EMPTY_CELL}
             </FreeTable.Td>
-            <FreeTable.Td>
-              <Tooltip label="删除这条记录" withArrow>
-                <ActionIcon
-                  aria-label={`删除「${record.title}」`}
-                  color="red"
-                  onClick={(event) => {
-                    // 整行是打开入口：点删除只删，不打开详情
-                    event.stopPropagation();
-                    onDelete(record);
-                  }}
-                  size="sm"
-                  variant="subtle"
-                >
-                  <IconTrash size={15} stroke={1.9} />
-                </ActionIcon>
-              </Tooltip>
+            <FreeTable.Td className={styles.actionWidth}>
+              <Group gap={2} justify="center" wrap="nowrap">
+                <CopyIconButton label="复制记录 ID" text={record.id} />
+                <Tooltip label="删除这条记录" withArrow>
+                  <ActionIcon
+                    aria-label={`删除「${record.title}」`}
+                    color="red"
+                    onClick={(event) => {
+                      // 整行是打开入口：点删除只删，不打开详情
+                      event.stopPropagation();
+                      onDelete(record);
+                    }}
+                    size="sm"
+                    variant="subtle"
+                  >
+                    <IconTrash size={15} stroke={1.9} />
+                  </ActionIcon>
+                </Tooltip>
+              </Group>
             </FreeTable.Td>
           </FreeTable.Tr>
         ))}
