@@ -230,8 +230,13 @@ const MarkdownPreviewModal = ({
     setPanel((current) => (current === 'filter' ? null : 'filter'));
   }, []);
 
+  /** 快捷键开合字号面板：已开字号面板就收起，否则切到字号（与点字号按钮同一条路） */
+  const toggleFontPanel = useCallback(() => {
+    setPanel((current) => (current === 'font' ? null : 'font'));
+  }, []);
+
   /**
-   * header 操作快捷键：`s` 筛选开合、`c` 复制路径、`r` 刷新、`f` 全屏。
+   * header 操作快捷键：`a` 字号开合、`s` 筛选开合、`c` 复制路径、`r` 刷新、`f` 全屏。
    * 子区域预览 / 删除确认层开着时停用——那时键盘归上面那一层；编辑态整组按钮都收掉。
    */
   useHeaderActionShortcuts({
@@ -240,6 +245,7 @@ const MarkdownPreviewModal = ({
       !editing.editing &&
       anchorBlock.index === null &&
       !removal.confirming,
+    onToggleFont: !loading ? toggleFontPanel : null,
     onToggleFilter: filter && !loading ? toggleFilterPanel : null,
     onCopy: relativePath ? handleCopyPath : null,
     onRefresh: onRefresh ? refresh : null,

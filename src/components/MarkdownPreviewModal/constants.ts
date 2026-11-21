@@ -42,6 +42,12 @@ export const CLOSE_BLOCKED_NOTIFICATION_ID = 'markdown-preview-close-blocked';
 /** 快捷键复制相对路径成功提示的固定 id：连按不叠一屏 */
 export const COPY_SUCCESS_NOTICE_ID = 'markdown-preview-copy-success';
 
+/** 刷新成功提示的固定 id：连按不叠一屏 */
+export const REFRESH_SUCCESS_NOTICE_ID = 'markdown-preview-refresh-success';
+
+/** 刷新成功提示停留时长（毫秒）：与页面刷新的「已刷新」同一档 */
+export const REFRESH_NOTICE_DURATION = 3000;
+
 /** 编辑态想关弹窗时的提示：说清出口在哪，而不是让按键像坏了一样没反应 */
 export const CLOSE_BLOCKED_EDITING_MESSAGE =
 '先点 header 的返回箭头退出编辑，关闭按钮就回来了。';

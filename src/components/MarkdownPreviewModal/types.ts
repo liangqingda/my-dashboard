@@ -581,10 +581,12 @@ export type ActiveHeadingParams = {
   headings: MarkdownOutlineHeading[];
 };
 
-/** header 操作快捷键的入参：s 筛选 / c 复制 / r 刷新 / f 全屏，各动作有能力才响应 */
+/** header 操作快捷键的入参：a 字号 / s 筛选 / c 复制 / r 刷新 / f 全屏，各动作有能力才响应 */
 export type HeaderActionShortcutParams = {
   /** 是否启用（预览态，编辑态与其它浮层都没占着键盘） */
   enabled: boolean;
+  /** 开合字号面板；不传表示没有字号调节能力 */
+  onToggleFont?: (() => void) | null;
   /** 开合筛选面板；不传表示没有筛选能力 */
   onToggleFilter?: (() => void) | null;
   /** 复制相对路径；不传表示没有路径可复制 */
