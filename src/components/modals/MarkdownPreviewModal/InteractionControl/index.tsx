@@ -75,7 +75,14 @@ const DETAILS_SCOPE_OPTIONS: Record<
   DetailsNavScope,
   { description: string; label: string }
 > = {
-  all: { description: '按正文顺序切换全文所有折叠块', label: '切换全文所有折叠块' },
+  all: {
+    description: '按正文顺序切换全部 <details>，含练习题的「知识点讲解」',
+    label: '切换全文所有折叠块',
+  },
+  kind: {
+    description: '只算标题相同的折叠块，如各轮的「知识点讲解」「错题讲解」',
+    label: '切换全文同类折叠块',
+  },
   section: {
     description: '只算同一个标题小节下的折叠块，如「场景对话」那两块',
     label: '只切换同一小节',

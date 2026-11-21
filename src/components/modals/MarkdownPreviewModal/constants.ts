@@ -120,8 +120,12 @@ export const DEFAULT_DETAILS_BLOCK_BEHAVIOR: DetailsBlockBehavior = 'expand';
 export const DETAILS_NAV_SCOPE_STORAGE_KEY =
   'my-dashboard:markdown-preview:details-scope';
 
-/** 可选的两种折叠块切换口径：全文所有折叠块 / 只同一小节里的那几个 */
-export const DETAILS_NAV_SCOPES: readonly DetailsNavScope[] = ['all', 'section'];
+/** 可选的三种折叠块切换口径：全文所有 / 全文同类 / 同一小节 */
+export const DETAILS_NAV_SCOPES: readonly DetailsNavScope[] = [
+  'all',
+  'kind',
+  'section',
+];
 
-/** 默认切换全文：等于上一版的行为（那时还没有这个设置） */
-export const DEFAULT_DETAILS_NAV_SCOPE: DetailsNavScope = 'all';
+/** 默认只切同一小节：范围最可控，读原文时不会跳到别的标题下 */
+export const DEFAULT_DETAILS_NAV_SCOPE: DetailsNavScope = 'section';

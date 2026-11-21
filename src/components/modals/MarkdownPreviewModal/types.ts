@@ -202,11 +202,14 @@ export type AnchorLinkBehavior = 'jump' | 'modal';
 export type AnchorNavScope = 'all' | 'section';
 
 /**
- * 折叠块子预览的前后切换口径：`all` 按正文顺序切换全文所有折叠块，
- * `section` 只切换「同一个标题小节下的那几个」折叠块（计数就是这一小节的块数）。
- * 例：`## 看一套…场景对话` 下两个「场景对话原文」，选 `section` 时计数只有 2。
+ * 折叠块子预览的前后切换口径：
+ * - `all` 按正文顺序切换全文所有 `<details>`（含练习题的「知识点讲解」「错题讲解」）；
+ * - `kind` 只切换**标题相同**的折叠块（去掉末尾序号再比），如各轮的「知识点讲解」、
+ *   「场景对话原文 1 / 2」——读原文时不会被练习题讲解插进来；
+ * - `section` 只切换「同一个标题小节下的那几个」折叠块（计数就是这一小节的块数），
+ *   例：`## 看一套…场景对话` 下两个「场景对话原文」。
  */
-export type DetailsNavScope = 'all' | 'section';
+export type DetailsNavScope = 'all' | 'kind' | 'section';
 
 /**
  * 折叠块（`<details>`）里那段内容的点击行为：`expand` 在正文里直接展开，
@@ -265,6 +268,11 @@ export type MarkdownDetailBlock = MarkdownPreviewSection & {
    * 折叠块就是「它上面最近的那个 h1–h4」，同值即同一个分组，`section` 口径按它分组。
    */
   groupLine: number;
+  /**
+   * 去掉末尾序号之后的 summary（如「场景对话原文 1」→「场景对话原文」）：
+   * 同值就是「同一类折叠块」，`kind` 口径按它分组。
+   */
+  titleKey: string;
 };
 
 /**

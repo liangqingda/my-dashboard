@@ -11,12 +11,12 @@
  *
  * @param groups 每一段的分组键，顺序与 `sections` 一致
  * @param currentGroup 当前这一段的分组键；null 表示认不出（退回全文）
- * @param scope 切换口径
+ * @param scope 切换口径（`section` 表示「只要同一组」）
  * @returns 可切换片段的下标，按原顺序；找不到同一组时退回全文，不让计数变成 0
  */
-export const listScopePeers = (
-  groups: readonly number[],
-  currentGroup: number | null,
+export const listScopePeers = <Key extends number | string>(
+  groups: readonly Key[],
+  currentGroup: Key | null,
   scope: 'all' | 'section',
 ): number[] =>
   groups.flatMap((group, index) =>

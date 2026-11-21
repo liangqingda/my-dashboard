@@ -40,6 +40,9 @@ const FENCE_PATTERN = /^(?:```|~~~)/u;
 /** 参与分组的标题层级：与标题目录、锚点区块一致（h1–h4） */
 const HEADING_PATTERN = /^#{1,4}\s+\S/u;
 
+/** summary 末尾的序号：`场景对话原文 2` / `错题讲解 1` / `第 3 部分` 都算同一类 */
+const TRAILING_ORDINAL = /(?:[\s·、#-]+|第\s*)(?:\d+|[０-９]+)\s*$/u;
+
 /**
  * 把 `[startLine, endLine)` 这几行凑成一段折叠块内容。
  *
@@ -84,6 +87,9 @@ const toBlock = (
     return null;
   }
 
+  /** `kind` 口径的分组键：去掉末尾序号，`场景对话原文 1` 与 `2` 就归成同一类 */
+  const titleKey = title ? title.replace(TRAILING_ORDINAL, '').trim() : '';
+
   return {
     groupLine,
     headings: extractMarkdownOutline(markdown),
@@ -92,6 +98,7 @@ const toBlock = (
     // 没有 summary 的折叠块（浏览器默认显示「详细信息」）给个能看懂的说法
     parentTitle: '',
     title: title || `折叠块 ${index + 1}`,
+    titleKey,
   };
 };
 
@@ -101,8 +108,9 @@ const toBlock = (
  * 顺序必须与渲染出来的 `<details>` 一致：正文里点了 summary 之后，
  * 是靠「它是第几个最外层 details」回查这里的下标（见 `utils/prose-navigation`）。
  *
- * 每块还记下「它上面最近的那个 h1–h4」的行号（`groupLine`）：同一小节下的折叠块同值，
- * `section` 口径就只在这一组里前后切换（例：`## 完整场景对话` 下两个「场景对话原文」）。
+ * 每块还记下两个分组键：`groupLine`（它上面最近的那个 h1–h4 的行号）与 `titleKey`
+ * （去掉末尾序号的 summary）。前者给 `section` 口径用（同一小节里的那几块），
+ * 后者给 `kind` 口径用（同一类，如各轮的「知识点讲解」），两者都是「同值即同一组」。
  *
  * @param markdown Markdown 原文（用屏上真正渲染的那一份，见 `useDocumentInteractions`）
  * @returns 折叠块内容；没有、或都没正文时为空数组
@@ -178,9 +186,11 @@ export const collectDetailBlocks = (
 /**
  * 按切换口径取「这一次能前后切换到的折叠块」在列表里的下标。
  *
- * - `all`：全文所有折叠块，按正文顺序（默认，等于上一版的行为）；
+ * - `all`：全文所有 `<details>`，按正文顺序（含练习题的「知识点讲解」「错题讲解」）；
+ * - `kind`：只保留与当前块**标题相同**的折叠块（`titleKey` 相同），不按小节分组，
+ *   例：各轮的「知识点讲解」互相能切到，读「场景对话原文」时不会被它们插进来；
  * - `section`：只保留与当前块**同一个标题小节**下的折叠块（`groupLine` 相同），
- *   例：`## 完整场景对话` 下两个「场景对话原文」→ 计数只有 2，不会跳到「故事原文」。
+ *   例：`## 看一套…场景对话` 下两个「场景对话原文」→ 计数只有 2，不会跳到「故事原文」。
  *
  * @param blocks 整篇的折叠块列表（`collectDetailBlocks` 的结果）
  * @param index 当前打开第几块；null 表示关着
@@ -192,11 +202,14 @@ export const listDetailBlockPeers = (
   index: number | null,
   scope: DetailsNavScope,
 ): number[] => {
+  /** `kind` 按标题分组、`section` 按小节行号分组，两种都算「同组」 */
+  const keyOf = (block: MarkdownDetailBlock): string | number =>
+    scope === 'kind' ? block.titleKey : block.groupLine;
   const current = index === null ? undefined : blocks[index];
 
   return listScopePeers(
-    blocks.map((block) => block.groupLine),
-    current ? current.groupLine : null,
-    scope,
+    blocks.map(keyOf),
+    current ? keyOf(current) : null,
+    scope === 'all' ? 'all' : 'section',
   );
 };
