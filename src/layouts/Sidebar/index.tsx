@@ -70,14 +70,13 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
             }
 
             const { key, label, icon: Icon, children } = item;
-            /** 进页面时当前路由落在哪个子项，就把这个分组展开 */
-            const opened = children.some((child) => pathname === child.to);
 
+            // 分组默认展开，子项直接可见；用户仍可点父项收起
             return (
               <NavLink
                 childrenOffset={18}
                 className={styles.group}
-                defaultOpened={opened}
+                defaultOpened
                 key={key}
                 label={label}
                 leftSection={<Icon size={16} stroke={1.9} />}
