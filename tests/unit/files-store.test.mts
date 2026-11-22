@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { after, before, describe, it } from 'node:test';
 
-import { listDirectory } from '../../scripts/vite/files-store.ts';
+import { buildPickerScript, listDirectory } from '../../scripts/vite/files-store.ts';
 
 describe('files-store', () => {
   let root = '';
@@ -80,5 +80,17 @@ describe('files-store', () => {
       () => listDirectory(path.join(root, 'no-such-dir')),
       /目录不存在/,
     );
+  });
+
+  it('选择器脚本：不带默认目录时不设默认位置；带目录时定位到该路径并转义引号', () => {
+    assert.equal(
+      buildPickerScript(),
+      'POSIX path of (choose folder with prompt "选择要浏览的目录")',
+    );
+
+    const script = buildPickerScript('/Users/lqd/My "Docs"');
+
+    assert.match(script, /default location defaultDir/);
+    assert.match(script, /POSIX file "\/Users\/lqd\/My \\"Docs\\""/);
   });
 });

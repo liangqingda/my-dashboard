@@ -64,3 +64,11 @@ export type UseFilesDirResult = {
   /** 静默刷新当前目录，供页面级刷新订阅 */
   reload: () => Promise<void>;
 };
+
+/** 收藏的一条目录：路径用于直达，名字用于列表展示 */
+export type FavoriteEntry = {
+  /** 目录绝对路径 */
+  path: string;
+  /** 目录名（列表展示用） */
+  name: string;
+};

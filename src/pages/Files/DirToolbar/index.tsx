@@ -1,7 +1,14 @@
 import { useState } from 'react';
 import { Button, Group, UnstyledButton } from '@mantine/core';
-import { IconChevronRight, IconFolderOpen, IconHome } from '@tabler/icons-react';
+import {
+  IconBookmark,
+  IconBookmarkFilled,
+  IconChevronRight,
+  IconFolderOpen,
+  IconHome,
+} from '@tabler/icons-react';
 
+import FreeIconAction from '@/components/buttons/FreeIconAction';
 import FreeInput from '@/components/fields/FreeInput';
 
 import {
@@ -21,8 +28,11 @@ import styles from './index.scss';
 const DirToolbar = ({
   currentDir,
   loading,
+  isFavorite,
+  favoriteDisabled,
   onOpenDir,
   onPickDir,
+  onToggleFavorite,
   onNavigate,
 }: DirToolbarProps) => {
   const [draft, setDraft] = useState(currentDir);
@@ -93,6 +103,19 @@ const DirToolbar = ({
           value={draft}
           width={DIR_INPUT_WIDTH}
         />
+        <FreeIconAction
+          disabled={favoriteDisabled}
+          label="收藏目录"
+          onClick={onToggleFavorite}
+          size="sm"
+          tooltipLabel={isFavorite ? '取消收藏当前目录' : '收藏当前目录'}
+        >
+          {isFavorite ? (
+            <IconBookmarkFilled size={16} />
+          ) : (
+            <IconBookmark size={16} />
+          )}
+        </FreeIconAction>
         <Button
           disabled={loading}
           onClick={onPickDir}

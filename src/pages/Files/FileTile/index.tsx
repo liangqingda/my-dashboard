@@ -11,8 +11,9 @@ import type { FileTileProps } from './types';
 import styles from './index.scss';
 
 /**
- * 网格里的一条文件：图标 + 文件名 + 体积。视频用独立视频图标，其余用通用文件图标；
- * 文件内容与预览是单独任务，本瓦片暂不挂点击行为；名称最多两行，超出省略并在 hover 时给全量。
+ * 网格里的一条文件：图标居上居中，文件名与体积纵向排在下方并居中。
+ * 视频用独立视频图标，其余用通用文件图标；文件内容与预览是单独任务，本瓦片暂不挂点击行为；
+ * 名称最多两行，超出做中间省略保留尾部，hover 时给全量。
  */
 const FileTile = memo(({ file }: FileTileProps) => {
   const isVideo = file.kind === 'video';
@@ -23,12 +24,13 @@ const FileTile = memo(({ file }: FileTileProps) => {
       <Icon
         aria-hidden="true"
         className={cx(styles.icon, isVideo && styles.iconVideo)}
-        size={32}
+        size={48}
         stroke={1.2}
       />
       <span className={styles.body}>
         <FreeTruncatedText
           className={styles.name}
+          ellipsis="middle"
           lines={2}
           position="top"
           text={file.name}

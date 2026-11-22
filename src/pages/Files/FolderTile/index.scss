@@ -1,15 +1,16 @@
-/* 文件夹瓦片：图标在左，名称与计数纵向排在右侧，整格可点进入下一层 */
+/* 文件夹瓦片：图标居上居中，名称与计数纵向排在下方，整格可点进入下一层 */
 
 .tile {
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
   min-width: 0;
-  padding: 10px 8px;
+  padding: 12px 8px;
   border-radius: 8px;
   background: transparent;
   color: inherit;
-  text-align: left;
+  text-align: center;
   cursor: pointer;
 
   &:hover {
@@ -24,8 +25,10 @@
 
 .body {
   display: flex;
+  width: 100%;
   min-width: 0;
   flex-direction: column;
+  align-items: center;
   gap: 2px;
 }
 
@@ -33,6 +36,7 @@
   color: var(--app-ink);
   font-size: 0.86rem;
   line-height: 1.35;
+  text-align: center;
 }
 
 .count {

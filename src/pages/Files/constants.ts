@@ -17,6 +17,12 @@ export const CURRENT_DIR_STORAGE_KEY = scopedStorageKey(
   'current-dir',
 );
 
+/** 收藏的目录列表（路径 + 名字，刷新后保留） */
+export const FAVORITES_STORAGE_KEY = scopedStorageKey(
+  FILES_STORAGE_SCOPE,
+  'favorites',
+);
+
 /** 目录路径输入框的占位文案 */
 export const DIR_INPUT_PLACEHOLDER = '输入本地目录绝对路径，如 ~/Documents';
 

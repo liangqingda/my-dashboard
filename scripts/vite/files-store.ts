@@ -249,16 +249,33 @@ const isCancelError = (error: unknown): boolean => {
   return text.includes('-128') || /cancel/i.test(text);
 };
 
+/** AppleScript 字符串转义：反斜杠与双引号先转义，避免路径里的特殊字符打断脚本 */
+const appleScriptString = (value: string): string =>
+  value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+
+/**
+ * 拼选择器 AppleScript：`defaultDir` 传入时先把它设为默认位置，选择框打开即停在该目录；
+ * 传空则不带默认位置，从用户主目录开始。路径里的反斜杠与双引号先转义。
+ */
+export const buildPickerScript = (defaultDir?: string): string =>
+  defaultDir
+    ? [
+        `set defaultDir to POSIX file "${appleScriptString(defaultDir)}"`,
+        'set picked to (choose folder with prompt "选择要浏览的目录" default location defaultDir)',
+        'POSIX path of picked',
+      ].join('\n')
+    : 'POSIX path of (choose folder with prompt "选择要浏览的目录")';
+
 /**
  * 调起 macOS 系统目录选择框，返回选中目录的 POSIX 绝对路径；
  * 用户取消选择时返回 cancelled，不按失败处理。
+ * `defaultDir` 传入时选择框默认定位到该目录；传空则从用户主目录开始。
  */
-export const pickDirectory = async (): Promise<PickedDir> => {
+export const pickDirectory = async (defaultDir?: string): Promise<PickedDir> => {
+  const script = buildPickerScript(defaultDir);
+
   try {
-    const { stdout } = await execFileAsync('osascript', [
-      '-e',
-      'POSIX path of (choose folder with prompt "选择要浏览的目录")',
-    ]);
+    const { stdout } = await execFileAsync('osascript', ['-e', script]);
     const picked = stdout.trim();
 
     return picked ? { path: picked } : { cancelled: true };

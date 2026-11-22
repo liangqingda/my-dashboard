@@ -37,13 +37,3 @@ export const splitPathSegments = (dir: string): PathSegment[] => {
     path: `/${parts.slice(0, index + 1).join('/')}`,
   }));
 };
-
-/** 目录计数文案：文件夹数与文件数拼成一行；都为 0 时提示空目录 */
-export const summarizeCount = (folders: number, files: number): string => {
-  const parts = [
-    folders > 0 ? `${folders} 个文件夹` : null,
-    files > 0 ? `${files} 个文件` : null,
-  ].filter((part): part is string => part !== null);
-
-  return parts.length > 0 ? parts.join(' · ') : '空目录';
-};

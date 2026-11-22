@@ -169,10 +169,11 @@ const normalizePicked = (raw: unknown): PickedDir | null => {
 };
 
 /**
- * 调起系统目录选择框；用户取消时返回 `cancelled`，不按失败处理。
- * 仅开发模式可用，与列表接口同一套中间件。
+ * 调起系统目录选择框；`defaultDir` 作为选择框默认定位目录；用户取消时返回 `cancelled`，
+ * 不按失败处理。仅开发模式可用，与列表接口同一套中间件。
  */
 export const pickPickedDir = async (
+  defaultDir: string | null,
   signal?: AbortSignal,
 ): Promise<PickedDir> => {
   if (!import.meta.env.DEV) {
@@ -182,6 +183,8 @@ export const pickPickedDir = async (
   const response = await fetch(PICK_ENDPOINT, {
     ...REQUEST_INIT,
     method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(defaultDir ? { dir: defaultDir } : {}),
     signal,
   });
 

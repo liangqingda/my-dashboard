@@ -26,7 +26,7 @@
 | 复制图标按钮 | `@/components/buttons/CopyIconButton` |
 | 页面级刷新 | `@/utils/page-refresh` 的 `requestPageRefresh()` / `onPageRefresh(handler)` |
 | Markdown 标题目录 | `@/utils/markdown-outline` 的 `extractMarkdownOutline` |
-| 单行省略文本 / 截断才提示 | `@/components/texts/FreeTruncatedText` |
+| 单行 / 两行省略文本（尾部或中间省略）、截断才提示 | `@/components/texts/FreeTruncatedText` |
 | 悬停 / 聚焦意图 | `@/hooks/useHoverIntent` |
 | 界面状态的本地持久化（展开 / 收起、全屏、视图形态） | `@/hooks/useStoredState` + `@/utils/local-storage` 的 `FLAG_CODEC` / `STRING_CODEC` / `createChoiceCodec(choices, fallback)`；不在组件里直接读写 `localStorage`，也不自己 try/catch |
 | 一个弹窗的整组偏好（同一次阅读的全屏 / 字号 / 目录宽度…） | `@/hooks/useStoredField(key, field, codec)` + `FLAG_FIELD_CODEC` / `createChoiceFieldCodec(choices, fallback)` |
@@ -48,7 +48,8 @@
   页面 / 组件已经知道自己标识的地方用 `scopedStorageKey(scope, capability)`，别一处手拼、一处走工具。
 - 例：`english-notes:view-mode`、`english-notes:notes-filter-range`、
   `english-notes:markdown-preview`、`english-notes:anchor-section-preview`、
-  `english-knowledge-base:record-detail`、`english-notes:fullscreen`。
+  `english-knowledge-base:record-detail`、`english-notes:fullscreen`、
+  `files:current-dir`、`files:favorites`。
 - **同一个公共组件挂在不同页面必须各记一套**：页面把标识传给组件（如 `MarkdownPreviewModal` 的
   `storageScope`），组件内部再拼 `<标识>:<组件>`；组件不许自己写死页面标识，否则两页会共用同一份
   全屏 / 字号。
