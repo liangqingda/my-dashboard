@@ -5,11 +5,32 @@
  * 校验与错误归类都收在这里，路由壳只负责拼响应。
  */
 
+import { execFile } from 'node:child_process';
 import { readdir, stat } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
+import { promisify } from 'node:util';
 
 import type { Dirent } from 'node:fs';
+
+const execFileAsync = promisify(execFile);
+
+/** 识别为视频文件的扩展名（小写、带点）；只用于区分图标，不做类型过滤 */
+const VIDEO_EXTENSIONS = [
+  '.mp4',
+  '.mov',
+  '.mkv',
+  '.avi',
+  '.webm',
+  '.m4v',
+  '.ts',
+  '.flv',
+  '.wmv',
+  '.mpeg',
+  '.mpg',
+  '.m2ts',
+  '.3gp',
+] as const;
 
 /** 目录里的一条子文件夹 */
 export type FolderEntry = {
@@ -21,6 +42,9 @@ export type FolderEntry = {
   itemCount: number;
 };
 
+/** 文件条目类型：视频走独立图标，其余用通用文件图标 */
+export type FileKind = 'video' | 'file';
+
 /** 目录里的一条文件 */
 export type FileEntry = {
   /** 文件名（含扩展名） */
@@ -31,6 +55,8 @@ export type FileEntry = {
   size: number;
   /** 最后修改时间（ISO 8601） */
   updatedAt: string;
+  /** 文件类型，用于区分图标 */
+  kind: FileKind;
 };
 
 /** 一次目录扫描的结果 */
@@ -49,6 +75,13 @@ export type DirListing = {
 
 /** 以点开头的隐藏条目不进列表，避免把系统文件铺到页面上 */
 const isHiddenName = (name: string): boolean => name.startsWith('.');
+
+/** 视频文件名判定：扩展名在白名单内即算；大小写不敏感 */
+const videoKind = (name: string): FileKind => {
+  const lower = name.toLowerCase();
+
+  return VIDEO_EXTENSIONS.some((ext) => lower.endsWith(ext)) ? 'video' : 'file';
+};
 
 /**
  * 解析并校验入参目录：展开 `~` 为用户主目录，其余必须是绝对路径。
@@ -182,6 +215,7 @@ export const listDirectory = async (input: string): Promise<DirListing> => {
           path: entryPath,
           size: info.size,
           updatedAt: info.mtime.toISOString(),
+          kind: videoKind(entry.name),
         });
       } catch {
         // 单文件 stat 失败就跳过这一条，目录里其它条目照常展示。
@@ -199,3 +233,40 @@ export const listDirectory = async (input: string): Promise<DirListing> => {
 
 /** 未指定目录时的默认起点：当前用户主目录 */
 export const homeDirectory = (): string => homedir();
+
+/** 系统目录选择器返回值：选中给绝对路径，用户取消给 cancelled */
+export type PickedDir = { path: string } | { cancelled: true };
+
+/** 判断 osascript 报错是不是用户在选择框里点了取消（Apple 错误码 -128） */
+const isCancelError = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  const record = error as { message?: string; stderr?: string };
+  const text = `${record.message ?? ''} ${record.stderr ?? ''}`;
+
+  return text.includes('-128') || /cancel/i.test(text);
+};
+
+/**
+ * 调起 macOS 系统目录选择框，返回选中目录的 POSIX 绝对路径；
+ * 用户取消选择时返回 cancelled，不按失败处理。
+ */
+export const pickDirectory = async (): Promise<PickedDir> => {
+  try {
+    const { stdout } = await execFileAsync('osascript', [
+      '-e',
+      'POSIX path of (choose folder with prompt "选择要浏览的目录")',
+    ]);
+    const picked = stdout.trim();
+
+    return picked ? { path: picked } : { cancelled: true };
+  } catch (error) {
+    if (isCancelError(error)) {
+      return { cancelled: true };
+    }
+
+    throw error;
+  }
+};

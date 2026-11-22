@@ -14,6 +14,9 @@ export type FolderEntry = {
   itemCount: number;
 };
 
+/** 文件条目类型：视频走独立图标，其余用通用文件图标 */
+export type FileKind = 'video' | 'file';
+
 /** 列表里的一条文件 */
 export type FileEntry = {
   /** 文件名（含扩展名） */
@@ -24,6 +27,8 @@ export type FileEntry = {
   size: number;
   /** 最后修改时间（ISO 8601） */
   updatedAt: string;
+  /** 文件类型，用于区分图标 */
+  kind: FileKind;
 };
 
 /** 一次目录扫描的结果 */
@@ -52,6 +57,8 @@ export type UseFilesDirResult = {
   error: string | null;
   /** 打开指定目录（含路径校验由中间件收口） */
   openDir: (dir: string) => void;
+  /** 调起系统目录选择器，选中后打开；取消则保持当前目录 */
+  pickDir: () => void;
   /** 手动刷新当前目录（显示 loading） */
   refresh: () => void;
   /** 静默刷新当前目录，供页面级刷新订阅 */

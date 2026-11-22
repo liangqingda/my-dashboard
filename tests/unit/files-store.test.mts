@@ -43,8 +43,11 @@ describe('files-store', () => {
       ],
     );
     assert.deepEqual(
-      listing.files.map((file) => file.name),
-      ['clip.webm', 'poster.png'],
+      listing.files.map((file) => [file.name, file.kind]),
+      [
+        ['clip.webm', 'video'],
+        ['poster.png', 'file'],
+      ],
     );
   });
 
@@ -53,6 +56,7 @@ describe('files-store', () => {
 
     assert.ok(file);
     assert.equal(file.size, 1);
+    assert.equal(file.kind, 'video');
     assert.match(file.updatedAt, /^\d{4}-\d{2}-\d{2}T/);
     assert.equal(file.path, path.join(root, 'clip.webm'));
   });

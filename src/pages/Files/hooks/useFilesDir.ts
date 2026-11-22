@@ -6,7 +6,7 @@ import { STRING_CODEC } from '@/utils/local-storage';
 
 import { CURRENT_DIR_STORAGE_KEY } from '../constants';
 import type { DirListing, UseFilesDirResult } from '../types';
-import { fetchFileDir } from '../utils/files-api';
+import { fetchFileDir, pickPickedDir } from '../utils/files-api';
 
 /**
  * 读取本机目录的子文件夹与文件列表。
@@ -96,6 +96,22 @@ export const useFilesDir = (): UseFilesDirResult => {
     [runFetch],
   );
 
+  /**
+   * 调起系统目录选择框：选中后走 `openDir` 打开；用户取消则保持当前目录，不报错。
+   * 选择过程本身失败时记进页面错误条，重抛在这里吞掉，避免未处理的 Promise 拒绝。
+   */
+  const pickDir = useCallback(() => {
+    void pickPickedDir()
+      .then((picked) => {
+        if ('path' in picked) {
+          openDir(picked.path);
+        }
+      })
+      .catch((caught: unknown) => {
+        fail(caught, requestId.current);
+      });
+  }, [openDir, fail]);
+
   /** 手动刷新当前目录（显示 loading）；同上，失败由错误条收口 */
   const refresh = useCallback(() => {
     const current = requestId.current + 1;
@@ -157,6 +173,7 @@ export const useFilesDir = (): UseFilesDirResult => {
     listing,
     loading,
     openDir,
+    pickDir,
     refresh,
     reload,
   };

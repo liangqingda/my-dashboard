@@ -10,6 +10,8 @@ export type DirToolbarProps = {
   loading: boolean;
   /** 按输入框里的路径打开目录 */
   onOpenDir: (dir: string) => void;
+  /** 调起系统目录选择器选择目录 */
+  onPickDir: () => void;
   /** 点面包屑某一段，回到该层目录 */
   onNavigate: (dir: string) => void;
 };

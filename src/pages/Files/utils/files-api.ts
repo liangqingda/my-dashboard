@@ -11,10 +11,15 @@ import { readHttpErrorMessage } from '@/utils/error';
 import type {
   DirListing,
   FileEntry,
+  FileKind,
   FolderEntry,
 } from '../types';
 
 const LIST_ENDPOINT = '/api/files';
+const PICK_ENDPOINT = '/api/files/pick-dir';
+
+/** 系统目录选择器返回值：选中给绝对路径，取消给 cancelled */
+export type PickedDir = { path: string } | { cancelled: true };
 
 /** 取数请求的缓存策略：开发态必须实时，静态产物不读这个接口 */
 const REQUEST_INIT: RequestInit = import.meta.env.DEV
@@ -59,11 +64,14 @@ const normalizeFile = (raw: unknown): FileEntry | null => {
     return null;
   }
 
+  const kind: FileKind = raw.kind === 'video' ? 'video' : 'file';
+
   return {
     name,
     path,
     size: asNumber(raw.size),
     updatedAt: asString(raw.updatedAt),
+    kind,
   };
 };
 
@@ -143,4 +151,52 @@ export const fetchFileDir = async (
   }
 
   return listing;
+};
+
+/** 归一化选择器返回值；格式不对返回 null，调用方按错误态处理 */
+const normalizePicked = (raw: unknown): PickedDir | null => {
+  if (!isObject(raw)) {
+    return null;
+  }
+
+  if ('cancelled' in raw) {
+    return { cancelled: true };
+  }
+
+  const path = asString(raw.path);
+
+  return path ? { path } : null;
+};
+
+/**
+ * 调起系统目录选择框；用户取消时返回 `cancelled`，不按失败处理。
+ * 仅开发模式可用，与列表接口同一套中间件。
+ */
+export const pickPickedDir = async (
+  signal?: AbortSignal,
+): Promise<PickedDir> => {
+  if (!import.meta.env.DEV) {
+    throw new Error('静态构建不支持读取本地目录，请在开发模式下打开');
+  }
+
+  const response = await fetch(PICK_ENDPOINT, {
+    ...REQUEST_INIT,
+    method: 'POST',
+    signal,
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      await readHttpErrorMessage(response, `选择目录失败（HTTP ${response.status}）`),
+    );
+  }
+
+  const payload = await readJson(response);
+  const picked = isObject(payload) ? normalizePicked(payload.picked) : null;
+
+  if (picked === null) {
+    throw new Error('目录数据格式不符合预期');
+  }
+
+  return picked;
 };

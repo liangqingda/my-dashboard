@@ -22,6 +22,7 @@ const DirToolbar = ({
   currentDir,
   loading,
   onOpenDir,
+  onPickDir,
   onNavigate,
 }: DirToolbarProps) => {
   const [draft, setDraft] = useState(currentDir);
@@ -94,8 +95,9 @@ const DirToolbar = ({
         />
         <Button
           disabled={loading}
-          onClick={submit}
+          onClick={onPickDir}
           size="xs"
+          title="选择本地目录"
           variant="light"
         >
           打开

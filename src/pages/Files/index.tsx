@@ -26,7 +26,7 @@ import styles from './index.scss';
  * 目录读取走 Vite 中间件，仅开发模式可用。
  */
 const Files = () => {
-  const { currentDir, listing, loading, error, openDir, refresh, reload } =
+  const { currentDir, listing, loading, error, openDir, pickDir, refresh, reload } =
     useFilesDir();
 
   // 页面标题栏的「刷新当前页面」：静默重读当前目录，失败由订阅方弹提示
@@ -51,6 +51,7 @@ const Files = () => {
           loading={loading}
           onNavigate={openDir}
           onOpenDir={openDir}
+          onPickDir={pickDir}
         />
 
         {error !== null ? (

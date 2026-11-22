@@ -10,9 +10,11 @@
   text-overflow: ellipsis;
 }
 
-/* 两行省略：放开换行，交给 -webkit-line-clamp 截到两行，省略号由它自动补 */
+/* 两行省略：放开换行，交给 -webkit-line-clamp 截到两行，省略号由它自动补；
+   长文件名（下划线 / 长后缀）没有空格可断，允许在任意字符处断行 */
 .clamp2 {
   display: -webkit-box;
+  overflow-wrap: anywhere;
   white-space: normal;
   text-overflow: clip;
   -webkit-box-orient: vertical;
