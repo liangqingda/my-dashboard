@@ -231,7 +231,8 @@
 .prose code {
   padding: 1px 5px;
   border-radius: 2px;
-  background: var(--app-surface);
+  background: var(--app-code-bg);
+  color: var(--app-code-color);
   font-family: var(--mantine-font-family-monospace);
   font-size: 0.82em;
 }
@@ -241,7 +242,8 @@
   margin: 0 0 14px;
   padding: 12px 14px;
   border: 1px solid var(--app-line);
-  background: var(--app-surface);
+  background: var(--app-code-bg);
+  color: var(--app-code-color);
 }
 
 .prose pre code {

@@ -40,6 +40,10 @@
 `--app-ink-strong` **夹在正文与标题之间**：浅色下比标题浅一档、暗色下比标题暗一档，与标题始终留
 1.3–1.5 倍亮度差；跟着标题往同一边推（浅色更黑 / 暗色更亮）会让加粗看起来像小标题，不要那样改。
 
+**行内代码 / 代码块**：底色与字色走全局令牌 `--app-code-bg` / `--app-code-color`（`src/styles/global.scss`），
+字色落在 `--app-ink-strong` 档，不随正文 `--app-ink-soft`——暗色下 ink-soft 压在同档底色上会发灰。
+新的 Markdown 渲染面复用这组令牌，不要在页面里另挑代码配色。
+
 **表格外框**：GFM 表格整体描一条 `--app-line` 外框、圆角 8px，行与行之间仍是 1px 单线（表头行靠
 `th` 的下边框、其余靠 `td`）。因此 `border-collapse` 必须是 `separate` + `border-spacing: 0`——
 `collapse` 下合并边框不参与圆角，外观会变成「外框直角、内线合并」的半成品；末行左右两个角还要单独给

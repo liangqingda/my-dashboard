@@ -47,6 +47,11 @@
   --app-status-muted: #64766e;
   --app-status-muted-soft: #dfe5e2;
 
+  /* code：Markdown 行内代码 / 代码块的底色与字色。代码是被标注的内容，
+     字色走 ink-strong 这一档，不随正文 ink-soft——暗色下 ink-soft 压在同档底色上会发灰 */
+  --app-code-bg: var(--app-surface);
+  --app-code-color: var(--app-ink-strong);
+
   /* spacing */
   --app-space-sm: 0.5rem;
   --app-space-md: 1rem;
