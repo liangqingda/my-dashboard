@@ -121,7 +121,7 @@ const DirToolbar = ({
           onClick={onPickDir}
           size="xs"
           title="选择本地目录"
-          variant="subtle"
+          variant="default"
         >
           打开
         </Button>
