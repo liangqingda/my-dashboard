@@ -103,6 +103,9 @@ export const useEntryActions = (
 
   const dragOverFolder = (path: string, event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
+    const { dataTransfer } = event;
+
+    dataTransfer.dropEffect = 'move';
     setDropTarget(path);
   };
 

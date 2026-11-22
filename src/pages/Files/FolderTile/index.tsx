@@ -42,7 +42,10 @@ const FolderTile = memo(
       onDragLeave={onDragLeave}
       onDragOver={onDragOver}
       onDragStart={(event) => {
-        event.dataTransfer.setData('text/plain', folder.path);
+        const { dataTransfer } = event;
+
+        dataTransfer.effectAllowed = 'move';
+        dataTransfer.setData('text/plain', folder.path);
         onDragStartEntry?.();
       }}
       onDrop={onDrop}

@@ -45,7 +45,10 @@ const FileTile = memo(
         draggable
         onDragEnd={onDragEnd}
         onDragStart={(event) => {
-          event.dataTransfer.setData('text/plain', file.path);
+          const { dataTransfer } = event;
+
+          dataTransfer.effectAllowed = 'move';
+          dataTransfer.setData('text/plain', file.path);
           onDragStartEntry?.();
         }}
       >
