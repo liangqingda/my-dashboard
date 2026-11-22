@@ -4,11 +4,12 @@
    浅/暗两套令牌，供所有页面组件消费。
    ============================================================ */
 :root {
-  /* surfaces */
-  --app-bg: #f3f6f4;
+  /* surfaces：内容区（--app-bg）比 chrome（--app-surface-subtle）深一档，卡片再抬到纯白 */
+  --app-bg: #eaeeec;
   --app-surface: #ffffff;
   --app-surface-subtle: #eef2f0;
-  --app-surface-hover: #e9f1ee;
+  /* hover 要同时压过内容区与纯白卡片：跟着内容区一起调深，否则落在画布上几乎看不出来 */
+  --app-surface-hover: #e3ece7;
 
   /* ink：strong 夹在正文（ink-soft）与标题（ink）之间，比正文重、比标题轻，让加粗不与标题同亮度 */
   --app-ink-strong: #2a3b35;
@@ -56,12 +57,11 @@
 
 html[data-mantine-color-scheme='dark'] {
   /*
-   * 暗色下三层的关系与浅色镜像：chrome（顶栏 / 侧栏，取 surface-subtle）只比内容区亮一档（约 5），
-   * 卡片（surface）明显亮于内容区（约 9）。内容区不再比 chrome 深一大截——
-   * 之前 --app-bg 是 #0f1513、--app-surface-subtle 是 #1d2724，两层差了 14，
-   * 暗色下读起来像「一块亮条箍着一块黑洞」。
+   * 暗色下三层的关系与浅色同向：内容区（--app-bg）比 chrome（--app-surface-subtle）稍暗，
+   * 只差一小档（约 2–3），不再是一块亮条箍着一块黑洞；卡片（surface）明显亮于内容区（约 6）。
+   * 暗色里「越亮越靠前」：内容区这档别压回 #0f1513 那种近乎纯黑，读起来会闷。
    */
-  --app-bg: #151d1b;
+  --app-bg: #18211f;
   --app-surface: #1e2724;
   --app-surface-subtle: #1a2320;
   --app-surface-hover: #22302c;
