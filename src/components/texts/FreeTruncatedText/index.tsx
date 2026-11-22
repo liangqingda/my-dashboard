@@ -3,15 +3,18 @@
  * 文本本来就放得下时不弹任何提示，不给读者加噪音。
  *
  * 默认单行、尾部省略；`lines={2}` 时截到两行。`ellipsis="middle"` 改为中间省略：
- * 头部与尾部都保留，省略号落在中间（文件名这类尾部扩展名重要的场景用）。
+ * 头部与尾部都保留，省略号落在**最后一行的水平中间**（文件名这类尾部扩展名重要的场景用）——
+ * 单行时就是这一行的中间，两行时落在第二行中间，三行时落在第三行中间。
  *
  * end 档的 tip 与测量都推迟到「被指到的那一刻」（见 `useHoverIntent`）：列表里几百个条目
  * 各自常驻一个 Tooltip 会白付几百套浮动定位实例的挂载成本，各自挂一个 ResizeObserver
- * 测量则会拆成几百次强制重排。middle 档做不到推迟——中间省略的拼法必须在节点挂上后定好，
- * 所以在回调 ref 里量一次（节点挂上即量），不挂常驻观察器。tip 挂在目标元素旁边、由 `target` 指回去。
+ * 测量则会拆成几百次强制重排。middle 档做不到推迟——中间省略的拼法必须在节点挂上后、
+ * 第一帧画出来之前定好，所以在回调 ref 里量一次（节点挂上即量），不挂常驻观察器；
+ * 文案或行数变了再按 `useLayoutEffect` 补量一次。tip 挂在目标元素旁边、由 `target` 指回去。
  */
 
-import { useCallback, useState } from 'react';
+import type { CSSProperties } from 'react';
+import { useCallback, useLayoutEffect, useState } from 'react';
 import { Tooltip, UnstyledButton } from '@mantine/core';
 
 import { useHoverIntent } from '@/hooks/useHoverIntent';
@@ -19,25 +22,9 @@ import { cx } from '@/utils/cx';
 
 import useIsTruncated from './hooks/useIsTruncated';
 import type { FreeTruncatedTextProps } from './types';
+import { resolveMiddleEllipsis } from './utils';
 
 import styles from './index.scss';
-
-const ELLIPSIS = '…';
-
-/**
- * 头尾各留一段拼中间省略；`keep` 是省略号之外保留的字符总数，头稍多一点。
- * 省略号本身不计入 `keep`。
- */
-const middleCandidate = (text: string, keep: number): string => {
-  if (text.length <= keep) {
-    return text;
-  }
-
-  const head = Math.ceil(keep / 2);
-  const tail = keep - head;
-
-  return `${text.slice(0, head)}${ELLIPSIS}${text.slice(text.length - tail)}`;
-};
 
 const FreeTruncatedText = ({
   className,
@@ -51,24 +38,31 @@ const FreeTruncatedText = ({
 }: FreeTruncatedTextProps) => {
   const { measure, ref, targetRef } = useIsTruncated();
   const isMiddle = ellipsis === 'middle';
+  const lineCount = Math.max(1, Math.trunc(lines));
   /**
    * 被指到的那一刻量出来的「是否截断」。**记着它量的是哪一段原文**：原文换了
    * （弹窗标题从这一条切到下一条）就按「还没量、放得下」算，tip 不沿用上一条的结论。
    */
   const [measured, setMeasured] = useState({ source: '', truncated: false });
   /**
-   * middle 档的拼好文案，同样记着是「哪一段原文」量的；原文换了就回落全文，
-   * 等节点随新文案重挂后再量一次（见 `handleRef`）。end 档不需要状态，直接用 `text`。
+   * middle 档的拼好文案，记着它是「哪一段原文、几行」量的：两者任一变了就回落全文，
+   * 等重算一次（见下面的 `useLayoutEffect`）。end 档不需要状态，直接用 `text`。
    */
-  const [middleText, setMiddleText] = useState({ display: text, source: text });
+  const [middleText, setMiddleText] = useState({
+    display: text,
+    lines: lineCount,
+    source: text,
+  });
 
-  const measureKind = lines === 2 ? 'height' : 'width';
+  const measureKind = lineCount > 1 ? 'height' : 'width';
   const truncated = measured.source === text && measured.truncated;
   const displayText =
-    isMiddle && middleText.source === text ? middleText.display : text;
+    isMiddle && middleText.source === text && middleText.lines === lineCount
+      ? middleText.display
+      : text;
 
   /**
-   * middle 档：节点挂上后按容器尺寸二分出**能放下的最多**头尾字符，写回状态渲染。
+   * middle 档：按容器实际排版算头 / 尾 / 省略号，省略号落在最后一行的水平中间。
    * 藏在隐藏视图里时盒子尺寸为 0，量不出结论，先按全文渲染，不误截断。
    */
   const resolveMiddle = useCallback(() => {
@@ -82,45 +76,14 @@ const FreeTruncatedText = ({
       return;
     }
 
-    element.textContent = text;
+    setMiddleText({
+      display: resolveMiddleEllipsis({ element, lines: lineCount, text }),
+      lines: lineCount,
+      source: text,
+    });
+  }, [isMiddle, lineCount, targetRef, text]);
 
-    if (element.clientWidth === 0 && element.clientHeight === 0) {
-      setMiddleText({ display: text, source: text });
-
-      return;
-    }
-
-    if (!measure(measureKind)) {
-      setMiddleText({ display: text, source: text });
-
-      return;
-    }
-
-    let low = 1;
-    let high = text.length - 1;
-    let best = text;
-
-    while (low <= high) {
-      const keep = Math.floor((low + high) / 2);
-      const candidate = middleCandidate(text, keep);
-
-      element.textContent = candidate;
-
-      if (!measure(measureKind)) {
-        // 放得下：还能多留字符，往更大的 keep 搜
-        best = candidate;
-        low = keep + 1;
-      } else {
-        // 放不下：往更少的 keep 收
-        high = keep - 1;
-      }
-    }
-
-    element.textContent = best;
-    setMiddleText({ display: best, source: text });
-  }, [isMiddle, measure, measureKind, targetRef, text]);
-
-  /** 组合 ref：先登记目标节点供 tip 定位与测量，再跑 middle 档的一次性测量 */
+  /** 组合 ref：先登记目标节点供 tip 定位与测量，再跑 middle 档的首次测量 */
   const handleRef = useCallback(
     (node: HTMLElement | null) => {
       ref(node);
@@ -131,6 +94,26 @@ const FreeTruncatedText = ({
     },
     [ref, resolveMiddle],
   );
+
+  /**
+   * 文案或行数变了要重算：节点不一定重挂，ref 回调不会再响，不补这一次就会一直停在全文
+   * （或停在上一档行数的拼法）。首次挂载时 ref 回调已经算过（两者都已对齐），这里自然空转。
+   */
+  useLayoutEffect(() => {
+    if (
+      isMiddle &&
+      (middleText.source !== text || middleText.lines !== lineCount)
+    ) {
+      resolveMiddle();
+    }
+  }, [
+    isMiddle,
+    lineCount,
+    middleText.lines,
+    middleText.source,
+    resolveMiddle,
+    text,
+  ]);
 
   const checkTruncation = useCallback(() => {
     setMeasured({
@@ -144,9 +127,17 @@ const FreeTruncatedText = ({
   const classes = cx(
     styles.text,
     inline && styles.inline,
-    lines === 2 && styles.clamp2,
+    lineCount > 1 && styles.multiline,
+    lineCount > 1 && !isMiddle && styles.clamp,
+    isMiddle && styles.middle,
     className,
   );
+
+  /** 多行尾部省略的行数交给 `-webkit-line-clamp`；middle 档的文案已经算准，不需要它 */
+  const lineStyle =
+    lineCount > 1 && !isMiddle
+      ? ({ '--freeTruncatedLines': lineCount } as CSSProperties)
+      : undefined;
 
   const content = onClick ? (
     <UnstyledButton
@@ -154,13 +145,14 @@ const FreeTruncatedText = ({
       disabled={disabled}
       onClick={onClick}
       ref={handleRef}
+      style={lineStyle}
       type="button"
       {...hoverHandlers}
     >
       {displayText}
     </UnstyledButton>
   ) : (
-    <span className={classes} ref={handleRef} {...hoverHandlers}>
+    <span className={classes} ref={handleRef} style={lineStyle} {...hoverHandlers}>
       {displayText}
     </span>
   );

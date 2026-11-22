@@ -20,8 +20,8 @@ export type FreeTruncatedTextProps = {
   onClick?: () => void;
   /** tip 出现方向，默认 right（正右侧）；贴边或被遮挡的场景按需改成 top 等 */
   position?: FloatingPosition;
-  /** 最多保留的行数，默认 1；2 行时按高度判断是否被截断 */
-  lines?: 1 | 2;
-  /** 省略位置，默认 `end`（尾部省略）；`middle` 保留头部与尾部、中间用省略号代替 */
+  /** 最多保留的行数，默认 1；正整数，多行时按高度判断是否被截断 */
+  lines?: number;
+  /** 省略位置，默认 `end`（尾部省略）；`middle` 保留头部与尾部，省略号落在最后一行的水平中间 */
   ellipsis?: TruncationEllipsis;
 };

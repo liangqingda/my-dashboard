@@ -10,15 +10,24 @@
   text-overflow: ellipsis;
 }
 
-/* 两行省略：放开换行，交给 -webkit-line-clamp 截到两行，省略号由它自动补；
-   长文件名（下划线 / 长后缀）没有空格可断，允许在任意字符处断行 */
-.clamp2 {
-  display: -webkit-box;
+/* 多行：放开换行；长文件名（下划线 / 长后缀）没有空格可断，允许在任意字符处断行 */
+.multiline {
   overflow-wrap: anywhere;
   white-space: normal;
   text-overflow: clip;
+}
+
+/* 多行尾部省略：交给 -webkit-line-clamp 截到 lines 行，省略号由它自动补；
+   行数由组件按 props.lines 写进自定义属性，这里不写死 */
+.clamp {
+  display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: var(--freeTruncatedLines);
+}
+
+/* middle 档：省略号已经由组件按排版拼好，别让原生 text-overflow 在行尾再补一个 */
+.middle {
+  text-overflow: clip;
 }
 
 /* 夹在一行文字里时不要独占整行 */
