@@ -2,5 +2,11 @@
  * 日志面板的常量。
  */
 
-/** 展开状态的存储键前缀：实际键按服务 id 拼接，各服务各记各的日志面板 */
-export const LOG_EXPANDED_STORAGE_PREFIX = 'my-dashboard:service-log-expanded:';
+import { scopedStorageKey } from '@/utils/page-storage';
+
+/**
+ * 某个服务日志面板展开状态的存储键：页面标识（路由 `/services`）+ 能力 + 服务 id，
+ * 各服务各记各的展开状态。
+ */
+export const logExpandedStorageKey = (serviceId: string): string =>
+  scopedStorageKey('services', `service-log-expanded:${serviceId}`);

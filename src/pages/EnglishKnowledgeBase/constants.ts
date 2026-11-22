@@ -5,6 +5,8 @@
 
 import type { MantineColor } from '@mantine/core';
 
+import { scopedStorageKey } from '@/utils/page-storage';
+
 import type { RecordStatus } from './types';
 
 /** 字段缺失时的占位，避免出现空单元格 */
@@ -54,7 +56,16 @@ export const SEARCH_WIDTH = 208;
 export const SKELETON_ROWS: readonly number[] = [0, 1, 2, 3, 4];
 
 /**
+ * 这一页在 localStorage 里的页面标识：对应路由 `/english/knowledge-base`
+ * （拼法见 `@/utils/page-storage`）。
+ */
+export const KNOWLEDGE_BASE_STORAGE_SCOPE = 'english-knowledge-base';
+
+/**
  * 记录详情弹窗的偏好命名空间（localStorage 里一个 JSON 对象）：目前只有全屏
  * （字段 `fullscreen`，见 `FreeModal` 的 `useModalFullscreen`），与 md 预览的几层各记各的。
  */
-export const RECORD_DETAIL_STORAGE_KEY = 'my-dashboard:record-detail';
+export const RECORD_DETAIL_STORAGE_KEY = scopedStorageKey(
+  KNOWLEDGE_BASE_STORAGE_SCOPE,
+  'record-detail',
+);

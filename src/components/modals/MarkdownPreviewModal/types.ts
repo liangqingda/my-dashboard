@@ -84,6 +84,12 @@ export type MarkdownPreviewModalProps = {
   relativePath?: string;
   /** 关闭预览 */
   onClose: () => void;
+  /**
+   * 这一页在 localStorage 里的页面标识（路由，如 `english-notes`，见 `@/utils/page-storage`）。
+   * 全屏 / 字号 / 目录宽度这些阅读偏好按 `<标识>:markdown-preview` 这类命名空间存——
+   * 同一个预览弹窗挂在不同页面各记各的，所以标识由页面传，组件不写死。
+   */
+  storageScope: string;
   /** 上一篇；null 表示没有相邻文档 */
   onPrevious?: (() => void) | null;
   /** 下一篇；null 表示没有相邻文档 */
@@ -317,6 +323,8 @@ export type SectionPreviewVariant = 'anchor' | 'details';
 export type SectionPreviewProps = {
   /** 这次是从哪个入口打开的：决定阅读偏好存进哪一套 */
   variant: SectionPreviewVariant;
+  /** 页面标识（路由）：这一层的偏好存在 `<标识>:anchor-section-preview` 这类命名空间里 */
+  storageScope: string;
   /** 可切换的全部区块（锚点区块 / 折叠块），按正文顺序 */
   sections: readonly MarkdownPreviewSection[];
   /** 当前打开第几段；null 表示关着 */

@@ -24,7 +24,7 @@ import type { LogKind } from '@/services/types';
 import { useServiceLog } from '../hooks/useServiceLog';
 import { resolveLogContent } from '../utils';
 
-import { LOG_EXPANDED_STORAGE_PREFIX } from './constants';
+import { logExpandedStorageKey } from './constants';
 import type { ServiceLogPanelProps } from './types';
 
 import styles from './index.scss';
@@ -32,7 +32,7 @@ import styles from './index.scss';
 const ServiceLogPanel = ({ offline, service }: ServiceLogPanelProps) => {
   /** 展开状态按服务分开记：刷新后哪些服务的日志面板开着，仍然开着 */
   const [expanded, setExpanded] = useStoredState(
-    `${LOG_EXPANDED_STORAGE_PREFIX}${service.id}`,
+    logExpandedStorageKey(service.id),
     FLAG_CODEC,
   );
   const [kind, setKind] = useState<LogKind>('service');

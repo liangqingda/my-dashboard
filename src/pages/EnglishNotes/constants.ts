@@ -10,6 +10,7 @@
 import type { MarkdownPreviewRemove } from '@/components/modals/MarkdownPreviewModal';
 import { createChoiceCodec } from '@/utils/local-storage';
 import type { StoredCodec } from '@/utils/local-storage';
+import { scopedStorageKey } from '@/utils/page-storage';
 
 import type {
   NoteDeleteMode,
@@ -36,8 +37,18 @@ export const EMPTY_CELL = '—';
  */
 export const NOTES_DIR = 'learning-record-notes';
 
+/**
+ * 这一页在 localStorage 里的页面标识：对应路由 `/english/notes`
+ * （`/english/notes` → `english-notes`，拼法见 `@/utils/page-storage`）。
+ * 页面级偏好与页面里用到的公共组件（Markdown 预览弹窗）都挂在这一个标识下。
+ */
+export const NOTES_STORAGE_SCOPE = 'english-notes';
+
 /** 展示形式（分列看板 / 表格）的存储键：刷新页面后保持上次切换到的形态 */
-export const VIEW_MODE_STORAGE_KEY = 'my-dashboard:english:view-mode';
+export const VIEW_MODE_STORAGE_KEY = scopedStorageKey(
+  NOTES_STORAGE_SCOPE,
+  'view-mode',
+);
 
 /** 展示形式的编解码：只认 board / table，写坏的存储值回落分列看板 */
 export const VIEW_MODE_CODEC = createChoiceCodec<NotesViewMode>(
@@ -108,9 +119,15 @@ export const createNoteRemove = (
  * 预览筛选的存储键：范围与关键词分两个键存。
  * 筛选条件要黏住——换一篇笔记、刷新页面都沿用上次的选择，不必重新点一遍。
  */
-export const FILTER_SCOPE_STORAGE_KEY = 'my-dashboard:english:filter-scope';
+export const FILTER_SCOPE_STORAGE_KEY = scopedStorageKey(
+  NOTES_STORAGE_SCOPE,
+  'filter-scope',
+);
 
-export const FILTER_KEYWORD_STORAGE_KEY = 'my-dashboard:english:filter-keyword';
+export const FILTER_KEYWORD_STORAGE_KEY = scopedStorageKey(
+  NOTES_STORAGE_SCOPE,
+  'filter-keyword',
+);
 
 /** 筛选范围的编解码：只认这四种范围，写坏的存储值回落「全部内容」 */
 export const FILTER_SCOPE_CODEC = createChoiceCodec<NoteFilterScope>(
@@ -142,11 +159,20 @@ export const UNCATEGORIZED_CATEGORY = '__uncategorized__';
  * 列表筛选的存储键：时间范围、指定日期、分类分三个键存。
  * 和预览筛选一样黏住——刷新页面重新进入仍沿用上次的条件。
  */
-export const NOTES_FILTER_RANGE_STORAGE_KEY = 'my-dashboard:english:notes-filter-range';
+export const NOTES_FILTER_RANGE_STORAGE_KEY = scopedStorageKey(
+  NOTES_STORAGE_SCOPE,
+  'notes-filter-range',
+);
 
-export const NOTES_FILTER_DATE_STORAGE_KEY = 'my-dashboard:english:notes-filter-date';
+export const NOTES_FILTER_DATE_STORAGE_KEY = scopedStorageKey(
+  NOTES_STORAGE_SCOPE,
+  'notes-filter-date',
+);
 
-export const NOTES_FILTER_CATEGORY_STORAGE_KEY = 'my-dashboard:english:notes-filter-category';
+export const NOTES_FILTER_CATEGORY_STORAGE_KEY = scopedStorageKey(
+  NOTES_STORAGE_SCOPE,
+  'notes-filter-category',
+);
 
 /** 时间范围的编解码：只认六档，写坏的存储值回落「全部时间」 */
 export const NOTES_FILTER_RANGE_CODEC = createChoiceCodec<NotesTimeRange>(

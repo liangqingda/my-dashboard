@@ -52,8 +52,9 @@
    就上提成一份常量（`IconPopoverButton/constants.ts` 的 `PANEL_FIELD_STYLES`）。复制的那几份注释里
    往往还写着「同一份口径」——那就是该上提的信号。
 7. **页面专属的东西不上提**：文案、业务阈值、存储键、文档语义留在调用方或该页 `constants.ts`；
-   存储按模块前缀分命名空间（`my-dashboard:markdown-preview`、`my-dashboard:english` 这类对象互不掺和，
-   一个命名空间的整组偏好存在同一个对象里，不再一个偏好一把键）。
+   存储键按「页面标识（路由）:组件或能力」命名（如 `english-notes:markdown-preview` 与
+   `english-knowledge-base:record-detail` 互不掺和），拼法与细则见 `docs/shared-utils.md`
+   的「存储键的命名」；同一组件的一组偏好存在同一个对象里，不再一个偏好一把键。
 
 ## 常见提错
 

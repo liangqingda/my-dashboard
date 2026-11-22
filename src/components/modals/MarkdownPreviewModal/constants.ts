@@ -5,34 +5,43 @@
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 
+import { scopedStorageKey } from '@/utils/page-storage';
+
 import type {
   AnchorLinkBehavior,
   AnchorNavScope,
   DetailsBlockBehavior,
   DetailsNavScope,
+  SectionPreviewVariant,
 } from './types';
 
 /** 「已保存」提示停留时长（毫秒） */
 export const SAVED_HINT_DURATION = 3000;
 
 /**
- * 主预览弹窗的整组偏好存在这个命名空间里（localStorage 里一个 JSON 对象）：
- * 全屏（字段 `fullscreen`，见 `FreeModal` 的 `useModalFullscreen`）、正文字号偏移、
- * 目录宽度、文档内交互四项。全屏是「怎么看」，不是某一篇的属性，
+ * 偏好命名空间的拼法：`<页面标识>:<组件>`。页面标识由调用方给（路由，如 `english-notes`，
+ * 见 `@/utils/page-storage`），所以同一个预览弹窗挂在不同页面时各记各的偏好。
+ *
+ * 主预览这一套里存全屏（字段 `fullscreen`，见 `FreeModal` 的 `useModalFullscreen`）、
+ * 正文字号偏移、目录宽度、文档内交互四项。全屏 / 字号 / 目录宽度都是「怎么看」的偏好，
  * 换篇、关掉重开、刷新页面后都保持上次的样子。
  */
-export const MAIN_PREVIEW_STORAGE_KEY = 'my-dashboard:markdown-preview';
+export const mainPreviewStorageKey = (scope: string): string =>
+  scopedStorageKey(scope, 'markdown-preview');
 
 /**
- * 同文档链接子预览的命名空间：与主预览各记各的，在里面开全屏 / 调字号 / 拖目录宽度
- * 不会把底下那篇主预览也改掉。
+ * 子区域预览的命名空间：链接预览与折叠块预览各一套，都在同一个页面标识下
+ * （`<标识>:anchor-section-preview` / `<标识>:details-section-preview`）。
+ * 两层叠在主预览上，各自的全屏 / 字号 / 目录宽度互不影响，也不会改到底下那篇。
  */
-export const ANCHOR_SECTION_STORAGE_KEY =
-  'my-dashboard:anchor-section-preview';
-
-/** 折叠块子预览的命名空间：与链接预览同样分开，两种入口互不影响 */
-export const DETAILS_SECTION_STORAGE_KEY =
-  'my-dashboard:details-section-preview';
+export const sectionPreviewStorageKey = (
+  scope: string,
+  variant: SectionPreviewVariant,
+): string =>
+  scopedStorageKey(
+    scope,
+    variant === 'anchor' ? 'anchor-section-preview' : 'details-section-preview',
+  );
 
 /**
  * 正文字号偏移在偏好对象里的字段名：存的只是「比各模式默认字号再大 / 小多少 px」这一段，

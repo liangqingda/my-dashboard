@@ -27,6 +27,7 @@ const PreviewOverlays = ({
   detailsScope,
   remove,
   removal,
+  storageScope,
   title,
 }: PreviewOverlaysProps) => {
   /** 当前打开的那一节锚点区块；关着时为 null */
@@ -67,6 +68,7 @@ const PreviewOverlays = ({
         peers={anchorPeers}
         previousLabel="上一个链接区块"
         sections={anchorBlocks}
+        storageScope={storageScope}
         variant="anchor"
       />
 
@@ -79,6 +81,7 @@ const PreviewOverlays = ({
         peers={detailPeers}
         previousLabel="上一个折叠块"
         sections={detailBlocks}
+        storageScope={storageScope}
         variant="details"
       />
     </>

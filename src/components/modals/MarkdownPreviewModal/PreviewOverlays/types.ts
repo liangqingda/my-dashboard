@@ -28,6 +28,8 @@ export type PreviewOverlaysProps = {
   detailBlocks: MarkdownDetailBlock[];
   /** 折叠块前后切换的口径 */
   detailsScope: DetailsNavScope;
+  /** 页面标识（路由）：两层子预览的阅读偏好按 `<标识>:…` 各记一套 */
+  storageScope: string;
   /** 删除配置：不传就没有删除确认层 */
   remove?: MarkdownPreviewRemove;
   /** 删除确认层的状态 */

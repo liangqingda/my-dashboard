@@ -11,7 +11,11 @@ import { onPageRefresh } from '@/utils/page-refresh';
 import { cx } from '@/utils/cx';
 
 import type { NoteSummary, NotesSort } from './types';
-import { DEFAULT_NOTE_SORT, createNoteRemove } from './constants';
+import {
+  DEFAULT_NOTE_SORT,
+  NOTES_STORAGE_SCOPE,
+  createNoteRemove,
+} from './constants';
 import { useActiveNote } from './hooks/useActiveNote';
 import { useEnglishNotes } from './hooks/useEnglishNotes';
 import { useNoteFilter } from './hooks/useNoteFilter';
@@ -320,6 +324,7 @@ const English = () => {
             ? createNoteRemove(removeActive)
             : undefined
         }
+        storageScope={NOTES_STORAGE_SCOPE}
         title={active?.name ?? ''}
       />
     </>

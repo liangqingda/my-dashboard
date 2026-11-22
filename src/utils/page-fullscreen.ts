@@ -11,13 +11,11 @@
  */
 
 import { FLAG_CODEC, readStoredString } from './local-storage';
+import { pageStorageKey } from './page-storage';
 
-/** 全屏状态的存储键前缀：实际键按路由拼接，各菜单页各记各的全屏开关 */
-const PAGE_FULLSCREEN_STORAGE_PREFIX = 'my-dashboard:fullscreen:';
-
-/** 某个路由的全屏状态存储键 */
+/** 某个路由的全屏状态存储键：按路由拼（`english-notes:fullscreen`），各菜单页各记各的 */
 export const pageFullscreenKey = (pathname: string): string =>
-  `${PAGE_FULLSCREEN_STORAGE_PREFIX}${pathname}`;
+  pageStorageKey(pathname, 'fullscreen');
 
 /** 读取某个路由上次是否处于全屏；没写过或存储不可用时视为非全屏 */
 export const readStoredPageFullscreen = (pathname: string): boolean =>

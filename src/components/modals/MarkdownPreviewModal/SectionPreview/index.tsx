@@ -26,14 +26,13 @@ import { useModalFullscreen } from '@/components/modals/FreeModal/hooks/useModal
 import { cx } from '@/utils/cx';
 import type { MarkdownOutlineHeading } from '@/utils/markdown-outline';
 
-import type { SectionPreviewProps, SectionPreviewVariant } from '../types';
+import type { SectionPreviewProps } from '../types';
 import OutlineNav from '../OutlineNav';
 import ProseFontControl from '../ProseFontControl';
 import {
-  ANCHOR_SECTION_STORAGE_KEY,
-  DETAILS_SECTION_STORAGE_KEY,
   REHYPE_PLUGINS,
   REMARK_PLUGINS,
+  sectionPreviewStorageKey,
 } from '../constants';
 import { useActiveHeadingIndex } from '../hooks/useActiveHeadingIndex';
 import { useDocumentScrollReset } from '../hooks/useDocumentScrollReset';
@@ -65,11 +64,6 @@ const FULLSCREEN_CONTENT_STYLE: CSSProperties = {
 };
 
 /** 两个入口各记一套阅读偏好：链接预览与折叠块预览互不影响 */
-const STORAGE_KEYS: Record<SectionPreviewVariant, string> = {
-  anchor: ANCHOR_SECTION_STORAGE_KEY,
-  details: DETAILS_SECTION_STORAGE_KEY,
-};
-
 const SectionPreview = ({
   nextLabel = '下一个区块',
   onClose,
@@ -78,6 +72,7 @@ const SectionPreview = ({
   previousLabel = '上一个区块',
   sections,
   index,
+  storageScope,
   variant,
 }: SectionPreviewProps) => {
   const section =
@@ -95,7 +90,7 @@ const SectionPreview = ({
     : null;
 
   /** 全屏与字号都是「怎么看」的偏好：按入口各记一套，换一段也不重置 */
-  const storageKey = STORAGE_KEYS[variant];
+  const storageKey = sectionPreviewStorageKey(storageScope, variant);
   const { fullscreen, toggle } = useModalFullscreen(storageKey);
   const proseFont = useProseFontScale(storageKey);
   const proseStyle = { '--prose-extra': `${proseFont.offset}px` } as CSSProperties;

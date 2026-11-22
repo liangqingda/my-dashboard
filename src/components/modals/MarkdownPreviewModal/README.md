@@ -27,6 +27,7 @@
 | `Editor` | `ComponentType<MarkdownEditorProps>`（可选） | 这一类文档的定制编辑器；不传则点「编辑」只给定制提示 |
 | `filter` | `MarkdownPreviewFilter`（可选） | 预览态的内容筛选槽：传了才出现 header 的筛选图标按钮与就近弹层；筛什么、怎么持久化由调用方给。编辑态与保存始终用未筛选的原文 |
 | `remove` | `{ description: string \| ((checkedKeys: readonly string[]) => string); choices?: readonly MarkdownPreviewRemoveChoice[]; confirm: (checkedKeys: readonly string[]) => Promise<void> }`（可选） | 提供后才出现 header 的删除图标按钮：点一下或按 `Delete` / `Backspace` 先弹二次确认（`DeleteConfirm`），确认后调用 `confirm`，参数是确认层说明块下方勾中的 key 数组（没传 `choices` 时为空数组）。删什么、删完怎么关弹窗与刷新列表都由调用方决定，组件只给「先问一遍」这一层与那组可选勾选项 |
+| `storageScope` | `string` | 这一页在 localStorage 里的页面标识（路由，如 `english-notes`，见 `@/utils/page-storage`）。全屏 / 字号 / 目录宽度这些阅读偏好按 `<标识>:markdown-preview` 这类命名空间存：**同一个弹窗挂在不同页面时由页面传各自的标识**，组件不写死页面，否则两页会共用同一份偏好 |
 
 ## 行为细节
 
@@ -72,8 +73,9 @@ header 文档操作组里的筛选图标按钮（排在复制路径之后、刷�
 
 header 文档操作组里的「文档内交互方式」图标按钮（`InteractionControl`，图标 `IconHandClick`，
 排在正文字号之后、刷新之前；编辑态随整组收掉）管三件「点一下之后会发生什么」的设置，
-三件都是**跨篇、跨会话记住的阅读偏好**（存在主预览命名空间 `MAIN_PREVIEW_STORAGE_KEY`
-（`my-dashboard:markdown-preview`）那个对象里，字段名见 `constants.ts`；括号里是默认值）：
+三件都是**跨篇、跨会话记住的阅读偏好**（存在 `mainPreviewStorageKey(storageScope)` 那个对象里，
+即 `<页面标识>:markdown-preview`（英语笔记页是 `english-notes:markdown-preview`），
+字段名见 `constants.ts`；括号里是默认值）：
 
 | 分组 | 设置项 | 取值 | 字段（默认） |
 | --- | --- | --- | --- |
@@ -82,11 +84,14 @@ header 文档操作组里的「文档内交互方式」图标按钮（`Interacti
 | 折叠块 | 点了标题之后怎么办 | `expand` 原地展开 / `modal` 弹窗预览 | `detailsBlock`（`expand`，等于旧行为） |
 | 折叠块 | 折叠块预览里能前后切到哪些块（都只算原文类） | `all` 全文所有原文 / `kind` 全文同类原文 / `section` 只同一小节里的原文 | `detailsNavScope`（`section`，范围最可控） |
 
-**偏好怎么存**：一个弹窗的整组偏好存成一个 localStorage 对象（`my-dashboard:markdown-preview`），
-每个设置项是对象里的一个字段，由 `@/hooks/useStoredField` 读一次、写回时读-改-写（不会冲掉邻居字段）。
-需求是「每种弹窗各记一套」，所以三层预览各有一个命名空间：主预览 `my-dashboard:markdown-preview`、
-链接预览 `my-dashboard:anchor-section-preview`、折叠块预览 `my-dashboard:details-section-preview`；
+**偏好怎么存**：一个弹窗的整组偏好存成一个 localStorage 对象，键是
+`<页面标识>:markdown-preview`，每个设置项是对象里的一个字段，由 `@/hooks/useStoredField`
+读一次、写回时读-改-写（不会冲掉邻居字段）。
+需求是「每种弹窗各记一套」，所以三层预览各有一个命名空间，都挂在同一个页面标识下：
+主预览 `<标识>:markdown-preview`、链接预览 `<标识>:anchor-section-preview`、
+折叠块预览 `<标识>:details-section-preview`（英语笔记页即 `english-notes:*`）；
 链接预览与折叠块预览共用同一个组件，但 `variant` 决定读哪一套，互不影响。
+页面标识由调用方通过 `storageScope` 传（路由拼法见 `docs/shared-utils.md` 的「存储键的命名」）。
 
 **弹层按主题分两组**：这个弹层早先只管锚点链接，现在还要管折叠块，所以按钮的 label / tooltip
 一并从「同文档链接打开方式」改成「文档内交互方式」；文档里两类内容都有弹窗预览时 hint 补一句
@@ -199,6 +204,7 @@ header 文档操作组里的「文档内交互方式」图标按钮（`Interacti
 
 `modal` 行为下的那一层弹窗是 `SectionPreview`，**两个入口共用**：同文档链接指向的一节、折叠块里的正文。
 它不再自己算「哪些段是一组」——`variant`（`anchor` / `details`）说明这次是哪个入口打开的、
+`storageScope`（页面标识）说明偏好记到哪一页，
 `sections`（全部可读段）、`index`、`peers`（能前后切到的下标）都由调用方给
 （链接按 `all` / `section` 口径分组、折叠块按全文顺序分组，都是文档语义），标题里的计数就是 `peers` 里的位置。
 界面交给 `@/components/modals/FreeModal` 组装（和主预览、记录详情同一套外壳，不再自己拼 `Modal` 与 header 行）：
@@ -408,7 +414,7 @@ header 右侧的图标按钮（排在刷新之后、编辑操作之前；编辑�
 - **Esc 不退出全屏，永远关掉弹窗**（全屏只是「框体铺满视口」这一层外观，不是另一种模式；
   同一个键在两种状态下干不同的事，用户只会记住那一次「按了没关掉」）。要回常规大小只有一条路：
   再点一次这个图标；关掉弹窗后再打开仍是全屏（见下一条）；
-- **全屏是记住的偏好**（存在主预览命名空间 `MAIN_PREVIEW_STORAGE_KEY` 的 `fullscreen` 字段）：换篇、关掉重开、
+- **全屏是记住的偏好**（`<页面标识>:markdown-preview` 对象里的 `fullscreen` 字段）：换篇、关掉重开、
   刷新页面后再打开都还是上次的样子，关闭弹窗不会把它重置成常规大小。
 
 ### 正文字号

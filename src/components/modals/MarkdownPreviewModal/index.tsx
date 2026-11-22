@@ -26,7 +26,7 @@ import DocumentActions from './DocumentActions';
 import PreviewHeaderActions from './HeaderActions';
 import PreviewOverlays from './PreviewOverlays';
 import PreviewWorkspace from './PreviewWorkspace';
-import { MAIN_PREVIEW_STORAGE_KEY } from './constants';
+import { mainPreviewStorageKey } from './constants';
 import { useCloseRequest } from './hooks/useCloseRequest';
 import { useNoteEditing } from './hooks/useNoteEditing';
 import { usePreviewHeaderActions } from './hooks/usePreviewHeaderActions';
@@ -71,6 +71,7 @@ const MarkdownPreviewModal = ({
   onSave,
   Editor,
   remove,
+  storageScope,
 }: MarkdownPreviewModalProps) => {
   /**
    * header 上的就近弹层：同一时刻只开一块（筛选用 `filter`、字号用 `font`、
@@ -79,12 +80,14 @@ const MarkdownPreviewModal = ({
    */
   const [panel, setPanel] = useState<PreviewPanel | null>(null);
 
+  /** 这一页的偏好命名空间：同一个弹窗挂在不同页面时各记各的（页面标识由调用方给） */
+  const storageKey = mainPreviewStorageKey(storageScope);
+
   /** 全屏开关：记住的展示偏好，关闭弹窗也不重置；Esc 不归它管，永远是关弹窗 */
-  const { fullscreen, toggle: toggleFullscreen } = useModalFullscreen(
-    MAIN_PREVIEW_STORAGE_KEY,
-  );
+  const { fullscreen, toggle: toggleFullscreen } =
+    useModalFullscreen(storageKey);
   /** 正文字号的用户偏移：跨篇、跨会话记住，叠在常规 / 全屏各自的默认字号上 */
-  const proseFont = useProseFontScale(MAIN_PREVIEW_STORAGE_KEY);
+  const proseFont = useProseFontScale(storageKey);
   /** 刷新按钮的 loading 与失败提示都在这个 hook 里 */
   const { refresh, refreshing } = useRefreshPreview(onRefresh);
 
@@ -120,7 +123,7 @@ const MarkdownPreviewModal = ({
     filter,
     filtering: !editing.editing,
     markdown: renderedMarkdown,
-    storageKey: MAIN_PREVIEW_STORAGE_KEY,
+    storageKey,
   });
 
   /** 翻篇 / 刷新 / 进编辑 / 关弹窗前先收起浮层：它们说的都是「当前这一篇」 */
@@ -273,7 +276,7 @@ const MarkdownPreviewModal = ({
           onBodyClick={interactions.handleBodyClick}
           onHighlightNavigation={header.setHighlightNavigation}
           opened={opened}
-          storageKey={MAIN_PREVIEW_STORAGE_KEY}
+          storageKey={storageKey}
           title={title}
         />
       </FreeModal>
@@ -287,6 +290,7 @@ const MarkdownPreviewModal = ({
         detailsScope={interactions.detailsScope.scope}
         removal={removal}
         remove={remove}
+        storageScope={storageScope}
         title={title}
       />
     </>
