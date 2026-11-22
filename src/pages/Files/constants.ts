@@ -11,9 +11,10 @@ import {
   IconVideo,
 } from '@tabler/icons-react';
 
+import { createChoiceCodec } from '@/utils/local-storage';
 import { scopedStorageKey } from '@/utils/page-storage';
 
-import type { FileCategory } from './types';
+import type { FileCategory, FilesViewMode } from './types';
 
 /**
  * 这一页在 localStorage 里的页面标识：对应路由 `/files`
@@ -43,6 +44,24 @@ export const FILE_CATEGORY_LABELS: Record<FileCategory, string> = {
   markdown: 'Markdown',
   other: '其它',
 };
+
+/** 条目类型 → 中文名词：表格「类别」列与操作按钮 tooltip 共用同一份 */
+export const ENTRY_KIND_LABELS = {
+  folder: '文件夹',
+  file: '文件',
+} as const;
+
+/** 展示形式（网格 / 表格）的存储键：刷新页面重新进入后保持上次切换到的形态 */
+export const VIEW_MODE_STORAGE_KEY = scopedStorageKey(
+  FILES_STORAGE_SCOPE,
+  'view-mode',
+);
+
+/** 展示形式的编解码：只认 grid / table，写坏的存储值回落网格 */
+export const VIEW_MODE_CODEC = createChoiceCodec<FilesViewMode>(
+  ['grid', 'table'],
+  'grid',
+);
 
 /**
  * 类型筛选下拉的选项（按上面的固定顺序）。

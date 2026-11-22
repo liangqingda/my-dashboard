@@ -126,7 +126,7 @@ export const useEntryActions = (
     }
   };
 
-  const dragOverFolder = (path: string, event: DragEvent<HTMLDivElement>) => {
+  const dragOverFolder = (path: string, event: DragEvent<HTMLElement>) => {
     event.preventDefault();
     const { dataTransfer } = event;
 

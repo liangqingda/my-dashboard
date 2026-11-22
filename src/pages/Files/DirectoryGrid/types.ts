@@ -22,8 +22,8 @@ export type DirectoryGridProps = {
   onDragStartEntry: (path: string) => void;
   /** 拖拽结束 */
   onDragEnd: () => void;
-  /** 拖拽经过某文件夹 */
-  onDragOverFolder: (path: string, event: DragEvent<HTMLDivElement>) => void;
+  /** 拖拽经过某文件夹（网格与表格共用同一套移动口径） */
+  onDragOverFolder: (path: string, event: DragEvent<HTMLElement>) => void;
   /** 拖拽离开某文件夹 */
   onDragLeaveFolder: (path: string) => void;
   /** 松手放入某文件夹 */

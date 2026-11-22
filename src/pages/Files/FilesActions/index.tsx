@@ -1,6 +1,6 @@
 /**
- * 文件页标题栏操作按钮组：「新建文件夹」「打开本地目录」图标按钮、收藏弹层按钮、筛选弹层按钮。
- * 两块弹层互斥，同时只开一块；开合状态由页面层持有，这里只排按钮与弹层内容。
+ * 文件页标题栏操作按钮组：「新建文件夹」「打开本地目录」图标按钮、收藏弹层按钮、筛选弹层按钮、
+ * 网格 / 表格切换按钮。两块弹层互斥，同时只开一块；开合状态由页面层持有，这里只排按钮与弹层内容。
  */
 
 import {
@@ -9,6 +9,8 @@ import {
   IconFilter,
   IconFolderOpen,
   IconFolderPlus,
+  IconLayoutGrid,
+  IconLayoutList,
 } from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
@@ -28,6 +30,7 @@ const FilesActions = ({
   favoriteDisabled,
   favorites,
   isFavorite,
+  isGridView,
   keyword,
   loading,
   onExcludedChange,
@@ -38,6 +41,7 @@ const FilesActions = ({
   onPickDir,
   onRemoveFavorite,
   onToggleFavorite,
+  onToggleViewMode,
   openPanel,
 }: FilesActionsProps) => {
   /** 筛选有没有条件生效：排除项或关键词任一非空，图标用强调色 */
@@ -107,6 +111,17 @@ const FilesActions = ({
           }}
         />
       </IconPopoverButton>
+
+      <FreeIconAction
+        label={isGridView ? '切换为表格形式' : '切换为网格形式'}
+        onClick={onToggleViewMode}
+      >
+        {isGridView ? (
+          <IconLayoutGrid size={ICON_SIZE} stroke={ICON_STROKE} />
+        ) : (
+          <IconLayoutList size={ICON_SIZE} stroke={ICON_STROKE} />
+        )}
+      </FreeIconAction>
     </>
   );
 };

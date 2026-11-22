@@ -15,6 +15,8 @@ export type FilesActionsProps = {
   createDisabled: boolean;
   /** 当前目录是否已收藏 */
   isFavorite: boolean;
+  /** 当前是不是网格形态（决定切换按钮的图标与文案） */
+  isGridView: boolean;
   /** 还没选目录时收藏按钮禁用 */
   favoriteDisabled: boolean;
   /** 收藏的目录列表，排成收藏面板的条目 */
@@ -31,6 +33,8 @@ export type FilesActionsProps = {
   onCreateFolder: () => void;
   /** 收藏 / 取消收藏当前目录 */
   onToggleFavorite: () => void;
+  /** 网格 ⇄ 表格切换 */
+  onToggleViewMode: () => void;
   /** 点收藏面板某一条直达该目录 */
   onOpenFavorite: (dir: string) => void;
   /** 移除一条收藏 */

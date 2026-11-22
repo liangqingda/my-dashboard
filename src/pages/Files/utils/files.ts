@@ -2,7 +2,13 @@
  * 文件浏览页的纯函数：文件大小格式化、路径分段、类型筛选。不依赖 React。
  */
 
-import type { DirSpace, FileCategory, FileEntry, FolderEntry } from '../types';
+import type {
+  DirSpace,
+  FileCategory,
+  FileEntry,
+  FilesRow,
+  FolderEntry,
+} from '../types';
 
 /** 字节数 → 可读体积（B / KB / MB / GB）；负数与 NaN 按 0 处理 */
 export const formatFileSize = (bytes: number): string => {
@@ -117,3 +123,12 @@ export const filterFilesByKeyword = (
 
   return files.filter((file) => file.name.toLowerCase().includes(query));
 };
+
+/** 把筛选后的文件夹与文件拼成表格行：文件夹在前、文件在后，与网格同一顺序 */
+export const toFilesRows = (
+  folders: FolderEntry[],
+  files: FileEntry[],
+): FilesRow[] => [
+  ...folders.map((folder) => ({ kind: 'folder' as const, folder })),
+  ...files.map((file) => ({ kind: 'file' as const, file })),
+];

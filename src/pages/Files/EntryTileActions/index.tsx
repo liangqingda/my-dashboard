@@ -4,23 +4,19 @@ import { IconPencil, IconTrash } from '@tabler/icons-react';
 import FreeIconAction from '@/components/buttons/FreeIconAction';
 import { cx } from '@/utils/cx';
 
-import type { EntryTileActionsProps, EntryTileKind } from './types';
+import { ENTRY_KIND_LABELS } from '../constants';
+
+import type { EntryTileActionsProps } from './types';
 
 import styles from './index.scss';
 
-/** 类型 → 按钮 tooltip 用的中文名词 */
-const KIND_LABEL: Record<EntryTileKind, string> = {
-  folder: '文件夹',
-  file: '文件',
-};
-
 /**
  * 瓦片右上角浮出的重命名 / 删除按钮组；点击各自吞掉冒泡，避免触发瓦片本体的打开行为。
- * 显隐由瓦片外壳 hover 控制，本组件只负责按钮与定位排布。
+ * 显隐由瓦片外壳 hover 控制，本组件只负责按钮与定位排布（表格视图传自己的定位类，让按钮常态可见）。
  */
 const EntryTileActions = memo(
   ({ kind, onEdit, onRequestDelete, className }: EntryTileActionsProps) => {
-    const label = KIND_LABEL[kind];
+    const label = ENTRY_KIND_LABELS[kind];
 
     return (
       <div className={cx(styles.actions, className)}>

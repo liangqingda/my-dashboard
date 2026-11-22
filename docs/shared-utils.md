@@ -49,7 +49,7 @@
 - 例：`english-notes:view-mode`、`english-notes:notes-filter-range`、
   `english-notes:markdown-preview`、`english-notes:anchor-section-preview`、
   `english-knowledge-base:record-detail`、`english-notes:fullscreen`、
-  `files:current-dir`、`files:favorites`、`files:type-filter`。
+  `files:current-dir`、`files:favorites`、`files:type-filter`、`files:view-mode`。
 - **同一个公共组件挂在不同页面必须各记一套**：页面把标识传给组件（如 `MarkdownPreviewModal` 的
   `storageScope`），组件内部再拼 `<标识>:<组件>`；组件不许自己写死页面标识，否则两页会共用同一份
   全屏 / 字号。

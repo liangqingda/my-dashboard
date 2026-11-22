@@ -94,3 +94,21 @@ export type FavoriteEntry = {
   /** 目录名（列表展示用） */
   name: string;
 };
+
+/** 展示形式：网格瓦片 / 表格平铺 */
+export type FilesViewMode = 'grid' | 'table';
+
+/** 展示形式 hook 的返回 */
+export type UseFilesViewModeResult = {
+  /** 当前形态 */
+  view: FilesViewMode;
+  /** 是不是网格形态；页面据此决定渲染哪一份 */
+  isGridView: boolean;
+  /** 切到另一种形态并写回存储 */
+  toggle: () => void;
+};
+
+/** 表格的一行：一个条目一行，文件夹在前、文件在后（与网格同一顺序） */
+export type FilesRow =
+  | { kind: 'folder'; folder: FolderEntry }
+  | { kind: 'file'; file: FileEntry };

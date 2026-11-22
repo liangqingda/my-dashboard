@@ -16,6 +16,14 @@
   background: var(--app-surface);
 }
 
+/* 表格滚动区：表头吸顶用的是页面底色（--app-bg），所以不再套白底卡片，
+   否则滚上去的行会从一块「白卡片里的灰表头」下穿过 */
+.tableList {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
 /* 骨架网格：与真实网格同列宽口径 */
 .gridSkeleton {
   display: grid;
