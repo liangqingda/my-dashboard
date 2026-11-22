@@ -1,0 +1,43 @@
+/* 文件夹瓦片：图标在左，名称与计数纵向排在右侧，整格可点进入下一层 */
+
+.tile {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px 8px;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--app-surface-hover);
+  }
+}
+
+.icon {
+  flex: 0 0 auto;
+  color: var(--mantine-color-blue-5);
+}
+
+.body {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.name {
+  color: var(--app-ink);
+  font-size: 0.86rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.count {
+  color: var(--mantine-color-blue-6);
+  font-size: 0.75rem;
+  line-height: 1.3;
+}

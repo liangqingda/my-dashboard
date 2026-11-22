@@ -6,6 +6,8 @@
  * 列表只取摘要：详情按 ID 按需取，不在首屏陪跑一堆讲解正文（见 `docs/local-repo-data.md`）。
  */
 
+import { readHttpErrorMessage } from '@/utils/error';
+
 import type {
   DeleteRecordResult,
   RecordCategory,
@@ -253,28 +255,6 @@ export const fetchRecordDetail = async (
   return normalizeDetail(import.meta.env.DEV ? payload.record : payload);
 };
 
-/** 读失败响应里的 `message`；响应不是 JSON 时保留默认文案 */
-const readErrorMessage = async (
-  response: Response,
-  fallback: string,
-): Promise<string> => {
-  try {
-    const payload: unknown = await response.json();
-
-    if (
-      isObject(payload) &&
-      typeof payload.message === 'string' &&
-      payload.message
-    ) {
-      return payload.message;
-    }
-  } catch {
-    // 响应不是 JSON 时保留默认文案。
-  }
-
-  return fallback;
-};
-
 /** 归一化提交结果：只收字符串与布尔，认不出的字段不下发 */
 const normalizeCommit = (raw: unknown): RecordCommit => {
   if (!isObject(raw)) {
@@ -309,7 +289,7 @@ export const deleteReviewRecord = async (
 
   if (!response.ok) {
     throw new Error(
-      await readErrorMessage(response, `删除失败（HTTP ${response.status}）`),
+      await readHttpErrorMessage(response, `删除失败（HTTP ${response.status}）`),
     );
   }
 

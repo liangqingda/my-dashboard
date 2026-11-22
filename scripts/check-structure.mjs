@@ -454,9 +454,9 @@ const FREE_LAYER_OWNERS = [
   },
   {
     symbol: 'TextInput',
-    owner: 'components/fields/FreeSearchInput/index.tsx',
-    hint: '输入框一律走 Free 层（搜索框 FreeSearchInput；普通输入框 FreeInput 未落地前先在 docs/ui-components.md 登记，不要在业务里直连）',
-    allowFiles: [],
+    owner: 'components/fields/FreeInput/index.tsx',
+    hint: '普通单行输入框走 @/components/fields/FreeInput；带搜索语义的走 FreeSearchInput，业务不要直连 Mantine TextInput',
+    allowFiles: ['components/fields/FreeSearchInput/index.tsx'],
   },
 ];
 

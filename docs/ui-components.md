@@ -18,7 +18,7 @@
 | 普通弹窗（说明 / 短表单 / 列表） | `FreeModal` 传 `height="auto"`（高度随内容、正文自己滚） |
 | 二次确认（删除 / 覆盖等不可逆操作） | `ConfirmModal`（基于 `FreeModal` 的通用业务组件：说明块 + 可选额外内容 + 取消 / 确认） |
 | 任何 Markdown / 文档预览 | `MarkdownPreviewModal`，不自己接渲染器（行为见 `src/components/modals/MarkdownPreviewModal/README.md`） |
-| 单行输入 | `TextInput` |
+| 单行输入（无搜索语义） | `FreeInput` |
 | 搜索框（左搜索图标 + 一键清空） | `FreeSearchInput` |
 | 多行输入（普通表单） | `Textarea` |
 | 下拉单选 / 多选 | `Select` / `MultiSelect` |
@@ -144,6 +144,7 @@
 | `FreeTruncatedText` | `src/components/texts/FreeTruncatedText/README.md` |
 | `FreeIconAction` | `src/components/buttons/FreeIconAction/README.md` |
 | `FreeSearchInput` | `src/components/fields/FreeSearchInput/README.md` |
+| `FreeInput` | `src/components/fields/FreeInput/README.md` |
 
 ## 基础组件锁的是「外观 + 行为」
 

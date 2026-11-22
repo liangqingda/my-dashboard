@@ -1,0 +1,46 @@
+/* 目录工具栏：面包屑一行，路径输入与打开按钮一行，换行时各自靠左 */
+
+.toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.breadcrumb {
+  min-height: 20px;
+  color: var(--app-ink-soft);
+  font-size: 0.8rem;
+}
+
+.home {
+  color: var(--app-ink-faint);
+}
+
+.segment {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.separator {
+  margin: 0 2px;
+  color: var(--app-ink-faint);
+}
+
+.link {
+  color: var(--app-ink-soft);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--app-accent);
+  }
+}
+
+.current {
+  color: var(--app-ink);
+  font-weight: 500;
+}
+
+.placeholder {
+  color: var(--app-ink-faint);
+}

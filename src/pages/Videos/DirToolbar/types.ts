@@ -1,0 +1,15 @@
+/**
+ * 目录工具栏的 props。
+ */
+
+/** 工具栏的入参 */
+export type DirToolbarProps = {
+  /** 当前目录绝对路径；空串表示还没选目录 */
+  currentDir: string;
+  /** 取数进行中（打开按钮随之禁用） */
+  loading: boolean;
+  /** 按输入框里的路径打开目录 */
+  onOpenDir: (dir: string) => void;
+  /** 点面包屑某一段，回到该层目录 */
+  onNavigate: (dir: string) => void;
+};

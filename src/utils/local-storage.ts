@@ -25,6 +25,12 @@ export const FLAG_CODEC: StoredCodec<boolean> = {
   encode: (value) => (value ? '1' : '0'),
 };
 
+/** 纯字符串编解码：存原文，没写过回落空串（如记住上次打开的目录路径） */
+export const STRING_CODEC: StoredCodec<string> = {
+  decode: (raw) => raw ?? '',
+  encode: (value) => value,
+};
+
 /**
  * 枚举取值的统一校验：不是字符串、不在 choices 里（枚举改版、被手工改坏）
  * 一律回落 fallback，单值键与对象字段两条编解码都靠这一步，别各写一遍。

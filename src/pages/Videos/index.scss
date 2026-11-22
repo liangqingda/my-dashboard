@@ -1,0 +1,26 @@
+/* 视频页布局：页面高度与内边距由 MenuContentLayout 负责，滚动只发生在网格区 */
+
+/* 撑满外壳内容区：工具栏固定，网格占剩余高度并自己滚 */
+.shell {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* 网格滚动区 */
+.list {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* 骨架网格：与真实网格同列宽口径 */
+.gridSkeleton {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px 12px;
+}
+
+/* 空态 / 引导文案，与工具栏上下留一点距离 */
+.empty {
+  margin-top: 6px;
+  color: var(--app-ink-faint);
+}

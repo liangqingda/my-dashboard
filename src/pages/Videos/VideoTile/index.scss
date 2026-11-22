@@ -1,0 +1,35 @@
+/* 视频瓦片：与文件夹瓦片同版式，图标换成视频图标，副文案是文件体积 */
+
+.tile {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px 8px;
+  border-radius: 8px;
+}
+
+.icon {
+  flex: 0 0 auto;
+  color: var(--app-ink-faint);
+}
+
+.body {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.name {
+  color: var(--app-ink);
+  font-size: 0.86rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  color: var(--app-ink-faint);
+  font-size: 0.75rem;
+  line-height: 1.3;
+}
