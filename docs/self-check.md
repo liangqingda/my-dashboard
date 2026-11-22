@@ -16,8 +16,9 @@
 | 用户明确要求浏览器验证 | `pnpm test:e2e`；默认不跑（见 `AGENTS.md`「前端 / 视觉改动默认不做浏览器实测」） |
 
 `pnpm lint` = `eslint .` + `check-structure` + `check-scss` + `check-imports` + `check:md`。
-布局 / 引用 / 命名 / 300 行上限 / import 分组 / 禁裸 `eslint-disable` / 禁 `@ts-ignore`
-都由它拦，失败即不合规，别靠人眼看。
+布局 / 引用 / 命名 / 300 行上限 / import 分组 / 禁裸 `eslint-disable` / 禁 `@ts-ignore`、
+**越过 Free 层直连（`Modal` / `Table` / `TextInput` / `ActionIcon`）、公共组件缺 `README.md`、
+样式里自己写 `text-overflow: ellipsis`、业务层自己监听 `keydown`** 都由它拦，失败即不合规，别靠人眼看。
 
 ## 2. 逐项过一遍（走两轮）
 
@@ -39,7 +40,7 @@
 | --- | --- | --- |
 | 1 | 功能与数据流：错误态、空态、越界、并发 | skill《Review 时的判据顺序》第 1 条 |
 | 2 | O(n²)、重复计算、无谓重渲染 | skill 第 3 条 + `js-*` 系列规则 |
-| 3 | 分层归位（五维）、一文件一组件、组件目录不嵌套 `components/` | skill《分层拆分》；命名细则见 `docs/code-splitting.md` |
+| 3 | 分层归位（五维）、一文件一组件、组件目录不嵌套 `components/`、**这次的「例外」是否真的不属于这一类** | skill《分层拆分》；命名细则见 `docs/code-splitting.md`；判据见 `docs/ui-components.md` |
 | 4 | 副作用收口：监听 / 订阅 / 定时器清理、请求竞态、轮询纪律 | skill《副作用收口与异步竞态》 |
 | 5 | 注释与实现是否一致 | skill《注释 / JSDoc》 |
 | 6 | 共用能力有没有重复实现 | `docs/shared-utils.md` 的清单（项目特有） |
@@ -52,6 +53,9 @@
 
 - 拆文件时手写样式容易丢声明：拆 `index.scss` 要从原文按块搬，只改选择器名。
 - 新加的图标按钮要有 `aria-label`。
+- **「塞不进去」不是例外，是 Free 层缺档位**：`Popover.Target` 要单个元素、某处要 26px 尺寸，
+  正确动作是给 Free 组件加一档能力（`tooltip="none"`、新增尺寸档），不是在外壳里抄一份外观。
+  例外只留给「本来就不是这一类」的东西，并且要同时进 `check-structure` 白名单与 `docs/ui-components.md`。
 - **给弹窗新增 header 图标时，键位与 tooltip 的键位标注要在同一次改动里一起挂到 `FreeModal`**
   （复制走 `copy`、删除走 `onRequestDelete`、翻篇走 `nav`），不能只加按钮：同一操作另一扇弹窗
   已经有了，就直接上提而不是在新位置补一份；`check-structure` 会拦业务层自己监听 `keydown`，

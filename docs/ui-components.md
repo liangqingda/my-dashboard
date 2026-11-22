@@ -136,7 +136,7 @@
 | `FreeTable` | Mantine `Table` + 项目外观：边框、表头、吸顶、行 hover；取分段统一走 `Thead` / `Tbody` / `Tr` / `Th` / `Td` | 不接分页、排序、虚拟滚动（那是业务组件的事） |
 | `FreeSelectField` | 弹层面板里的字段组：标题 + 一档下拉 + 一行口径说明；尺寸档、字段间距、下拉不进门户 | 选项、当前值、说明文案、编解码、选中后的状态 |
 | `FreePanelFooter` | 弹层面板底部一行：左侧边界说明 + 右侧「重置」（组件库 `Button` subtle 小号） | 说明文案、置灰口径、重置动作 |
-| `FreeModal` | 弹窗外壳（唯一一扇）：框体与遮罩、紧凑 header（顺序为翻页 → 标题 → 第一组操作 → 全屏 → 末尾位 → 第二组操作）、全屏开关按钮与整套键位（空格 / 翻篇 / `F` / `C` 复制 / `Delete` 删除）；两种高度模式：`reading`（固定 `82dvh`）/ `auto`（随内容、上限 `88dvh`、正文自己滚）；全屏偏好走它的 `useModalFullscreen(storageKey)` | 标题文案、翻页数据、各组按钮的组件与能力（复制什么、删除怎么确认）、正文内容与滚动方式 |
+| `FreeModal` | 弹窗外壳（唯一一扇）：框体与遮罩、紧凑 header（顺序为翻页 → 标题 → 第一组操作 → 全屏 → 末尾位 → 第二组操作）、全屏开关按钮与整套键位（空格 / 翻篇 / `F` / `C` 复制 / `Delete` 删除）；两种高度模式：`reading`（固定 `82dvh`）/ `auto`（随内容、上限 `88dvh`、正文自己滚）；全屏偏好走它的 `useModalFullscreen(storageKey)` | 标题文案（单行省略与 tip 走 `FreeTruncatedText`）、翻页数据、各组按钮的组件与能力（复制什么、删除怎么确认）、正文内容与滚动方式 |
 | `FreeTruncatedText` | 单行文本的截断口径：放不下才省略、**只有被截断且被指到时**才弹 tip；量宽与 tip 创建都推迟到被指到那一刻 | 多行省略、tip 内容定制（tip 恒为原文）、业务字号与颜色 |
 | `FreeIconAction` | 图标按钮的形状与档位：`subtle` 变体、`xs` / `sm` / `lg` 三档尺寸、`normal` / `accent` / `danger` 三档语气（只改颜色）、tooltip 与 aria-label 同句且**被指到时才挂**、`tooltipLabel` 承载变化中的文案（如「已复制」）；`tooltip` 两档：`hover` 自己挂 / `none` 只出按钮本体（给 `Popover.Target` 这类锚点位）；禁用态统一为「透明底 + 变淡」，加载中不套这套 | 图标本身与像素尺寸、点击后做什么、是否 `stopPropagation`；`layouts/Header` 品牌区那颗切换按钮不在此列（26px 与 `--app-ink-soft` 色调，属全局品牌视觉） |
 | `FreeSearchInput` | 搜索框口径：`size="xs"` + 左侧搜索图标 + 值非空才出现的清空按钮（点完清空并**把焦点留在输入框**）；`autoFocus` / 标题 / 说明 / 面板字段间距按需传入 | 值、占位文案、回车与快捷键行为（`onKeyDown` 由调用方给） |
@@ -197,14 +197,23 @@ Mantine `Table` / `Select` / 自己拼一套底栏——两套外观迟早会漂
   （一处用也封；连同键位、开合这类默认行为一起收）；
 - 不属于上述两类（单处用、也不构成某类对象的唯一形态）→ 继续直接用组件库，不造薄壳。
 
+**这条现在由 `check-structure` 拦，不再靠人眼**：`Modal` / `Table` / `TextInput` / `ActionIcon`
+只许出现在对应的 Free 组件里，别处 import 一律报错；例外只有在脚本白名单里登记过才放过——
+当前只有两处（`layouts/Header` 品牌区主题切换、`ProseFontControl` 的 `A-` / `A+`），
+且必须同时写在本文件与对应组件的 README。**新增例外等于同时改脚本、改文档、写理由**，
+不写理由的一律按「漏改」处理。
+
 ## 自检
 
 ```bash
-# 弹窗只能出现在两扇壳里（check-structure 已拦，这里是自查用）
-grep -rn "Modal" --include="*.tsx" src | grep "from '@mantine/core'"
+# 越层直连、组件目录缺 README、手写单行省略：pnpm lint 里的 check-structure 已拦，这里只做自查
+pnpm lint
 
 grep -rn "<table\|<button\|<input\|<select" --include="*.tsx" src
 ```
+
+`check-structure` 现在会报的四类：越过 Free 层直连（`Modal` / `Table` / `TextInput` / `ActionIcon`）、
+公共组件目录缺 `README.md`、样式里自己写 `text-overflow: ellipsis`、业务层自己监听 `keydown`。
 
 不是要求零命中，而是**每一处命中都要说得清**：组件库没有对应能力，或只是纯语义容器。
 说不清的，改成组件库组件；同类形态全站只该有一套的，封 `FreeXxx`；有业务特殊能力的，

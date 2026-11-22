@@ -17,6 +17,7 @@ import {
 } from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
+import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
 import { cx } from '@/utils/cx';
 
 import { useModalShortcuts } from './hooks/useModalShortcuts';
@@ -141,7 +142,11 @@ const FreeModal = ({
               </span>
             </>
           ) : null}
-          <span className={styles.fileName}>{title}</span>
+          <FreeTruncatedText
+            className={styles.fileName}
+            inline
+            text={title}
+          />
           <span className={styles.titleGap} />
           {headerActions ? (
             <div className={styles.actions}>{headerActions}</div>

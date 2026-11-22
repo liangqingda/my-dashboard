@@ -45,8 +45,8 @@ export type FreeModalProps = {
   opened: boolean;
   /** 关闭（Esc、点遮罩、点关闭按钮都走它） */
   onClose: () => void;
-  /** header 标题：通常是文件名 / 条目名 */
-  title: ReactNode;
+  /** header 标题（文件名 / 条目名）：单行放不下才省略并弹 tip，走 `FreeTruncatedText` */
+  title: string;
   /** 正文 */
   children: ReactNode;
   /** 翻页与计数；不传则 header 只有标题 */

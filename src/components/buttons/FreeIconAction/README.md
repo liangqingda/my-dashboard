@@ -32,6 +32,10 @@
 | `FreeModal` 的关闭按钮 | 那是组件库 `Modal` 内建的 `closeButton`，不由本项目的代码渲染，也没有可换的位 |
 | `ProseFontControl` 的 `A-` / `A+` | 弹层面板里的步进控件组，`variant="light"`，形状与图标操作不同档 |
 
+前两处例外已登记在 `scripts/check-structure.mjs` 的 `FREE_LAYER_OWNERS` 白名单里：
+`ActionIcon` 在别处一出现，`pnpm lint` 就报错。**新增例外要同时改脚本、改本表、写理由**，
+只改一处等于漏改。
+
 ## 注意
 
 - 按钮含义必须能独立读懂：图标不自解释，`label` 要写人话（`删除这条记录` 而不是 `删除` 之外再猜）。

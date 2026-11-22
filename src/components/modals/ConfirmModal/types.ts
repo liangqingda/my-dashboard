@@ -6,8 +6,8 @@ export type ConfirmModalProps = {
   opened: boolean;
   /** 取消 / 关闭（Esc、遮罩、关闭按钮都走它；`loading` 时不会被调用） */
   onCancel: () => void;
-  /** 标题：一句动作说明，如「删除这个文档？」 */
-  title: ReactNode;
+  /** 标题：一句动作说明，如「删除这个文档？」（单行，标题栏里放不下才省略） */
+  title: string;
   /** 说明：删掉会发生什么 / 这一步的后果，软底块里显示 */
   description: ReactNode;
   /** 说明与按钮之间的额外内容（如「这次删什么」的勾选项）；不传就没有这一段 */

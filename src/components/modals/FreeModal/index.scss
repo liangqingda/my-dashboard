@@ -87,17 +87,17 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* 标题：单行省略，占满中间剩余宽度之前先让给右侧操作组 */
+/*
+ * 标题：只给版式与字体。单行省略与「截断才弹 tip」由 FreeTruncatedText 负责，
+ * 这里写 overflow / ellipsis 就是两份口径。
+ */
 .fileName {
   flex: 0 1 auto;
   min-width: 0;
-  overflow: hidden;
   color: var(--app-ink);
   font-family: var(--app-serif);
   font-size: 0.94rem;
   line-height: 1.4;
-  white-space: nowrap;
-  text-overflow: ellipsis;
 }
 
 /* 标题之后吃掉剩余空间，把右侧操作组顶到最右 */

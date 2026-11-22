@@ -12,6 +12,10 @@
  *     包内容，页面样式不得再定义 .page
  *  6. Modal 只许出现在封装壳（FreeModal）里，业务侧不得直连 Mantine Modal
  *  7. 键盘监听只许出现在外壳 / 布局：业务页面与业务弹窗不得自己 addEventListener('keydown')
+ *  7.1 Free 层是唯一入口：Modal / Table / TextInput / ActionIcon 只许在对应的 Free 组件里直连，
+ *      别处直连就是绕层（例外登记在 FREE_LAYER_OWNERS[].allowFiles，且必须同时写进 docs/ui-components.md）
+ *  7.2 每个公共组件目录必须有 README.md：契约（锁了什么、props、坑）跟代码走
+ *  7.3 单行省略只许出自 FreeTruncatedText：别处写 text-overflow: ellipsis 就是两套口径
  *  8. 入口文档 AGENTS.md 只放硬约束与索引：行数不超上限，docs/ 下的细则与索引一一对应，
  *     索引里的文档路径（含跟代码走的组件 / hook README）必须真实存在；
  *     CLAUDE.md 只能是指向它的软链（两份内容会漂移）
@@ -418,25 +422,115 @@ function checkEntryDocs() {
  * 业务侧直接 import Mantine `Modal` 就等于绕开框体、header、键位与遮罩那一套基线，
  * 迟早出现「这扇窗和别的窗不一样」——这里直接拦成结构错误。
  */
-function checkModalShells() {
-  const allowDirs = [path.join(SRC, 'components', 'modals', 'FreeModal')];
+/**
+ * Free 层 = 「某类对象全站只允许一种形态的唯一入口」，所以组件库原语只许出现在
+ * 对应的 Free 组件里。别处直连的后果不是「多写一行 import」，而是同一类东西长出第二副样子
+ * （两套颜色、两套尺寸档、两套 tooltip 时机）——上一轮 IconPopoverButton 就是这么漂的。
+ *
+ * 例外只许登记在 `allowFiles`，并且同一条例外必须写进 `docs/ui-components.md` 与
+ * 对应组件的 README：名单是「已声明的例外」，不是「暂时没空改的地方」。
+ */
+const FREE_LAYER_OWNERS = [
+  {
+    symbol: 'ActionIcon',
+    owner: 'components/buttons/FreeIconAction/index.tsx',
+    hint: '图标按钮一律走 @/components/buttons/FreeIconAction；要当锚点（Popover.Target 这类）用 tooltip="none" 取按钮本体，不许另抄颜色规则',
+    allowFiles: [
+      'layouts/Header/index.tsx',
+      'components/modals/MarkdownPreviewModal/ProseFontControl/index.tsx',
+    ],
+  },
+  {
+    symbol: 'Modal',
+    owner: 'components/modals/FreeModal/index.tsx',
+    hint: '弹窗一律走 @/components/modals/FreeModal（普通弹窗 height="auto"，二次确认再基于它封 ConfirmModal）',
+    allowFiles: [],
+  },
+  {
+    symbol: 'Table',
+    owner: 'components/tables/FreeTable/index.tsx',
+    hint: '表格一律走 @/components/tables/FreeTable，业务表格在它上面加增量',
+    allowFiles: [],
+  },
+  {
+    symbol: 'TextInput',
+    owner: 'components/fields/FreeSearchInput/index.tsx',
+    hint: '输入框一律走 Free 层（搜索框 FreeSearchInput；普通输入框 FreeInput 未落地前先在 docs/ui-components.md 登记，不要在业务里直连）',
+    allowFiles: [],
+  },
+];
 
-  for (const file of collectFiles(SRC, CODE_EXTS)) {
-    const allowed = allowDirs.some((dir) => file.startsWith(`${dir}${path.sep}`));
+/** 匹配 `import { … } from '@mantine/core'`（含多行） */
+const MANTINE_IMPORT_RE = /import\s+(?:type\s+)?\{[^}]*\}\s*from\s+'@mantine\/core'/g;
 
-    if (allowed) continue;
+function checkFreeLayerIsOnlyEntry() {
+  for (const rule of FREE_LAYER_OWNERS) {
+    const ownerAbs = path.join(SRC, rule.owner);
+    const allowAbs = rule.allowFiles.map((rel) => path.join(SRC, rel));
+
+    for (const file of collectFiles(SRC, CODE_EXTS)) {
+      if (file === ownerAbs) continue;
+      if (allowAbs.includes(file)) continue;
+
+      const source = readFileSync(file, 'utf8');
+      const lineOf = (index) => source.slice(0, index).split('\n').length;
+
+      MANTINE_IMPORT_RE.lastIndex = 0;
+      let match;
+      while ((match = MANTINE_IMPORT_RE.exec(source))) {
+        if (!new RegExp(`\\b${rule.symbol}\\b`).test(match[0])) continue;
+
+        errors.push(
+          `[结构] ${path.relative(ROOT, file)}:${lineOf(match.index)} 越过 Free 层直连 Mantine ${rule.symbol}：${rule.hint}`,
+        );
+      }
+    }
+  }
+}
+
+/**
+ * 公共组件的契约（锁了什么、props、边界与坑）跟着代码走，写在组件目录的 README.md 里。
+ * 缺 README 的组件等于「只有实现、没有判据」，下一个人只能靠猜改它。
+ */
+function checkComponentReadmes() {
+  if (!existsSync(COMPONENTS)) return;
+
+  for (const entry of readdirSync(COMPONENTS, { withFileTypes: true })) {
+    if (!entry.isDirectory() || !COMPONENT_GROUPS.has(entry.name)) continue;
+
+    const groupDir = path.join(COMPONENTS, entry.name);
+
+    for (const child of readdirSync(groupDir, { withFileTypes: true })) {
+      if (!child.isDirectory()) continue;
+
+      const readme = path.join(groupDir, child.name, 'README.md');
+      if (existsSync(readme)) continue;
+
+      errors.push(
+        `[结构] src/components/${entry.name}/${child.name} 缺 README.md：公共组件的契约（锁了什么 / props / 边界）写在它自己目录里`,
+      );
+    }
+  }
+}
+
+/**
+ * 单行省略只有一套口径：放不下才省略、只有被截断且被指到时才弹 tip（`FreeTruncatedText`）。
+ * 别处再写 `text-overflow: ellipsis`，就是「省略了但看不到全文」的第二套实现。
+ */
+function checkSingleLineEllipsis() {
+  const owner = path.join(SRC, 'components', 'texts', 'FreeTruncatedText', 'index.scss');
+
+  for (const file of collectFiles(SRC, ['.scss'])) {
+    if (file === owner) continue;
 
     const lines = readFileSync(file, 'utf8').split('\n');
 
     lines.forEach((line, index) => {
-      if (
-        line.includes("from '@mantine/core'") &&
-        /\bModal\b/.test(line)
-      ) {
-        errors.push(
-          `[结构] ${path.relative(ROOT, file)}:${index + 1} 直接引用了 Mantine Modal：弹窗一律走 @/components/modals/FreeModal（普通弹窗用 height="auto"，二次确认再基于它封 ConfirmModal）`,
-        );
-      }
+      if (!/text-overflow:\s*ellipsis/.test(line)) return;
+
+      errors.push(
+        `[结构] ${path.relative(ROOT, file)}:${index + 1} 自己写单行省略：走 @/components/texts/FreeTruncatedText（省略与「截断才弹 tip」都在它里面），样式里只给字号 / 颜色 / 版式`,
+      );
     });
   }
 }
@@ -542,7 +636,9 @@ checkPages();
 checkComponents();
 checkMenuPages();
 checkEntryDocs();
-checkModalShells();
+checkFreeLayerIsOnlyEntry();
+checkComponentReadmes();
+checkSingleLineEllipsis();
 checkKeyboardListeners();
 
 if (errors.length > 0) {
@@ -552,5 +648,5 @@ if (errors.length > 0) {
 }
 
 console.log(
-  '[✓] 结构检查通过：pages 目录组织、公共组件分类目录、菜单页布局、Modal 封装壳、键位归属与入口文档索引符合约定',
+  '[✓] 结构检查通过：pages 目录组织、公共组件分类目录与 README、菜单页布局、Free 层唯一入口（Modal / Table / TextInput / ActionIcon）、单行省略归属、键位归属与入口文档索引符合约定',
 );
