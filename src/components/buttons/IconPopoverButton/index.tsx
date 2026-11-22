@@ -1,13 +1,16 @@
 /**
  * 带就近弹层的图标按钮：点一下在图标下方弹出调用方给的一块面板。
  *
- * 只做三件事：与标题栏其它图标同档的按钮外观、「生效」时换主色、弹层的开合与定位。
+ * 只做三件事：把按钮摆到 `Popover.Target` 的锚点上、管弹层的开合与定位、给一处「生效」高亮。
+ * 按钮本体（形状 / 尺寸档 / 语气 / 不随文字收缩）全部来自 `FreeIconAction`，这里只传 `tone`，
+ * 不再定义任何按钮样式。
+ *
  * 面板里放什么、什么时候收起都不归它——过滤、字号这类语义各自在调用方那一层。
  */
 
-import { ActionIcon, Popover, Tooltip } from '@mantine/core';
+import { Popover, Tooltip } from '@mantine/core';
 
-import { cx } from '@/utils/cx';
+import FreeIconAction from '@/components/buttons/FreeIconAction';
 
 import type { IconPopoverButtonProps } from './types';
 
@@ -41,17 +44,18 @@ const IconPopoverButton = ({
       withArrow
       withinPortal
     >
+      {/* 提示要拼「已生效」和键位，所以按钮只出本体（`tooltip="none"`），tip 在这里挂 */}
       <Popover.Target>
         <Tooltip label={tooltip} withArrow>
-          <ActionIcon
-            aria-label={label}
-            className={cx(styles.button, active && styles.active)}
+          <FreeIconAction
+            label={label}
             onClick={() => onChange(!opened)}
             size="sm"
-            variant="subtle"
+            tone={active ? 'accent' : 'normal'}
+            tooltip="none"
           >
             {icon}
-          </ActionIcon>
+          </FreeIconAction>
         </Tooltip>
       </Popover.Target>
       <Popover.Dropdown className={styles.dropdown}>{children}</Popover.Dropdown>

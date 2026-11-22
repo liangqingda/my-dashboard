@@ -8,7 +8,8 @@
 | 形状 | `ActionIcon variant="subtle"`；常态弱色（`--app-ink-faint`），悬停主色——**业务侧不要再手写这两条颜色规则** |
 | 尺寸档 | `xs`（贴着字段 / 文字）、`sm`（标题栏、表格操作列，默认）、`lg`（编辑态那排承担全部操作的按钮） |
 | 语气 | `normal` / `accent`（主操作，常态就用主色）/ `danger`（只描红，不做实底）——语气只改颜色，不改形状 |
-| tooltip | 内容默认等于 `label`；**只在指针停上来时创建**（`useHoverIntent` + `Tooltip target`），几百行列表也不会有几百套常驻定位实例 |
+| 提示内容 | 默认等于 `label`；**只在指针停上来时创建**（`useHoverIntent` + `Tooltip target`），几百行列表也不会有几百套常驻定位实例 |
+| `tooltip` 档位 | 两档：`hover`（默认，tip 由本组件挂）／`none`（只渲染按钮本体、单节点 + `ref` 透传，tip 交给外层）。需要这颗按钮当锚点时用 `none`——`Popover.Target` 这类位置要的是一个能接 `ref` 的元素，塞不进「按钮 + 按需 tip」两个节点 |
 | `tooltipLabel` | 含义会变的按钮用它（复制成功后的「已复制」、带键位的「刷新当前页面（R）」），`aria-label` 仍用 `label` 保持稳定 |
 | `ariaBusy` | 进行中状态（如刷新在转圈）标给读屏；旋转动画由调用方用 `className` 加成 |
 | `className` | 只补布局或状态动画（居中、旋转），**不改颜色与形状** |
@@ -18,6 +19,9 @@
 
 - 任何「图标 + 一句含义」的按钮：页面标题栏、弹窗 header、表格操作列、工具栏；
 - 业务侧**不许**再直连 `ActionIcon` + `Tooltip` 拼一套——口径已经统一在这里。
+- 要把这颗按钮当锚点（`Popover.Target`、`Tooltip` 等会 `cloneElement` 注入 `ref` 的位置）：
+  传 `tooltip="none"` 只取按钮本体，tip 由外壳挂（`IconPopoverButton` 就是这么做的）。
+  **外观仍然只有一份**——外壳只许补布局与语气，不许另抄颜色规则。
 
 例外（都不在「业务图标按钮」这一类，写在各自的地方）：
 
@@ -25,7 +29,6 @@
 | --- | --- |
 | `layouts/Header` 顶栏品牌区那颗主题切换 | 26px 与 `--app-ink-soft` 色调，属全局品牌视觉，不是页面 / 弹窗图标按钮 |
 | `FreeModal` header 自带的三颗（关闭 / 翻页 / 全屏） | 外壳内部实现，同时承担键位、焦点与关窗路径，不对外开放 |
-| `IconPopoverButton` 里那颗 | 必须是 `Popover.Target` 的**单个**元素（接收 ref），本组件返回的是「按钮 + 按需 tip」两节点 |
 | `ProseFontControl` 的 `A-` / `A+` | 弹层面板里的步进控件组，`variant="light"`，形状与图标操作不同档 |
 
 ## 注意

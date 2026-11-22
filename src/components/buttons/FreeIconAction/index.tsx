@@ -8,11 +8,16 @@
  * tip 只在指针停上来时创建（见 `useHoverIntent`）：表格里几百行的图标按钮各自常驻一个
  * Tooltip，光挂载就要建几百套浮动定位实例，而这些提示平时根本看不见。
  * 状态会变的含义（如复制成功后的「已复制」）走 `tooltipLabel`，`aria-label` 仍保持稳定。
+ *
+ * `tooltip="none"` 时只渲染按钮本体（单节点 + ref 透传），留给外壳自己把提示拼上：
+ * `Popover.Target` 这类位置要的是「一个能接 ref 的元素」，两个节点塞不进去。
+ * 此时按钮外观仍由这里出，外壳不许再抄一份颜色规则。
  */
 
 import { useRef } from 'react';
 import type { MouseEvent } from 'react';
 import { ActionIcon, Tooltip } from '@mantine/core';
+import { useMergedRef } from '@mantine/hooks';
 
 import { useHoverIntent } from '@/hooks/useHoverIntent';
 import { cx } from '@/utils/cx';
@@ -30,35 +35,46 @@ const FreeIconAction = ({
   label,
   loading = false,
   onClick,
+  ref,
   size = 'sm',
   tone = 'normal',
+  tooltip,
   tooltipLabel,
 }: FreeIconActionProps) => {
-  const [active, hoverHandlers] = useHoverIntent();
+  const [hovered, hoverHandlers] = useHoverIntent();
   /** tip 的定位目标：就是下面这个按钮自己 */
   const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const mergedRef = useMergedRef(buttonRef, ref);
 
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
     onClick?.(event);
   };
 
+  const button = (
+    <ActionIcon
+      aria-busy={ariaBusy || undefined}
+      aria-label={label}
+      className={cx(styles.button, TONE_CLASS[tone], className)}
+      disabled={disabled}
+      loading={loading}
+      onClick={handleClick}
+      ref={mergedRef}
+      size={size}
+      variant="subtle"
+      {...(tooltip === 'none' ? {} : hoverHandlers)}
+    >
+      {children}
+    </ActionIcon>
+  );
+
+  if (tooltip === 'none') {
+    return button;
+  }
+
   return (
     <>
-      <ActionIcon
-        aria-busy={ariaBusy || undefined}
-        aria-label={label}
-        className={cx(styles.button, TONE_CLASS[tone], className)}
-        disabled={disabled}
-        loading={loading}
-        onClick={handleClick}
-        ref={buttonRef}
-        size={size}
-        variant="subtle"
-        {...hoverHandlers}
-      >
-        {children}
-      </ActionIcon>
-      {active ? (
+      {button}
+      {hovered ? (
         <Tooltip
           label={tooltipLabel ?? label}
           opened
