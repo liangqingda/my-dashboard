@@ -1,9 +1,9 @@
 /**
  * 同文档锚点区块的状态：现在开着哪一块、正文点击要不要被接管。
  *
- * 弹窗把「点了同文档链接之后发生什么」收在这一处：
+ * 弹窗把「点了同文档锚点之后发生什么」收在这一处：
  * - `jump`：在当前正文里滚到锚点；
- * - `modal`：认出链接指向的那一节，交给子区域预览弹窗；
+ * - `modal`：认出锚点指向的那一节，交给子区域预览弹窗；
  * - 认不出区块（锚点没有对应标题）时退回跳转，不让点击白按一下。
  *
  * 外链与相对路径一律放行，交给浏览器——只有 `#` 开头的链接归这里。
@@ -17,7 +17,7 @@ import { getClickedAnchor, scrollToAnchor } from '../utils/prose-navigation';
 
 /** 区块导航的入参 */
 export type AnchorBlockNavigationParams = {
-  /** 文档里被链接指向的区块，按正文顺序 */
+  /** 文档里被锚点指向的区块，按正文顺序 */
   blocks: MarkdownAnchorBlock[];
   /** 当前点击行为 */
   behavior: AnchorLinkBehavior;
@@ -33,7 +33,7 @@ export type AnchorBlockNavigationState = {
   setIndex: (index: number | null) => void;
   /** 收起子预览（换篇、刷新、进编辑、关弹窗时一起清） */
   close: () => void;
-  /** 正文点击：同文档链接被这一层接管，其它链接放行 */
+  /** 正文点击：同文档锚点被这一层接管，其它链接放行 */
   handleBodyClick: (event: MouseEvent<HTMLElement>) => void;
 };
 

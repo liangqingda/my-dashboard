@@ -6,7 +6,7 @@
  *
  * 子区域预览有两个入口，共用同一层弹窗（`SectionPreview`），但阅读偏好（全屏 / 字号 / 目录宽度）
  * 各记一套（`variant` 决定存进哪套命名空间）：
- * - 同文档链接指向的一节：能前后切到哪几节按 `all` / `section` 口径算；
+ * - 同文档锚点指向的一节：能前后切到哪几节按 `all` / `section` 口径算；
  * - 折叠块里的正文：能前后切到全文所有折叠块。
  * 两份的当前下标互不相干，同一时刻只会开着一个（上层盖住主预览时点不到正文）。
  */
@@ -62,11 +62,11 @@ const PreviewOverlays = ({
       {/* 子区域预览：开在主预览上面，只看一段内容；Esc 只关它，底下这一篇留着 */}
       <SectionPreview
         index={anchorBlock.index}
-        nextLabel="下一个链接区块"
+        nextLabel="下一个锚点区块"
         onClose={anchorBlock.close}
         onIndexChange={anchorBlock.setIndex}
         peers={anchorPeers}
-        previousLabel="上一个链接区块"
+        previousLabel="上一个锚点区块"
         sections={anchorBlocks}
         storageScope={storageScope}
         variant="anchor"

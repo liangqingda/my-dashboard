@@ -39,7 +39,7 @@ export type DetailsBlockNavigationState = {
   /** 收起子预览（换篇、刷新、进编辑、关弹窗时一起清） */
   close: () => void;
   /**
-   * 正文点击：折叠块标题被这一层接管时返回 true（调用方据此不再按链接处理）。
+   * 正文点击：折叠块标题被这一层接管时返回 true（调用方据此不再按锚点处理）。
    * `expand` 行为下永远返回 false，让浏览器照常展开。
    */
   handleBodyClick: (event: MouseEvent<HTMLElement>) => boolean;

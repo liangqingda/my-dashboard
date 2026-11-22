@@ -30,7 +30,7 @@ export const mainPreviewStorageKey = (scope: string): string =>
   scopedStorageKey(scope, 'markdown-preview');
 
 /**
- * 子区域预览的命名空间：链接预览与折叠块预览各一套，都在同一个页面标识下
+ * 子区域预览的命名空间：锚点预览与折叠块预览各一套，都在同一个页面标识下
  * （`<标识>:anchor-section-preview` / `<标识>:details-section-preview`）。
  * 两层叠在主预览上，各自的全屏 / 字号 / 目录宽度互不影响，也不会改到底下那篇。
  */
@@ -91,7 +91,7 @@ export const HEADING_SELECTOR = 'h1, h2, h3, h4';
 export const ACTIVE_HEADING_OFFSET = 16;
 
 /**
- * 同文档锚点链接的点击行为在偏好对象里的字段名：属于「怎么看链接」的阅读偏好，
+ * 同文档锚点的点击行为在偏好对象里的字段名：属于「怎么看锚点」的阅读偏好，
  * 换篇、关掉重开、刷新页面后都保持上次的样子。
  */
 export const ANCHOR_LINK_FIELD = 'anchorLink';
@@ -99,10 +99,10 @@ export const ANCHOR_LINK_FIELD = 'anchorLink';
 /** 子区域预览前后切换口径的字段名 */
 export const ANCHOR_NAV_SCOPE_FIELD = 'anchorNavScope';
 
-/** 可选的两种切换口径：全文所有链接 / 只同一处目录里的链接 */
+/** 可选的两种切换口径：全文所有锚点 / 只同一处目录里的锚点 */
 export const ANCHOR_NAV_SCOPES: readonly AnchorNavScope[] = ['all', 'section'];
 
-/** 默认切换口径：按链接顺序切换全文所有区块（等于旧行为） */
+/** 默认切换口径：按锚点顺序切换全文所有区块（等于旧行为） */
 export const DEFAULT_ANCHOR_NAV_SCOPE: AnchorNavScope = 'all';
 
 /** 可选的两档行为：跳过去 / 弹窗打开那一块 */
@@ -115,7 +115,7 @@ export const ANCHOR_LINK_BEHAVIORS: readonly AnchorLinkBehavior[] = [
 export const DEFAULT_ANCHOR_LINK_BEHAVIOR: AnchorLinkBehavior = 'jump';
 
 /**
- * 折叠块（`<details>`）里那段内容的点击行为在偏好对象里的字段名：与链接一样是
+ * 折叠块（`<details>`）里那段内容的点击行为在偏好对象里的字段名：与锚点一样是
  * 「怎么看文档里的东西」的阅读偏好，换篇、关掉重开、刷新页面后都保持上次的样子。
  */
 export const DETAILS_BLOCK_FIELD = 'detailsBlock';
@@ -130,7 +130,7 @@ export const DETAILS_BLOCK_BEHAVIORS: readonly DetailsBlockBehavior[] = [
 export const DEFAULT_DETAILS_BLOCK_BEHAVIOR: DetailsBlockBehavior = 'expand';
 
 /**
- * 折叠块子预览的前后切换口径在偏好对象里的字段名：与链接那份并列，
+ * 折叠块子预览的前后切换口径在偏好对象里的字段名：与锚点那份并列，
  * 都是「怎么看文档里的东西」的阅读偏好。
  */
 export const DETAILS_NAV_SCOPE_FIELD = 'detailsNavScope';

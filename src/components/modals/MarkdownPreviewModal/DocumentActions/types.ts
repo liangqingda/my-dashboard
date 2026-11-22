@@ -19,9 +19,9 @@ export type DocumentActionsProps = {
   filter?: MarkdownPreviewFilter;
   /** 正文字号的用户偏移 */
   fontScale: ProseFontScale;
-  /** 同文档链接的点击行为 */
+  /** 同文档锚点的点击行为 */
   anchorBehavior: AnchorLinkBehavior;
-  /** 换一种链接行为（跨篇记住） */
+  /** 换一种锚点行为（跨篇记住） */
   onAnchorBehaviorChange: (behavior: AnchorLinkBehavior) => void;
   /** 子区域预览的前后切换口径 */
   anchorScope: AnchorNavScope;
@@ -35,7 +35,7 @@ export type DocumentActionsProps = {
   detailsScope: DetailsNavScope;
   /** 换一种折叠块切换口径（跨篇记住） */
   onDetailsScopeChange: (scope: DetailsNavScope) => void;
-  /** 文档里有没有同文档锚点链接 */
+  /** 文档里有没有同文档锚点 */
   hasAnchorLinks: boolean;
   /** 文档里有没有折叠块 */
   hasDetailBlocks: boolean;

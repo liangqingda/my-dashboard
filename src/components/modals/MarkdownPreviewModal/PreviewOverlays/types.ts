@@ -16,11 +16,11 @@ import type {
 export type PreviewOverlaysProps = {
   /** 当前这篇的标题 */
   title: string;
-  /** 链接区块子预览的导航状态 */
+  /** 锚点区块子预览的导航状态 */
   anchorBlock: AnchorBlockNavigationState;
   /** 当前这篇的锚点区块（正文里 h1–h4 切出来） */
   anchorBlocks: MarkdownAnchorBlock[];
-  /** 链接区块前后切换的口径 */
+  /** 锚点区块前后切换的口径 */
   anchorScope: AnchorNavScope;
   /** 折叠块子预览的导航状态 */
   detailBlock: DetailsBlockNavigationState;

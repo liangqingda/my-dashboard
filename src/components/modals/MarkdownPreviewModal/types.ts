@@ -187,15 +187,15 @@ export type DeleteConfirmProps = {
 };
 
 /**
- * 同文档锚点链接的点击行为：`jump` 在当前正文里滚过去，
- * `modal` 把链接指向的那一节内容单独开窗预览。
+ * 同文档锚点的点击行为：`jump` 在当前正文里滚过去，
+ * `modal` 把锚点指向的那一节内容单独开窗预览。
  */
 export type AnchorLinkBehavior = 'jump' | 'modal';
 
 /**
- * 子区域预览的前后切换口径：`all` 按链接顺序切换全文所有链接指向的区块，
- * `section` 只切换「同一处目录里的那几个链接」指向的区块（计数就是这一处的链接数）。
- * 例：`## 讲解` 里列了两轮复习的链接，选 `section` 时计数只有 2，只能在这两个里切换。
+ * 子区域预览的前后切换口径：`all` 按锚点顺序切换全文所有锚点指向的区块，
+ * `section` 只切换「同一处目录里的那几个锚点」指向的区块（计数就是这一处的锚点数）。
+ * 例：`## 讲解` 里列了两轮复习的锚点，选 `section` 时计数只有 2，只能在这两个里切换。
  */
 export type AnchorNavScope = 'all' | 'section';
 
@@ -219,7 +219,7 @@ export type DetailsBlockBehavior = 'expand' | 'modal';
 
 /**
  * 子区域预览渲染的一段内容：它不讲「这段内容打哪来」——
- * 同文档链接指向的一节与折叠块（`<details>`）里的正文都套在这个形状上，
+ * 同文档锚点指向的一节与折叠块（`<details>`）里的正文都套在这个形状上，
  * 弹窗只负责把这一段读出来，翻页范围由调用方算好传进来。
  */
 export type MarkdownPreviewSection = {
@@ -236,19 +236,19 @@ export type MarkdownPreviewSection = {
 };
 
 /**
- * 同文档锚点链接指向的一个内容区块：某一节标题下的全部内容。
+ * 同文档锚点指向的一个内容区块：某一节标题下的全部内容。
  *
  * 子区域预览弹窗一次只看一块；「跳到 h2 就展示整个 h2 小节（含 h3）」这条
  * 边界由 `collectAnchorBlocks` 算好，组件只负责渲染。
  */
 export type MarkdownAnchorBlock = MarkdownPreviewSection & {
-  /** 锚点 id（链接里 `#` 之后的片段，不含 `#`）；同一节被多个链接指向时取第一条 */
+  /** 锚点 id（链接里 `#` 之后的片段，不含 `#`）；同一节被多个锚点指向时取第一条 */
   anchor: string;
   /** 标题层级 1–4；区块边界按它算（到下一个同级或更高级标题为止），没有标题时为 0 */
   level: number;
   /**
-   * 指向这一块的链接所在的上级标题行号（-1 表示在第一个标题之前）。
-   * 同值就是「同一处目录里的链接」，`section` 口径按它分组，前后切换不出这一组。
+   * 指向这一块的锚点所在的上级标题行号（-1 表示在第一个标题之前）。
+   * 同值就是「同一处目录里的锚点」，`section` 口径按它分组，前后切换不出这一组。
    */
   linkGroup: number;
   /** 区块首行在整篇里的行号：按它排正文顺序 */
@@ -282,12 +282,12 @@ export type MarkdownDetailBlock = MarkdownPreviewSection & {
 };
 
 /**
- * 「文档内交互方式」图标按钮的入参：同文档链接一组、折叠块一组。
+ * 「文档内交互方式」图标按钮的入参：同文档锚点一组、折叠块一组。
  *
  * 文档里只有其中一类时，另一组不渲染——没有可点的东西，那一档设置也无从验证。
  */
 export type InteractionControlProps = {
-  /** 同文档链接的点击行为 */
+  /** 同文档锚点的点击行为 */
   anchorBehavior: AnchorLinkBehavior;
   /** 子区域预览的前后切换口径 */
   anchorScope: AnchorNavScope;
@@ -295,7 +295,7 @@ export type InteractionControlProps = {
   detailsBehavior: DetailsBlockBehavior;
   /** 折叠块子预览的前后切换口径 */
   detailsScope: DetailsNavScope;
-  /** 文档里有没有同文档锚点链接 */
+  /** 文档里有没有同文档锚点 */
   hasAnchorLinks: boolean;
   /** 文档里有没有折叠块 */
   hasDetailBlocks: boolean;
@@ -303,7 +303,7 @@ export type InteractionControlProps = {
   opened: boolean;
   /** 弹层开合（点图标、点外部、Esc 都会走到这里） */
   onChange: (opened: boolean) => void;
-  /** 选中的新链接行为；写存储归调用方 */
+  /** 选中的新锚点行为；写存储归调用方 */
   onAnchorBehaviorChange: (behavior: AnchorLinkBehavior) => void;
   /** 选中的新切换口径；写存储归调用方 */
   onAnchorScopeChange: (scope: AnchorNavScope) => void;
@@ -314,7 +314,7 @@ export type InteractionControlProps = {
 };
 
 /**
- * 子区域预览的入口：同文档链接指向的一节 / 折叠块里的正文。
+ * 子区域预览的入口：同文档锚点指向的一节 / 折叠块里的正文。
  * 两种入口共用同一个组件，但各自记住自己的全屏、字号与目录宽度。
  */
 export type SectionPreviewVariant = 'anchor' | 'details';
@@ -374,7 +374,7 @@ export type PreviewWorkspaceProps = {
   editing: NoteEditingState;
   /** 这一类文档的定制编辑器；不传就没有编辑区 */
   Editor?: ComponentType<MarkdownEditorProps>;
-  /** 正文里的点击（同文档链接在弹窗这一层接管） */
+  /** 正文里的点击（同文档锚点在弹窗这一层接管） */
   onBodyClick: (event: MouseEvent<HTMLElement>) => void;
 };
 

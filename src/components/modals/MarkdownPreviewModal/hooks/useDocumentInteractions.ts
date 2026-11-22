@@ -1,5 +1,5 @@
 /**
- * 正文里的两类交互：同文档链接与折叠块。
+ * 正文里的两类交互：同文档锚点与折叠块。
  *
  * 它们共用同一件「点一下之后会发生什么」的叙事，也共用同一套让位规则，所以在弹窗这一层
  * 收成一个 hook：正文里点了什么 → 是折叠块标题还是锚点链接 → 按各自记住的偏好
@@ -10,7 +10,7 @@
  * - 折叠块按**屏上真正渲染的**正文算：它是靠「DOM 里第几个 `<details>`」回查的，
  *   拿未筛选原文去数，筛选裁掉几块之后顺序就会错位。
  *
- * 两层子预览同一时刻只会开一层：打开链接区块之前先收起折叠块。
+ * 两层子预览同一时刻只会开一层：打开锚点区块之前先收起折叠块。
  */
 
 import { useMemo } from 'react';
@@ -50,21 +50,21 @@ export type DocumentInteractionsParams = {
 
 /** 正文交互的状态与动作 */
 export type DocumentInteractionsState = {
-  /** 同文档链接指向的区块（未筛选正文） */
+  /** 同文档锚点指向的区块（未筛选正文） */
   anchorBlocks: MarkdownAnchorBlock[];
   /** 折叠块里那几段内容（屏上渲染的正文） */
   detailBlocks: MarkdownDetailBlock[];
-  /** 同文档链接的两份跨篇偏好 */
+  /** 同文档锚点的两份跨篇偏好 */
   anchorLink: AnchorLinkBehaviorState;
   anchorScope: AnchorNavScopeState;
   /** 折叠块的两份跨篇偏好：点了之后的行为、子预览的切换口径 */
   detailsBlock: DetailsBlockBehaviorState;
   detailsScope: DetailsNavScopeState;
-  /** 链接区块子预览 */
+  /** 锚点区块子预览 */
   anchorBlock: AnchorBlockNavigationState;
   /** 折叠块子预览 */
   detailBlock: DetailsBlockNavigationState;
-  /** 正文点击：先折叠块、再同文档链接，路由只在这一处 */
+  /** 正文点击：先折叠块、再同文档锚点，路由只在这一处 */
   handleBodyClick: (event: MouseEvent<HTMLElement>) => void;
   /** 收起两层子预览（换篇、刷新、进编辑、关弹窗时一起清） */
   close: () => void;
@@ -98,7 +98,7 @@ export const useDocumentInteractions = ({
     [visibleMarkdown],
   );
 
-  /** 同文档链接的点击行为：跨篇记住的阅读偏好 */
+  /** 同文档锚点的点击行为：跨篇记住的阅读偏好 */
   const anchorLink = useAnchorLinkBehavior(storageKey);
   /** 子区域预览的前后切换口径：同样是跨篇记住的阅读偏好 */
   const anchorScope = useAnchorNavScope(storageKey);
@@ -117,7 +117,7 @@ export const useDocumentInteractions = ({
     blocks: detailBlocks,
   });
   /**
-   * 链接区块子预览的开合与正文链接点击：点链接时按当前行为决定「跳过去」还是
+   * 锚点区块子预览的开合与正文链接点击：点锚点时按当前行为决定「跳过去」还是
    * 「弹窗打开那一节」。开之前顺带收掉折叠块子预览——两层不该同时开着。
    */
   const anchorBlock = useAnchorBlockNavigation({

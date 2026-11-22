@@ -1,7 +1,7 @@
 /**
  * 正文内的导航：从点击里认出同文档锚点、滚到某个锚点、滚到第几个标题。
  *
- * 主预览与子区域预览共用这一份：两处都要「点链接 → 定位」和「点目录 → 定位」，
+ * 主预览与子区域预览共用这一份：两处都要「点锚点 → 定位」和「点目录 → 定位」，
  * 各自再写一遍就等于养两个版本的滚动口径。
  */
 
@@ -27,7 +27,7 @@ const decodeAnchor = (value: string): string => {
  * 只认 `href` 以 `#` 开头的链接：外链、相对路径、`mailto:` 一律返回 null，交给浏览器。
  *
  * @param target 事件目标（`event.target`）
- * @returns 锚点 id（不含 `#`）；不是同文档链接、或片段为空时返回 null
+ * @returns 锚点 id（不含 `#`）；不是同文档锚点、或片段为空时返回 null
  */
 export const getClickedAnchor = (target: EventTarget | null): string | null => {
   if (!(target instanceof HTMLElement)) {

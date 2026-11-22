@@ -9,7 +9,7 @@
  * 与字段标题（组件库默认字号、正文墨色）明显分开两档——两者同档时读起来像并列的四个字段。
  *
  * 两组偏好（都是跨篇记住的阅读偏好，写在 localStorage）：
- * 1. 同文档链接（`[文字](#锚点)`）：点链接之后滚过去 / 弹窗读那一节；子区域预览能前后切到哪些链接；
+ * 1. 同文档锚点（`[文字](#锚点)`）：点锚点之后滚过去 / 弹窗读那一节；子区域预览能前后切到哪些锚点；
  * 2. 折叠块（`<details>`，笔记里的场景对话原文、故事原文）：点标题之后原地展开 / 弹窗读。
  *    只有一个折叠块里真有内容时这一组才有意义，所以文档里没有折叠块时整组不渲染。
  *
@@ -46,7 +46,7 @@ const ICON_STROKE = 1.9;
 /** 弹层宽度：与筛选面板同宽（272），两组字段都排得开 */
 const DROPDOWN_WIDTH = 272;
 
-/** 两档链接行为：档名给下拉，口径说明单列一行（塞进选项会把下拉撑宽） */
+/** 两档锚点行为：档名给下拉，口径说明单列一行（塞进选项会把下拉撑宽） */
 const ANCHOR_BEHAVIOR_OPTIONS: Record<
   AnchorLinkBehavior,
   { description: string; label: string }
@@ -57,8 +57,8 @@ const ANCHOR_BEHAVIOR_OPTIONS: Record<
 
 /** 两种切换口径：同上，档名进下拉、口径说明单列一行 */
 const SCOPE_OPTIONS: Record<AnchorNavScope, { description: string; label: string }> = {
-  all: { description: '按链接顺序切换全文所有链接指向的区块', label: '切换全文所有链接' },
-  section: { description: '只算同一处目录里的链接，如「讲解」里那两条', label: '只切换同一处链接' },
+  all: { description: '按锚点顺序切换全文所有锚点指向的区块', label: '切换全文所有锚点' },
+  section: { description: '只算同一处目录里的锚点，如「讲解」里那两条', label: '只切换同一处锚点' },
 };
 
 /** 两档折叠块行为：原地展开保留浏览器默认，弹窗预览把这一段单独读 */
@@ -158,13 +158,13 @@ const InteractionControl = ({
           <Stack gap={8}>
             <Group gap={6} wrap="nowrap">
               <Box className={styles.groupMark} />
-              <Text className={styles.groupTitle}>同文档链接</Text>
+              <Text className={styles.groupTitle}>同文档锚点</Text>
               <Box className={styles.groupRule} />
             </Group>
             <FreeSelectField
               data={ANCHOR_BEHAVIOR_DATA}
               description={ANCHOR_BEHAVIOR_OPTIONS[anchorBehavior].description}
-              label="点链接之后"
+              label="点锚点之后"
               onChange={(value) =>
                 pickValue(ANCHOR_BEHAVIOR_DATA, value, onAnchorBehaviorChange)
               }
