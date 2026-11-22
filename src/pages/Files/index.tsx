@@ -203,6 +203,8 @@ const Files = () => {
           </Text>
         ) : null}
 
+        {/* 两种形态都自己滚：网格四周留一圈；表格按行铺满，只在右侧让出
+            滚动条宽度加一段空隙，别让滚动条贴住表格内容 */}
         {listing !== null && !showEmpty ? (
           <ScrollArea
             className={isGridView ? styles.list : styles.tableList}
@@ -216,7 +218,9 @@ const Files = () => {
                     paddingInlineStart: 12,
                     paddingTop: 12,
                   }
-                : {},
+                : {
+                    paddingInlineEnd: 16,
+                  },
             }}
             type="auto"
           >
