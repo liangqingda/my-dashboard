@@ -127,6 +127,21 @@
   margin: 0 0 10px;
 }
 
+/*
+ * 译文弱化：故事段落译文与对话台词译文由笔记侧统一打 `.noteTranslation` 标记，
+ * 颜色退到最浅一档、字号小半档（与表格同档 0.78rem），把英文原文留作主视觉；
+ * 颜色与字号都走主题 / 字号变量，不写死 hex 或 px，深浅色与用户字号偏好自动跟随。
+ */
+.prose .noteTranslation {
+  color: var(--app-ink-faint);
+  font-size: calc(0.78rem + var(--prose-grow) + var(--prose-extra));
+  line-height: 1.7;
+}
+
+.prose p.noteTranslation {
+  margin: -4px 0 12px;
+}
+
 /* 无序 / 有序列表共用一套间距：两者左缩进一致，不再靠 ol 独有的 margin-left 拉开 */
 .prose ul,
 .prose ol {

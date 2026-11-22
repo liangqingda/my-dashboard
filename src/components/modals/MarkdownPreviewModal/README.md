@@ -40,6 +40,11 @@
 `--app-ink-strong` **夹在正文与标题之间**：浅色下比标题浅一档、暗色下比标题暗一档，与标题始终留
 1.3–1.5 倍亮度差；跟着标题往同一边推（浅色更黑 / 暗色更亮）会让加粗看起来像小标题，不要那样改。
 
+**译文弱化**：故事段落译文与对话台词译文由笔记侧统一打 `noteTranslation` class（段落用
+`<p class="noteTranslation">…</p>`，列表子项用 `<span class="noteTranslation">…</span>`），
+颜色走 `--app-ink-faint`、字号小半档，英文原文保持正文墨色。译文样式只在 `.prose .noteTranslation`
+这一处维护；笔记里不写行内颜色 / 字号，也不要在预览组件里为译文另挑配色。
+
 **行内代码 / 代码块**：底色与字色走全局令牌 `--app-code-bg` / `--app-code-color`（`src/styles/global.scss`），
 两套主题同一份口径：底色取 **header / 侧栏那一档 chrome**（`--app-surface-subtle`），不用纯白卡片
 （纯白压在画布纸上既晃眼、又像贴了一块白纸），也不抬成另一块面板；字色取各自主题里**最重的标题墨色**
