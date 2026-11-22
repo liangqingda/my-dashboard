@@ -42,8 +42,9 @@
 
 **译文弱化**：故事段落译文与对话台词译文由笔记侧统一打 `noteTranslation` class（段落用
 `<p class="noteTranslation">…</p>`，列表子项用 `<span class="noteTranslation">…</span>`），
-颜色走 `--app-ink-faint`、字号小半档，英文原文保持正文墨色。译文样式只在 `.prose .noteTranslation`
-这一处维护；笔记里不写行内颜色 / 字号，也不要在预览组件里为译文另挑配色。
+颜色走 `--app-ink-faint` 并叠 `0.7` 不透明度、字号小半档，英文原文保持正文墨色；`faint` 令牌与正文
+`soft` 差距很小（暗色下同值），单换颜色看不出差别，弱化主要靠 opacity。译文样式只在
+`.prose .noteTranslation` 这一处维护；笔记里不写行内颜色 / 字号，也不要在预览组件里为译文另挑配色。
 
 **行内代码 / 代码块**：底色与字色走全局令牌 `--app-code-bg` / `--app-code-color`（`src/styles/global.scss`），
 两套主题同一份口径：底色取 **header / 侧栏那一档 chrome**（`--app-surface-subtle`），不用纯白卡片
