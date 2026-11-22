@@ -51,12 +51,21 @@ const FreeTruncatedText = ({
 }: FreeTruncatedTextProps) => {
   const { measure, ref, targetRef } = useIsTruncated();
   const isMiddle = ellipsis === 'middle';
-  /** 被指到的那一刻量出来的结果；没量过就是「放得下」，不弹 tip */
-  const [truncated, setTruncated] = useState(false);
-  /** middle 档渲染用的拼好文案；end 档恒等于原文 */
-  const [displayText, setDisplayText] = useState(text);
+  /**
+   * 被指到的那一刻量出来的「是否截断」。**记着它量的是哪一段原文**：原文换了
+   * （弹窗标题从这一条切到下一条）就按「还没量、放得下」算，tip 不沿用上一条的结论。
+   */
+  const [measured, setMeasured] = useState({ source: '', truncated: false });
+  /**
+   * middle 档的拼好文案，同样记着是「哪一段原文」量的；原文换了就回落全文，
+   * 等节点随新文案重挂后再量一次（见 `handleRef`）。end 档不需要状态，直接用 `text`。
+   */
+  const [middleText, setMiddleText] = useState({ display: text, source: text });
 
   const measureKind = lines === 2 ? 'height' : 'width';
+  const truncated = measured.source === text && measured.truncated;
+  const displayText =
+    isMiddle && middleText.source === text ? middleText.display : text;
 
   /**
    * middle 档：节点挂上后按容器尺寸二分出**能放下的最多**头尾字符，写回状态渲染。
@@ -76,13 +85,13 @@ const FreeTruncatedText = ({
     element.textContent = text;
 
     if (element.clientWidth === 0 && element.clientHeight === 0) {
-      setDisplayText(text);
+      setMiddleText({ display: text, source: text });
 
       return;
     }
 
     if (!measure(measureKind)) {
-      setDisplayText(text);
+      setMiddleText({ display: text, source: text });
 
       return;
     }
@@ -108,7 +117,7 @@ const FreeTruncatedText = ({
     }
 
     element.textContent = best;
-    setDisplayText(best);
+    setMiddleText({ display: best, source: text });
   }, [isMiddle, measure, measureKind, targetRef, text]);
 
   /** 组合 ref：先登记目标节点供 tip 定位与测量，再跑 middle 档的一次性测量 */
@@ -124,7 +133,10 @@ const FreeTruncatedText = ({
   );
 
   const checkTruncation = useCallback(() => {
-    setTruncated(isMiddle ? displayText !== text : measure(measureKind));
+    setMeasured({
+      source: text,
+      truncated: isMiddle ? displayText !== text : measure(measureKind),
+    });
   }, [displayText, isMiddle, measure, measureKind, text]);
 
   const [active, hoverHandlers] = useHoverIntent(checkTruncation);
