@@ -40,6 +40,21 @@ const CATEGORY_EXTENSIONS: Readonly<Record<Exclude<FileCategory, 'other'>, reado
   markdown: ['.md', '.markdown'],
 };
 
+/** 分类的固定顺序，拼文件夹分类摘要时按它排，与前端筛选项一致 */
+const CATEGORY_ORDER: readonly FileCategory[] = [
+  'video',
+  'pdf',
+  'markdown',
+  'other',
+];
+
+/**
+ * 文件夹分类摘要的扫描预算：只用来判断「里面有没有这类文件」，
+ * 逐层往下找，累计看够这么多个条目或走够这么多层就收工，不保证数尽整棵树。
+ */
+const FOLDER_CATEGORY_BUDGET = 2000;
+const FOLDER_CATEGORY_DEPTH = 6;
+
 /** 目录里的一条子文件夹 */
 export type FolderEntry = {
   /** 文件夹名（不含路径） */
@@ -48,6 +63,8 @@ export type FolderEntry = {
   path: string;
   /** 该文件夹直属的条目数（文件夹 + 文件，不递归子目录） */
   itemCount: number;
+  /** 文件夹内出现过的文件分类（含深层，按扫描预算收口）；按类型筛选时用它决定要不要露出这个文件夹 */
+  categories: FileCategory[];
 };
 
 /** 目录里的一条文件 */
@@ -178,24 +195,90 @@ const toReadError = (error: unknown, dir: string): Error => {
   return wrapped;
 };
 
-/** 数一个文件夹直属的条目数（文件夹 + 文件，不含隐藏项与符号链接）；读不到就按 0 计 */
-const countItems = async (dir: string): Promise<number> => {
-  let entries: Dirent[];
+/** 可进列表的条目：既不是隐藏项，也不是符号链接 */
+const isListedEntry = (entry: Dirent): boolean =>
+  !entry.isSymbolicLink() && !isHiddenName(entry.name);
 
+/** 读一层目录的条目；读不到按空目录处理 */
+const readEntries = async (dir: string): Promise<Dirent[]> => {
   try {
-    entries = await readdir(dir, { withFileTypes: true });
+    return await readdir(dir, { withFileTypes: true });
   } catch {
-    return 0;
+    return [];
+  }
+};
+
+/**
+ * 扫描一个文件夹：直属条目数（文件夹 + 文件，不含隐藏项与符号链接），
+ * 以及内部出现过的文件分类。分类按层往下找，找到四类就提前结束，
+ * 累计到预算上限或走完层数上限时按已发现的算——只服务于类型筛选的「露不露出这个文件夹」。
+ * 读不到按空文件夹处理。
+ */
+const scanFolder = async (
+  dir: string,
+): Promise<{ itemCount: number; categories: FileCategory[] }> => {
+  const entries = (await readEntries(dir)).filter(isListedEntry);
+  const found = new Set<FileCategory>();
+  const folders: string[] = [];
+  let itemCount = 0;
+
+  for (const entry of entries) {
+    if (entry.isDirectory()) {
+      itemCount += 1;
+      folders.push(path.join(dir, entry.name));
+      continue;
+    }
+
+    if (entry.isFile()) {
+      itemCount += 1;
+      found.add(categoryForName(entry.name));
+    }
   }
 
-  return entries.reduce(
-    (count, entry) =>
-      !entry.isSymbolicLink() && !isHiddenName(entry.name) &&
-      (entry.isDirectory() || entry.isFile())
-        ? count + 1
-        : count,
-    0,
-  );
+  let frontier = folders;
+  let budget = FOLDER_CATEGORY_BUDGET;
+
+  for (
+    let depth = 1;
+    depth <= FOLDER_CATEGORY_DEPTH &&
+    budget > 0 &&
+    frontier.length > 0 &&
+    found.size < CATEGORY_ORDER.length;
+    depth += 1
+  ) {
+    const next: string[] = [];
+
+    for (const current of frontier) {
+      for (const entry of await readEntries(current)) {
+        if (!isListedEntry(entry)) {
+          continue;
+        }
+
+        if (budget <= 0) {
+          break;
+        }
+
+        budget -= 1;
+
+        if (entry.isFile()) {
+          found.add(categoryForName(entry.name));
+        } else if (entry.isDirectory()) {
+          next.push(path.join(current, entry.name));
+        }
+      }
+
+      if (budget <= 0) {
+        break;
+      }
+    }
+
+    frontier = next;
+  }
+
+  return {
+    categories: CATEGORY_ORDER.filter((category) => found.has(category)),
+    itemCount,
+  };
 };
 
 /**
@@ -227,7 +310,7 @@ export const listDirectory = async (input: string): Promise<DirListing> => {
       folders.push({
         name: entry.name,
         path: entryPath,
-        itemCount: await countItems(entryPath),
+        ...(await scanFolder(entryPath)),
       });
       continue;
     }
@@ -337,7 +420,7 @@ export const createFolder = async (dirInput: string): Promise<FolderEntry> => {
 
   await mkdir(target);
 
-  return { name, path: target, itemCount: 0 };
+  return { categories: [], itemCount: 0, name, path: target };
 };
 
 /**

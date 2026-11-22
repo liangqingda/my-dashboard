@@ -66,6 +66,19 @@ describe('files-store', () => {
     );
   });
 
+  it('子文件夹带内部出现过的文件分类：直属与更深层都算，空文件夹为空', async () => {
+    const listing = await listDirectory(root);
+
+    assert.deepEqual(
+      listing.folders.map((folder) => [folder.name, folder.categories]),
+      [
+        ['folder-a', ['video', 'other']],
+        ['folder-b', []],
+        ['sub', ['video']],
+      ],
+    );
+  });
+
   it('文件条目带大小与修改时间，文件大小按字节保留', async () => {
     const [file] = (await listDirectory(root)).files.filter(
       (entry) => entry.name === 'clip.webm',

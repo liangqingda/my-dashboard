@@ -1,6 +1,7 @@
 /**
  * 筛选弹层面板：顶部关键词按文件名模糊搜索，下方 checkbox 多选分类，改动即时写回；
- * 底部重置清掉全部条件。分类选项是页面固定的档位，不随当前目录里有没有该类型而增减。
+ * 底部重置清掉全部条件。分类选项是页面固定的档位，不随当前目录里有没有该类型而增减；
+ * 选了类型后，不含该类型文件的文件夹也会一起隐藏（分类摘要由中间件随列表下发）。
  */
 
 import { Checkbox, Group, Stack, UnstyledButton } from '@mantine/core';
@@ -64,7 +65,7 @@ const TypeFilterPanel = ({
 
       <FreePanelFooter
         disabled={!active}
-        hint="只过滤文件，不影响文件夹"
+        hint="不含所选类型的文件夹一并隐藏"
         onReset={onReset}
       />
     </Stack>

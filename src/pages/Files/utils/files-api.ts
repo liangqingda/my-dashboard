@@ -4,19 +4,20 @@
  * 页面直接回落提示态，不假设某个目录在产物里有快照。
  *
  * 列表只给摘要（名称 / 路径 / 大小 / 修改时间），文件内容与预览是单独任务，这里不下发文件。
+ * 响应归一化是纯函数，住在 `normalize.ts`，这里只管请求与错误文案。
  */
 
 import { readHttpErrorMessage } from '@/utils/error';
 
-import { FILE_CATEGORY_OPTIONS } from '../constants';
-import type {
-  DirListing,
-  DirSpace,
-  FileCategory,
-  FileEntry,
-  FolderEntry,
-  VolumeSpace,
-} from '../types';
+import type { DirListing, FolderEntry } from '../types';
+
+import {
+  normalizeEntryResponse,
+  normalizeListingResponse,
+  normalizePickedResponse,
+  normalizeRenamedEntry,
+} from './normalize';
+import type { PickedDir } from './normalize';
 
 const LIST_ENDPOINT = '/api/files';
 const PICK_ENDPOINT = '/api/files/pick-dir';
@@ -25,135 +26,10 @@ const RENAME_ENDPOINT = '/api/files/rename';
 const MOVE_ENDPOINT = '/api/files/move';
 const DELETE_ENDPOINT = '/api/files/delete';
 
-/** 系统目录选择器返回值：选中给绝对路径，取消给 cancelled */
-export type PickedDir = { path: string } | { cancelled: true };
-
 /** 取数请求的缓存策略：开发态必须实时，静态产物不读这个接口 */
 const REQUEST_INIT: RequestInit = import.meta.env.DEV
   ? { cache: 'no-store' }
   : {};
-
-const isObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
-
-const asString = (value: unknown): string =>
-  typeof value === 'string' ? value : '';
-
-const asNumber = (value: unknown): number =>
-  typeof value === 'number' && Number.isFinite(value) ? value : 0;
-
-/** 归一化一条子文件夹；路径或名字缺失时丢弃 */
-const normalizeFolder = (raw: unknown): FolderEntry | null => {
-  if (!isObject(raw)) {
-    return null;
-  }
-
-  const name = asString(raw.name);
-  const path = asString(raw.path);
-
-  if (!name || !path) {
-    return null;
-  }
-
-  return { name, path, itemCount: asNumber(raw.itemCount) };
-};
-
-/** 归一化一条文件；路径或名字缺失时丢弃 */
-const normalizeFile = (raw: unknown): FileEntry | null => {
-  if (!isObject(raw)) {
-    return null;
-  }
-
-  const name = asString(raw.name);
-  const path = asString(raw.path);
-
-  if (!name || !path) {
-    return null;
-  }
-
-  const knownCategories = FILE_CATEGORY_OPTIONS.map((option) => option.value) as string[];
-  const category =
-    typeof raw.category === 'string' && knownCategories.includes(raw.category)
-      ? (raw.category as FileCategory)
-      : 'other';
-
-  return {
-    name,
-    path,
-    size: asNumber(raw.size),
-    updatedAt: asString(raw.updatedAt),
-    category,
-  };
-};
-
-/** 归一化一个卷的剩余空间；挂载点或可用字节缺失时按「读不到」返回 null */
-const normalizeVolume = (raw: unknown): VolumeSpace | null => {
-  if (!isObject(raw)) {
-    return null;
-  }
-
-  const mountPoint = asString(raw.mountPoint);
-  const { freeBytes } = raw;
-
-  if (
-    !mountPoint ||
-    typeof freeBytes !== 'number' ||
-    !Number.isFinite(freeBytes)
-  ) {
-    return null;
-  }
-
-  return { freeBytes, mountPoint, name: asString(raw.name) || null };
-};
-
-/** 归一化卷空间：启动卷读不到就整份当作没有，外接卷读不到只丢那一卷 */
-const normalizeSpace = (raw: unknown): DirSpace | null => {
-  if (!isObject(raw)) {
-    return null;
-  }
-
-  const system = normalizeVolume(raw.system);
-
-  return system === null
-    ? null
-    : { external: normalizeVolume(raw.external), system };
-};
-
-/** 归一化整份目录清单；核心字段不合格返回 null，调用方按错误态处理 */
-const normalizeListing = (raw: unknown): DirListing | null => {
-  if (!isObject(raw)) {
-    return null;
-  }
-
-  const path = asString(raw.path);
-
-  if (!path) {
-    return null;
-  }
-
-  const parent = asString(raw.parent);
-
-  return {
-    folders: Array.isArray(raw.folders)
-      ? raw.folders.flatMap((item) => {
-          const folder = normalizeFolder(item);
-
-          return folder ? [folder] : [];
-        })
-      : [],
-    name: asString(raw.name) || path,
-    parent: parent || null,
-    path,
-    files: Array.isArray(raw.files)
-      ? raw.files.flatMap((item) => {
-          const file = normalizeFile(item);
-
-          return file ? [file] : [];
-        })
-      : [],
-    space: normalizeSpace(raw.space),
-  };
-};
 
 /** 解析响应里的 JSON；格式不对时抛错，调用方给统一文案 */
 const readJson = async (response: Response): Promise<unknown> => {
@@ -189,28 +65,13 @@ export const fetchFileDir = async (
   }
 
   const payload = await readJson(response);
-  const listing = isObject(payload) ? normalizeListing(payload.listing) : null;
+  const listing = normalizeListingResponse(payload);
 
   if (listing === null) {
     throw new Error('目录数据格式不符合预期');
   }
 
   return listing;
-};
-
-/** 归一化选择器返回值；格式不对返回 null，调用方按错误态处理 */
-const normalizePicked = (raw: unknown): PickedDir | null => {
-  if (!isObject(raw)) {
-    return null;
-  }
-
-  if ('cancelled' in raw) {
-    return { cancelled: true };
-  }
-
-  const path = asString(raw.path);
-
-  return path ? { path } : null;
 };
 
 /**
@@ -240,7 +101,7 @@ export const pickPickedDir = async (
   }
 
   const payload = await readJson(response);
-  const picked = isObject(payload) ? normalizePicked(payload.picked) : null;
+  const picked = normalizePickedResponse(payload);
 
   if (picked === null) {
     throw new Error('目录数据格式不符合预期');
@@ -282,7 +143,7 @@ export const createFolder = async (
   signal?: AbortSignal,
 ): Promise<FolderEntry> => {
   const payload = await postJson(NEW_FOLDER_ENDPOINT, { dir }, signal);
-  const entry = isObject(payload) ? normalizeFolder(payload.entry) : null;
+  const entry = normalizeEntryResponse(payload);
 
   if (entry === null) {
     throw new Error('目录数据格式不符合预期');
@@ -297,17 +158,13 @@ export const renameEntry = async (
   name: string,
 ): Promise<{ name: string; path: string }> => {
   const payload = await postJson(RENAME_ENDPOINT, { path: pathValue, name });
-  const entry = isObject(payload) ? payload.entry : null;
+  const entry = normalizeRenamedEntry(payload);
 
-  if (
-    !isObject(entry) ||
-    typeof entry.path !== 'string' ||
-    typeof entry.name !== 'string'
-  ) {
+  if (entry === null) {
     throw new Error('目录数据格式不符合预期');
   }
 
-  return { name: entry.name, path: entry.path };
+  return entry;
 };
 
 /** 把一条条目移入目标文件夹；同名冲突 / 移入自身后代由后端拒绝 */

@@ -28,6 +28,7 @@ import {
   describeDirSpace,
   filterFilesByCategory,
   filterFilesByKeyword,
+  filterFoldersByCategory,
 } from './utils/files';
 
 import styles from './index.scss';
@@ -35,7 +36,7 @@ import styles from './index.scss';
 /**
  * 文件浏览页：按 macOS 目录网格展示本机指定目录下的子文件夹与文件，不限文件类型。
  * 点文件夹进入下一层，面包屑回退，`⌘↑` 回上一级；可收藏常用目录，在收藏面板里点选直达；
- * 标题栏筛选面板支持按文件名关键词与类型多选过滤。文件内容与预览播放是单独任务，
+ * 标题栏筛选面板支持按文件名关键词与类型多选过滤；选了类型后不含该类型文件的文件夹也一起隐藏。文件内容与预览播放是单独任务，
  * 本页只列摘要。目录读取走 Vite 中间件，仅开发模式可用。
  * 标题行右侧再显示本机剩余可用空间；当前目录在外接盘（移动硬盘）上时，连同那块盘的可用空间一起显示。
  */
@@ -69,12 +70,16 @@ const Files = () => {
   /** 当前目录作为收藏条目；还没选目录时为 null，收藏按钮禁用 */
   const currentEntry = listing ? { path: listing.path, name: listing.name } : null;
 
-  /** 类型 + 关键词筛选后的文件；文件夹不受筛选影响 */
+  /** 类型 + 关键词筛选后的文件；文件夹不受关键词影响，按内含类型过滤 */
   const visibleFiles = listing
     ? filterFilesByKeyword(
         filterFilesByCategory(listing.files, selectedCategories),
         keyword,
       )
+    : [];
+  /** 类型筛选后的文件夹：不含所选类型的文件夹一并隐藏 */
+  const visibleFolders = listing
+    ? filterFoldersByCategory(listing.folders, selectedCategories)
     : [];
 
   /** 切换某块弹层：再点一次同一块则收起 */
@@ -109,7 +114,7 @@ const Files = () => {
   const showEmpty =
     !showSkeleton &&
     listing !== null &&
-    listing.folders.length === 0 &&
+    visibleFolders.length === 0 &&
     visibleFiles.length === 0;
   /** 还没选过目录：引导先填路径，不报错 */
   const showPrompt = !showSkeleton && listing === null && error === null;
@@ -177,7 +182,9 @@ const Files = () => {
 
         {showEmpty ? (
           <Text className={styles.empty} size="sm">
-            这个目录里没有文件或子文件夹
+            {selectedCategories.length > 0 || keyword.trim() !== ''
+              ? '没有符合筛选条件的文件或文件夹'
+              : '这个目录里没有文件或子文件夹'}
           </Text>
         ) : null}
 
@@ -196,7 +203,7 @@ const Files = () => {
               dragSource={entryActions.dragSource}
               dropTarget={entryActions.dropTarget}
               files={visibleFiles}
-              folders={folders}
+              folders={visibleFolders}
               onDragEnd={entryActions.clearDrag}
               onDragLeaveFolder={entryActions.dragLeaveFolder}
               onDragOverFolder={entryActions.dragOverFolder}

@@ -12,6 +12,8 @@ export type FolderEntry = {
   path: string;
   /** 直属条目数（文件夹 + 文件，不递归子目录） */
   itemCount: number;
+  /** 文件夹内出现过的文件分类（含深层，按中间件的扫描预算收口） */
+  categories: FileCategory[];
 };
 
 /** 文件归类：与中间件 `FileCategory` 同一套档位，用于区分图标与类型筛选 */

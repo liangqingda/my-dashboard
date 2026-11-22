@@ -2,7 +2,7 @@
  * 文件浏览页的纯函数：文件大小格式化、路径分段、类型筛选。不依赖 React。
  */
 
-import type { DirSpace, FileCategory, FileEntry } from '../types';
+import type { DirSpace, FileCategory, FileEntry, FolderEntry } from '../types';
 
 /** 字节数 → 可读体积（B / KB / MB / GB）；负数与 NaN 按 0 处理 */
 export const formatFileSize = (bytes: number): string => {
@@ -83,6 +83,25 @@ export const filterFilesByCategory = (
   const picked = new Set(selected);
 
   return files.filter((file) => picked.has(file.category));
+};
+
+/**
+ * 按已选分类过滤文件夹：只留下内含所选类型文件的文件夹（含深层，靠中间件给的分类摘要）；
+ * 空选择表示不过滤，整份保留。
+ */
+export const filterFoldersByCategory = (
+  folders: FolderEntry[],
+  selected: FileCategory[],
+): FolderEntry[] => {
+  if (selected.length === 0) {
+    return folders;
+  }
+
+  const picked = new Set(selected);
+
+  return folders.filter((folder) =>
+    folder.categories.some((category) => picked.has(category)),
+  );
 };
 
 /** 按文件名关键词过滤；空白关键词表示不过滤，整份保留。大小写不敏感子串匹配 */
