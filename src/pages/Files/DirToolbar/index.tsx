@@ -1,6 +1,6 @@
 import {
   Button,
-  Divider,
+  Checkbox,
   Group,
   MultiSelect,
   Pill,
@@ -32,7 +32,7 @@ import type { DirToolbarProps } from './types';
 import styles from './index.scss';
 
 /**
- * 目录工具栏：上行是当前路径面包屑，右侧经竖向分割线接收藏开关与「打开」按钮；
+ * 目录工具栏：上行是当前路径面包屑，右侧接收藏开关与「打开」按钮；
  * 下行是类型多选与收藏目录下拉。
  */
 const DirToolbar = ({
@@ -101,7 +101,6 @@ const DirToolbar = ({
         </Group>
 
         <Group className={styles.actions} gap="sm" wrap="nowrap">
-          <Divider className={styles.divider} orientation="vertical" />
           <FreeIconAction
             disabled={favoriteDisabled}
             label="收藏目录"
@@ -133,7 +132,13 @@ const DirToolbar = ({
           clearable
           data={typeOptions}
           onChange={onCategoriesChange}
-          placeholder="全部类型"
+          placeholder={selectedCategories.length === 0 ? '全部类型' : undefined}
+          renderOption={({ option, checked }) => (
+            <Group gap="xs" wrap="nowrap">
+              <Checkbox checked={checked} readOnly size="xs" />
+              <span>{option.label}</span>
+            </Group>
+          )}
           renderPill={({ option, onRemove, value }) => {
             const idx = selectedCategories.indexOf(value as FileCategory);
 
@@ -168,6 +173,7 @@ const DirToolbar = ({
           styles={{ pillsList: { flexWrap: 'nowrap' } }}
           value={selectedCategories}
           w={TYPE_FILTER_WIDTH}
+          withCheckIcon={false}
         />
         {favorites.length > 0 ? (
           <Select

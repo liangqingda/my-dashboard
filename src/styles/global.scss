@@ -200,11 +200,12 @@ a {
 }
 
 /*
- * 焦点环只给能被 Tab 序列到达的控件。tabindex=-1 是被脚本挪焦点的容器
+ * 焦点环只给能被 Tab 序列到达的非表单控件。tabindex=-1 是被脚本挪焦点的容器
  * （Mantine 弹窗 dialog、隐藏的初始焦点节点），不进 Tab 序列；给它画环只会
- * 在弹窗外沿多出一圈主色描边，这里排除掉。
+ * 在弹窗外沿多出一圈主色描边，这里排除掉。输入框 / 下拉 / 多行文本的聚焦提示
+ * 由 Mantine 换边框色承担，再叠一圈 outline 会在控件内 / 外各出一层框，一并排除。
  */
-:focus-visible:not([tabindex='-1']) {
+:focus-visible:not([tabindex='-1']):not(input):not(textarea):not(select) {
   outline: 2px solid var(--app-accent);
   outline-offset: 3px;
 }

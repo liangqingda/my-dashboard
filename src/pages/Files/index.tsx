@@ -118,6 +118,9 @@ const Files = () => {
             offsetScrollbars="y"
             scrollbarSize={6}
             scrollbars="y"
+            styles={{
+              viewport: { paddingBottom: 12, paddingInlineStart: 12, paddingTop: 12 },
+            }}
             type="auto"
           >
             <DirectoryGrid

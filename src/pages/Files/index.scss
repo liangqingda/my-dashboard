@@ -6,10 +6,14 @@
   min-height: 0;
 }
 
-/* 网格滚动区 */
+/* 网格滚动区：卡片底托，边框 / 圆角 / 底色与其它列表页同一口径 */
 .list {
   flex: 1 1 auto;
   min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--app-line);
+  border-radius: var(--mantine-radius-md);
+  background: var(--app-surface);
 }
 
 /* 骨架网格：与真实网格同列宽口径 */
