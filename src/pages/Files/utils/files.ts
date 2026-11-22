@@ -1,5 +1,5 @@
 /**
- * 视频页的纯函数：文件大小格式化、路径分段。不依赖 React。
+ * 文件浏览页的纯函数：文件大小格式化、路径分段。不依赖 React。
  */
 
 /** 字节数 → 可读体积（B / KB / MB / GB）；负数与 NaN 按 0 处理 */
@@ -38,11 +38,11 @@ export const splitPathSegments = (dir: string): PathSegment[] => {
   }));
 };
 
-/** 目录计数文案：文件夹数与视频数拼成一行；都为 0 时提示空目录 */
-export const summarizeCount = (folders: number, videos: number): string => {
+/** 目录计数文案：文件夹数与文件数拼成一行；都为 0 时提示空目录 */
+export const summarizeCount = (folders: number, files: number): string => {
   const parts = [
     folders > 0 ? `${folders} 个文件夹` : null,
-    videos > 0 ? `${videos} 个视频` : null,
+    files > 0 ? `${files} 个文件` : null,
   ].filter((part): part is string => part !== null);
 
   return parts.length > 0 ? parts.join(' · ') : '空目录';

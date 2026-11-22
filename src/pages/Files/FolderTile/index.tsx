@@ -2,13 +2,15 @@ import { memo } from 'react';
 import { UnstyledButton } from '@mantine/core';
 import { IconFolderFilled } from '@tabler/icons-react';
 
+import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
+
 import type { FolderTileProps } from './types';
 
 import styles from './index.scss';
 
 /**
- * 网格里的一条子文件夹：蓝色文件夹图标 + 名称 + 直属视频数，点击进入下一层目录。
- * 计数只数直属视频，不递归子文件夹（与中间件口径一致）。
+ * 网格里的一条子文件夹：蓝色文件夹图标 + 名称 + 直属条目数，点击进入下一层目录。
+ * 计数只数直属条目，不递归子文件夹（与中间件口径一致）；名称最多两行，超出省略并在 hover 时给全量。
  */
 const FolderTile = memo(({ folder, onOpen }: FolderTileProps) => (
   <UnstyledButton
@@ -24,9 +26,14 @@ const FolderTile = memo(({ folder, onOpen }: FolderTileProps) => (
       stroke={1.2}
     />
     <span className={styles.body}>
-      <span className={styles.name}>{folder.name}</span>
+      <FreeTruncatedText
+        className={styles.name}
+        lines={2}
+        position="top"
+        text={folder.name}
+      />
       <span className={styles.count}>
-        {folder.videoCount > 0 ? `${folder.videoCount} 个视频` : '无视频'}
+        {folder.itemCount > 0 ? `${folder.itemCount} 个项目` : '空文件夹'}
       </span>
     </span>
   </UnstyledButton>

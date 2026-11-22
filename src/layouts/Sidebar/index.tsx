@@ -1,11 +1,11 @@
 import { Link, useLocation } from 'react-router';
 import { AppShell, NavLink, ScrollArea } from '@mantine/core';
 import {
+  IconFolder,
   IconLanguage,
   IconNotes,
   IconRepeat,
   IconServer,
-  IconVideo,
 } from '@tabler/icons-react';
 
 import type { NavGroupItem, NavItem, NavLinkItem, SidebarProps } from './types';
@@ -18,7 +18,7 @@ import styles from './index.scss';
  */
 const navItems: NavItem[] = [
   { key: 'services', label: '服务', to: '/services', icon: IconServer },
-  { key: 'videos', label: '视频', to: '/videos', icon: IconVideo },
+  { key: 'files', label: '文件', to: '/files', icon: IconFolder },
   {
     key: 'english',
     label: '英语',

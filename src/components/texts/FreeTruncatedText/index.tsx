@@ -1,10 +1,12 @@
 /**
- * 单行文本：容器放不下才省略，且**只有被省略时**才在 hover / 键盘聚焦时用 tip 展示完整内容。
+ * 省略文本：容器放不下才省略，且**只有被省略时**才在 hover / 键盘聚焦时用 tip 展示完整内容。
  * 文本本来就放得下时不弹任何提示，不给读者加噪音。
  *
- * tip 与量宽都推迟到「被指到的那一刻」才发生（见 `useHoverIntent`）：列表里几百个条目
+ * 默认单行；`lines={2}` 时截到两行，按高度判断是否截断。
+ *
+ * tip 与测量都推迟到「被指到的那一刻」才发生（见 `useHoverIntent`）：列表里几百个条目
  * 各自常驻一个 Tooltip 会白付几百套浮动定位实例的挂载成本，各自挂一个 ResizeObserver
- * 量宽则会拆成几百次强制重排。tip 挂在目标元素旁边、由 `target` 指回去，因此它的
+ * 测量则会拆成几百次强制重排。tip 挂在目标元素旁边、由 `target` 指回去，因此它的
  * 出现与消失不会替换文本元素本身（焦点与鼠标状态都留在原地）。
  */
 
@@ -23,6 +25,7 @@ const FreeTruncatedText = ({
   className,
   disabled = false,
   inline = false,
+  lines = 1,
   onClick,
   position = 'right',
   text,
@@ -32,12 +35,17 @@ const FreeTruncatedText = ({
   const [truncated, setTruncated] = useState(false);
 
   const checkTruncation = useCallback(() => {
-    setTruncated(measure());
-  }, [measure]);
+    setTruncated(measure(lines === 2 ? 'height' : 'width'));
+  }, [measure, lines]);
 
   const [active, hoverHandlers] = useHoverIntent(checkTruncation);
 
-  const classes = cx(styles.text, inline && styles.inline, className);
+  const classes = cx(
+    styles.text,
+    inline && styles.inline,
+    lines === 2 && styles.clamp2,
+    className,
+  );
 
   const content = onClick ? (
     <UnstyledButton

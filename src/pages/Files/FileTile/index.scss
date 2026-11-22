@@ -1,4 +1,4 @@
-/* 视频瓦片：与文件夹瓦片同版式，图标换成视频图标，副文案是文件体积 */
+/* 文件瓦片：与文件夹瓦片同版式，图标换成文件图标，副文案是文件体积 */
 
 .tile {
   display: flex;
@@ -25,7 +25,6 @@
   color: var(--app-ink);
   font-size: 0.86rem;
   line-height: 1.35;
-  overflow-wrap: anywhere;
 }
 
 .meta {

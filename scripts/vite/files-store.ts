@@ -1,5 +1,5 @@
 /**
- * 本地视频目录的只读扫描：列出指定目录下的子文件夹与视频文件。
+ * 本机任意目录的只读扫描：列出指定目录下的子文件夹与常规文件，不限文件类型。
  *
  * 这一层只做读盘与归类，不假设固定仓库位置——目录路径由页面在查询参数里给出，
  * 校验与错误归类都收在这里，路由壳只负责拼响应。
@@ -11,35 +11,18 @@ import path from 'node:path';
 
 import type { Dirent } from 'node:fs';
 
-/** 识别为视频文件的扩展名（小写、带点）；认不出的扩展名不进视频列表 */
-export const VIDEO_EXTENSIONS = [
-  '.mp4',
-  '.mov',
-  '.mkv',
-  '.avi',
-  '.webm',
-  '.m4v',
-  '.ts',
-  '.flv',
-  '.wmv',
-  '.mpeg',
-  '.mpg',
-  '.m2ts',
-  '.3gp',
-] as const;
-
 /** 目录里的一条子文件夹 */
-export type VideoFolderEntry = {
+export type FolderEntry = {
   /** 文件夹名（不含路径） */
   name: string;
   /** 文件夹的绝对路径，点开时原样回传给中间件 */
   path: string;
-  /** 该文件夹直属的视频文件数（不递归子目录） */
-  videoCount: number;
+  /** 该文件夹直属的条目数（文件夹 + 文件，不递归子目录） */
+  itemCount: number;
 };
 
-/** 目录里的一条视频文件 */
-export type VideoFileEntry = {
+/** 目录里的一条文件 */
+export type FileEntry = {
   /** 文件名（含扩展名） */
   name: string;
   /** 文件的绝对路径 */
@@ -51,7 +34,7 @@ export type VideoFileEntry = {
 };
 
 /** 一次目录扫描的结果 */
-export type VideoDirListing = {
+export type DirListing = {
   /** 当前目录的绝对路径 */
   path: string;
   /** 当前目录名 */
@@ -59,16 +42,9 @@ export type VideoDirListing = {
   /** 父目录绝对路径；已经是文件系统根时为 null */
   parent: string | null;
   /** 子文件夹（按名称排序） */
-  folders: VideoFolderEntry[];
-  /** 直属视频文件（按名称排序） */
-  videos: VideoFileEntry[];
-};
-
-/** 视频文件名判定：扩展名在白名单内即算；大小写不敏感 */
-const isVideoName = (name: string): boolean => {
-  const lower = name.toLowerCase();
-
-  return VIDEO_EXTENSIONS.some((ext) => lower.endsWith(ext));
+  folders: FolderEntry[];
+  /** 直属文件（按名称排序） */
+  files: FileEntry[];
 };
 
 /** 以点开头的隐藏条目不进列表，避免把系统文件铺到页面上 */
@@ -117,23 +93,34 @@ export const statusForReadError = (error: unknown): number => {
   return 500;
 };
 
-/** 把读盘错误归成页面能直接读懂的原因；认不出的保留原始信息 */
+/** 把读盘错误归成页面能直接读懂的原因；原始错误码随错误一起保留，供状态码归类 */
 const toReadError = (error: unknown, dir: string): Error => {
-  switch (errorCode(error)) {
-    case 'ENOENT':
-      return new Error(`目录不存在：${dir}`);
-    case 'ENOTDIR':
-      return new Error(`路径不是目录：${dir}`);
-    case 'EACCES':
-    case 'EPERM':
-      return new Error(`没有权限读取目录：${dir}`);
-    default:
-      return error instanceof Error ? error : new Error('读取目录失败');
+  const code = errorCode(error);
+  const message = (() => {
+    switch (code) {
+      case 'ENOENT':
+        return `目录不存在：${dir}`;
+      case 'ENOTDIR':
+        return `路径不是目录：${dir}`;
+      case 'EACCES':
+      case 'EPERM':
+        return `没有权限读取目录：${dir}`;
+      default:
+        return error instanceof Error ? error.message : '读取目录失败';
+    }
+  })();
+
+  const wrapped = new Error(message) as Error & { code?: string };
+
+  if (code) {
+    wrapped.code = code;
   }
+
+  return wrapped;
 };
 
-/** 数一个文件夹直属的视频文件数；读不到就按 0 计，不让单个坏目录拖垮整页 */
-const countVideos = async (dir: string): Promise<number> => {
+/** 数一个文件夹直属的条目数（文件夹 + 文件，不含隐藏项与符号链接）；读不到就按 0 计 */
+const countItems = async (dir: string): Promise<number> => {
   let entries: Dirent[];
 
   try {
@@ -144,18 +131,19 @@ const countVideos = async (dir: string): Promise<number> => {
 
   return entries.reduce(
     (count, entry) =>
-      entry.isFile() && !entry.isSymbolicLink() && !isHiddenName(entry.name)
-        ? count + (isVideoName(entry.name) ? 1 : 0)
+      !entry.isSymbolicLink() && !isHiddenName(entry.name) &&
+      (entry.isDirectory() || entry.isFile())
+        ? count + 1
         : count,
     0,
   );
 };
 
 /**
- * 扫描一个目录：子文件夹直属视频数 + 直属视频文件的大小与修改时间。
+ * 扫描一个目录：子文件夹直属条目数 + 直属文件的大小与修改时间。
  * 单个条目读不到就跳过，不影响同级其它条目；目录本身读不到时抛错给路由壳归类。
  */
-export const listDirectory = async (input: string): Promise<VideoDirListing> => {
+export const listDirectory = async (input: string): Promise<DirListing> => {
   const dir = resolveDir(input);
 
   let entries: Dirent[];
@@ -166,8 +154,8 @@ export const listDirectory = async (input: string): Promise<VideoDirListing> => 
     throw toReadError(error, dir);
   }
 
-  const folders: VideoFolderEntry[] = [];
-  const videos: VideoFileEntry[] = [];
+  const folders: FolderEntry[] = [];
+  const files: FileEntry[] = [];
 
   for (const entry of entries) {
     if (isHiddenName(entry.name) || entry.isSymbolicLink()) {
@@ -180,33 +168,33 @@ export const listDirectory = async (input: string): Promise<VideoDirListing> => 
       folders.push({
         name: entry.name,
         path: entryPath,
-        videoCount: await countVideos(entryPath),
+        itemCount: await countItems(entryPath),
       });
       continue;
     }
 
-    if (entry.isFile() && isVideoName(entry.name)) {
+    if (entry.isFile()) {
       try {
         const info = await stat(entryPath);
 
-        videos.push({
+        files.push({
           name: entry.name,
           path: entryPath,
           size: info.size,
           updatedAt: info.mtime.toISOString(),
         });
       } catch {
-        // 单文件 stat 失败就跳过这一条，目录里其它视频照常展示。
+        // 单文件 stat 失败就跳过这一条，目录里其它条目照常展示。
       }
     }
   }
 
   folders.sort((a, b) => a.name.localeCompare(b.name));
-  videos.sort((a, b) => a.name.localeCompare(b.name));
+  files.sort((a, b) => a.name.localeCompare(b.name));
 
   const parent = path.dirname(dir) === dir ? null : path.dirname(dir);
 
-  return { folders, name: path.basename(dir), parent, path: dir, videos };
+  return { folders, name: path.basename(dir), parent, path: dir, files };
 };
 
 /** 未指定目录时的默认起点：当前用户主目录 */

@@ -15,36 +15,36 @@ import { onPageRefresh } from '@/utils/page-refresh';
 import DirToolbar from './DirToolbar';
 import DirectoryGrid from './DirectoryGrid';
 import { SKELETON_TILES } from './constants';
-import { useVideoDir } from './hooks/useVideoDir';
-import { summarizeCount } from './utils/videos';
+import { useFilesDir } from './hooks/useFilesDir';
+import { summarizeCount } from './utils/files';
 
 import styles from './index.scss';
 
 /**
- * 视频页：按 macOS 目录网格展示本机指定目录下的子文件夹与视频文件。
- * 点文件夹进入下一层，面包屑回退；视频预览播放是单独任务，本页只列摘要。
+ * 文件浏览页：按 macOS 目录网格展示本机指定目录下的子文件夹与文件，不限文件类型。
+ * 点文件夹进入下一层，面包屑回退；文件内容与预览播放是单独任务，本页只列摘要。
  * 目录读取走 Vite 中间件，仅开发模式可用。
  */
-const Videos = () => {
+const Files = () => {
   const { currentDir, listing, loading, error, openDir, refresh, reload } =
-    useVideoDir();
+    useFilesDir();
 
   // 页面标题栏的「刷新当前页面」：静默重读当前目录，失败由订阅方弹提示
   useEffect(() => onPageRefresh(reload), [reload]);
 
   /** 首次 / 切目录还没拿到结果：先给骨架形状，不报 0 */
   const showSkeleton = loading && listing === null;
-  /** 拿到结果但目录里既没有文件夹也没有视频 */
+  /** 拿到结果但目录里既没有文件夹也没有文件 */
   const showEmpty =
     !showSkeleton &&
     listing !== null &&
     listing.folders.length === 0 &&
-    listing.videos.length === 0;
+    listing.files.length === 0;
   /** 还没选过目录：引导先填路径，不报错 */
   const showPrompt = !showSkeleton && listing === null && error === null;
 
   return (
-    <MenuContentLayout fill title="视频">
+    <MenuContentLayout fill title="文件">
       <Stack className={styles.shell} gap="sm">
         <DirToolbar
           currentDir={currentDir}
@@ -80,14 +80,14 @@ const Videos = () => {
 
         {showEmpty ? (
           <Text className={styles.empty} size="sm">
-            这个目录里没有视频或子文件夹
+            这个目录里没有文件或子文件夹
           </Text>
         ) : null}
 
         {listing !== null && !showEmpty ? (
           <>
             <Text c="dimmed" size="xs">
-              {summarizeCount(listing.folders.length, listing.videos.length)}
+              {summarizeCount(listing.folders.length, listing.files.length)}
             </Text>
             <ScrollArea
               className={styles.list}
@@ -95,9 +95,9 @@ const Videos = () => {
               type="auto"
             >
               <DirectoryGrid
+                files={listing.files}
                 folders={listing.folders}
                 onOpenFolder={openDir}
-                videos={listing.videos}
               />
             </ScrollArea>
           </>
@@ -107,4 +107,4 @@ const Videos = () => {
   );
 };
 
-export default Videos;
+export default Files;

@@ -8,7 +8,7 @@ import {
   DIR_INPUT_PLACEHOLDER,
   DIR_INPUT_WIDTH,
 } from '../constants';
-import { splitPathSegments } from '../utils/videos';
+import { splitPathSegments } from '../utils/files';
 
 import type { DirToolbarProps } from './types';
 

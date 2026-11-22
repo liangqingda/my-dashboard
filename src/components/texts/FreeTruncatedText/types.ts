@@ -1,5 +1,5 @@
 /**
- * 单行省略文本的契约：文案 + 交互与 tip 位置，省略与是否需要 tip 由组件自己判断。
+ * 省略文本的契约：文案 + 交互与 tip 位置，省略与是否需要 tip 由组件自己判断。
  */
 
 import type { FloatingPosition } from '@mantine/core';
@@ -17,4 +17,6 @@ export type FreeTruncatedTextProps = {
   onClick?: () => void;
   /** tip 出现方向，默认 right（正右侧）；贴边或被遮挡的场景按需改成 top 等 */
   position?: FloatingPosition;
+  /** 最多保留的行数，默认 1；2 行时按高度判断是否被截断 */
+  lines?: 1 | 2;
 };

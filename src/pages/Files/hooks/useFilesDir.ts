@@ -5,28 +5,28 @@ import { getErrorMessage } from '@/utils/error';
 import { STRING_CODEC } from '@/utils/local-storage';
 
 import { CURRENT_DIR_STORAGE_KEY } from '../constants';
-import type { VideoDirListing, UseVideoDirResult } from '../types';
-import { fetchVideoDir } from '../utils/videos-api';
+import type { DirListing, UseFilesDirResult } from '../types';
+import { fetchFileDir } from '../utils/files-api';
 
 /**
- * 读取本机目录的子文件夹与视频列表。
+ * 读取本机目录的子文件夹与文件列表。
  * 进入页面时按上次记住的目录恢复；没记住过就从主目录开始浏览。`openDir` 切换目录，
  * `refresh` 手动刷新（显示 loading），`reload` 静默同步，供页面标题栏的「刷新当前页面」。
  * 请求竞态由 requestId 收口：过期结果直接忽略。
  */
-export const useVideoDir = (): UseVideoDirResult => {
+export const useFilesDir = (): UseFilesDirResult => {
   const [currentDir, setCurrentDir] = useStoredState(
     CURRENT_DIR_STORAGE_KEY,
     STRING_CODEC,
   );
-  const [listing, setListing] = useState<VideoDirListing | null>(null);
+  const [listing, setListing] = useState<DirListing | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const requestId = useRef(0);
 
   /** 把请求结果落到状态上；请求已过期时直接忽略。当前目录以成功扫描到的路径为准并记住 */
   const apply = useCallback(
-    (snapshot: VideoDirListing, current: number) => {
+    (snapshot: DirListing, current: number) => {
       if (requestId.current !== current) {
         return;
       }
@@ -68,7 +68,7 @@ export const useVideoDir = (): UseVideoDirResult => {
       setError(null);
 
       try {
-        const snapshot = await fetchVideoDir(dir, signal);
+        const snapshot = await fetchFileDir(dir, signal);
 
         apply(snapshot, current);
       } catch (caught) {
@@ -79,25 +79,32 @@ export const useVideoDir = (): UseVideoDirResult => {
     [apply, fail],
   );
 
-  /** 打开指定目录；空路径回到主目录。路径是否合法由中间件收口，失败不翻动当前目录 */
+  /**
+   * 打开指定目录；空路径回到主目录。路径是否合法由中间件收口，失败不翻动当前目录。
+   * 失败原因已记进页面错误条，这里吞掉重抛，避免形成未处理的 Promise 拒绝。
+   */
   const openDir = useCallback(
     (dir: string) => {
       const current = requestId.current + 1;
 
       requestId.current = current;
 
-      void runFetch(dir.trim() || null, current, true);
+      void runFetch(dir.trim() || null, current, true).catch(() => {
+        /* fail 已把错误写进页面状态，这里不再向上抛 */
+      });
     },
     [runFetch],
   );
 
-  /** 手动刷新当前目录（显示 loading） */
+  /** 手动刷新当前目录（显示 loading）；同上，失败由错误条收口 */
   const refresh = useCallback(() => {
     const current = requestId.current + 1;
 
     requestId.current = current;
 
-    void runFetch(currentDir || null, current, true);
+    void runFetch(currentDir || null, current, true).catch(() => {
+      /* fail 已把错误写进页面状态，这里不再向上抛 */
+    });
   }, [currentDir, runFetch]);
 
   /**
@@ -129,7 +136,7 @@ export const useVideoDir = (): UseVideoDirResult => {
 
     requestId.current = current;
 
-    fetchVideoDir(initialDir || null, controller.signal)
+    fetchFileDir(initialDir || null, controller.signal)
       .then(
         (snapshot) => apply(snapshot, current),
         (caught: unknown) => fail(caught, current),

@@ -1,24 +1,24 @@
 /**
- * 视频页的常量：存储键、占位文案与骨架形状。
- * 视频扩展名白名单住在中间件 `scripts/vite/videos-store.ts`，前端不维护第二份。
+ * 文件浏览页的常量：存储键、占位文案与骨架形状。
+ * 文件类型过滤住在中间件 `scripts/vite/files-store.ts`，前端不维护第二份。
  */
 
 import { scopedStorageKey } from '@/utils/page-storage';
 
 /**
- * 这一页在 localStorage 里的页面标识：对应路由 `/videos`
+ * 这一页在 localStorage 里的页面标识：对应路由 `/files`
  * （拼法见 `@/utils/page-storage`）。
  */
-export const VIDEOS_STORAGE_SCOPE = 'videos';
+export const FILES_STORAGE_SCOPE = 'files';
 
 /** 上次打开的目录路径（刷新后回到同一个目录） */
 export const CURRENT_DIR_STORAGE_KEY = scopedStorageKey(
-  VIDEOS_STORAGE_SCOPE,
+  FILES_STORAGE_SCOPE,
   'current-dir',
 );
 
 /** 目录路径输入框的占位文案 */
-export const DIR_INPUT_PLACEHOLDER = '输入本地目录绝对路径，如 ~/Movies';
+export const DIR_INPUT_PLACEHOLDER = '输入本地目录绝对路径，如 ~/Documents';
 
 /** 目录路径输入框宽度 */
 export const DIR_INPUT_WIDTH = 280;

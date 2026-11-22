@@ -1,4 +1,4 @@
-/* 单行省略文本：截断时才弹 tip（判宽逻辑在 hooks/useIsTruncated） */
+/* 省略文本：截断时才弹 tip（判宽 / 判高逻辑在 hooks/useIsTruncated） */
 
 .text {
   display: block;
@@ -8,6 +8,15 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+/* 两行省略：放开换行，交给 -webkit-line-clamp 截到两行，省略号由它自动补 */
+.clamp2 {
+  display: -webkit-box;
+  white-space: normal;
+  text-overflow: clip;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 /* 夹在一行文字里时不要独占整行 */

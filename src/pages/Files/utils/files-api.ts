@@ -1,20 +1,20 @@
 /**
- * 视频页的数据访问层。
- * 开发态走 Vite 插件的 `/api/videos`（实时扫描本机目录）；静态构建不带这个中间件，
+ * 文件浏览页的数据访问层。
+ * 开发态走 Vite 插件的 `/api/files`（实时扫描本机目录）；静态构建不带这个中间件，
  * 页面直接回落提示态，不假设某个目录在产物里有快照。
  *
- * 列表只给摘要（名称 / 路径 / 大小 / 修改时间），视频内容与预览是单独任务，这里不下发文件。
+ * 列表只给摘要（名称 / 路径 / 大小 / 修改时间），文件内容与预览是单独任务，这里不下发文件。
  */
 
 import { readHttpErrorMessage } from '@/utils/error';
 
 import type {
-  VideoDirListing,
-  VideoFileEntry,
-  VideoFolderEntry,
+  DirListing,
+  FileEntry,
+  FolderEntry,
 } from '../types';
 
-const LIST_ENDPOINT = '/api/videos';
+const LIST_ENDPOINT = '/api/files';
 
 /** 取数请求的缓存策略：开发态必须实时，静态产物不读这个接口 */
 const REQUEST_INIT: RequestInit = import.meta.env.DEV
@@ -31,7 +31,7 @@ const asNumber = (value: unknown): number =>
   typeof value === 'number' && Number.isFinite(value) ? value : 0;
 
 /** 归一化一条子文件夹；路径或名字缺失时丢弃 */
-const normalizeFolder = (raw: unknown): VideoFolderEntry | null => {
+const normalizeFolder = (raw: unknown): FolderEntry | null => {
   if (!isObject(raw)) {
     return null;
   }
@@ -43,11 +43,11 @@ const normalizeFolder = (raw: unknown): VideoFolderEntry | null => {
     return null;
   }
 
-  return { name, path, videoCount: asNumber(raw.videoCount) };
+  return { name, path, itemCount: asNumber(raw.itemCount) };
 };
 
-/** 归一化一条视频文件；路径或名字缺失时丢弃 */
-const normalizeVideo = (raw: unknown): VideoFileEntry | null => {
+/** 归一化一条文件；路径或名字缺失时丢弃 */
+const normalizeFile = (raw: unknown): FileEntry | null => {
   if (!isObject(raw)) {
     return null;
   }
@@ -68,7 +68,7 @@ const normalizeVideo = (raw: unknown): VideoFileEntry | null => {
 };
 
 /** 归一化整份目录清单；核心字段不合格返回 null，调用方按错误态处理 */
-const normalizeListing = (raw: unknown): VideoDirListing | null => {
+const normalizeListing = (raw: unknown): DirListing | null => {
   if (!isObject(raw)) {
     return null;
   }
@@ -92,11 +92,11 @@ const normalizeListing = (raw: unknown): VideoDirListing | null => {
     name: asString(raw.name) || path,
     parent: parent || null,
     path,
-    videos: Array.isArray(raw.videos)
-      ? raw.videos.flatMap((item) => {
-          const video = normalizeVideo(item);
+    files: Array.isArray(raw.files)
+      ? raw.files.flatMap((item) => {
+          const file = normalizeFile(item);
 
-          return video ? [video] : [];
+          return file ? [file] : [];
         })
       : [],
   };
@@ -112,13 +112,13 @@ const readJson = async (response: Response): Promise<unknown> => {
 };
 
 /**
- * 读取指定目录的子文件夹与视频列表；`dir` 为 null 时回落主目录。
+ * 读取指定目录的子文件夹与文件列表；`dir` 为 null 时回落主目录。
  * 每次调用都重新读盘，目录变化后刷新即可看到最新内容。
  */
-export const fetchVideoDir = async (
+export const fetchFileDir = async (
   dir: string | null,
   signal?: AbortSignal,
-): Promise<VideoDirListing> => {
+): Promise<DirListing> => {
   if (!import.meta.env.DEV) {
     throw new Error('静态构建不支持读取本地目录，请在开发模式下打开');
   }

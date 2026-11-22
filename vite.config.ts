@@ -9,7 +9,7 @@ import type { Plugin } from 'vite';
 import { englishNotes } from './scripts/vite/english-notes.js';
 import { englishRecords } from './scripts/vite/english-records.js';
 import { localAgent } from './scripts/vite/local-agent.js';
-import { videos } from './scripts/vite/videos.js';
+import { files } from './scripts/vite/files.js';
 
 const rootDir = fileURLToPath(new URL('.', import.meta.url));
 const srcDir = normalizePath(path.resolve(rootDir, 'src'));
@@ -107,7 +107,7 @@ export default defineConfig({
     englishNotes(rootDir),
     englishRecords(rootDir),
     localAgent(rootDir),
-    videos(),
+    files(),
     implicitScssModules(),
     react(),
   ],
