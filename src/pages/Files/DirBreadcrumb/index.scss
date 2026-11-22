@@ -43,3 +43,9 @@
 .placeholder {
   color: var(--app-ink-faint);
 }
+
+/* 表格视图下的路径行：没有卡片底托，用一条下边框把它和表格分开 */
+.divider {
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--app-line);
+}

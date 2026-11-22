@@ -166,7 +166,11 @@ const Files = () => {
       title="文件"
     >
       <Stack className={styles.shell} gap="sm">
-        <DirBreadcrumb currentDir={currentDir} onNavigate={goToDir} />
+        <DirBreadcrumb
+          currentDir={currentDir}
+          divider={!isGridView}
+          onNavigate={goToDir}
+        />
 
         {error !== null ? (
           <Alert color="red" title="读取目录失败">
@@ -205,7 +209,7 @@ const Files = () => {
 
         {listing !== null && !showEmpty ? (
           <ScrollArea
-            className={styles.list}
+            className={isGridView ? styles.list : styles.tableList}
             offsetScrollbars="y"
             scrollbarSize={6}
             scrollbars="y"
