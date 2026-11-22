@@ -9,6 +9,8 @@
   正文高度 `82dvh`（上限 `88dvh`），全屏时铺满 `100vw / 100dvh`。
 - **header**：紧凑版（上下内边距 6px，高度由行内最高按钮决定，约 41px），用 `.content .header`
   双类名压掉 Mantine 的 `min-height` —— 单类名会被它那套 padding / min-height 顶回来。
+- **header 里的按钮**：翻页与全屏走 `FreeIconAction`（`size="sm"`、语气恒为 `normal`、tip 与 `aria-label` 同句，
+  键位提示走 `tooltipLabel`），**外壳不自维护图标按钮样式**；关闭按钮是组件库 `Modal` 内建的 `closeButton`。
 - **header 顺序（固定）**：翻页与计数 → 标题 → `headerActions` → 全屏 → `headerTail` →
   `headerSecondary` → 竖线 → Mantine 关闭按钮。
   竖线只有一条，画在**关闭按钮之前**（操作区与关闭的分界），组与组之间不再画线；

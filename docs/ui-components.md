@@ -138,7 +138,7 @@
 | `FreePanelFooter` | 弹层面板底部一行：左侧边界说明 + 右侧「重置」（组件库 `Button` subtle 小号） | 说明文案、置灰口径、重置动作 |
 | `FreeModal` | 弹窗外壳（唯一一扇）：框体与遮罩、紧凑 header（顺序为翻页 → 标题 → 第一组操作 → 全屏 → 末尾位 → 第二组操作）、全屏开关按钮与整套键位（空格 / 翻篇 / `F` / `C` 复制 / `Delete` 删除）；两种高度模式：`reading`（固定 `82dvh`）/ `auto`（随内容、上限 `88dvh`、正文自己滚）；全屏偏好走它的 `useModalFullscreen(storageKey)` | 标题文案、翻页数据、各组按钮的组件与能力（复制什么、删除怎么确认）、正文内容与滚动方式 |
 | `FreeTruncatedText` | 单行文本的截断口径：放不下才省略、**只有被截断且被指到时**才弹 tip；量宽与 tip 创建都推迟到被指到那一刻 | 多行省略、tip 内容定制（tip 恒为原文）、业务字号与颜色 |
-| `FreeIconAction` | 图标按钮的形状与档位：`subtle` 变体、`xs` / `sm` / `lg` 三档尺寸、`normal` / `accent` / `danger` 三档语气（只改颜色）、tooltip 与 aria-label 同句且**被指到时才挂**、`tooltipLabel` 承载变化中的文案（如「已复制」）；`tooltip` 两档：`hover` 自己挂 / `none` 只出按钮本体（给 `Popover.Target` 这类锚点位） | 图标本身与像素尺寸、点击后做什么、是否 `stopPropagation`；`layouts/Header` 品牌区那颗切换按钮不在此列（26px 与 `--app-ink-soft` 色调，属全局品牌视觉） |
+| `FreeIconAction` | 图标按钮的形状与档位：`subtle` 变体、`xs` / `sm` / `lg` 三档尺寸、`normal` / `accent` / `danger` 三档语气（只改颜色）、tooltip 与 aria-label 同句且**被指到时才挂**、`tooltipLabel` 承载变化中的文案（如「已复制」）；`tooltip` 两档：`hover` 自己挂 / `none` 只出按钮本体（给 `Popover.Target` 这类锚点位）；禁用态统一为「透明底 + 变淡」，加载中不套这套 | 图标本身与像素尺寸、点击后做什么、是否 `stopPropagation`；`layouts/Header` 品牌区那颗切换按钮不在此列（26px 与 `--app-ink-soft` 色调，属全局品牌视觉） |
 | `FreeSearchInput` | 搜索框口径：`size="xs"` + 左侧搜索图标 + 值非空才出现的清空按钮（点完清空并**把焦点留在输入框**）；`autoFocus` / 标题 / 说明 / 面板字段间距按需传入 | 值、占位文案、回车与快捷键行为（`onKeyDown` 由调用方给） |
 
 **规划中、尚未落地**：`FreeInput`（普通表单输入框的尺寸档与标签 / 错误提示位；搜索框已由

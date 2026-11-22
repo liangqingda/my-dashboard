@@ -18,6 +18,19 @@
   color: var(--app-accent-strong);
 }
 
+/*
+ * 禁用：清掉组件库给的灰底与描边。这一排图标平时是透明的，
+ * 突然多一块底色会看着像「那一个被选中了」；只留变淡 + 不能点。
+ * 加载中（`data-loading`）不掺和：那是「进行中」，不是「不可点」。
+ */
+.button:disabled:not([data-loading]),
+.button[data-disabled]:not([data-loading]) {
+  border-color: transparent;
+  background: transparent;
+  color: var(--app-ink-faint);
+  opacity: 0.4;
+}
+
 /* 危险操作（删除）：只描红，不做实底 */
 .danger {
   color: var(--app-status-danger);

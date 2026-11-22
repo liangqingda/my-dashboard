@@ -8,7 +8,7 @@
  * 全屏状态由调用方持有（正文排版要跟着变），状态本身用 `hooks/useModalFullscreen` 记住。
  */
 
-import { ActionIcon, FocusTrap, Modal, Tooltip } from '@mantine/core';
+import { FocusTrap, Modal } from '@mantine/core';
 import {
   IconChevronLeft,
   IconChevronRight,
@@ -16,6 +16,7 @@ import {
   IconMinimize,
 } from '@tabler/icons-react';
 
+import FreeIconAction from '@/components/buttons/FreeIconAction';
 import { cx } from '@/utils/cx';
 
 import { useModalShortcuts } from './hooks/useModalShortcuts';
@@ -119,30 +120,22 @@ const FreeModal = ({
         >
           {nav ? (
             <>
-              <Tooltip label={tip(nav.previousLabel ?? '上一个')} withArrow>
-                <ActionIcon
-                  aria-label={nav.previousLabel ?? '上一个'}
-                  className={styles.stepButton}
-                  disabled={nav.disabled === true || nav.onPrevious === null}
-                  onClick={nav.onPrevious ?? undefined}
-                  size="sm"
-                  variant="subtle"
-                >
-                  <IconChevronLeft size={STEP_ICON_SIZE} stroke={ICON_STROKE} />
-                </ActionIcon>
-              </Tooltip>
-              <Tooltip label={tip(nav.nextLabel ?? '下一个')} withArrow>
-                <ActionIcon
-                  aria-label={nav.nextLabel ?? '下一个'}
-                  className={styles.stepButton}
-                  disabled={nav.disabled === true || nav.onNext === null}
-                  onClick={nav.onNext ?? undefined}
-                  size="sm"
-                  variant="subtle"
-                >
-                  <IconChevronRight size={STEP_ICON_SIZE} stroke={ICON_STROKE} />
-                </ActionIcon>
-              </Tooltip>
+              <FreeIconAction
+                disabled={nav.disabled === true || nav.onPrevious === null}
+                label={nav.previousLabel ?? '上一个'}
+                onClick={nav.onPrevious ?? undefined}
+                tooltipLabel={tip(nav.previousLabel ?? '上一个')}
+              >
+                <IconChevronLeft size={STEP_ICON_SIZE} stroke={ICON_STROKE} />
+              </FreeIconAction>
+              <FreeIconAction
+                disabled={nav.disabled === true || nav.onNext === null}
+                label={nav.nextLabel ?? '下一个'}
+                onClick={nav.onNext ?? undefined}
+                tooltipLabel={tip(nav.nextLabel ?? '下一个')}
+              >
+                <IconChevronRight size={STEP_ICON_SIZE} stroke={ICON_STROKE} />
+              </FreeIconAction>
               <span className={styles.position}>
                 {nav.index} / {nav.total}
               </span>
@@ -154,24 +147,17 @@ const FreeModal = ({
             <div className={styles.actions}>{headerActions}</div>
           ) : null}
           {fullscreen ? (
-            <Tooltip
-              label={fullscreen.active ? '退出全屏（F）' : '全屏（F）'}
-              withArrow
+            <FreeIconAction
+              label={fullscreen.active ? '退出全屏' : '全屏'}
+              onClick={fullscreen.onToggle}
+              tooltipLabel={fullscreen.active ? '退出全屏（F）' : '全屏（F）'}
             >
-              <ActionIcon
-                aria-label={fullscreen.active ? '退出全屏' : '全屏'}
-                className={styles.iconButton}
-                onClick={fullscreen.onToggle}
-                size="sm"
-                variant="subtle"
-              >
-                {fullscreen.active ? (
-                  <IconMinimize size={ICON_SIZE} stroke={ICON_STROKE} />
-                ) : (
-                  <IconMaximize size={ICON_SIZE} stroke={ICON_STROKE} />
-                )}
-              </ActionIcon>
-            </Tooltip>
+              {fullscreen.active ? (
+                <IconMinimize size={ICON_SIZE} stroke={ICON_STROKE} />
+              ) : (
+                <IconMaximize size={ICON_SIZE} stroke={ICON_STROKE} />
+              )}
+            </FreeIconAction>
           ) : null}
           {headerTail}
           {headerSecondary}
