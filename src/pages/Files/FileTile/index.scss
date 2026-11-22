@@ -21,10 +21,9 @@
   padding: 12px 8px;
 }
 
-/* 正在被拖拽的文件：弱化半透明，光标切到拖拽态 */
+/* 正在被拖拽的文件：弱化半透明，光标交给浏览器绘制（见 dragstart 的 effectAllowed） */
 .dragging {
   opacity: 0.4;
-  cursor: grabbing;
 }
 
 /* hover 才浮出的操作按钮组：按钮组定位在 EntryTileActions，这里只挂 hover 显隐 */

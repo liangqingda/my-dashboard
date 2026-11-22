@@ -24,15 +24,9 @@
   cursor: pointer;
 }
 
-/* 正在被拖拽的条目：弱化半透明，光标切到拖拽态 */
+/* 正在被拖拽的条目：弱化半透明，光标交给浏览器绘制（见 dragstart 的 effectAllowed） */
 .dragging {
   opacity: 0.4;
-  cursor: grabbing;
-}
-
-/* 内层可点按钮自带手型，拖拽中跟着外层切回抓取光标 */
-.wrapper.dragging .tile {
-  cursor: grabbing;
 }
 
 /* 拖拽悬停的目标文件夹：描一圈强调色底托，提示可以放入 */
