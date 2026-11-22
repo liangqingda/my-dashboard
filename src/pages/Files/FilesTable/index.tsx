@@ -86,7 +86,7 @@ const FilesTable = memo(
     };
 
     return (
-      <FreeTable layout="fixed">
+      <FreeTable className={styles.tableFrame} layout="fixed">
         <FreeTable.Thead>
           <FreeTable.Tr>
             <FreeTable.Th scope="col">名称</FreeTable.Th>
