@@ -16,12 +16,14 @@
   background: var(--app-surface);
 }
 
-/* 表格滚动区：表头吸顶用的是页面底色（--app-bg），所以不套白底卡片，
-   否则滚上去的行会从一块「白卡片里的灰表头」下穿过 */
+/* 表格滚动区：表头吸顶用的是页面底色（--app-bg），所以不铺白底卡片，
+   只画一圈外边框把表格范围圈出来（边框 / 圆角与网格卡片同一口径） */
 .tableList {
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
+  border: 1px solid var(--app-line);
+  border-radius: var(--mantine-radius-md);
 }
 
 /* 骨架网格：与真实网格同列宽口径 */

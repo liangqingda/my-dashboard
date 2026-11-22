@@ -166,11 +166,7 @@ const Files = () => {
       title="文件"
     >
       <Stack className={styles.shell} gap="sm">
-        <DirBreadcrumb
-          currentDir={currentDir}
-          divider={!isGridView}
-          onNavigate={goToDir}
-        />
+        <DirBreadcrumb currentDir={currentDir} onNavigate={goToDir} />
 
         {error !== null ? (
           <Alert color="red" title="读取目录失败">
