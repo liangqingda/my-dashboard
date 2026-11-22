@@ -8,12 +8,14 @@
    * surfaces：浅色下 chrome（--app-surface-subtle，顶栏 / 侧栏）比内容区（--app-bg）暗一档，
    * 暗色下反过来比内容区亮一档（见下面暗色块）——两边都是「外壳从画布上浮出来」，
    * 只是浅色靠暗一点、暗色靠亮一点。卡片（--app-surface）永远比内容区更靠前。
+   * 浅色这组整体压得比早先那版（#f3f6f4 / #eef2f0）暗一档：白底满屏时太晃眼，
+   * 描线（--app-line）也跟着压深，否则边框落在画布上会糊掉。
    */
-  --app-bg: #eaeeec;
+  --app-bg: #e3e8e5;
   --app-surface: #ffffff;
-  --app-surface-subtle: #e7ecea;
+  --app-surface-subtle: #dfe5e2;
   /* hover 要同时压过内容区与纯白卡片：跟着内容区一起调深，否则落在画布上几乎看不出来 */
-  --app-surface-hover: #e3ece7;
+  --app-surface-hover: #d6e3dd;
 
   /* ink：strong 夹在正文（ink-soft）与标题（ink）之间，比正文重、比标题轻，让加粗不与标题同亮度 */
   --app-ink-strong: #2a3b35;
@@ -21,9 +23,9 @@
   --app-ink-soft: #5b6b66;
   --app-ink-faint: #64766e;
 
-  /* lines */
-  --app-line: #e2e8e5;
-  --app-line-strong: #d2ddd8;
+  /* lines：跟着压暗的画布走，比 --app-bg 深一档才看得见 */
+  --app-line: #d3dcd7;
+  --app-line-strong: #c3cfc9;
 
   /* accent (teal / verdigris) */
   --app-accent: #0e7a64;
@@ -43,7 +45,7 @@
   --app-status-danger-fill: #b53228;
   --app-status-danger-fill-hover: #9c2a21;
   --app-status-muted: #64766e;
-  --app-status-muted-soft: #e7ecea;
+  --app-status-muted-soft: #dfe5e2;
 
   /* spacing */
   --app-space-sm: 0.5rem;
