@@ -24,7 +24,7 @@
   - **空格**：关窗，并 `preventDefault` 掉浏览器「空格 = 点击当前焦点按钮」——焦点常留在 header
     图标上，不拦的话按空格会莫名翻到下一条 / 切了全屏；`closeOnSpace` 默认跟随 `closeOnEscape`；
   - **`[` / `【`、`←` 上一个；`]` / `】`、`→` 下一个**：有 `nav` 且未禁用时；
-  - **`F`**：切换全屏（有全屏按钮时）；
+  - **`F`**：切换全屏（有全屏按钮、即 `showToggle` 不为 `false` 时）；
   - **`C` 复制**：传了 `copy` 时把那段文本写进剪贴板，并给一条成功 / 失败提示（走固定通知 id）；
   - **`Delete` / `Backspace` 删除**：传了 `onRequestDelete` 时触发它（调用方只打开二次确认层，
     不在这里直接删）。两个键都认：macOS 键盘上印着 delete 的那颗发出来的就是 `Backspace`。
@@ -57,7 +57,7 @@
 | `headerActions` | 第一组操作（阅读类：复制、筛选、刷新…） |
 | `headerTail` | 排在全屏之后的末尾位，保证「删除」始终在最右 |
 | `headerSecondary` | 第二组操作（如编辑流程），紧接在 `headerTail` 之后、关闭按钮的竖线之前 |
-| `fullscreen` | `{ active, onToggle }`；不传则不显示全屏按钮 |
+| `fullscreen` | `{ active, onToggle, showToggle? }`；不传则没有全屏外观与按钮。`showToggle` 默认 `true`，传 `false` 时只保留 `active` 决定的铺满外观、不画按钮也不响应 `F`（进编辑这类不该换尺寸的场景） |
 | `copy` | `{ text, message }`；传了就有 `C` 复制键（`text` 进剪贴板，`message` 是成功提示），与 header 的复制按钮同一口径 |
 | `onRequestDelete` | 传了就有 `Delete` / `Backspace` 删除键；只应打开二次确认层，不直接删 |
 | `closeButton` | 是否显示关闭按钮，默认显示（编辑态这类「关不掉」的场景传 `false`） |

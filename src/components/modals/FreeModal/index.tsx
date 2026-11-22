@@ -63,6 +63,15 @@ const FreeModal = ({
   trapFocus = true,
 }: FreeModalProps) => {
   /**
+   * 全屏切换入口：`showToggle: false` 时只保留铺满外观、不画按钮、也不吃 `F`。
+   * 尺寸由 `active` 单独决定，两件事分开，进编辑不会突然缩回常规。
+   */
+  const fullscreenToggleVisible = fullscreen?.showToggle !== false;
+  const onToggleFullscreen = fullscreenToggleVisible
+    ? fullscreen?.onToggle
+    : undefined;
+
+  /**
    * 空格关窗与翻页 / 全屏 / 复制 / 删除快捷键：业务弹窗不用各自实现。
    * 空格默认与 Esc 同口径；其余键由 `shortcutsEnabled` 整组把关，复制与删除另按能力挂接。
    */
@@ -75,7 +84,7 @@ const FreeModal = ({
     nav,
     onClose,
     onRequestDelete,
-    onToggleFullscreen: fullscreen?.onToggle,
+    onToggleFullscreen,
   });
 
   /** 翻页 tooltip 的快捷键提示：业务侧没给就用这套统一的键位 */
@@ -151,7 +160,7 @@ const FreeModal = ({
           {headerActions ? (
             <div className={styles.actions}>{headerActions}</div>
           ) : null}
-          {fullscreen ? (
+          {fullscreen && fullscreenToggleVisible ? (
             <FreeIconAction
               label={fullscreen.active ? '退出全屏' : '全屏'}
               onClick={fullscreen.onToggle}
@@ -170,7 +179,11 @@ const FreeModal = ({
             竖线只画在关闭按钮之前：它是「操作区 / 关闭」的分界，不和组与组的分隔混在一起。
             没有关闭按钮（编辑态关不掉）、或右侧一个图标都没渲染时都不画，免得留一条孤线。
           */}
-          {closeButton && (headerActions || headerTail || fullscreen || headerSecondary) ? (
+          {closeButton &&
+          (headerActions ||
+            headerTail ||
+            (fullscreen && fullscreenToggleVisible) ||
+            headerSecondary) ? (
             <span aria-hidden="true" className={styles.divider} />
           ) : null}
         </div>

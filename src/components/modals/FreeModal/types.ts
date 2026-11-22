@@ -25,6 +25,12 @@ export type FreeModalFullscreen = {
   active: boolean;
   /** 切换全屏 */
   onToggle: () => void;
+  /**
+   * 是否给切换入口（header 按钮与 `F` 键），默认 `true`。
+   * 传 `false` 时只保留「当前是否铺满」这一层外观：进编辑这类不该换阅读尺寸的场景，
+   * 收掉入口而不是把框体缩回常规。
+   */
+  showToggle?: boolean;
 };
 
 /**

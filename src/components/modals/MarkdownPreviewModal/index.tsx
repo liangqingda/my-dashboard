@@ -163,7 +163,7 @@ const MarkdownPreviewModal = ({
    * 编辑态（含草稿预览）关不掉：关闭按钮不渲染，Esc / 点遮罩只提示；唯一出口是返回箭头。
    * Esc 的归属：header 弹层 / 子区域预览开着时只收那一层（`closeOnEscape` 由它们把关）。
    */
-  /** 编辑态（含草稿预览）收掉阅读类操作与全屏：这时要看的是块编辑器 */
+  /** 编辑态（含草稿预览）收掉阅读类操作与全屏入口（铺满外观保留，见 `fullscreen.showToggle`） */
   const documentActionsVisible = !editing.editing;
 
   return (
@@ -177,11 +177,11 @@ const MarkdownPreviewModal = ({
             ? { message: '相对路径已复制', text: relativePath }
             : undefined
         }
-        fullscreen={
-          documentActionsVisible
-            ? { active: fullscreen, onToggle: toggleFullscreen }
-            : undefined
-        }
+        fullscreen={{
+          active: fullscreen,
+          onToggle: toggleFullscreen,
+          showToggle: documentActionsVisible,
+        }}
         headerActions={
           documentActionsVisible ? (
             <DocumentActions
