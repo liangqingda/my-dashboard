@@ -52,6 +52,8 @@ const OutlineNavItem = ({
       <FreeTruncatedText
         className={styles.item}
         disabled={disabled}
+        /* 目录列宽可拖，宽度事后会变：走尾部省略，middle 的拼法跟不上拖拽 */
+        ellipsis="end"
         onClick={onSelect}
         text={text}
       />

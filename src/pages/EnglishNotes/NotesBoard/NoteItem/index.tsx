@@ -39,7 +39,13 @@ const NoteItem = memo(({ note, category, onOpen }: NoteItemProps) => {
         }}
         type="button"
       >
-        <FreeTruncatedText className={styles.name} position="top" text={label} />
+        {/* 列 hover 时抢份额变宽、窄屏又改成固定宽：宽度会变，走尾部省略 */}
+        <FreeTruncatedText
+          className={styles.name}
+          ellipsis="end"
+          position="top"
+          text={label}
+        />
         <IconChevronRight
           aria-hidden="true"
           className={styles.chevron}

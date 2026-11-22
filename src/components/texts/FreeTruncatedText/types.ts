@@ -4,7 +4,7 @@
 
 import type { FloatingPosition } from '@mantine/core';
 
-/** 省略位置：`end` 尾部省略；`middle` 头部与尾部都保留、中间省略 */
+/** 省略位置：`middle` 头部与尾部都保留、中间省略（默认）；`end` 尾部省略 */
 export type TruncationEllipsis = 'end' | 'middle';
 
 export type FreeTruncatedTextProps = {
@@ -22,6 +22,9 @@ export type FreeTruncatedTextProps = {
   position?: FloatingPosition;
   /** 最多保留的行数，默认 1；正整数，多行时按高度判断是否被截断 */
   lines?: number;
-  /** 省略位置，默认 `end`（尾部省略）；`middle` 保留头部与尾部，省略号落在最后一行的水平中间 */
+  /**
+   * 省略位置，默认 `middle`（保留头部与尾部，省略号落在最后一行的水平中间）；
+   * 宽度会在静止状态下变的位置（可拖列宽、hover 让列变宽）传 `end` 走尾部省略
+   */
   ellipsis?: TruncationEllipsis;
 };
