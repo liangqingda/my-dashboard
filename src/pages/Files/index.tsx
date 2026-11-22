@@ -69,7 +69,6 @@ const Files = () => {
           loading={loading}
           onCategoriesChange={onCategoriesChange}
           onNavigate={openDir}
-          onOpenDir={openDir}
           onOpenFavorite={openDir}
           onPickDir={pickDir}
           onRemoveFavorite={removeFavorite}
@@ -103,7 +102,7 @@ const Files = () => {
 
         {showPrompt ? (
           <Text className={styles.empty} size="sm">
-            输入本地目录的绝对路径后回车；留空则浏览主目录
+            点「打开」选择要浏览的本地目录，或从收藏目录进入
           </Text>
         ) : null}
 
@@ -114,7 +113,13 @@ const Files = () => {
         ) : null}
 
         {listing !== null && !showEmpty ? (
-          <ScrollArea className={styles.list} scrollbars="y" type="auto">
+          <ScrollArea
+            className={styles.list}
+            offsetScrollbars="y"
+            scrollbarSize={6}
+            scrollbars="y"
+            type="auto"
+          >
             <DirectoryGrid
               files={visibleFiles}
               folders={listing.folders}

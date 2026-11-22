@@ -26,12 +26,6 @@ export const FAVORITES_STORAGE_KEY = scopedStorageKey(
   'favorites',
 );
 
-/** 目录路径输入框的占位文案 */
-export const DIR_INPUT_PLACEHOLDER = '输入本地目录绝对路径，如 ~/Documents';
-
-/** 目录路径输入框宽度 */
-export const DIR_INPUT_WIDTH = 280;
-
 /** 首屏骨架块的数量：只为给一个「正在读」的形状，不假装有数据 */
 export const SKELETON_TILES: readonly number[] = [0, 1, 2, 3, 4, 5, 6, 7];
 

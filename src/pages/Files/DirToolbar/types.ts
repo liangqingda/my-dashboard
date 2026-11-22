@@ -20,8 +20,6 @@ export type DirToolbarProps = {
   typeOptions: { value: FileCategory; label: string }[];
   /** 类型筛选已选分类；空数组表示不过滤 */
   selectedCategories: FileCategory[];
-  /** 按输入框里的路径打开目录 */
-  onOpenDir: (dir: string) => void;
   /** 调起系统目录选择器选择目录 */
   onPickDir: () => void;
   /** 收藏 / 取消收藏当前目录 */

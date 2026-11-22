@@ -1,4 +1,4 @@
-/* 目录工具栏：面包屑一行，路径输入与打开按钮一行，换行时各自靠左 */
+/* 目录工具栏：上行面包屑 + 右侧操作，下行类型与收藏下拉 */
 
 .toolbar {
   display: flex;
@@ -6,10 +6,23 @@
   gap: 8px;
 }
 
+.top {
+  width: 100%;
+}
+
 .breadcrumb {
   min-height: 20px;
   color: var(--app-ink-soft);
   font-size: 0.8rem;
+}
+
+.actions {
+  flex: 0 0 auto;
+}
+
+.divider {
+  height: 18px;
+  --divider-color: var(--app-line);
 }
 
 .home {
