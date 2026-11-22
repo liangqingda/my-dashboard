@@ -20,10 +20,11 @@
   vertical-align: bottom;
 }
 
+/* 单元格默认垂直居中：列表行的行高常被图标按钮 / 徽标撑起来，贴顶会让文字偏上、行底留白 */
 .table td {
   padding: 7px 12px;
   border-bottom: 1px solid var(--app-line);
-  vertical-align: top;
+  vertical-align: middle;
 }
 
 /* 密排：编辑器网格用，字与行都贴着内容，字号由所属编辑器自己定 */
@@ -34,5 +35,4 @@
 
 .compact td {
   padding: 2px 6px;
-  vertical-align: middle;
 }

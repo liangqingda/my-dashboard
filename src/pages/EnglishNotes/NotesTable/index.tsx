@@ -123,7 +123,6 @@ const NotesTable = memo(({
                   </FreeTable.Td>
                   <FreeTable.Td className={styles.actionWidth}>
                     <CopyIconButton
-                      className={styles.actionButton}
                       label="复制相对路径"
                       text={getNoteRelativePath(row.note.name)}
                     />
