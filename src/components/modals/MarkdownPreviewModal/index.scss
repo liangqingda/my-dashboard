@@ -131,14 +131,16 @@
  * 译文弱化：故事段落译文与对话台词译文由笔记侧统一打 `.noteTranslation` 标记，
  * 颜色退到最浅一档、字号小半档（与表格同档 0.78rem），把英文原文留作主视觉；
  * 颜色与字号都走主题 / 字号变量，不写死 hex 或 px，深浅色与用户字号偏好自动跟随。
+ * 这个类名写在笔记的 Markdown HTML 里、不经 TSX 的 styles 对象下发，必须用 :global 逃逸：
+ * 本文件是隐式 CSS Module，普通类选择器会被本地哈希，笔记里的字面 class 反而匹配不上。
  */
-.prose .noteTranslation {
+.prose :global(.noteTranslation) {
   color: var(--app-ink-faint);
   font-size: calc(0.78rem + var(--prose-grow) + var(--prose-extra));
   line-height: 1.7;
 }
 
-.prose p.noteTranslation {
+.prose p:global(.noteTranslation) {
   margin: -4px 0 12px;
 }
 
@@ -250,7 +252,7 @@
   background: var(--app-code-bg);
   color: var(--app-code-color);
   font-family: var(--mantine-font-family-monospace);
-  font-size: 0.82em;
+  font-size: 0.9em;
 }
 
 .prose pre {
