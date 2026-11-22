@@ -4,21 +4,21 @@
  *
  * 与「点击行为」一样是「怎么看链接」的偏好，不属于某一篇：记在 localStorage，
  * 换篇、关掉重开、刷新页面后都保持上次的样子；存储值不在枚举里（改版、被手工改坏）
- * 时由 `createChoiceCodec` 回落默认（切换全文）。
+ * 时由 `createChoiceFieldCodec` 回落默认（切换全文）。
  */
 
-import { useStoredState } from '@/hooks/useStoredState';
-import { createChoiceCodec } from '@/utils/local-storage';
+import { useStoredField } from '@/hooks/useStoredField';
+import { createChoiceFieldCodec } from '@/utils/local-storage';
 
 import type { AnchorNavScope } from '../types';
 import {
   ANCHOR_NAV_SCOPES,
-  ANCHOR_NAV_SCOPE_STORAGE_KEY,
+  ANCHOR_NAV_SCOPE_FIELD,
   DEFAULT_ANCHOR_NAV_SCOPE,
 } from '../constants';
 
 /** 存两种口径之一：缺失或不在枚举里都回落默认 */
-const SCOPE_CODEC = createChoiceCodec(
+const SCOPE_CODEC = createChoiceFieldCodec(
   ANCHOR_NAV_SCOPES,
   DEFAULT_ANCHOR_NAV_SCOPE,
 );
@@ -34,11 +34,13 @@ export type AnchorNavScopeState = {
 /**
  * 管理子区域预览的前后切换口径。
  *
+ * @param storageKey 主预览的偏好命名空间（这一项只挂在主预览上）
  * @returns 当前口径与切换动作（`AnchorNavScopeState`）
  */
-export const useAnchorNavScope = (): AnchorNavScopeState => {
-  const [scope, setScope] = useStoredState(
-    ANCHOR_NAV_SCOPE_STORAGE_KEY,
+export const useAnchorNavScope = (storageKey: string): AnchorNavScopeState => {
+  const [scope, setScope] = useStoredField(
+    storageKey,
+    ANCHOR_NAV_SCOPE_FIELD,
     SCOPE_CODEC,
   );
 

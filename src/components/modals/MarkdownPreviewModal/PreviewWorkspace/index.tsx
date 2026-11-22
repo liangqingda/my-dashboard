@@ -42,6 +42,7 @@ const PreviewWorkspace = ({
   onBodyClick,
   onHighlightNavigation,
   opened,
+  storageKey,
   title,
 }: PreviewWorkspaceProps) => {
   /** 正文节点：滚动跟踪、换篇回顶与点目录定位都读它 */
@@ -172,6 +173,7 @@ const PreviewWorkspace = ({
         fullscreen={fullscreen}
         headings={outline}
         onSelect={jumpToHeading}
+        storageKey={storageKey}
       />
       <div className={styles.pane}>
         {/* 正文还在取：只放一个居中的加载指示，不渲染空 Markdown，也不给编辑入口 */}

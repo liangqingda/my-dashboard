@@ -307,8 +307,16 @@ export type InteractionControlProps = {
   onDetailsScopeChange: (scope: DetailsNavScope) => void;
 };
 
+/**
+ * 子区域预览的入口：同文档链接指向的一节 / 折叠块里的正文。
+ * 两种入口共用同一个组件，但各自记住自己的全屏、字号与目录宽度。
+ */
+export type SectionPreviewVariant = 'anchor' | 'details';
+
 /** 子区域预览的装配入参：这一段内容与「能切到哪几段」都由调用方算好 */
 export type SectionPreviewProps = {
+  /** 这次是从哪个入口打开的：决定阅读偏好存进哪一套 */
+  variant: SectionPreviewVariant;
   /** 可切换的全部区块（锚点区块 / 折叠块），按正文顺序 */
   sections: readonly MarkdownPreviewSection[];
   /** 当前打开第几段；null 表示关着 */
@@ -346,6 +354,8 @@ export type PreviewWorkspaceProps = {
   title: string;
   /** 全屏预览：目录全展开、正文放大 */
   fullscreen: boolean;
+  /** 这层预览的偏好命名空间：目录宽度与收起状态存在里面 */
+  storageKey: string;
   /** 关键词匹配导航就绪后回传给弹窗层；卸载 / 无导航时回传 null */
   onHighlightNavigation?: (navigation: MarkdownFilterNavigation | null) => void;
   /** 正文字号的用户偏移（px） */
@@ -411,6 +421,8 @@ export type OutlineNavProps = {
   fullscreen: boolean;
   /** 点击第几条标题 */
   onSelect: (index: number) => void;
+  /** 这层预览的偏好命名空间：目录宽度与收起状态各层各记一份 */
+  storageKey: string;
 };
 
 /** 目录宽度偏好：收起时仍记住展开过的宽度，点窄轨能还原回去 */

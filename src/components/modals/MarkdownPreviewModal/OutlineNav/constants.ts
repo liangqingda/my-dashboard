@@ -1,9 +1,9 @@
 /**
- * 标题目录 sidebar 的宽度约束：拖拽区间、收起阈值、键盘步长与存储键。
+ * 标题目录 sidebar 的宽度约束：拖拽区间、收起阈值、键盘步长与存储字段名。
  *
- * 宽度是「怎么看」的偏好，和全屏一样记在 localStorage：换篇、关掉重开、刷新页面后
- * 都还是上次拖出来的样子。编解码见 `hooks/useOutlineWidth`（那里才是读写偏好的地方，
- * 本文件只放数值与键）。
+ * 宽度是「怎么看」的偏好，和全屏一样记在 localStorage（这一层预览的命名空间对象里）：
+ * 换篇、关掉重开、刷新页面后都还是上次拖出来的样子；主预览与两种子预览各记一份。
+ * 编解码见 `hooks/useOutlineWidth`（那里才是读写偏好的地方，本文件只放数值与字段名）。
  */
 
 import type { OutlineWidthPreference } from '../types';
@@ -23,9 +23,8 @@ export const OUTLINE_COLLAPSE_WIDTH = 72;
 /** 键盘微调（← / →）一次的步长 */
 export const OUTLINE_KEYBOARD_STEP = 16;
 
-/** 目录宽度偏好存在 localStorage 的键 */
-export const OUTLINE_WIDTH_STORAGE_KEY =
-  'my-dashboard:markdown-preview:outline-width';
+/** 目录宽度偏好在偏好对象里的字段名：各层预览各有一个自己的对象 */
+export const OUTLINE_WIDTH_FIELD = 'outlineWidth';
 
 /** 没写过偏好时的默认：宽度交给各模式的 CSS 默认（常规 184 / 全屏 300） */
 export const DEFAULT_OUTLINE_WIDTH_PREFERENCE: OutlineWidthPreference = {

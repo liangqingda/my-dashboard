@@ -6,7 +6,7 @@ import FreeModal from '@/components/modals/FreeModal';
 import { useModalFullscreen } from '@/components/modals/FreeModal/hooks/useModalFullscreen';
 
 import RecordDetailBody from '../RecordDetailBody';
-import { RECORD_FULLSCREEN_STORAGE_KEY } from '../constants';
+import { RECORD_DETAIL_STORAGE_KEY } from '../constants';
 
 import type { RecordDetailModalProps } from './types';
 
@@ -31,9 +31,7 @@ const RecordDetailModal = ({
   title,
 }: RecordDetailModalProps) => {
   /** 全屏是记住的阅读偏好：关掉重开、换一条记录都不重置 */
-  const { fullscreen, toggle } = useModalFullscreen(
-    RECORD_FULLSCREEN_STORAGE_KEY,
-  );
+  const { fullscreen, toggle } = useModalFullscreen(RECORD_DETAIL_STORAGE_KEY);
 
   return (
     <FreeModal

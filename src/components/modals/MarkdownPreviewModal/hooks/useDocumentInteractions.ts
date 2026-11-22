@@ -44,6 +44,8 @@ export type DocumentInteractionsParams = {
   filtering: boolean;
   /** 开子区域预览之前先收起 header 弹层（两层浮层不该同时开着） */
   beforeOpen: () => void;
+  /** 这四份阅读偏好的命名空间：由主预览给（子预览不读它们） */
+  storageKey: string;
 };
 
 /** 正文交互的状态与动作 */
@@ -81,6 +83,7 @@ export const useDocumentInteractions = ({
   filter,
   filtering,
   markdown,
+  storageKey,
 }: DocumentInteractionsParams): DocumentInteractionsState => {
   const anchorBlocks = useMemo(() => collectAnchorBlocks(markdown), [markdown]);
 
@@ -96,13 +99,13 @@ export const useDocumentInteractions = ({
   );
 
   /** 同文档链接的点击行为：跨篇记住的阅读偏好 */
-  const anchorLink = useAnchorLinkBehavior();
+  const anchorLink = useAnchorLinkBehavior(storageKey);
   /** 子区域预览的前后切换口径：同样是跨篇记住的阅读偏好 */
-  const anchorScope = useAnchorNavScope();
+  const anchorScope = useAnchorNavScope(storageKey);
   /** 折叠块里那段内容的点击行为：同样是跨篇记住的阅读偏好 */
-  const detailsBlock = useDetailsBlockBehavior();
+  const detailsBlock = useDetailsBlockBehavior(storageKey);
   /** 折叠块子预览的前后切换口径：同上，跨篇记住 */
-  const detailsScope = useDetailsNavScope();
+  const detailsScope = useDetailsNavScope(storageKey);
 
   /**
    * 折叠块子预览的开合与正文 summary 点击：它开在主预览上面，

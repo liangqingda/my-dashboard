@@ -3,21 +3,21 @@
  *
  * 这是「怎么看链接」的偏好，不属于某一篇，所以记在 localStorage 里：
  * 换篇、关掉重开、刷新页面后都保持上次的样子。存储值不在枚举里（改版、被手工改坏）
- * 时由 `createChoiceCodec` 回落到默认行为，不会渲染出一个不认识的状态。
+ * 时由 `createChoiceFieldCodec` 回落到默认行为，不会渲染出一个不认识的状态。
  */
 
-import { useStoredState } from '@/hooks/useStoredState';
-import { createChoiceCodec } from '@/utils/local-storage';
+import { useStoredField } from '@/hooks/useStoredField';
+import { createChoiceFieldCodec } from '@/utils/local-storage';
 
 import type { AnchorLinkBehavior } from '../types';
 import {
   ANCHOR_LINK_BEHAVIORS,
-  ANCHOR_LINK_STORAGE_KEY,
+  ANCHOR_LINK_FIELD,
   DEFAULT_ANCHOR_LINK_BEHAVIOR,
 } from '../constants';
 
 /** 存两档行为之一：缺失或不在枚举里都回落默认（跳过去） */
-const BEHAVIOR_CODEC = createChoiceCodec(
+const BEHAVIOR_CODEC = createChoiceFieldCodec(
   ANCHOR_LINK_BEHAVIORS,
   DEFAULT_ANCHOR_LINK_BEHAVIOR,
 );
@@ -33,11 +33,15 @@ export type AnchorLinkBehaviorState = {
 /**
  * 管理同文档链接的点击行为。
  *
+ * @param storageKey 主预览的偏好命名空间（这一项只挂在主预览上）
  * @returns 当前行为与切换动作（`AnchorLinkBehaviorState`）
  */
-export const useAnchorLinkBehavior = (): AnchorLinkBehaviorState => {
-  const [behavior, setBehavior] = useStoredState(
-    ANCHOR_LINK_STORAGE_KEY,
+export const useAnchorLinkBehavior = (
+  storageKey: string,
+): AnchorLinkBehaviorState => {
+  const [behavior, setBehavior] = useStoredField(
+    storageKey,
+    ANCHOR_LINK_FIELD,
     BEHAVIOR_CODEC,
   );
 

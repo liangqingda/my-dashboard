@@ -4,7 +4,8 @@
  * 都开在主预览之上、各自只收自己那一层——取消删除不关预览，Esc 关子区域预览时
  * 底下这一篇同样留着。主预览只负责把状态交给这里，不参与它们的排版。
  *
- * 子区域预览有两个入口，共用同一层弹窗（`SectionPreview`）：
+ * 子区域预览有两个入口，共用同一层弹窗（`SectionPreview`），但阅读偏好（全屏 / 字号 / 目录宽度）
+ * 各记一套（`variant` 决定存进哪套命名空间）：
  * - 同文档链接指向的一节：能前后切到哪几节按 `all` / `section` 口径算；
  * - 折叠块里的正文：能前后切到全文所有折叠块。
  * 两份的当前下标互不相干，同一时刻只会开着一个（上层盖住主预览时点不到正文）。
@@ -66,9 +67,10 @@ const PreviewOverlays = ({
         peers={anchorPeers}
         previousLabel="上一个链接区块"
         sections={anchorBlocks}
+        variant="anchor"
       />
 
-      {/* 折叠块预览：summary 点出来的那一段，样式 / 键位 / 字号全与上一份同一套 */}
+      {/* 折叠块预览：summary 点出来的那一段，样式 / 键位与上一份同一套，阅读偏好各记一套 */}
       <SectionPreview
         index={detailBlock.index}
         nextLabel="下一个折叠块"
@@ -77,6 +79,7 @@ const PreviewOverlays = ({
         peers={detailPeers}
         previousLabel="上一个折叠块"
         sections={detailBlocks}
+        variant="details"
       />
     </>
   );

@@ -53,5 +53,8 @@ export const SEARCH_WIDTH = 208;
 /** 首屏骨架屏的行数：只为给一个「正在读」的形状，不假装有数据 */
 export const SKELETON_ROWS: readonly number[] = [0, 1, 2, 3, 4];
 
-/** 记录详情弹窗的全屏偏好：与 md 预览各记各的，互不影响 */
-export const RECORD_FULLSCREEN_STORAGE_KEY = 'my-dashboard:review:fullscreen';
+/**
+ * 记录详情弹窗的偏好命名空间（localStorage 里一个 JSON 对象）：目前只有全屏
+ * （字段 `fullscreen`，见 `FreeModal` 的 `useModalFullscreen`），与 md 预览的几层各记各的。
+ */
+export const RECORD_DETAIL_STORAGE_KEY = 'my-dashboard:record-detail';

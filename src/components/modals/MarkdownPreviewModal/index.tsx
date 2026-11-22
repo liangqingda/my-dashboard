@@ -26,7 +26,7 @@ import DocumentActions from './DocumentActions';
 import PreviewHeaderActions from './HeaderActions';
 import PreviewOverlays from './PreviewOverlays';
 import PreviewWorkspace from './PreviewWorkspace';
-import { FULLSCREEN_STORAGE_KEY } from './constants';
+import { MAIN_PREVIEW_STORAGE_KEY } from './constants';
 import { useCloseRequest } from './hooks/useCloseRequest';
 import { useNoteEditing } from './hooks/useNoteEditing';
 import { usePreviewHeaderActions } from './hooks/usePreviewHeaderActions';
@@ -81,10 +81,10 @@ const MarkdownPreviewModal = ({
 
   /** 全屏开关：记住的展示偏好，关闭弹窗也不重置；Esc 不归它管，永远是关弹窗 */
   const { fullscreen, toggle: toggleFullscreen } = useModalFullscreen(
-    FULLSCREEN_STORAGE_KEY,
+    MAIN_PREVIEW_STORAGE_KEY,
   );
   /** 正文字号的用户偏移：跨篇、跨会话记住，叠在常规 / 全屏各自的默认字号上 */
-  const proseFont = useProseFontScale();
+  const proseFont = useProseFontScale(MAIN_PREVIEW_STORAGE_KEY);
   /** 刷新按钮的 loading 与失败提示都在这个 hook 里 */
   const { refresh, refreshing } = useRefreshPreview(onRefresh);
 
@@ -120,6 +120,7 @@ const MarkdownPreviewModal = ({
     filter,
     filtering: !editing.editing,
     markdown: renderedMarkdown,
+    storageKey: MAIN_PREVIEW_STORAGE_KEY,
   });
 
   /** 翻篇 / 刷新 / 进编辑 / 关弹窗前先收起浮层：它们说的都是「当前这一篇」 */
@@ -272,6 +273,7 @@ const MarkdownPreviewModal = ({
           onBodyClick={interactions.handleBodyClick}
           onHighlightNavigation={header.setHighlightNavigation}
           opened={opened}
+          storageKey={MAIN_PREVIEW_STORAGE_KEY}
           title={title}
         />
       </FreeModal>

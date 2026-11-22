@@ -72,8 +72,10 @@
 const { fullscreen, toggle } = useModalFullscreen(storageKey);
 ```
 
-- 每个业务弹窗**一把自己的存储键**（如 `my-dashboard:markdown-preview:fullscreen`、
-  `my-dashboard:review:fullscreen`）：md 预览与记录详情各记各的，互不干扰；
+- 每个业务弹窗**一个自己的命名空间**（localStorage 里的一个 JSON 对象，全屏存在它的 `fullscreen` 字段）：
+  如 `my-dashboard:markdown-preview`、`my-dashboard:anchor-section-preview`、
+  `my-dashboard:details-section-preview`、`my-dashboard:record-detail`——
+  md 预览的三层与记录详情各记各的，互不干扰；
 - 状态由调用方持有，用来参与正文排版；`Esc` 永远关弹窗（连带退出全屏），不是切全屏。
 
 ## 两种高度模式

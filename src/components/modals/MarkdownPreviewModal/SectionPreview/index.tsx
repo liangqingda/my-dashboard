@@ -26,11 +26,12 @@ import { useModalFullscreen } from '@/components/modals/FreeModal/hooks/useModal
 import { cx } from '@/utils/cx';
 import type { MarkdownOutlineHeading } from '@/utils/markdown-outline';
 
-import type { SectionPreviewProps } from '../types';
+import type { SectionPreviewProps, SectionPreviewVariant } from '../types';
 import OutlineNav from '../OutlineNav';
 import ProseFontControl from '../ProseFontControl';
 import {
-  FULLSCREEN_STORAGE_KEY,
+  ANCHOR_SECTION_STORAGE_KEY,
+  DETAILS_SECTION_STORAGE_KEY,
   REHYPE_PLUGINS,
   REMARK_PLUGINS,
 } from '../constants';
@@ -63,6 +64,12 @@ const FULLSCREEN_CONTENT_STYLE: CSSProperties = {
   maxHeight: '95dvh',
 };
 
+/** 两个入口各记一套阅读偏好：链接预览与折叠块预览互不影响 */
+const STORAGE_KEYS: Record<SectionPreviewVariant, string> = {
+  anchor: ANCHOR_SECTION_STORAGE_KEY,
+  details: DETAILS_SECTION_STORAGE_KEY,
+};
+
 const SectionPreview = ({
   nextLabel = '下一个区块',
   onClose,
@@ -71,6 +78,7 @@ const SectionPreview = ({
   previousLabel = '上一个区块',
   sections,
   index,
+  variant,
 }: SectionPreviewProps) => {
   const section =
     index !== null && index < sections.length ? sections[index] : null;
@@ -86,9 +94,10 @@ const SectionPreview = ({
     ? peers[cursor === peers.length - 1 ? 0 : cursor + 1]
     : null;
 
-  /** 全屏与字号都是「怎么看」的偏好，和主预览共用存储，换一段也不重置 */
-  const { fullscreen, toggle } = useModalFullscreen(FULLSCREEN_STORAGE_KEY);
-  const proseFont = useProseFontScale();
+  /** 全屏与字号都是「怎么看」的偏好：按入口各记一套，换一段也不重置 */
+  const storageKey = STORAGE_KEYS[variant];
+  const { fullscreen, toggle } = useModalFullscreen(storageKey);
+  const proseFont = useProseFontScale(storageKey);
   const proseStyle = { '--prose-extra': `${proseFont.offset}px` } as CSSProperties;
 
   const bodyRef = useRef<HTMLElement | null>(null);
@@ -231,6 +240,7 @@ const SectionPreview = ({
           fullscreen={fullscreen}
           headings={headings}
           onSelect={(headingIndex) => scrollToHeading(bodyRef.current, headingIndex)}
+          storageKey={storageKey}
         />
         <div className={previewStyles.pane}>
           {section ? (

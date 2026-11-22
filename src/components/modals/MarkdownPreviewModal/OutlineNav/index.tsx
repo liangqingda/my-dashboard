@@ -89,10 +89,11 @@ const OutlineNav = ({
   forceVisible = false,
   fullscreen,
   onSelect,
+  storageKey,
 }: OutlineNavProps) => {
   const tree = useMemo(() => buildMarkdownOutlineTree(headings), [headings]);
   const navRef = useRef<HTMLDivElement | null>(null);
-  const { width, collapsed, handleProps } = useOutlineWidth(navRef);
+  const { width, collapsed, handleProps } = useOutlineWidth(navRef, storageKey);
   /** 默认展开集合要在下面的派生里当基准，算一次缓存住：全屏全开，常规只开前两层 */
   const defaultExpanded = useMemo(
     () => (fullscreen ? allExpandedKeys(tree) : defaultExpandedKeys(tree)),

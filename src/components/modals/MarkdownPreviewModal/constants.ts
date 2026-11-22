@@ -16,17 +16,29 @@ import type {
 export const SAVED_HINT_DURATION = 3000;
 
 /**
- * 全屏预览偏好存在 localStorage 的键：全屏是「怎么看」，不是某一篇的属性，
+ * 主预览弹窗的整组偏好存在这个命名空间里（localStorage 里一个 JSON 对象）：
+ * 全屏（字段 `fullscreen`，见 `FreeModal` 的 `useModalFullscreen`）、正文字号偏移、
+ * 目录宽度、文档内交互四项。全屏是「怎么看」，不是某一篇的属性，
  * 换篇、关掉重开、刷新页面后都保持上次的样子。
  */
-export const FULLSCREEN_STORAGE_KEY = 'my-dashboard:markdown-preview:fullscreen';
+export const MAIN_PREVIEW_STORAGE_KEY = 'my-dashboard:markdown-preview';
 
 /**
- * 正文字号微调存在 localStorage 的键：存的只是「比各模式默认字号再大 / 小多少 px」这一段，
+ * 同文档链接子预览的命名空间：与主预览各记各的，在里面开全屏 / 调字号 / 拖目录宽度
+ * 不会把底下那篇主预览也改掉。
+ */
+export const ANCHOR_SECTION_STORAGE_KEY =
+  'my-dashboard:anchor-section-preview';
+
+/** 折叠块子预览的命名空间：与链接预览同样分开，两种入口互不影响 */
+export const DETAILS_SECTION_STORAGE_KEY =
+  'my-dashboard:details-section-preview';
+
+/**
+ * 正文字号偏移在偏好对象里的字段名：存的只是「比各模式默认字号再大 / 小多少 px」这一段，
  * 全屏自带的那 2px 由 CSS 负责（见 index.scss 的 `--prose-grow`），两者互不覆盖。
  */
-export const PROSE_FONT_STORAGE_KEY =
-  'my-dashboard:markdown-preview:prose-font-offset';
+export const PROSE_FONT_FIELD = 'proseFontOffset';
 
 /** 正文字号微调的步长（px）：点一下加减一档 */
 export const PROSE_FONT_STEP = 1;
@@ -70,14 +82,13 @@ export const HEADING_SELECTOR = 'h1, h2, h3, h4';
 export const ACTIVE_HEADING_OFFSET = 16;
 
 /**
- * 同文档锚点链接的点击行为放在 localStorage 的键：属于「怎么看链接」的阅读偏好，
+ * 同文档锚点链接的点击行为在偏好对象里的字段名：属于「怎么看链接」的阅读偏好，
  * 换篇、关掉重开、刷新页面后都保持上次的样子。
  */
-export const ANCHOR_LINK_STORAGE_KEY = 'my-dashboard:markdown-preview:anchor-link';
+export const ANCHOR_LINK_FIELD = 'anchorLink';
 
-/** 子区域预览前后切换口径的存储键 */
-export const ANCHOR_NAV_SCOPE_STORAGE_KEY =
-  'my-dashboard:markdown-preview:anchor-nav-scope';
+/** 子区域预览前后切换口径的字段名 */
+export const ANCHOR_NAV_SCOPE_FIELD = 'anchorNavScope';
 
 /** 可选的两种切换口径：全文所有链接 / 只同一处目录里的链接 */
 export const ANCHOR_NAV_SCOPES: readonly AnchorNavScope[] = ['all', 'section'];
@@ -95,11 +106,10 @@ export const ANCHOR_LINK_BEHAVIORS: readonly AnchorLinkBehavior[] = [
 export const DEFAULT_ANCHOR_LINK_BEHAVIOR: AnchorLinkBehavior = 'jump';
 
 /**
- * 折叠块（`<details>`）里那段内容的点击行为放在 localStorage 的键：与链接一样是
+ * 折叠块（`<details>`）里那段内容的点击行为在偏好对象里的字段名：与链接一样是
  * 「怎么看文档里的东西」的阅读偏好，换篇、关掉重开、刷新页面后都保持上次的样子。
  */
-export const DETAILS_BLOCK_STORAGE_KEY =
-  'my-dashboard:markdown-preview:details-block';
+export const DETAILS_BLOCK_FIELD = 'detailsBlock';
 
 /** 可选的两档折叠块行为：原地展开 / 弹窗预览 */
 export const DETAILS_BLOCK_BEHAVIORS: readonly DetailsBlockBehavior[] = [
@@ -111,11 +121,10 @@ export const DETAILS_BLOCK_BEHAVIORS: readonly DetailsBlockBehavior[] = [
 export const DEFAULT_DETAILS_BLOCK_BEHAVIOR: DetailsBlockBehavior = 'expand';
 
 /**
- * 折叠块子预览的前后切换口径放在 localStorage 的键：与链接那份并列，
+ * 折叠块子预览的前后切换口径在偏好对象里的字段名：与链接那份并列，
  * 都是「怎么看文档里的东西」的阅读偏好。
  */
-export const DETAILS_NAV_SCOPE_STORAGE_KEY =
-  'my-dashboard:markdown-preview:details-scope';
+export const DETAILS_NAV_SCOPE_FIELD = 'detailsNavScope';
 
 /** 可选的三种折叠块切换口径：全文所有原文 / 全文同类原文 / 同一小节 */
 export const DETAILS_NAV_SCOPES: readonly DetailsNavScope[] = [

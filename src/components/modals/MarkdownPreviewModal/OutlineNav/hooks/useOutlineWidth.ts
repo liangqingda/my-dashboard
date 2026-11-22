@@ -2,7 +2,8 @@
  * 标题目录 sidebar 的可拖拽宽度：拖右边缘改宽度，拖到接近左边就收起。
  *
  * 收起不是「删掉这一列」：右边缘留一条贴住正文的窄轨，点它（或往右拖）能还原
- * 上次的宽度。宽度与收起状态和全屏一样记在 localStorage，换篇 / 重开 / 刷新都保持。
+ * 上次的宽度。宽度与收起状态和全屏一样记在 localStorage 的偏好对象里（命名空间由调用方给，
+ * 主预览与两种子预览各一份），换篇 / 重开 / 刷新都保持。
  * 拖动过程只改本地状态，松手才写存储——逐帧写 localStorage 是同步 I/O，拖动会卡。
  *
  * 窄屏（≤720px）目录是一条横带，拖动条由 CSS 隐藏、收起偏好也不生效，这里不额外判断。
@@ -11,8 +12,8 @@
 import { useCallback, useRef, useState } from 'react';
 import type { KeyboardEvent, PointerEvent, RefObject } from 'react';
 
-import { useStoredState } from '@/hooks/useStoredState';
-import type { StoredCodec } from '@/utils/local-storage';
+import { useStoredField } from '@/hooks/useStoredField';
+import type { StoredFieldCodec } from '@/utils/local-storage';
 
 import type { OutlineWidthPreference } from '../../types';
 import {
@@ -22,7 +23,7 @@ import {
   OUTLINE_MAX_RATIO,
   OUTLINE_MAX_WIDTH,
   OUTLINE_MIN_WIDTH,
-  OUTLINE_WIDTH_STORAGE_KEY,
+  OUTLINE_WIDTH_FIELD,
 } from '../constants';
 
 /** 一次拖拽的起点：指针位移都相对它换算，松手时才落存储 */
@@ -43,40 +44,30 @@ type DragOrigin = {
 const CLICK_SLOP = 4;
 
 /**
- * 宽度偏好的编解码：存成 JSON，读回来时校验类型并夹回允许区间，
+ * 宽度偏好的编解码：读回来时校验类型并夹回允许区间，
  * 存储被手工改坏或塞进离谱数值时回落默认，不让脏值决定布局。
  */
-const OUTLINE_WIDTH_CODEC: StoredCodec<OutlineWidthPreference> = {
-  decode: (raw) => {
-    if (raw === null) {
+const OUTLINE_WIDTH_CODEC: StoredFieldCodec<OutlineWidthPreference> = {
+  decode: (value) => {
+    if (typeof value !== 'object' || value === null) {
       return DEFAULT_OUTLINE_WIDTH_PREFERENCE;
     }
 
-    try {
-      const parsed: unknown = JSON.parse(raw);
+    const { collapsed, width } = value as {
+      collapsed?: unknown;
+      width?: unknown;
+    };
+    const storedWidth =
+      typeof width === 'number' && Number.isFinite(width)
+        ? Math.min(
+            Math.max(Math.round(width), OUTLINE_MIN_WIDTH),
+            OUTLINE_MAX_WIDTH,
+          )
+        : null;
 
-      if (typeof parsed !== 'object' || parsed === null) {
-        return DEFAULT_OUTLINE_WIDTH_PREFERENCE;
-      }
-
-      const { collapsed, width } = parsed as {
-        collapsed?: unknown;
-        width?: unknown;
-      };
-      const storedWidth =
-        typeof width === 'number' && Number.isFinite(width)
-          ? Math.min(
-              Math.max(Math.round(width), OUTLINE_MIN_WIDTH),
-              OUTLINE_MAX_WIDTH,
-            )
-          : null;
-
-      return { width: storedWidth, collapsed: collapsed === true };
-    } catch {
-      return DEFAULT_OUTLINE_WIDTH_PREFERENCE;
-    }
+    return { width: storedWidth, collapsed: collapsed === true };
   },
-  encode: (preference) => JSON.stringify(preference),
+  encode: (preference) => preference,
 };
 
 /**
@@ -97,11 +88,16 @@ const clampMaxWidth = (available: number): number => {
  * 管理目录宽度与收起状态。
  *
  * @param navRef 目录列的 ref，用来量当前宽度与工作区宽度
+ * @param storageKey 这层预览的偏好命名空间（主预览与两种子预览各记各的宽度）
  * @returns 生效宽度（`null` 表示用 CSS 默认）、是否收起，以及拖动条的事件属性
  */
-export const useOutlineWidth = (navRef: RefObject<HTMLDivElement | null>) => {
-  const [preference, setPreference] = useStoredState<OutlineWidthPreference>(
-    OUTLINE_WIDTH_STORAGE_KEY,
+export const useOutlineWidth = (
+  navRef: RefObject<HTMLDivElement | null>,
+  storageKey: string,
+) => {
+  const [preference, setPreference] = useStoredField<OutlineWidthPreference>(
+    storageKey,
+    OUTLINE_WIDTH_FIELD,
     OUTLINE_WIDTH_CODEC,
   );
   /** 拖动中的临时宽度：松手才落存储，避免逐帧写盘 */

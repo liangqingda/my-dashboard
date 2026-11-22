@@ -10,13 +10,16 @@
 
 import { useCallback } from 'react';
 
-import { useStoredState } from '@/hooks/useStoredState';
-import { FLAG_CODEC } from '@/utils/local-storage';
+import { useStoredField } from '@/hooks/useStoredField';
+import { FLAG_FIELD_CODEC } from '@/utils/local-storage';
+
+/** 全屏在偏好对象里的字段名：各弹窗的命名空间不同，字段名一致 */
+export const FULLSCREEN_FIELD = 'fullscreen';
 
 /**
  * 管理弹窗的全屏开关。
  *
- * @param storageKey 记住全屏偏好的 localStorage 键（每个业务弹窗一把，互不影响）
+ * @param storageKey 记住这组偏好的 localStorage 命名空间键（每个业务弹窗一个对象，互不影响）
  * @returns `fullscreen` 当前是否全屏，`toggle` 切换
  */
 export const useModalFullscreen = (
@@ -25,7 +28,11 @@ export const useModalFullscreen = (
   fullscreen: boolean;
   toggle: () => void;
 } => {
-  const [fullscreen, setFullscreen] = useStoredState(storageKey, FLAG_CODEC);
+  const [fullscreen, setFullscreen] = useStoredField(
+    storageKey,
+    FULLSCREEN_FIELD,
+    FLAG_FIELD_CODEC,
+  );
 
   const toggle = useCallback(
     () => setFullscreen(!fullscreen),

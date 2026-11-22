@@ -72,14 +72,21 @@ header 文档操作组里的筛选图标按钮（排在复制路径之后、刷�
 
 header 文档操作组里的「文档内交互方式」图标按钮（`InteractionControl`，图标 `IconHandClick`，
 排在正文字号之后、刷新之前；编辑态随整组收掉）管三件「点一下之后会发生什么」的设置，
-三件都是**跨篇、跨会话记住的阅读偏好**（`localStorage`，键见 `constants.ts`；括号里是默认值）：
+三件都是**跨篇、跨会话记住的阅读偏好**（存在主预览命名空间 `MAIN_PREVIEW_STORAGE_KEY`
+（`my-dashboard:markdown-preview`）那个对象里，字段名见 `constants.ts`；括号里是默认值）：
 
-| 分组 | 设置项 | 取值 | 存储键（默认） |
+| 分组 | 设置项 | 取值 | 字段（默认） |
 | --- | --- | --- | --- |
-| 同文档链接 | 点了链接之后怎么办 | `jump` 滚过去 / `modal` 弹窗打开那一块 | `ANCHOR_LINK_STORAGE_KEY`（`jump`，等于浏览器原行为） |
-| 同文档链接 | 子区域预览里能前后切到哪些链接 | `all` 全文所有链接 / `section` 只同一处目录里的那几个 | `ANCHOR_NAV_SCOPE_STORAGE_KEY`（`all`，等于旧行为） |
-| 折叠块 | 点了标题之后怎么办 | `expand` 原地展开 / `modal` 弹窗预览 | `DETAILS_BLOCK_STORAGE_KEY`（`expand`，等于旧行为） |
-| 折叠块 | 折叠块预览里能前后切到哪些块（都只算原文类） | `all` 全文所有原文 / `kind` 全文同类原文 / `section` 只同一小节里的原文 | `DETAILS_NAV_SCOPE_STORAGE_KEY`（`section`，范围最可控） |
+| 同文档链接 | 点了链接之后怎么办 | `jump` 滚过去 / `modal` 弹窗打开那一块 | `anchorLink`（`jump`，等于浏览器原行为） |
+| 同文档链接 | 子区域预览里能前后切到哪些链接 | `all` 全文所有链接 / `section` 只同一处目录里的那几个 | `anchorNavScope`（`all`，等于旧行为） |
+| 折叠块 | 点了标题之后怎么办 | `expand` 原地展开 / `modal` 弹窗预览 | `detailsBlock`（`expand`，等于旧行为） |
+| 折叠块 | 折叠块预览里能前后切到哪些块（都只算原文类） | `all` 全文所有原文 / `kind` 全文同类原文 / `section` 只同一小节里的原文 | `detailsNavScope`（`section`，范围最可控） |
+
+**偏好怎么存**：一个弹窗的整组偏好存成一个 localStorage 对象（`my-dashboard:markdown-preview`），
+每个设置项是对象里的一个字段，由 `@/hooks/useStoredField` 读一次、写回时读-改-写（不会冲掉邻居字段）。
+需求是「每种弹窗各记一套」，所以三层预览各有一个命名空间：主预览 `my-dashboard:markdown-preview`、
+链接预览 `my-dashboard:anchor-section-preview`、折叠块预览 `my-dashboard:details-section-preview`；
+链接预览与折叠块预览共用同一个组件，但 `variant` 决定读哪一套，互不影响。
 
 **弹层按主题分两组**：这个弹层早先只管锚点链接，现在还要管折叠块，所以按钮的 label / tooltip
 一并从「同文档链接打开方式」改成「文档内交互方式」；文档里两类内容都有弹窗预览时 hint 补一句
@@ -191,7 +198,8 @@ header 文档操作组里的「文档内交互方式」图标按钮（`Interacti
 ### 子区域预览（`SectionPreview`）
 
 `modal` 行为下的那一层弹窗是 `SectionPreview`，**两个入口共用**：同文档链接指向的一节、折叠块里的正文。
-它不再自己算「哪些段是一组」——`sections`（全部可读段）、`index`、`peers`（能前后切到的下标）都由调用方给
+它不再自己算「哪些段是一组」——`variant`（`anchor` / `details`）说明这次是哪个入口打开的、
+`sections`（全部可读段）、`index`、`peers`（能前后切到的下标）都由调用方给
 （链接按 `all` / `section` 口径分组、折叠块按全文顺序分组，都是文档语义），标题里的计数就是 `peers` 里的位置。
 界面交给 `@/components/modals/FreeModal` 组装（和主预览、记录详情同一套外壳，不再自己拼 `Modal` 与 header 行）：
 
@@ -225,7 +233,8 @@ header 文档操作组里的「文档内交互方式」图标按钮（`Interacti
   所以 `section` 口径下会跨小节跳（讲解里的两个链接分别指向两轮不同的 h1）；组里只有一块时两侧按钮都置灰；
 - **正文不重复本节标题**：区块从标题的下一行开始截取，标题只出现在 header；块内目录因此也只列
   下属标题（跳到 h2 时目录里是它的 h3…），目录高亮与点目录定位都按这份短了一层的正文算；
-- 字号 / 全屏与主预览**共用同一份记住的值**，换块不重置；字号弹层换块后按归属算作收起
+- 字号 / 全屏 / 目录宽度是**这一层自己的**记住值（按 `variant` 存进链接预览或折叠块预览的命名空间），
+  与另一层、与主预览都不互相影响；换块不重置；字号弹层换块后按归属算作收起
   （记录「这一块」的派生状态，不在 effect 里 `setState`）；
 - 换块时正文回到顶部（`useDocumentScrollReset`），目录高亮按**这一块**的标题重算；
 - 块内还有同文档链接时**只在这一块内部跳**，不再往下开第三层；
@@ -360,7 +369,8 @@ header 文档操作组**最后一个**图标（垃圾桶，颜色与同排图标
   hover / 聚焦才浮出一条短竖线；展开区间 140–480px 且不超过工作区的 45%，松手宽度不到 72px 就认定收起；
   收起后列宽归零、内容整块隐藏，只剩那条 1px 分界线与正文左内边距里的一个箭头窄轨，**点窄轨（或往右拖）
   还原上次宽度**；`←` / `→` 按 16px 微调、`Enter` / `空格` 收起展开（拖动条是 `role="separator"`）；
-  宽度与收起状态存在 `localStorage`（键见 `constants.ts` 的 `OUTLINE_WIDTH_STORAGE_KEY`），
+  宽度与收起状态存在 `localStorage`（`OutlineNav/constants.ts` 的 `OUTLINE_WIDTH_FIELD`，
+  落在这一层预览自己的命名空间对象里），
   拖动过程只改本地状态、松手才落存储；窄屏横带里拖动条整条隐藏、收起偏好也不生效。
 - **目录列与 header 同一档底色**（取弹窗下发的 `--preview-chrome`，与正文的 `--preview-paper` 分成两层，
   口径与页面外壳一致：头部 + 侧栏是一层软底，正文是另一档画布纸），只靠右侧一条细线分列；
@@ -398,7 +408,7 @@ header 右侧的图标按钮（排在刷新之后、编辑操作之前；编辑�
 - **Esc 不退出全屏，永远关掉弹窗**（全屏只是「框体铺满视口」这一层外观，不是另一种模式；
   同一个键在两种状态下干不同的事，用户只会记住那一次「按了没关掉」）。要回常规大小只有一条路：
   再点一次这个图标；关掉弹窗后再打开仍是全屏（见下一条）；
-- **全屏是记住的偏好**（`localStorage`，键见 `constants.ts` 的 `FULLSCREEN_STORAGE_KEY`）：换篇、关掉重开、
+- **全屏是记住的偏好**（存在主预览命名空间 `MAIN_PREVIEW_STORAGE_KEY` 的 `fullscreen` 字段）：换篇、关掉重开、
   刷新页面后再打开都还是上次的样子，关闭弹窗不会把它重置成常规大小。
 
 ### 正文字号
@@ -409,7 +419,7 @@ header 文档操作组里的字号图标（排在筛选之后、刷新之前；�
 - 面板里「减 / 加」各一档（步长 1px、范围 −2～+6px，到边界按钮置灰），「恢复默认」把偏移清零；
 - 调的是**用户偏移**（`--prose-extra`，内联 CSS 变量），叠在常规 / 全屏各自的默认字号上：
   退出全屏不会把调过的结果冲掉，全屏那 2px 照旧；
-- 偏移**跨篇、跨会话记住**（`localStorage`，键见 `constants.ts` 的 `PROSE_FONT_STORAGE_KEY`）；
+- 偏移**跨篇、跨会话记住**（主预览命名空间里的 `proseFontOffset` 字段，见 `constants.ts` 的 `PROSE_FONT_FIELD`）；
   手工改坏的存储值由 `useProseFontScale` 的 `clampOffset` 夹回范围，不会渲染出离谱字号；
 - 不是默认值时图标常态换主色，与「筛选生效」同一个表达；
 - 弹层与筛选 / 文档内交互弹层**互斥**：header 同一时刻只开一块（弹窗里的 `panel` 状态，取值见 `PreviewPanel`），

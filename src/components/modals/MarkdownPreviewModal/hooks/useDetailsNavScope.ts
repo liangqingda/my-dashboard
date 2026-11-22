@@ -5,21 +5,21 @@
  *
  * 与「点击行为」一样是「怎么看折叠块」的偏好，不属于某一篇：记在 localStorage，
  * 换篇、关掉重开、刷新页面后都保持上次的样子；存储值不在枚举里（改版、被手工改坏，
- * 例如上一版的 `kind`）时由 `createChoiceCodec` 回落默认（同一小节）。
+ * 例如上一版的 `kind`）时由 `createChoiceFieldCodec` 回落默认（同一小节）。
  */
 
-import { useStoredState } from '@/hooks/useStoredState';
-import { createChoiceCodec } from '@/utils/local-storage';
+import { useStoredField } from '@/hooks/useStoredField';
+import { createChoiceFieldCodec } from '@/utils/local-storage';
 
 import type { DetailsNavScope } from '../types';
 import {
   DEFAULT_DETAILS_NAV_SCOPE,
   DETAILS_NAV_SCOPES,
-  DETAILS_NAV_SCOPE_STORAGE_KEY,
+  DETAILS_NAV_SCOPE_FIELD,
 } from '../constants';
 
 /** 存两种口径之一：缺失或不在枚举里都回落默认 */
-const SCOPE_CODEC = createChoiceCodec(
+const SCOPE_CODEC = createChoiceFieldCodec(
   DETAILS_NAV_SCOPES,
   DEFAULT_DETAILS_NAV_SCOPE,
 );
@@ -35,11 +35,15 @@ export type DetailsNavScopeState = {
 /**
  * 管理折叠块子预览的前后切换口径。
  *
+ * @param storageKey 主预览的偏好命名空间（这一项只挂在主预览上）
  * @returns 当前口径与切换动作（`DetailsNavScopeState`）
  */
-export const useDetailsNavScope = (): DetailsNavScopeState => {
-  const [scope, setScope] = useStoredState(
-    DETAILS_NAV_SCOPE_STORAGE_KEY,
+export const useDetailsNavScope = (
+  storageKey: string,
+): DetailsNavScopeState => {
+  const [scope, setScope] = useStoredField(
+    storageKey,
+    DETAILS_NAV_SCOPE_FIELD,
     SCOPE_CODEC,
   );
 
