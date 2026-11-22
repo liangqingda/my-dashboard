@@ -8,12 +8,12 @@
   min-width: 0;
   padding: 12px 8px;
   border-radius: 8px;
-  cursor: grab;
 }
 
-/* 正在被拖拽的文件：弱化半透明 */
+/* 正在被拖拽的文件：弱化半透明，光标切到拖拽态 */
 .dragging {
   opacity: 0.4;
+  cursor: grabbing;
 }
 
 .icon {

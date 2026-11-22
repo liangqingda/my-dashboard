@@ -1,12 +1,13 @@
 /**
- * 本机任意目录的只读扫描：列出指定目录下的子文件夹与常规文件，不限文件类型。
+ * 本机任意目录的扫描与写盘：列出指定目录下的子文件夹与常规文件，不限文件类型；
+ * 另提供新建 / 重命名 / 移动 / 删除的写盘收口。
  *
- * 这一层只做读盘与归类，不假设固定仓库位置——目录路径由页面在查询参数里给出，
+ * 这一层不假设固定仓库位置——目录路径由页面在查询参数里给出，
  * 校验与错误归类都收在这里，路由壳只负责拼响应。
  */
 
 import { execFile } from 'node:child_process';
-import { mkdir, readdir, rename as renamePath, stat } from 'node:fs/promises';
+import { mkdir, readdir, rename as renamePath, rm, stat } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
@@ -406,6 +407,28 @@ export const moveEntry = async (
   }
 
   await renamePath(source, target);
+};
+
+/**
+ * 删除一条条目：文件夹连同内部全部内容递归删除，文件直接删除；不可恢复。
+ * 只允许删文件夹或常规文件，不存在的路径按 404 收口。
+ */
+export const deleteEntry = async (entryPath: string): Promise<void> => {
+  const source = path.resolve(entryPath);
+
+  let sourceInfo;
+
+  try {
+    sourceInfo = await stat(source);
+  } catch (error) {
+    throw toReadError(error, source);
+  }
+
+  if (!sourceInfo.isDirectory() && !sourceInfo.isFile()) {
+    throw new Error('只能删除文件夹或常规文件');
+  }
+
+  await rm(source, { recursive: true });
 };
 
 /** 系统目录选择器返回值：选中给绝对路径，用户取消给 cancelled */

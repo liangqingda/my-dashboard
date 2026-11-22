@@ -1,4 +1,4 @@
-import { useEffect, useState, type DragEvent } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Alert,
   Button,
@@ -8,26 +8,26 @@ import {
   Stack,
   Text,
 } from '@mantine/core';
-import { notifications } from '@mantine/notifications';
 
 import MenuContentLayout from '@/layouts/MenuContentLayout';
-import { getErrorMessage } from '@/utils/error';
 import { onPageRefresh } from '@/utils/page-refresh';
 
 import DirectoryGrid from './DirectoryGrid';
+import DeleteFolderConfirm from './DeleteFolderConfirm';
 import DirBreadcrumb from './DirBreadcrumb';
 import FilesActions from './FilesActions';
 import type { FilesActionsPanel } from './FilesActions/types';
 import { SKELETON_TILES } from './constants';
+import { useEntryActions } from './hooks/useEntryActions';
 import { useFavorites } from './hooks/useFavorites';
 import { useFilesDir } from './hooks/useFilesDir';
+import { useFolderDelete } from './hooks/useFolderDelete';
 import { useTypeFilter } from './hooks/useTypeFilter';
 import {
   availableCategoryOptions,
   filterFilesByCategory,
   filterFilesByKeyword,
 } from './utils/files';
-import { createFolder, moveEntry, renameEntry } from './utils/files-api';
 
 import styles from './index.scss';
 
@@ -44,15 +44,21 @@ const Files = () => {
   const { selected: selectedCategories, onChange: onCategoriesChange } =
     useTypeFilter();
 
+  const folders = listing?.folders ?? [];
+  const entryActions = useEntryActions(listing?.path ?? null, reload);
+  const {
+    cancelDelete,
+    confirmDelete,
+    deletingFolder,
+    deleteLoading,
+    requestDelete,
+    resetDelete,
+  } = useFolderDelete(folders, reload);
+
   /** 同时只开一块弹层：收藏 / 筛选 */
   const [openPanel, setOpenPanel] = useState<FilesActionsPanel | null>(null);
   /** 文件名关键词；会话内状态，不持久化 */
   const [keyword, setKeyword] = useState('');
-  /** 正在就地改名的文件夹路径；null 表示没有改名态 */
-  const [renamingPath, setRenamingPath] = useState<string | null>(null);
-  /** 拖拽中的条目路径与悬停的放置目标文件夹路径 */
-  const [dragSource, setDragSource] = useState<string | null>(null);
-  const [dropTarget, setDropTarget] = useState<string | null>(null);
 
   // 页面标题栏的「刷新当前页面」：静默重读当前目录，失败由订阅方弹提示
   useEffect(() => onPageRefresh(reload), [reload]);
@@ -74,11 +80,10 @@ const Files = () => {
   const togglePanel = (panel: FilesActionsPanel) =>
     setOpenPanel((prev) => (prev === panel ? null : panel));
 
-  /** 离开当前目录前清掉改名与拖拽临时状态，不沿用到新目录 */
+  /** 离开当前目录前清掉改名、拖拽与待删除临时状态，不沿用到新目录 */
   const resetTransientState = () => {
-    setRenamingPath(null);
-    setDragSource(null);
-    setDropTarget(null);
+    entryActions.resetTransient();
+    resetDelete();
   };
 
   /** 切目录：先清临时状态再交 hook 取数 */
@@ -95,86 +100,6 @@ const Files = () => {
   const handlePickDir = () => {
     resetTransientState();
     pickDir();
-  };
-
-  /** 新建文件夹：后端落一个默认名条目，刷新后进入就地改名态 */
-  const handleCreateFolder = async () => {
-    if (!listing) {
-      return;
-    }
-
-    try {
-      const created = await createFolder(listing.path);
-
-      await reload();
-      setRenamingPath(created.path);
-    } catch (err) {
-      notifications.show({
-        title: '新建文件夹失败',
-        message: getErrorMessage(err, '请稍后重试'),
-        color: 'red',
-        autoClose: false,
-      });
-    }
-  };
-
-  /** 提交改名：成功后刷新列表；失败弹提示并退出改名态，条目保留原名 */
-  const handleRenameCommit = async (path: string, name: string) => {
-    try {
-      await renameEntry(path, name);
-      await reload();
-    } catch (err) {
-      notifications.show({
-        title: '重命名失败',
-        message: getErrorMessage(err, '请稍后重试'),
-        color: 'red',
-        autoClose: false,
-      });
-    } finally {
-      setRenamingPath(null);
-    }
-  };
-
-  /** 拖拽移动：同名冲突 / 移入自身后代由后端拒绝，失败不改动原位置 */
-  const handleMove = async (source: string, targetDir: string) => {
-    if (!source || source === targetDir) {
-      setDragSource(null);
-      setDropTarget(null);
-
-      return;
-    }
-
-    try {
-      await moveEntry(source, targetDir);
-      await reload();
-      notifications.show({
-        title: '已移动',
-        message: '条目已移入目标文件夹',
-        color: 'teal',
-        autoClose: 4000,
-      });
-    } catch (err) {
-      notifications.show({
-        title: '移动失败',
-        message: getErrorMessage(err, '请稍后重试'),
-        color: 'red',
-        autoClose: false,
-      });
-    } finally {
-      setDragSource(null);
-      setDropTarget(null);
-    }
-  };
-
-  const handleDragOverFolder = (path: string, event: DragEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    setDropTarget(path);
-  };
-
-  const handleDropFolder = (path: string) => {
-    if (dragSource) {
-      void handleMove(dragSource, path);
-    }
   };
 
   /** 首次 / 切目录还没拿到结果：先给骨架形状，不报 0 */
@@ -199,7 +124,7 @@ const Files = () => {
           keyword={keyword}
           loading={loading}
           onCategoriesChange={onCategoriesChange}
-          onCreateFolder={handleCreateFolder}
+          onCreateFolder={entryActions.createEntry}
           onKeywordChange={setKeyword}
           onOpenFavorite={goToDir}
           onPanelChange={setOpenPanel}
@@ -267,26 +192,32 @@ const Files = () => {
             type="auto"
           >
             <DirectoryGrid
-              dragSource={dragSource}
-              dropTarget={dropTarget}
+              dragSource={entryActions.dragSource}
+              dropTarget={entryActions.dropTarget}
               files={visibleFiles}
-              folders={listing.folders}
-              onDragEnd={() => {
-                setDragSource(null);
-                setDropTarget(null);
-              }}
-              onDragLeaveFolder={() => setDropTarget(null)}
-              onDragOverFolder={handleDragOverFolder}
-              onDragStartEntry={setDragSource}
-              onDropFolder={handleDropFolder}
+              folders={folders}
+              onDragEnd={entryActions.clearDrag}
+              onDragLeaveFolder={entryActions.dragLeaveFolder}
+              onDragOverFolder={entryActions.dragOverFolder}
+              onDragStartEntry={entryActions.dragStartEntry}
+              onDropFolder={entryActions.dropFolder}
+              onEditFolder={entryActions.editEntry}
               onOpenFolder={goToDir}
-              onRenameCancel={() => setRenamingPath(null)}
-              onRenameCommit={handleRenameCommit}
-              renamingPath={renamingPath}
+              onRenameCancel={entryActions.renameCancel}
+              onRenameCommit={entryActions.renameCommit}
+              onRequestDeleteFolder={requestDelete}
+              renamingPath={entryActions.renamingPath}
             />
           </ScrollArea>
         ) : null}
       </Stack>
+
+      <DeleteFolderConfirm
+        folder={deletingFolder}
+        loading={deleteLoading}
+        onCancel={cancelDelete}
+        onConfirm={() => void confirmDelete()}
+      />
     </MenuContentLayout>
   );
 };

@@ -6,7 +6,8 @@
  * - `POST /api/files/pick-dir`：调起 macOS 系统目录选择框，body `{ dir }` 作为默认定位目录，返回选中目录的绝对路径（取消返回 cancelled）；
  * - `POST /api/files/new-folder`：在 body `{ dir }` 目录下新建文件夹，返回新条目；
  * - `POST /api/files/rename`：body `{ path, name }` 重命名一条条目；
- * - `POST /api/files/move`：body `{ source, targetDir }` 把一条条目移入目标目录。
+ * - `POST /api/files/move`：body `{ source, targetDir }` 把一条条目移入目标目录；
+ * - `POST /api/files/delete`：body `{ path }` 删除一条条目，文件夹连同内部内容递归删除。
  *
  * 写操作仅限开发服务器中间件，静态构建不带这些接口；不读文件内容，只给列表摘要。
  */
@@ -15,6 +16,7 @@ import type { Plugin } from 'vite';
 
 import {
   createFolder,
+  deleteEntry,
   homeDirectory,
   listDirectory,
   moveEntry,
@@ -129,7 +131,8 @@ export const files = (): Plugin => ({
       if (
         pathname === '/new-folder' ||
         pathname === '/rename' ||
-        pathname === '/move'
+        pathname === '/move' ||
+        pathname === '/delete'
       ) {
         if (req.method !== 'POST') {
           res.statusCode = 405;
@@ -159,11 +162,15 @@ export const files = (): Plugin => ({
             );
 
             res.end(JSON.stringify({ entry }));
-          } else {
+          } else if (pathname === '/move') {
             await moveEntry(
               bodyString(body, 'source'),
               bodyString(body, 'targetDir'),
             );
+
+            res.end(JSON.stringify({ ok: true }));
+          } else {
+            await deleteEntry(bodyString(body, 'path'));
 
             res.end(JSON.stringify({ ok: true }));
           }

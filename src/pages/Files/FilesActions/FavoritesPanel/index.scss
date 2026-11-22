@@ -1,9 +1,13 @@
-/* 收藏条目行：名字 + 路径占满剩余宽度可截断，移除按钮靠右 */
+/* 收藏条目行：整行可点直达，名字 + 路径占满剩余宽度可截断，移除按钮靠右 */
 
 .row {
+  display: flex;
   width: 100%;
-  padding: 4px 6px;
-  border-radius: 4px;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
 
   &:hover {
     background: var(--app-surface-hover);

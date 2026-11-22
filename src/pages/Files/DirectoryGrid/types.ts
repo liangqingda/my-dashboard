@@ -25,7 +25,7 @@ export type DirectoryGridProps = {
   /** 拖拽结束 */
   onDragEnd: () => void;
   /** 拖拽经过某文件夹 */
-  onDragOverFolder: (path: string, event: DragEvent<HTMLButtonElement>) => void;
+  onDragOverFolder: (path: string, event: DragEvent<HTMLDivElement>) => void;
   /** 拖拽离开某文件夹 */
   onDragLeaveFolder: (path: string) => void;
   /** 松手放入某文件夹 */
@@ -34,4 +34,8 @@ export type DirectoryGridProps = {
   onRenameCommit: (path: string, name: string) => void;
   /** 取消改名 */
   onRenameCancel: () => void;
+  /** 重命名某个文件夹 */
+  onEditFolder: (path: string) => void;
+  /** 请求删除某个文件夹（先弹二次确认） */
+  onRequestDeleteFolder: (path: string) => void;
 };

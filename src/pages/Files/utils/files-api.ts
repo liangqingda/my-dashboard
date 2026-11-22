@@ -21,6 +21,7 @@ const PICK_ENDPOINT = '/api/files/pick-dir';
 const NEW_FOLDER_ENDPOINT = '/api/files/new-folder';
 const RENAME_ENDPOINT = '/api/files/rename';
 const MOVE_ENDPOINT = '/api/files/move';
+const DELETE_ENDPOINT = '/api/files/delete';
 
 /** 系统目录选择器返回值：选中给绝对路径，取消给 cancelled */
 export type PickedDir = { path: string } | { cancelled: true };
@@ -278,4 +279,9 @@ export const moveEntry = async (
   targetDir: string,
 ): Promise<void> => {
   await postJson(MOVE_ENDPOINT, { source, targetDir });
+};
+
+/** 删除一条条目；文件夹连同内部内容递归删除，不可恢复 */
+export const deleteEntry = async (pathValue: string): Promise<void> => {
+  await postJson(DELETE_ENDPOINT, { path: pathValue });
 };

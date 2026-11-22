@@ -21,9 +21,11 @@ const DirectoryGrid = ({
   onDragOverFolder,
   onDragStartEntry,
   onDropFolder,
+  onEditFolder,
   onOpenFolder,
   onRenameCancel,
   onRenameCommit,
+  onRequestDeleteFolder,
   renamingPath,
 }: DirectoryGridProps) => {
   const renamingFolder = folders.find((folder) => folder.path === renamingPath);
@@ -52,7 +54,9 @@ const DirectoryGrid = ({
             onDragOver={(event) => onDragOverFolder(folder.path, event)}
             onDragStartEntry={() => onDragStartEntry(folder.path)}
             onDrop={() => onDropFolder(folder.path)}
+            onEdit={() => onEditFolder(folder.path)}
             onOpen={onOpenFolder}
+            onRequestDelete={() => onRequestDeleteFolder(folder.path)}
           />
         ),
       )}

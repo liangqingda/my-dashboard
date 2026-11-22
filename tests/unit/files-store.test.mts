@@ -7,6 +7,7 @@ import { after, before, describe, it } from 'node:test';
 import {
   buildPickerScript,
   createFolder,
+  deleteEntry,
   listDirectory,
   moveEntry,
   renameEntry,
@@ -191,6 +192,29 @@ describe('files-store', () => {
     await assert.rejects(
       () => moveEntry(sub.path, child.path),
       /自身或其子文件夹/,
+    );
+  });
+
+  it('删除：空文件夹直接删除；非空文件夹连同内部文件与子文件夹递归删除；不存在的路径报错', async () => {
+    const empty = await createFolder(root);
+
+    await deleteEntry(empty.path);
+    assert.ok(
+      !(await listDirectory(root)).folders.some((folder) => folder.path === empty.path),
+    );
+
+    const nested = await createFolder(root);
+    await writeFile(path.join(nested.path, 'inside.txt'), 'x');
+    await mkdir(path.join(nested.path, 'child'));
+
+    await deleteEntry(nested.path);
+    assert.ok(
+      !(await listDirectory(root)).folders.some((folder) => folder.path === nested.path),
+    );
+
+    await assert.rejects(
+      () => deleteEntry(path.join(root, 'no-such-entry')),
+      /目录不存在/,
     );
   });
 });
