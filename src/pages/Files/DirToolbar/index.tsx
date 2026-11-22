@@ -1,40 +1,37 @@
-import {
-  Button,
-  Checkbox,
-  Group,
-  MultiSelect,
-  Pill,
-  Select,
-  Tooltip,
-  UnstyledButton,
-} from '@mantine/core';
+/**
+ * 目录工具栏：一行排布——左侧当前路径面包屑，竖向分割线后依次是「打开」访达图标按钮、
+ * 收藏弹层按钮、类型筛选弹层按钮。两块弹层互斥，同时只开一块。
+ */
+
+import { useState } from 'react';
+import { Divider, Group, UnstyledButton } from '@mantine/core';
 import {
   IconBookmark,
   IconBookmarkFilled,
+  IconBrandFinder,
   IconChevronRight,
+  IconFilter,
   IconHome,
-  IconX,
 } from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
-import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
+import IconPopoverButton from '@/components/buttons/IconPopoverButton';
 
-import {
-  FAVORITE_SELECT_WIDTH,
-  MAX_VISIBLE_CATEGORY_PILLS,
-  TYPE_FILTER_WIDTH,
-} from '../constants';
 import { splitPathSegments } from '../utils/files';
-import type { FileCategory } from '../types';
 
+import FavoritesPanel from './FavoritesPanel';
+import TypeFilterPanel from './TypeFilterPanel';
 import type { DirToolbarProps } from './types';
 
 import styles from './index.scss';
 
-/**
- * 目录工具栏：上行是当前路径面包屑，右侧接收藏开关与「打开」按钮；
- * 下行是类型多选与收藏目录下拉。
- */
+/** 同时只开一块弹层：收藏面板 / 类型面板 */
+type OpenPanel = 'favorites' | 'type';
+
+/** 与同排图标同档的尺寸 / 线宽 */
+const ICON_SIZE = 16;
+const ICON_STROKE = 1.9;
+
 const DirToolbar = ({
   currentDir,
   favoriteDisabled,
@@ -50,165 +47,97 @@ const DirToolbar = ({
   selectedCategories,
   typeOptions,
 }: DirToolbarProps) => {
-  const segments = splitPathSegments(currentDir);
-
-  const favoriteOptions = favorites.map((favorite) => ({
-    value: favorite.path,
-    label: favorite.name,
-  }));
-  const favoriteValue = favorites.some((item) => item.path === currentDir)
-    ? currentDir
-    : '';
-  const categoryLabelByValue = new Map(
-    typeOptions.map((option) => [option.value, option.label]),
-  );
+  const [openPanel, setOpenPanel] = useState<OpenPanel | null>(null);
+  const pathSegments = splitPathSegments(currentDir);
 
   return (
-    <div className={styles.toolbar}>
-      <Group className={styles.top} gap="sm" justify="space-between" wrap="nowrap">
-        <Group className={styles.breadcrumb} gap={4} wrap="wrap">
-          {segments.length > 0 ? (
-            <>
-              <IconHome aria-hidden="true" className={styles.home} size={14} />
-              {segments.map((segment, index) => {
-                const last = index === segments.length - 1;
+    <Group align="center" className={styles.top} gap="sm" justify="space-between" wrap="nowrap">
+      <Group className={styles.breadcrumb} gap={4} wrap="wrap">
+        {pathSegments.length > 0 ? (
+          <>
+            <IconHome aria-hidden="true" className={styles.home} size={14} />
+            {pathSegments.map((segment, index) => {
+              const isLast = index === pathSegments.length - 1;
 
-                return (
-                  <span className={styles.segment} key={segment.path}>
-                    <IconChevronRight
-                      aria-hidden="true"
-                      className={styles.separator}
-                      size={13}
-                    />
-                    {last ? (
-                      <span className={styles.current}>{segment.label}</span>
-                    ) : (
-                      <UnstyledButton
-                        className={styles.link}
-                        onClick={() => onNavigate(segment.path)}
-                        type="button"
-                      >
-                        {segment.label}
-                      </UnstyledButton>
-                    )}
-                  </span>
-                );
-              })}
-            </>
-          ) : (
-            <span className={styles.placeholder}>未选择目录</span>
-          )}
-        </Group>
-
-        <Group className={styles.actions} gap="sm" wrap="nowrap">
-          <FreeIconAction
-            disabled={favoriteDisabled}
-            label="收藏目录"
-            onClick={onToggleFavorite}
-            size="sm"
-            tooltipLabel={isFavorite ? '取消收藏当前目录' : '收藏当前目录'}
-          >
-            {isFavorite ? (
-              <IconBookmarkFilled size={16} />
-            ) : (
-              <IconBookmark size={16} />
-            )}
-          </FreeIconAction>
-          <Button
-            disabled={loading}
-            onClick={onPickDir}
-            size="xs"
-            title="选择本地目录"
-            variant="default"
-          >
-            打开
-          </Button>
-        </Group>
-      </Group>
-
-      <Group gap="sm" wrap="nowrap">
-        <MultiSelect
-          aria-label="按文件类型筛选"
-          clearable
-          data={typeOptions}
-          onChange={onCategoriesChange}
-          placeholder={selectedCategories.length === 0 ? '全部类型' : undefined}
-          renderOption={({ option, checked }) => (
-            <Group gap="xs" wrap="nowrap">
-              <Checkbox checked={checked} readOnly size="xs" />
-              <span>{option.label}</span>
-            </Group>
-          )}
-          renderPill={({ option, onRemove, value }) => {
-            const idx = selectedCategories.indexOf(value as FileCategory);
-
-            if (idx < 0) {
-              return null;
-            }
-
-            if (idx < MAX_VISIBLE_CATEGORY_PILLS) {
               return (
-                <Pill onRemove={onRemove} size="xs" withRemoveButton>
-                  {option.label}
-                </Pill>
+                <span className={styles.segment} key={segment.path}>
+                  <IconChevronRight
+                    aria-hidden="true"
+                    className={styles.separator}
+                    size={13}
+                  />
+                  {isLast ? (
+                    <span className={styles.current}>{segment.label}</span>
+                  ) : (
+                    <UnstyledButton
+                      className={styles.link}
+                      onClick={() => onNavigate(segment.path)}
+                      type="button"
+                    >
+                      {segment.label}
+                    </UnstyledButton>
+                  )}
+                </span>
               );
-            }
-
-            if (idx !== MAX_VISIBLE_CATEGORY_PILLS) {
-              return null;
-            }
-
-            const hidden = selectedCategories.slice(MAX_VISIBLE_CATEGORY_PILLS);
-            const hiddenLabels = hidden.map(
-              (item) => categoryLabelByValue.get(item) ?? item,
-            );
-
-            return (
-              <Tooltip label={hiddenLabels.join('、')} multiline position="top">
-                <Pill size="xs">+{hidden.length}</Pill>
-              </Tooltip>
-            );
-          }}
-          size="xs"
-          styles={{ pillsList: { flexWrap: 'nowrap' } }}
-          value={selectedCategories}
-          w={TYPE_FILTER_WIDTH}
-          withCheckIcon={false}
-        />
-        {favorites.length > 0 ? (
-          <Select
-            allowDeselect={false}
-            aria-label="收藏的目录"
-            data={favoriteOptions}
-            onChange={(value) => {
-              if (value !== null) {
-                onOpenFavorite(value);
-              }
-            }}
-            placeholder="收藏目录"
-            renderOption={({ option }) => (
-              <Group gap="xs" justify="space-between" wrap="nowrap">
-                <FreeTruncatedText inline position="top" text={option.label} />
-                <FreeIconAction
-                  label="移除收藏"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onRemoveFavorite(option.value);
-                  }}
-                  size="xs"
-                  tooltip="none"
-                >
-                  <IconX size={13} />
-                </FreeIconAction>
-              </Group>
-            )}
-            size="xs"
-            value={favoriteValue}
-            w={FAVORITE_SELECT_WIDTH}
-          />
-        ) : null}
+            })}
+          </>
+        ) : (
+          <span className={styles.placeholder}>未选择目录</span>
+        )}
       </Group>
-    </div>
+
+      <Group className={styles.actions} gap="sm" wrap="nowrap">
+        <Divider className={styles.divider} orientation="vertical" />
+
+        <FreeIconAction
+          disabled={loading}
+          label="选择本地目录"
+          onClick={onPickDir}
+        >
+          <IconBrandFinder size={ICON_SIZE} stroke={ICON_STROKE} />
+        </FreeIconAction>
+
+        <IconPopoverButton
+          active={isFavorite}
+          disabled={favoriteDisabled}
+          hint={isFavorite ? '取消收藏当前目录' : '收藏当前目录'}
+          icon={
+            isFavorite ? (
+              <IconBookmarkFilled size={ICON_SIZE} stroke={ICON_STROKE} />
+            ) : (
+              <IconBookmark size={ICON_SIZE} stroke={ICON_STROKE} />
+            )
+          }
+          label="收藏目录"
+          onChange={(opened) => setOpenPanel(opened ? 'favorites' : null)}
+          opened={openPanel === 'favorites'}
+        >
+          <FavoritesPanel
+            disabled={favoriteDisabled}
+            favorites={favorites}
+            isFavorite={isFavorite}
+            onClose={() => setOpenPanel(null)}
+            onOpen={onOpenFavorite}
+            onRemove={onRemoveFavorite}
+            onToggleFavorite={onToggleFavorite}
+          />
+        </IconPopoverButton>
+
+        <IconPopoverButton
+          active={selectedCategories.length > 0}
+          icon={<IconFilter size={15} stroke={ICON_STROKE} />}
+          label="按类型筛选"
+          onChange={(opened) => setOpenPanel(opened ? 'type' : null)}
+          opened={openPanel === 'type'}
+        >
+          <TypeFilterPanel
+            onChange={onCategoriesChange}
+            options={typeOptions}
+            selected={selectedCategories}
+          />
+        </IconPopoverButton>
+      </Group>
+    </Group>
   );
 };
 

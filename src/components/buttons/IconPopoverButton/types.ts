@@ -17,6 +17,8 @@ export type IconPopoverButtonProps = {
   active?: boolean;
   /** 弹层是否打开 */
   opened: boolean;
+  /** 禁用触发按钮；弹层自然不会打开 */
+  disabled?: boolean;
   /** 开合变化（点图标、点弹层外面、按 Esc 都会走到这里） */
   onChange: (opened: boolean) => void;
   /** 弹层宽度；内容里放日历这类宽控件时由调用方放宽 */

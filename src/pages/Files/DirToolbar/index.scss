@@ -1,16 +1,12 @@
-/* 目录工具栏：上行面包屑 + 右侧操作，下行类型与收藏下拉 */
-
-.toolbar {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+/* 目录工具栏：一行面包屑 + 竖向分割线 + 右侧操作按钮组 */
 
 .top {
   width: 100%;
 }
 
 .breadcrumb {
+  flex: 1 1 auto;
+  min-width: 0;
   min-height: 20px;
   color: var(--app-ink-soft);
   font-size: 0.8rem;
@@ -18,6 +14,11 @@
 
 .actions {
   flex: 0 0 auto;
+}
+
+.divider {
+  height: 18px;
+  --divider-color: var(--app-line);
 }
 
 .home {

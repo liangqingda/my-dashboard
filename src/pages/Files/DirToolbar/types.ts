@@ -14,7 +14,7 @@ export type DirToolbarProps = {
   isFavorite: boolean;
   /** 还没选目录时收藏按钮禁用 */
   favoriteDisabled: boolean;
-  /** 收藏的目录列表，排成下拉选项；空列表时收藏下拉不渲染 */
+  /** 收藏的目录列表，排成收藏面板的条目 */
   favorites: FavoriteEntry[];
   /** 类型筛选可选分类（当前列表里实际出现过的） */
   typeOptions: { value: FileCategory; label: string }[];
@@ -26,7 +26,7 @@ export type DirToolbarProps = {
   onToggleFavorite: () => void;
   /** 点面包屑某一段，回到该层目录 */
   onNavigate: (dir: string) => void;
-  /** 点收藏下拉某一项直达该目录 */
+  /** 点收藏面板某一条直达该目录 */
   onOpenFavorite: (dir: string) => void;
   /** 移除一条收藏 */
   onRemoveFavorite: (path: string) => void;

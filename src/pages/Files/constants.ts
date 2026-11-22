@@ -47,12 +47,3 @@ export const TYPE_FILTER_STORAGE_KEY = scopedStorageKey(
   FILES_STORAGE_SCOPE,
   'type-filter',
 );
-
-/** 类型筛选下拉宽度（两项 pill 收进 +n 后仍单行放得下） */
-export const TYPE_FILTER_WIDTH = 176;
-
-/** 收藏目录下拉宽度 */
-export const FAVORITE_SELECT_WIDTH = 200;
-
-/** 类型多选最多平铺展示的已选项；超出收进「+n」，悬浮看剩余 */
-export const MAX_VISIBLE_CATEGORY_PILLS = 2;

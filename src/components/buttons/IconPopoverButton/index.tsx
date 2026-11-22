@@ -22,6 +22,7 @@ const DROPDOWN_WIDTH = 272;
 const IconPopoverButton = ({
   active = false,
   children,
+  disabled = false,
   hint,
   icon,
   label,
@@ -48,6 +49,7 @@ const IconPopoverButton = ({
       <Popover.Target>
         <Tooltip label={tooltip} withArrow>
           <FreeIconAction
+            disabled={disabled}
             label={label}
             onClick={() => onChange(!opened)}
             size="sm"
