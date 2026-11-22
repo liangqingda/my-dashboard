@@ -13,24 +13,19 @@
  * 下拉外观、字段间距、底部那行不归这里。
  */
 
-import { useEffect, useRef } from 'react';
 import type { KeyboardEvent } from 'react';
-import { ActionIcon, Stack, TextInput } from '@mantine/core';
-import { IconSearch, IconX } from '@tabler/icons-react';
+import { Stack } from '@mantine/core';
 
-import FreePanelFooter from '@/components/panels/FreePanelFooter';
-import FreeSelectField from '@/components/fields/FreeSelectField';
 import { PANEL_FIELD_STYLES } from '@/components/buttons/IconPopoverButton/constants';
+import FreeSearchInput from '@/components/fields/FreeSearchInput';
+import FreeSelectField from '@/components/fields/FreeSelectField';
 import type { MarkdownFilterNavigation } from '@/components/modals/MarkdownPreviewModal';
+import FreePanelFooter from '@/components/panels/FreePanelFooter';
 
 import { FILTER_SCOPE_CODEC } from '../constants';
 
 import { SCOPE_OPTIONS, SCOPE_SELECT_DATA } from './constants';
 import type { NoteFilterProps } from './types';
-
-/** 输入框右侧清空按钮与图标的尺寸，跟面板整体的小字号对齐 */
-const ICON_SIZE = 13;
-const ICON_STROKE = 1.9;
 
 /** 命中计数文案：无关键词不显示；有词但零命中显示「无匹配」 */
 const resolveMatchHint = (
@@ -56,13 +51,6 @@ const NoteFilter = ({
   onScopeChange,
   scope,
 }: NoteFilterProps) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  /** 面板随弹层挂载即聚焦关键词输入框，点开就能直接打字 */
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
-
   /** 有没有条件生效：没有时「重置」置灰，点了也没东西可清（口径与 hook 里的 active 一致） */
   const active = scope !== 'all' || keyword.trim() !== '';
   /** 收起时只留一档名字，选中的这一档到底筛掉什么，靠这句单行说明补上 */
@@ -89,27 +77,15 @@ const NoteFilter = ({
 
   return (
     <Stack gap="sm">
-      <TextInput
+      <FreeSearchInput
+        ariaLabel="关键词"
+        autoFocus
+        clearLabel="清空关键词"
         description={matchHint === '' ? undefined : matchHint}
         label="关键词"
-        leftSection={<IconSearch size={ICON_SIZE} stroke={ICON_STROKE} />}
-        onChange={(event) => onKeywordChange(event.currentTarget.value)}
+        onChange={onKeywordChange}
         onKeyDown={handleKeyDown}
         placeholder="题目、答案、讲解里搜"
-        ref={inputRef}
-        rightSection={
-          keyword === '' ? null : (
-            <ActionIcon
-              aria-label="清空关键词"
-              onClick={() => onKeywordChange('')}
-              size={18}
-              variant="subtle"
-            >
-              <IconX size={ICON_SIZE} stroke={ICON_STROKE} />
-            </ActionIcon>
-          )
-        }
-        size="xs"
         styles={PANEL_FIELD_STYLES}
         value={keyword}
       />

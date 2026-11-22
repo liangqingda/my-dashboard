@@ -86,4 +86,4 @@ const { fullscreen, toggle } = useModalFullscreen(storageKey);
 - `Review/RecordDetailModal`：记录详情，`nav` 传上一条 / 下一条，正文用 `ScrollArea` + `.paper` 留白。
 
 业务弹窗不回头直连 `Modal`、不复制框体 / header 样式；需要新插槽时先加在本组件，哪怕只有一处用
-（同款外观出现第二处时，两处要一起往这里靠）。
+（同一类形态全站只该有一套，第二处出现时两处一起往这里靠）。

@@ -17,7 +17,7 @@
 import { useState } from 'react';
 import { IconTrash } from '@tabler/icons-react';
 
-import HeaderIconAction from '@/components/buttons/HeaderIconAction';
+import FreeIconAction from '@/components/buttons/FreeIconAction';
 import FreeModal from '@/components/modals/FreeModal';
 import { useModalFullscreen } from '@/components/modals/FreeModal/hooks/useModalFullscreen';
 
@@ -224,12 +224,12 @@ const MarkdownPreviewModal = ({
         }
         headerTail={
           documentActionsVisible && remove && !loading ? (
-            <HeaderIconAction
+            <FreeIconAction
               label="删除这篇文档（Delete）"
               onClick={withPanelsClosed(removal.request) ?? undefined}
             >
               <IconTrash size={15} stroke={1.9} />
-            </HeaderIconAction>
+            </FreeIconAction>
           ) : undefined
         }
         nav={

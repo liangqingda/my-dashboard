@@ -14,7 +14,7 @@
 
 `PANEL_FIELD_STYLES`（`{ label: { marginBottom: 4 } }`）：弹层面板里「标题 + 控件」的字段间距。
 组件库只靠标题行高留白，视觉上会贴着控件，所以统一补 4px。`FreeSelectField` 里的 `Select`、
-`NoteFilter` 里的 `TextInput` 用的都是它——**不要再各自复制一份同值常量**。
+`FreeSearchInput`（筛选面板里的关键词框）用的都是它——**不要再各自复制一份同值常量**。
 它放在这里，是因为它管的是「弹层面板里的字段」，而不是某一个控件。
 
 ## 注意

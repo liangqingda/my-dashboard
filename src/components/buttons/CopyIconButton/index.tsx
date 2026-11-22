@@ -1,29 +1,21 @@
 /**
  * 复制图标按钮：点一下把文本写进剪贴板，成功后图标换成对勾并在 1.5 秒内复原。
  *
- * 供表格操作列与 Markdown 预览弹窗 header 共用。点击事件不向父级冒泡：
- * 嵌在「整行可点击」的表格里时，复制不会顺带打开那一行。
- * 复制失败（权限被拒且兜底也失败）只弹一条提示，不静默失败。
- *
- * tip 只在指针停在这个图标上时创建（见 `useHoverIntent`）：表格里几百行的复制按钮如果
- * 各自常驻一个 Tooltip，光挂载就要建几百套浮动定位实例，而这些提示平时根本看不见。
- * tip 挂在按钮旁边、由 `target` 指回去，出现与消失不会替换按钮元素。
+ * 外观与「只在被指到时才挂 tip」的口径来自 `FreeIconAction`，这里只管复制这个动作：
+ * 点击不向父级冒泡（嵌在「整行可点击」的表格里时，复制不会顺带打开那一行）、
+ * 成功后 tooltip 切到 `copiedLabel`、复制失败只弹一条提示，不静默失败。
  */
 
 import { useEffect, useRef, useState } from 'react';
 import type { MouseEvent } from 'react';
-import { ActionIcon, Tooltip } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconCheck, IconCopy } from '@tabler/icons-react';
 
-import { useHoverIntent } from '@/hooks/useHoverIntent';
+import FreeIconAction from '@/components/buttons/FreeIconAction';
 import { COPY_FEEDBACK_DURATION, copyText } from '@/utils/clipboard';
-import { cx } from '@/utils/cx';
 
 import type { CopyIconButtonProps } from './types';
 import { COPY_FAILED_NOTICE_ID } from './constants';
-
-import styles from './index.scss';
 
 const CopyIconButton = ({
   className,
@@ -34,9 +26,6 @@ const CopyIconButton = ({
   text,
 }: CopyIconButtonProps) => {
   const [copied, setCopied] = useState(false);
-  const [active, hoverHandlers] = useHoverIntent();
-  /** tip 的定位目标：就是下面这个按钮自己 */
-  const buttonRef = useRef<HTMLButtonElement | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // 卸载时清掉复原定时器，避免对已卸载组件 setState
@@ -65,31 +54,19 @@ const CopyIconButton = ({
   };
 
   return (
-    <>
-      <ActionIcon
-        aria-label={label}
-        className={cx(styles.button, className)}
-        onClick={(event) => void handleCopy(event)}
-        ref={buttonRef}
-        size={size}
-        variant="subtle"
-        {...hoverHandlers}
-      >
-        {copied ? (
-          <IconCheck size={iconSize} stroke={1.9} />
-        ) : (
-          <IconCopy size={iconSize} stroke={1.9} />
-        )}
-      </ActionIcon>
-      {active ? (
-        <Tooltip
-          label={copied ? copiedLabel : label}
-          opened
-          target={buttonRef}
-          withArrow
-        />
-      ) : null}
-    </>
+    <FreeIconAction
+      className={className}
+      label={label}
+      onClick={(event) => void handleCopy(event)}
+      size={size}
+      tooltipLabel={copied ? copiedLabel : label}
+    >
+      {copied ? (
+        <IconCheck size={iconSize} stroke={1.9} />
+      ) : (
+        <IconCopy size={iconSize} stroke={1.9} />
+      )}
+    </FreeIconAction>
   );
 };
 

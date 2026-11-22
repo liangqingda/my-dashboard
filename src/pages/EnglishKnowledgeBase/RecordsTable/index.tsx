@@ -1,8 +1,9 @@
 import { memo } from 'react';
-import { ActionIcon, Badge, Group, Tooltip } from '@mantine/core';
+import { Badge, Group } from '@mantine/core';
 import { IconTrash } from '@tabler/icons-react';
 
 import CopyIconButton from '@/components/buttons/CopyIconButton';
+import FreeIconAction from '@/components/buttons/FreeIconAction';
 import FreeTable from '@/components/tables/FreeTable';
 import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
 import { formatDateTime } from '@/utils/format';
@@ -80,21 +81,18 @@ const RecordsTable = memo(
             <FreeTable.Td className={styles.actionWidth}>
               <Group gap={2} justify="center" wrap="nowrap">
                 <CopyIconButton label="复制记录 ID" text={record.id} />
-                <Tooltip label="删除这条记录" withArrow>
-                  <ActionIcon
-                    aria-label={`删除「${record.title}」`}
-                    color="red"
-                    onClick={(event) => {
-                      // 整行是打开入口：点删除只删，不打开详情
-                      event.stopPropagation();
-                      onDelete(record);
-                    }}
-                    size="sm"
-                    variant="subtle"
-                  >
-                    <IconTrash size={15} stroke={1.9} />
-                  </ActionIcon>
-                </Tooltip>
+                <FreeIconAction
+                  label={`删除「${record.title}」`}
+                  onClick={(event) => {
+                    // 整行是打开入口：点删除只删，不打开详情
+                    event.stopPropagation();
+                    onDelete(record);
+                  }}
+                  tone="danger"
+                  tooltipLabel="删除这条记录"
+                >
+                  <IconTrash size={15} stroke={1.9} />
+                </FreeIconAction>
               </Group>
             </FreeTable.Td>
           </FreeTable.Tr>

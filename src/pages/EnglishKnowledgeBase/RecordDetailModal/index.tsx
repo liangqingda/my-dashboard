@@ -1,7 +1,7 @@
 import { ScrollArea } from '@mantine/core';
 import { IconTrash } from '@tabler/icons-react';
 
-import HeaderIconAction from '@/components/buttons/HeaderIconAction';
+import FreeIconAction from '@/components/buttons/FreeIconAction';
 import FreeModal from '@/components/modals/FreeModal';
 import { useModalFullscreen } from '@/components/modals/FreeModal/hooks/useModalFullscreen';
 
@@ -49,9 +49,12 @@ const RecordDetailModal = ({
       fullscreen={{ active: fullscreen, onToggle: toggle }}
       headerTail={
         recordId === null || !onRequestDelete ? undefined : (
-          <HeaderIconAction label="删除这条记录（Delete）" onClick={onRequestDelete}>
+          <FreeIconAction
+            label="删除这条记录（Delete）"
+            onClick={onRequestDelete}
+          >
             <IconTrash size={ICON_SIZE} stroke={ICON_STROKE} />
-          </HeaderIconAction>
+          </FreeIconAction>
         )
       }
       nav={recordId === null ? undefined : nav}

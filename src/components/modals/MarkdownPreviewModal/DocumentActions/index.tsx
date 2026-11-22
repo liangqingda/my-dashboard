@@ -6,11 +6,11 @@
  * 全屏归弹窗外壳（`FreeModal`），删除排在全屏之后（见弹窗的 `headerTail`）。
  */
 
-import { ActionIcon, Tooltip } from '@mantine/core';
 import { IconRefresh } from '@tabler/icons-react';
 
 import CopyIconButton from '@/components/buttons/CopyIconButton';
 import FilterButton from '@/components/buttons/FilterButton';
+import FreeIconAction from '@/components/buttons/FreeIconAction';
 
 import InteractionControl from '../InteractionControl';
 import ProseFontControl from '../ProseFontControl';
@@ -100,18 +100,14 @@ const DocumentActions = ({
     ) : null}
     {/* 刷新正文：正文从盘里读时才有效，编辑中刷了只会把草稿盖掉 */}
     {onRefresh ? (
-      <Tooltip label="刷新预览内容（R）" withArrow>
-        <ActionIcon
-          aria-label="刷新预览内容"
-          className={styles.refreshButton}
-          loading={refreshing}
-          onClick={onRefresh}
-          size="sm"
-          variant="subtle"
-        >
-          <IconRefresh size={ICON_SIZE} stroke={ICON_STROKE} />
-        </ActionIcon>
-      </Tooltip>
+      <FreeIconAction
+        label="刷新预览内容"
+        loading={refreshing}
+        onClick={onRefresh}
+        tooltipLabel="刷新预览内容（R）"
+      >
+        <IconRefresh size={ICON_SIZE} stroke={ICON_STROKE} />
+      </FreeIconAction>
     ) : null}
   </div>
 );

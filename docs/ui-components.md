@@ -10,7 +10,7 @@
 | 场景 | 用什么 |
 | --- | --- |
 | 普通按钮（主次操作 / 提交） | `Button`（`variant` 区分主次，不自己写配色） |
-| 纯图标按钮 | `ActionIcon` + `Tooltip`（别用 `UnstyledButton` 当图标位） |
+| 纯图标按钮 | `FreeIconAction`（尺寸档 / 语气 / tooltip 都在它里面，别直连 `ActionIcon` + `Tooltip`，也别用 `UnstyledButton` 当图标位） |
 | 长得像文字、或整行 / 整块可点的入口 | `UnstyledButton` |
 | 表格 | `FreeTable`（业务再包一层，见下文） |
 | 阅读类弹窗（文档预览 / 条目详情） | `FreeModal`（业务弹窗基于它封装，见下文） |
@@ -22,13 +22,14 @@
 一律 `@/components/modals/FreeModal`（二次确认再基于它封 `ConfirmModal`），不 import Mantine `Modal`、
 也不 import `Modal.Root` 自己拼 header。`scripts/check-structure.mjs` 会扫这一条，命中即 lint 失败。
 | 单行输入 | `TextInput` |
+| 搜索框（左搜索图标 + 一键清空） | `FreeSearchInput` |
 | 多行输入（普通表单） | `Textarea` |
 | 下拉单选 / 多选 | `Select` / `MultiSelect` |
 | 弹层面板里的字段（标题 + 下拉 + 一行口径说明） | `FreeSelectField` |
 | 弹层面板底部（一句边界说明 + 重置） | `FreePanelFooter` |
 | 日期选择 | `@mantine/dates` 的 `DatePicker`（内联日历）/ `DatePickerInput`（带弹层的日期输入）；全站日历口径（中文、周一为第一天）由 `src/main.tsx` 的 `DatesProvider` 统一给，不要自己拼日历或改用原生 `type="date"` |
 | 分段切换（视图模式、日志类别） | `SegmentedControl` |
-| 悬停 / 聚焦提示 | `Tooltip`（截断后的完整内容走 `FreeTruncatedText`）；**列表里成百上千个条目不要给每条常驻一个 `Tooltip`**，用 `@/hooks/useHoverIntent` 在被指到时才挂一个（`target` 指向被指的节点，不替换它），`FreeTruncatedText` 与 `CopyIconButton` 已内置这套做法 |
+| 悬停 / 聚焦提示 | `Tooltip`（截断后的完整内容走 `FreeTruncatedText`）；**列表里成百上千个条目不要给每条常驻一个 `Tooltip`**，用 `@/hooks/useHoverIntent` 在被指到时才挂一个（`target` 指向被指的节点，不替换它），`FreeTruncatedText`、`FreeIconAction` 与 `CopyIconButton` 已内置这套做法 |
 | 加载中 | `Loader`（占位骨架 `Skeleton`） |
 | 一次性提示 | `notifications.show`（不自己造 toast） |
 | 折叠 / 展开 | `Collapse`、`Accordion` |
@@ -74,9 +75,9 @@
 | 分类目录 | 放什么 | 现有组件 |
 | --- | --- | --- |
 | `modals` | 弹窗外壳与弹窗类组件（阅读弹窗、二次确认） | `FreeModal`、`ConfirmModal`、`MarkdownPreviewModal` |
-| `buttons` | 按钮、图标按钮、按钮触发的弹层外壳 | `CopyIconButton`、`FilterButton`、`IconPopoverButton` |
+| `buttons` | 按钮、图标按钮、按钮触发的弹层外壳 | `FreeIconAction`、`CopyIconButton`、`FilterButton`、`IconPopoverButton` |
 | `tables` | 表格基线 | `FreeTable` |
-| `fields` | 字段 / 输入控件组 | `FreeSelectField` |
+| `fields` | 字段 / 输入控件组 | `FreeSelectField`、`FreeSearchInput` |
 | `panels` | 面板级排布件（底栏、面板内布局） | `FreePanelFooter` |
 | `texts` | 文本展示与截断 | `FreeTruncatedText` |
 | `feedback` | 加载、空态、提示这类状态呈现 | `PageLoading` |
@@ -103,8 +104,8 @@
 **`Free` 前缀的唯一含义是「全站唯一入口」**，不是「包了某个组件库组件」。三条判据从上往下问：
 
 1. 这类东西全站只允许一种形态 / 一套交互、业务不许越过它直连底层？是 → `FreeXxx`
-   ——**不看底下包的是组件库还是自研**（表格、弹窗、输入、视频播放、PDF 预览、文本截断、加载态
-   都属于这一列）。
+   ——**不看底下包的是组件库还是自研**（表格、弹窗、输入、图标按钮、搜索框、视频播放、PDF 预览、
+   文本截断都属于这一列）。
 2. 它只是某个动作的现成实现，各场景按需要选用、并不构成某类对象的唯一形态？→ 不挂 `Free`
    （复制、筛选、图标弹层、二次确认、文档预览是一套能力，不是某类对象的唯一入口）。
 3. props 里出现只有某一页才成立的语义（某页的筛选项、某页的文档结构）？→ 它不该在
@@ -117,11 +118,12 @@
 `FreePanelFooter` 是 1 的边缘案例：它底下没有现成的 Mantine 组件，锁的是「面板底部布局 +
 `Button` subtle 小号」这套外观，但**在该场景内它仍是唯一入口**，所以留 `Free`；同理，新写的
 面板级排布件只要在该场景内不许另起一套长相，就按这一类走，否则当能力件或留页面。
-把「全站只允许一种形态」推到品类级别看：`FreeVideo` / `FreePdf` / `FreeInput` 都属于这一列
-（现有清单还没落地，见下节）。
+把「全站只允许一种形态」推到品类级别看：`FreeInput` / `FreeVideo` / `FreePdf` 都属于这一列
+（现有清单还没落地，见下节）。`PageLoading` 不在此列：它是页面 chunk 的**占位实现**（全屏铺满 +
+居中 `Loader`），不构成「全站加载态的唯一入口」——普通加载仍直接 `Loader` / `Skeleton`。
 
-目录结构与其它组件一致（见 `docs/code-splitting.md`）：`index.tsx` + `index.scss` +
-`types.ts`，一个 `index.tsx` 只放一个组件。
+目录结构与其它组件一致（见 `docs/code-splitting.md`）：`index.tsx` + `types.ts`（需要跨文件共享时），
+要写自己的样式才加 `index.scss`，一个 `index.tsx` 只放一个组件。
 
 ## 现有 Free 层组件
 
@@ -132,14 +134,17 @@
 | `FreePanelFooter` | 弹层面板底部一行：左侧边界说明 + 右侧「重置」（组件库 `Button` subtle 小号） | 说明文案、置灰口径、重置动作 |
 | `FreeModal` | 弹窗外壳（唯一一扇）：框体与遮罩、紧凑 header（顺序为翻页 → 标题 → 第一组操作 → 全屏 → 末尾位 → 第二组操作）、全屏开关按钮与整套键位（空格 / 翻篇 / `F` / `C` 复制 / `Delete` 删除）；两种高度模式：`reading`（固定 `82dvh`）/ `auto`（随内容、上限 `88dvh`、正文自己滚）；全屏偏好走它的 `useModalFullscreen(storageKey)` | 标题文案、翻页数据、各组按钮的组件与能力（复制什么、删除怎么确认）、正文内容与滚动方式 |
 | `FreeTruncatedText` | 单行文本的截断口径：放不下才省略、**只有被截断且被指到时**才弹 tip；量宽与 tip 创建都推迟到被指到那一刻 | 多行省略、tip 内容定制（tip 恒为原文）、业务字号与颜色 |
+| `FreeIconAction` | 图标按钮的形状与档位：`subtle` 变体、`xs` / `sm` / `lg` 三档尺寸、`normal` / `accent` / `danger` 三档语气（只改颜色）、tooltip 与 aria-label 同句且**被指到时才挂**、`tooltipLabel` 承载变化中的文案（如「已复制」） | 图标本身与像素尺寸、点击后做什么、是否 `stopPropagation`；`layouts/Header` 品牌区那颗切换按钮不在此列（26px 与 `--app-ink-soft` 色调，属全局品牌视觉） |
+| `FreeSearchInput` | 搜索框口径：`size="xs"` + 左侧搜索图标 + 值非空才出现的清空按钮（点完清空并**把焦点留在输入框**）；`autoFocus` / 标题 / 说明 / 面板字段间距按需传入 | 值、占位文案、回车与快捷键行为（`onKeyDown` 由调用方给） |
 
-**规划中、尚未落地**：`FreeInput`（输入框尺寸档与标签 / 错误提示位）、`FreeVideo`（全站唯一播放器）、
-`FreePdf`（全站唯一 PDF 预览）。判据成立但组件还没建：等真需要统一时再建，**建之前不许在业务里
-各自起一套口径**（那正是要上提的信号）。
+**规划中、尚未落地**：`FreeInput`（普通表单输入框的尺寸档与标签 / 错误提示位；搜索框已由
+`FreeSearchInput` 收口）、`FreeVideo`（全站唯一播放器）、`FreePdf`（全站唯一 PDF 预览）。
+判据成立但组件还没建：等真需要统一时再建，**建之前不许在业务里各自起一套口径**（那正是要上提的信号）。
 
-`FreeSelectField` / `FreePanelFooter` / `FreeModal` / `FreeTruncatedText` 的契约（props、锁定项的取值理由、坑）
-写在各自目录的 `README.md`——判据：只有改它的人才需要读 → 跟代码走。`FreeTable` 的约定就在本文件（它是
-样式基线的示例）：props 透传 Mantine `TableProps`，`compact` 只收紧内边距。
+`FreeSelectField` / `FreePanelFooter` / `FreeModal` / `FreeTruncatedText` / `FreeIconAction` /
+`FreeSearchInput` 的契约（props、锁定项的取值理由、坑）写在各自目录的 `README.md`——判据：只有改它的人
+才需要读 → 跟代码走。`FreeTable` 的约定就在本文件（它是样式基线的示例）：props 透传 Mantine `TableProps`，
+`compact` 只收紧内边距。
 单元格默认 `vertical-align: top`（编辑器那类多行内容要贴顶）；**单行内容 + 徽标 / 图标按钮的
 列表表格**在自己页面样式里加 `.row td { vertical-align: middle }`——行高被最高的图标按钮撑起来，
 贴顶会让文字明显偏上、行底留一截空白；操作列的图标按钮用 `th/td` 的 `text-align` 居中
@@ -174,7 +179,8 @@
 root 容器并带上自己的高度 / 内边距 / 边框体系，全部覆盖反而更难对齐。放开的前提：
 
 - 必须在组件里写一行注释说明理由（写不清的就是「瞎写」）；
-- 只限编辑器表层，不扩散到普通表单——表单、搜索框、设置项一律用 `TextInput` / `Select` 等。
+- 只限编辑器表层，不扩散到普通表单——表单、设置项一律用 `TextInput` / `Select` 等，搜索框走
+  `FreeSearchInput`。
 
 ## 同族组件：封了壳就只走壳
 

@@ -30,15 +30,6 @@
   color: var(--app-accent);
 }
 
-/* 展示形式切换按钮：规格与 MenuContentLayout 内置的图标按钮一致（默认弱化、悬停强调） */
-.viewToggle {
-  color: var(--app-ink-faint);
-}
-
-.viewToggle:hover {
-  color: var(--app-accent);
-}
-
 /* 展示形式各占一个面板：切过去的那一份第一次挂载后就一直留着，来回切只切显隐，
    不再把几百个条目整棵拆掉重建，滚动位置也一并留在原地 */
 .pane {

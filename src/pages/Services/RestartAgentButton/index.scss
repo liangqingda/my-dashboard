@@ -1,8 +1,4 @@
-/* 与页面头部其它图标按钮同色，避免抢标题视觉 */
-.icon {
-  color: var(--app-ink-faint);
-}
-
-.icon:hover {
-  color: var(--app-accent);
-}
+/*
+ * 本组件没有自己的样式：图标按钮的形状、颜色与 tooltip 全交给公共的 `FreeIconAction`。
+ * 保留本文件是因为页面目录要求 `index.tsx` + `index.scss` 成对（`check-structure` 校验）。
+ */

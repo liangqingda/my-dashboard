@@ -6,9 +6,10 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { ActionIcon, Button } from '@mantine/core';
+import { Button } from '@mantine/core';
 import { IconRefresh, IconTerminal2 } from '@tabler/icons-react';
 
+import FreeIconAction from '@/components/buttons/FreeIconAction';
 import FreeModal from '@/components/modals/FreeModal';
 import { fetchCliCommands } from '@/services/api';
 import { useServices } from '@/services/hooks/useServices';
@@ -135,15 +136,13 @@ const QuickCommands = () => {
       <FreeModal
         closeLabel="关闭全局快捷命令"
         headerActions={
-          <ActionIcon
-            aria-label="刷新快捷命令"
+          <FreeIconAction
             disabled={!agentOnline || loading}
+            label="刷新快捷命令"
             onClick={() => setRevision((current) => current + 1)}
-            title="刷新快捷命令"
-            variant="subtle"
           >
             <IconRefresh aria-hidden="true" size={18} />
-          </ActionIcon>
+          </FreeIconAction>
         }
         height="auto"
         onClose={() => setOpened(false)}

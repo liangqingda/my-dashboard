@@ -5,14 +5,12 @@
 
 import { useState } from 'react';
 import { notifications } from '@mantine/notifications';
-import { ActionIcon, Tooltip } from '@mantine/core';
 import { IconReload } from '@tabler/icons-react';
 
+import FreeIconAction from '@/components/buttons/FreeIconAction';
 import { restartAgent } from '@/services/api';
 import { useServices } from '@/services/hooks/useServices';
 import { getErrorMessage } from '@/utils/error';
-
-import styles from './index.scss';
 
 const RestartAgentButton = () => {
   const { agentOnline, busy, refresh, services } = useServices();
@@ -47,19 +45,14 @@ const RestartAgentButton = () => {
     services.some((service) => service.deploying);
 
   return (
-    <Tooltip label="重启 agent" withArrow>
-      <ActionIcon
-        aria-label="重启 agent"
-        className={styles.icon}
-        disabled={blocked}
-        loading={restarting}
-        onClick={() => void handleRestart()}
-        size="sm"
-        variant="subtle"
-      >
-        <IconReload size={16} stroke={1.9} />
-      </ActionIcon>
-    </Tooltip>
+    <FreeIconAction
+      disabled={blocked}
+      label="重启 agent"
+      loading={restarting}
+      onClick={() => void handleRestart()}
+    >
+      <IconReload size={16} stroke={1.9} />
+    </FreeIconAction>
   );
 };
 

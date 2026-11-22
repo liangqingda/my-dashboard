@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActionIcon, Tooltip, UnstyledButton } from '@mantine/core';
+import { UnstyledButton } from '@mantine/core';
 import { IconLayoutGrid, IconLayoutList } from '@tabler/icons-react';
 
 import FilterButton from '@/components/buttons/FilterButton';
+import FreeIconAction from '@/components/buttons/FreeIconAction';
 import MarkdownPreviewModal from '@/components/modals/MarkdownPreviewModal';
 import type { MarkdownPreviewFilter } from '@/components/modals/MarkdownPreviewModal';
 import MenuContentLayout from '@/layouts/MenuContentLayout';
@@ -239,24 +240,16 @@ const English = () => {
                 range={notesFilterRange}
               />
             </FilterButton>
-            <Tooltip
+            <FreeIconAction
               label={isBoardView ? '切换为表格形式' : '切换为分列看板'}
-              withArrow
+              onClick={toggleView}
             >
-              <ActionIcon
-                aria-label={isBoardView ? '切换为表格形式' : '切换为分列看板'}
-                className={styles.viewToggle}
-                onClick={toggleView}
-                size="sm"
-                variant="subtle"
-              >
-                {isBoardView ? (
-                  <IconLayoutGrid size={16} stroke={1.9} />
-                ) : (
-                  <IconLayoutList size={16} stroke={1.9} />
-                )}
-              </ActionIcon>
-            </Tooltip>
+              {isBoardView ? (
+                <IconLayoutGrid size={16} stroke={1.9} />
+              ) : (
+                <IconLayoutList size={16} stroke={1.9} />
+              )}
+            </FreeIconAction>
           </>
         }
         fill

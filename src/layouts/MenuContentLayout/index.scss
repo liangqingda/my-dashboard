@@ -48,14 +48,6 @@
 }
 
 /* 刷新 / 全屏图标：默认弱化，悬停才用强调色 */
-.iconButton {
-  color: var(--app-ink-faint);
-}
-
-.iconButton:hover {
-  color: var(--app-accent);
-}
-
 /* 刷新进行中：图标原地旋转。不要换成 ActionIcon 的 loading Loader——
    那会把图标藏起来、再把按钮压成 disabled 低透明度，看起来就像按钮消失了 */
 .spinning svg {

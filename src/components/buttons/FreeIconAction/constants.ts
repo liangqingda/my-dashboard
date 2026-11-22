@@ -3,13 +3,13 @@
  * 只有需要改色的语气才给类，`normal` 用 undefined 表示「不额外加类」。
  */
 
-import type { HeaderIconActionTone } from './types';
+import type { FreeIconActionTone } from './types';
 
 import styles from './index.scss';
 
 /** 各语气对应的颜色类 */
-export const TONE_CLASS: Record<HeaderIconActionTone, string | undefined> = {
-  normal: undefined,
+export const TONE_CLASS: Record<FreeIconActionTone, string | undefined> = {
   accent: styles.accent,
   danger: styles.danger,
+  normal: undefined,
 };

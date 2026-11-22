@@ -1,12 +1,11 @@
 import {
-  CloseButton,
   Group,
   SegmentedControl,
   Select,
   Text,
-  TextInput,
 } from '@mantine/core';
-import { IconSearch } from '@tabler/icons-react';
+
+import FreeSearchInput from '@/components/fields/FreeSearchInput';
 
 import {
   ALL_CATEGORIES,
@@ -52,23 +51,12 @@ const RecordsToolbar = ({
         value={category}
         w={128}
       />
-      <TextInput
-        aria-label="按关键词搜索记录"
-        leftSection={<IconSearch size={15} stroke={1.9} />}
-        onChange={(event) => onKeywordChange(event.currentTarget.value)}
+      <FreeSearchInput
+        ariaLabel="按关键词搜索记录"
+        onChange={onKeywordChange}
         placeholder={SEARCH_PLACEHOLDER}
-        rightSection={
-          keyword ? (
-            <CloseButton
-              aria-label="清空搜索"
-              onClick={() => onKeywordChange('')}
-              size="xs"
-            />
-          ) : null
-        }
-        size="xs"
         value={keyword}
-        w={SEARCH_WIDTH}
+        width={SEARCH_WIDTH}
       />
     </Group>
     <Text c="dimmed" size="xs">

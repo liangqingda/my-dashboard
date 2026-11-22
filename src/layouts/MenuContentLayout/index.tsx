@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router';
-import { ActionIcon, Title, Tooltip } from '@mantine/core';
+import { Title } from '@mantine/core';
 import { IconMaximize, IconMinimize, IconRefresh } from '@tabler/icons-react';
 
+import FreeIconAction from '@/components/buttons/FreeIconAction';
 import { useStoredState } from '@/hooks/useStoredState';
 import { cx } from '@/utils/cx';
 import { FLAG_CODEC } from '@/utils/local-storage';
@@ -84,41 +85,28 @@ const MenuContentLayout = ({
         </Title>
         <div className={styles.actions}>
           {actions}
-          <Tooltip label="刷新当前页面（R）" withArrow>
-            <ActionIcon
-              aria-busy={refreshing || undefined}
-              aria-label="刷新当前页面"
-              className={cx(
-                styles.iconButton,
-                refreshing && styles.spinning,
-              )}
-              onClick={refresh}
-              size="sm"
-              variant="subtle"
-            >
-              <IconRefresh size={16} stroke={1.9} />
-            </ActionIcon>
-          </Tooltip>
-          <Tooltip
-            label={
+          <FreeIconAction
+            ariaBusy={refreshing}
+            className={cx(refreshing && styles.spinning)}
+            label="刷新当前页面"
+            onClick={refresh}
+            tooltipLabel="刷新当前页面（R）"
+          >
+            <IconRefresh size={16} stroke={1.9} />
+          </FreeIconAction>
+          <FreeIconAction
+            label={fullscreen ? '退出全屏' : '全屏查看当前页面'}
+            onClick={() => setFullscreen(!fullscreen)}
+            tooltipLabel={
               fullscreen ? '退出全屏（Esc / F）' : '全屏查看当前页面（F）'
             }
-            withArrow
           >
-            <ActionIcon
-              aria-label={fullscreen ? '退出全屏' : '全屏查看当前页面'}
-              className={styles.iconButton}
-              onClick={() => setFullscreen(!fullscreen)}
-              size="sm"
-              variant="subtle"
-            >
-              {fullscreen ? (
-                <IconMinimize size={16} stroke={1.9} />
-              ) : (
-                <IconMaximize size={16} stroke={1.9} />
-              )}
-            </ActionIcon>
-          </Tooltip>
+            {fullscreen ? (
+              <IconMinimize size={16} stroke={1.9} />
+            ) : (
+              <IconMaximize size={16} stroke={1.9} />
+            )}
+          </FreeIconAction>
         </div>
       </div>
       <div className={styles.body}>{children}</div>

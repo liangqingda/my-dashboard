@@ -45,8 +45,10 @@ hook 默认一个文件（`hooks/useXxx.ts`）；**一旦要为它写说明，�
 - 组件目录内**不嵌套** `components/` 层，子组件目录直接放父组件目录下。
 - 公共组件先按类型进分类目录：`src/components/<分类>/<组件>/`（分类名单与判据见
   `docs/ui-components.md` 的「公共组件按类型分目录」），分类目录小写、组件目录 `PascalCase`。
-- 每个组件目录 `index.tsx` + `index.scss` 成对存在（CSS Module 类名自动 camelCase）；
-  需要写规格时同目录放 `README.md`。
+- 每个组件目录有 `index.tsx`；样式只在这个组件**要写自己的规则**时才需要 `index.scss`
+  （外观全交给组件库 props 的不建空文件），CSS Module 类名自动 camelCase；规格写同目录 `README.md`。
+  页面目录另有一条硬要求：含 `index.tsx` 的目录必须有 `index.scss`（`check-structure` 校验，
+  没样式就留一个说明性注释占位）。
 - 在组件里定义的局部变量不要与 import 进来的组件 / 函数同名。例如两个图标别名不要叫
   `ActionIcon`——会和 Mantine 的 `ActionIcon` 撞名，读代码时极难分辨。
 
