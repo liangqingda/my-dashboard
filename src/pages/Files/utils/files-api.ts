@@ -261,16 +261,17 @@ export const renameEntry = async (
   name: string,
 ): Promise<{ name: string; path: string }> => {
   const payload = await postJson(RENAME_ENDPOINT, { path: pathValue, name });
+  const entry = isObject(payload) ? payload.entry : null;
 
   if (
-    !isObject(payload) ||
-    typeof payload.path !== 'string' ||
-    typeof payload.name !== 'string'
+    !isObject(entry) ||
+    typeof entry.path !== 'string' ||
+    typeof entry.name !== 'string'
   ) {
     throw new Error('目录数据格式不符合预期');
   }
 
-  return { name: payload.name, path: payload.path };
+  return { name: entry.name, path: entry.path };
 };
 
 /** 把一条条目移入目标文件夹；同名冲突 / 移入自身后代由后端拒绝 */

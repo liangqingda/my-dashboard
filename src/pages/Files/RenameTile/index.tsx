@@ -3,7 +3,7 @@
  * 回车 / 失焦提交，Esc 取消。改名成功与否由页面层收口，这里只采集输入与键位。
  */
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { IconFolderFilled } from '@tabler/icons-react';
 
 import FreeInput from '@/components/fields/FreeInput';
@@ -14,15 +14,26 @@ import styles from './index.scss';
 
 const RenameTile = ({ name, onCancel, onCommit }: RenameTileProps) => {
   const [value, setValue] = useState(name);
+  /** 提交 / 取消只生效一次：回车后组件卸载还会再触发失焦，不能发第二次请求 */
+  const settled = useRef(false);
+
+  const settle = (action: () => void) => {
+    if (settled.current) {
+      return;
+    }
+
+    settled.current = true;
+    action();
+  };
 
   /** 提交：空名或未改动按取消处理；改动交回页面层调重命名接口 */
   const commit = () => {
     const next = value.trim();
 
     if (next && next !== name) {
-      onCommit(next);
+      settle(() => onCommit(next));
     } else {
-      onCancel();
+      settle(onCancel);
     }
   };
 
@@ -32,7 +43,7 @@ const RenameTile = ({ name, onCancel, onCommit }: RenameTileProps) => {
       commit();
     } else if (event.key === 'Escape') {
       event.preventDefault();
-      onCancel();
+      settle(onCancel);
     }
   };
 
