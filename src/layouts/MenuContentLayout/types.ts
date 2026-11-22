@@ -12,6 +12,12 @@ export type MenuContentLayoutProps = {
   actions?: ReactNode;
   /** 内容区是否撑满视口高度并禁止外层滚动（滚动交给内部子区域，如英语看板各列） */
   fill?: boolean;
-  /** 页面内容 */
+  /** 内容 */
   children: ReactNode;
+  /** `⌘↑` 回到上一级目录；不传则该组合键不动作 */
+  onNavigateParent?: () => void;
+  /** `S` 开合页面自己的筛选面板；不传则该键不动作 */
+  onToggleFilter?: () => void;
+  /** `C` 开合页面自己的收藏面板；不传则该键不动作 */
+  onToggleFavorites?: () => void;
 };

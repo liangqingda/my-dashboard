@@ -61,3 +61,17 @@ export const availableCategoryOptions = (files: FileEntry[]) => {
 
   return FILE_CATEGORY_OPTIONS.filter((option) => present.has(option.value));
 };
+
+/** 按文件名关键词过滤；空白关键词表示不过滤，整份保留。大小写不敏感子串匹配 */
+export const filterFilesByKeyword = (
+  files: FileEntry[],
+  keyword: string,
+): FileEntry[] => {
+  const query = keyword.trim().toLowerCase();
+
+  if (query === '') {
+    return files;
+  }
+
+  return files.filter((file) => file.name.toLowerCase().includes(query));
+};

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Alert,
   Button,
@@ -12,20 +12,27 @@ import {
 import MenuContentLayout from '@/layouts/MenuContentLayout';
 import { onPageRefresh } from '@/utils/page-refresh';
 
-import DirToolbar from './DirToolbar';
 import DirectoryGrid from './DirectoryGrid';
+import DirBreadcrumb from './DirBreadcrumb';
+import FilesActions from './FilesActions';
+import type { FilesActionsPanel } from './FilesActions/types';
 import { SKELETON_TILES } from './constants';
 import { useFavorites } from './hooks/useFavorites';
 import { useFilesDir } from './hooks/useFilesDir';
 import { useTypeFilter } from './hooks/useTypeFilter';
-import { availableCategoryOptions, filterFilesByCategory } from './utils/files';
+import {
+  availableCategoryOptions,
+  filterFilesByCategory,
+  filterFilesByKeyword,
+} from './utils/files';
 
 import styles from './index.scss';
 
 /**
  * 文件浏览页：按 macOS 目录网格展示本机指定目录下的子文件夹与文件，不限文件类型。
- * 点文件夹进入下一层，面包屑回退；可收藏常用目录，在收藏面板里点选直达；工具栏可按类型多选过滤。
- * 文件内容与预览播放是单独任务，本页只列摘要。目录读取走 Vite 中间件，仅开发模式可用。
+ * 点文件夹进入下一层，面包屑回退，`⌘↑` 回上一级；可收藏常用目录，在收藏面板里点选直达；
+ * 标题栏筛选面板支持按文件名关键词与类型多选过滤。文件内容与预览播放是单独任务，
+ * 本页只列摘要。目录读取走 Vite 中间件，仅开发模式可用。
  */
 const Files = () => {
   const { currentDir, listing, loading, error, openDir, pickDir, refresh, reload } =
@@ -34,18 +41,34 @@ const Files = () => {
   const { selected: selectedCategories, onChange: onCategoriesChange } =
     useTypeFilter();
 
+  /** 同时只开一块弹层：收藏 / 筛选 */
+  const [openPanel, setOpenPanel] = useState<FilesActionsPanel | null>(null);
+  /** 文件名关键词；会话内状态，不持久化 */
+  const [keyword, setKeyword] = useState('');
+
   // 页面标题栏的「刷新当前页面」：静默重读当前目录，失败由订阅方弹提示
   useEffect(() => onPageRefresh(reload), [reload]);
 
   /** 当前目录作为收藏条目；还没选目录时为 null，收藏按钮禁用 */
   const currentEntry = listing ? { path: listing.path, name: listing.name } : null;
 
-  /** 类型筛选后的文件；文件夹不受类型筛选影响 */
+  /** 类型 + 关键词筛选后的文件；文件夹不受筛选影响 */
   const visibleFiles = listing
-    ? filterFilesByCategory(listing.files, selectedCategories)
+    ? filterFilesByKeyword(
+        filterFilesByCategory(listing.files, selectedCategories),
+        keyword,
+      )
     : [];
-  /** 当前目录里实际出现过的分类，作为类型下拉的可选项 */
+  /** 当前目录里实际出现过的分类，作为筛选项 */
   const typeOptions = listing ? availableCategoryOptions(listing.files) : [];
+
+  /** 切换某块弹层：再点一次同一块则收起 */
+  const togglePanel = (panel: FilesActionsPanel) =>
+    setOpenPanel((prev) => (prev === panel ? null : panel));
+
+  /** 已是文件系统根时没有上级目录，快捷键不动作 */
+  const parentDir = listing?.parent ?? null;
+  const navigateParent = parentDir !== null ? () => openDir(parentDir) : undefined;
 
   /** 首次 / 切目录还没拿到结果：先给骨架形状，不报 0 */
   const showSkeleton = loading && listing === null;
@@ -59,17 +82,18 @@ const Files = () => {
   const showPrompt = !showSkeleton && listing === null && error === null;
 
   return (
-    <MenuContentLayout fill title="文件">
-      <Stack className={styles.shell} gap="sm">
-        <DirToolbar
-          currentDir={currentDir}
+    <MenuContentLayout
+      actions={
+        <FilesActions
           favoriteDisabled={currentEntry === null}
           favorites={favorites}
           isFavorite={currentEntry !== null && isFavorite(currentEntry.path)}
+          keyword={keyword}
           loading={loading}
           onCategoriesChange={onCategoriesChange}
-          onNavigate={openDir}
+          onKeywordChange={setKeyword}
           onOpenFavorite={openDir}
+          onPanelChange={setOpenPanel}
           onPickDir={pickDir}
           onRemoveFavorite={removeFavorite}
           onToggleFavorite={() => {
@@ -77,9 +101,19 @@ const Files = () => {
               toggleFavorite(currentEntry);
             }
           }}
+          openPanel={openPanel}
           selectedCategories={selectedCategories}
           typeOptions={typeOptions}
         />
+      }
+      fill
+      onNavigateParent={navigateParent}
+      onToggleFavorites={() => togglePanel('favorites')}
+      onToggleFilter={() => togglePanel('filter')}
+      title="文件"
+    >
+      <Stack className={styles.shell} gap="sm">
+        <DirBreadcrumb currentDir={currentDir} onNavigate={openDir} />
 
         {error !== null ? (
           <Alert color="red" title="读取目录失败">

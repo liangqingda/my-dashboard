@@ -77,8 +77,12 @@ library），定一个就一直用它，别两套并存。
    **页面不要再自己造这两个按钮，也不要在页面里写全屏逻辑**。刷新时的加载占位
    `src/components/feedback/PageLoading` 按同一份存储（`@/utils/page-fullscreen`）提前判断：目标页是全屏
    就先铺满视口盖住外壳，避免页面 chunk 尚未挂载时先闪一下非全屏界面。
-5. 页面自己的操作按钮通过 `actions` prop 传入，排在上述两个内置按钮之前；按钮组件就近放在
-   该页面目录下（`src/pages/<Page>/<Button>/`）。（示例：服务页的「重启 agent」。）
+5. 页面自己的操作按钮通过 `actions` prop 传入，排在上述两个内置按钮之前；有页面按钮时，
+   它们与内置按钮之间由外壳加一条竖向分割线。按钮组件就近放在该页面目录下
+   （`src/pages/<Page>/<Button>/`）。（示例：服务页的「重启 agent」。）
+6. 页面可选再挂三条快捷键回调：`onToggleFilter`（`S` 开合页面筛选面板）、
+   `onToggleFavorites`（`C` 开合收藏面板）、`onNavigateParent`（`⌘↑` 回上一级目录）；
+   不传对应回调则该键不动作。键位监听只在布局层 hook 里，业务页面不自写 `keydown`。
 
 ## 页面呈现
 

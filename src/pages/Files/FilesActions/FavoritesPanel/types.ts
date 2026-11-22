@@ -1,7 +1,7 @@
 import type { FavoriteEntry } from '../../types';
 
 /**
- * 收藏目录弹层面板的入参：当前目录收藏态、收藏列表与各事件都由工具栏层传入，
+ * 收藏目录弹层面板的入参：当前目录收藏态、收藏列表与各事件都由按钮组层传入，
  * 面板只排布顶部操作按钮与条目列表。
  */
 export type FavoritesPanelProps = {

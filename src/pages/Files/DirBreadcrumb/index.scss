@@ -1,24 +1,15 @@
-/* 目录工具栏：一行面包屑 + 竖向分割线 + 右侧操作按钮组 */
-
-.top {
-  width: 100%;
-}
+/* 当前目录面包屑：分段可点，末段为当前目录 */
 
 .breadcrumb {
+  display: flex;
   flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
   min-width: 0;
   min-height: 20px;
+  gap: 4px;
   color: var(--app-ink-soft);
   font-size: 0.8rem;
-}
-
-.actions {
-  flex: 0 0 auto;
-}
-
-.divider {
-  height: 18px;
-  --divider-color: var(--app-line);
 }
 
 .home {

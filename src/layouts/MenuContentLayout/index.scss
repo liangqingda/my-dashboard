@@ -47,6 +47,12 @@
   gap: 6px;
 }
 
+/* 页面定制按钮与内置刷新 / 全屏按钮之间的分隔：只在传了 actions 时出现 */
+.divider {
+  height: 18px;
+  --divider-color: var(--app-line);
+}
+
 /* 刷新 / 全屏图标：默认弱化，悬停才用强调色 */
 /* 刷新进行中：图标原地旋转。不要换成 ActionIcon 的 loading Loader——
    那会把图标藏起来、再把按钮压成 disabled 低透明度，看起来就像按钮消失了 */

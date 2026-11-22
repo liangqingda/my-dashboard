@@ -1,0 +1,29 @@
+/* 收藏条目行：名字 + 路径占满剩余宽度可截断，移除按钮靠右 */
+
+.row {
+  width: 100%;
+  padding: 4px 6px;
+  border-radius: 4px;
+
+  &:hover {
+    background: var(--app-surface-hover);
+  }
+}
+
+.info {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.name {
+  color: var(--app-ink);
+}
+
+.path {
+  color: var(--app-ink-faint);
+  font-size: 0.72rem;
+  line-height: 1.3;
+}

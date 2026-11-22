@@ -1,11 +1,12 @@
 /**
- * 页面级操作快捷键：`r` 刷新当前页面、`f` 切换全屏。
+ * 页面级操作快捷键：`r` 刷新当前页面、`f` 切换全屏；页面可选再挂 `s` 开合筛选面板、
+ * `c` 开合收藏面板、`⌘↑` 回到上一级目录。
  *
- * 放行口径与弹窗快捷键一致：带 ⌘ / Ctrl / Alt 的组合键归浏览器或系统；正在输入
- * （输入框、文本域、可编辑区）时字符属于输入本身，不抢。事件落点不在本页容器内
- * （预览弹窗这类浮层接管了焦点）时也放行，避免弹窗打开时按键同时触发页面与弹窗
- * 两套操作；落点是 `body` / `<html>` 表示没聚焦任何控件，按页面内按键处理。
- * 大小写都认（`R` / `r` 等价，大小写锁定不影响）。
+ * 放行口径与弹窗快捷键一致：带 ⌘ / Ctrl / Alt 的组合键归浏览器或系统（`⌘↑` 是唯一例外，
+ * 由页面显式给了上级目录回调才接管）；正在输入（输入框、文本域、可编辑区）时字符属于
+ * 输入本身，不抢。事件落点不在本页容器内（预览弹窗这类浮层接管了焦点）时也放行，避免
+ * 弹窗打开时按键同时触发页面与弹窗两套操作；落点是 `body` / `<html>` 表示没聚焦任何控件，
+ * 按页面内按键处理。大小写都认（`R` / `r` 等价，大小写锁定不影响）。
  */
 
 import { useEffect, type RefObject } from 'react';
@@ -16,6 +17,10 @@ import { isTypingTarget } from '@/utils/typing-target';
 const REFRESH_KEY = 'r';
 /** 切换全屏 */
 const FULLSCREEN_KEY = 'f';
+/** 开合筛选面板 */
+const FILTER_KEY = 's';
+/** 开合收藏面板 */
+const FAVORITES_KEY = 'c';
 
 /** 页面级操作快捷键的入参 */
 type PageActionShortcutParams = {
@@ -25,20 +30,25 @@ type PageActionShortcutParams = {
   onRefresh: () => void;
   /** 切换全屏 */
   onToggleFullscreen: () => void;
+  /** 回到上一级目录；不传则 `⌘↑` 不动作 */
+  onNavigateParent?: () => void;
+  /** 开合筛选面板；不传则 `S` 不动作 */
+  onToggleFilter?: () => void;
+  /** 开合收藏面板；不传则 `C` 不动作 */
+  onToggleFavorites?: () => void;
 };
 
-/** 监听页面操作键，分别触发刷新与全屏切换 */
+/** 监听页面操作键，分别触发刷新、全屏与页面可选的面板 / 目录动作 */
 export function usePageActionShortcuts({
   containerRef,
+  onNavigateParent,
   onRefresh,
+  onToggleFilter,
+  onToggleFavorites,
   onToggleFullscreen,
 }: PageActionShortcutParams): void {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.metaKey || event.ctrlKey || event.altKey) {
-        return;
-      }
-
       if (isTypingTarget(event.target)) {
         return;
       }
@@ -58,14 +68,42 @@ export function usePageActionShortcuts({
         return;
       }
 
+      if (event.metaKey || event.ctrlKey || event.altKey) {
+        // `⌘↑` 回上级目录是组合键里唯一留给页面动作的；其余组合键归浏览器 / 系统
+        if (
+          event.metaKey &&
+          !event.ctrlKey &&
+          !event.altKey &&
+          event.key === 'ArrowUp' &&
+          onNavigateParent
+        ) {
+          event.preventDefault();
+          onNavigateParent();
+        }
+
+        return;
+      }
+
+      /** 有回调才抢键并拦默认行为；没回调的档位不吞字符 */
+      const run = (handler?: () => void) => {
+        if (handler) {
+          event.preventDefault();
+          handler();
+        }
+      };
+
       switch (event.key.toLowerCase()) {
         case REFRESH_KEY:
-          event.preventDefault();
-          onRefresh();
+          run(onRefresh);
           break;
         case FULLSCREEN_KEY:
-          event.preventDefault();
-          onToggleFullscreen();
+          run(onToggleFullscreen);
+          break;
+        case FILTER_KEY:
+          run(onToggleFilter);
+          break;
+        case FAVORITES_KEY:
+          run(onToggleFavorites);
           break;
         default:
           break;
@@ -75,5 +113,12 @@ export function usePageActionShortcuts({
     window.addEventListener('keydown', handleKeyDown);
 
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [containerRef, onRefresh, onToggleFullscreen]);
+  }, [
+    containerRef,
+    onNavigateParent,
+    onRefresh,
+    onToggleFilter,
+    onToggleFavorites,
+    onToggleFullscreen,
+  ]);
 }

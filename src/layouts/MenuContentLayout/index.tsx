@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router';
-import { Title } from '@mantine/core';
+import { Divider, Title } from '@mantine/core';
 import { IconMaximize, IconMinimize, IconRefresh } from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
@@ -25,12 +25,16 @@ import styles from './index.scss';
  * 全屏状态按当前路由记在 localStorage（各菜单页互不影响），刷新页面重新进入后保持上次的状态，
  * 只把页面根元素铺满视口（覆盖顶栏与侧栏），页面内部结构、内容与正常状态完全一致，
  * 点了再点、按 `F` 或全屏时按 Esc 退出。刷新按 `R`、全屏按 `F` 有同一套快捷键。
- * 页面自己的按钮（如服务页「重启 agent」）通过 `actions` 传入，排在这两个按钮之前。
+ * 页面自己的按钮（如服务页「重启 agent」）通过 `actions` 传入，排在这两个按钮之前；
+ * 有页面按钮时，它们与内置按钮之间用一条竖向分割线隔开。
  */
 const MenuContentLayout = ({
   actions,
   children,
   fill = false,
+  onNavigateParent,
+  onToggleFilter,
+  onToggleFavorites,
   title,
 }: MenuContentLayoutProps) => {
   /** 刷新按钮的进行中状态与结果提示 */
@@ -46,10 +50,13 @@ const MenuContentLayout = ({
   /** 页面容器：快捷键只响应落点在本页内的按键，弹窗等浮层接管焦点时放行 */
   const pageRef = useRef<HTMLDivElement | null>(null);
 
-  /** 页面级快捷键：`R` 刷新、`F` 切换全屏，与 header 按钮走同一条回调 */
+  /** 页面级快捷键：`R` 刷新、`F` 切换全屏；页面可选再挂筛选 / 收藏面板与上级目录 */
   usePageActionShortcuts({
     containerRef: pageRef,
+    onNavigateParent,
     onRefresh: refresh,
+    onToggleFilter,
+    onToggleFavorites,
     onToggleFullscreen: () => setFullscreen(!fullscreen),
   });
 
@@ -85,6 +92,9 @@ const MenuContentLayout = ({
         </Title>
         <div className={styles.actions}>
           {actions}
+          {actions ? (
+            <Divider className={styles.divider} orientation="vertical" />
+          ) : null}
           <FreeIconAction
             ariaBusy={refreshing}
             className={cx(refreshing && styles.spinning)}

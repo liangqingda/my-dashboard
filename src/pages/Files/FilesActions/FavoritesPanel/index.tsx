@@ -1,5 +1,6 @@
 /**
  * 收藏目录弹层面板：顶部收藏 / 取消当前目录，下方已收藏条目直达与移除。
+ * 条目两行：目录名在上，完整路径在下；路径过长省略，hover 显示全文。
  * 列表数据与持久化归 `useFavorites`，这里只排布与条目事件。
  */
 
@@ -41,15 +42,17 @@ const FavoritesPanel = ({
       <Stack gap={2}>
         {favorites.map((entry) => (
           <Group className={styles.row} gap="xs" key={entry.path} wrap="nowrap">
-            <FreeTruncatedText
-              className={styles.name}
-              inline
-              onClick={() => {
-                onOpen(entry.path);
-                onClose();
-              }}
-              text={entry.name}
-            />
+            <div className={styles.info}>
+              <FreeTruncatedText
+                className={styles.name}
+                onClick={() => {
+                  onOpen(entry.path);
+                  onClose();
+                }}
+                text={entry.name}
+              />
+              <FreeTruncatedText className={styles.path} text={entry.path} />
+            </div>
             <FreeIconAction
               label="移除收藏"
               onClick={(event) => {
