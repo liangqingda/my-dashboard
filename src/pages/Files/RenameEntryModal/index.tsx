@@ -50,9 +50,11 @@ const RenameEntryModal = ({
     }
   };
 
-  /** 回车提交；Shift+回车保留文本域默认的换行行为 */
+  /** 回车提交；中文输入法组词中回车只落字、不提交；Shift+回车保留文本域默认换行 */
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === 'Enter' && !event.shiftKey) {
+    const { isComposing, key, shiftKey } = event.nativeEvent;
+
+    if (key === 'Enter' && !shiftKey && !isComposing) {
       event.preventDefault();
       handleCommit();
     }
