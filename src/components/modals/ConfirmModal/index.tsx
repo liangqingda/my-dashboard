@@ -32,6 +32,7 @@ const ConfirmModal = ({
   opened,
   size = 420,
   title,
+  trapFocus,
 }: ConfirmModalProps) => (
   <FreeModal
     closeButton={!loading}
@@ -42,6 +43,7 @@ const ConfirmModal = ({
     opened={opened}
     size={size}
     title={title}
+    trapFocus={trapFocus}
   >
     <div className={styles.description}>{description}</div>
     {children}

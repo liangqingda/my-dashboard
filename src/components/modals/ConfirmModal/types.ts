@@ -28,4 +28,6 @@ export type ConfirmModalProps = {
   closeLabel?: string;
   /** 宽度档位，默认 420 */
   size?: number | string;
+  /** 是否锁焦点，默认跟随外壳；表单类弹窗要自己聚焦输入框时可传 false */
+  trapFocus?: boolean;
 };

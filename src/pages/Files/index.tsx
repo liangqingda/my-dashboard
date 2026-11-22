@@ -17,7 +17,7 @@ import DeleteEntryConfirm from './DeleteEntryConfirm';
 import DirBreadcrumb from './DirBreadcrumb';
 import FilesActions from './FilesActions';
 import type { FilesActionsPanel } from './FilesActions/types';
-import RenameFileModal from './RenameFileModal';
+import RenameEntryModal from './RenameEntryModal';
 import { SKELETON_TILES } from './constants';
 import { useEntryActions } from './hooks/useEntryActions';
 import { useEntryDelete } from './hooks/useEntryDelete';
@@ -203,13 +203,9 @@ const Files = () => {
               onDragOverFolder={entryActions.dragOverFolder}
               onDragStartEntry={entryActions.dragStartEntry}
               onDropFolder={entryActions.dropFolder}
-              onEditFile={entryActions.editFile}
-              onEditFolder={entryActions.editEntry}
+              onEditEntry={entryActions.editEntry}
               onOpenFolder={goToDir}
-              onRenameCancel={entryActions.renameCancel}
-              onRenameCommit={entryActions.renameCommit}
               onRequestDeleteEntry={requestDelete}
-              renamingPath={entryActions.renamingPath}
             />
           </ScrollArea>
         ) : null}
@@ -222,14 +218,14 @@ const Files = () => {
         onConfirm={() => void confirmDelete()}
       />
 
-      <RenameFileModal
-        file={entryActions.renamingFile}
-        key={entryActions.renamingFile?.path ?? 'none'}
+      <RenameEntryModal
+        entry={entryActions.renamingEntry}
+        key={entryActions.renamingEntry?.path ?? 'none'}
         loading={entryActions.renameLoading}
-        onCancel={entryActions.closeFileRename}
+        onCancel={entryActions.closeRename}
         onCommit={(name) => {
-          if (entryActions.renamingFile !== null) {
-            void entryActions.renameCommit(entryActions.renamingFile.path, name);
+          if (entryActions.renamingEntry !== null) {
+            void entryActions.renameCommit(entryActions.renamingEntry.path, name);
           }
         }}
       />
