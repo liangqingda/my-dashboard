@@ -47,12 +47,12 @@
   --app-status-muted: #64766e;
   --app-status-muted-soft: #dfe5e2;
 
-  /* code：Markdown 行内代码 / 代码块的底色与字色。浅色字色走 ink-strong 档；
-     浅色底取「画布纸（--app-bg）亮一档」的一档 off-white，不取纯白卡片
-     （纯白落在画布纸上像贴了一块白纸，也比正文更晃眼）；
-     暗色在下面暗色块里再抬一档（底色 surface-hover、字色 ink），让代码从纸面跳出来 */
-  --app-code-bg: #f2f6f4;
-  --app-code-color: var(--app-ink-strong);
+  /* code：Markdown 行内代码 / 代码块的底色与字色。
+     底色与 header / 侧栏同一档 chrome（--app-surface-subtle），不取纯白卡片
+     （纯白落在画布纸上像贴了一块白纸，也太晃眼）；字色取最重的标题墨色，比加粗更显眼；
+     暗色块里同一份口径（同样取 chrome 档 + ink），不另挑配色 */
+  --app-code-bg: var(--app-surface-subtle);
+  --app-code-color: var(--app-ink);
 
   /* spacing */
   --app-space-sm: 0.5rem;
@@ -105,9 +105,9 @@ html[data-mantine-color-scheme='dark'] {
   --app-status-muted: #9aa9a3;
   --app-status-muted-soft: #1e2825;
 
-  /* 暗色下代码要从纸面里跳出来：底色抬到 surface-hover 档、字色提到标题档 ink；
+  /* 暗色下代码仍取 chrome 档底色、ink 档字色（与浅色同一份口径，见浅色块那份说明）；
      代码靠等宽字体 + 芯片底色与标题区分，不会被读成小标题 */
-  --app-code-bg: var(--app-surface-hover);
+  --app-code-bg: var(--app-surface-subtle);
   --app-code-color: var(--app-ink);
 }
 
