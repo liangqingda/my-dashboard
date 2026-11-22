@@ -12,7 +12,7 @@ export type DirectoryGridProps = {
   folders: FolderEntry[];
   /** 直属文件（已按名称排序） */
   files: FileEntry[];
-  /** 正在就地改名的条目路径；null 表示没有改名态 */
+  /** 正在就地改名的文件夹路径；null 表示没有改名态 */
   renamingPath: string | null;
   /** 当前拖拽源条目路径；null 表示没在拖拽 */
   dragSource: string | null;
@@ -34,8 +34,10 @@ export type DirectoryGridProps = {
   onRenameCommit: (path: string, name: string) => void;
   /** 取消改名 */
   onRenameCancel: () => void;
-  /** 重命名某个条目 */
-  onEditEntry: (path: string) => void;
+  /** 重命名某个文件夹（就地改名） */
+  onEditFolder: (path: string) => void;
+  /** 重命名某个文件（弹窗改名） */
+  onEditFile: (file: FileEntry) => void;
   /** 请求删除某个条目（先弹二次确认） */
   onRequestDeleteEntry: (path: string) => void;
 };

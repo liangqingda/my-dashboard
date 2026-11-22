@@ -1,4 +1,4 @@
-/* 改名瓦片：与条目瓦片同格位，图标居上，输入框占满下方宽度 */
+/* 改名瓦片：与文件夹瓦片同格位，图标居上，输入框占满下方宽度 */
 
 .tile {
   display: flex;
@@ -11,4 +11,9 @@
   background: transparent;
   color: inherit;
   text-align: center;
+}
+
+.icon {
+  flex: 0 0 auto;
+  color: var(--mantine-color-blue-5);
 }
