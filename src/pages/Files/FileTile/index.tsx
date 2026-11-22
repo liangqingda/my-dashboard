@@ -1,33 +1,20 @@
 import { memo } from 'react';
-import {
-  IconFile,
-  IconFileText,
-  IconMarkdown,
-  IconVideo,
-} from '@tabler/icons-react';
 
 import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
 import { cx } from '@/utils/cx';
 
+import EntryTileActions from '../EntryTileActions';
+import { CATEGORY_ICONS } from '../constants';
 import { formatFileSize } from '../utils/files';
-import type { FileCategory } from '../types';
 
 import type { FileTileProps } from './types';
 
 import styles from './index.scss';
 
-/** 分类 → 瓦片图标；视频额外上蓝色，其余用通用弱色 */
-const CATEGORY_ICONS: Record<FileCategory, typeof IconFile> = {
-  video: IconVideo,
-  pdf: IconFileText,
-  markdown: IconMarkdown,
-  other: IconFile,
-};
-
 /**
  * 网格里的一条文件：图标居上居中，文件名与体积纵向排在下方并居中，可被拖拽移动。
- * 图标按文件归类区分；文件内容与预览是单独任务，本瓦片暂不挂点击行为；
- * 名称最多两行，超出做中间省略保留尾部，hover 时给全量。
+ * 图标按文件归类区分；hover 时右上角浮出重命名 / 删除按钮；文件内容与预览是单独任务，
+ * 本瓦片暂不挂点击行为；名称最多两行，超出做中间省略保留尾部，hover 时给全量。
  */
 const FileTile = memo(
   ({
@@ -35,13 +22,15 @@ const FileTile = memo(
     file,
     onDragEnd,
     onDragStartEntry,
+    onEdit,
+    onRequestDelete,
   }: FileTileProps) => {
     const Icon = CATEGORY_ICONS[file.category];
     const isVideo = file.category === 'video';
 
     return (
       <div
-        className={cx(styles.tile, dragging && styles.dragging)}
+        className={cx(styles.wrapper, dragging && styles.dragging)}
         draggable
         onDragEnd={onDragEnd}
         onDragStart={(event) => {
@@ -52,22 +41,31 @@ const FileTile = memo(
           onDragStartEntry?.();
         }}
       >
-        <Icon
-          aria-hidden="true"
-          className={cx(styles.icon, isVideo && styles.iconVideo)}
-          size={48}
-          stroke={1.2}
-        />
-        <span className={styles.body}>
-          <FreeTruncatedText
-            className={styles.name}
-            ellipsis="middle"
-            lines={2}
-            position="top"
-            text={file.name}
+        <div className={styles.tile}>
+          <Icon
+            aria-hidden="true"
+            className={cx(styles.icon, isVideo && styles.iconVideo)}
+            size={48}
+            stroke={1.2}
           />
-          <span className={styles.meta}>{formatFileSize(file.size)}</span>
-        </span>
+          <span className={styles.body}>
+            <FreeTruncatedText
+              className={styles.name}
+              ellipsis="middle"
+              lines={2}
+              position="top"
+              text={file.name}
+            />
+            <span className={styles.meta}>{formatFileSize(file.size)}</span>
+          </span>
+        </div>
+
+        <EntryTileActions
+          className={styles.actions}
+          kind="file"
+          onEdit={() => onEdit?.()}
+          onRequestDelete={() => onRequestDelete?.()}
+        />
       </div>
     );
   },

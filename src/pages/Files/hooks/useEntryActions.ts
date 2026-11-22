@@ -7,7 +7,7 @@ import { createFolder, moveEntry, renameEntry } from '../utils/files-api';
 
 /**
  * 条目写操作编排：新建文件夹、就地改名、拖拽移动的临时状态与接口调用收口在这里。
- * 成功后静默刷新列表；失败弹红色通知，不改原位置。弹窗类的删除编排归 `useFolderDelete`。
+ * 成功后静默刷新列表；失败弹红色通知，不改原位置。弹窗类的删除编排归 `useEntryDelete`。
  */
 export const useEntryActions = (
   currentDir: string | null,

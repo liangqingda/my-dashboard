@@ -34,8 +34,8 @@ export type DirectoryGridProps = {
   onRenameCommit: (path: string, name: string) => void;
   /** 取消改名 */
   onRenameCancel: () => void;
-  /** 重命名某个文件夹 */
-  onEditFolder: (path: string) => void;
-  /** 请求删除某个文件夹（先弹二次确认） */
-  onRequestDeleteFolder: (path: string) => void;
+  /** 重命名某个条目 */
+  onEditEntry: (path: string) => void;
+  /** 请求删除某个条目（先弹二次确认） */
+  onRequestDeleteEntry: (path: string) => void;
 };

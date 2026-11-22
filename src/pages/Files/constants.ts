@@ -4,6 +4,13 @@
  * 不维护第二份扩展名表；分类的中文标签与筛选偏好归本页。
  */
 
+import {
+  IconFile,
+  IconFileText,
+  IconMarkdown,
+  IconVideo,
+} from '@tabler/icons-react';
+
 import { scopedStorageKey } from '@/utils/page-storage';
 
 import type { FileCategory } from './types';
@@ -47,3 +54,11 @@ export const TYPE_FILTER_STORAGE_KEY = scopedStorageKey(
   FILES_STORAGE_SCOPE,
   'type-filter',
 );
+
+/** 分类 → 瓦片图标；视频额外上蓝色，其余用通用弱色 */
+export const CATEGORY_ICONS: Record<FileCategory, typeof IconFile> = {
+  video: IconVideo,
+  pdf: IconFileText,
+  markdown: IconMarkdown,
+  other: IconFile,
+};

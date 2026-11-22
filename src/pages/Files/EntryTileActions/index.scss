@@ -1,0 +1,11 @@
+/** 瓦片右上角浮出的操作按钮组：定位与排布收在这里，hover 显隐由各瓦片外壳控制 */
+
+.actions {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}

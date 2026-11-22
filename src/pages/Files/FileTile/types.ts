@@ -14,4 +14,8 @@ export type FileTileProps = {
   onDragStartEntry?: () => void;
   /** 拖拽结束（松开 / 取消） */
   onDragEnd?: () => void;
+  /** 重命名这个文件 */
+  onEdit?: () => void;
+  /** 请求删除这个文件（先弹二次确认） */
+  onRequestDelete?: () => void;
 };

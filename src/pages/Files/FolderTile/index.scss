@@ -42,17 +42,7 @@
   outline-offset: -2px;
 }
 
-/* hover 才浮出的操作按钮组：右上角，避免常驻挤占瓦片 */
-.actions {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  display: flex;
-  gap: 2px;
-  opacity: 0;
-  transition: opacity 120ms ease;
-}
-
+/* hover 才浮出的操作按钮组：按钮组定位在 EntryTileActions，这里只挂 hover 显隐 */
 .wrapper:hover .actions {
   opacity: 1;
 }

@@ -1,10 +1,11 @@
 import { memo } from 'react';
 import { UnstyledButton } from '@mantine/core';
-import { IconFolderFilled, IconPencil, IconTrash } from '@tabler/icons-react';
+import { IconFolderFilled } from '@tabler/icons-react';
 
-import FreeIconAction from '@/components/buttons/FreeIconAction';
 import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
 import { cx } from '@/utils/cx';
+
+import EntryTileActions from '../EntryTileActions';
 
 import type { FolderTileProps } from './types';
 
@@ -76,29 +77,12 @@ const FolderTile = memo(
         </span>
       </UnstyledButton>
 
-      <div className={styles.actions}>
-        <FreeIconAction
-          label="重命名文件夹"
-          onClick={(event) => {
-            event.stopPropagation();
-            onEdit?.();
-          }}
-          size="xs"
-        >
-          <IconPencil size={13} />
-        </FreeIconAction>
-        <FreeIconAction
-          label="删除文件夹"
-          onClick={(event) => {
-            event.stopPropagation();
-            onRequestDelete?.();
-          }}
-          size="xs"
-          tone="danger"
-        >
-          <IconTrash size={13} />
-        </FreeIconAction>
-      </div>
+      <EntryTileActions
+        className={styles.actions}
+        kind="folder"
+        onEdit={() => onEdit?.()}
+        onRequestDelete={() => onRequestDelete?.()}
+      />
     </div>
   ),
 );

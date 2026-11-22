@@ -13,15 +13,15 @@ import MenuContentLayout from '@/layouts/MenuContentLayout';
 import { onPageRefresh } from '@/utils/page-refresh';
 
 import DirectoryGrid from './DirectoryGrid';
-import DeleteFolderConfirm from './DeleteFolderConfirm';
+import DeleteEntryConfirm from './DeleteEntryConfirm';
 import DirBreadcrumb from './DirBreadcrumb';
 import FilesActions from './FilesActions';
 import type { FilesActionsPanel } from './FilesActions/types';
 import { SKELETON_TILES } from './constants';
 import { useEntryActions } from './hooks/useEntryActions';
+import { useEntryDelete } from './hooks/useEntryDelete';
 import { useFavorites } from './hooks/useFavorites';
 import { useFilesDir } from './hooks/useFilesDir';
-import { useFolderDelete } from './hooks/useFolderDelete';
 import { useTypeFilter } from './hooks/useTypeFilter';
 import {
   availableCategoryOptions,
@@ -45,15 +45,16 @@ const Files = () => {
     useTypeFilter();
 
   const folders = listing?.folders ?? [];
+  const allFiles = listing?.files ?? [];
   const entryActions = useEntryActions(listing?.path ?? null, reload);
   const {
     cancelDelete,
     confirmDelete,
-    deletingFolder,
+    deletingEntry,
     deleteLoading,
     requestDelete,
     resetDelete,
-  } = useFolderDelete(folders, reload);
+  } = useEntryDelete(folders, allFiles, reload);
 
   /** 同时只开一块弹层：收藏 / 筛选 */
   const [openPanel, setOpenPanel] = useState<FilesActionsPanel | null>(null);
@@ -201,19 +202,19 @@ const Files = () => {
               onDragOverFolder={entryActions.dragOverFolder}
               onDragStartEntry={entryActions.dragStartEntry}
               onDropFolder={entryActions.dropFolder}
-              onEditFolder={entryActions.editEntry}
+              onEditEntry={entryActions.editEntry}
               onOpenFolder={goToDir}
               onRenameCancel={entryActions.renameCancel}
               onRenameCommit={entryActions.renameCommit}
-              onRequestDeleteFolder={requestDelete}
+              onRequestDeleteEntry={requestDelete}
               renamingPath={entryActions.renamingPath}
             />
           </ScrollArea>
         ) : null}
       </Stack>
 
-      <DeleteFolderConfirm
-        folder={deletingFolder}
+      <DeleteEntryConfirm
+        entry={deletingEntry}
         loading={deleteLoading}
         onCancel={cancelDelete}
         onConfirm={() => void confirmDelete()}

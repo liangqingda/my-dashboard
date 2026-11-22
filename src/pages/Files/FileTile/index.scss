@@ -1,19 +1,35 @@
 /* 文件瓦片：与文件夹瓦片同版式，图标换成文件图标，副文案是文件体积 */
 
+.wrapper {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  border-radius: 8px;
+
+  &:hover {
+    background: var(--app-surface-hover);
+  }
+}
+
 .tile {
   display: flex;
+  width: 100%;
   flex-direction: column;
   align-items: center;
   gap: 6px;
   min-width: 0;
   padding: 12px 8px;
-  border-radius: 8px;
 }
 
 /* 正在被拖拽的文件：弱化半透明，光标切到拖拽态 */
 .dragging {
   opacity: 0.4;
   cursor: grabbing;
+}
+
+/* hover 才浮出的操作按钮组：按钮组定位在 EntryTileActions，这里只挂 hover 显隐 */
+.wrapper:hover .actions {
+  opacity: 1;
 }
 
 .icon {
