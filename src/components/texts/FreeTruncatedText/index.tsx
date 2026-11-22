@@ -7,7 +7,7 @@
  *
  * end 档的 tip 与测量都推迟到「被指到的那一刻」（见 `useHoverIntent`）：列表里几百个条目
  * 各自常驻一个 Tooltip 会白付几百套浮动定位实例的挂载成本，各自挂一个 ResizeObserver
- * 测量则会拆成几百次强制重排。middle 档做不到推迟——中间省略的拼法必须在挂载时就定好，
+ * 测量则会拆成几百次强制重排。middle 档做不到推迟——中间省略的拼法必须在节点挂上后定好，
  * 所以在回调 ref 里量一次（节点挂上即量），不挂常驻观察器。tip 挂在目标元素旁边、由 `target` 指回去。
  */
 
@@ -59,7 +59,7 @@ const FreeTruncatedText = ({
   const measureKind = lines === 2 ? 'height' : 'width';
 
   /**
-   * middle 档：节点挂上后按容器尺寸二分出能放下的头尾拼法，写回状态渲染。
+   * middle 档：节点挂上后按容器尺寸二分出**能放下的最多**头尾字符，写回状态渲染。
    * 藏在隐藏视图里时盒子尺寸为 0，量不出结论，先按全文渲染，不误截断。
    */
   const resolveMiddle = useCallback(() => {
@@ -98,10 +98,12 @@ const FreeTruncatedText = ({
       element.textContent = candidate;
 
       if (!measure(measureKind)) {
+        // 放得下：还能多留字符，往更大的 keep 搜
         best = candidate;
-        high = keep - 1;
-      } else {
         low = keep + 1;
+      } else {
+        // 放不下：往更少的 keep 收
+        high = keep - 1;
       }
     }
 
