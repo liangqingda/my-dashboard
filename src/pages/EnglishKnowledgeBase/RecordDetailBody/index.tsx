@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Badge, Box, Group, Loader, SimpleGrid, Stack, Text } from '@mantine/core';
+import { Badge, Box, Group, Loader, Stack, Text } from '@mantine/core';
 
 import CopyIconButton from '@/components/buttons/CopyIconButton';
 import FreeTable from '@/components/tables/FreeTable';
@@ -170,12 +170,7 @@ const RecordDetailBody = ({ recordId }: RecordDetailBodyProps) => {
         </Stack>
       ) : null}
 
-      <SimpleGrid
-        className={hasHistory ? styles.columns : undefined}
-        cols={hasHistory ? 2 : 1}
-        spacing="md"
-        verticalSpacing="md"
-      >
+      <Group align="flex-start" gap={24} wrap="wrap">
         <Stack gap={4}>
           <Text c="dimmed" size="xs">
             记录信息
@@ -246,7 +241,7 @@ const RecordDetailBody = ({ recordId }: RecordDetailBodyProps) => {
             </Box>
           </Stack>
         ) : null}
-      </SimpleGrid>
+      </Group>
     </Stack>
   );
 };

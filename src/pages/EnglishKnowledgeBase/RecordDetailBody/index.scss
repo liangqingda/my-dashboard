@@ -42,12 +42,3 @@
   color: var(--app-ink-soft);
   white-space: nowrap;
 }
-
-/* 记录信息与复习历史并列两栏时，两张表各吃满所在那一列，长值在列内换行 */
-.columns .tableWrap {
-  align-items: stretch;
-}
-
-.columns .tableWrap .table {
-  width: 100%;
-}
