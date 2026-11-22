@@ -24,6 +24,18 @@
   overflow-wrap: anywhere;
 }
 
+/* 两张表按内容定宽，不铺满弹窗：父级限定提高特异性，盖住基础表格的 100% */
+.tableWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.tableWrap .table {
+  width: auto;
+  max-width: 100%;
+}
+
 /* 记录信息表的字段列：固定窄列 + 字段色，值列吃掉剩余宽度 */
 .fieldLabel {
   width: 80px;

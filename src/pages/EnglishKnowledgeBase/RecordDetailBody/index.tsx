@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Badge, Group, Loader, Stack, Text } from '@mantine/core';
+import { Badge, Box, Group, Loader, Stack, Text } from '@mantine/core';
 
 import CopyIconButton from '@/components/buttons/CopyIconButton';
 import FreeTable from '@/components/tables/FreeTable';
@@ -170,71 +170,76 @@ const RecordDetailBody = ({ recordId }: RecordDetailBodyProps) => {
         </Stack>
       ) : null}
 
+      <Stack gap={4}>
+        <Text c="dimmed" size="xs">
+          记录信息
+        </Text>
+        <Box className={styles.tableWrap}>
+          <FreeTable className={styles.table} compact tabularNums>
+            <FreeTable.Thead>
+              <FreeTable.Tr>
+                <FreeTable.Th scope="col">字段</FreeTable.Th>
+                <FreeTable.Th scope="col">值</FreeTable.Th>
+              </FreeTable.Tr>
+            </FreeTable.Thead>
+            <FreeTable.Tbody>
+              {fieldRow(
+                '记录 ID',
+                detail.id,
+                <CopyIconButton
+                  iconSize={13}
+                  label="复制记录 ID（C）"
+                  size="xs"
+                  text={detail.id}
+                />,
+              )}
+              {fieldRow('掌握分', formatScore(detail.masteryScore))}
+              {fieldRow('连续满分', formatTenStreak(detail.masteredTenStreak))}
+              {fieldRow('复习次数', String(detail.reviewCount))}
+              {fieldRow('学习次数', String(detail.learnedCount))}
+              {fieldRow('遗忘次数', String(detail.lapseCount))}
+              {fieldRow('首次学习', formatDateTimeOrEmpty(detail.firstLearnedAt))}
+              {fieldRow('最近学习', formatDateTimeOrEmpty(detail.lastLearnedAt))}
+              {fieldRow('掌握时间', formatDateTimeOrEmpty(detail.masteredAt))}
+              {fieldRow('下次复习', formatDateTimeOrEmpty(detail.nextReviewAt))}
+            </FreeTable.Tbody>
+          </FreeTable>
+        </Box>
+      </Stack>
+
       {hasHistory ? (
         <Stack gap={4}>
           <Text c="dimmed" size="xs">
             复习历史
           </Text>
-          <FreeTable compact tabularNums>
-            <FreeTable.Thead>
-              <FreeTable.Tr>
-                <FreeTable.Th scope="col">时间</FreeTable.Th>
-                <FreeTable.Th scope="col">得分</FreeTable.Th>
-                <FreeTable.Th scope="col">状态变化</FreeTable.Th>
-              </FreeTable.Tr>
-            </FreeTable.Thead>
-            <FreeTable.Tbody>
-              {detail.reviewHistory.map((entry) => (
-                <FreeTable.Tr
-                  key={`${entry.reviewedAt}-${entry.score}-${entry.newStatus}`}
-                >
-                  <FreeTable.Td className={styles.time}>
-                    {formatDateTime(entry.reviewedAt)}
-                  </FreeTable.Td>
-                  <FreeTable.Td>{formatScore(entry.score)}</FreeTable.Td>
-                  <FreeTable.Td>
-                    {`${statusText(entry.previousStatus)} → ${statusText(entry.newStatus)}`}
-                  </FreeTable.Td>
+          <Box className={styles.tableWrap}>
+            <FreeTable className={styles.table} compact tabularNums>
+              <FreeTable.Thead>
+                <FreeTable.Tr>
+                  <FreeTable.Th scope="col">时间</FreeTable.Th>
+                  <FreeTable.Th scope="col">得分</FreeTable.Th>
+                  <FreeTable.Th scope="col">状态变化</FreeTable.Th>
                 </FreeTable.Tr>
-              ))}
-            </FreeTable.Tbody>
-          </FreeTable>
+              </FreeTable.Thead>
+              <FreeTable.Tbody>
+                {detail.reviewHistory.map((entry) => (
+                  <FreeTable.Tr
+                    key={`${entry.reviewedAt}-${entry.score}-${entry.newStatus}`}
+                  >
+                    <FreeTable.Td className={styles.time}>
+                      {formatDateTime(entry.reviewedAt)}
+                    </FreeTable.Td>
+                    <FreeTable.Td>{formatScore(entry.score)}</FreeTable.Td>
+                    <FreeTable.Td>
+                      {`${statusText(entry.previousStatus)} → ${statusText(entry.newStatus)}`}
+                    </FreeTable.Td>
+                  </FreeTable.Tr>
+                ))}
+              </FreeTable.Tbody>
+            </FreeTable>
+          </Box>
         </Stack>
       ) : null}
-      <Stack gap={4}>
-        <Text c="dimmed" size="xs">
-          记录信息
-        </Text>
-        <FreeTable compact tabularNums>
-          <FreeTable.Thead>
-            <FreeTable.Tr>
-              <FreeTable.Th scope="col">字段</FreeTable.Th>
-              <FreeTable.Th scope="col">值</FreeTable.Th>
-            </FreeTable.Tr>
-          </FreeTable.Thead>
-          <FreeTable.Tbody>
-            {fieldRow(
-              '记录 ID',
-              detail.id,
-              <CopyIconButton
-                iconSize={13}
-                label="复制记录 ID（C）"
-                size="xs"
-                text={detail.id}
-              />,
-            )}
-            {fieldRow('掌握分', formatScore(detail.masteryScore))}
-            {fieldRow('连续满分', formatTenStreak(detail.masteredTenStreak))}
-            {fieldRow('复习次数', String(detail.reviewCount))}
-            {fieldRow('学习次数', String(detail.learnedCount))}
-            {fieldRow('遗忘次数', String(detail.lapseCount))}
-            {fieldRow('首次学习', formatDateTimeOrEmpty(detail.firstLearnedAt))}
-            {fieldRow('最近学习', formatDateTimeOrEmpty(detail.lastLearnedAt))}
-            {fieldRow('掌握时间', formatDateTimeOrEmpty(detail.masteredAt))}
-            {fieldRow('下次复习', formatDateTimeOrEmpty(detail.nextReviewAt))}
-          </FreeTable.Tbody>
-        </FreeTable>
-      </Stack>
     </Stack>
   );
 };
