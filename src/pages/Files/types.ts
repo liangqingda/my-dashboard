@@ -14,8 +14,8 @@ export type FolderEntry = {
   itemCount: number;
 };
 
-/** 文件条目类型：视频走独立图标，其余用通用文件图标 */
-export type FileKind = 'video' | 'file';
+/** 文件归类：与中间件 `FileCategory` 同一套档位，用于区分图标与类型筛选 */
+export type FileCategory = 'video' | 'image' | 'audio' | 'document' | 'archive' | 'other';
 
 /** 列表里的一条文件 */
 export type FileEntry = {
@@ -27,8 +27,8 @@ export type FileEntry = {
   size: number;
   /** 最后修改时间（ISO 8601） */
   updatedAt: string;
-  /** 文件类型，用于区分图标 */
-  kind: FileKind;
+  /** 文件归类，用于区分图标与类型筛选 */
+  category: FileCategory;
 };
 
 /** 一次目录扫描的结果 */

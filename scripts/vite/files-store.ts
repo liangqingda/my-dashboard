@@ -15,22 +15,89 @@ import type { Dirent } from 'node:fs';
 
 const execFileAsync = promisify(execFile);
 
-/** 识别为视频文件的扩展名（小写、带点）；只用于区分图标，不做类型过滤 */
-const VIDEO_EXTENSIONS = [
-  '.mp4',
-  '.mov',
-  '.mkv',
-  '.avi',
-  '.webm',
-  '.m4v',
-  '.ts',
-  '.flv',
-  '.wmv',
-  '.mpeg',
-  '.mpg',
-  '.m2ts',
-  '.3gp',
-] as const;
+/** 文件归类：前端按这一档换图标、做类型筛选；认不出扩展名的落 `other` */
+export type FileCategory =
+  | 'video'
+  | 'image'
+  | 'audio'
+  | 'document'
+  | 'archive'
+  | 'other';
+
+/** 各分类识别的扩展名（小写、带点）；归类只看扩展名，不读文件内容 */
+const CATEGORY_EXTENSIONS: Readonly<Record<Exclude<FileCategory, 'other'>, readonly string[]>> = {
+  video: [
+    '.mp4',
+    '.mov',
+    '.mkv',
+    '.avi',
+    '.webm',
+    '.m4v',
+    '.ts',
+    '.flv',
+    '.wmv',
+    '.mpeg',
+    '.mpg',
+    '.m2ts',
+    '.3gp',
+  ],
+  image: [
+    '.jpg',
+    '.jpeg',
+    '.png',
+    '.gif',
+    '.webp',
+    '.svg',
+    '.heic',
+    '.heif',
+    '.bmp',
+    '.tif',
+    '.tiff',
+    '.icns',
+    '.avif',
+  ],
+  audio: [
+    '.mp3',
+    '.wav',
+    '.flac',
+    '.aac',
+    '.ogg',
+    '.m4a',
+    '.opus',
+    '.wma',
+    '.ape',
+    '.aiff',
+  ],
+  document: [
+    '.txt',
+    '.md',
+    '.pdf',
+    '.doc',
+    '.docx',
+    '.xls',
+    '.xlsx',
+    '.ppt',
+    '.pptx',
+    '.csv',
+    '.rtf',
+    '.pages',
+    '.numbers',
+    '.key',
+  ],
+  archive: [
+    '.zip',
+    '.rar',
+    '.7z',
+    '.tar',
+    '.gz',
+    '.tgz',
+    '.bz2',
+    '.xz',
+    '.dmg',
+    '.pkg',
+    '.iso',
+  ],
+};
 
 /** 目录里的一条子文件夹 */
 export type FolderEntry = {
@@ -42,9 +109,6 @@ export type FolderEntry = {
   itemCount: number;
 };
 
-/** 文件条目类型：视频走独立图标，其余用通用文件图标 */
-export type FileKind = 'video' | 'file';
-
 /** 目录里的一条文件 */
 export type FileEntry = {
   /** 文件名（含扩展名） */
@@ -55,8 +119,8 @@ export type FileEntry = {
   size: number;
   /** 最后修改时间（ISO 8601） */
   updatedAt: string;
-  /** 文件类型，用于区分图标 */
-  kind: FileKind;
+  /** 文件归类，用于区分图标与类型筛选 */
+  category: FileCategory;
 };
 
 /** 一次目录扫描的结果 */
@@ -76,11 +140,17 @@ export type DirListing = {
 /** 以点开头的隐藏条目不进列表，避免把系统文件铺到页面上 */
 const isHiddenName = (name: string): boolean => name.startsWith('.');
 
-/** 视频文件名判定：扩展名在白名单内即算；大小写不敏感 */
-const videoKind = (name: string): FileKind => {
+/** 按扩展名归类文件名：大小写不敏感；扩展名不在任何白名单内落 `other` */
+const categoryForName = (name: string): FileCategory => {
   const lower = name.toLowerCase();
 
-  return VIDEO_EXTENSIONS.some((ext) => lower.endsWith(ext)) ? 'video' : 'file';
+  for (const [category, extensions] of Object.entries(CATEGORY_EXTENSIONS)) {
+    if (extensions.some((ext) => lower.endsWith(ext))) {
+      return category as FileCategory;
+    }
+  }
+
+  return 'other';
 };
 
 /**
@@ -215,7 +285,7 @@ export const listDirectory = async (input: string): Promise<DirListing> => {
           path: entryPath,
           size: info.size,
           updatedAt: info.mtime.toISOString(),
-          kind: videoKind(entry.name),
+          category: categoryForName(entry.name),
         });
       } catch {
         // 单文件 stat 失败就跳过这一条，目录里其它条目照常展示。

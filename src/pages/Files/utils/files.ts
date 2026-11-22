@@ -1,6 +1,9 @@
 /**
- * 文件浏览页的纯函数：文件大小格式化、路径分段。不依赖 React。
+ * 文件浏览页的纯函数：文件大小格式化、路径分段、类型筛选。不依赖 React。
  */
+
+import { FILE_CATEGORY_OPTIONS } from '../constants';
+import type { FileCategory, FileEntry } from '../types';
 
 /** 字节数 → 可读体积（B / KB / MB / GB）；负数与 NaN 按 0 处理 */
 export const formatFileSize = (bytes: number): string => {
@@ -36,4 +39,25 @@ export const splitPathSegments = (dir: string): PathSegment[] => {
     label: part,
     path: `/${parts.slice(0, index + 1).join('/')}`,
   }));
+};
+
+/** 按已选分类过滤文件；空选择表示不过滤，整份保留 */
+export const filterFilesByCategory = (
+  files: FileEntry[],
+  selected: FileCategory[],
+): FileEntry[] => {
+  if (selected.length === 0) {
+    return files;
+  }
+
+  const picked = new Set(selected);
+
+  return files.filter((file) => picked.has(file.category));
+};
+
+/** 当前列表里实际出现过的分类，按固定选项顺序给出下拉项；都没出现时返回空 */
+export const availableCategoryOptions = (files: FileEntry[]) => {
+  const present = new Set(files.map((file) => file.category));
+
+  return FILE_CATEGORY_OPTIONS.filter((option) => present.has(option.value));
 };

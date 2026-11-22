@@ -8,10 +8,11 @@
 
 import { readHttpErrorMessage } from '@/utils/error';
 
+import { FILE_CATEGORY_OPTIONS } from '../constants';
 import type {
   DirListing,
+  FileCategory,
   FileEntry,
-  FileKind,
   FolderEntry,
 } from '../types';
 
@@ -64,14 +65,18 @@ const normalizeFile = (raw: unknown): FileEntry | null => {
     return null;
   }
 
-  const kind: FileKind = raw.kind === 'video' ? 'video' : 'file';
+  const knownCategories = FILE_CATEGORY_OPTIONS.map((option) => option.value) as string[];
+  const category =
+    typeof raw.category === 'string' && knownCategories.includes(raw.category)
+      ? (raw.category as FileCategory)
+      : 'other';
 
   return {
     name,
     path,
     size: asNumber(raw.size),
     updatedAt: asString(raw.updatedAt),
-    kind,
+    category,
   };
 };
 

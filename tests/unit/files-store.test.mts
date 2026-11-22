@@ -22,6 +22,9 @@ describe('files-store', () => {
     await writeFile(path.join(root, 'sub', 'folder-c', 'clip.mp4'), 'd');
     await writeFile(path.join(root, 'clip.webm'), 'e');
     await writeFile(path.join(root, 'poster.png'), 'f');
+    await writeFile(path.join(root, 'song.mp3'), 'h');
+    await writeFile(path.join(root, 'bundle.zip'), 'i');
+    await writeFile(path.join(root, 'script.js'), 'j');
     await writeFile(path.join(root, '.hidden.mp4'), 'g');
   });
 
@@ -43,20 +46,25 @@ describe('files-store', () => {
       ],
     );
     assert.deepEqual(
-      listing.files.map((file) => [file.name, file.kind]),
+      listing.files.map((file) => [file.name, file.category]),
       [
+        ['bundle.zip', 'archive'],
         ['clip.webm', 'video'],
-        ['poster.png', 'file'],
+        ['poster.png', 'image'],
+        ['script.js', 'other'],
+        ['song.mp3', 'audio'],
       ],
     );
   });
 
   it('文件条目带大小与修改时间，文件大小按字节保留', async () => {
-    const [file] = (await listDirectory(root)).files;
+    const [file] = (await listDirectory(root)).files.filter(
+      (entry) => entry.name === 'clip.webm',
+    );
 
     assert.ok(file);
     assert.equal(file.size, 1);
-    assert.equal(file.kind, 'video');
+    assert.equal(file.category, 'video');
     assert.match(file.updatedAt, /^\d{4}-\d{2}-\d{2}T/);
     assert.equal(file.path, path.join(root, 'clip.webm'));
   });
