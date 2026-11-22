@@ -60,7 +60,7 @@ const RecordDetailModal = ({
       onRequestDelete={onRequestDelete ?? null}
       opened={recordId !== null}
       shortcutsEnabled={!confirming}
-      size="min(760px, 92vw)"
+      size="min(860px, 94vw)"
       title={title ?? '记录详情'}
       trapFocus={!confirming}
     >
