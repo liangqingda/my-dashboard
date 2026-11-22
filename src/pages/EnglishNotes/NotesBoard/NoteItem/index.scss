@@ -38,7 +38,7 @@
   cursor: pointer;
 }
 
-/* 省略号与 tip 由 TruncatedText 负责，这里只管字形与颜色；
+/* 省略号与 tip 由 FreeTruncatedText 负责，这里只管字形与颜色；
    宽度按内容走（放不下才让省略号收窄），箭头才能紧跟文字而不是被顶到行尾 */
 .name {
   flex: 0 1 auto;

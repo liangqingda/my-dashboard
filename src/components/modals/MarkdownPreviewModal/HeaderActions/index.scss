@@ -9,7 +9,7 @@
 
 /*
  * 状态提示（已保存 / 保存失败）：只在标题栏的剩余宽度里显示，
- * 省略号与「只有被截断才弹 tip」交给公共组件 TruncatedText。
+ * 省略号与「只有被截断才弹 tip」交给公共组件 FreeTruncatedText。
  */
 .status {
   flex: 0 1 auto;

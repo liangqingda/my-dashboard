@@ -4,7 +4,7 @@
 
 import type { FloatingPosition } from '@mantine/core';
 
-export type TruncatedTextProps = {
+export type FreeTruncatedTextProps = {
   /** 文本内容 */
   text: string;
   /** 文本样式（字号、颜色、缩进等）；省略号与 tip 由组件负责，不要自己再写 overflow / ellipsis */

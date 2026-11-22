@@ -1,14 +1,14 @@
 /**
  * 标题导航的单条：可点击标题文本 + 右侧折叠图标（有子标题时）。
  * 被激活时把自己滚进目录的可视范围，长目录里高亮不会藏在滚动区外。
- * 省略号与「只在被截断时才弹 tip」交给公共组件 TruncatedText。
+ * 省略号与「只在被截断时才弹 tip」交给公共组件 FreeTruncatedText。
  */
 
 import { useEffect, useRef } from 'react';
 import { UnstyledButton } from '@mantine/core';
 import { IconChevronDown } from '@tabler/icons-react';
 
-import TruncatedText from '@/components/texts/TruncatedText';
+import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
 import { cx } from '@/utils/cx';
 
 import type { OutlineNavItemProps } from '../../types';
@@ -49,7 +49,7 @@ const OutlineNavItem = ({
       )}
       ref={rowRef}
     >
-      <TruncatedText
+      <FreeTruncatedText
         className={styles.item}
         disabled={disabled}
         onClick={onSelect}

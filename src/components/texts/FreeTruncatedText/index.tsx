@@ -15,18 +15,18 @@ import { useHoverIntent } from '@/hooks/useHoverIntent';
 import { cx } from '@/utils/cx';
 
 import useIsTruncated from './hooks/useIsTruncated';
-import type { TruncatedTextProps } from './types';
+import type { FreeTruncatedTextProps } from './types';
 
 import styles from './index.scss';
 
-const TruncatedText = ({
+const FreeTruncatedText = ({
   className,
   disabled = false,
   inline = false,
   onClick,
   position = 'right',
   text,
-}: TruncatedTextProps) => {
+}: FreeTruncatedTextProps) => {
   const { measure, ref, targetRef } = useIsTruncated();
   /** 被指到的那一刻量出来的结果；没量过就是「放得下」，不弹 tip */
   const [truncated, setTruncated] = useState(false);
@@ -80,4 +80,4 @@ const TruncatedText = ({
   );
 };
 
-export default TruncatedText;
+export default FreeTruncatedText;

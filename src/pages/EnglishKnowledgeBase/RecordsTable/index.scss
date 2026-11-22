@@ -30,7 +30,7 @@
   vertical-align: middle;
 }
 
-/* 知识点单行截断，放不下时由 TruncatedText 在被指到时弹全称 */
+/* 知识点单行截断，放不下时由 FreeTruncatedText 在被指到时弹全称 */
 .title {
   display: block;
   padding: 0;

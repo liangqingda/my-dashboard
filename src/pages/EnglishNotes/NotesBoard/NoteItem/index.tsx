@@ -3,7 +3,7 @@ import { UnstyledButton } from '@mantine/core';
 import { IconChevronRight } from '@tabler/icons-react';
 
 import CopyIconButton from '@/components/buttons/CopyIconButton';
-import TruncatedText from '@/components/texts/TruncatedText';
+import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
 
 import {
   getNoteRelativePath,
@@ -17,7 +17,7 @@ import styles from './index.scss';
 
 /**
  * 列表里的一行：只露文件名（去掉重复的分类前缀），点击打开预览。
- * 放不下时 `TruncatedText` 收成省略号，悬停 / 聚焦时在行上方弹完整文件名。
+ * 放不下时 `FreeTruncatedText` 收成省略号，悬停 / 聚焦时在行上方弹完整文件名。
  * 行右侧的复制图标与表格形式一致，复制的是同一条相对路径；只在悬停 / 聚焦这一行时浮现。
  *
  * 用 memo 兜住：一列可能有 200+ 行，打开弹窗只是 `active` 变了，
@@ -39,7 +39,7 @@ const NoteItem = memo(({ note, category, onOpen }: NoteItemProps) => {
         }}
         type="button"
       >
-        <TruncatedText className={styles.name} position="top" text={label} />
+        <FreeTruncatedText className={styles.name} position="top" text={label} />
         <IconChevronRight
           aria-hidden="true"
           className={styles.chevron}

@@ -5,7 +5,7 @@
 
 ## 场景 → 用哪个
 
-新写任何 UI 先在这张表里找，找不到再看下面三档判据；**表里有的一律不许手写原生标签**。
+新写任何 UI 先在这张表里找，找不到再看下面三层判据；**表里有的一律不许手写原生标签**。
 
 | 场景 | 用什么 |
 | --- | --- |
@@ -28,7 +28,7 @@
 | 弹层面板底部（一句边界说明 + 重置） | `FreePanelFooter` |
 | 日期选择 | `@mantine/dates` 的 `DatePicker`（内联日历）/ `DatePickerInput`（带弹层的日期输入）；全站日历口径（中文、周一为第一天）由 `src/main.tsx` 的 `DatesProvider` 统一给，不要自己拼日历或改用原生 `type="date"` |
 | 分段切换（视图模式、日志类别） | `SegmentedControl` |
-| 悬停 / 聚焦提示 | `Tooltip`（截断后的完整内容走 `TruncatedText`）；**列表里成百上千个条目不要给每条常驻一个 `Tooltip`**，用 `@/hooks/useHoverIntent` 在被指到时才挂一个（`target` 指向被指的节点，不替换它），`TruncatedText` 与 `CopyIconButton` 已内置这套做法 |
+| 悬停 / 聚焦提示 | `Tooltip`（截断后的完整内容走 `FreeTruncatedText`）；**列表里成百上千个条目不要给每条常驻一个 `Tooltip`**，用 `@/hooks/useHoverIntent` 在被指到时才挂一个（`target` 指向被指的节点，不替换它），`FreeTruncatedText` 与 `CopyIconButton` 已内置这套做法 |
 | 加载中 | `Loader`（占位骨架 `Skeleton`） |
 | 一次性提示 | `notifications.show`（不自己造 toast） |
 | 折叠 / 展开 | `Collapse`、`Accordion` |
@@ -36,19 +36,28 @@
 | 徽标 / 状态标记 | `Badge` |
 | 进度 | `Progress`、`RingProgress` |
 
-## 三档判据
+## 三层：组件库 → Free 层 → 业务组件
 
-| 情况 | 做法 | 放哪 |
+| 层 | 判据（一遍问下来只落一层） | 落点 |
 | --- | --- | --- |
-| 组件库已有等价组件（表格、按钮、输入框、弹窗、提示） | 直接用组件库组件 | 就地 |
-| 同一个组件在**第二处**要同一套外观 / 行为 | 封装 `FreeXxx` 前端 UI 基建组件 | `src/components/<分类>/FreeXxx/` |
-| 业务表格 / 弹窗有特殊列、特殊交互、特殊数据形态 | 基于 `FreeXxx`（没有就基于公共组件 / 组件库）再封一层业务组件 | `src/pages/<Page>/<Name>/` |
+| 组件库 | 这个品类还没有 Free 层，也没有「全站只允许一种形态」的口径 | 就地直接用 Mantine |
+| `FreeXxx`（项目标准层） | 这一类对象**全站只允许一种形态 / 一套交互**，业务不许越过它直连底层 | `src/components/<分类>/FreeXxx/` |
+| 业务组件 | 有业务语义（特殊列、特殊交互、特殊数据形态），但所属品类已有 Free 层 | `src/pages/<Page>/<Name>/`，基于 Free 层加增量 |
 
-- **不提前封装**：只在一处用、没有第二处要同款外观的，直接吃组件库，别造薄壳。
-- **`FreeXxx` 必须真的承担统一外观 / 默认行为**（边框、表头、hover、间距、尺寸档位），
-  否则它只是换个名字的别名，说明该直接用组件库组件。
-- **业务组件不回头直连组件库**：已经封了 `FreeTable` 的场景，业务侧再直接 import
-  Mantine `Table` 就会出现两套外观，也算违反约定。
+- **`Free` 标的是「唯一入口」，不是「包了组件库」**：`FreeTable` 底下是 Mantine `Table`，
+  `FreeVideo` / `FreePdf` 底下可能是第三方库，`FreeTruncatedText` 底下是自研逻辑；
+  前缀承诺的是「这类东西全站只有这一个入口」，不承诺「从名字看出包的是谁」。
+- **业务组件不许越过 Free 层**：品类已有 Free 层时，业务侧再直接 import 底层（`Table` / `Modal` /
+  播放器 / 自己写截断逻辑）就是缺陷——**只有一处用也不例外**；缺 props / 插槽就先给 Free 层加，
+  不在业务里另起一套口径。
+- **「有没有第二处」不是判据**：判据是「同一类对象是否只允许一种形态」。一处用也走 Free 层；
+  反过来，只出现在一页、且不构成某类对象唯一形态的东西留在页面，别上提。
+- **`FreeXxx` 必须真的锁住东西**（尺寸档、边框、表头、间距、键位、加载 / 错误态这类默认外观与
+  默认行为）。说不清锁什么的，说明它只是组件库的别名，先别建——**不提前造薄壳**指的是这一条，
+  不是「等第二处」。
+- **场景限定不是例外**：只服务弹层面板的 `FreeSelectField`、只服务面板底部的 `FreePanelFooter`
+  同样算 Free 层——它们在该场景内是唯一入口、且锁了外观。真正不挂 `Free` 的是「提供某个动作的
+  现成实现、不构成某类对象唯一形态」的件（复制、筛选、图标弹层、二次确认、文档预览）。
 - **不复制样式**：业务组件要改外观通过 props / 自己的 `index.scss` 加增量，不把 `FreeXxx`
   的规则抄一遍。
 - **配置对象也算样式**：`{ label: { marginBottom: 4 } }` 这种「同一套外观的 params」出现第二处
@@ -69,7 +78,7 @@
 | `tables` | 表格基线 | `FreeTable` |
 | `fields` | 字段 / 输入控件组 | `FreeSelectField` |
 | `panels` | 面板级排布件（底栏、面板内布局） | `FreePanelFooter` |
-| `texts` | 文本展示与截断 | `TruncatedText` |
+| `texts` | 文本展示与截断 | `FreeTruncatedText` |
 | `feedback` | 加载、空态、提示这类状态呈现 | `PageLoading` |
 
 - **分类目录一律小写**（`@liangqingda/eslint-config` 1.8.0 起放行 `components` 下一层的分类名单，
@@ -78,7 +87,7 @@
   分类目录下只允许 `PascalCase` 组件目录且必须有 `index.tsx`。
 - **一个组件只进一个分类**：先看它包的是哪个组件库根组件（`Modal` → `modals`、`Button` / `ActionIcon`
   → `buttons`、`Table` → `tables`），再看它回答的是哪类能力（文本截断 → `texts`，加载态 → `feedback`）。
-- **不新建「杂项」目录**：放不进上表的先回到三档判据——只有一处用就别提公共，直接用组件库。
+- **不新建「杂项」目录**：放不进上表的先回到三层判据——说不清它锁什么，就别提公共，直接用组件库。
 - **新增分类要走三处**：`scripts/check-structure.mjs` 的 `COMPONENT_GROUPS`、共享包
   `config/web-naming-rules.js` 的 `reactComponentGroupDirectoryNames`（需发版）、本文件的表；
   只改一处会出现「能建目录但 lint 拦」或「lint 放行但结构检查拦」。
@@ -87,31 +96,34 @@
 
 | 类型 | 命名 | 位置 |
 | --- | --- | --- |
-| 基础 UI 基建（包组件库、上项目基线） | `Free` 前缀 + 组件名（`FreeTable`、`FreeSelectField`…） | `src/components/<分类>/FreeXxx/` |
-| 通用能力件（单一职责、不属于某个页面） | 能力语义，**不挂 `Free`**（`CopyIconButton`、`TruncatedText`…） | `src/components/<分类>/<Name>/` |
+| 项目标准层（某类对象的全站唯一入口） | `Free` 前缀 + 组件名（`FreeTable`、`FreeModal`、`FreeTruncatedText`…） | `src/components/<分类>/FreeXxx/` |
+| 能力件（某个动作的现成实现，不构成某类对象的唯一形态） | 能力语义，**不挂 `Free`**（`CopyIconButton`、`FilterButton`、`ConfirmModal`…） | `src/components/<分类>/<Name>/` |
 | 业务组件 | 业务语义（`NotesTable`、`TableEditor`…），不挂 `Free` | `src/pages/<Page>/<Name>/` |
 
-**`Free` 前缀只给「组件库某个组件 + 项目基线」的壳**：名字里能看出包的是 Table / Select / Modal，
-它锁的是这个组件的尺寸档、边框、表头、间距这类外观。三条判据从上往下问：
+**`Free` 前缀的唯一含义是「全站唯一入口」**，不是「包了某个组件库组件」。三条判据从上往下问：
 
-1. 它是不是把某个组件库组件包成「项目默认长相 / 默认行为」？是 → `FreeXxx`。
-2. 它是不是一个单一能力的通用件，名字回答「干什么」而不是「包的谁」？是 → 不挂 `Free`
-   （复制、截断提示、图标弹层、文档预览这些是一套能力，不是一套外观）。
+1. 这类东西全站只允许一种形态 / 一套交互、业务不许越过它直连底层？是 → `FreeXxx`
+   ——**不看底下包的是组件库还是自研**（表格、弹窗、输入、视频播放、PDF 预览、文本截断、加载态
+   都属于这一列）。
+2. 它只是某个动作的现成实现，各场景按需要选用、并不构成某类对象的唯一形态？→ 不挂 `Free`
+   （复制、筛选、图标弹层、二次确认、文档预览是一套能力，不是某类对象的唯一入口）。
 3. props 里出现只有某一页才成立的语义（某页的筛选项、某页的文档结构）？→ 它不该在
    `src/components`，回 `src/pages/<Page>/`（判据见 `docs/reuse-boundaries.md` 的形态 ④）。
 
-`FreeModal` 是 1 的典型例子：包的就是 Mantine `Modal`，锁的是框体 / header / 正文区这套外观与键位；
+`FreeModal` 是 1 的典型例子：底下是 Mantine `Modal`，锁的是框体 / header / 正文区这套外观与键位；
 阅读弹窗（`MarkdownPreviewModal`、`Review/RecordDetailModal`）用它默认的 `height="reading"`，
 普通弹窗（快捷命令、最近操作）用它 `height="auto"`，二次确认则是**基于它的通用业务组件** `ConfirmModal`
 （形态 2：单一能力、名字回答「干什么」），**谁都不再各自拼 `Modal`**。
-`FreePanelFooter` 是 1 的边缘案例，归类按「锁定了什么外观」定：它锁的是「面板底部布局 +
-`Button` subtle 小号」这套外观（不是某个 Mantine 组件），所以留 `Free`；同理，新写的面板级排布件
-只要**跨页面复用同一套长相**就按这一类走，否则当能力件或留页面。
+`FreePanelFooter` 是 1 的边缘案例：它底下没有现成的 Mantine 组件，锁的是「面板底部布局 +
+`Button` subtle 小号」这套外观，但**在该场景内它仍是唯一入口**，所以留 `Free`；同理，新写的
+面板级排布件只要在该场景内不许另起一套长相，就按这一类走，否则当能力件或留页面。
+把「全站只允许一种形态」推到品类级别看：`FreeVideo` / `FreePdf` / `FreeInput` 都属于这一列
+（现有清单还没落地，见下节）。
 
 目录结构与其它组件一致（见 `docs/code-splitting.md`）：`index.tsx` + `index.scss` +
 `types.ts`，一个 `index.tsx` 只放一个组件。
 
-## 现有的 Free 组件
+## 现有 Free 层组件
 
 | 组件 | 统一了什么 | 不管什么 |
 | --- | --- | --- |
@@ -119,9 +131,14 @@
 | `FreeSelectField` | 弹层面板里的字段组：标题 + 一档下拉 + 一行口径说明；尺寸档、字段间距、下拉不进门户 | 选项、当前值、说明文案、编解码、选中后的状态 |
 | `FreePanelFooter` | 弹层面板底部一行：左侧边界说明 + 右侧「重置」（组件库 `Button` subtle 小号） | 说明文案、置灰口径、重置动作 |
 | `FreeModal` | 弹窗外壳（唯一一扇）：框体与遮罩、紧凑 header（顺序为翻页 → 标题 → 第一组操作 → 全屏 → 末尾位 → 第二组操作）、全屏开关按钮与整套键位（空格 / 翻篇 / `F` / `C` 复制 / `Delete` 删除）；两种高度模式：`reading`（固定 `82dvh`）/ `auto`（随内容、上限 `88dvh`、正文自己滚）；全屏偏好走它的 `useModalFullscreen(storageKey)` | 标题文案、翻页数据、各组按钮的组件与能力（复制什么、删除怎么确认）、正文内容与滚动方式 |
+| `FreeTruncatedText` | 单行文本的截断口径：放不下才省略、**只有被截断且被指到时**才弹 tip；量宽与 tip 创建都推迟到被指到那一刻 | 多行省略、tip 内容定制（tip 恒为原文）、业务字号与颜色 |
 
-`FreeSelectField` / `FreePanelFooter` / `FreeModal` 的契约（props、锁定项的取值理由、坑）写在各自目录的
-`README.md`——判据：只有改它的人才需要读 → 跟代码走。`FreeTable` 的约定就在本文件（它是
+**规划中、尚未落地**：`FreeInput`（输入框尺寸档与标签 / 错误提示位）、`FreeVideo`（全站唯一播放器）、
+`FreePdf`（全站唯一 PDF 预览）。判据成立但组件还没建：等真需要统一时再建，**建之前不许在业务里
+各自起一套口径**（那正是要上提的信号）。
+
+`FreeSelectField` / `FreePanelFooter` / `FreeModal` / `FreeTruncatedText` 的契约（props、锁定项的取值理由、坑）
+写在各自目录的 `README.md`——判据：只有改它的人才需要读 → 跟代码走。`FreeTable` 的约定就在本文件（它是
 样式基线的示例）：props 透传 Mantine `TableProps`，`compact` 只收紧内边距。
 单元格默认 `vertical-align: top`（编辑器那类多行内容要贴顶）；**单行内容 + 徽标 / 图标按钮的
 列表表格**在自己页面样式里加 `.row td { vertical-align: middle }`——行高被最高的图标按钮撑起来，
@@ -166,8 +183,9 @@ root 容器并带上自己的高度 / 内边距 / 边框体系，全部覆盖反
 Mantine `Table` / `Select` / 自己拼一套底栏——两套外观迟早会漂，而且改基线时要改两处。
 
 - 已封壳的场景里出现底层组件 → 算缺陷，改成壳 + 缺 props 就先给壳加插槽；
-- 还没封、但**第二处**要同款外观 / 行为 → 按上文三档判据封 `FreeXxx`（连同键位、开合这类默认行为一起收）；
-- 只有一处用、没有第二处同款 → 继续直接用组件库，不造薄壳。
+- 属于「某类对象全站只允许一种形态」但还没封 → 按上文三层判据封 `FreeXxx`
+  （一处用也封；连同键位、开合这类默认行为一起收）；
+- 不属于上述两类（单处用、也不构成某类对象的唯一形态）→ 继续直接用组件库，不造薄壳。
 
 ## 自检
 
@@ -179,5 +197,5 @@ grep -rn "<table\|<button\|<input\|<select" --include="*.tsx" src
 ```
 
 不是要求零命中，而是**每一处命中都要说得清**：组件库没有对应能力，或只是纯语义容器。
-说不清的，改成组件库组件；第二处要同款外观的，封 `FreeXxx`；有业务特殊能力的，
+说不清的，改成组件库组件；同类形态全站只该有一套的，封 `FreeXxx`；有业务特殊能力的，
 基于 `FreeXxx` 封业务组件。

@@ -16,7 +16,7 @@ import {
 } from '@tabler/icons-react';
 
 import HeaderIconAction from '@/components/buttons/HeaderIconAction';
-import TruncatedText from '@/components/texts/TruncatedText';
+import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
 import { cx } from '@/utils/cx';
 
 import type { PreviewHeaderActionsProps } from '../types';
@@ -62,14 +62,14 @@ const PreviewHeaderActions = ({
         <span className={styles.unsavedHint}>这份改动还没保存</span>
       ) : null}
       {!askDiscard && saveError ? (
-        <TruncatedText
+        <FreeTruncatedText
           className={cx(styles.status, styles.statusError)}
           inline
           text={saveError}
         />
       ) : null}
       {!askDiscard && !saveError && savedAt ? (
-        <TruncatedText
+        <FreeTruncatedText
           className={cx(styles.status, styles.statusSaved)}
           inline
           text={`已保存・${savedAt}${saveNotice ? `・${saveNotice}` : ''}`}

@@ -4,7 +4,7 @@ import { IconTrash } from '@tabler/icons-react';
 
 import CopyIconButton from '@/components/buttons/CopyIconButton';
 import FreeTable from '@/components/tables/FreeTable';
-import TruncatedText from '@/components/texts/TruncatedText';
+import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
 import { formatDateTime } from '@/utils/format';
 
 import { EMPTY_CELL, STATUS_COLORS, STATUS_LABELS } from '../constants';
@@ -51,7 +51,7 @@ const RecordsTable = memo(
             onClick={() => onOpen(record)}
           >
             <FreeTable.Td>
-              <TruncatedText
+              <FreeTruncatedText
                 className={styles.title}
                 onClick={() => onOpen(record)}
                 text={record.title}

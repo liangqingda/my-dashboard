@@ -9,7 +9,7 @@
  * 供调用方现场量宽 / 取当前值，省掉「先进来、下一帧才拿到结果」的闪烁。
  *
  * 不用 `@mantine/hooks` 的 `useHover`：它给的是 `ref` + `hovered` 状态，状态变化要等下一轮渲染
- * 才可见；这里要的是 handlers 直接铺在已有节点上（`TruncatedText`、`CopyIconButton` 不换自己的
+ * 才可见；这里要的是 handlers 直接铺在已有节点上（`FreeTruncatedText`、`CopyIconButton` 不换自己的
  * 节点），且 `onEnter` 在进入的同一事件里同步执行，语义与它不重合，见 `docs/dependencies.md`。
  */
 
