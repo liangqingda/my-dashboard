@@ -26,6 +26,7 @@ import { useFilesDir } from './hooks/useFilesDir';
 import { useTypeFilter } from './hooks/useTypeFilter';
 import {
   availableCategoryOptions,
+  describeDirSpace,
   filterFilesByCategory,
   filterFilesByKeyword,
 } from './utils/files';
@@ -37,6 +38,7 @@ import styles from './index.scss';
  * 点文件夹进入下一层，面包屑回退，`⌘↑` 回上一级；可收藏常用目录，在收藏面板里点选直达；
  * 标题栏筛选面板支持按文件名关键词与类型多选过滤。文件内容与预览播放是单独任务，
  * 本页只列摘要。目录读取走 Vite 中间件，仅开发模式可用。
+ * 标题行右侧再显示本机剩余可用空间；当前目录在外接盘（移动硬盘）上时，连同那块盘的可用空间一起显示。
  */
 const Files = () => {
   const { currentDir, listing, loading, error, openDir, pickDir, refresh, reload } =
@@ -142,6 +144,7 @@ const Files = () => {
           typeOptions={typeOptions}
         />
       }
+      description={describeDirSpace(listing?.space ?? null)}
       fill
       onNavigateParent={navigateParent}
       onToggleFavorites={() => togglePanel('favorites')}

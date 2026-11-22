@@ -11,9 +11,11 @@ import { readHttpErrorMessage } from '@/utils/error';
 import { FILE_CATEGORY_OPTIONS } from '../constants';
 import type {
   DirListing,
+  DirSpace,
   FileCategory,
   FileEntry,
   FolderEntry,
+  VolumeSpace,
 } from '../types';
 
 const LIST_ENDPOINT = '/api/files';
@@ -84,6 +86,39 @@ const normalizeFile = (raw: unknown): FileEntry | null => {
   };
 };
 
+/** 归一化一个卷的剩余空间；挂载点或可用字节缺失时按「读不到」返回 null */
+const normalizeVolume = (raw: unknown): VolumeSpace | null => {
+  if (!isObject(raw)) {
+    return null;
+  }
+
+  const mountPoint = asString(raw.mountPoint);
+  const { freeBytes } = raw;
+
+  if (
+    !mountPoint ||
+    typeof freeBytes !== 'number' ||
+    !Number.isFinite(freeBytes)
+  ) {
+    return null;
+  }
+
+  return { freeBytes, mountPoint, name: asString(raw.name) || null };
+};
+
+/** 归一化卷空间：启动卷读不到就整份当作没有，外接卷读不到只丢那一卷 */
+const normalizeSpace = (raw: unknown): DirSpace | null => {
+  if (!isObject(raw)) {
+    return null;
+  }
+
+  const system = normalizeVolume(raw.system);
+
+  return system === null
+    ? null
+    : { external: normalizeVolume(raw.external), system };
+};
+
 /** 归一化整份目录清单；核心字段不合格返回 null，调用方按错误态处理 */
 const normalizeListing = (raw: unknown): DirListing | null => {
   if (!isObject(raw)) {
@@ -116,6 +151,7 @@ const normalizeListing = (raw: unknown): DirListing | null => {
           return file ? [file] : [];
         })
       : [],
+    space: normalizeSpace(raw.space),
   };
 };
 

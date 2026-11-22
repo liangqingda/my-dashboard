@@ -2,7 +2,8 @@
  * 文件浏览页插件：把本机指定目录下的文件夹与文件暴露给前端。
  *
  * - `GET /api/files`：列用户主目录；
- * - `GET /api/files?dir=<绝对路径>`：列指定目录（含子文件夹直属条目数、文件大小与修改时间）；
+ * - `GET /api/files?dir=<绝对路径>`：列指定目录（含子文件夹直属条目数、文件大小与修改时间，
+ *   以及启动卷 / 外接卷的剩余可用空间 `space`）；
  * - `POST /api/files/pick-dir`：调起 macOS 系统目录选择框，body `{ dir }` 作为默认定位目录，返回选中目录的绝对路径（取消返回 cancelled）；
  * - `POST /api/files/new-folder`：在 body `{ dir }` 目录下新建文件夹，返回新条目；
  * - `POST /api/files/rename`：body `{ path, name }` 重命名一条条目；
@@ -24,6 +25,7 @@ import {
   renameEntry,
   statusForReadError,
 } from './files-store.js';
+import { readDirSpace } from './files-space.js';
 
 /** 从 `?dir=` 取目录路径；没带参数返回 null（回落主目录） */
 const dirFromUrl = (url: string | undefined): string | null => {
@@ -198,8 +200,10 @@ export const files = (): Plugin => ({
 
       try {
         const listing = await listDirectory(dir);
+        // 空间只是附加信息：读的是刚校验过的目录，读不到就是 null，不拖垮这次列表
+        const space = await readDirSpace(listing.path);
 
-        res.end(JSON.stringify({ listing }));
+        res.end(JSON.stringify({ listing: { ...listing, space } }));
       } catch (error) {
         res.statusCode = statusForReadError(error);
         res.end(

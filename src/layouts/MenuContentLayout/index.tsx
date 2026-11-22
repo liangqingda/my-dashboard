@@ -4,6 +4,7 @@ import { Divider, Title } from '@mantine/core';
 import { IconMaximize, IconMinimize, IconRefresh } from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
+import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
 import { useStoredState } from '@/hooks/useStoredState';
 import { cx } from '@/utils/cx';
 import { FLAG_CODEC } from '@/utils/local-storage';
@@ -27,10 +28,13 @@ import styles from './index.scss';
  * 点了再点、按 `F` 或全屏时按 Esc 退出。刷新按 `R`、全屏按 `F` 有同一套快捷键。
  * 页面自己的按钮（如服务页「重启 agent」）通过 `actions` 传入，排在这两个按钮之前；
  * 有页面按钮时，它们与内置按钮之间用一条竖向分割线隔开。
+ * 标题右侧还可以再带一句 `description`（页面的补充说明，如文件页的剩余可用空间）：
+ * 弱色小字、放不下才省略并弹 tip，这段文本的样式与截断统一由本组件决定，页面只拼文案。
  */
 const MenuContentLayout = ({
   actions,
   children,
+  description,
   fill = false,
   onNavigateParent,
   onToggleFilter,
@@ -87,9 +91,17 @@ const MenuContentLayout = ({
       ref={pageRef}
     >
       <div className={styles.titleBar}>
-        <Title className={styles.title} order={2}>
-          {title}
-        </Title>
+        <div className={styles.heading}>
+          <Title className={styles.title} order={2}>
+            {title}
+          </Title>
+          {description ? (
+            <FreeTruncatedText
+              className={styles.description}
+              text={description}
+            />
+          ) : null}
+        </div>
         <div className={styles.actions}>
           {actions}
           {actions ? (

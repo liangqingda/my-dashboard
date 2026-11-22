@@ -31,6 +31,24 @@ export type FileEntry = {
   category: FileCategory;
 };
 
+/** 一个卷的剩余可用空间 */
+export type VolumeSpace = {
+  /** 卷名：外接卷取挂载点最后一段；启动卷没有名字，为 null */
+  name: string | null;
+  /** 挂载点绝对路径（启动卷是 `/`） */
+  mountPoint: string;
+  /** 剩余可用字节 */
+  freeBytes: number;
+};
+
+/** 目录所在的卷空间：启动卷恒有，目录在外接卷时再带那一卷 */
+export type DirSpace = {
+  /** 本机启动卷的剩余可用空间 */
+  system: VolumeSpace;
+  /** 当前目录所在的外接卷；目录不在外接卷上时为 null */
+  external: VolumeSpace | null;
+};
+
 /** 一次目录扫描的结果 */
 export type DirListing = {
   /** 当前目录绝对路径 */
@@ -43,6 +61,8 @@ export type DirListing = {
   folders: FolderEntry[];
   /** 直属文件（按名称排序） */
   files: FileEntry[];
+  /** 启动卷 / 外接卷的剩余空间；读不到时为 null，页面不显示这段描述 */
+  space: DirSpace | null;
 };
 
 /** 目录取数 hook 的返回 */

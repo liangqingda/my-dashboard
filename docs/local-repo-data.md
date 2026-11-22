@@ -168,6 +168,7 @@
 | --- | --- |
 | `scripts/vite/files.ts` | 路由壳：`GET /api/files`（未带 `dir` 回落主目录）、`GET /api/files?dir=…`、`POST /api/files/pick-dir`（系统目录选择框）、`POST /api/files/new-folder`、`POST /api/files/rename`、`POST /api/files/move`、`POST /api/files/delete`，错误归类成 HTTP 状态码 |
 | `scripts/vite/files-store.ts` | 路径校验、条目归类、文件夹直属条目计数、文件归类（视频 / PDF / Markdown / 其它）标记、选择器脚本拼装，以及新建 / 重命名 / 移动 / 删除的写盘与冲突拒绝、错误文案与错误码收口 |
+| `scripts/vite/files-space.ts` | 卷空间只读侧：解析 `df -kP` 的挂载点与可用块数、按 `/Volumes/` 前缀判定外接卷、拼出 `DirSpace` |
 
 - **不读文件内容**：接口只下发名称 / 路径 / 大小 / 修改时间等摘要；文件预览是单独任务；
 - **仅开发模式**：中间件挂在 `configureServer`，静态构建不带这些接口，页面回落「静态构建不支持读取本地目录」提示态，不产出目录快照；
@@ -180,6 +181,13 @@
 - **计数口径**：文件夹副文案只数直属条目（文件夹 + 文件），不递归子目录；单条条目读不到就跳过，不影响同级其它条目；
 - **筛选**：前端在已取到本页的文件摘要上做两档过滤——文件名关键词（大小写不敏感子串匹配）与分类多选，都只过滤文件、不影响文件夹；已选分类持久化，空分类选择表示不过滤；关键词为会话内状态不持久化；
 - **类型图标**：后端按扩展名归类，前端按分类换图标（视频上蓝色，其余弱色）；视频帧封面抽取是单独任务。
+- **可用空间**：`GET /api/files` 的 `listing.space` 同时下发启动卷 `/` 的剩余空间，以及当前目录
+  所在的那一卷（只在它被判定为外接卷时给，`external` 为 `null` 表示目录就在启动卷上）。
+  判定口径是「挂载点在 `/Volumes/` 下、且不等于启动卷的挂载点」，启动卷的 APFS 数据卷
+  `/System/Volumes/Data` 不会被当成外接盘；后端用 `df -kP` 一次取挂载点与可用块数。
+  读不到（`df` 不可用、路径读不出）`space` 就是 `null`，页面只是不显示那句描述，目录列表照常出；
+  页面只把两个数字拼成文案（`src/pages/Files/utils/files.ts` 的 `describeDirSpace`）传给
+  `MenuContentLayout` 的 `description`，不自己调 `df`，也不做后台定时刷新。
 
 ## 写操作的底线
 

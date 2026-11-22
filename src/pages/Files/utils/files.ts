@@ -3,7 +3,7 @@
  */
 
 import { FILE_CATEGORY_OPTIONS } from '../constants';
-import type { FileCategory, FileEntry } from '../types';
+import type { DirSpace, FileCategory, FileEntry } from '../types';
 
 /** 字节数 → 可读体积（B / KB / MB / GB）；负数与 NaN 按 0 处理 */
 export const formatFileSize = (bytes: number): string => {
@@ -23,6 +23,37 @@ export const formatFileSize = (bytes: number): string => {
   }
 
   return `${value.toFixed(value >= 100 ? 0 : 1)} ${units[unitIndex]}`;
+};
+
+/** 字节数 → 卷的可用空间：两位小数，满 1000 GB 改用 TB（文件体积仍用 `formatFileSize`） */
+export const formatAvailableSpace = (bytes: number): string => {
+  const size = Number.isFinite(bytes) && bytes >= 0 ? bytes : 0;
+  const gb = size / 1024 ** 3;
+
+  if (gb >= 1000) {
+    return `${(gb / 1024).toFixed(2)} TB`;
+  }
+
+  return `${gb.toFixed(2)} GB`;
+};
+
+/**
+ * 标题栏描述：先给本机剩余可用空间（「13.78 GB 可用」）；
+ * 当前目录在外接卷上时再追加那一卷的名字与可用空间，让两个数字分得清是哪块盘。
+ * 读不到空间时返回 undefined，标题行只留标题。
+ */
+export const describeDirSpace = (space: DirSpace | null): string | undefined => {
+  if (space === null) {
+    return undefined;
+  }
+
+  const system = `${formatAvailableSpace(space.system.freeBytes)} 可用`;
+
+  if (space.external === null) {
+    return system;
+  }
+
+  return `${system} · ${space.external.name ?? '外接盘'} ${formatAvailableSpace(space.external.freeBytes)} 可用`;
 };
 
 /** 面包屑的一段：目录名 + 该段对应的绝对路径 */
