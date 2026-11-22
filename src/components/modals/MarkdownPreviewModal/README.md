@@ -351,8 +351,10 @@ header 文档操作组**最后一个**图标（垃圾桶，颜色与同排图标
   不给正文多占一行小字。**整项都是 hover / 可点区域**：浅底（`--app-surface-hover`）+ 圆角 + 小手
   （`cursor: pointer`，连子元素的默认箭头也盖掉），`focus-within` 也给同一层底；
   删除中（input 被禁用）不给底、`cursor: not-allowed`。
-  方框与文字的纵向对齐靠 root 的 `align-items: center` + label 的 `padding-top: 0` 兜住——
-  Mantine 默认顶部对齐，label 比 14px 方框高时会歪一截。`defaultChecked` 决定每次打开确认层时的
+  方框与文字的纵向对齐靠 Mantine 内层 body（排方框与文字的那个 flex 容器）的
+  `align-items: center` + label 行高与 16px 的 xs 方框同高兜住——root 只是外层可点壳，
+  不是对齐容器；Mantine 默认顶部对齐，label 盒比方框高时方框会偏上一截。禁用态 DOM
+  结构不变，同一条规则一并生效。`defaultChecked` 决定每次打开确认层时的
   初始勾选（默认都不勾）。**说明块可以传函数**：`description(checkedKeys)` 按当前勾选现算，所以勾选一变
   「这次删什么、留什么」在按下删除之前就跟着变。**一项都没勾时删除按钮 `disabled`**——没有可删的
   内容。勾选集合由 `useRemoveRequest` 持有，每次打开都回到各项的 `defaultChecked`、不跨次记住，

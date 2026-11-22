@@ -82,6 +82,7 @@ const DeleteConfirm = ({
               >
                 <Checkbox
                   classNames={{
+                    body: styles.choiceBody,
                     label: styles.choiceLabel,
                     root: styles.choiceRoot,
                   }}

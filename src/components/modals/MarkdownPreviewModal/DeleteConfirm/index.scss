@@ -20,16 +20,23 @@
 
 /*
  * 整项（含 label 旁边的空白）都是可点、可 hover 的区域：给一层浅底 + 圆角，
- * 鼠标移上去给小手，才知道这里能点。纵向居中由 `align-items: center` 兜住——
- * Mantine 默认按顶部对齐，label 字号比 14px 的方框高时会歪一截。
+ * 鼠标移上去给小手，才知道这里能点。这里只是外层可点壳，方框与文字的对齐归下面的
+ * `choiceBody`——root 不是 Mantine 排方框与文字的那个 flex 容器。
  */
 .choices .choiceRoot {
-  display: flex;
-  align-items: center;
   padding: 4px 8px;
   border-radius: 6px;
   cursor: pointer;
   transition: background-color 120ms ease;
+}
+
+/*
+ * 方框与文字的对齐容器是 Mantine 的 body（内层 flex）：默认按顶部对齐，label 盒比
+ * 16px 的 xs 方框高时方框会偏上一截。这里纵向居中；删除中禁用态的 DOM 结构不变，
+ * 同一条规则一并兜住。
+ */
+.choices .choiceBody {
+  align-items: center;
 }
 
 /* 子元素（方框、文字、label 里的空白）也一律给小手，不然悬在文字上会变回默认箭头 */
@@ -51,12 +58,11 @@
 }
 
 /*
- * 主提示的字号与行高：Mantine 给 Checkbox 自己的 label 写了字号 / 行高与上边距，
- * 用 `.choices` 前缀把它们压回这一档——行高与 14px 方框接近，配上一行居中才不会错位。
+ * 文字字号与行高：行高压到与 16px 的 xs 方框同高，配合 body 的纵向居中，方框中心
+ * 才落在文字盒中心，不会因行高大于方框而上下错一截。
  */
 .choices .choiceLabel {
-  padding-top: 0;
   color: var(--app-ink-soft);
   font-size: 13px;
-  line-height: 1.5;
+  line-height: 16px;
 }
