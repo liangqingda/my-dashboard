@@ -1,18 +1,128 @@
+/*
+ * 页面侧栏：行级外观与预览弹窗的标题目录共用 `--app-nav-row-*` 这组令牌。
+ * 不用 NavLink 自带的灰底 hover 与无标线的选中态——灰底落在软色侧栏上偏冷，
+ * 也和目录列「hover 浅一档、选中重一档」的递进对不上。
+ */
+
 .list {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 6px;
+  padding: 10px 8px 8px;
 }
 
-/* 导航项自身的内边距也收一档，跟着侧栏紧凑 */
-.group {
-  border-radius: var(--mantine-radius-md);
+/* 与预览弹窗目录列的「目录」同一个位置：一行淡色小标签，不参与跳转 */
+.legend {
+  padding: 0 6px 6px;
+  color: var(--app-ink-faint);
+  font-size: 0.805rem;
+}
+
+/* 行：底色 / 标线 / 文字色统一 120ms 过渡，节奏与目录行一致 */
+.row {
+  border-radius: var(--app-nav-row-radius);
   padding: 6px 8px;
+  text-decoration: none;
+  transition:
+    background-color var(--app-nav-row-transition),
+    box-shadow var(--app-nav-row-transition),
+    color var(--app-nav-row-transition);
 }
 
-/* 分组子项比顶层收一档：挂在父项下面，不宜和顶层争同等的重量 */
+/* 顶层入口：墨色、稍大字号 */
+.parent {
+  color: var(--app-ink);
+  font-size: 0.85rem;
+}
+
+/* 分组行：比顶层再重一点点，作为这一组的标题 */
+.group {
+  color: var(--app-ink);
+  font-size: 0.885rem;
+}
+
+/* 分组子项降一档：挂在父项下面，不跟顶层争同等的重量 */
 .child {
-  border-radius: var(--mantine-radius-md);
   padding: 4px 8px;
+  color: var(--app-ink-soft);
+  font-size: 0.805rem;
+}
+
+/*
+ * 组件库默认 hover 是灰底（gray-0 / dark-6），压掉换成主色最浅一档；
+ * 加 `.list` 多一档特异性，才盖得住 NavLink 自带的那条 :hover 规则。
+ * 聚焦态与 hover 同一层表现：焦点环全站关闭，键盘用户靠这层底色定位。
+ */
+.list .row:hover,
+.list .row:focus-visible {
+  background: var(--app-nav-row-hover);
+  box-shadow: var(--app-nav-row-marker);
+  color: var(--app-ink);
+}
+
+/* 当前路由：重一档底色 + 同一条标线，文字与图标一起提到主色 */
+.list .row.active {
+  background: var(--app-nav-row-active);
+  box-shadow: var(--app-nav-row-marker);
+  color: var(--app-accent);
+}
+
+/* 选中的行被 hover 时保持选中底色，不退回 hover 那一档 */
+.list .row.active:hover {
+  background: var(--app-nav-row-active);
+}
+
+/* 图标与文字的距离收一档（组件库默认 12px，在紧凑侧栏里太松） */
+.row .iconSlot {
+  color: inherit;
+}
+
+.row .iconSlot[data-position='left'] {
+  margin-inline-end: 8px;
+}
+
+/* 右侧折叠图标保持淡色：它只提示可开合，不与入口本身争注意力 */
+.row .iconSlot[data-position='right'] {
+  margin-inline-end: 0;
+  margin-inline-start: 6px;
+  color: var(--app-ink-faint);
+  transition: transform var(--app-nav-row-transition);
+}
+
+/* 字号挂在 label 上：NavLink 自己给 label 定了 14px，得从这一层改 */
+.row .labelText {
+  font-size: inherit;
+  font-weight: 500;
+}
+
+/*
+ * 分组子项内缩一段 + 左侧引导线：与目录列的嵌套层同一套语言，
+ * 线只作「这几条属于上一项」的位置提示，用最浅的 --app-line。
+ * 子项是分组按钮之后的兄弟节点（不是它的子元素），所以不能用 `.group .children`。
+ */
+.list .children {
+  margin-left: 10px;
+  padding-left: 8px;
+  border-left: 1px solid var(--app-line);
+}
+
+/* 滚动条做细、贴边，与目录列同一份口径 */
+.scroll .scrollbar {
+  width: 6px;
+}
+
+.scroll .thumb {
+  border-radius: 3px;
+  background: var(--app-line-strong);
+}
+
+/* 系统开启「减少动态效果」时不做过渡：折叠图标直接换方向，行状态直接切换 */
+@media (prefers-reduced-motion: reduce) {
+  .row {
+    transition: none;
+  }
+
+  .row .iconSlot[data-position='right'] {
+    transition: none;
+  }
 }

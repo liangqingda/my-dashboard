@@ -62,7 +62,7 @@
 .item {
   padding: 3px 5px;
   border: 0;
-  border-radius: 2px;
+  border-radius: var(--app-nav-row-radius);
   background: none;
   color: inherit;
   font-family: inherit;
@@ -70,20 +70,24 @@
   line-height: inherit;
   text-align: left;
   cursor: pointer;
+  transition:
+    background-color var(--app-nav-row-transition),
+    box-shadow var(--app-nav-row-transition),
+    color var(--app-nav-row-transition);
 }
 
 /*
  * hover / 聚焦只给底色 + 一条主色标线，不再原地摊开长标题：
  * 摊开会挤动下方标题、也让目录高度跳动，完整标题统一交给 tip。
- * 底色取主色最浅一档（accent-soft），不用纯白：目录列已经和正文同纸，
- * 白底滑块比纸面亮出一大截，看着像贴了张卡片；主色浅底和纸面同色系，只略染一层。
- * 与「当前小节」的 accent-soft-strong 一起构成纸面 → hover → 选中的递进。
+ * 底色与标线取 `--app-nav-row-*` 令牌（页面侧栏菜单共用同一套，见 `src/styles/global.scss`），
+ * 不用纯白：目录列已经和正文同纸，白底滑块比纸面亮出一大截，看着像贴了张卡片；
+ * 主色浅底和纸面同色系，只略染一层。与「当前小节」一起构成纸面 → hover → 选中的递进。
  */
 .item:hover,
 .item:focus-visible {
-  background: var(--app-accent-soft);
+  background: var(--app-nav-row-hover);
   color: var(--app-ink);
-  box-shadow: inset 2px 0 0 var(--app-accent);
+  box-shadow: var(--app-nav-row-marker);
 }
 
 /* disabled 的按钮不响应 hover，指针不要留在 pointer 上 */
@@ -119,13 +123,13 @@
 /*
  * 当前所在小节：底色 + 左侧主色标线，颜色统一提到主色，
  * 和 hover 那种「临时掠过」的浅底区分开。放在层级类之后，靠出现顺序压过 .level1–4 的颜色。
- * 底色用重一档的 accent-soft：目录列已经与正文同纸，再叠最浅的那档几乎看不出选中。
+ * 底色用 `--app-nav-row-active`（比 hover 重一档）：目录列已经与正文同纸，再叠最浅的那档几乎看不出选中。
  */
 .active {
   color: var(--app-accent);
 }
 
 .active .item {
-  background: var(--app-accent-soft-strong);
-  box-shadow: inset 2px 0 0 var(--app-accent);
+  background: var(--app-nav-row-active);
+  box-shadow: var(--app-nav-row-marker);
 }

@@ -34,6 +34,17 @@
   --app-accent-soft: #e4f2ec;
   --app-accent-soft-strong: #d6ece3;
 
+  /*
+   * 导航行（页面侧栏菜单与预览弹窗的标题目录共用一套行级状态）：
+   * 纸面 → hover（最浅主色）→ 选中（重一档主色）的递进，左侧同一条 2px 主色标线。
+   * 两处只消费这组令牌，不再各自写一份底色、圆角与阴影。
+   */
+  --app-nav-row-radius: 2px;
+  --app-nav-row-hover: var(--app-accent-soft);
+  --app-nav-row-active: var(--app-accent-soft-strong);
+  --app-nav-row-marker: inset 2px 0 0 var(--app-accent);
+  --app-nav-row-transition: 120ms ease;
+
   /* status */
   --app-status-ok: #0e7a3d;
   --app-status-ok-soft: #e2f2e7;
