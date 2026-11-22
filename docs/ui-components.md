@@ -18,10 +18,6 @@
 | 普通弹窗（说明 / 短表单 / 列表） | `FreeModal` 传 `height="auto"`（高度随内容、正文自己滚） |
 | 二次确认（删除 / 覆盖等不可逆操作） | `ConfirmModal`（基于 `FreeModal` 的通用业务组件：说明块 + 可选额外内容 + 取消 / 确认） |
 | 任何 Markdown / 文档预览 | `MarkdownPreviewModal`，不自己接渲染器（行为见 `src/components/modals/MarkdownPreviewModal/README.md`） |
-
-**弹窗只有一扇壳**：`Modal` **只允许**出现在 `src/components/modals/FreeModal` 内部，页面 / 业务组件
-一律 `@/components/modals/FreeModal`（二次确认再基于它封 `ConfirmModal`），不 import Mantine `Modal`、
-也不 import `Modal.Root` 自己拼 header。`scripts/check-structure.mjs` 会扫这一条，命中即 lint 失败。
 | 单行输入 | `TextInput` |
 | 搜索框（左搜索图标 + 一键清空） | `FreeSearchInput` |
 | 多行输入（普通表单） | `Textarea` |
@@ -37,6 +33,10 @@
 | 布局排布 | `Stack`、`Group`、`Box`、`AppShell` 等布局组件，不堆自定义 flex 容器 |
 | 徽标 / 状态标记 | `Badge` |
 | 进度 | `Progress`、`RingProgress` |
+
+**弹窗只有一扇壳**：`Modal` **只允许**出现在 `src/components/modals/FreeModal` 内部，页面 / 业务组件
+一律 `@/components/modals/FreeModal`（二次确认再基于它封 `ConfirmModal`），不 import Mantine `Modal`、
+也不 import `Modal.Root` 自己拼 header。`scripts/check-structure.mjs` 会扫这一条，命中即 lint 失败。
 
 ## 三层：组件库 → Free 层 → 业务组件
 
@@ -115,44 +115,35 @@
 3. props 里出现只有某一页才成立的语义（某页的筛选项、某页的文档结构）？→ 它不该在
    `src/components`，回 `src/pages/<Page>/`（判据见 `docs/reuse-boundaries.md` 的形态 ④）。
 
-`FreeModal` 是 1 的典型例子：底下是 Mantine `Modal`，锁的是框体 / header / 正文区这套外观与键位；
-阅读弹窗（`MarkdownPreviewModal`、`Review/RecordDetailModal`）用它默认的 `height="reading"`，
-普通弹窗（快捷命令、最近操作）用它 `height="auto"`，二次确认则是**基于它的通用业务组件** `ConfirmModal`
-（形态 2：单一能力、名字回答「干什么」），**谁都不再各自拼 `Modal`**。
-`FreePanelFooter` 是 1 的边缘案例：它底下没有现成的 Mantine 组件，锁的是「面板底部布局 +
-`Button` subtle 小号」这套外观，但**在该场景内它仍是唯一入口**，所以留 `Free`；同理，新写的
-面板级排布件只要在该场景内不许另起一套长相，就按这一类走，否则当能力件或留页面。
-把「全站只允许一种形态」推到品类级别看：`FreeInput` / `FreeVideo` / `FreePdf` 都属于这一列
-（现有清单还没落地，见下节）。`PageLoading` 不在此列：它是页面 chunk 的**占位实现**（全屏铺满 +
-居中 `Loader`），不构成「全站加载态的唯一入口」——普通加载仍直接 `Loader` / `Skeleton`。
+边缘情形回同一条判据问：**这个场景内，这类对象是否只允许一种形态 / 一套交互。**
+
+- 是，哪怕它底下没有现成的组件库组件，也留 `Free`（锁住的可以是布局 + 组件库小件组合）；
+- 不是，只是某个动作的现成实现 → 能力件；只是某一页的语义 → 回 `src/pages/<Page>/`。
+
+判据不看「底下包的是谁」，也不看现有清单里有没有同类组件。
+
+示例：`FreeModal` 锁框体 / header / 正文区外观与键位（底下是 Mantine `Modal`）；`FreePanelFooter`
+锁面板底部布局 + `Button` subtle 小号（底下没有现成组件）；`PageLoading` 是页面 chunk 的占位实现，
+不构成「全站加载态唯一入口」，所以不挂 `Free`。品类级但尚未落地的 `FreeInput` / `FreeVideo` /
+`FreePdf` 同理：判据成立，等真需要统一时再建，**建之前不许在业务里各自起一套口径**。
 
 目录结构与其它组件一致（见 `docs/code-splitting.md`）：`index.tsx` + `types.ts`（需要跨文件共享时），
 要写自己的样式才加 `index.scss`，一个 `index.tsx` 只放一个组件。
 
-## 现有 Free 层组件
+## 现有 Free 层组件：契约在哪
 
-| 组件 | 统一了什么 | 不管什么 |
-| --- | --- | --- |
-| `FreeTable` | Mantine `Table` + 项目外观：边框、表头、吸顶、行 hover；取分段统一走 `Thead` / `Tbody` / `Tr` / `Th` / `Td` | 不接分页、排序、虚拟滚动（那是业务组件的事） |
-| `FreeSelectField` | 弹层面板里的字段组：标题 + 一档下拉 + 一行口径说明；尺寸档、字段间距、下拉不进门户 | 选项、当前值、说明文案、编解码、选中后的状态 |
-| `FreePanelFooter` | 弹层面板底部一行：左侧边界说明 + 右侧「重置」（组件库 `Button` subtle 小号） | 说明文案、置灰口径、重置动作 |
-| `FreeModal` | 弹窗外壳（唯一一扇）：框体与遮罩、紧凑 header（顺序为翻页 → 标题 → 第一组操作 → 全屏 → 末尾位 → 第二组操作）、全屏开关按钮与整套键位（空格 / 翻篇 / `F` / `C` 复制 / `Delete` 删除）；两种高度模式：`reading`（固定 `82dvh`）/ `auto`（随内容、上限 `88dvh`、正文自己滚）；全屏偏好走它的 `useModalFullscreen(storageKey)` | 标题文案（单行省略与 tip 走 `FreeTruncatedText`）、翻页数据、各组按钮的组件与能力（复制什么、删除怎么确认）、正文内容与滚动方式 |
-| `FreeTruncatedText` | 单行文本的截断口径：放不下才省略、**只有被截断且被指到时**才弹 tip；量宽与 tip 创建都推迟到被指到那一刻 | 多行省略、tip 内容定制（tip 恒为原文）、业务字号与颜色 |
-| `FreeIconAction` | 图标按钮的形状与档位：`subtle` 变体、`xs` / `sm` / `lg` 三档尺寸、`normal` / `accent` / `danger` 三档语气（只改颜色）、tooltip 与 aria-label 同句且**被指到时才挂**、`tooltipLabel` 承载变化中的文案（如「已复制」）；`tooltip` 两档：`hover` 自己挂 / `none` 只出按钮本体（给 `Popover.Target` 这类锚点位）；禁用态统一为「透明底 + 变淡」，加载中不套这套 | 图标本身与像素尺寸、点击后做什么、是否 `stopPropagation`；`layouts/Header` 品牌区那颗切换按钮不在此列（26px 与 `--app-ink-soft` 色调，属全局品牌视觉） |
-| `FreeSearchInput` | 搜索框口径：`size="xs"` + 左侧搜索图标 + 值非空才出现的清空按钮（点完清空并**把焦点留在输入框**）；`autoFocus` / 标题 / 说明 / 面板字段间距按需传入 | 值、占位文案、回车与快捷键行为（`onKeyDown` 由调用方给） |
+组件的「锁了什么 / 不管什么 / props」写在各自目录的 `README.md`——判据：只有改它的人才需要读
+→ 跟代码走。本文件只维护选型表与分层判据，不复制组件规格。
 
-**规划中、尚未落地**：`FreeInput`（普通表单输入框的尺寸档与标签 / 错误提示位；搜索框已由
-`FreeSearchInput` 收口）、`FreeVideo`（全站唯一播放器）、`FreePdf`（全站唯一 PDF 预览）。
-判据成立但组件还没建：等真需要统一时再建，**建之前不许在业务里各自起一套口径**（那正是要上提的信号）。
-
-`FreeSelectField` / `FreePanelFooter` / `FreeModal` / `FreeTruncatedText` / `FreeIconAction` /
-`FreeSearchInput` 的契约（props、锁定项的取值理由、坑）写在各自目录的 `README.md`——判据：只有改它的人
-才需要读 → 跟代码走。`FreeTable` 的约定就在本文件（它是样式基线的示例）：props 透传 Mantine `TableProps`，
-`compact` 只收紧内边距。
-单元格默认 `vertical-align: top`（编辑器那类多行内容要贴顶）；**单行内容 + 徽标 / 图标按钮的
-列表表格**在自己页面样式里加 `.row td { vertical-align: middle }`——行高被最高的图标按钮撑起来，
-贴顶会让文字明显偏上、行底留一截空白；操作列的图标按钮用 `th/td` 的 `text-align` 居中
-（`margin: auto` 在表格单元格里对 `inline-flex` 的 `ActionIcon` 不生效）。
+| 组件 | 契约 |
+| --- | --- |
+| `FreeTable` | `src/components/tables/FreeTable/README.md` |
+| `FreeSelectField` | `src/components/fields/FreeSelectField/README.md` |
+| `FreePanelFooter` | `src/components/panels/FreePanelFooter/README.md` |
+| `FreeModal` | `src/components/modals/FreeModal/README.md` |
+| `FreeTruncatedText` | `src/components/texts/FreeTruncatedText/README.md` |
+| `FreeIconAction` | `src/components/buttons/FreeIconAction/README.md` |
+| `FreeSearchInput` | `src/components/fields/FreeSearchInput/README.md` |
 
 ## 基础组件锁的是「外观 + 行为」
 
@@ -168,10 +159,10 @@
 - 键位与放行口径（⌘ / Ctrl / Alt 放行、输入中不抢字符、按住连发不算）只写一份，示例见
   `FreeModal/hooks/useModalShortcuts`，业务侧的整组开关走 `shortcutsEnabled` 这类中性 prop。
 
-反面教材（真实发生过，已改正）：md 预览曾把 `[` `]`、`←` `→`、`F` 全屏、`C` 复制与 `Delete` 删除
-写在自己的业务 `hooks/` 里，记录详情弹窗复用同一个外壳时这些键位全都不在——用户感知就是
-「笔记页能用、这边不能用」。结论：读 / 写类能力（复制、删除）如果两扇阅读弹窗都要，键位与通知
-一并收进 `FreeModal`，业务侧只传「复制哪段文本、删除时打开哪个确认」这两个中性参数。
+**需要一次上提的信号**：同一操作在两处都要用，而键位只挂了一处——用户感知会是「这边能用、
+那边不能用」。此时键位、通知与 tooltip 标注一起收进外壳，业务侧只传中性参数。
+（示例：复制 / 删除两扇阅读弹窗都要，所以 `copy` 与 `onRequestDelete` 在 `FreeModal`，业务只传
+「复制哪段、删除怎么确认」。）
 
 **这套「哪些提公共、提到哪一层」的判据不在本文件**，见 `docs/reuse-boundaries.md`：
 本文件管「UI 形态怎么选」，那份管「UI 与逻辑各自该不该提公共」。

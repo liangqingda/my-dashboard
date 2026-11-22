@@ -13,21 +13,24 @@
 
 ## 已抽好的能力
 
+只登记**入口**；默认值、坑与行为细节写在该文件的 JSDoc 或组件自己的 `README.md`，这里不复述
+（清单是事实，不是规则，判据见 `docs/doc-writing.md`）。
+
 | 场景 | 用哪个 |
 | --- | --- |
 | 错误对象转提示文案 | `@/utils/error` 的 `getErrorMessage(error, fallback)` |
-| 时间格式化 | `@/utils/format` 的 `formatClock` / `formatTime` / `formatDateTime`（内部缓存 `Intl` 实例，不要就地 `new Intl.DateTimeFormat`） |
-| 多 class 拼接 | `@/utils/cx` 的 `cx(...)`，不要手写模板串或 `?? ''` 拼空格 |
-| 键盘事件落点是不是输入框 / 可编辑区 | `@/utils/typing-target` 的 `isTypingTarget(target)`：全局快捷键（翻篇、撤销）先问它，正在打字就放行，别抢字符 |
-| 剪贴板复制 | `@/utils/clipboard` 的 `copyText(text)`（含 `execCommand` 兜底）与 `COPY_FEEDBACK_DURATION`（复制成功后对勾的停留时长） |
-| 复制图标按钮 | `@/components/buttons/CopyIconButton`：点击复制 `text`，成功后图标 1.5 秒内变对勾；点击不冒泡（嵌在整行可点击的表格里不会顺带打开那一行），失败弹一条提示 |
-| 页面级刷新 | `@/utils/page-refresh` 的 `requestPageRefresh()`（等页面取完数才 resolve，返回 `empty` 表示无订阅者）/ `onPageRefresh(handler)` |
+| 时间格式化 | `@/utils/format` 的 `formatClock` / `formatTime` / `formatDateTime`（不要在调用方就地 `new Intl.DateTimeFormat`） |
+| 多 class 拼接 | `@/utils/cx` 的 `cx(...)`（不要手写模板串拼 class） |
+| 键盘事件落点是不是输入框 / 可编辑区 | `@/utils/typing-target` 的 `isTypingTarget(target)`（全局快捷键先问它） |
+| 剪贴板复制 | `@/utils/clipboard` 的 `copyText(text)` 与 `COPY_FEEDBACK_DURATION` |
+| 复制图标按钮 | `@/components/buttons/CopyIconButton` |
+| 页面级刷新 | `@/utils/page-refresh` 的 `requestPageRefresh()` / `onPageRefresh(handler)` |
 | Markdown 标题目录 | `@/utils/markdown-outline` 的 `extractMarkdownOutline` |
-| 单行省略文本 / 截断才提示 | `@/components/texts/FreeTruncatedText`：放得下就正常显示，只有被省略号截断时才在 hover / 聚焦弹 tip；传 `onClick` 渲染成 button，`inline` 用于夹在一行文字里（量宽与 tip 都在被指到时才做，见下一行） |
-| 悬停 / 聚焦意图（把重组件推迟到真被指到） | `@/hooks/useHoverIntent`：返回 `[是否被指到, 四个事件处理器]`，handlers 铺在被指的元素上；可选 `onEnter` 在进入的同一事件里跑一次（现场量宽这类）。列表里成百上千个条目**不要**各自常驻 `Tooltip` / `ResizeObserver`，按这个模式改成按需创建 |
-| 界面状态的本地持久化（展开 / 收起、全屏、视图形态） | `@/hooks/useStoredState` 配 `@/utils/local-storage` 的 `FLAG_CODEC`（开关）或 `createChoiceCodec(choices, fallback)`（枚举形态）；存储键常量放各自模块的 `constants.ts`。不在组件里直接读写 `localStorage`，也不自己 try/catch |
-| 一个弹窗的整组偏好（同一次阅读的全屏 / 字号 / 目录宽度…） | 存成一个命名空间对象：`@/hooks/useStoredField(key, field, codec)` 配 `FLAG_FIELD_CODEC` 或 `createChoiceFieldCodec(choices, fallback)`；字段名与命名空间都放该模块 `constants.ts`。写回是读-改-写，同一对象的邻居字段不会被冲掉 |
-| 存储键的拼法（不知道键该怎么起名） | `@/utils/page-storage`：`pageStorageScope(pathname)`（`/english/notes` → `english-notes`）、`pageStorageKey(pathname, capability)`（→ `english-notes:fullscreen`），页面自己知道标识时用 `scopedStorageKey(scope, capability)`（→ `english-notes:view-mode`）；细则见下面「存储键的命名」，不要手拼字符串 |
+| 单行省略文本 / 截断才提示 | `@/components/texts/FreeTruncatedText` |
+| 悬停 / 聚焦意图 | `@/hooks/useHoverIntent` |
+| 界面状态的本地持久化（展开 / 收起、全屏、视图形态） | `@/hooks/useStoredState` + `@/utils/local-storage` 的 `FLAG_CODEC` / `createChoiceCodec(choices, fallback)`；不在组件里直接读写 `localStorage`，也不自己 try/catch |
+| 一个弹窗的整组偏好（同一次阅读的全屏 / 字号 / 目录宽度…） | `@/hooks/useStoredField(key, field, codec)` + `FLAG_FIELD_CODEC` / `createChoiceFieldCodec(choices, fallback)` |
+| 存储键的拼法（不知道键该怎么起名） | `@/utils/page-storage` 的 `pageStorageScope` / `pageStorageKey` / `scopedStorageKey`；细则见下面「存储键的命名」，不要手拼字符串 |
 
 界面状态持久化的判据：**用户手动切换的展示偏好**才记（展开的日志面板、页面全屏、英语页看板 /
 表格形态），刷新后应当还在；**由数据或操作结果推导出来的状态**（正在加载、当前选中的笔记、

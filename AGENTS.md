@@ -16,6 +16,7 @@
 | 想抽公共 / 判一段 UI 与逻辑各自该不该提、提到哪一层（整块、只提 UI 壳、只提逻辑） | `docs/reuse-boundaries.md` |
 | 新建或改造任何 Markdown / 文档预览，动弹窗排版 / 标题导航 / 全屏 / header 操作 | `src/components/modals/MarkdownPreviewModal/README.md` |
 | 新建或改造某类文档的编辑器、改块解析与回写、跑 `pnpm check:md` | `docs/markdown-editing.md` |
+| 新建 / 修改任何规范文档：`docs/`、入口 `AGENTS.md`、组件或 hook 的 `README.md` | `docs/doc-writing.md` |
 | 要在 `../learn-english` 这类目标仓库里加能力 / 改它的代码或数据、新增或修改本机仓库读写、动 `scripts/vite/*` 与自动提交、笔记数据修源头 | `docs/local-repo-data.md` |
 | 收尾 / 提交 / 交付前 | `docs/self-check.md` |
 
@@ -28,8 +29,8 @@
    或 `src/utils`；页面只做数据拼装与状态编排。
 2. **按五维拆分**：类型 `types.ts` / 纯函数 `utils.ts`（多了建 `utils/`）/ 副作用 `hooks/` /
    展示单元 一组件一目录 / 常量 `constants.ts`。一个 `index.tsx` 只放一个组件，不嵌套 `components/`。
-3. **公共能力不许重复实现**：错误文案 `getErrorMessage`、时间 `format*`、class `cx`、
-   复制 `copyText`。同一逻辑出现第二处就上提（清单见 `docs/shared-utils.md`）。
+3. **公共能力不许重复实现**：同一类能力出现第二处就上提；现有入口清单见 `docs/shared-utils.md`，
+   新增同类能力先查清单再动手，不在页面里另写一份。
 4. **服务状态不做后台定时轮询**：只在进页面、页面重新可见 / 窗口聚焦、手动刷新时取数；
    仅「有服务在启动 / 部署 / 操作中」时短暂按 1 秒刷新。新页面不要自己加 `setInterval`。
 5. **每次改完代码自检自改两轮**（`docs/self-check.md`，发现问题直接改，不只在回复里列）：
@@ -77,7 +78,9 @@
    命中那一行，否则规则藏在 `docs/` 里等于没人读。
 5. **顺手清重复**：通读相邻条目，同一件事写两遍的合一，详情已搬走的删掉，不留「对照版」。
    本节增删条目后会重新编号，所以**别处引用一律用条目标题或 `docs/` 文件名，不要用「硬约束 N」**。
-6. **收尾必跑 `pnpm lint`**：行数上限与索引双向校验都在里面，绿了再提交。
+6. **规则句要能删掉例子独立成立**：例子只作注脚，不许用组件清单 / 目录快照 / 事故复盘来定义
+   边界（判据见 `docs/doc-writing.md`）。
+7. **收尾必跑 `pnpm lint`**：行数上限与索引双向校验都在里面，绿了再提交。
 
 - **硬阈值**：本文件不超过 100 行，`scripts/check-structure.mjs` 在 `pnpm lint` 里校验，超了即失败——
   不是让你放宽阈值，是让你把内容拆到 `docs/`。

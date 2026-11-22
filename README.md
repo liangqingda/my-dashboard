@@ -227,12 +227,12 @@ scripts/              # 工程脚本（结构检查、组件脚手架）
 src/
   layouts/            # 布局（BasicLayout / Header / Sidebar / MenuContentLayout）
   pages/              # 页面，页面代码与它的 components / hooks / utils 就近放在同一目录
-    Services/         # 服务页（服务列表、日志、快捷命令）
-    English/          # 英语笔记页（看板、预览、块级编辑器）
-    Errors/           # 404
+    <Page>/           # 一个菜单页一个目录；清单以 src/pages 目录与 Sidebar 的 navItems 为准
+    <Page>/<Name>/    # 页面自己的子组件 / hooks / utils 就近放页面目录，不跨页上提
+    Errors/           # 404（非菜单页）
   services/           # 服务数据层（api / provider / types / hooks），跨页面共用
   components/         # 公共组件，按类型分目录：modals / buttons / tables / fields / panels / texts / feedback
-  utils/              # 公共纯函数（markdown-outline / error / format / cx / clipboard）
+  utils/              # 公共纯函数（清单以 src/utils 目录为准）
   styles/             # 全局样式与 design tokens
 ```
 
@@ -244,7 +244,9 @@ src/
 根目录的 `CLAUDE.md` 是指向它的软链，供只认这个文件名的 Claude Code 读取。下面是其中被工具强制的最短版本：
 
 - 路径别名：`@/*` → `src/*`
-- 新增组件时，同级放置 `index.tsx` + `index.scss`（CSS Module 类名自动 camelCase）；写规格时同目录加 `README.md`
+- 新增组件时，同级放置 `index.tsx`；**只在组件要写自己的样式时才加 `index.scss`**（页面目录例外：
+  含 `index.tsx` 必须有 `index.scss`，没有样式就写注释占位）；要写规格时同目录加 `README.md`，
+  写法见 `docs/doc-writing.md`
 - `src/components/<分类>/<组件>/` 的组件目录与文件名必须是 PascalCase（如 `modals/MarkdownPreviewModal/index.tsx`）；
   分类目录（`modals`、`buttons`、`tables`、`fields`、`panels`、`texts`、`feedback`）用小写，新增分类见 `docs/ui-components.md`
 - 页面代码就近放 `src/pages/<Page>/`，按 `components` / `hooks` / `utils` / `types` /

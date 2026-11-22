@@ -16,7 +16,7 @@
 ## 什么时候用它
 
 - 列表 / 看板的筛选工具栏、弹层面板里的关键词输入；
-- 业务侧不要再拼 `TextInput` + `CloseButton` / `ActionIcon` 的清空按钮：两处曾经一个用 `CloseButton`、
-  一个手写 `ActionIcon`，尺寸都不一样。
+- 业务侧不要再拼 `TextInput` + `CloseButton` / `ActionIcon` 的清空按钮：清空按钮的形态、尺寸与
+  「清空后把焦点留在输入框」的行为统一在这里，别在业务里另拼一份。
 
 普通表单的单行输入（没有搜索语义）仍直接用 Mantine `TextInput`；通用输入框口径（`FreeInput`）尚未落地。
