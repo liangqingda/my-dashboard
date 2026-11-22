@@ -36,7 +36,8 @@ import styles from './index.scss';
 /**
  * 文件浏览页：按 macOS 目录网格展示本机指定目录下的子文件夹与文件，不限文件类型。
  * 点文件夹进入下一层，面包屑回退，`⌘↑` 回上一级；可收藏常用目录，在收藏面板里点选直达；
- * 标题栏筛选面板支持按文件名关键词与类型多选过滤；选了类型后不含该类型文件的文件夹也一起隐藏。文件内容与预览播放是单独任务，
+ * 标题栏筛选面板支持按文件名关键词过滤与按类型勾选：四类默认全选，取消勾选的类型
+ * 连同对应文件夹一起隐藏。文件内容与预览播放是单独任务，
  * 本页只列摘要。目录读取走 Vite 中间件，仅开发模式可用。
  * 标题行右侧再显示本机剩余可用空间；当前目录在外接盘（移动硬盘）上时，连同那块盘的可用空间一起显示。
  */
@@ -44,8 +45,7 @@ const Files = () => {
   const { currentDir, listing, loading, error, openDir, pickDir, refresh, reload } =
     useFilesDir();
   const { favorites, isFavorite, toggleFavorite, removeFavorite } = useFavorites();
-  const { selected: selectedCategories, onChange: onCategoriesChange } =
-    useTypeFilter();
+  const { excluded, onChange: onExcludedChange } = useTypeFilter();
 
   const folders = listing?.folders ?? [];
   const allFiles = listing?.files ?? [];
@@ -73,13 +73,13 @@ const Files = () => {
   /** 类型 + 关键词筛选后的文件；文件夹不受关键词影响，按内含类型过滤 */
   const visibleFiles = listing
     ? filterFilesByKeyword(
-        filterFilesByCategory(listing.files, selectedCategories),
+        filterFilesByCategory(listing.files, excluded),
         keyword,
       )
     : [];
-  /** 类型筛选后的文件夹：不含所选类型的文件夹一并隐藏 */
+  /** 类型筛选后的文件夹：只剩仍有未排除类型的文件夹 */
   const visibleFolders = listing
-    ? filterFoldersByCategory(listing.folders, selectedCategories)
+    ? filterFoldersByCategory(listing.folders, excluded)
     : [];
 
   /** 切换某块弹层：再点一次同一块则收起 */
@@ -124,13 +124,14 @@ const Files = () => {
       actions={
         <FilesActions
           createDisabled={currentEntry === null}
+          excludedCategories={excluded}
           favoriteDisabled={currentEntry === null}
           favorites={favorites}
           isFavorite={currentEntry !== null && isFavorite(currentEntry.path)}
           keyword={keyword}
           loading={loading}
-          onCategoriesChange={onCategoriesChange}
           onCreateFolder={entryActions.createEntry}
+          onExcludedChange={onExcludedChange}
           onKeywordChange={setKeyword}
           onOpenFavorite={goToDir}
           onPanelChange={setOpenPanel}
@@ -142,7 +143,6 @@ const Files = () => {
             }
           }}
           openPanel={openPanel}
-          selectedCategories={selectedCategories}
         />
       }
       description={describeDirSpace(listing?.space ?? null)}
@@ -182,7 +182,7 @@ const Files = () => {
 
         {showEmpty ? (
           <Text className={styles.empty} size="sm">
-            {selectedCategories.length > 0 || keyword.trim() !== ''
+            {excluded.length > 0 || keyword.trim() !== ''
               ? '没有符合筛选条件的文件或文件夹'
               : '这个目录里没有文件或子文件夹'}
           </Text>

@@ -71,36 +71,36 @@ export const splitPathSegments = (dir: string): PathSegment[] => {
   }));
 };
 
-/** 按已选分类过滤文件；空选择表示不过滤，整份保留 */
+/** 按排除项过滤文件：去掉被排除的分类；空排除项表示全部显示，整份保留 */
 export const filterFilesByCategory = (
   files: FileEntry[],
-  selected: FileCategory[],
+  excluded: FileCategory[],
 ): FileEntry[] => {
-  if (selected.length === 0) {
+  if (excluded.length === 0) {
     return files;
   }
 
-  const picked = new Set(selected);
+  const hidden = new Set(excluded);
 
-  return files.filter((file) => picked.has(file.category));
+  return files.filter((file) => !hidden.has(file.category));
 };
 
 /**
- * 按已选分类过滤文件夹：只留下内含所选类型文件的文件夹（含深层，靠中间件给的分类摘要）；
- * 空选择表示不过滤，整份保留。
+ * 按排除项过滤文件夹：只要文件夹里还有没被排除的类型就留下（含深层，靠中间件给的分类摘要）；
+ * 空排除项表示全部显示，整份保留，空文件夹也不例外。
  */
 export const filterFoldersByCategory = (
   folders: FolderEntry[],
-  selected: FileCategory[],
+  excluded: FileCategory[],
 ): FolderEntry[] => {
-  if (selected.length === 0) {
+  if (excluded.length === 0) {
     return folders;
   }
 
-  const picked = new Set(selected);
+  const hidden = new Set(excluded);
 
   return folders.filter((folder) =>
-    folder.categories.some((category) => picked.has(category)),
+    folder.categories.some((category) => !hidden.has(category)),
   );
 };
 

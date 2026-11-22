@@ -19,8 +19,8 @@ export type FilesActionsProps = {
   favoriteDisabled: boolean;
   /** 收藏的目录列表，排成收藏面板的条目 */
   favorites: FavoriteEntry[];
-  /** 类型筛选已选分类；空数组表示不过滤 */
-  selectedCategories: FileCategory[];
+  /** 类型筛选的排除项（取消勾选的分类）；空数组表示四类全显示 */
+  excludedCategories: FileCategory[];
   /** 文件名关键词；空串表示不按关键词过滤 */
   keyword: string;
   /** 当前打开的弹层；null 表示都关着 */
@@ -35,8 +35,8 @@ export type FilesActionsProps = {
   onOpenFavorite: (dir: string) => void;
   /** 移除一条收藏 */
   onRemoveFavorite: (path: string) => void;
-  /** 切换已选分类 */
-  onCategoriesChange: (next: FileCategory[]) => void;
+  /** 切换排除项（取消 / 恢复勾选某一类） */
+  onExcludedChange: (next: FileCategory[]) => void;
   /** 改动文件名关键词 */
   onKeywordChange: (value: string) => void;
   /** 弹层开合：打开某一块，或传 null 全部收起 */

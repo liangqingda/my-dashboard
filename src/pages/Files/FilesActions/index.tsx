@@ -24,12 +24,13 @@ const ICON_STROKE = 1.9;
 
 const FilesActions = ({
   createDisabled,
+  excludedCategories,
   favoriteDisabled,
   favorites,
   isFavorite,
   keyword,
   loading,
-  onCategoriesChange,
+  onExcludedChange,
   onCreateFolder,
   onKeywordChange,
   onOpenFavorite,
@@ -38,10 +39,9 @@ const FilesActions = ({
   onRemoveFavorite,
   onToggleFavorite,
   openPanel,
-  selectedCategories,
 }: FilesActionsProps) => {
-  /** 筛选有没有条件生效：分类或关键词任一非空，图标用强调色 */
-  const filterActive = selectedCategories.length > 0 || keyword.trim() !== '';
+  /** 筛选有没有条件生效：排除项或关键词任一非空，图标用强调色 */
+  const filterActive = excludedCategories.length > 0 || keyword.trim() !== '';
 
   return (
     <>
@@ -97,14 +97,14 @@ const FilesActions = ({
         shortcut="S"
       >
         <TypeFilterPanel
+          excluded={excludedCategories}
           keyword={keyword}
-          onChange={onCategoriesChange}
+          onChange={onExcludedChange}
           onKeywordChange={onKeywordChange}
           onReset={() => {
-            onCategoriesChange([]);
+            onExcludedChange([]);
             onKeywordChange('');
           }}
-          selected={selectedCategories}
         />
       </IconPopoverButton>
     </>

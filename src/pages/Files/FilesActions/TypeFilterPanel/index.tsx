@@ -1,7 +1,7 @@
 /**
  * 筛选弹层面板：顶部关键词按文件名模糊搜索，下方 checkbox 多选分类，改动即时写回；
- * 底部重置清掉全部条件。分类选项是页面固定的档位，不随当前目录里有没有该类型而增减；
- * 选了类型后，不含该类型文件的文件夹也会一起隐藏（分类摘要由中间件随列表下发）。
+ * 底部重置清掉全部条件。分类选项是页面固定的档位、默认全选，取消勾选的类型不显示
+ * （对应的文件与文件夹一并隐藏，分类摘要由中间件随列表下发）。
  */
 
 import { Checkbox, Group, Stack, UnstyledButton } from '@mantine/core';
@@ -18,22 +18,23 @@ import type { TypeFilterPanelProps } from './types';
 import styles from './index.scss';
 
 const TypeFilterPanel = ({
+  excluded,
   keyword,
   onChange,
   onKeywordChange,
   onReset,
-  selected,
 }: TypeFilterPanelProps) => {
+  /** 勾选 = 显示；取消勾选 = 把这一类加进排除项 */
   const toggle = (value: FileCategory) => {
     onChange(
-      selected.includes(value)
-        ? selected.filter((item) => item !== value)
-        : [...selected, value],
+      excluded.includes(value)
+        ? excluded.filter((item) => item !== value)
+        : [...excluded, value],
     );
   };
 
   /** 有没有条件生效：没有时「重置」置灰，点了也没东西可清 */
-  const active = selected.length > 0 || keyword.trim() !== '';
+  const active = excluded.length > 0 || keyword.trim() !== '';
 
   return (
     <Stack gap="sm">
@@ -56,7 +57,11 @@ const TypeFilterPanel = ({
             onClick={() => toggle(option.value)}
           >
             <Group gap="xs" wrap="nowrap">
-              <Checkbox checked={selected.includes(option.value)} readOnly size="xs" />
+              <Checkbox
+                checked={!excluded.includes(option.value)}
+                readOnly
+                size="xs"
+              />
               <span>{option.label}</span>
             </Group>
           </UnstyledButton>
@@ -65,7 +70,7 @@ const TypeFilterPanel = ({
 
       <FreePanelFooter
         disabled={!active}
-        hint="不含所选类型的文件夹一并隐藏"
+        hint="取消勾选的类型不显示，文件夹一并隐藏"
         onReset={onReset}
       />
     </Stack>

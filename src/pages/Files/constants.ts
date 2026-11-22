@@ -52,10 +52,13 @@ export const FILE_CATEGORY_OPTIONS = (
   Object.keys(FILE_CATEGORY_LABELS) as FileCategory[]
 ).map((value) => ({ value, label: FILE_CATEGORY_LABELS[value] }));
 
-/** 类型筛选的已选分类（多选，刷新后保留；空数组表示不过滤） */
+/**
+ * 类型筛选的排除项（取消勾选的分类，刷新后保留；空数组表示四类全显示）。
+ * 键名带 `excluded`：旧的「已选分类」存的是白名单，含义相反，不能沿用同一个键。
+ */
 export const TYPE_FILTER_STORAGE_KEY = scopedStorageKey(
   FILES_STORAGE_SCOPE,
-  'type-filter',
+  'type-filter-excluded',
 );
 
 /** 分类 → 瓦片图标；视频额外上蓝色，其余用通用弱色 */
