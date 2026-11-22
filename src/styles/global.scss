@@ -47,8 +47,8 @@
   --app-status-muted: #64766e;
   --app-status-muted-soft: #dfe5e2;
 
-  /* code：Markdown 行内代码 / 代码块的底色与字色。代码是被标注的内容，
-     字色走 ink-strong 这一档，不随正文 ink-soft——暗色下 ink-soft 压在同档底色上会发灰 */
+  /* code：Markdown 行内代码 / 代码块的底色与字色。浅色字色走 ink-strong 档；
+     暗色在下面暗色块里再抬一档（底色 surface-hover、字色 ink），让代码从纸面跳出来 */
   --app-code-bg: var(--app-surface);
   --app-code-color: var(--app-ink-strong);
 
@@ -102,6 +102,11 @@ html[data-mantine-color-scheme='dark'] {
   --app-status-danger-fill-hover: #9c342d;
   --app-status-muted: #9aa9a3;
   --app-status-muted-soft: #1e2825;
+
+  /* 暗色下代码要从纸面里跳出来：底色抬到 surface-hover 档、字色提到标题档 ink；
+     代码靠等宽字体 + 芯片底色与标题区分，不会被读成小标题 */
+  --app-code-bg: var(--app-surface-hover);
+  --app-code-color: var(--app-ink);
 }
 
 :root {
