@@ -205,7 +205,7 @@ const Files = () => {
 
         {listing !== null && !showEmpty ? (
           <ScrollArea
-            className={isGridView ? styles.list : styles.tableList}
+            className={styles.list}
             offsetScrollbars="y"
             scrollbarSize={6}
             scrollbars="y"
