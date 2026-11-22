@@ -1,10 +1,8 @@
 import { memo } from 'react';
 import {
-  IconArchive,
   IconFile,
   IconFileText,
-  IconMusic,
-  IconPhoto,
+  IconMarkdown,
   IconVideo,
 } from '@tabler/icons-react';
 
@@ -21,10 +19,8 @@ import styles from './index.scss';
 /** 分类 → 瓦片图标；视频额外上蓝色，其余用通用弱色 */
 const CATEGORY_ICONS: Record<FileCategory, typeof IconFile> = {
   video: IconVideo,
-  image: IconPhoto,
-  audio: IconMusic,
-  document: IconFileText,
-  archive: IconArchive,
+  pdf: IconFileText,
+  markdown: IconMarkdown,
   other: IconFile,
 };
 

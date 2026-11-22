@@ -3,7 +3,9 @@ import {
   Button,
   Group,
   MultiSelect,
+  Pill,
   Select,
+  Tooltip,
   UnstyledButton,
 } from '@mantine/core';
 import {
@@ -23,9 +25,11 @@ import {
   DIR_INPUT_PLACEHOLDER,
   DIR_INPUT_WIDTH,
   FAVORITE_SELECT_WIDTH,
+  MAX_VISIBLE_CATEGORY_PILLS,
   TYPE_FILTER_WIDTH,
 } from '../constants';
 import { splitPathSegments } from '../utils/files';
+import type { FileCategory } from '../types';
 
 import type { DirToolbarProps } from './types';
 
@@ -77,6 +81,9 @@ const DirToolbar = ({
   const favoriteValue = favorites.some((item) => item.path === currentDir)
     ? currentDir
     : '';
+  const categoryLabelByValue = new Map(
+    typeOptions.map((option) => [option.value, option.label]),
+  );
 
   return (
     <div className={styles.toolbar}>
@@ -121,7 +128,38 @@ const DirToolbar = ({
           data={typeOptions}
           onChange={onCategoriesChange}
           placeholder="全部类型"
+          renderPill={({ option, onRemove, value }) => {
+            const idx = selectedCategories.indexOf(value as FileCategory);
+
+            if (idx < 0) {
+              return null;
+            }
+
+            if (idx < MAX_VISIBLE_CATEGORY_PILLS) {
+              return (
+                <Pill onRemove={onRemove} size="xs" withRemoveButton>
+                  {option.label}
+                </Pill>
+              );
+            }
+
+            if (idx !== MAX_VISIBLE_CATEGORY_PILLS) {
+              return null;
+            }
+
+            const hidden = selectedCategories.slice(MAX_VISIBLE_CATEGORY_PILLS);
+            const hiddenLabels = hidden.map(
+              (item) => categoryLabelByValue.get(item) ?? item,
+            );
+
+            return (
+              <Tooltip label={hiddenLabels.join('、')} multiline position="top">
+                <Pill size="xs">+{hidden.length}</Pill>
+              </Tooltip>
+            );
+          }}
           size="xs"
+          styles={{ pillsList: { flexWrap: 'nowrap' } }}
           value={selectedCategories}
           w={TYPE_FILTER_WIDTH}
         />
@@ -188,7 +226,7 @@ const DirToolbar = ({
           onClick={onPickDir}
           size="xs"
           title="选择本地目录"
-          variant="subtle"
+          variant="default"
         >
           打开
         </Button>

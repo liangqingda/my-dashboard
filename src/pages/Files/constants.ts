@@ -38,11 +38,9 @@ export const SKELETON_TILES: readonly number[] = [0, 1, 2, 3, 4, 5, 6, 7];
 /** 分类键 → 中文标签；键的集合与中间件 `FileCategory` 对齐 */
 export const FILE_CATEGORY_LABELS: Record<FileCategory, string> = {
   video: '视频',
-  image: '图片',
-  audio: '音频',
-  document: '文档',
-  archive: '压缩包',
-  other: '其他',
+  pdf: 'PDF',
+  markdown: 'Markdown',
+  other: '其它',
 };
 
 /** 类型筛选下拉的选项（按上面的固定顺序） */
@@ -56,8 +54,11 @@ export const TYPE_FILTER_STORAGE_KEY = scopedStorageKey(
   'type-filter',
 );
 
-/** 类型筛选下拉宽度 */
-export const TYPE_FILTER_WIDTH = 150;
+/** 类型筛选下拉宽度（两项 pill 收进 +n 后仍单行放得下） */
+export const TYPE_FILTER_WIDTH = 176;
 
 /** 收藏目录下拉宽度 */
 export const FAVORITE_SELECT_WIDTH = 200;
+
+/** 类型多选最多平铺展示的已选项；超出收进「+n」，悬浮看剩余 */
+export const MAX_VISIBLE_CATEGORY_PILLS = 2;

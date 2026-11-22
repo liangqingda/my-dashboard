@@ -16,13 +16,7 @@ import type { Dirent } from 'node:fs';
 const execFileAsync = promisify(execFile);
 
 /** 文件归类：前端按这一档换图标、做类型筛选；认不出扩展名的落 `other` */
-export type FileCategory =
-  | 'video'
-  | 'image'
-  | 'audio'
-  | 'document'
-  | 'archive'
-  | 'other';
+export type FileCategory = 'video' | 'pdf' | 'markdown' | 'other';
 
 /** 各分类识别的扩展名（小写、带点）；归类只看扩展名，不读文件内容 */
 const CATEGORY_EXTENSIONS: Readonly<Record<Exclude<FileCategory, 'other'>, readonly string[]>> = {
@@ -41,62 +35,8 @@ const CATEGORY_EXTENSIONS: Readonly<Record<Exclude<FileCategory, 'other'>, reado
     '.m2ts',
     '.3gp',
   ],
-  image: [
-    '.jpg',
-    '.jpeg',
-    '.png',
-    '.gif',
-    '.webp',
-    '.svg',
-    '.heic',
-    '.heif',
-    '.bmp',
-    '.tif',
-    '.tiff',
-    '.icns',
-    '.avif',
-  ],
-  audio: [
-    '.mp3',
-    '.wav',
-    '.flac',
-    '.aac',
-    '.ogg',
-    '.m4a',
-    '.opus',
-    '.wma',
-    '.ape',
-    '.aiff',
-  ],
-  document: [
-    '.txt',
-    '.md',
-    '.pdf',
-    '.doc',
-    '.docx',
-    '.xls',
-    '.xlsx',
-    '.ppt',
-    '.pptx',
-    '.csv',
-    '.rtf',
-    '.pages',
-    '.numbers',
-    '.key',
-  ],
-  archive: [
-    '.zip',
-    '.rar',
-    '.7z',
-    '.tar',
-    '.gz',
-    '.tgz',
-    '.bz2',
-    '.xz',
-    '.dmg',
-    '.pkg',
-    '.iso',
-  ],
+  pdf: ['.pdf'],
+  markdown: ['.md', '.markdown'],
 };
 
 /** 目录里的一条子文件夹 */

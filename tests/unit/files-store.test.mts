@@ -22,9 +22,10 @@ describe('files-store', () => {
     await writeFile(path.join(root, 'sub', 'folder-c', 'clip.mp4'), 'd');
     await writeFile(path.join(root, 'clip.webm'), 'e');
     await writeFile(path.join(root, 'poster.png'), 'f');
-    await writeFile(path.join(root, 'song.mp3'), 'h');
-    await writeFile(path.join(root, 'bundle.zip'), 'i');
-    await writeFile(path.join(root, 'script.js'), 'j');
+    await writeFile(path.join(root, 'guide.pdf'), 'h');
+    await writeFile(path.join(root, 'readme.md'), 'i');
+    await writeFile(path.join(root, 'archive.zip'), 'j');
+    await writeFile(path.join(root, 'script.js'), 'k');
     await writeFile(path.join(root, '.hidden.mp4'), 'g');
   });
 
@@ -48,11 +49,12 @@ describe('files-store', () => {
     assert.deepEqual(
       listing.files.map((file) => [file.name, file.category]),
       [
-        ['bundle.zip', 'archive'],
+        ['archive.zip', 'other'],
         ['clip.webm', 'video'],
-        ['poster.png', 'image'],
+        ['guide.pdf', 'pdf'],
+        ['poster.png', 'other'],
+        ['readme.md', 'markdown'],
         ['script.js', 'other'],
-        ['song.mp3', 'audio'],
       ],
     );
   });
