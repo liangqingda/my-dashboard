@@ -121,6 +121,28 @@
   gap: 8px;
 }
 
+/*
+ * 浮层 header：绝对定位覆盖正文顶部，栏体仍在（隐藏时只是淡出上移，不卸载按钮）。
+ * 视频这类「全屏时 header 平时藏起来、动鼠标才浮出」的弹窗用它，正文因此能占满整块高度。
+ */
+.content .headerOverlay {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  right: 0;
+  left: 0;
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
+/* 隐藏态：淡出上移，且不接收指针事件，免得住上方看不见的按钮被误点 */
+.content .headerHidden {
+  opacity: 0;
+  transform: translateY(-100%);
+  pointer-events: none;
+}
+
 /* 竖分割线：把两组操作隔开 */
 .divider {
   flex: 0 0 auto;

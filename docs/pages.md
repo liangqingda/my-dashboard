@@ -90,7 +90,8 @@ library），定一个就一直用它，别两套并存。
 ## 页面呈现
 
 页面默认只展示文件名、标题这类索引信息；正文细节交给预览层（`MarkdownPreviewModal`，见
-`src/components/modals/MarkdownPreviewModal/README.md`），不要把全文平铺在页面上。页面本身只做数据拼装与状态编排。
+`src/components/modals/MarkdownPreviewModal/README.md`），视频交给视频预览层（`VideoPreviewModal`），
+不要把全文平铺在页面上，也不要在页面里自己接播放器。页面本身只做数据拼装与状态编排。
 
 **列表数据已经整份在客户端时，就整份渲染**：不再做「首屏 N 行 + 滚动追加」，那只是把已经到手的
 数据藏起来，还要多养一套量视口高度、追加行数、详情补渲染的逻辑。只有渲染量真成了瓶颈（上千行）

@@ -13,6 +13,9 @@
   业务弹窗不再各自挑底色。`height="auto"` 的普通弹窗同样成立（没有侧栏时就是「header 一档、正文一档」）。
 - **header**：紧凑版（上下内边距 6px，高度由行内最高按钮决定，约 41px），用 `.content .header`
   双类名压掉 Mantine 的 `min-height` —— 单类名会被它那套 padding / min-height 顶回来。
+- **header 的两种排布**：默认在正文上方占一行（普通流）；传 `headerOverlay` 后改为浮层
+  （绝对定位、压住正文顶部），配合 `headerHidden` 淡出上移——视频这类「全屏时 header 平时藏起来、
+  动鼠标才浮出」的弹窗用它，收起时正文能占满整块高度。隐藏只改外观，按钮仍由调用方决定是否可用。
 - **header 里的按钮**：翻页与全屏走 `FreeIconAction`（`size="sm"`、语气恒为 `normal`、tip 与 `aria-label` 同句，
   键位提示走 `tooltipLabel`），**外壳不自维护图标按钮样式**；关闭按钮是组件库 `Modal` 内建的 `closeButton`。
 - **header 顺序（固定）**：翻页与计数 → 标题 → `headerActions` → 全屏 → `headerTail` →
@@ -21,8 +24,9 @@
   没有关闭按钮（`closeButton={false}`）或右侧一个图标都没渲染时也不画，免得留一条孤线。
 - **键盘口径统一在这里**（`hooks/useModalShortcuts`），业务弹窗不各自补快捷键：
   - `Esc`：关窗（Mantine 的 `closeOnEscape`）；
-  - **空格**：关窗，并 `preventDefault` 掉浏览器「空格 = 点击当前焦点按钮」——焦点常留在 header
-    图标上，不拦的话按空格会莫名翻到下一条 / 切了全屏；`closeOnSpace` 默认跟随 `closeOnEscape`；
+  - **空格**：关窗（传了 `media.onTogglePlay` 时改为播放 / 暂停，不关窗），并 `preventDefault`
+    掉浏览器「空格 = 点击当前焦点按钮」——焦点常留在 header 图标上，不拦的话按空格会莫名翻到
+    下一条 / 切了全屏；`closeOnSpace` 默认跟随 `closeOnEscape`；
   - **`[` / `【`、`←` 上一个；`]` / `】`、`→` 下一个**：有 `nav` 且未禁用时；
   - **`F`**：切换全屏（有全屏按钮、即 `showToggle` 不为 `false` 时）；
   - **`C` 复制**：传了 `copy` 时把那段文本写进剪贴板，并给一条成功 / 失败提示（走固定通知 id）；
@@ -57,6 +61,8 @@
 | `headerActions` | 第一组操作（阅读类：复制、筛选、刷新…） |
 | `headerTail` | 排在全屏之后的末尾位，保证「删除」始终在最右 |
 | `headerSecondary` | 第二组操作（如编辑流程），紧接在 `headerTail` 之后、关闭按钮的竖线之前 |
+| `headerOverlay` / `headerHidden` | header 是否浮在正文之上（绝对定位）、是否处于隐藏态（淡出上移、不接收指针事件）；只影响外观，不卸载按钮 |
+| `media` | `{ onTogglePlay }`；传了之后空格切播放 / 暂停，不再关窗 |
 | `fullscreen` | `{ active, onToggle, showToggle? }`；不传则没有全屏外观与按钮。`showToggle` 默认 `true`，传 `false` 时只保留 `active` 决定的铺满外观、不画按钮也不响应 `F`（进编辑这类不该换尺寸的场景） |
 | `copy` | `{ text, message }`；传了就有 `C` 复制键（`text` 进剪贴板，`message` 是成功提示），与 header 的复制按钮同一口径 |
 | `onRequestDelete` | 传了就有 `Delete` / `Backspace` 删除键；只应打开二次确认层，不直接删 |
@@ -67,6 +73,10 @@
 | `contentClassName` / `bodyClassName` | 只加增量类名，复制框体 / header 样式不算 |
 
 ## 全屏偏好：`hooks/useModalFullscreen`
+
+这里管的是「框体放大到视口」的阅读全屏；视频预览的**整块屏幕全屏**走浏览器 Fullscreen API，
+不用这个 hook（见 `VideoPreviewModal/README.md`）。
+
 
 ```ts
 const { fullscreen, toggle } = useModalFullscreen(storageKey);

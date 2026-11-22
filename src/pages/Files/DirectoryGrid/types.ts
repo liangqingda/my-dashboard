@@ -18,6 +18,8 @@ export type DirectoryGridProps = {
   dropTarget: string | null;
   /** 打开某个子文件夹 */
   onOpenFolder: (dir: string) => void;
+  /** 打开某条视频（交给视频预览弹窗） */
+  onOpenVideo: (file: FileEntry) => void;
   /** 开始拖拽一条目 */
   onDragStartEntry: (path: string) => void;
   /** 拖拽结束 */

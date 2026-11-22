@@ -1,6 +1,7 @@
 /**
  * 目录表格：一行一个条目，三列「名称 / 类别 / 操作」，文件夹在前、文件在后。
- * 名称前带类型图标；文件夹行整行可点进入下一层，文件行没有打开行为（与网格一致）。
+ * 名称前带类型图标；文件夹行整行可点进入下一层，视频名称可点打开视频预览，
+ * 其它文件仍只是展示（与网格一致）。
  * 行可拖拽，文件夹行是放置目标；重命名 / 删除走与瓦片同一组按钮。
  * 表格外观（边框、表头吸顶、行 hover）由 `FreeTable` 统一给，这里只管列宽与内容。
  */
@@ -33,6 +34,7 @@ const FilesTable = memo(
     onDropFolder,
     onEditEntry,
     onOpenFolder,
+    onOpenVideo,
     onRequestDeleteEntry,
     rows,
   }: FilesTableProps) => {
@@ -74,6 +76,22 @@ const FilesTable = memo(
             onClick={(event) => {
               event.stopPropagation();
               onOpenFolder(entry.path);
+            }}
+            type="button"
+          >
+            {content}
+          </UnstyledButton>
+        );
+      }
+
+      if (row.file.category === 'video') {
+        return (
+          <UnstyledButton
+            aria-label={`预览视频 ${entry.name}`}
+            className={styles.nameButton}
+            onClick={(event) => {
+              event.stopPropagation();
+              onOpenVideo(row.file);
             }}
             type="button"
           >

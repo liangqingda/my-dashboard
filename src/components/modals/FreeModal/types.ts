@@ -45,6 +45,15 @@ export type FreeModalCopy = {
   message: string;
 };
 
+/**
+ * 媒体类内容的快捷键能力：给了 `onTogglePlay`，空格就切换播放 / 暂停，
+ * 而不是关窗（视频看完通常按空格暂停，不按空格关窗）。键位收在外壳里，业务侧只给动作。
+ */
+export type FreeModalMedia = {
+  /** 切换播放 / 暂停；不传则空格仍按 `closeOnSpace` 处理 */
+  onTogglePlay?: () => void;
+};
+
 /** 基础弹窗外壳的入参 */
 export type FreeModalProps = {
   /** 是否打开 */
@@ -55,6 +64,18 @@ export type FreeModalProps = {
   title: string;
   /** 正文 */
   children: ReactNode;
+  /**
+   * header 是否浮在正文之上（绝对定位、覆盖正文顶部），默认按普通流排版。
+   * 给视频这类「header 平时可以藏起来」的弹窗用：隐藏时正文能占满整块高度。
+   */
+  headerOverlay?: boolean;
+  /**
+   * header 是否处于隐藏态：淡出并上移、不接收指针事件。
+   * 只影响外观，不卸载 header——按钮仍由业务侧决定是否可用（配合 `headerOverlay` 使用）。
+   */
+  headerHidden?: boolean;
+  /** 媒体快捷键：传了 `media`，空格切播放 / 暂停而不是关窗 */
+  media?: FreeModalMedia;
   /** 翻页与计数；不传则 header 只有标题 */
   nav?: FreeModalNav;
   /** header 右侧第一组操作（阅读类：复制、筛选、刷新…） */

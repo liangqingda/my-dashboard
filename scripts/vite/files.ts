@@ -4,17 +4,20 @@
  * - `GET /api/files`：列用户主目录；
  * - `GET /api/files?dir=<绝对路径>`：列指定目录（含子文件夹直属条目数、文件大小与修改时间，
  *   以及启动卷 / 外接卷的剩余可用空间 `space`）；
+ * - `GET /api/files/content?path=<绝对路径>`：按 HTTP Range 流式读一个视频文件（只在开发模式）；
  * - `POST /api/files/pick-dir`：调起 macOS 系统目录选择框，body `{ dir }` 作为默认定位目录，返回选中目录的绝对路径（取消返回 cancelled）；
  * - `POST /api/files/new-folder`：在 body `{ dir }` 目录下新建文件夹，返回新条目；
  * - `POST /api/files/rename`：body `{ path, name }` 重命名一条条目；
  * - `POST /api/files/move`：body `{ source, targetDir }` 把一条条目移入目标目录；
- * - `POST /api/files/delete`：body `{ path }` 删除一条条目，文件夹连同内部内容递归删除。
+ * - `POST /api/files/delete`：body `{ path }` 删除一条条目，文件夹连同内部内容递归删除；
+ * - `POST /api/files/capture`：body `{ dataUrl }` 把一帧 PNG 截图写进桌面，返回文件名与路径。
  *
- * 写操作仅限开发服务器中间件，静态构建不带这些接口；不读文件内容，只给列表摘要。
+ * 写操作与媒体接口仅限开发服务器中间件，静态构建不带这些接口；列表只给摘要，视频内容按需流式读取。
  */
 
 import type { Plugin } from 'vite';
 
+import { openVideoFile, openVideoStream, parseByteRange, saveCapture } from './files-media.js';
 import {
   createFolder,
   deleteEntry,
@@ -26,6 +29,20 @@ import {
   statusForReadError,
 } from './files-store.js';
 import { readDirSpace } from './files-space.js';
+
+/** 截图请求体上限：一帧 PNG 的 base64 通常几 MB，留出余量但拒绝超大载荷 */
+const CAPTURE_BODY_LIMIT = 40 * 1024 * 1024;
+
+/** 统一的 JSON 错误响应 */
+const sendJsonError = (
+  res: import('node:http').ServerResponse,
+  status: number,
+  message: string,
+): void => {
+  res.statusCode = status;
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.end(JSON.stringify({ message }));
+};
 
 /** 从 `?dir=` 取目录路径；没带参数返回 null（回落主目录） */
 const dirFromUrl = (url: string | undefined): string | null => {
@@ -39,9 +56,13 @@ const dirFromUrl = (url: string | undefined): string | null => {
 const sameOrigin = (req: import('node:http').IncomingMessage): boolean =>
   req.headers.origin === `http://${req.headers.host}`;
 
-/** 读 POST JSON body；空 body / 非法 JSON / 超长都按空对象处理 */
+/**
+ * 读 POST JSON body；空 body / 非法 JSON / 超长都按空对象处理。
+ * 上限按请求类型给（默认 4KB，截图走更大的额度）。
+ */
 const readJsonBody = (
   req: import('node:http').IncomingMessage,
+  limit = 4096,
 ): Promise<Record<string, unknown>> =>
   new Promise((resolve) => {
     let raw = '';
@@ -50,7 +71,7 @@ const readJsonBody = (
     req.on('data', (chunk) => {
       raw += chunk;
 
-      if (raw.length > 4096) {
+      if (raw.length > limit) {
         aborted = true;
         req.destroy();
       }
@@ -82,16 +103,85 @@ const bodyString = (body: Record<string, unknown>, key: string): string =>
   typeof body[key] === 'string' ? body[key] : '';
 
 /**
- * 目录浏览插件：读盘归类走 `files-store.ts`，这里只做请求解析、错误归类与响应收口。
+ * 流式读一个视频文件：视频元素靠 Range 请求跳转与续播，这里按 `Range` 回 206，
+ * 没有 Range 时整份返回。只做 GET / HEAD，不接受写操作。
+ */
+const serveVideoContent = async (
+  req: import('node:http').IncomingMessage,
+  res: import('node:http').ServerResponse,
+): Promise<void> => {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    sendJsonError(res, 405, '不支持的请求方法');
+
+    return;
+  }
+
+  try {
+    const url = new URL(req.url ?? '', 'http://localhost');
+    const video = await openVideoFile(url.searchParams.get('path') ?? '');
+    const range = parseByteRange(req.headers.range, video.size);
+
+    res.setHeader('Content-Type', video.mime);
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.setHeader('Cache-Control', 'no-store');
+
+    if (range) {
+      res.statusCode = 206;
+      res.setHeader(
+        'Content-Range',
+        `bytes ${range.start}-${range.end}/${video.size}`,
+      );
+      res.setHeader('Content-Length', range.end - range.start + 1);
+    } else {
+      res.setHeader('Content-Length', video.size);
+    }
+
+    if (req.method === 'HEAD') {
+      res.end();
+
+      return;
+    }
+
+    const stream = openVideoStream(video, range);
+
+    stream.on('error', () => {
+      if (!res.headersSent) {
+        sendJsonError(res, 500, '读取视频失败');
+
+        return;
+      }
+
+      res.destroy();
+    });
+    res.on('close', () => stream.destroy());
+    stream.pipe(res);
+  } catch (error) {
+    sendJsonError(
+      res,
+      statusForReadError(error),
+      error instanceof Error ? error.message : '读取视频失败',
+    );
+  }
+};
+
+/**
+ * 目录浏览插件：读盘归类走 `files-store.ts`，视频流与截图走 `files-media.ts`，
+ * 这里只做请求解析、错误归类与响应收口。
  */
 export const files = (): Plugin => ({
   name: 'files',
   configureServer(server) {
     server.middlewares.use('/api/files', async (req, res) => {
+      const pathname = (req.url ?? '').split('?')[0];
+
+      if (pathname === '/content') {
+        await serveVideoContent(req, res);
+
+        return;
+      }
+
       res.setHeader('Content-Type', 'application/json; charset=utf-8');
       res.setHeader('Cache-Control', 'no-store');
-
-      const pathname = (req.url ?? '').split('?')[0];
 
       if (pathname === '/pick-dir') {
         if (req.method !== 'POST') {
@@ -134,7 +224,8 @@ export const files = (): Plugin => ({
         pathname === '/new-folder' ||
         pathname === '/rename' ||
         pathname === '/move' ||
-        pathname === '/delete'
+        pathname === '/delete' ||
+        pathname === '/capture'
       ) {
         if (req.method !== 'POST') {
           res.statusCode = 405;
@@ -151,9 +242,16 @@ export const files = (): Plugin => ({
         }
 
         try {
-          const body = await readJsonBody(req);
+          const body = await readJsonBody(
+            req,
+            pathname === '/capture' ? CAPTURE_BODY_LIMIT : undefined,
+          );
 
-          if (pathname === '/new-folder') {
+          if (pathname === '/capture') {
+            const capture = await saveCapture(bodyString(body, 'dataUrl'));
+
+            res.end(JSON.stringify({ capture }));
+          } else if (pathname === '/new-folder') {
             const entry = await createFolder(bodyString(body, 'dir'));
 
             res.end(JSON.stringify({ entry }));

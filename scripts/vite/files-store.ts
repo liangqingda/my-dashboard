@@ -111,6 +111,10 @@ const categoryForName = (name: string): FileCategory => {
   return 'other';
 };
 
+/** 文件名扩展名是否属于视频分类：媒体接口只放视频，分类规则与列表共用这一份 */
+export const isVideoFileName = (name: string): boolean =>
+  categoryForName(name) === 'video';
+
 /**
  * 解析并校验入参目录：展开 `~` 为用户主目录，其余必须是绝对路径。
  * 相对路径不收——拼到进程 cwd 上得到的目录不是用户意图里的那个位置。
@@ -164,6 +168,10 @@ export const statusForReadError = (error: unknown): number => {
 
   if (code === 'EEXIST') {
     return 409;
+  }
+
+  if (code === 'EINVAL') {
+    return 400;
   }
 
   return 500;

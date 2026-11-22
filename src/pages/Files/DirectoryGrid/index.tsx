@@ -33,6 +33,7 @@ const DirectoryGrid = ({
   onDropFolder,
   onEditEntry,
   onOpenFolder,
+  onOpenVideo,
   onRequestDeleteEntry,
 }: DirectoryGridProps) => (
   <div className={styles.grid} onDragOver={allowMoveOverGrid}>
@@ -60,6 +61,9 @@ const DirectoryGrid = ({
         onDragEnd={onDragEnd}
         onDragStartEntry={() => onDragStartEntry(file.path)}
         onEdit={() => onEditEntry(file)}
+        onOpen={
+          file.category === 'video' ? () => onOpenVideo(file) : undefined
+        }
         onRequestDelete={() => onRequestDeleteEntry(file.path)}
       />
     ))}

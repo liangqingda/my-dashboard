@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { UnstyledButton } from '@mantine/core';
 
 import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
 import { cx } from '@/utils/cx';
@@ -13,8 +14,9 @@ import styles from './index.scss';
 
 /**
  * 网格里的一条文件：图标居上居中，文件名与体积纵向排在下方并居中，可被拖拽移动。
- * 图标按文件归类区分；hover 时右上角浮出重命名 / 删除按钮；文件内容与预览是单独任务，
- * 本瓦片暂不挂点击行为；名称最多两行，超出做中间省略保留尾部，hover 时给全量。
+ * 图标按文件归类区分；hover 时右上角浮出重命名 / 删除按钮。
+ * 视频（调用方传了 `onOpen`）整块可点，交给视频预览弹窗；其它文件仍只是展示。
+ * 名称最多两行，超出做中间省略保留尾部，hover 时给全量。
  */
 const FileTile = memo(
   ({
@@ -23,10 +25,32 @@ const FileTile = memo(
     onDragEnd,
     onDragStartEntry,
     onEdit,
+    onOpen,
     onRequestDelete,
   }: FileTileProps) => {
     const Icon = CATEGORY_ICONS[file.category];
     const isVideo = file.category === 'video';
+
+    const content = (
+      <>
+        <Icon
+          aria-hidden="true"
+          className={cx(styles.icon, isVideo && styles.iconVideo)}
+          size={48}
+          stroke={1.2}
+        />
+        <span className={styles.body}>
+          <FreeTruncatedText
+            className={styles.name}
+            ellipsis="middle"
+            lines={2}
+            position="top"
+            text={file.name}
+          />
+          <span className={styles.meta}>{formatFileSize(file.size)}</span>
+        </span>
+      </>
+    );
 
     return (
       <div
@@ -41,24 +65,18 @@ const FileTile = memo(
           onDragStartEntry?.();
         }}
       >
-        <div className={styles.tile}>
-          <Icon
-            aria-hidden="true"
-            className={cx(styles.icon, isVideo && styles.iconVideo)}
-            size={48}
-            stroke={1.2}
-          />
-          <span className={styles.body}>
-            <FreeTruncatedText
-              className={styles.name}
-              ellipsis="middle"
-              lines={2}
-              position="top"
-              text={file.name}
-            />
-            <span className={styles.meta}>{formatFileSize(file.size)}</span>
-          </span>
-        </div>
+        {onOpen ? (
+          <UnstyledButton
+            aria-label={`预览视频 ${file.name}`}
+            className={cx(styles.tile, styles.tileOpenable)}
+            onClick={onOpen}
+            type="button"
+          >
+            {content}
+          </UnstyledButton>
+        ) : (
+          <div className={styles.tile}>{content}</div>
+        )}
 
         <EntryTileActions
           className={styles.actions}

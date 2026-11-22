@@ -16,6 +16,8 @@ export type FilesTableProps = {
   dropTarget: string | null;
   /** 打开某个子文件夹（点名称进入下一层） */
   onOpenFolder: (dir: string) => void;
+  /** 打开某条视频（点名称交给视频预览弹窗） */
+  onOpenVideo: (file: FileEntry) => void;
   /** 开始拖拽一条目 */
   onDragStartEntry: (path: string) => void;
   /** 拖拽结束 */

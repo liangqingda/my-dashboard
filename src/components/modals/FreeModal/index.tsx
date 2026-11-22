@@ -50,9 +50,12 @@ const FreeModal = ({
   copy,
   fullscreen,
   headerActions,
+  headerHidden = false,
+  headerOverlay = false,
   headerSecondary,
   headerTail,
   height = 'reading',
+  media,
   nav,
   onClose,
   onRequestDelete,
@@ -85,6 +88,7 @@ const FreeModal = ({
     onClose,
     onRequestDelete,
     onToggleFullscreen,
+    onTogglePlay: media?.onTogglePlay,
   });
 
   /** 翻页 tooltip 的快捷键提示：业务侧没给就用这套统一的键位 */
@@ -108,7 +112,11 @@ const FreeModal = ({
           fullscreen?.active && styles.contentFullscreen,
           contentClassName,
         ),
-        header: styles.header,
+        header: cx(
+          styles.header,
+          headerOverlay && styles.headerOverlay,
+          headerHidden && styles.headerHidden,
+        ),
         title: styles.title,
       }}
       closeButtonProps={{ 'aria-label': closeLabel }}

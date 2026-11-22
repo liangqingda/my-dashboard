@@ -1,0 +1,8 @@
+/* 视频预览弹窗：左侧目录 + 右侧舞台，舞台由播放器自己撑满 */
+
+.layout {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}

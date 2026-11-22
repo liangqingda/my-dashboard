@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Button,
@@ -9,6 +9,7 @@ import {
   Text,
 } from '@mantine/core';
 
+import VideoPreviewModal from '@/components/modals/VideoPreviewModal';
 import MenuContentLayout from '@/layouts/MenuContentLayout';
 import { onPageRefresh } from '@/utils/page-refresh';
 
@@ -26,6 +27,8 @@ import { useFavorites } from './hooks/useFavorites';
 import { useFilesDir } from './hooks/useFilesDir';
 import { useFilesViewMode } from './hooks/useFilesViewMode';
 import { useTypeFilter } from './hooks/useTypeFilter';
+import { useVideoPreview } from './hooks/useVideoPreview';
+import { videoContentUrl } from './utils/files-api';
 import {
   describeDirSpace,
   filterFilesByCategory,
@@ -42,8 +45,8 @@ import styles from './index.scss';
  * 切换结果记在 localStorage，刷新后保持上次的形态。
  * 点文件夹进入下一层，面包屑回退，`⌘↑` 回上一级；可收藏常用目录，在收藏面板里点选直达；
  * 标题栏筛选面板支持按文件名关键词过滤与按类型勾选：四类默认全选，取消勾选的类型
- * 连同对应文件夹一起隐藏。文件内容与预览播放是单独任务，
- * 本页只列摘要。目录读取走 Vite 中间件，仅开发模式可用。
+ * 连同对应文件夹一起隐藏。列表只列摘要；点视频条目会在弹窗里播放，
+ * 弹窗的翻篇、目录侧栏与截图都基于当前目录的视频列表。目录读取走 Vite 中间件，仅开发模式可用。
  * 标题行右侧再显示本机剩余可用空间；当前目录在外接盘（移动硬盘）上时，连同那块盘的可用空间一起显示。
  */
 const Files = () => {
@@ -57,6 +60,25 @@ const Files = () => {
   const folders = listing?.folders ?? [];
   const allFiles = listing?.files ?? [];
   const entryActions = useEntryActions(listing?.path ?? null, reload);
+  /** 视频预览：点视频打开弹窗，翻篇 / 侧栏 / 截图都按当前目录的视频列表走 */
+  const {
+    activeId: previewVideoId,
+    captureFrame,
+    closeVideo,
+    openVideo,
+    selectVideo,
+    videos: videoFiles,
+  } = useVideoPreview(listing);
+  /** 弹窗条目：id 用路径，播放地址由中间件按 Range 流式读 */
+  const videoItems = useMemo(
+    () =>
+      videoFiles.map((file) => ({
+        id: file.path,
+        name: file.name,
+        src: videoContentUrl(file.path),
+      })),
+    [videoFiles],
+  );
   const {
     cancelDelete,
     confirmDelete,
@@ -95,10 +117,11 @@ const Files = () => {
   const togglePanel = (panel: FilesActionsPanel) =>
     setOpenPanel((prev) => (prev === panel ? null : panel));
 
-  /** 离开当前目录前清掉改名、拖拽与待删除临时状态，不沿用到新目录 */
+  /** 离开当前目录前清掉改名、拖拽、待删除与视频预览状态，不沿用到新目录 */
   const resetTransientState = () => {
     entryActions.resetTransient();
     resetDelete();
+    closeVideo();
   };
 
   /** 切目录：先清临时状态再交 hook 取数 */
@@ -238,6 +261,7 @@ const Files = () => {
                 onDropFolder={entryActions.dropFolder}
                 onEditEntry={entryActions.editEntry}
                 onOpenFolder={goToDir}
+                onOpenVideo={openVideo}
                 onRequestDeleteEntry={requestDelete}
               />
             ) : (
@@ -251,6 +275,7 @@ const Files = () => {
                 onDropFolder={entryActions.dropFolder}
                 onEditEntry={entryActions.editEntry}
                 onOpenFolder={goToDir}
+                onOpenVideo={openVideo}
                 onRequestDeleteEntry={requestDelete}
                 rows={tableRows}
               />
@@ -264,6 +289,15 @@ const Files = () => {
         loading={deleteLoading}
         onCancel={cancelDelete}
         onConfirm={() => void confirmDelete()}
+      />
+
+      <VideoPreviewModal
+        activeId={previewVideoId}
+        items={videoItems}
+        onCapture={captureFrame}
+        onClose={closeVideo}
+        onSelect={selectVideo}
+        opened={previewVideoId !== null}
       />
 
       <RenameEntryModal

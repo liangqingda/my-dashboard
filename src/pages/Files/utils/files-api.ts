@@ -12,6 +12,7 @@ import { readHttpErrorMessage } from '@/utils/error';
 import type { DirListing, FolderEntry } from '../types';
 
 import {
+  normalizeCaptureResponse,
   normalizeEntryResponse,
   normalizeListingResponse,
   normalizePickedResponse,
@@ -25,6 +26,8 @@ const NEW_FOLDER_ENDPOINT = '/api/files/new-folder';
 const RENAME_ENDPOINT = '/api/files/rename';
 const MOVE_ENDPOINT = '/api/files/move';
 const DELETE_ENDPOINT = '/api/files/delete';
+const CONTENT_ENDPOINT = '/api/files/content';
+const CAPTURE_ENDPOINT = '/api/files/capture';
 
 /** 取数请求的缓存策略：开发态必须实时，静态产物不读这个接口 */
 const REQUEST_INIT: RequestInit = import.meta.env.DEV
@@ -178,4 +181,23 @@ export const moveEntry = async (
 /** 删除一条条目；文件夹连同内部内容递归删除，不可恢复 */
 export const deleteEntry = async (pathValue: string): Promise<void> => {
   await postJson(DELETE_ENDPOINT, { path: pathValue });
+};
+
+/**
+ * 视频的播放地址：中间件按 Range 流式读文件，浏览器可以直接把它塞进 `<video src>`。
+ * 地址由前端拼、路径做整段编码（路径里的 `#`、`?` 不改写就会截断查询串）。
+ */
+export const videoContentUrl = (pathValue: string): string =>
+  `${CONTENT_ENDPOINT}?path=${encodeURIComponent(pathValue)}`;
+
+/** 把一帧 PNG 截图写进桌面；返回实际文件名（同秒重名后端会追加序号） */
+export const captureVideoFrame = async (dataUrl: string): Promise<string> => {
+  const payload = await postJson(CAPTURE_ENDPOINT, { dataUrl });
+  const name = normalizeCaptureResponse(payload);
+
+  if (name === null) {
+    throw new Error('截图回执格式不符合预期');
+  }
+
+  return name;
 };

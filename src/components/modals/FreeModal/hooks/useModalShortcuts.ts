@@ -2,8 +2,9 @@
  * 阅读类弹窗的整套键盘口径，只在这里定义一次：业务弹窗不各自补快捷键。
  *
  * - `Esc`：关窗（由 Mantine `Modal` 的 `closeOnEscape` 负责，不在这里）；
- * - **空格**：关窗，并 `preventDefault` 掉浏览器「空格 = 点击当前焦点按钮」的默认行为
- *   —— 焦点常留在 header 图标上，不拦的话按空格会莫名翻到下一条 / 切了全屏；
+ * - **空格**：关窗（给了媒体能力时改为播放 / 暂停），并 `preventDefault` 掉浏览器
+ *   「空格 = 点击当前焦点按钮」的默认行为——焦点常留在 header 图标上，不拦的话按空格会莫名
+ *   翻到下一条 / 切了全屏；
  * - **`[` / `【`、`←` 上一篇；`]` / `】`、`→` 下一篇**（有 `nav` 且没被禁用时）；
  * - **`F` 全屏开关**（有全屏按钮时）；
  * - **`C` 复制**（调用方给了复制文本时）：与 header 的复制按钮同一口径，写进剪贴板并给一条提示；
@@ -58,6 +59,8 @@ type ModalShortcutsParams = {
   nav?: FreeModalNav;
   /** 切换全屏；不传表示没有全屏按钮 */
   onToggleFullscreen?: () => void;
+  /** 切换播放 / 暂停；传了之后空格归媒体，不再关窗 */
+  onTogglePlay?: () => void;
   /** 复制能力：要写进剪贴板的文本；不传表示没有复制按钮 */
   copy?: string;
   /** 复制成功的提示文案；不传用一句通用文案 */
@@ -77,6 +80,7 @@ export const useModalShortcuts = ({
   onClose,
   onRequestDelete,
   onToggleFullscreen,
+  onTogglePlay,
 }: ModalShortcutsParams): void => {
   useEffect(() => {
     if (!enabled) {
@@ -110,6 +114,13 @@ export const useModalShortcuts = ({
       }
 
       if (event.key === ' ') {
+        if (onTogglePlay) {
+          event.preventDefault();
+          onTogglePlay();
+
+          return;
+        }
+
         if (closeOnSpace) {
           event.preventDefault();
           onClose();
@@ -178,5 +189,6 @@ export const useModalShortcuts = ({
     onClose,
     onRequestDelete,
     onToggleFullscreen,
+    onTogglePlay,
   ]);
 };

@@ -2,7 +2,9 @@
 {
   "extends": "@liangqingda/tsconfig/node.json",
   "compilerOptions": {
-    "noEmit": true
+    // 脚本层有 Node 原生测试直接跑 .ts（files-media → files-store 用显式 .ts 引入）
+    "noEmit": true,
+    "allowImportingTsExtensions": true
   },
   "include": ["vite.config.ts"]
 }

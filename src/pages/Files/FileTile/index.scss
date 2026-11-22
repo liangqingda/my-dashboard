@@ -21,6 +21,11 @@
   padding: 12px 8px;
 }
 
+/* 可打开的视频瓦片：整块是按钮，补上小手与键盘可达的语义 */
+.tileOpenable {
+  cursor: pointer;
+}
+
 /* 正在被拖拽的文件：弱化半透明，光标交给浏览器绘制（见 dragstart 的 effectAllowed） */
 .dragging {
   opacity: 0.4;

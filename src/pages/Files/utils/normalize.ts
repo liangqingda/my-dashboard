@@ -202,3 +202,12 @@ const normalizePicked = (raw: unknown): PickedDir | null => {
 /** 归一化 `{ picked }` 响应体；取不到选择结果返回 null */
 export const normalizePickedResponse = (payload: unknown): PickedDir | null =>
   isObject(payload) ? normalizePicked(payload.picked) : null;
+
+/** 归一化 `{ capture }` 截图响应体：只认带文件名的回执，其余返回 null */
+export const normalizeCaptureResponse = (payload: unknown): string | null => {
+  const capture = isObject(payload) ? payload.capture : null;
+
+  return isObject(capture) && typeof capture.name === 'string' && capture.name
+    ? capture.name
+    : null;
+};

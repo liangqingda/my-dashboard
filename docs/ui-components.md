@@ -18,6 +18,7 @@
 | 普通弹窗（说明 / 短表单 / 列表） | `FreeModal` 传 `height="auto"`（高度随内容、正文自己滚） |
 | 二次确认（删除 / 覆盖等不可逆操作） | `ConfirmModal`（基于 `FreeModal` 的通用业务组件：说明块 + 可选额外内容 + 取消 / 确认） |
 | 任何 Markdown / 文档预览 | `MarkdownPreviewModal`，不自己接渲染器（行为见 `src/components/modals/MarkdownPreviewModal/README.md`） |
+| 视频播放 / 视频预览 | `VideoPreviewModal`（内含 `VideoPlayer`，不自己拼 `<video>` 控制栏；行为见 `src/components/modals/VideoPreviewModal/README.md`） |
 | 单行输入（无搜索语义） | `FreeInput` |
 | 搜索框（左搜索图标 + 一键清空） | `FreeSearchInput` |
 | 多行输入（普通表单） | `Textarea` |
@@ -78,7 +79,7 @@
 
 | 分类目录 | 放什么 | 现有组件 |
 | --- | --- | --- |
-| `modals` | 弹窗外壳与弹窗类组件（阅读弹窗、二次确认） | `FreeModal`、`ConfirmModal`、`MarkdownPreviewModal` |
+| `modals` | 弹窗外壳与弹窗类组件（阅读弹窗、视频预览、二次确认） | `FreeModal`、`ConfirmModal`、`MarkdownPreviewModal`、`VideoPreviewModal` |
 | `buttons` | 按钮、图标按钮、按钮触发的弹层外壳 | `FreeIconAction`、`CopyIconButton`、`FilterButton`、`IconPopoverButton` |
 | `tables` | 表格基线 | `FreeTable` |
 | `fields` | 字段 / 输入控件组 | `FreeSelectField`、`FreeSearchInput` |

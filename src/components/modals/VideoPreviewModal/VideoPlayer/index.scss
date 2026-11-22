@@ -1,0 +1,73 @@
+/* 播放器：黑色舞台 + 底部控制栏；舞台内只放视频与几种状态浮层 */
+
+.player {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: #000;
+}
+
+/* 舞台：视频铺满，浮层以它为定位祖先 */
+.stage {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+
+/* 视频按比例完整显示，不留黑边裁切；整块可点，光标提示能切换播放 */
+.video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+  cursor: pointer;
+}
+
+/* 加载 / 报错 / 缓冲的居中浮层：黑底上给浅色文字 */
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  color: rgb(255 255 255 / 72%);
+  font-size: 0.82rem;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* 报错图标用暖色，和「正在读取」的灰字分开 */
+.errorIcon {
+  flex: 0 0 auto;
+  color: var(--app-status-warn);
+}
+
+.overlayText {
+  max-width: 68%;
+  line-height: 1.5;
+}
+
+/* 暂停时的中央播放键：半透明圆底，悬停提亮 */
+.bigPlay {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 48%);
+  color: #fff;
+  transition: background 120ms ease;
+
+  &:hover {
+    background: rgb(0 0 0 / 64%);
+  }
+}

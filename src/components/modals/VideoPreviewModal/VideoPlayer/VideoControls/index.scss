@@ -1,0 +1,31 @@
+/* 播放器控制栏：一条与 header 同色系的底栏，进度条吃掉剩余宽度 */
+
+.controls {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  border-top: 1px solid var(--app-line);
+  background: var(--app-surface-subtle);
+}
+
+/* 进度条占满中间，时间与音量固定在右侧 */
+.progress {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* 时间：等宽数字，播放中不会随数字跳动而左右晃 */
+.time {
+  flex: 0 0 auto;
+  color: var(--app-ink-faint);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 音量条比进度条短，避免和进度抢注意力 */
+.volume {
+  flex: 0 0 auto;
+  width: 72px;
+}
