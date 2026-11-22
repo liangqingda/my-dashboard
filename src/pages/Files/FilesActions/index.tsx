@@ -39,7 +39,6 @@ const FilesActions = ({
   onToggleFavorite,
   openPanel,
   selectedCategories,
-  typeOptions,
 }: FilesActionsProps) => {
   /** 筛选有没有条件生效：分类或关键词任一非空，图标用强调色 */
   const filterActive = selectedCategories.length > 0 || keyword.trim() !== '';
@@ -105,7 +104,6 @@ const FilesActions = ({
             onCategoriesChange([]);
             onKeywordChange('');
           }}
-          options={typeOptions}
           selected={selectedCategories}
         />
       </IconPopoverButton>

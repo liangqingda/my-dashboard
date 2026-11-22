@@ -44,7 +44,10 @@ export const FILE_CATEGORY_LABELS: Record<FileCategory, string> = {
   other: '其它',
 };
 
-/** 类型筛选下拉的选项（按上面的固定顺序） */
+/**
+ * 类型筛选下拉的选项（按上面的固定顺序）。
+ * 是页面固定档位：不随当前目录里有没有该类型而增减。
+ */
 export const FILE_CATEGORY_OPTIONS = (
   Object.keys(FILE_CATEGORY_LABELS) as FileCategory[]
 ).map((value) => ({ value, label: FILE_CATEGORY_LABELS[value] }));

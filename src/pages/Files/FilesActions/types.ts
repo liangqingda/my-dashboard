@@ -19,8 +19,6 @@ export type FilesActionsProps = {
   favoriteDisabled: boolean;
   /** 收藏的目录列表，排成收藏面板的条目 */
   favorites: FavoriteEntry[];
-  /** 筛选可选分类（当前列表里实际出现过的） */
-  typeOptions: { value: FileCategory; label: string }[];
   /** 类型筛选已选分类；空数组表示不过滤 */
   selectedCategories: FileCategory[];
   /** 文件名关键词；空串表示不按关键词过滤 */

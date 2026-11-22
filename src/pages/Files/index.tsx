@@ -25,7 +25,6 @@ import { useFavorites } from './hooks/useFavorites';
 import { useFilesDir } from './hooks/useFilesDir';
 import { useTypeFilter } from './hooks/useTypeFilter';
 import {
-  availableCategoryOptions,
   describeDirSpace,
   filterFilesByCategory,
   filterFilesByKeyword,
@@ -77,8 +76,6 @@ const Files = () => {
         keyword,
       )
     : [];
-  /** 当前目录里实际出现过的分类，作为筛选项 */
-  const typeOptions = listing ? availableCategoryOptions(listing.files) : [];
 
   /** 切换某块弹层：再点一次同一块则收起 */
   const togglePanel = (panel: FilesActionsPanel) =>
@@ -141,7 +138,6 @@ const Files = () => {
           }}
           openPanel={openPanel}
           selectedCategories={selectedCategories}
-          typeOptions={typeOptions}
         />
       }
       description={describeDirSpace(listing?.space ?? null)}
