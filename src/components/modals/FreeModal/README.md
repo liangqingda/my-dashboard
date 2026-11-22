@@ -7,6 +7,10 @@
 
 - **框体**：`radius="md"`、`padding={0}`、遮罩 `backgroundOpacity 0.5 + blur 2`、140ms fade；
   正文高度 `82dvh`（上限 `88dvh`），全屏时铺满 `100vw / 100dvh`。
+- **配色分两层**（与页面外壳 `BasicLayout` 同一条口径，两个变量都在 `.content` 上打包下发）：
+  header 与侧栏（业务侧的目录列）共用软底 `--preview-chrome`（`--app-surface-subtle`），
+  正文区是画布纸 `--preview-paper`（`--app-bg`）；两层之间靠一条 `--app-line` 细线分界，
+  业务弹窗不再各自挑底色。`height="auto"` 的普通弹窗同样成立（没有侧栏时就是「header 一档、正文一档」）。
 - **header**：紧凑版（上下内边距 6px，高度由行内最高按钮决定，约 41px），用 `.content .header`
   双类名压掉 Mantine 的 `min-height` —— 单类名会被它那套 padding / min-height 顶回来。
 - **header 里的按钮**：翻页与全屏走 `FreeIconAction`（`size="sm"`、语气恒为 `normal`、tip 与 `aria-label` 同句，

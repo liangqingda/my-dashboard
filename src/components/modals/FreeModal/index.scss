@@ -1,7 +1,13 @@
 /* 基础弹窗外壳：框体、紧凑 header、正文区与全屏；业务弹窗只加自己的增量样式 */
 
+/*
+ * 配色与页面外壳（`BasicLayout`）同一条口径：header 与侧栏共用软底那一档
+ * （`--preview-chrome`，业务侧的目录列读它），正文区是另一档画布纸（`--preview-paper`）。
+ * 两层都从这里下发，业务弹窗不再各自挑底色。
+ */
 .content {
-  --preview-paper: var(--app-surface-subtle);
+  --preview-chrome: var(--app-surface-subtle);
+  --preview-paper: var(--app-bg);
 
   display: flex;
   flex-direction: column;
@@ -35,7 +41,8 @@
 }
 
 /*
- * header 与正文同底色，只用一条线分隔；上下 6px、行高交给里面的按钮，整体紧凑。
+ * header 走 chrome 档（与侧栏同色），与正文的画布纸靠一条线分界；
+ * 上下 6px、行高交给里面的按钮，整体紧凑。
  * 用 `.content .header` 双类名：Mantine 给 modal header 垫了 `min-height: calc(3.75rem * scale)`
  * 与它那套 padding，单类名要靠 CSS 加载顺序才盖得住。
  */
@@ -46,7 +53,7 @@
   min-height: 0;
   padding: 6px 10px 6px 12px;
   border-bottom: 1px solid var(--app-line);
-  background: transparent;
+  background: var(--preview-chrome);
 }
 
 .title {

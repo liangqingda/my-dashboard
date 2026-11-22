@@ -19,7 +19,7 @@
 }
 
 /*
- * tip 走 portal，拿不到弹窗内容上的 --preview-paper，直接用全局令牌。
+ * tip 走 portal，拿不到弹窗内容上那层配色变量（`--preview-paper` / `--preview-chrome`），直接用全局令牌。
  * 刻意做成深底浅字（暗色模式自动反转）：浅底卡片上必须靠明暗反差一眼跳出来。
  * 同时写 --tooltip-bg / --tooltip-color，Mantine 取色读的就是这两个变量，
  * 样式顺序变了底色也不会退回默认灰。
