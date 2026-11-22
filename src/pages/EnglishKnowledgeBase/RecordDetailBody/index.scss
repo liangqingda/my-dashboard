@@ -1,4 +1,4 @@
-/* 详情正文、引文与统计行的样式：弹窗外壳在 RecordDetailModal 目录里 */
+/* 详情正文、引文与记录信息表格的样式：弹窗外壳在 RecordDetailModal 目录里 */
 
 .body {
   color: var(--app-ink);
@@ -22,4 +22,11 @@
 
 .value {
   overflow-wrap: anywhere;
+}
+
+/* 记录信息表的字段列：固定窄列 + 字段色，值列吃掉剩余宽度 */
+.fieldLabel {
+  width: 80px;
+  color: var(--app-ink-soft);
+  white-space: nowrap;
 }

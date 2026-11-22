@@ -27,19 +27,21 @@ const statusText = (status: string): string =>
     : status || EMPTY_CELL;
 
 /**
- * 一条「字段：值」行；值缺失时显示占位，不留空。
+ * 记录信息表格的一行：字段名 + 值；值缺失时显示占位，不留空。
  * `action` 是值后面紧跟的一个操作（目前只有记录 ID 后面的复制按钮）。
  */
-const field = (label: string, value: string, action?: ReactNode) => (
-  <Group gap={6} key={label} wrap="nowrap">
-    <Text c="dimmed" size="xs" w={72}>
-      {label}
-    </Text>
-    <Text className={styles.value} size="xs">
-      {value || EMPTY_CELL}
-    </Text>
-    {action}
-  </Group>
+const fieldRow = (label: string, value: string, action?: ReactNode) => (
+  <FreeTable.Tr key={label}>
+    <FreeTable.Td className={styles.fieldLabel}>{label}</FreeTable.Td>
+    <FreeTable.Td>
+      <Group gap={6} wrap="nowrap">
+        <Text className={styles.value} size="xs">
+          {value || EMPTY_CELL}
+        </Text>
+        {action}
+      </Group>
+    </FreeTable.Td>
+  </FreeTable.Tr>
 );
 
 /**
@@ -200,25 +202,38 @@ const RecordDetailBody = ({ recordId }: RecordDetailBodyProps) => {
         </Stack>
       ) : null}
       <Stack gap={4}>
-        {field(
-          '记录 ID',
-          detail.id,
-          <CopyIconButton
-            iconSize={13}
-            label="复制记录 ID（C）"
-            size="xs"
-            text={detail.id}
-          />,
-        )}
-        {field('掌握分', formatScore(detail.masteryScore))}
-        {field('连续满分', formatTenStreak(detail.masteredTenStreak))}
-        {field('复习次数', String(detail.reviewCount))}
-        {field('学习次数', String(detail.learnedCount))}
-        {field('遗忘次数', String(detail.lapseCount))}
-        {field('首次学习', formatDateTimeOrEmpty(detail.firstLearnedAt))}
-        {field('最近学习', formatDateTimeOrEmpty(detail.lastLearnedAt))}
-        {field('掌握时间', formatDateTimeOrEmpty(detail.masteredAt))}
-        {field('下次复习', formatDateTimeOrEmpty(detail.nextReviewAt))}
+        <Text c="dimmed" size="xs">
+          记录信息
+        </Text>
+        <FreeTable compact tabularNums>
+          <FreeTable.Thead>
+            <FreeTable.Tr>
+              <FreeTable.Th scope="col">字段</FreeTable.Th>
+              <FreeTable.Th scope="col">值</FreeTable.Th>
+            </FreeTable.Tr>
+          </FreeTable.Thead>
+          <FreeTable.Tbody>
+            {fieldRow(
+              '记录 ID',
+              detail.id,
+              <CopyIconButton
+                iconSize={13}
+                label="复制记录 ID（C）"
+                size="xs"
+                text={detail.id}
+              />,
+            )}
+            {fieldRow('掌握分', formatScore(detail.masteryScore))}
+            {fieldRow('连续满分', formatTenStreak(detail.masteredTenStreak))}
+            {fieldRow('复习次数', String(detail.reviewCount))}
+            {fieldRow('学习次数', String(detail.learnedCount))}
+            {fieldRow('遗忘次数', String(detail.lapseCount))}
+            {fieldRow('首次学习', formatDateTimeOrEmpty(detail.firstLearnedAt))}
+            {fieldRow('最近学习', formatDateTimeOrEmpty(detail.lastLearnedAt))}
+            {fieldRow('掌握时间', formatDateTimeOrEmpty(detail.masteredAt))}
+            {fieldRow('下次复习', formatDateTimeOrEmpty(detail.nextReviewAt))}
+          </FreeTable.Tbody>
+        </FreeTable>
       </Stack>
     </Stack>
   );
