@@ -4,10 +4,14 @@
    浅/暗两套令牌，供所有页面组件消费。
    ============================================================ */
 :root {
-  /* surfaces：内容区（--app-bg）比 chrome（--app-surface-subtle）深一档，卡片再抬到纯白 */
+  /*
+   * surfaces：浅色下 chrome（--app-surface-subtle，顶栏 / 侧栏）比内容区（--app-bg）暗一档，
+   * 暗色下反过来比内容区亮一档（见下面暗色块）——两边都是「外壳从画布上浮出来」，
+   * 只是浅色靠暗一点、暗色靠亮一点。卡片（--app-surface）永远比内容区更靠前。
+   */
   --app-bg: #eaeeec;
   --app-surface: #ffffff;
-  --app-surface-subtle: #eef2f0;
+  --app-surface-subtle: #e7ecea;
   /* hover 要同时压过内容区与纯白卡片：跟着内容区一起调深，否则落在画布上几乎看不出来 */
   --app-surface-hover: #e3ece7;
 
@@ -39,7 +43,7 @@
   --app-status-danger-fill: #b53228;
   --app-status-danger-fill-hover: #9c2a21;
   --app-status-muted: #64766e;
-  --app-status-muted-soft: #eef2f0;
+  --app-status-muted-soft: #e7ecea;
 
   /* spacing */
   --app-space-sm: 0.5rem;
@@ -57,13 +61,13 @@
 
 html[data-mantine-color-scheme='dark'] {
   /*
-   * 暗色下三层的关系与浅色同向：内容区（--app-bg）比 chrome（--app-surface-subtle）稍暗，
-   * 只差一小档（约 2–3），不再是一块亮条箍着一块黑洞；卡片（surface）明显亮于内容区（约 6）。
+   * 暗色下三层的关系：chrome（--app-surface-subtle）比内容区（--app-bg）亮一档（约 6），
+   * 卡片（surface）也比内容区亮（约 6），于是「外壳」与「卡片」同档、画布最暗。
    * 暗色里「越亮越靠前」：内容区这档别压回 #0f1513 那种近乎纯黑，读起来会闷。
    */
   --app-bg: #18211f;
   --app-surface: #1e2724;
-  --app-surface-subtle: #1a2320;
+  --app-surface-subtle: #1e2825;
   --app-surface-hover: #22302c;
 
   --app-ink-strong: #bccac4;
@@ -90,7 +94,7 @@ html[data-mantine-color-scheme='dark'] {
   --app-status-danger-fill: #b2413a;
   --app-status-danger-fill-hover: #9c342d;
   --app-status-muted: #9aa9a3;
-  --app-status-muted-soft: #1a2320;
+  --app-status-muted-soft: #1e2825;
 }
 
 :root {
