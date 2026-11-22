@@ -9,8 +9,10 @@ export type FilesActionsPanel = 'favorites' | 'filter';
 
 /** 标题栏操作按钮组的入参；开合状态与各事件都由页面层传入，这里只排按钮与弹层 */
 export type FilesActionsProps = {
-  /** 取数进行中（打开按钮随之禁用） */
+  /** 取数进行中（打开 / 新建按钮随之禁用） */
   loading: boolean;
+  /** 还没选目录时新建与收藏按钮禁用 */
+  createDisabled: boolean;
   /** 当前目录是否已收藏 */
   isFavorite: boolean;
   /** 还没选目录时收藏按钮禁用 */
@@ -27,6 +29,8 @@ export type FilesActionsProps = {
   openPanel: FilesActionsPanel | null;
   /** 调起系统目录选择器选择目录 */
   onPickDir: () => void;
+  /** 在当前目录下新建文件夹并进入改名态 */
+  onCreateFolder: () => void;
   /** 收藏 / 取消收藏当前目录 */
   onToggleFavorite: () => void;
   /** 点收藏面板某一条直达该目录 */

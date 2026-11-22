@@ -3,18 +3,23 @@
  *
  * - `GET /api/files`：列用户主目录；
  * - `GET /api/files?dir=<绝对路径>`：列指定目录（含子文件夹直属条目数、文件大小与修改时间）；
- * - `POST /api/files/pick-dir`：调起 macOS 系统目录选择框，body `{ dir }` 作为默认定位目录，返回选中目录的绝对路径（取消返回 cancelled）。
+ * - `POST /api/files/pick-dir`：调起 macOS 系统目录选择框，body `{ dir }` 作为默认定位目录，返回选中目录的绝对路径（取消返回 cancelled）；
+ * - `POST /api/files/new-folder`：在 body `{ dir }` 目录下新建文件夹，返回新条目；
+ * - `POST /api/files/rename`：body `{ path, name }` 重命名一条条目；
+ * - `POST /api/files/move`：body `{ source, targetDir }` 把一条条目移入目标目录。
  *
- * 只读、不写盘；中间件只挂在开发服务器上，静态构建不带这个接口。
- * 文件内容与预览是单独任务，本接口不下发文件内容，只给列表摘要。
+ * 写操作仅限开发服务器中间件，静态构建不带这些接口；不读文件内容，只给列表摘要。
  */
 
 import type { Plugin } from 'vite';
 
 import {
+  createFolder,
   homeDirectory,
   listDirectory,
+  moveEntry,
   pickDirectory,
+  renameEntry,
   statusForReadError,
 } from './files-store.js';
 
@@ -68,6 +73,10 @@ const readJsonBody = (
     req.on('error', () => resolve({}));
   });
 
+/** 从 body 取字符串字段；缺失 / 非字符串按空串处理，校验留在 store 层 */
+const bodyString = (body: Record<string, unknown>, key: string): string =>
+  typeof body[key] === 'string' ? body[key] : '';
+
 /**
  * 目录浏览插件：读盘归类走 `files-store.ts`，这里只做请求解析、错误归类与响应收口。
  */
@@ -110,6 +119,60 @@ export const files = (): Plugin => ({
             JSON.stringify({
               message:
                 error instanceof Error ? error.message : '选择目录失败',
+            }),
+          );
+        }
+
+        return;
+      }
+
+      if (
+        pathname === '/new-folder' ||
+        pathname === '/rename' ||
+        pathname === '/move'
+      ) {
+        if (req.method !== 'POST') {
+          res.statusCode = 405;
+          res.end(JSON.stringify({ message: '不支持的请求方法' }));
+
+          return;
+        }
+
+        if (!sameOrigin(req)) {
+          res.statusCode = 403;
+          res.end(JSON.stringify({ message: '跨站请求被拒绝' }));
+
+          return;
+        }
+
+        try {
+          const body = await readJsonBody(req);
+
+          if (pathname === '/new-folder') {
+            const entry = await createFolder(bodyString(body, 'dir'));
+
+            res.end(JSON.stringify({ entry }));
+          } else if (pathname === '/rename') {
+            const entry = await renameEntry(
+              bodyString(body, 'path'),
+              bodyString(body, 'name'),
+            );
+
+            res.end(JSON.stringify({ entry }));
+          } else {
+            await moveEntry(
+              bodyString(body, 'source'),
+              bodyString(body, 'targetDir'),
+            );
+
+            res.end(JSON.stringify({ ok: true }));
+          }
+        } catch (error) {
+          res.statusCode = statusForReadError(error);
+          res.end(
+            JSON.stringify({
+              message:
+                error instanceof Error ? error.message : '操作失败',
             }),
           );
         }

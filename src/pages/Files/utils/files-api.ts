@@ -18,6 +18,9 @@ import type {
 
 const LIST_ENDPOINT = '/api/files';
 const PICK_ENDPOINT = '/api/files/pick-dir';
+const NEW_FOLDER_ENDPOINT = '/api/files/new-folder';
+const RENAME_ENDPOINT = '/api/files/rename';
+const MOVE_ENDPOINT = '/api/files/move';
 
 /** 系统目录选择器返回值：选中给绝对路径，取消给 cancelled */
 export type PickedDir = { path: string } | { cancelled: true };
@@ -207,4 +210,72 @@ export const pickPickedDir = async (
   }
 
   return picked;
+};
+
+/** POST JSON 写请求：统一开发态守卫与错误文案收口 */
+const postJson = async (
+  endpoint: string,
+  body: Record<string, unknown>,
+  signal?: AbortSignal,
+): Promise<unknown> => {
+  if (!import.meta.env.DEV) {
+    throw new Error('静态构建不支持操作本地目录，请在开发模式下打开');
+  }
+
+  const response = await fetch(endpoint, {
+    ...REQUEST_INIT,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    signal,
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      await readHttpErrorMessage(response, `操作失败（HTTP ${response.status}）`),
+    );
+  }
+
+  return readJson(response);
+};
+
+/** 在当前目录下新建文件夹；返回新建条目，默认名重名由后端追加序号 */
+export const createFolder = async (
+  dir: string,
+  signal?: AbortSignal,
+): Promise<FolderEntry> => {
+  const payload = await postJson(NEW_FOLDER_ENDPOINT, { dir }, signal);
+  const entry = isObject(payload) ? normalizeFolder(payload.entry) : null;
+
+  if (entry === null) {
+    throw new Error('目录数据格式不符合预期');
+  }
+
+  return entry;
+};
+
+/** 重命名一条条目；返回重命名后的路径与名字。同名冲突由后端拒绝 */
+export const renameEntry = async (
+  pathValue: string,
+  name: string,
+): Promise<{ name: string; path: string }> => {
+  const payload = await postJson(RENAME_ENDPOINT, { path: pathValue, name });
+
+  if (
+    !isObject(payload) ||
+    typeof payload.path !== 'string' ||
+    typeof payload.name !== 'string'
+  ) {
+    throw new Error('目录数据格式不符合预期');
+  }
+
+  return { name: payload.name, path: payload.path };
+};
+
+/** 把一条条目移入目标文件夹；同名冲突 / 移入自身后代由后端拒绝 */
+export const moveEntry = async (
+  source: string,
+  targetDir: string,
+): Promise<void> => {
+  await postJson(MOVE_ENDPOINT, { source, targetDir });
 };

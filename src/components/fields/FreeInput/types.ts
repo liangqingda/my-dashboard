@@ -2,7 +2,11 @@
  * 普通单行输入框的契约：值 + 改动回调，尺寸档与外观由组件自己定。
  */
 
-import type { KeyboardEventHandler, ReactNode } from 'react';
+import type {
+  FocusEventHandler,
+  KeyboardEventHandler,
+  ReactNode,
+} from 'react';
 import type { TextInputProps } from '@mantine/core';
 
 /** 普通单行输入框的入参 */
@@ -21,6 +25,12 @@ export type FreeInputProps = {
   description?: string;
   /** 回车等按键行为由调用方给（输入框自己不抢键） */
   onKeyDown?: KeyboardEventHandler<HTMLInputElement>;
+  /** 聚焦行为（如聚焦时全选文本）由调用方给 */
+  onFocus?: FocusEventHandler<HTMLInputElement>;
+  /** 失焦行为（如失焦提交）由调用方给 */
+  onBlur?: FocusEventHandler<HTMLInputElement>;
+  /** 挂载即聚焦（就地改名这类场景） */
+  autoFocus?: boolean;
   /** 左侧附加内容（如图标）；没有搜索语义时不要硬塞搜索图标 */
   leftSection?: ReactNode;
   /** 面板内字段间距这类既有口径，不在这里写新样式 */

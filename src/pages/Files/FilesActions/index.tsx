@@ -1,5 +1,5 @@
 /**
- * 文件页标题栏操作按钮组：「打开本地目录」图标按钮、收藏弹层按钮、筛选弹层按钮。
+ * 文件页标题栏操作按钮组：「新建文件夹」「打开本地目录」图标按钮、收藏弹层按钮、筛选弹层按钮。
  * 两块弹层互斥，同时只开一块；开合状态由页面层持有，这里只排按钮与弹层内容。
  */
 
@@ -8,6 +8,7 @@ import {
   IconBookmarkFilled,
   IconFilter,
   IconFolderOpen,
+  IconFolderPlus,
 } from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
@@ -22,12 +23,14 @@ const ICON_SIZE = 16;
 const ICON_STROKE = 1.9;
 
 const FilesActions = ({
+  createDisabled,
   favoriteDisabled,
   favorites,
   isFavorite,
   keyword,
   loading,
   onCategoriesChange,
+  onCreateFolder,
   onKeywordChange,
   onOpenFavorite,
   onPanelChange,
@@ -43,6 +46,14 @@ const FilesActions = ({
 
   return (
     <>
+      <FreeIconAction
+        disabled={createDisabled || loading}
+        label="新建文件夹"
+        onClick={onCreateFolder}
+      >
+        <IconFolderPlus size={ICON_SIZE} stroke={ICON_STROKE} />
+      </FreeIconAction>
+
       <FreeIconAction
         disabled={loading}
         label="选择本地目录"

@@ -6,7 +6,7 @@
  */
 
 import { execFile } from 'node:child_process';
-import { readdir, stat } from 'node:fs/promises';
+import { mkdir, readdir, rename as renamePath, stat } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
@@ -121,7 +121,18 @@ const errorCode = (error: unknown): string =>
     ? String((error as { code: unknown }).code)
     : '';
 
-/** 读盘错误 → HTTP 状态码；认不出的按 500 处理 */
+/** 同名冲突：目标位置已有同名条目，调用方按 409 收口，不覆盖 */
+export class EntryConflictError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'EntryConflictError';
+    this.code = 'EEXIST';
+  }
+
+  code: string;
+}
+
+/** 读盘 / 写盘错误 → HTTP 状态码；认不出的按 500 处理 */
 export const statusForReadError = (error: unknown): number => {
   const code = errorCode(error);
 
@@ -131,6 +142,10 @@ export const statusForReadError = (error: unknown): number => {
 
   if (code === 'EACCES' || code === 'EPERM') {
     return 403;
+  }
+
+  if (code === 'EEXIST') {
+    return 409;
   }
 
   return 500;
@@ -243,6 +258,155 @@ export const listDirectory = async (input: string): Promise<DirListing> => {
 
 /** 未指定目录时的默认起点：当前用户主目录 */
 export const homeDirectory = (): string => homedir();
+
+/** 新建文件夹的默认名；重名时依次追加 2、3… */
+const DEFAULT_FOLDER_NAME = '未命名文件夹';
+
+/** 校验条目名：去首尾空白；拒收空名、路径分隔符、单双点与点开头的隐藏名 */
+const resolveEntryName = (raw: string): string => {
+  const name = raw.trim();
+
+  if (!name) {
+    throw new Error('名称不能为空');
+  }
+
+  if (name.includes('/') || name.includes('\\')) {
+    throw new Error('名称不能包含路径分隔符');
+  }
+
+  if (name === '.' || name === '..') {
+    throw new Error('名称不能是 . 或 ..');
+  }
+
+  if (name.startsWith('.')) {
+    throw new Error('名称不能以点开头');
+  }
+
+  if (name.length > 255) {
+    throw new Error('名称过长');
+  }
+
+  return name;
+};
+
+/** 路径是否已存在；读不到按不存在处理 */
+const pathExists = async (target: string): Promise<boolean> => {
+  try {
+    await stat(target);
+
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+/** 在目录里找一个不重名的文件夹名：基础名被占用就依次追加 2、3… */
+const uniqueFolderName = async (
+  dir: string,
+  base: string,
+): Promise<string> => {
+  const entries = await readdir(dir, { withFileTypes: true });
+  const taken = new Set(entries.map((entry) => entry.name));
+
+  if (!taken.has(base)) {
+    return base;
+  }
+
+  let index = 2;
+
+  while (taken.has(`${base} ${index}`)) {
+    index += 1;
+  }
+
+  return `${base} ${index}`;
+};
+
+/**
+ * 在指定目录下新建文件夹；目录由 `resolveDir` 校验。返回新建条目的摘要，
+ * 初始直属条目数为 0。默认名重名时自动追加序号，不覆盖已有文件夹。
+ */
+export const createFolder = async (dirInput: string): Promise<FolderEntry> => {
+  const dir = resolveDir(dirInput);
+  const name = await uniqueFolderName(dir, DEFAULT_FOLDER_NAME);
+  const target = path.join(dir, name);
+
+  if (await pathExists(target)) {
+    throw new EntryConflictError(`已存在同名文件夹：${name}`);
+  }
+
+  await mkdir(target);
+
+  return { name, path: target, itemCount: 0 };
+};
+
+/**
+ * 重命名一条文件夹或文件；新名校验通过后，目标位置已有同名条目则按冲突拒绝，不覆盖。
+ * 返回重命名后的路径与名字。
+ */
+export const renameEntry = async (
+  entryPath: string,
+  rawName: string,
+): Promise<{ name: string; path: string }> => {
+  const source = path.resolve(entryPath);
+  const name = resolveEntryName(rawName);
+
+  let sourceInfo;
+
+  try {
+    sourceInfo = await stat(source);
+  } catch (error) {
+    throw toReadError(error, source);
+  }
+
+  if (!sourceInfo.isDirectory() && !sourceInfo.isFile()) {
+    throw new Error('只能重命名文件夹或常规文件');
+  }
+
+  const target = path.join(path.dirname(source), name);
+
+  if (await pathExists(target)) {
+    throw new EntryConflictError(`已存在同名条目：${name}`);
+  }
+
+  await renamePath(source, target);
+
+  return { name, path: target };
+};
+
+/**
+ * 把一条文件夹或文件移动到目标目录；目标位置已有同名条目则按冲突拒绝，不覆盖。
+ * 文件夹不能移动到它自身或其子文件夹内。
+ */
+export const moveEntry = async (
+  sourceInput: string,
+  targetDirInput: string,
+): Promise<void> => {
+  const source = path.resolve(sourceInput);
+  const targetDir = resolveDir(targetDirInput);
+
+  let sourceInfo;
+
+  try {
+    sourceInfo = await stat(source);
+  } catch (error) {
+    throw toReadError(error, source);
+  }
+
+  const target = path.join(targetDir, path.basename(source));
+
+  if (await pathExists(target)) {
+    throw new EntryConflictError(`目标文件夹已有同名条目：${path.basename(source)}`);
+  }
+
+  if (
+    sourceInfo.isDirectory() &&
+    (target === source || target.startsWith(`${source}${path.sep}`))
+  ) {
+    throw new Error('不能把文件夹移动到它自身或其子文件夹内');
+  }
+
+  await renamePath(source, target);
+};
 
 /** 系统目录选择器返回值：选中给绝对路径，用户取消给 cancelled */
 export type PickedDir = { path: string } | { cancelled: true };

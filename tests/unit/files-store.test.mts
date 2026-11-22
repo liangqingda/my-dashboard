@@ -4,7 +4,13 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { after, before, describe, it } from 'node:test';
 
-import { buildPickerScript, listDirectory } from '../../scripts/vite/files-store.ts';
+import {
+  buildPickerScript,
+  createFolder,
+  listDirectory,
+  moveEntry,
+  renameEntry,
+} from '../../scripts/vite/files-store.ts';
 
 describe('files-store', () => {
   let root = '';
@@ -102,5 +108,89 @@ describe('files-store', () => {
 
     assert.match(script, /default location defaultDir/);
     assert.match(script, /POSIX file "\/Users\/lqd\/My \\"Docs\\""/);
+  });
+
+  it('新建文件夹：默认名重名时自动追加序号，不覆盖已有文件夹', async () => {
+    const first = await createFolder(root);
+
+    assert.equal(first.name, '未命名文件夹');
+    assert.equal(first.itemCount, 0);
+
+    const second = await createFolder(root);
+
+    assert.equal(second.name, '未命名文件夹 2');
+
+    const listing = await listDirectory(root);
+
+    assert.ok(listing.folders.some((folder) => folder.name === first.name));
+    assert.ok(listing.folders.some((folder) => folder.name === second.name));
+  });
+
+  it('重命名：改名后路径同步更新；目标已有同名条目时拒绝且不覆盖', async () => {
+    const created = await createFolder(root);
+    const renamed = await renameEntry(created.path, 'renamed-folder');
+
+    assert.equal(renamed.name, 'renamed-folder');
+    assert.equal(renamed.path, path.join(root, 'renamed-folder'));
+
+    await assert.rejects(
+      () => renameEntry(renamed.path, 'folder-a'),
+      /已存在同名条目/,
+    );
+
+    const listing = await listDirectory(root);
+
+    assert.ok(listing.folders.some((folder) => folder.name === 'renamed-folder'));
+  });
+
+  it('移动条目：文件移入目标文件夹；目标已有同名条目时拒绝', async () => {
+    const before = await listDirectory(root);
+    const target = before.folders.find((folder) => folder.name === 'folder-b');
+
+    assert.ok(target);
+
+    const source = before.files.find((file) => file.name === 'clip.webm');
+
+    assert.ok(source);
+
+    await moveEntry(source.path, target.path);
+
+    const afterRoot = await listDirectory(root);
+    const afterTarget = await listDirectory(target.path);
+
+    assert.equal(
+      afterRoot.files.some((file) => file.name === 'clip.webm'),
+      false,
+    );
+    assert.ok(afterTarget.files.some((file) => file.name === 'clip.webm'));
+
+    // folder-a 里已有 one.mp4：再把根目录的另一文件改成同名不适用，这里用同名文件测冲突
+    await writeFile(path.join(target.path, 'dup.txt'), 'x');
+    await writeFile(path.join(root, 'dup.txt'), 'y');
+
+    const rootDup = (await listDirectory(root)).files.find(
+      (file) => file.name === 'dup.txt',
+    );
+
+    assert.ok(rootDup);
+    await assert.rejects(() => moveEntry(rootDup.path, target.path), /同名条目/);
+  });
+
+  it('文件夹不能移动到它自身或其子文件夹内', async () => {
+    const listing = await listDirectory(root);
+    const sub = listing.folders.find((folder) => folder.name === 'sub');
+
+    assert.ok(sub);
+
+    const child = (await listDirectory(sub.path)).folders.find(
+      (folder) => folder.name === 'folder-c',
+    );
+
+    assert.ok(child);
+
+    await assert.rejects(
+      () => moveEntry(sub.path, child.path),
+      /自身或其子文件夹/,
+    );
   });
 });

@@ -9,10 +9,13 @@ import type { FreeInputProps } from './types';
 
 const FreeInput = ({
   ariaLabel,
+  autoFocus = false,
   description,
   label,
   leftSection,
+  onBlur,
   onChange,
+  onFocus,
   onKeyDown,
   placeholder,
   styles,
@@ -21,10 +24,13 @@ const FreeInput = ({
 }: FreeInputProps) => (
   <TextInput
     aria-label={ariaLabel}
+    autoFocus={autoFocus}
     description={description}
     label={label}
     leftSection={leftSection}
+    onBlur={onBlur}
     onChange={(event) => onChange(event.currentTarget.value)}
+    onFocus={onFocus}
     onKeyDown={onKeyDown}
     placeholder={placeholder}
     size="xs"
