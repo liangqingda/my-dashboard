@@ -34,11 +34,13 @@
   - **`F`**：切换全屏（有全屏按钮、即 `showToggle` 不为 `false` 时）；
   - **`M` 静音**、**`S` 显隐面板**：传了 `media.onToggleMute` / `onToggleSidebar` 才生效
     （视频预览里是静音、目录列的显隐）；
+  - **`Enter` 截图**：传了 `onCapture` 时触发（视频预览截当前帧）；还没解出画面等
+    由调用方自己判断，外壳只把按键转成一个回调；
   - **`C` 复制**：传了 `copy` 时把那段文本写进剪贴板，并给一条成功 / 失败提示（走固定通知 id）；
   - **`Delete` / `Backspace` 删除**：传了 `onRequestDelete` 时触发它（调用方只打开二次确认层，
     不在这里直接删）。两个键都认：macOS 键盘上印着 delete 的那颗发出来的就是 `Backspace`。
   放行口径：带 ⌘ / Ctrl / Alt 的组合键不拦、正在输入（输入框 / 可编辑区）不拦、按住连发不算；
-  翻页、方向键、全屏、静音、面板显隐、复制与删除可由 `shortcutsEnabled` 整组收掉（加载中、上层浮层开着时），
+  翻页、方向键、全屏、静音、面板显隐、截图、复制与删除可由 `shortcutsEnabled` 整组收掉（加载中、上层浮层开着时），
   收掉时**连空格一起收**——上层确认层开着，底下的播放器不该还在响应播放 / 暂停。
   复制与删除的键位收在外壳：同一操作只要有两扇弹窗都要用，键位就必须只有一份（留在一处就会出现
   「这边能用、那边不能用」）；具体复制什么、删除时怎么确认仍归调用方。
@@ -71,6 +73,7 @@
 | `media` | `{ onTogglePlay, onToggleMute }`；传了 `onTogglePlay` 之后空格切播放 / 暂停、不再关窗，传了 `onToggleMute` 才有 `M` 静音 |
 | `onToggleSidebar` | `s` / `S` 的动作（视频预览用来收 / 放目录列）；不传则该键不动作。键位归外壳，面板状态归调用方 |
 | `zIndex` | 层级，默认走组件库的弹窗档；要压在另一扇已打开的弹窗之上时显式抬高（二次确认层由 `ConfirmModal` 默认给 `320`） |
+| `onCapture` | `Enter` 的动作（视频预览截当前帧）；不传则该键不动作 |
 | `onSeek` | `(direction: 'backward' \| 'forward') => void`；传了之后 `←` / `→` 交给它（视频快进 / 后退），翻篇只剩 `[` / `]` |
 | `fullscreen` | `{ active, onToggle, showToggle? }`；不传则没有全屏外观与按钮。`showToggle` 默认 `true`，传 `false` 时只保留 `active` 决定的铺满外观、不画按钮也不响应 `F`（进编辑这类不该换尺寸的场景） |
 | `copy` | `{ text, message }`；传了就有 `C` 复制键（`text` 进剪贴板，`message` 是成功提示），与 header 的复制按钮同一口径 |

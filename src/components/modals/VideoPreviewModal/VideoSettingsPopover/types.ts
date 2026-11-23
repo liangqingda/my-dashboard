@@ -1,9 +1,9 @@
 /**
- * 视频设置面板的契约：三项可改的偏好、目录选择与开合状态；
+ * 视频设置面板的契约：可改的偏好、目录选择与开合状态；
  * 值本身由弹窗持有并持久化，面板只负责回传。
  */
 
-import type { VideoArrowMode } from '../constants';
+import type { VideoArrowMode, VideoSpaceMode } from '../constants';
 
 /** 设置面板的入参 */
 export type VideoSettingsPopoverProps = {
@@ -19,10 +19,14 @@ export type VideoSettingsPopoverProps = {
   onChangeOpened: (opened: boolean) => void;
   /** 调系统目录选择框；返回 null 表示取消；不传则面板里没有「选择目录」 */
   onPickCaptureDir?: () => Promise<string | null>;
+  /** 改空格键去向 */
+  onSpaceModeChange: (mode: VideoSpaceMode) => void;
   /** 改步长（秒） */
   onSeekStepChange: (seconds: number) => void;
   /** 是否展开 */
   opened: boolean;
   /** 当前步长（秒） */
   seekStep: number;
+  /** 空格键的去向 */
+  spaceMode: VideoSpaceMode;
 };

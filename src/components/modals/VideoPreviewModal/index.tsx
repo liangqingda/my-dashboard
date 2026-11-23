@@ -3,11 +3,12 @@
  *
  * - header：翻篇 / 计数 / 文件名（外壳）+ 目录显隐、截图、设置、删除（本组件）；
  *   标题与右侧操作组之间恒留 20px，标题不换行、放不下才省略；
- * - 键盘：空格切播放 / 暂停（`FreeModal` 的 `media`），`m` / `M` 静音、`s` / `S` 显隐目录列，
+ * - 键盘：空格按设置切播放 / 暂停或关窗（`FreeModal` 的 `media` / `closeOnSpace`），
+ *   `Enter` 截当前帧、`m` / `M` 静音、`s` / `S` 显隐目录列，
  *   `[` / `]` 翻篇，`←` / `→` 默认按设置里的步长快进 / 后退（可在设置面板改成翻篇），
  *   `Delete` 触发删除确认；设置面板打开或删除确认开着时整组收掉；
  * - 设置面板：快进 / 后退步长、方向键去向、截图存放目录（默认桌面），并把全部键位列一遍；
- * - 翻篇按钮排在播放器控制栏里、播放键左右两侧（与控制栏一起显隐）；
+ * - 控制栏的两颗箭头在播放键左右两侧，去向跟着「方向键去向」设置：快进 / 后退，或翻篇；
  * - 全屏走浏览器 Fullscreen API：侧栏收起时 header 浮在画面上、鼠标静止 1s 收起；
  *   侧栏唤出后 header 回到普通流（否则会盖住侧栏）；指针在控制栏上时不唤出 header；
  * - `Esc` 在全屏里交给浏览器退出全屏，非全屏才是关窗。
@@ -19,28 +20,33 @@ import {
   IconLayoutSidebarLeftCollapse,
   IconLayoutSidebarLeftExpand,
   IconTrash,
+  IconVideo,
 } from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
 import FreeVideo from '@/components/file-preview/FreeVideo';
 import { CONTROLS_SELECTOR } from '@/components/file-preview/FreeVideo/constants';
+import { useBrowserFullscreen } from '@/hooks/useBrowserFullscreen';
 import FreeModal from '@/components/modals/FreeModal';
 import type { FreeModalSeekDirection } from '@/components/modals/FreeModal/types';
+import PreviewSidebar from '@/components/modals/PreviewSidebar';
 
 import { HEADER_HIDE_DELAY } from './constants';
 import { useAutoHideHeader } from './hooks/useAutoHideHeader';
 import { useFrameCapture } from './hooks/useFrameCapture';
-import { useVideoFullscreen } from './hooks/useVideoFullscreen';
 import { useVideoSettings } from './hooks/useVideoSettings';
 import type { VideoPreviewModalProps } from './types';
 import VideoSettingsPopover from './VideoSettingsPopover';
-import VideoSidebar from './VideoSidebar';
 
 import styles from './index.scss';
 
 /** header 图标的尺寸与线宽：与外壳那排图标同一档 */
 const ICON_SIZE = 15;
 const ICON_STROKE = 1.8;
+
+/** 侧栏条目的图标：与 header 同一档 */
+const SIDEBAR_ICON_SIZE = 15;
+const SIDEBAR_ICON_STROKE = 1.6;
 
 const VideoPreviewModal = ({
   activeId,
@@ -61,8 +67,8 @@ const VideoPreviewModal = ({
   const [sidebarOpenInFullscreen, setSidebarOpenInFullscreen] = useState(false);
   /** 设置面板是否展开：开着手动隐藏 header、并收掉整组快捷键 */
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const { active: fullscreen, exit, toggle } = useVideoFullscreen();
-  const { setArrowMode, setCaptureDir, setSeekStep, settings } =
+  const { active: fullscreen, exit, toggle } = useBrowserFullscreen();
+  const { setArrowMode, setCaptureDir, setSeekStep, setSpaceMode, settings } =
     useVideoSettings(storageScope);
 
   const sidebarVisible = fullscreen ? sidebarOpenInFullscreen : sidebarOpen;
@@ -170,11 +176,23 @@ const VideoPreviewModal = ({
   /** 方向键快进时翻篇只剩方括号；tooltip 跟着改口径 */
   const navShortcutHint =
     settings.arrowMode === 'seek' ? '[ · ]' : '[ / ← · ] / →';
+  /** 控制栏那两颗箭头与实体方向键同一套去向：seek 模式快进 / 后退，nav 模式翻篇 */
+  const stepSeek = settings.arrowMode === 'seek';
+  const navBackward = previousItem ? () => onSelect(previousItem.id) : null;
+  const navForward = nextItem ? () => onSelect(nextItem.id) : null;
+  const stepBackward = stepSeek ? () => seekBy('backward') : navBackward;
+  const stepForward = stepSeek ? () => seekBy('forward') : navForward;
+  const stepPreviousLabel = stepSeek
+    ? `后退 ${settings.seekStep} 秒（←）`
+    : '上一个视频（[）';
+  const stepNextLabel = stepSeek
+    ? `前进 ${settings.seekStep} 秒（→）`
+    : '下一个视频（]）';
 
   return (
     <FreeModal
       closeOnEscape={!fullscreen && !settingsOpen && !blocked}
-      closeOnSpace={false}
+      closeOnSpace={settings.spaceMode === 'close' && !settingsOpen && !blocked}
       fullscreen={{ active: fullscreen, onToggle: toggleFullscreen }}
       headerActions={
         <>
@@ -203,8 +221,10 @@ const VideoPreviewModal = ({
             onChangeOpened={setSettingsOpen}
             onPickCaptureDir={onPickCaptureDir}
             onSeekStepChange={setSeekStep}
+            onSpaceModeChange={setSpaceMode}
             opened={settingsOpen}
             seekStep={settings.seekStep}
+            spaceMode={settings.spaceMode}
           />
         </>
       }
@@ -221,7 +241,10 @@ const VideoPreviewModal = ({
           </FreeIconAction>
         ) : undefined
       }
-      media={{ onToggleMute: toggleMute, onTogglePlay: togglePlay }}
+      media={{
+        onToggleMute: toggleMute,
+        onTogglePlay: settings.spaceMode === 'play' ? togglePlay : undefined,
+      }}
       nav={{
         index: index + 1,
         onNext: nextItem ? () => onSelect(nextItem.id) : null,
@@ -229,6 +252,7 @@ const VideoPreviewModal = ({
         shortcutHint: navShortcutHint,
         total: items.length,
       }}
+      onCapture={() => void capture(settings.captureDir)}
       onClose={requestClose}
       onRequestDelete={onRequestDelete ?? null}
       onSeek={settings.arrowMode === 'seek' ? seekBy : undefined}
@@ -240,17 +264,21 @@ const VideoPreviewModal = ({
     >
       <div className={styles.layout}>
         {sidebarVisible ? (
-          <VideoSidebar
+          <PreviewSidebar
             activeId={activeItem.id}
+            icon={<IconVideo size={SIDEBAR_ICON_SIZE} stroke={SIDEBAR_ICON_STROKE} />}
             items={items}
             onSelect={onSelect}
+            title="当前目录视频"
           />
         ) : null}
         <FreeVideo
           key={activeItem.id}
           nav={{
-            onNext: nextItem ? () => onSelect(nextItem.id) : null,
-            onPrevious: previousItem ? () => onSelect(previousItem.id) : null,
+            nextLabel: stepNextLabel,
+            onNext: stepForward,
+            onPrevious: stepBackward,
+            previousLabel: stepPreviousLabel,
           }}
           src={activeItem.src}
           videoRef={videoRef}

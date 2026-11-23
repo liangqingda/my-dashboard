@@ -1,7 +1,7 @@
 /**
- * 视频预览的三项界面偏好：方向键去向、快进 / 后退步长、截图存放目录。
+ * 视频预览的四项界面偏好：方向键去向、快进 / 后退步长、空格键去向、截图存放目录。
  *
- * 三项同属一个 localStorage 命名空间（`<页面标识>:video-preview`），各写各的字段：
+ * 四项同属一个 localStorage 命名空间（`<页面标识>:video-preview`），各写各的字段：
  * 改步长不会把已选的截图目录冲掉。页面标识由调用方给（`storageScope`），
  * 同一个组件挂到第二页时不该共用第一页的偏好。
  */
@@ -19,7 +19,9 @@ import {
   SETTINGS_CAPABILITY,
   SETTINGS_FIELD,
   SEEK_STEP_CODEC,
+  SPACE_MODE_CODEC,
   type VideoArrowMode,
+  type VideoSpaceMode,
 } from '../constants';
 
 /** 设置项的值 */
@@ -30,6 +32,8 @@ export type VideoPreviewSettings = {
   captureDir: string;
   /** 快进 / 后退步长（秒） */
   seekStep: number;
+  /** 空格键是播放 / 暂停还是关闭弹窗 */
+  spaceMode: VideoSpaceMode;
 };
 
 /** 设置 hook 的返回 */
@@ -42,6 +46,8 @@ export type UseVideoSettingsResult = {
   setCaptureDir: (next: string) => void;
   /** 改步长；越界值夹回合法区间 */
   setSeekStep: (next: number) => void;
+  /** 改空格键去向 */
+  setSpaceMode: (next: VideoSpaceMode) => void;
 };
 
 /**
@@ -68,6 +74,11 @@ export const useVideoSettings = (
       storageKey,
       SETTINGS_FIELD.seekStep,
       SEEK_STEP_CODEC,
+    ),
+    spaceMode: readStoredField(
+      storageKey,
+      SETTINGS_FIELD.spaceMode,
+      SPACE_MODE_CODEC,
     ),
   }));
 
@@ -119,5 +130,18 @@ export const useVideoSettings = (
     [storageKey],
   );
 
-  return { setArrowMode, setCaptureDir, setSeekStep, settings };
+  const setSpaceMode = useCallback(
+    (next: VideoSpaceMode) => {
+      writeStoredField(
+        storageKey,
+        SETTINGS_FIELD.spaceMode,
+        SPACE_MODE_CODEC,
+        next,
+      );
+      setSettings((prev) => ({ ...prev, spaceMode: next }));
+    },
+    [storageKey],
+  );
+
+  return { setArrowMode, setCaptureDir, setSeekStep, setSpaceMode, settings };
 };

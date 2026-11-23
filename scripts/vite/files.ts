@@ -5,6 +5,7 @@
  * - `GET /api/files?dir=<绝对路径>`：列指定目录（含子文件夹直属条目数、应用包摘要、文件大小与修改时间，
  *   以及启动卷 / 外接卷的剩余可用空间 `space`）；
  * - `GET /api/files/content?path=<绝对路径>`：按 HTTP Range 流式读一个视频文件（只在开发模式）；
+ * - `GET /api/files/image?path=<绝对路径>`：整份返回一张图片（只在开发模式，给图片预览用）；
  * - `GET /api/files/app-icon?path=<.app 路径>`：把应用包里的 `.icns` 转成 PNG 返回（带缓存）；
  * - `GET /api/files/app-residue?path=<.app 路径>`：列卸载会一并删掉的残留（应用数据 / 缓存 / 偏好设置等）；
  * - `POST /api/files/pick-dir`：调起 macOS 系统目录选择框，body `{ dir }` 作为默认定位目录，返回选中目录的绝对路径（取消返回 cancelled）；
@@ -18,11 +19,13 @@
  * 写操作与媒体接口仅限开发服务器中间件，静态构建不带这些接口；列表只给摘要，视频内容按需流式读取。
  */
 
+import { createReadStream } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import type { Plugin } from 'vite';
 
 import { appIconPng } from './files-app-icons.js';
 import { scanAppResidues, uninstallAppBundle } from './files-apps.js';
+import { openImageFile } from './files-images.js';
 import { openVideoFile, openVideoStream, parseByteRange, saveCapture } from './files-media.js';
 import {
   createFolder,
@@ -171,6 +174,56 @@ const serveVideoContent = async (
 };
 
 /**
+ * 图片内容：整份读给浏览器（图片不需要 Range），带正确 MIME 并禁止缓存，
+ * 换目录 / 换文件后不会拿到上一张的旧内容。
+ */
+const serveImageContent = async (
+  req: import('node:http').IncomingMessage,
+  res: import('node:http').ServerResponse,
+): Promise<void> => {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    sendJsonError(res, 405, '不支持的请求方法');
+
+    return;
+  }
+
+  try {
+    const url = new URL(req.url ?? '', 'http://localhost');
+    const image = await openImageFile(url.searchParams.get('path') ?? '');
+
+    res.setHeader('Content-Type', image.mime);
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Content-Length', image.size);
+
+    if (req.method === 'HEAD') {
+      res.end();
+
+      return;
+    }
+
+    const stream = createReadStream(image.path);
+
+    stream.on('error', () => {
+      if (!res.headersSent) {
+        sendJsonError(res, 500, '读取图片失败');
+
+        return;
+      }
+
+      res.destroy();
+    });
+    res.on('close', () => stream.destroy());
+    stream.pipe(res);
+  } catch (error) {
+    sendJsonError(
+      res,
+      statusForReadError(error),
+      error instanceof Error ? error.message : '读取图片失败',
+    );
+  }
+};
+
+/**
  * 应用图标：取 `.icns` 转好的 PNG 缓存按二进制返回。
  * 没有可用图标时 404，前端回落通用应用图标，不拖垮条目本身。
  */
@@ -223,6 +276,12 @@ export const files = (): Plugin => ({
 
       if (pathname === '/content') {
         await serveVideoContent(req, res);
+
+        return;
+      }
+
+      if (pathname === '/image') {
+        await serveImageContent(req, res);
 
         return;
       }

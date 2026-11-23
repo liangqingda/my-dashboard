@@ -50,7 +50,7 @@ const VideoControls = ({
     {nav ? (
       <FreeIconAction
         disabled={nav.onPrevious === null}
-        label="上一个视频（[）"
+        label={nav.previousLabel ?? '上一个视频'}
         onClick={nav.onPrevious ?? undefined}
       >
         <IconChevronLeft size={STEP_ICON_SIZE} stroke={ICON_STROKE} />
@@ -72,7 +72,7 @@ const VideoControls = ({
     {nav ? (
       <FreeIconAction
         disabled={nav.onNext === null}
-        label="下一个视频（]）"
+        label={nav.nextLabel ?? '下一个视频'}
         onClick={nav.onNext ?? undefined}
       >
         <IconChevronRight size={STEP_ICON_SIZE} stroke={ICON_STROKE} />

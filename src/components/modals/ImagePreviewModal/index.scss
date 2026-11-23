@@ -1,0 +1,8 @@
+/* 图片预览弹窗：左侧图片列表 + 右侧整图（舞台自己撑满），这里只排这两列的横向关系 */
+
+.layout {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}

@@ -1,9 +1,10 @@
 /**
- * 视频弹窗的全屏：走浏览器 Fullscreen API，占满**整块屏幕**，而不是把框体放大到视口。
+ * 整屏全屏：走浏览器 Fullscreen API，把整个页面铺到屏幕上（不是把某个框体放大到视口）。
  *
+ * 视频预览与图片预览共用这一份：两者的差别只在「全屏里固定什么」，状态与失败处理相同。
  * 状态不存 localStorage：进入全屏需要用户手势，刷新后自动恢复全屏会被浏览器拒绝，
- * 记下来只会得到一个「明明记着却进不去」的偏好。退出（Esc / 再点一次）都由 `fullscreenchange`
- * 同步，弹窗不自己猜状态。
+ * 记下来只会得到一个「明明记着却进不去」的偏好。退出（Esc / 再点一次）都由
+ * `fullscreenchange` 同步，调用方不自己猜状态。
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -11,8 +12,8 @@ import { notifications } from '@mantine/notifications';
 
 import { getErrorMessage } from '@/utils/error';
 
-/** 全屏 hook 的返回 */
-export type UseVideoFullscreenResult = {
+/** 整屏全屏 hook 的返回 */
+export type UseBrowserFullscreenResult = {
   /** 当前是否处于整屏全屏 */
   active: boolean;
   /** 切换全屏；浏览器拒绝时给一条红色通知 */
@@ -22,9 +23,9 @@ export type UseVideoFullscreenResult = {
 };
 
 /** 浏览器全屏状态同步 + 主动退出全屏；失败不抛给调用方，只提示一次 */
-export const useVideoFullscreen = (): UseVideoFullscreenResult => {
+export const useBrowserFullscreen = (): UseBrowserFullscreenResult => {
   const [active, setActive] = useState(false);
-  /** 是不是这一次由本弹窗进入的全屏：卸载时只退出自己开的，不去动别的全屏 */
+  /** 是不是这一次由本组件进入的全屏：卸载时只退出自己开的，不去动别的全屏 */
   const enteredRef = useRef(false);
 
   useEffect(() => {

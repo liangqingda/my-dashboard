@@ -18,6 +18,8 @@ export type FilesTableProps = {
   onOpenFolder: (dir: string) => void;
   /** 打开某条视频（点名称交给视频预览弹窗） */
   onOpenVideo: (file: FileEntry) => void;
+  /** 打开某张图片（点名称交给图片预览弹窗） */
+  onOpenImage: (file: FileEntry) => void;
   /** 开始拖拽一条目 */
   onDragStartEntry: (path: string) => void;
   /** 拖拽结束 */

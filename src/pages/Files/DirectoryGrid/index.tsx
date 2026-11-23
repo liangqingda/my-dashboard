@@ -1,6 +1,7 @@
 import type { DragEvent } from 'react';
 
 import AppTile from '../AppTile';
+import type { FileEntry } from '../types';
 import FileTile from '../FileTile';
 import FolderTile from '../FolderTile';
 
@@ -22,6 +23,23 @@ const allowMoveOverGrid = (event: DragEvent<HTMLDivElement>) => {
  * 应用只展示与卸载，不参与拖拽移动。拖拽落在空白处不触发移动，等同取消。
  * 条目数量已经整份在客户端，不做分页或虚拟滚动（见 `docs/pages.md`）。
  */
+/** 可预览的文件按分类分给对应的弹窗；其它文件点不动 */
+const previewHandler = (
+  file: FileEntry,
+  onOpenVideo: (file: FileEntry) => void,
+  onOpenImage: (file: FileEntry) => void,
+): (() => void) | undefined => {
+  if (file.category === 'video') {
+    return () => onOpenVideo(file);
+  }
+
+  if (file.category === 'image') {
+    return () => onOpenImage(file);
+  }
+
+  return undefined;
+};
+
 const DirectoryGrid = ({
   apps,
   dragSource,
@@ -35,6 +53,7 @@ const DirectoryGrid = ({
   onDropFolder,
   onEditEntry,
   onOpenFolder,
+  onOpenImage,
   onOpenVideo,
   onRequestDeleteEntry,
   onRequestUninstallApp,
@@ -71,9 +90,7 @@ const DirectoryGrid = ({
         onDragEnd={onDragEnd}
         onDragStartEntry={() => onDragStartEntry(file.path)}
         onEdit={() => onEditEntry(file)}
-        onOpen={
-          file.category === 'video' ? () => onOpenVideo(file) : undefined
-        }
+        onOpen={previewHandler(file, onOpenVideo, onOpenImage)}
         onRequestDelete={() => onRequestDeleteEntry(file.path)}
       />
     ))}

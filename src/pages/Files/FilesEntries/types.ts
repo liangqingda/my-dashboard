@@ -38,6 +38,8 @@ export type FilesEntriesProps = {
   onOpenFolder: (dir: string) => void;
   /** 打开某条视频 */
   onOpenVideo: (file: FileEntry) => void;
+  /** 打开某张图片 */
+  onOpenImage: (file: FileEntry) => void;
   /** 请求删除某个条目 */
   onRequestDeleteEntry: (path: string) => void;
   /** 请求卸载某个应用 */

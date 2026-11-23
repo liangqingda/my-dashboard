@@ -9,7 +9,7 @@
  * - **`←` / `→`**：默认同 `[` / `]` 翻篇；调用方给了 `onSeek` 时改为交给它快进 / 后退
  *   （视频里方向键要留给播放进度，翻篇只剩方括号）；
  * - **`F` 全屏开关**（有全屏按钮时）；
- * - **`M` 静音开关**、**`S` 显隐面板**（视频预览的目录列）：都是调用方给了动作才生效；
+ * - **`M` 静音开关**、**`S` 显隐面板**（视频预览的目录列）、**`Enter` 截图**：都是调用方给了动作才生效；
  * - **`C` 复制**（调用方给了复制文本时）：与 header 的复制按钮同一口径，写进剪贴板并给一条提示；
  * - **`Delete` / `Backspace` 删除**（调用方给了删除请求时）：只触发确认，不直接删。
  *   两个键都认：`Delete` 是键盘右侧的 Forward Delete，macOS 键盘上印着「delete」的那一颗
@@ -54,6 +54,9 @@ const COPY_KEY = 'c';
 /** 静音键 */
 const MUTE_KEY = 'm';
 
+/** 截图键：回车 */
+const CAPTURE_KEY = 'Enter';
+
 /** 显隐面板键 */
 const SIDEBAR_KEY = 's';
 
@@ -80,6 +83,8 @@ type ModalShortcutsParams = {
   onToggleMute?: () => void;
   /** 切换某块面板的显隐（`s` / `S`，视频预览用来收 / 放目录列）；不传则该键不动作 */
   onToggleSidebar?: () => void;
+  /** 截当前画面（`Enter`，视频预览用来存帧）；不传则该键不动作 */
+  onCapture?: () => void;
   /** 方向键快进 / 后退：传了之后 ← / → 不再翻篇 */
   onSeek?: (direction: FreeModalSeekDirection) => void;
   /** 复制能力：要写进剪贴板的文本；不传表示没有复制按钮 */
@@ -102,6 +107,7 @@ export const useModalShortcuts = ({
   onRequestDelete,
   onSeek,
   onToggleFullscreen,
+  onCapture,
   onToggleMute,
   onTogglePlay,
   onToggleSidebar,
@@ -197,6 +203,13 @@ export const useModalShortcuts = ({
         return;
       }
 
+      if (event.key === CAPTURE_KEY && onCapture) {
+        event.preventDefault();
+        onCapture();
+
+        return;
+      }
+
       // 方向键交给了媒体（视频快进 / 后退）就不再翻篇，翻篇只剩方括号
       const seekDirection = onSeek ? ARROW_SEEK_DIRECTION[event.key] : undefined;
 
@@ -244,6 +257,7 @@ export const useModalShortcuts = ({
     disabled,
     enabled,
     nav,
+    onCapture,
     onClose,
     onRequestDelete,
     onSeek,

@@ -9,6 +9,7 @@ import {
   IconFile,
   IconFileText,
   IconMarkdown,
+  IconPhoto,
   IconVideo,
 } from '@tabler/icons-react';
 
@@ -41,6 +42,7 @@ export const SKELETON_TILES: readonly number[] = [0, 1, 2, 3, 4, 5, 6, 7];
 /** 分类键 → 中文标签；键的集合与中间件 `FileCategory` 对齐 */
 export const FILE_CATEGORY_LABELS: Record<FileCategory, string> = {
   video: '视频',
+  image: '图片',
   pdf: 'PDF',
   markdown: 'Markdown',
   app: 'App',
@@ -86,6 +88,7 @@ export const TYPE_FILTER_STORAGE_KEY = scopedStorageKey(
 /** 分类 → 瓦片图标；视频额外上蓝色，应用走通用应用图标，其余用通用弱色 */
 export const CATEGORY_ICONS: Record<FileCategory, typeof IconFile> = {
   video: IconVideo,
+  image: IconPhoto,
   pdf: IconFileText,
   markdown: IconMarkdown,
   app: IconApps,

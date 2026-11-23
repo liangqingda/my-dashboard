@@ -17,7 +17,7 @@ export type FolderEntry = {
 };
 
 /** 文件归类：与中间件 `FileCategory` 同一套档位，用于区分图标与类型筛选 */
-export type FileCategory = 'video' | 'pdf' | 'markdown' | 'app' | 'other';
+export type FileCategory = 'video' | 'image' | 'pdf' | 'markdown' | 'app' | 'other';
 
 /** 列表里的一条应用包（`.app`） */
 export type AppEntry = {

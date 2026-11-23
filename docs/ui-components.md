@@ -20,6 +20,7 @@
 | 任何 Markdown / 文档预览 | `MarkdownPreviewModal`，不自己接渲染器（行为见 `src/components/modals/MarkdownPreviewModal/README.md`） |
 | 视频播放 | `FreeVideo`（全站唯一的播放器，不自己拼 `<video>` 控制栏；行为见 `src/components/file-preview/FreeVideo/README.md`） |
 | 视频预览 | `VideoPreviewModal`（`FreeModal` + `FreeVideo` + 目录侧栏；行为见 `src/components/modals/VideoPreviewModal/README.md`） |
+| 图片预览 | `ImagePreviewModal`（`FreeModal` + 目录侧栏 + 整图舞台；行为见 `src/components/modals/ImagePreviewModal/README.md`） |
 | 单行输入（无搜索语义） | `FreeInput` |
 | 搜索框（左搜索图标 + 一键清空） | `FreeSearchInput` |
 | 多行输入（普通表单） | `Textarea` |
@@ -80,7 +81,7 @@
 
 | 分类目录 | 放什么 | 现有组件 |
 | --- | --- | --- |
-| `modals` | 弹窗外壳与弹窗类组件（阅读弹窗、视频预览、二次确认） | `FreeModal`、`ConfirmModal`、`MarkdownPreviewModal`、`VideoPreviewModal` |
+| `modals` | 弹窗外壳与弹窗类组件（阅读弹窗、媒体预览、二次确认） | `FreeModal`、`ConfirmModal`、`MarkdownPreviewModal`、`VideoPreviewModal`、`ImagePreviewModal`、`PreviewSidebar` |
 | `buttons` | 按钮、图标按钮、按钮触发的弹层外壳 | `FreeIconAction`、`CopyIconButton`、`FilterButton`、`IconPopoverButton` |
 | `tables` | 表格基线 | `FreeTable` |
 | `fields` | 字段 / 输入控件组 | `FreeSelectField`、`FreeSearchInput` |
@@ -148,6 +149,9 @@
 | `FreeSearchInput` | `src/components/fields/FreeSearchInput/README.md` |
 | `FreeInput` | `src/components/fields/FreeInput/README.md` |
 | `FreeVideo` | `src/components/file-preview/FreeVideo/README.md` |
+| `PreviewSidebar` | `src/components/modals/PreviewSidebar/README.md` |
+| `VideoPreviewModal` | `src/components/modals/VideoPreviewModal/README.md` |
+| `ImagePreviewModal` | `src/components/modals/ImagePreviewModal/README.md` |
 
 ## 基础组件锁的是「外观 + 行为」
 

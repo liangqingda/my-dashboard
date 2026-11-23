@@ -65,7 +65,7 @@ describe('files-store', () => {
         ['archive.zip', 'other'],
         ['clip.webm', 'video'],
         ['guide.pdf', 'pdf'],
-        ['poster.png', 'other'],
+        ['poster.png', 'image'],
         ['readme.md', 'markdown'],
         ['script.js', 'other'],
       ],

@@ -28,6 +28,7 @@ const FilesEntries = ({
   onDropFolder,
   onEditEntry,
   onOpenFolder,
+  onOpenImage,
   onOpenVideo,
   onRequestDeleteEntry,
   onRequestUninstallApp,
@@ -65,6 +66,7 @@ const FilesEntries = ({
         onDropFolder={onDropFolder}
         onEditEntry={onEditEntry}
         onOpenFolder={onOpenFolder}
+        onOpenImage={onOpenImage}
         onOpenVideo={onOpenVideo}
         onRequestDeleteEntry={onRequestDeleteEntry}
         onRequestUninstallApp={onRequestUninstallApp}
@@ -80,6 +82,7 @@ const FilesEntries = ({
         onDropFolder={onDropFolder}
         onEditEntry={onEditEntry}
         onOpenFolder={onOpenFolder}
+        onOpenImage={onOpenImage}
         onOpenVideo={onOpenVideo}
         onRequestDeleteEntry={onRequestDeleteEntry}
         onRequestUninstallApp={onRequestUninstallApp}

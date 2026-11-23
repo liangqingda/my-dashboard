@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Group, Skeleton, Stack, Text } from '@mantine/core';
+import { useEffect, useState } from 'react';
+import { Stack } from '@mantine/core';
 
-import VideoPreviewModal from '@/components/modals/VideoPreviewModal';
 import MenuContentLayout from '@/layouts/MenuContentLayout';
 import { onPageRefresh } from '@/utils/page-refresh';
 
@@ -10,18 +9,20 @@ import DirBreadcrumb from './DirBreadcrumb';
 import FilesActions from './FilesActions';
 import type { FilesActionsPanel } from './FilesActions/types';
 import FilesEntries from './FilesEntries';
+import FilesPreviewLayers from './FilesPreviewLayers';
+import FilesStates from './FilesStates';
 import RenameEntryModal from './RenameEntryModal';
 import UninstallAppConfirm from './UninstallAppConfirm';
-import { FILES_STORAGE_SCOPE, SKELETON_TILES } from './constants';
+import { FILES_STORAGE_SCOPE } from './constants';
 import { useAppUninstall } from './hooks/useAppUninstall';
 import { useEntryActions } from './hooks/useEntryActions';
 import { useEntryDelete } from './hooks/useEntryDelete';
 import { useFavorites } from './hooks/useFavorites';
 import { useFilesDir } from './hooks/useFilesDir';
 import { useFilesViewMode } from './hooks/useFilesViewMode';
+import { useImagePreview } from './hooks/useImagePreview';
 import { useTypeFilter } from './hooks/useTypeFilter';
 import { useVideoPreview } from './hooks/useVideoPreview';
-import { videoContentUrl } from './utils/files-api';
 import {
   describeDirSpace,
   filterAppsByCategory,
@@ -41,8 +42,9 @@ import styles from './index.scss';
  * 切换结果记在 localStorage，刷新后保持上次的形态。
  * 点文件夹进入下一层，面包屑回退，`⌘↑` 回上一级；可收藏常用目录，在收藏面板里点选直达；
  * 标题栏筛选面板支持按名称关键词过滤与按类型勾选：视频 / PDF / Markdown / App / 其它默认全选，
- * 取消勾选的类型连同对应文件夹一起隐藏。列表只列摘要；点视频条目会在弹窗里播放，
- * 弹窗的翻篇、目录侧栏与截图都基于当前目录的视频列表。应用 hover 后右上角给卸载按钮，
+ * 取消勾选的类型连同对应文件夹一起隐藏。列表只列摘要；点视频条目会在弹窗里播放、
+ * 点图片条目会在同形的弹窗里预览，两者的翻篇与目录侧栏都基于当前目录的同类列表（视频另有截图）。
+ * 应用 hover 后右上角给卸载按钮，
  * 二次确认里先列清要删的残留，确认后由中间件删整包并清理缓存 / 配置 / 数据。
  * 目录读取走 Vite 中间件，仅开发模式可用。
  * 标题行右侧再显示本机剩余可用空间；当前目录在外接盘（移动硬盘）上时，连同那块盘的可用空间一起显示。
@@ -65,21 +67,19 @@ const Files = () => {
     activeId: previewVideoId,
     captureFrame,
     closeVideo,
+    items: videoItems,
     openVideo,
     pickCaptureDir,
     selectVideo,
-    videos: videoFiles,
   } = useVideoPreview(listing);
-  /** 弹窗条目：id 用路径，播放地址由中间件按 Range 流式读 */
-  const videoItems = useMemo(
-    () =>
-      videoFiles.map((file) => ({
-        id: file.path,
-        name: file.name,
-        src: videoContentUrl(file.path),
-      })),
-    [videoFiles],
-  );
+  /** 图片预览：与视频预览同形，但没有播放 / 截图那一套 */
+  const {
+    activeId: previewImageId,
+    closeImage,
+    items: imageItems,
+    openImage,
+    selectImage,
+  } = useImagePreview(listing);
   const {
     cancelDelete,
     confirmDelete,
@@ -122,12 +122,13 @@ const Files = () => {
   const togglePanel = (panel: FilesActionsPanel) =>
     setOpenPanel((prev) => (prev === panel ? null : panel));
 
-  /** 离开当前目录前清掉改名、拖拽、待删除、待卸载与视频预览状态，不沿用到新目录 */
+  /** 离开当前目录前清掉改名、拖拽、待删除、待卸载与两种预览状态，不沿用到新目录 */
   const resetTransientState = () => {
     entryActions.resetTransient();
     resetDelete();
     appUninstall.reset();
     closeVideo();
+    closeImage();
   };
 
   /** 切目录：先清临时状态再交 hook 取数 */
@@ -159,6 +160,15 @@ const Files = () => {
     visibleFiles.length === 0;
   /** 还没选过目录：引导先填路径，不报错 */
   const showPrompt = !showSkeleton && listing === null && error === null;
+  /** 空态文案：筛过条件与真的空目录给不同一句话；不是空态就是 null */
+  let emptyText: string | null = null;
+
+  if (showEmpty) {
+    emptyText =
+      excluded.length > 0 || keyword.trim() !== ''
+        ? '没有符合筛选条件的条目'
+        : '这个目录里没有文件或子文件夹';
+  }
 
   return (
     <MenuContentLayout
@@ -198,40 +208,14 @@ const Files = () => {
       <Stack className={styles.shell} gap="sm">
         <DirBreadcrumb currentDir={currentDir} onNavigate={goToDir} />
 
-        {error !== null ? (
-          <Alert color="red" title="读取目录失败">
-            <Group gap="sm" justify="space-between" wrap="nowrap">
-              <Text size="xs">{error}</Text>
-              <Button onClick={refresh} size="xs" variant="light">
-                重试
-              </Button>
-            </Group>
-          </Alert>
-        ) : null}
-
-        {showGridSkeleton ? (
-          <div className={styles.gridSkeleton}>
-            {SKELETON_TILES.map((tile) => (
-              <Skeleton height={112} key={tile} />
-            ))}
-          </div>
-        ) : null}
-
-        {showTableSkeleton ? <Skeleton height={220} /> : null}
-
-        {showPrompt ? (
-          <Text className={styles.empty} size="sm">
-            点「打开」选择要浏览的本地目录，或从收藏目录进入
-          </Text>
-        ) : null}
-
-        {showEmpty ? (
-          <Text className={styles.empty} size="sm">
-            {excluded.length > 0 || keyword.trim() !== ''
-              ? '没有符合筛选条件的条目'
-              : '这个目录里没有文件或子文件夹'}
-          </Text>
-        ) : null}
+        <FilesStates
+          emptyText={emptyText}
+          error={error}
+          gridSkeleton={showGridSkeleton}
+          onRetry={refresh}
+          prompt={showPrompt}
+          tableSkeleton={showTableSkeleton}
+        />
 
         {/* 两种形态都自己滚：纵向滚动条浮在内容之上，右侧固定留出一段比
             常规内边距更宽的空白（滚动条 6px + 呼吸空间），别让滚动条贴住列表内容 */}
@@ -250,6 +234,7 @@ const Files = () => {
             onDropFolder={entryActions.dropFolder}
             onEditEntry={entryActions.editEntry}
             onOpenFolder={goToDir}
+            onOpenImage={openImage}
             onOpenVideo={openVideo}
             onRequestDeleteEntry={requestDelete}
             onRequestUninstallApp={appUninstall.requestUninstall}
@@ -275,21 +260,20 @@ const Files = () => {
         uninstalling={appUninstall.uninstalling}
       />
 
-      <VideoPreviewModal
-        activeId={previewVideoId}
+      <FilesPreviewLayers
         blocked={deletingEntry !== null}
-        items={videoItems}
-        onCapture={captureFrame}
-        onClose={closeVideo}
+        imageActiveId={previewImageId}
+        imageItems={imageItems}
+        onCaptureVideo={captureFrame}
+        onCloseImage={closeImage}
+        onCloseVideo={closeVideo}
         onPickCaptureDir={pickCaptureDir}
-        onRequestDelete={
-          previewVideoId !== null
-            ? () => requestDelete(previewVideoId)
-            : null
-        }
-        onSelect={selectVideo}
-        opened={previewVideoId !== null}
+        onRequestDelete={requestDelete}
+        onSelectImage={selectImage}
+        onSelectVideo={selectVideo}
         storageScope={FILES_STORAGE_SCOPE}
+        videoActiveId={previewVideoId}
+        videoItems={videoItems}
       />
 
       <RenameEntryModal

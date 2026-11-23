@@ -1,8 +1,8 @@
 /**
  * 视频设置面板：一个图标按钮 + 就近弹出的一档设置。
  *
- * 可改的只有三件：← / → 是快进后退还是翻篇、快进后退的步长、截图存到哪；
- * 其余键位固定，这里整份列出来当作速查表（改键位属于另一件事，不由这个面板承担）。
+ * 可改的是 ← / → 与空格键的去向、快进后退的步长、截图存到哪；
+ * 其余键位固定，这里整份列出来当作速查表（方向键那一行随设置变）。
  * 打开期间弹窗会把整组快捷键收掉（见弹窗的 `shortcutsEnabled`），
  * 免得在输入框 / 分段控件里调值时顺手翻篇或快进。
  */
@@ -30,6 +30,7 @@ import {
   MIN_SEEK_STEP,
   SETTINGS_PANEL_WIDTH,
   type VideoArrowMode,
+  type VideoSpaceMode,
 } from '../constants';
 
 import type { VideoSettingsPopoverProps } from './types';
@@ -46,6 +47,12 @@ const ARROW_MODE_OPTIONS: { label: string; value: VideoArrowMode }[] = [
   { label: '切换上下条', value: 'nav' },
 ];
 
+/** 空格键去向的两档 */
+const SPACE_MODE_OPTIONS: { label: string; value: VideoSpaceMode }[] = [
+  { label: '播放 / 暂停', value: 'play' },
+  { label: '关闭弹窗', value: 'close' },
+];
+
 const VideoSettingsPopover = ({
   arrowMode,
   captureDir,
@@ -54,19 +61,26 @@ const VideoSettingsPopover = ({
   onChangeOpened,
   onPickCaptureDir,
   onSeekStepChange,
+  onSpaceModeChange,
   opened,
   seekStep,
+  spaceMode,
 }: VideoSettingsPopoverProps) => {
   /** 目录选择框打开中：按钮转圈并禁用，避免连点弹出两个系统框 */
   const [picking, setPicking] = useState(false);
 
-  /** 全部键位速查：方向键那一行随设置变，其余固定 */
+  /** 全部键位速查：方向键与空格两行随设置变，其余固定 */
+  const spaceRow = {
+    action: spaceMode === 'play' ? '播放 / 暂停' : '关闭弹窗',
+    keys: ['空格'],
+  };
   const shortcutRows: readonly { action: string; keys: readonly string[] }[] =
     arrowMode === 'seek'
       ? [
-          { action: '播放 / 暂停', keys: ['空格'] },
+          spaceRow,
           { action: '上一个 / 下一个', keys: ['[', ']'] },
           { action: '快进 / 后退', keys: ['←', '→'] },
+          { action: '截当前画面', keys: ['Enter'] },
           { action: '静音 / 取消静音', keys: ['M'] },
           { action: '显示 / 隐藏视频列表', keys: ['S'] },
           { action: '全屏 / 退出全屏', keys: ['F'] },
@@ -74,8 +88,9 @@ const VideoSettingsPopover = ({
           { action: '删除当前视频', keys: ['Delete'] },
         ]
       : [
-          { action: '播放 / 暂停', keys: ['空格'] },
+          spaceRow,
           { action: '上一个 / 下一个', keys: ['[', ']', '←', '→'] },
+          { action: '截当前画面', keys: ['Enter'] },
           { action: '静音 / 取消静音', keys: ['M'] },
           { action: '显示 / 隐藏视频列表', keys: ['S'] },
           { action: '全屏 / 退出全屏', keys: ['F'] },
@@ -165,6 +180,27 @@ const VideoSettingsPopover = ({
             }}
             size="xs"
             value={arrowMode}
+          />
+        </Stack>
+
+        <Stack gap={4}>
+          <Text fw={600} size="xs">
+            空格键
+          </Text>
+          <SegmentedControl
+            data={SPACE_MODE_OPTIONS}
+            fullWidth
+            onChange={(value) => {
+              const next = SPACE_MODE_OPTIONS.find(
+                (option) => option.value === value,
+              );
+
+              if (next !== undefined) {
+                onSpaceModeChange(next.value);
+              }
+            }}
+            size="xs"
+            value={spaceMode}
           />
         </Stack>
 

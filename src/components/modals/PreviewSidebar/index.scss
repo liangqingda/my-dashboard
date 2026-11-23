@@ -1,4 +1,4 @@
-/* 视频列表侧栏：与 header 同一档软底，右侧一条细线与舞台分开 */
+/* 媒体预览的列表侧栏：与 header 同一档软底，右侧一条细线与舞台分开 */
 
 .sidebar {
   display: flex;
@@ -54,13 +54,15 @@
   }
 }
 
-/* 正在播放的一条：与侧栏菜单同一档选中底色 */
+/* 正在预览的一条：与侧栏菜单同一档选中底色 */
 .itemActive {
   background: var(--app-nav-row-active);
   color: var(--app-ink);
 }
 
+/* 媒体类条目统一走蓝色图标，与网格里的视频 / 图片图标同一档 */
 .icon {
+  display: flex;
   flex: 0 0 auto;
   color: var(--mantine-color-blue-5);
 }

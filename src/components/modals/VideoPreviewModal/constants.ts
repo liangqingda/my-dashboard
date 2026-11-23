@@ -25,6 +25,7 @@ export const SETTINGS_FIELD = {
   arrowMode: 'arrowMode',
   captureDir: 'captureDir',
   seekStep: 'seekStep',
+  spaceMode: 'spaceMode',
 } as const;
 
 /** ← / → 的两种去向：快进 / 后退（默认）与翻篇 */
@@ -41,6 +42,18 @@ export const MIN_SEEK_STEP = 1;
 
 /** 步长上限（秒）：再大就不如直接拖进度条 */
 export const MAX_SEEK_STEP = 600;
+
+/** 空格键的两种去向：播放 / 暂停（默认）与关闭弹窗 */
+export const SPACE_MODES = ['play', 'close'] as const;
+
+/** 空格键去向 */
+export type VideoSpaceMode = (typeof SPACE_MODES)[number];
+
+/** 空格键去向的编解码：不认识的存值回落「播放 / 暂停」 */
+export const SPACE_MODE_CODEC = createChoiceFieldCodec<VideoSpaceMode>(
+  SPACE_MODES,
+  'play',
+);
 
 /** 方向键去向的编解码：不认识的存值回落「快进 / 后退」 */
 export const ARROW_MODE_CODEC = createChoiceFieldCodec<VideoArrowMode>(

@@ -29,6 +29,7 @@ const RENAME_ENDPOINT = '/api/files/rename';
 const MOVE_ENDPOINT = '/api/files/move';
 const DELETE_ENDPOINT = '/api/files/delete';
 const CONTENT_ENDPOINT = '/api/files/content';
+const IMAGE_ENDPOINT = '/api/files/image';
 const CAPTURE_ENDPOINT = '/api/files/capture';
 const APP_ICON_ENDPOINT = '/api/files/app-icon';
 const APP_RESIDUE_ENDPOINT = '/api/files/app-residue';
@@ -194,6 +195,13 @@ export const deleteEntry = async (pathValue: string): Promise<void> => {
  */
 export const videoContentUrl = (pathValue: string): string =>
   `${CONTENT_ENDPOINT}?path=${encodeURIComponent(pathValue)}`;
+
+/**
+ * 图片的预览地址：中间件整份返回图片字节，浏览器可以直接把它塞进 `<img src>`。
+ * 与视频地址同一套编码口径——路径里的 `#`、`?` 不改写就会截断查询串。
+ */
+export const imageContentUrl = (pathValue: string): string =>
+  `${IMAGE_ENDPOINT}?path=${encodeURIComponent(pathValue)}`;
 
 /**
  * 把一帧 PNG 截图写进目标目录（空串 = 用户桌面）；返回实际文件名（同秒重名后端会追加序号）。

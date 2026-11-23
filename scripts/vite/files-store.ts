@@ -20,7 +20,7 @@ import type { AppEntry } from './files-apps.ts';
 const execFileAsync = promisify(execFile);
 
 /** 文件归类：前端按这一档换图标、做类型筛选；认不出扩展名的落 `other` */
-export type FileCategory = 'video' | 'pdf' | 'markdown' | 'app' | 'other';
+export type FileCategory = 'video' | 'image' | 'pdf' | 'markdown' | 'app' | 'other';
 
 /** 各分类识别的扩展名（小写、带点）；归类只看扩展名，不读文件内容 */
 const CATEGORY_EXTENSIONS: Readonly<Record<Exclude<FileCategory, 'app' | 'other'>, readonly string[]>> = {
@@ -39,6 +39,19 @@ const CATEGORY_EXTENSIONS: Readonly<Record<Exclude<FileCategory, 'app' | 'other'
     '.m2ts',
     '.3gp',
   ],
+  image: [
+    '.png',
+    '.jpg',
+    '.jpeg',
+    '.gif',
+    '.webp',
+    '.bmp',
+    '.tif',
+    '.tiff',
+    '.heic',
+    '.heif',
+    '.avif',
+  ],
   pdf: ['.pdf'],
   markdown: ['.md', '.markdown'],
 };
@@ -46,6 +59,7 @@ const CATEGORY_EXTENSIONS: Readonly<Record<Exclude<FileCategory, 'app' | 'other'
 /** 分类的固定顺序，拼文件夹分类摘要时按它排，与前端筛选项一致 */
 const CATEGORY_ORDER: readonly FileCategory[] = [
   'video',
+  'image',
   'pdf',
   'markdown',
   'app',
@@ -120,6 +134,10 @@ const categoryForName = (name: string): FileCategory => {
 /** 文件名扩展名是否属于视频分类：媒体接口只放视频，分类规则与列表共用这一份 */
 export const isVideoFileName = (name: string): boolean =>
   categoryForName(name) === 'video';
+
+/** 文件名扩展名是否属于图片分类：图片预览接口据此收口，规则与列表共用这一份 */
+export const isImageFileName = (name: string): boolean =>
+  categoryForName(name) === 'image';
 
 /**
  * 解析并校验入参目录：展开 `~` 为用户主目录，其余必须是绝对路径。
