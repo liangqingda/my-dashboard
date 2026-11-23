@@ -1,26 +1,33 @@
 /**
  * 视频播放器：`<video>` + 项目自己的控制栏（播放 / 进度 / 时间 / 静音 / 音量）。
  *
+ * 与「在哪预览」无关：调用方给一个地址就能播，不读路由、不弹窗、不做全屏与列表；
+ * 需要取当前帧或从外部驱动播放时传 `videoRef`，组件会与内部 ref 合并后交给 `<video>`。
+ *
  * 不用浏览器自带 `controls`：原生控制栏样式跟着系统走，且自带一个「网页元素全屏」按钮，
- * 与本弹窗「整屏全屏 + header 自动隐藏」的交互不是同一件事。播放进度、音量与键盘动作
- * 都由这里驱动，视频元素本身只用 `ref` 交给弹窗（截图取当前帧、空格切播放）。
+ * 与整屏预览的交互不是同一件事。
  *
  * 换片由调用方用 `key` 重挂（每个视频一个实例），不在这里监听 `src` 变化清状态。
  */
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { IconAlertTriangleFilled, IconPlayerPlayFilled } from '@tabler/icons-react';
 import { Loader, UnstyledButton } from '@mantine/core';
+import { useMergedRef } from '@mantine/hooks';
+
+import { cx } from '@/utils/cx';
 
 import VideoControls from './VideoControls';
-import type { VideoPlayerProps } from './types';
+import type { FreeVideoProps } from './types';
 
 import styles from './index.scss';
 
 /** 播放状态：loading 还没解出画面，ready 可播，error 浏览器解不了 */
 type PlayerStatus = 'loading' | 'ready' | 'error';
 
-const VideoPlayer = ({ src, videoRef }: VideoPlayerProps) => {
+const FreeVideo = ({ className, src, videoRef }: FreeVideoProps) => {
+  const ownRef = useRef<HTMLVideoElement | null>(null);
+  const mergedRef = useMergedRef(ownRef, videoRef);
   const [status, setStatus] = useState<PlayerStatus>('loading');
   const [buffering, setBuffering] = useState(false);
   const [playing, setPlaying] = useState(false);
@@ -31,7 +38,7 @@ const VideoPlayer = ({ src, videoRef }: VideoPlayerProps) => {
 
   /** 播放 / 暂停：用户手势里调用，失败（编码不支持）由 error 事件接管 */
   const togglePlay = () => {
-    const element = videoRef.current;
+    const element = ownRef.current;
 
     if (!element) {
       return;
@@ -48,7 +55,7 @@ const VideoPlayer = ({ src, videoRef }: VideoPlayerProps) => {
 
   /** 拖进度条：连续 seek，时间文本跟着走，不等 `timeupdate` */
   const seek = (seconds: number) => {
-    const element = videoRef.current;
+    const element = ownRef.current;
 
     if (!element) {
       return;
@@ -60,7 +67,7 @@ const VideoPlayer = ({ src, videoRef }: VideoPlayerProps) => {
 
   /** 音量：调到非零时自动取消静音（用户拉音量就是想听见） */
   const changeVolume = (next: number) => {
-    const element = videoRef.current;
+    const element = ownRef.current;
 
     if (!element) {
       return;
@@ -75,7 +82,7 @@ const VideoPlayer = ({ src, videoRef }: VideoPlayerProps) => {
 
   /** 静音开关 */
   const toggleMute = () => {
-    const element = videoRef.current;
+    const element = ownRef.current;
 
     if (!element) {
       return;
@@ -87,7 +94,7 @@ const VideoPlayer = ({ src, videoRef }: VideoPlayerProps) => {
   const showPlayOverlay = status === 'ready' && !playing && !buffering;
 
   return (
-    <div className={styles.player}>
+    <div className={cx(styles.player, className)}>
       <div className={styles.stage}>
         <video
           className={styles.video}
@@ -117,7 +124,7 @@ const VideoPlayer = ({ src, videoRef }: VideoPlayerProps) => {
           onWaiting={() => setBuffering(true)}
           playsInline
           preload="auto"
-          ref={videoRef}
+          ref={mergedRef}
           src={src}
         />
 
@@ -171,4 +178,4 @@ const VideoPlayer = ({ src, videoRef }: VideoPlayerProps) => {
   );
 };
 
-export default VideoPlayer;
+export default FreeVideo;

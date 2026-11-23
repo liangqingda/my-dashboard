@@ -1,5 +1,5 @@
 /**
- * 视频预览弹窗：在 `FreeModal` 里放大播放器，左侧列当前目录的视频。
+ * 视频预览弹窗：`FreeModal`（外壳）+ `FreeVideo`（播放器）的组合，左侧列当前目录的视频。
  *
  * - header：翻篇 / 计数 / 文件名（外壳）+ 目录显隐与截图（本组件）；
  * - 全屏走浏览器 Fullscreen API（整块屏幕），全屏时 header 浮在画面上、鼠标静止 3s 收起，
@@ -16,13 +16,13 @@ import {
 } from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
+import FreeVideo from '@/components/file-preview/FreeVideo';
 import FreeModal from '@/components/modals/FreeModal';
 
 import { useAutoHideHeader } from './hooks/useAutoHideHeader';
 import { useFrameCapture } from './hooks/useFrameCapture';
 import { useVideoFullscreen } from './hooks/useVideoFullscreen';
 import type { VideoPreviewModalProps } from './types';
-import VideoPlayer from './VideoPlayer';
 import VideoSidebar from './VideoSidebar';
 
 import styles from './index.scss';
@@ -153,7 +153,7 @@ const VideoPreviewModal = ({
             onSelect={onSelect}
           />
         ) : null}
-        <VideoPlayer key={activeItem.id} src={activeItem.src} videoRef={videoRef} />
+        <FreeVideo key={activeItem.id} src={activeItem.src} videoRef={videoRef} />
       </div>
     </FreeModal>
   );

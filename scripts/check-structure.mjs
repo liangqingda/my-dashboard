@@ -50,6 +50,7 @@ const COMPONENT_GROUPS = new Set([
   'buttons',
   'feedback',
   'fields',
+  'file-preview',
   'modals',
   'panels',
   'tables',
@@ -604,7 +605,7 @@ function checkComponents() {
 
     if (!COMPONENT_GROUPS.has(entry.name)) {
       errors.push(
-        `[结构] ${rel} 不是分类目录：公共组件一律按类型放 modals / buttons / tables / fields / panels / texts / feedback，新分类要先补 docs/ui-components.md 与 scripts/check-structure.mjs`,
+        `[结构] ${rel} 不是分类目录：公共组件一律按类型放 modals / buttons / tables / fields / panels / texts / feedback / file-preview，新分类要先补 docs/ui-components.md 与 scripts/check-structure.mjs`,
       );
       continue;
     }

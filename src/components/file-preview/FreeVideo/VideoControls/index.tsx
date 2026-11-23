@@ -15,7 +15,7 @@ import {
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
 
-import { formatDuration, formatProgressLabel } from '../../utils/format-duration';
+import { formatDuration, formatProgressLabel } from '../utils/format-duration';
 
 import type { VideoControlsProps } from './types';
 

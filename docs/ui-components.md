@@ -18,7 +18,8 @@
 | 普通弹窗（说明 / 短表单 / 列表） | `FreeModal` 传 `height="auto"`（高度随内容、正文自己滚） |
 | 二次确认（删除 / 覆盖等不可逆操作） | `ConfirmModal`（基于 `FreeModal` 的通用业务组件：说明块 + 可选额外内容 + 取消 / 确认） |
 | 任何 Markdown / 文档预览 | `MarkdownPreviewModal`，不自己接渲染器（行为见 `src/components/modals/MarkdownPreviewModal/README.md`） |
-| 视频播放 / 视频预览 | `VideoPreviewModal`（内含 `VideoPlayer`，不自己拼 `<video>` 控制栏；行为见 `src/components/modals/VideoPreviewModal/README.md`） |
+| 视频播放 | `FreeVideo`（全站唯一的播放器，不自己拼 `<video>` 控制栏；行为见 `src/components/file-preview/FreeVideo/README.md`） |
+| 视频预览 | `VideoPreviewModal`（`FreeModal` + `FreeVideo` + 目录侧栏；行为见 `src/components/modals/VideoPreviewModal/README.md`） |
 | 单行输入（无搜索语义） | `FreeInput` |
 | 搜索框（左搜索图标 + 一键清空） | `FreeSearchInput` |
 | 多行输入（普通表单） | `Textarea` |
@@ -86,10 +87,11 @@
 | `panels` | 面板级排布件（底栏、面板内布局） | `FreePanelFooter` |
 | `texts` | 文本展示与截断 | `FreeTruncatedText` |
 | `feedback` | 加载、空态、提示这类状态呈现 | `PageLoading` |
+| `file-preview` | 把文件内容渲染 / 播放出来的组件（视频、后续 PDF / 文档播放器） | `FreeVideo` |
 
 - **分类目录一律小写**（`@liangqingda/eslint-config` 1.8.0 起放行 `components` 下一层的分类名单，
   名单在 `config/web-naming-rules.js`；进入分类目录后组件目录仍是 `PascalCase`）；
-  `scripts/check-structure.mjs` 再校验一次：`src/components` 下只允许上表这七个分类目录，
+  `scripts/check-structure.mjs` 再校验一次：`src/components` 下只允许上表这八个分类目录，
   分类目录下只允许 `PascalCase` 组件目录且必须有 `index.tsx`。
 - **一个组件只进一个分类**：先看它包的是哪个组件库根组件（`Modal` → `modals`、`Button` / `ActionIcon`
   → `buttons`、`Table` → `tables`），再看它回答的是哪类能力（文本截断 → `texts`，加载态 → `feedback`）。
@@ -125,8 +127,7 @@
 
 示例：`FreeModal` 锁框体 / header / 正文区外观与键位（底下是 Mantine `Modal`）；`FreePanelFooter`
 锁面板底部布局 + `Button` subtle 小号（底下没有现成组件）；`PageLoading` 是页面 chunk 的占位实现，
-不构成「全站加载态唯一入口」，所以不挂 `Free`。品类级但尚未落地的 `FreeInput` / `FreeVideo` /
-`FreePdf` 同理：判据成立，等真需要统一时再建，**建之前不许在业务里各自起一套口径**。
+不构成「全站加载态唯一入口」，所以不挂 `Free`。品类级但尚未落地的 `FreeInput` / `FreePdf` 同理：判据成立，等真需要统一时再建，**建之前不许在业务里各自起一套口径**。
 
 目录结构与其它组件一致（见 `docs/code-splitting.md`）：`index.tsx` + `types.ts`（需要跨文件共享时），
 要写自己的样式才加 `index.scss`，一个 `index.tsx` 只放一个组件。
@@ -146,6 +147,7 @@
 | `FreeIconAction` | `src/components/buttons/FreeIconAction/README.md` |
 | `FreeSearchInput` | `src/components/fields/FreeSearchInput/README.md` |
 | `FreeInput` | `src/components/fields/FreeInput/README.md` |
+| `FreeVideo` | `src/components/file-preview/FreeVideo/README.md` |
 
 ## 基础组件锁的是「外观 + 行为」
 

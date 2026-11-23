@@ -1,13 +1,15 @@
 # 视频预览弹窗（`VideoPreviewModal`）
 
-视频播放与预览的**唯一入口**：文件页里的视频条目点开后，在 `FreeModal` 里播放、翻篇、看当前目录
-的视频列表、截当前一帧。选型见 `docs/ui-components.md`；本文件讲行为契约与实现约束。
+视频预览的**唯一入口**：文件页里的视频条目点开后，在 `FreeModal` 里播放、翻篇、看当前目录
+的视频列表、截当前一帧。它只做「容器」——播放能力组合自独立的
+[`FreeVideo`](../../file-preview/FreeVideo/README.md)（`file-preview` 分类），本组件不重复实现
+控制栏与播放状态。选型见 `docs/ui-components.md`；本文件讲行为契约与实现约束。
 
 ## 它锁了什么
 
-- **播放器**：`VideoPlayer`（本目录下的子组件）是 `<video>` 的封装，**不用浏览器自带 `controls`**。
-  原生控制栏跟着系统走、还自带一个「网页元素全屏」，与本弹窗「整屏全屏 + header 自动隐藏」不是一回事。
-  播放 / 暂停、进度、时间、静音与音量都由 `VideoControls` 给；循环、倍速不做（需要再加）。
+- **组合关系**：`FreeModal`（外壳：标题 / 翻篇 / 计数 / 键位）+ `FreeVideo`（播放器）+
+  `VideoSidebar`（目录）。播放器与弹窗互不依赖：`FreeVideo` 不认识弹窗，弹窗只传 `src` 与
+  `videoRef`；全屏、header、侧栏、截图都留在本组件。
 - **整屏全屏**：走浏览器 Fullscreen API（`document.documentElement.requestFullscreen()`），
   占的是**整块屏幕**，不是把框体撑满视口。`fullscreenchange` 是唯一状态源：浏览器里按 `Esc`
   退出全屏的状态也由它同步，组件不自己猜。
@@ -39,8 +41,8 @@
 
 ## 实现约束
 
-- 播放器只认 `src` 与 `videoRef`；视频元素引用交给弹窗复用（截图与空格播放都读它）。
-- 换片是 `key={id}` 重挂 `VideoPlayer`——在同一个 `<video>` 上换 `src` 需要清理播放状态与进度，
+- `FreeVideo` 只认 `src` / `videoRef` / `className`；视频元素引用交给弹窗复用（截图与空格播放都读它）。
+- 换片是 `key={id}` 重挂 `FreeVideo`——在同一个 `<video>` 上换 `src` 需要清理播放状态与进度，
   重挂比在 effect 里逐项复位更省心。
 - 浏览器解不了的编码（mkv / avi / wmv 等常见）走 `error` 事件，舞台中央给一句人话，
   不静默停在黑屏。
