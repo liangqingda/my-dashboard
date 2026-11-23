@@ -2,7 +2,8 @@
  * 播放器控制栏：翻篇 / 播放 / 进度 / 时间 / 静音与音量。
  *
  * 翻篇箭头排在播放键两侧（常见播放器的位置），是因为「上一条 / 下一条」在这里就是前后两格；
- * 音量条平时不占地方，指针停在喇叭上才往上浮出——把横向宽度让给进度条。
+ * 这两颗箭头的 tip 只在指上去的 1.5s 内出现，之后自己收掉，免得压在进度条上。
+ * 音量条平时不占地方，指针停在喇叭上才在它上方浮出——方向朝上走，竖着排，横向宽度留给进度条。
  *
  * 进度条拖到哪就 seek 到哪（拖动过程连续 seek，松手不额外跳一次）；
  * 时长还没解出来时进度条禁用，避免 0 上限的滑块把当前时间压成 0。
@@ -33,6 +34,9 @@ const ICON_STROKE = 1.8;
 /** 翻篇箭头比播放键略大一圈：一左一右夹着播放键，要看得出是「前后两格」 */
 const STEP_ICON_SIZE = 18;
 
+/** 翻篇箭头的 tip 只亮这么久就自己收掉：常挂在播放条上会挡住进度 */
+const STEP_TIP_DURATION = 1500;
+
 const VideoControls = ({
   currentTime,
   duration,
@@ -52,6 +56,7 @@ const VideoControls = ({
         disabled={nav.onPrevious === null}
         label={nav.previousLabel ?? '上一个视频'}
         onClick={nav.onPrevious ?? undefined}
+        tipDuration={STEP_TIP_DURATION}
       >
         <IconChevronLeft size={STEP_ICON_SIZE} stroke={ICON_STROKE} />
       </FreeIconAction>
@@ -74,6 +79,7 @@ const VideoControls = ({
         disabled={nav.onNext === null}
         label={nav.nextLabel ?? '下一个视频'}
         onClick={nav.onNext ?? undefined}
+        tipDuration={STEP_TIP_DURATION}
       >
         <IconChevronRight size={STEP_ICON_SIZE} stroke={ICON_STROKE} />
       </FreeIconAction>
@@ -97,7 +103,7 @@ const VideoControls = ({
     </span>
 
     {/*
-      音量：喇叭键 + 悬停浮出的横向音量条。tip 关掉（`tooltip="none"`），
+      音量：喇叭键 + 悬停浮出的竖向音量条。tip 关掉（`tooltip="none"`），
       否则提示会正好落在浮出的音量条上，两套浮层互相挡。
     */}
     <div className={styles.volumeWrap}>
@@ -122,6 +128,7 @@ const VideoControls = ({
             label={(value: number) => `${Math.round(value * 100)}%`}
             max={1}
             onChange={onVolumeChange}
+            orientation="vertical"
             size="xs"
             step={0.01}
             thumbLabel="音量"

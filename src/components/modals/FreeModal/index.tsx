@@ -34,6 +34,12 @@ const ICON_STROKE = 1.9;
 const NAV_SHORTCUT_HINT = '[ / ← · ] / →';
 
 /**
+ * header 那一行的选择器：给「指针停在 header 上就别自动收起」这类调用方用。
+ * 由本组件的样式模块算出——外壳的 class 是哈希后的，写死字符串必失效。
+ */
+export const MODAL_HEADER_SELECTOR = `.${styles.header}`;
+
+/**
  * 基础弹窗外壳。业务侧只管「标题是什么、右侧放哪些操作、正文是什么」，
  * header 的排布、全屏与关闭按钮的位置固定在这里。
  */

@@ -7,6 +7,8 @@
  *
  * `ignoreSelector` 圈出一块「不该唤出 header」的区域（播放器控制栏）：
  * 指针在那一带上活动时既不亮 header、也不重置计时，让它按原来的节奏收起。
+ * `holdSelector` 圈出「指针停在上面就不收起」的区域（header 自己）：
+ * 停在那一块里多久都保持可见，指针移到别处才开始计时收起。
  */
 
 import { useEffect, useState } from 'react';
@@ -33,6 +35,7 @@ export const useAutoHideHeader = (
   enabled: boolean,
   delay = HEADER_HIDE_DELAY,
   ignoreSelector?: string,
+  holdSelector?: string,
 ): boolean => {
   const [visible, setVisible] = useState(true);
 
@@ -44,23 +47,41 @@ export const useAutoHideHeader = (
     let timer: ReturnType<typeof setTimeout> | undefined;
     // 以上一次「显示的」状态为起点：上次全屏结束时可能停在隐藏态，这里必须重新亮出 header
     let lastVisible = false;
+    // 指针是否正停在「不收起」区域里；在里面时不排收起计时
+    let holding = false;
 
-    const restartTimer = () => {
-      if (timer !== undefined) {
-        clearTimeout(timer);
+    const clearTimer = () => {
+      if (timer === undefined) {
+        return;
       }
 
+      clearTimeout(timer);
+      timer = undefined;
+    };
+
+    const restartTimer = () => {
+      clearTimer();
       timer = setTimeout(() => {
         lastVisible = false;
         setVisible(false);
       }, delay);
     };
 
-    /** 指针一有活动就亮出 header，并重新开始计时 */
-    const reveal = () => {
+    const show = () => {
       if (!lastVisible) {
         lastVisible = true;
         setVisible(true);
+      }
+    };
+
+    /** 指针一有活动就亮出 header；不在「不收起」区域里才重新开始计时 */
+    const reveal = () => {
+      show();
+
+      if (holding) {
+        clearTimer();
+
+        return;
       }
 
       restartTimer();
@@ -68,10 +89,30 @@ export const useAutoHideHeader = (
 
     const handleActivity = (event: Event) => {
       if (isIgnored(event.target, ignoreSelector)) {
+        // 从 header 移进被忽略区域（控制栏）：不再算「停在 header 上」，按常规节奏收起
+        if (holding) {
+          holding = false;
+          restartTimer();
+        }
+
         return;
       }
 
+      holding =
+        holdSelector !== undefined &&
+        event.target instanceof Element &&
+        event.target.closest(holdSelector) !== null;
       reveal();
+    };
+
+    /** 指针离开页面时（还停在 header 上就关掉窗口）：不再算「停在 header 上」，照常收起 */
+    const handleLeaveWindow = () => {
+      if (!holding) {
+        return;
+      }
+
+      holding = false;
+      restartTimer();
     };
 
     // 刚进入全屏（或鼠标在别处）也先亮一会儿，再由计时器收起
@@ -80,17 +121,17 @@ export const useAutoHideHeader = (
     window.addEventListener('pointermove', handleActivity);
     window.addEventListener('pointerdown', handleActivity);
     window.addEventListener('wheel', handleActivity, { passive: true });
+    document.addEventListener('pointerleave', handleLeaveWindow);
 
     return () => {
-      if (timer !== undefined) {
-        clearTimeout(timer);
-      }
+      clearTimer();
 
       window.removeEventListener('pointermove', handleActivity);
       window.removeEventListener('pointerdown', handleActivity);
       window.removeEventListener('wheel', handleActivity);
+      document.removeEventListener('pointerleave', handleLeaveWindow);
     };
-  }, [delay, enabled, ignoreSelector]);
+  }, [delay, enabled, holdSelector, ignoreSelector]);
 
   /** 非全屏恒为可见：状态只在全屏里有意义，关闭全屏不必再走一遍 setState */
   return !enabled || visible;

@@ -6,3 +6,12 @@
   min-width: 0;
   min-height: 0;
 }
+
+/* 图片整块可点：点一下收起 / 展开 header 与列表，指针给「能点」的提示 */
+.stageButton {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  cursor: pointer;
+}

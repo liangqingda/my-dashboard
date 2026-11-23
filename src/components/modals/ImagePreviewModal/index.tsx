@@ -3,12 +3,15 @@
  *
  * 与视频预览同形，但更朴素——没有播放器，也就没有播放 / 快进 / 截图那一套：
  *
- * - header 与侧栏常驻，不做自动隐藏（看图时挪鼠标不需要重找按钮）；
- * - 键盘：`[` / `]` 与 `←` / `→` 都翻篇，`F` 全屏，`Esc` 退出 / 关窗，`Delete` 触发删除确认；
- *   空格不关窗也不播（没有可播的东西），删除确认开着时整组快捷键收掉；
+ * - header 与侧栏默认常驻；点一下图片把它们一起收起，再看整幅图，再点一下回来
+ *   （不做「鼠标静止自动隐藏」，收起只由点击决定）；
+ * - 键盘：`[` / `]` 与 `←` / `→` 都翻篇，`F` 全屏，`Esc` 退出 / 关窗，`Delete` 触发删除确认，
+ *   空格关窗（与其它弹窗一致，只有视频弹窗把空格让给了播放）；删除确认开着时整组快捷键收掉；
  * - 全屏走浏览器 Fullscreen API，与视频预览同一份 `useBrowserFullscreen`。
  */
 
+import { useState } from 'react';
+import { UnstyledButton } from '@mantine/core';
 import { IconPhoto, IconTrash } from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
@@ -39,6 +42,8 @@ const ImagePreviewModal = ({
   opened,
 }: ImagePreviewModalProps) => {
   const { active: fullscreen, exit, toggle } = useBrowserFullscreen();
+  /** header 与侧栏是否展示：点图片切换，收起后舞台能看满整幅 */
+  const [chromeVisible, setChromeVisible] = useState(true);
 
   /** 关窗：先退出整屏全屏，再真正关闭，避免弹窗没了页面还停在全屏 */
   const requestClose = () => {
@@ -64,8 +69,10 @@ const ImagePreviewModal = ({
   return (
     <FreeModal
       closeOnEscape={!fullscreen && !blocked}
-      closeOnSpace={false}
+      closeOnSpace={!blocked}
       fullscreen={{ active: fullscreen, onToggle: toggle }}
+      headerHidden={!chromeVisible}
+      headerOverlay={!chromeVisible}
       headerTail={
         onRequestDelete ? (
           <FreeIconAction
@@ -94,14 +101,23 @@ const ImagePreviewModal = ({
       trapFocus={!blocked}
     >
       <div className={styles.layout}>
-        <PreviewSidebar
-          activeId={activeItem.id}
-          icon={<IconPhoto size={SIDEBAR_ICON_SIZE} stroke={SIDEBAR_ICON_STROKE} />}
-          items={items}
-          onSelect={onSelect}
-          title="当前目录图片"
-        />
-        <ImageStage key={activeItem.id} name={activeItem.name} src={activeItem.src} />
+        {chromeVisible ? (
+          <PreviewSidebar
+            activeId={activeItem.id}
+            icon={<IconPhoto size={SIDEBAR_ICON_SIZE} stroke={SIDEBAR_ICON_STROKE} />}
+            items={items}
+            onSelect={onSelect}
+            title="当前目录图片"
+          />
+        ) : null}
+        <UnstyledButton
+          aria-label={chromeVisible ? '隐藏标题与图片列表' : '显示标题与图片列表'}
+          className={styles.stageButton}
+          onClick={() => setChromeVisible((prev) => !prev)}
+          type="button"
+        >
+          <ImageStage key={activeItem.id} name={activeItem.name} src={activeItem.src} />
+        </UnstyledButton>
       </div>
     </FreeModal>
   );

@@ -14,7 +14,7 @@
  * - `Esc` 在全屏里交给浏览器退出全屏，非全屏才是关窗。
  */
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   IconCamera,
   IconLayoutSidebarLeftCollapse,
@@ -27,7 +27,7 @@ import FreeIconAction from '@/components/buttons/FreeIconAction';
 import FreeVideo from '@/components/file-preview/FreeVideo';
 import { CONTROLS_SELECTOR } from '@/components/file-preview/FreeVideo/constants';
 import { useBrowserFullscreen } from '@/hooks/useBrowserFullscreen';
-import FreeModal from '@/components/modals/FreeModal';
+import FreeModal, { MODAL_HEADER_SELECTOR } from '@/components/modals/FreeModal';
 import type { FreeModalSeekDirection } from '@/components/modals/FreeModal/types';
 import PreviewSidebar from '@/components/modals/PreviewSidebar';
 
@@ -82,6 +82,7 @@ const VideoPreviewModal = ({
     headerOverlay && !settingsOpen && !blocked,
     HEADER_HIDE_DELAY,
     CONTROLS_SELECTOR,
+    MODAL_HEADER_SELECTOR,
   );
 
   /** `←` / `→`：按设置的步长快进 / 后退；方向键交给它之后翻篇只剩方括号 */
@@ -151,6 +152,38 @@ const VideoPreviewModal = ({
     }
 
     setSidebarOpen((prev) => !prev);
+  };
+
+  /** 删除确认开着期间先暂停；取消后按原来的状态恢复：之前就在放才继续放 */
+  const pausedForDelete = useRef(false);
+
+  useEffect(() => {
+    if (blocked || !pausedForDelete.current) {
+      return;
+    }
+
+    pausedForDelete.current = false;
+
+    const element = videoRef.current;
+
+    if (element?.isConnected) {
+      void element.play().catch(() => undefined);
+    }
+  }, [blocked]);
+
+  /**
+   * 请求删除当前视频：删除确认层会盖住画面，先把片子停下来；
+   * 取消后若是我们停的，再续上（原本就是暂停的保持不变）。
+   */
+  const requestDelete = () => {
+    const element = videoRef.current;
+
+    if (element !== null && !element.paused) {
+      pausedForDelete.current = true;
+      element.pause();
+    }
+
+    onRequestDelete?.();
   };
 
   /** 关窗：先退出整屏全屏，再真正关闭，避免弹窗没了页面还停在全屏 */
@@ -234,7 +267,7 @@ const VideoPreviewModal = ({
         onRequestDelete ? (
           <FreeIconAction
             label="删除这个视频（Delete）"
-            onClick={onRequestDelete}
+            onClick={requestDelete}
             tone="danger"
           >
             <IconTrash size={ICON_SIZE} stroke={ICON_STROKE} />
@@ -254,7 +287,7 @@ const VideoPreviewModal = ({
       }}
       onCapture={() => void capture(settings.captureDir)}
       onClose={requestClose}
-      onRequestDelete={onRequestDelete ?? null}
+      onRequestDelete={onRequestDelete ? requestDelete : null}
       onSeek={settings.arrowMode === 'seek' ? seekBy : undefined}
       onToggleSidebar={toggleSidebar}
       opened={opened}
