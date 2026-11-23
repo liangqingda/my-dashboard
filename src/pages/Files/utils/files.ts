@@ -125,8 +125,9 @@ export const filterAppsByCategory = (
 
 /**
  * 按已勾选的分类过滤文件夹：全选整份保留；否则只留内含「勾选的某个文件类型」的文件夹
- * （含深层，靠中间件给的分类摘要）。「App」是独立条目类型——文件夹本身不是应用，
- * 只勾了 App 时不列文件夹，避免「选了 App 还满屏文件夹」。
+ * （含深层，靠中间件给的分类摘要）。勾了「App」时另留**直属含应用包**的文件夹
+ * （`hasApps`）——根目录下的 `/Applications` 这类应用目录要能点进去；包里深层才有的 app
+ * 不算，避免 `~/Library` 那种满屏文件夹又被筛出来。
  */
 export const filterFoldersByCategory = (
   folders: FolderEntry[],
@@ -139,13 +140,16 @@ export const filterFoldersByCategory = (
   const relevant: FileCategory[] = selected.filter(
     (category) => category !== 'app',
   );
+  const wantApps = selected.includes('app');
 
   if (relevant.length === 0) {
-    return [];
+    return folders.filter((folder) => folder.hasApps);
   }
 
-  return folders.filter((folder) =>
-    folder.categories.some((category) => relevant.includes(category)),
+  return folders.filter(
+    (folder) =>
+      (wantApps && folder.hasApps) ||
+      folder.categories.some((category) => relevant.includes(category)),
   );
 };
 

@@ -13,7 +13,7 @@ import FilesPreviewLayers from './FilesPreviewLayers';
 import FilesStates from './FilesStates';
 import RenameEntryModal from './RenameEntryModal';
 import UninstallAppConfirm from './UninstallAppConfirm';
-import { FILE_CATEGORY_VALUES, FILES_STORAGE_SCOPE } from './constants';
+import { FILES_STORAGE_SCOPE } from './constants';
 import { useAppLaunch } from './hooks/useAppLaunch';
 import { useAppUninstall } from './hooks/useAppUninstall';
 import { useEntryActions } from './hooks/useEntryActions';
@@ -21,6 +21,7 @@ import { useEntryDelete } from './hooks/useEntryDelete';
 import { useFilesSettings } from './hooks/useFilesSettings';
 import { useFavorites } from './hooks/useFavorites';
 import { useFilesDir } from './hooks/useFilesDir';
+import { useFilesFilterActions } from './hooks/useFilesFilterActions';
 import { useFilesViewMode } from './hooks/useFilesViewMode';
 import { useImagePreview } from './hooks/useImagePreview';
 import { useTypeFilter } from './hooks/useTypeFilter';
@@ -35,7 +36,6 @@ import {
   filterFoldersByCategory,
   toFilesRows,
 } from './utils/files';
-import type { TypeFilterMode } from './types';
 
 import styles from './index.scss';
 
@@ -180,14 +180,14 @@ const Files = () => {
   /** 还没选过目录：引导先填路径，不报错 */
   const showPrompt = !showSkeleton && listing === null && error === null;
 
-  /** 切筛选方式：从多选切到单选时选择不是「恰好一类」就收敛成全部，免得单选列表一个都没选中 */
-  const changeFilterMode = (mode: TypeFilterMode) => {
-    settings.setFilterMode(mode);
-
-    if (mode === 'single' && selectedCategories.length !== 1) {
-      onSelectedCategoriesChange([...FILE_CATEGORY_VALUES]);
-    }
-  };
+  /** 只勾 App 自动切到系统应用目录；多选切单选时收敛成全部 */
+  const { changeFilterMode, changeSelectedCategories } = useFilesFilterActions({
+    currentPath: listing?.path ?? null,
+    onSelectedCategoriesChange,
+    openDir: goToDir,
+    selectedCategories,
+    setFilterMode: settings.setFilterMode,
+  });
 
   /** 空态文案：筛过条件与真的空目录给不同一句话；不是空态就是 null */
   const emptyText = showEmpty
@@ -212,7 +212,7 @@ const Files = () => {
           onPanelChange={setOpenPanel}
           onPickDir={handlePickDir}
           onRemoveFavorite={removeFavorite}
-          onSelectedCategoriesChange={onSelectedCategoriesChange}
+          onSelectedCategoriesChange={changeSelectedCategories}
           onToggleFavorite={() => {
             if (currentEntry !== null) {
               toggleFavorite(currentEntry);

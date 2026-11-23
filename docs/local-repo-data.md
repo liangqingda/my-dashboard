@@ -167,7 +167,7 @@
 | 文件 | 职责 |
 | --- | --- |
 | `scripts/vite/files.ts` | 路由壳：`GET /api/files`（未带 `dir` 回落主目录）、`GET /api/files?dir=…`、`GET /api/files/content?path=…`（视频按 Range 流式读）、`GET /api/files/image?path=…`（图片字节）、`GET /api/files/thumb?path=…`（图片 / 视频缩略图，网格用）、`GET /api/files/video-apps`（能播视频的本机应用）、`GET /api/files/app-icon?path=…`（应用图标 PNG）、`GET /api/files/app-residue?path=…`（卸载残留清单）、`POST /api/files/open-app`（打开应用包）、`POST /api/files/pick-dir`（系统目录选择框）、`POST /api/files/new-folder`、`POST /api/files/rename`、`POST /api/files/move`、`POST /api/files/delete`、`POST /api/files/open`（交给外部播放器）、`POST /api/files/uninstall-app`、`POST /api/files/capture`（视频帧截图写目录，缺省桌面），错误归类成 HTTP 状态码 |
-| `scripts/vite/files-store.ts` | 路径校验、条目归类、应用包从文件夹里分出来单独成列、文件夹直属条目计数与内含分类摘要（按扫描预算，供类型筛选过滤文件夹）、文件归类（视频 / PDF / Markdown / App / 其它）标记、选择器脚本拼装，以及新建 / 重命名 / 移动 / 删除的写盘与冲突拒绝、错误文案与错误码收口 |
+| `scripts/vite/files-store.ts` | 路径校验、条目归类、应用包从文件夹里分出来单独成列、文件夹直属条目计数、内含分类摘要与「直属是否含应用包」，供类型筛选过滤文件夹、文件归类（视频 / PDF / Markdown / App / 其它）标记、选择器脚本拼装，以及新建 / 重命名 / 移动 / 删除的写盘与冲突拒绝、错误文案与错误码收口 |
 | `scripts/vite/files-apps.ts` | 应用包识别（`.app` 目录与指向它的符号链接）、Info.plist 解析（`plutil`）、残留推导（用户级与系统级）、打开（校验 `.app` 后交给系统 `open`）、卸载（先退应用再删整包与残留，权限不足时弹一次授权窗补删） |
 | `scripts/vite/files-app-icons.ts` | 应用图标按需抽取：从包内 `Contents/Resources` 找 `.icns`，`sips` 转成 PNG，按「包路径 + 修改时间」缓存在临时目录 |
 | `scripts/vite/files-video-apps.ts` | 能播视频的应用清单：扫 `/Applications`、`/System/Applications` 与 `~/Applications` 顶层的 `.app`，读 `Info.plist` 的 `CFBundleDocumentTypes`，声明了视频统一类型标识（或视频扩展名）的才算，按应用名去重；再剔掉 `EXCLUDED_VIDEO_APPS` 里那批「顺带能放视频、但不是播放器」的应用（网盘 / 阅读 / 聊天 / 音乐 / 系统 QuickTime） |
@@ -193,8 +193,8 @@
   同类别里新的在前。渲染顺序仍是「文件夹 → 应用 → 文件」，于是同类条目在网格 / 表格里连成一段；
   中间件的 `updatedMs` 是排序用的毫秒值，`updatedAt` 是同一份时间的 ISO 文本，读不到时记 0 排在最后；
 - **计数口径**：文件夹副文案只数直属条目（文件夹 + 文件 + 应用包），不递归子目录；单条条目读不到就跳过，不影响同级其它条目；
-- **筛选**：前端在已取到本页的摘要上做两档过滤——名称关键词（大小写不敏感子串匹配，过滤文件与应用）与分类勾选（视频 / 图片 / PDF / Markdown / App / 其它，默认全选）：勾了哪类就显示哪类，文件按自身分类、应用按「App」这一档、文件夹按内含分类（只勾 App 时不列文件夹——文件夹本身不是应用）；「全部」与分类列表用一条分割线隔开：多选模式下它是复选框（全勾选中、部分勾选半选、一个没勾未选，点它全选 / 全清），单选模式下是单选框。操作方式可在设置面板切「多选 / 单选」：多选可同时勾几类，单选一次只能留一类（「全部」表示不筛选），从多选切到单选时选择不是「恰好一类」就收敛成全部。勾选与操作方式都持久化（键 `type-filter-selected` / `type-filter-mode`）；关键词为会话内状态不持久化；
-- **文件夹分类摘要**：`listing.folders[].categories` 给出文件夹内出现过的分类（含深层），中间件按「先浅后深、找齐各档即停」扫描，累计 2000 个条目或 6 层为止，超出预算的深层内容不保证计入；应用包按一条 `app` 分类计入、不再往包里扫；只服务于筛选时决定文件夹露不露出，不是精确的全树统计；
+- **筛选**：前端在已取到本页的摘要上做两档过滤——名称关键词（大小写不敏感子串匹配，过滤文件与应用）与分类勾选（视频 / 图片 / PDF / Markdown / App / 其它，默认全选）：勾了哪类就显示哪类，文件按自身分类、应用按「App」这一档、文件夹按内含分类；勾了 App 时另列**直属含应用包**的文件夹（`hasApps`，如 `/` 下的 `Applications`、`System` 能点进去），只有包里深层才有的 app 不算；「全部」与分类列表用一条分割线隔开：多选模式下它是复选框（全勾选中、部分勾选半选、一个没勾未选，点它全选 / 全清），单选模式下是单选框。只勾「App」时会自动切到收藏里的「系统应用程序」目录（已在 `/Applications` 不重复打开）。操作方式可在设置面板切「多选 / 单选」：多选可同时勾几类，单选一次只能留一类（「全部」表示不筛选），从多选切到单选时选择不是「恰好一类」就收敛成全部。勾选与操作方式都持久化（键 `type-filter-selected` / `type-filter-mode`）；关键词为会话内状态不持久化；
+- **文件夹分类摘要**：`listing.folders[].categories` 给出文件夹内出现过的分类（含深层），中间件按「先浅后深、找齐各档即停」扫描，累计 2000 个条目或 6 层为止，超出预算的深层内容不保证计入；应用包按一条 `app` 分类计入、不再往包里扫；另有 `hasApps` 只表示**直属子项**里有应用包。两者只服务于筛选时决定文件夹露不露出，不是精确的全树统计；
 - **类型图标**：后端按扩展名归类，前端按分类换图标（视频与图片上蓝色，其余弱色）；视频帧封面抽取是单独任务。
 - **视频预览与截图**：`content` 接口只认视频扩展名（分类表与列表共用同一份），并按 `Range` 回 206
   （浏览器靠它跳转与续播），没有 `Range` 时整份返回；响应带 `Cache-Control: private, max-age=600`

@@ -107,6 +107,8 @@ export type FolderEntry = {
   itemCount: number;
   /** 文件夹内出现过的文件分类（含深层，按扫描预算收口）；按类型筛选时用它决定要不要露出这个文件夹 */
   categories: FileCategory[];
+  /** 直属子项里有没有应用包（`.app`，含符号链接）：只勾「App」时据此露出真正的应用目录 */
+  hasApps: boolean;
   /** 最后修改时间（毫秒）：子文件夹之间按它「新的在前」 */
   updatedMs: number;
 };
@@ -269,30 +271,47 @@ const readEntries = async (dir: string): Promise<Dirent[]> => {
 };
 
 /**
- * 扫描一个文件夹：直属条目数（文件夹 + 文件，不含隐藏项与符号链接），
- * 以及内部出现过的文件分类。分类按层往下找，各档都见到就提前结束，
+ * 扫描一个文件夹：直属条目数（文件夹 + 文件 + 应用包，不含隐藏项）、
+ * 内部出现过的文件分类，以及直属有没有应用包。分类按层往下找，各档都见到就提前结束，
  * 累计到预算上限或走完层数上限时按已发现的算——只服务于类型筛选的「露不露出这个文件夹」。
  * 读不到按空文件夹处理。
  */
 const scanFolder = async (
   dir: string,
-): Promise<{ itemCount: number; categories: FileCategory[]; updatedMs: number }> => {
-  const entries = (await readEntries(dir)).filter(isListedEntry);
+): Promise<{
+  itemCount: number;
+  categories: FileCategory[];
+  hasApps: boolean;
+  updatedMs: number;
+}> => {
+  // 应用包常是符号链接，这一层不能按 `isListedEntry` 把符号链接全丢掉
+  const entries = (await readEntries(dir)).filter(
+    (entry) => !isHiddenName(entry.name),
+  );
   const found = new Set<FileCategory>();
   const folders: string[] = [];
   let itemCount = 0;
+  let hasApps = false;
 
   for (const entry of entries) {
-    if (entry.isDirectory()) {
+    if (entry.isSymbolicLink() && !isAppBundleName(entry.name)) {
+      continue;
+    }
+
+    if (entry.isDirectory() || entry.isSymbolicLink()) {
       itemCount += 1;
 
       // 应用包按一条应用算，不往包里面扫：包里动辄几千个文件，分类也没有意义
       if (isAppBundleName(entry.name)) {
         found.add('app');
+        hasApps = true;
         continue;
       }
 
-      folders.push(path.join(dir, entry.name));
+      if (entry.isDirectory()) {
+        folders.push(path.join(dir, entry.name));
+      }
+
       continue;
     }
 
@@ -354,6 +373,7 @@ const scanFolder = async (
 
   return {
     categories: CATEGORY_ORDER.filter((category) => found.has(category)),
+    hasApps,
     itemCount,
     updatedMs,
   };
@@ -520,6 +540,7 @@ export const createFolder = async (dirInput: string): Promise<FolderEntry> => {
 
   return {
     categories: [],
+    hasApps: false,
     itemCount: 0,
     name,
     path: target,

@@ -100,6 +100,27 @@ describe('files-store', () => {
     );
   });
 
+  it('文件夹摘要标记直属应用包：包里 / 深层才有的 app 不算', async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'files-store-apps-'));
+
+    await mkdir(path.join(dir, 'Apps', 'Demo.app'), { recursive: true });
+    await mkdir(path.join(dir, 'Deep', 'Nested', 'Inner.app'), {
+      recursive: true,
+    });
+
+    const listing = await listDirectory(dir);
+    const byName = new Map(
+      listing.folders.map((folder) => [folder.name, folder]),
+    );
+
+    assert.equal(byName.get('Apps')?.hasApps, true);
+    assert.equal(byName.get('Deep')?.hasApps, false);
+    // 深层应用包仍计入分类摘要，但不是「直属含 app」
+    assert.deepEqual(byName.get('Deep')?.categories, ['app']);
+
+    await rm(dir, { force: true, recursive: true });
+  });
+
   it('列表先按类别分段、同类别内按修改时间新的在前', async () => {
     const listing = await listDirectory(root);
 

@@ -55,6 +55,7 @@ const normalizeFolder = (raw: unknown): FolderEntry | null => {
 
   return {
     categories: normalizeCategories(raw.categories),
+    hasApps: raw.hasApps === true,
     updatedMs: asNumber(raw.updatedMs),
     itemCount: asNumber(raw.itemCount),
     name,

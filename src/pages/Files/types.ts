@@ -16,6 +16,8 @@ export type FolderEntry = {
   itemCount: number;
   /** 文件夹内出现过的文件分类（含深层，按中间件的扫描预算收口） */
   categories: FileCategory[];
+  /** 直属子项里有没有应用包：只勾「App」时据此露出真正的应用目录 */
+  hasApps: boolean;
 };
 
 /** 文件归类：与中间件 `FileCategory` 同一套档位，用于区分图标与类型筛选 */
