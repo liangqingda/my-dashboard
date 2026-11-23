@@ -31,3 +31,9 @@
   font-size: 0.72rem;
   line-height: 1.3;
 }
+
+/* 固定「系统应用程序」条目的图标：不随文字截断，颜色与路径同档 */
+.pinnedIcon {
+  flex: 0 0 auto;
+  color: var(--app-ink-faint);
+}

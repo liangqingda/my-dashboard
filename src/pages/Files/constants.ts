@@ -94,3 +94,13 @@ export const CATEGORY_ICONS: Record<FileCategory, typeof IconFile> = {
   app: IconApps,
   other: IconFile,
 };
+
+/**
+ * 固定的系统应用程序目录入口：macOS 的系统应用装在根目录下的 `/Applications`，
+ * 而用户主目录里可能也有一个同名 `Applications`（Chrome 应用快捷方式之类），打开后者
+ * 会看不到任何应用。收藏面板顶部固定放这一条，随时一键回到真正的应用目录。
+ */
+export const SYSTEM_APPS_FAVORITE = {
+  name: '系统应用程序',
+  path: '/Applications',
+} as const;

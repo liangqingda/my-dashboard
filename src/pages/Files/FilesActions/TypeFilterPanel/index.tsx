@@ -70,7 +70,7 @@ const TypeFilterPanel = ({
 
       <FreePanelFooter
         disabled={!active}
-        hint="取消勾选的类型不显示，文件夹一并隐藏"
+        hint="默认全部勾选；只想看某类就取消其它项，文件夹同时隐藏"
         onReset={onReset}
       />
     </Stack>
