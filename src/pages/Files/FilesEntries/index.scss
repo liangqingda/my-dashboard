@@ -1,19 +1,20 @@
-/* 网格 / 表格滚动区：卡片底托，边框 / 圆角 / 底色与其它列表页同一口径 */
-.list {
+/* 列表外框：卡片底托，边框 / 圆角与其它列表页同一口径；loading 蒙层定位在这上面 */
+.frame {
+  position: relative;
+  display: flex;
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
   border: 1px solid var(--app-line);
   border-radius: var(--mantine-radius-md);
+}
+
+/* 网格视图铺白底卡片；表格视图不铺（表头吸顶用的是页面底色 --app-bg） */
+.gridFrame {
   background: var(--app-surface);
 }
 
-/* 表格滚动区：表头吸顶用的是页面底色（--app-bg），所以不铺白底卡片，
-   只画一圈外边框把表格范围圈出来（边框 / 圆角与网格卡片同一口径） */
-.tableList {
+.scroll {
   flex: 1 1 auto;
   min-height: 0;
-  overflow: hidden;
-  border: 1px solid var(--app-line);
-  border-radius: var(--mantine-radius-md);
 }

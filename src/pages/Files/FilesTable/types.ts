@@ -14,6 +14,10 @@ export type FilesTableProps = {
   dragSource: string | null;
   /** 当前悬停的放置目标文件夹路径；null 表示没有目标 */
   dropTarget: string | null;
+  /** 列表正在取数：只有取数期间才给对应文件夹行挂进度 */
+  listLoading: boolean;
+  /** 正在打开的文件夹路径：该行名称后显示进度且整行暂不可点 */
+  loadingFolder: string | null;
   /** 正在启动的应用路径 */
   launchingApp: string | null;
   /** 点应用名称交给系统打开该应用 */

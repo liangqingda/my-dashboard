@@ -23,6 +23,7 @@ import { useFavorites } from './hooks/useFavorites';
 import { useFilesDir } from './hooks/useFilesDir';
 import { useFilesFilterActions } from './hooks/useFilesFilterActions';
 import { useFilesViewMode } from './hooks/useFilesViewMode';
+import { useFolderOpening } from './hooks/useFolderOpening';
 import { useImagePreview } from './hooks/useImagePreview';
 import { useTypeFilter } from './hooks/useTypeFilter';
 import { useVideoPreview } from './hooks/useVideoPreview';
@@ -156,6 +157,7 @@ const Files = () => {
     openDir(dir);
   };
 
+  const { openFolder, openingFolder } = useFolderOpening(goToDir);
   /** 已是文件系统根时没有上级目录，快捷键不动作 */
   const parentDir = listing?.parent ?? null;
   const navigateParent =
@@ -257,6 +259,8 @@ const Files = () => {
             folders={visibleFolders}
             isGridView={isGridView}
             launchingApp={launchingPath}
+            loading={loading}
+            loadingFolder={openingFolder}
             onDragEnd={entryActions.clearDrag}
             onDragLeaveFolder={entryActions.dragLeaveFolder}
             onDragOverFolder={entryActions.dragOverFolder}
@@ -264,7 +268,7 @@ const Files = () => {
             onDropFolder={entryActions.dropFolder}
             onEditEntry={entryActions.editEntry}
             onOpenApp={launchApp}
-            onOpenFolder={goToDir}
+            onOpenFolder={openFolder}
             onOpenImage={openImage}
             onOpenVideo={openVideo}
             onRequestDeleteEntry={requestDelete}

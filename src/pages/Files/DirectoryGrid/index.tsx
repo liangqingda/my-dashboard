@@ -46,6 +46,8 @@ const DirectoryGrid = ({
   dropTarget,
   files,
   folders,
+  loading,
+  loadingFolder,
   onDragEnd,
   onDragLeaveFolder,
   onDragOverFolder,
@@ -69,6 +71,7 @@ const DirectoryGrid = ({
         dropActive={dropTarget === folder.path}
         folder={folder}
         key={folder.path}
+        loading={loading && loadingFolder === folder.path}
         onDragEnd={onDragEnd}
         onDragLeave={() => onDragLeaveFolder(folder.path)}
         onDragOver={(event) => onDragOverFolder(folder.path, event)}

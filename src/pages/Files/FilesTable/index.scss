@@ -17,6 +17,10 @@
 }
 
 /* 文件夹名称整块可点：外观与文件名称保持一致，只在 hover 时给一个可点的反馈 */
+.openingSpinner {
+  flex: 0 0 auto;
+}
+
 .nameButton {
   color: inherit;
   text-align: left;

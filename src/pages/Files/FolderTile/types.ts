@@ -10,6 +10,8 @@ import type { FolderEntry } from '../types';
 export type FolderTileProps = {
   /** 文件夹摘要 */
   folder: FolderEntry;
+  /** 正在打开这个文件夹：按钮暂不可点，计数位置显示进度 */
+  loading?: boolean;
   /** 打开这个文件夹 */
   onOpen: (path: string) => void;
   /** 当前正在被拖拽 */

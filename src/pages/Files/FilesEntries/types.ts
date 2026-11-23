@@ -26,6 +26,10 @@ export type FilesEntriesProps = {
   folders: FolderEntry[];
   /** 网格 / 表格 */
   isGridView: boolean;
+  /** 正在切目录取数：整块列表蒙一层 loading */
+  loading: boolean;
+  /** 正在打开的文件夹路径：该瓦片 / 行显示进度 */
+  loadingFolder: string | null;
   /** 表格视图的行（文件夹 → 应用 → 文件） */
   rows: FilesRow[];
   /** 设置里的播放器应用名：网格在外部模式下用它的图标 */

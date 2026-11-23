@@ -10,7 +10,7 @@
 
 import type { DragEvent } from 'react';
 import { memo } from 'react';
-import { UnstyledButton } from '@mantine/core';
+import { Loader, UnstyledButton } from '@mantine/core';
 import { IconFolderFilled } from '@tabler/icons-react';
 
 import FreeTable from '@/components/tables/FreeTable';
@@ -45,6 +45,8 @@ const FilesTable = memo(
     dragSource,
     dropTarget,
     launchingApp,
+    listLoading,
+    loadingFolder,
     onDragEnd,
     onDragLeaveFolder,
     onDragOverFolder,
@@ -110,10 +112,13 @@ const FilesTable = memo(
       );
 
       if (row.kind === 'folder') {
+        const opening = listLoading && loadingFolder === row.folder.path;
+
         return (
           <UnstyledButton
             aria-label={`打开文件夹 ${row.folder.name}`}
             className={styles.nameButton}
+            disabled={opening}
             onClick={(event) => {
               event.stopPropagation();
               onOpenFolder(row.folder.path);
@@ -121,6 +126,9 @@ const FilesTable = memo(
             type="button"
           >
             {content}
+            {opening ? (
+              <Loader className={styles.openingSpinner} size={11} />
+            ) : null}
           </UnstyledButton>
         );
       }

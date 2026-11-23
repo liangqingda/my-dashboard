@@ -1,42 +1,54 @@
 import { UnstyledButton } from '@mantine/core';
-import { IconChevronRight, IconDeviceDesktop } from '@tabler/icons-react';
+import {
+  IconChevronRight,
+  IconDeviceDesktop,
+  IconDeviceUsb,
+  IconHome,
+} from '@tabler/icons-react';
 
-import { splitPathSegments } from '../utils/files';
+import { describePathRoot } from '../utils/files';
 
 import type { DirBreadcrumbProps } from './types';
 
 import styles from './index.scss';
 
 /**
- * 当前目录面包屑：以「本机（`/`）」为根起步，逐层分段可点；末段是当前目录，只展示不可点。
- * 根不是主目录——从收藏的「系统应用程序」进 `/Applications` 这类根级路径时，主目录图标
- * 既不对也回不去；现在根固定是磁盘根，点它回 `/`。
- * 路径本身与分段数据归纯函数，这里只排根、分段与点击事件。
+ * 当前目录面包屑：根按路径自动换形态——主目录下的路径以「家」为根（用户名 + 房子图标），
+ * 外接卷下的路径以该卷为根（卷名 + 移动盘图标），其余以「本机（`/`）」为根；
+ * 根之下的分段逐层可点，末段是当前目录只展示。点根回到根所在的那一层。
+ * 路径根与分段数据归纯函数（`describePathRoot`），这里只排图标、分段与点击事件。
  */
+const ROOT_ICONS = {
+  computer: IconDeviceDesktop,
+  home: IconHome,
+  volume: IconDeviceUsb,
+} as const;
+
 const DirBreadcrumb = ({ currentDir, onNavigate }: DirBreadcrumbProps) => {
-  const pathSegments = splitPathSegments(currentDir);
+  const root = describePathRoot(currentDir);
+  const RootIcon = ROOT_ICONS[root.kind];
 
   return (
     <nav aria-label="当前目录路径" className={styles.breadcrumb}>
       {currentDir ? (
         <>
-          {currentDir === '/' ? (
+          {currentDir === root.path ? (
             <span className={styles.current}>
-              <IconDeviceDesktop aria-hidden="true" size={14} />
-              本机
+              <RootIcon aria-hidden="true" size={14} />
+              {root.label}
             </span>
           ) : (
             <UnstyledButton
               className={styles.root}
-              onClick={() => onNavigate('/')}
+              onClick={() => onNavigate(root.path)}
               type="button"
             >
-              <IconDeviceDesktop aria-hidden="true" size={14} />
-              本机
+              <RootIcon aria-hidden="true" size={14} />
+              {root.label}
             </UnstyledButton>
           )}
-          {pathSegments.map((segment, index) => {
-            const isLast = index === pathSegments.length - 1;
+          {root.segments.map((segment, index) => {
+            const isLast = index === root.segments.length - 1;
 
             return (
               <span className={styles.segment} key={segment.path}>

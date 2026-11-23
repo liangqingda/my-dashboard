@@ -79,6 +79,54 @@ export const splitPathSegments = (dir: string): PathSegment[] => {
   }));
 };
 
+/** 面包屑根的三种形态：本机磁盘根 / 当前用户主目录 / 外接卷 */
+export type PathRootKind = 'computer' | 'home' | 'volume';
+
+/** 面包屑根：根叫什么、回哪去，以及根之下还剩哪些分段 */
+export type PathRoot = {
+  kind: PathRootKind;
+  /** 根的名字：本机 / 用户名 / 卷名 */
+  label: string;
+  /** 点根回到哪一层 */
+  path: string;
+  /** 根之下的分段（不含根自身） */
+  segments: PathSegment[];
+};
+
+/**
+ * 按路径推出面包屑的根：`/Users/<用户>/…` 以主目录为根、`/Volumes/<卷>/…` 以该卷为根，
+ * 其余以磁盘根 `/` 为根；根自身不再当作一段重复展示。只认这两类常见前缀，不猜别的挂载点。
+ */
+export const describePathRoot = (dir: string): PathRoot => {
+  const parts = dir.split('/').filter(Boolean);
+  const [first, second] = parts;
+
+  if (first === 'Users' && parts.length >= 2) {
+    return {
+      kind: 'home',
+      label: second,
+      path: `/Users/${second}`,
+      segments: splitPathSegments(dir).slice(2),
+    };
+  }
+
+  if (first === 'Volumes' && parts.length >= 2) {
+    return {
+      kind: 'volume',
+      label: second,
+      path: `/Volumes/${second}`,
+      segments: splitPathSegments(dir).slice(2),
+    };
+  }
+
+  return {
+    kind: 'computer',
+    label: '本机',
+    path: '/',
+    segments: splitPathSegments(dir),
+  };
+};
+
 /** 分类是否全选：筛选列表的「全部」勾选框与列表过滤共用这一个判据 */
 export const isTypeFilterAllSelected = (selected: FileCategory[]): boolean =>
   selected.length === FILE_CATEGORY_VALUES.length;
