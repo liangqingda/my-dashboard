@@ -24,10 +24,13 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* 音量数值：贴在滑杆左下方，跟着浮出的音量条一起出现（自带浮标靠右会被弹窗边缘裁掉） */
+/*
+ * 音量数值：贴在滑杆左下方，跟着浮出的音量条一起出现（自带浮标靠右会被弹窗边缘裁掉）。
+ * `50%` 是滑杆中心，再让开拇指半径（6px）与 12px 的间距，数字不贴着滑杆。
+ */
 .volumeValue {
   position: absolute;
-  right: calc(50% + 12px);
+  right: calc(50% + 18px);
   bottom: 2px;
   color: var(--app-ink-faint);
   font-size: 0.66rem;
