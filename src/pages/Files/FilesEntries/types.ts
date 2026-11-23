@@ -44,6 +44,10 @@ export type FilesEntriesProps = {
   onDropFolder: (path: string) => void;
   /** 重命名某个条目 */
   onEditEntry: (entry: FolderEntry | FileEntry) => void;
+  /** 正在启动的应用路径 */
+  launchingApp: string | null;
+  /** 点应用瓦片打开该应用 */
+  onOpenApp: (app: AppEntry) => void;
   /** 打开某个子文件夹 */
   onOpenFolder: (dir: string) => void;
   /** 打开某条视频 */

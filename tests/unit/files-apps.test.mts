@@ -6,6 +6,7 @@ import { after, before, describe, it } from 'node:test';
 
 import {
   isSystemAppPath,
+  launchAppBundle,
   scanAppResidues,
   uninstallAppBundle,
 } from '../../scripts/vite/files-apps.ts';
@@ -69,6 +70,17 @@ describe('files-apps', () => {
     assert.equal(isSystemAppPath('/System/Applications/Safari.app'), true);
     assert.equal(isSystemAppPath('/usr/local/bin/foo'), true);
     assert.equal(isSystemAppPath('/Applications/Demo.app'), false);
+  });
+
+  it('打开应用前先校验应用包：非 .app 与不存在的路径都拒绝', async () => {
+    await assert.rejects(
+      launchAppBundle(path.join(root, 'Demo.txt')),
+      /只能操作 \.app 应用包/,
+    );
+    await assert.rejects(
+      launchAppBundle(path.join(root, 'Missing.app')),
+      /应用不存在/,
+    );
   });
 
   it('列残留：只报真实存在的用户级条目，bundle id 从 Info.plist 解析', async () => {

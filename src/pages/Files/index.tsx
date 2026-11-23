@@ -14,6 +14,7 @@ import FilesStates from './FilesStates';
 import RenameEntryModal from './RenameEntryModal';
 import UninstallAppConfirm from './UninstallAppConfirm';
 import { FILE_CATEGORY_VALUES, FILES_STORAGE_SCOPE } from './constants';
+import { useAppLaunch } from './hooks/useAppLaunch';
 import { useAppUninstall } from './hooks/useAppUninstall';
 import { useEntryActions } from './hooks/useEntryActions';
 import { useEntryDelete } from './hooks/useEntryDelete';
@@ -26,12 +27,12 @@ import { useTypeFilter } from './hooks/useTypeFilter';
 import { useVideoPreview } from './hooks/useVideoPreview';
 import {
   describeDirSpace,
+  emptyListingText,
   filterAppsByCategory,
   filterAppsByKeyword,
   filterFilesByCategory,
   filterFilesByKeyword,
   filterFoldersByCategory,
-  isTypeFilterAllSelected,
   toFilesRows,
 } from './utils/files';
 import type { TypeFilterMode } from './types';
@@ -53,7 +54,14 @@ import styles from './index.scss';
 const Files = () => {
   const { currentDir, listing, loading, error, openDir, pickDir, refresh, reload } =
     useFilesDir();
-  const { favorites, isFavorite, toggleFavorite, removeFavorite } = useFavorites();
+  const {
+    favorites,
+    isFavorite,
+    moveFavorite,
+    removeFavorite,
+    toggleFavorite,
+    togglePinnedFavorite,
+  } = useFavorites();
   const {
     onChange: onSelectedCategoriesChange,
     selected: selectedCategories,
@@ -68,6 +76,7 @@ const Files = () => {
   const entryActions = useEntryActions(listing?.path ?? null, reload);
   /** 应用卸载：点卸载先取残留清单，确认后删整包并清理残留 */
   const appUninstall = useAppUninstall(reload);
+  const { launchApp, launchingPath } = useAppLaunch();
   /** 视频预览：点视频打开弹窗，翻篇 / 侧栏 / 截图都按当前目录的视频列表走 */
   const {
     activeId: previewVideoId,
@@ -181,19 +190,9 @@ const Files = () => {
   };
 
   /** 空态文案：筛过条件与真的空目录给不同一句话；不是空态就是 null */
-  let emptyText: string | null = null;
-
-  if (showEmpty) {
-    if (selectedCategories.length === 0) {
-      emptyText = '筛选里一个类型都没勾，勾上要看的类型或点「全部」';
-    } else if (selectedCategories.length === 1 && selectedCategories[0] === 'app') {
-      emptyText = '这个目录里没有应用，可点收藏里的「系统应用程序」去 /Applications';
-    } else if (keyword.trim() !== '' || !isTypeFilterAllSelected(selectedCategories)) {
-      emptyText = '没有符合筛选条件的条目';
-    } else {
-      emptyText = '这个目录里没有文件或子文件夹';
-    }
-  }
+  const emptyText = showEmpty
+    ? emptyListingText(selectedCategories, keyword)
+    : null;
 
   return (
     <MenuContentLayout
@@ -208,6 +207,7 @@ const Files = () => {
           loading={loading}
           onCreateFolder={entryActions.createEntry}
           onKeywordChange={setKeyword}
+          onMoveFavorite={moveFavorite}
           onOpenFavorite={goToDir}
           onPanelChange={setOpenPanel}
           onPickDir={handlePickDir}
@@ -218,6 +218,7 @@ const Files = () => {
               toggleFavorite(currentEntry);
             }
           }}
+          onTogglePinnedFavorite={togglePinnedFavorite}
           onToggleViewMode={toggleViewMode}
           onTypeFilterModeChange={changeFilterMode}
           openPanel={openPanel}
@@ -255,12 +256,14 @@ const Files = () => {
             files={visibleFiles}
             folders={visibleFolders}
             isGridView={isGridView}
+            launchingApp={launchingPath}
             onDragEnd={entryActions.clearDrag}
             onDragLeaveFolder={entryActions.dragLeaveFolder}
             onDragOverFolder={entryActions.dragOverFolder}
             onDragStartEntry={entryActions.dragStartEntry}
             onDropFolder={entryActions.dropFolder}
             onEditEntry={entryActions.editEntry}
+            onOpenApp={launchApp}
             onOpenFolder={goToDir}
             onOpenImage={openImage}
             onOpenVideo={openVideo}

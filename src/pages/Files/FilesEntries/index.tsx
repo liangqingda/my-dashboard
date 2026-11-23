@@ -20,6 +20,7 @@ const FilesEntries = ({
   files,
   folders,
   isGridView,
+  launchingApp,
   rows,
   onDragEnd,
   onDragLeaveFolder,
@@ -28,6 +29,7 @@ const FilesEntries = ({
   onDropFolder,
   onEditEntry,
   onOpenFolder,
+  onOpenApp,
   onOpenImage,
   onOpenVideo,
   onRequestDeleteEntry,
@@ -61,12 +63,14 @@ const FilesEntries = ({
         dropTarget={dropTarget}
         files={files}
         folders={folders}
+        launchingApp={launchingApp}
         onDragEnd={onDragEnd}
         onDragLeaveFolder={onDragLeaveFolder}
         onDragOverFolder={onDragOverFolder}
         onDragStartEntry={onDragStartEntry}
         onDropFolder={onDropFolder}
         onEditEntry={onEditEntry}
+        onOpenApp={onOpenApp}
         onOpenFolder={onOpenFolder}
         onOpenImage={onOpenImage}
         onOpenVideo={onOpenVideo}
@@ -79,12 +83,14 @@ const FilesEntries = ({
       <FilesTable
         dragSource={dragSource}
         dropTarget={dropTarget}
+        launchingApp={launchingApp}
         onDragEnd={onDragEnd}
         onDragLeaveFolder={onDragLeaveFolder}
         onDragOverFolder={onDragOverFolder}
         onDragStartEntry={onDragStartEntry}
         onDropFolder={onDropFolder}
         onEditEntry={onEditEntry}
+        onOpenApp={onOpenApp}
         onOpenFolder={onOpenFolder}
         onOpenImage={onOpenImage}
         onOpenVideo={onOpenVideo}

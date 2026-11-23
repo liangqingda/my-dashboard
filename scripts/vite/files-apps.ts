@@ -240,6 +240,27 @@ export const inspectAppBundle = async (
 };
 
 /**
+ * 打开一个应用包：校验是 `.app` 后交给系统 `open`（等价于在 Finder 里双击）。
+ * 只传真实路径，页面给什么路径都不会被当成可执行文件直接跑。
+ */
+export const launchAppBundle = async (
+  input: string,
+): Promise<{ path: string }> => {
+  const { realPath } = await inspectAppBundle(input);
+
+  try {
+    await execFileAsync('open', [realPath], { timeout: 15_000 });
+  } catch (error) {
+    throw appError(
+      `无法打开应用：${error instanceof Error ? error.message : realPath}`,
+      errorCode(error) || 'EIO',
+    );
+  }
+
+  return { path: realPath };
+};
+
+/**
  * 列目录时用的轻量摘要：只 stat + realpath，不读 Info.plist。
  * 读不到（符号链接指向不存在、不是目录）返回 null，调用方跳过这一条。
  */

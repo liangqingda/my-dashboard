@@ -15,6 +15,7 @@
  * - `POST /api/files/rename`：body `{ path, name }` 重命名一条条目；
  * - `POST /api/files/move`：body `{ source, targetDir }` 把一条条目移入目标目录；
  * - `POST /api/files/delete`：body `{ path }` 删除一条条目，文件夹连同内部内容递归删除；
+ * - `POST /api/files/open-app`：body `{ path }` 打开一个应用包（交给系统 `open`）；
  * - `POST /api/files/uninstall-app`：body `{ path }` 卸载应用包并清理残留，权限不足时弹一次授权窗补删；
  * - `POST /api/files/capture`：body `{ dataUrl, dir? }` 把一帧 PNG 截图写进 `dir`（缺省用户桌面），返回文件名与绝对路径；
  * - `GET /api/files/video-apps`：列出能播放视频的本机应用（`open -a` 用应用名），供设置里选外部播放器；
@@ -29,7 +30,7 @@ import type { Plugin } from 'vite';
 
 import { appIconPng } from './files-app-icons.js';
 import { fileThumb } from './files-thumbs.js';
-import { scanAppResidues, uninstallAppBundle } from './files-apps.js';
+import { launchAppBundle, scanAppResidues, uninstallAppBundle } from './files-apps.js';
 import { openImageFile } from './files-images.js';
 import { openVideoFile, openVideoStream, parseByteRange, saveCapture, videoEtag } from './files-media.js';
 import { openExternalFile } from './files-open.js';
@@ -501,6 +502,7 @@ export const files = (): Plugin => ({
         pathname === '/rename' ||
         pathname === '/move' ||
         pathname === '/delete' ||
+        pathname === '/open-app' ||
         pathname === '/uninstall-app' ||
         pathname === '/capture'
       ) {
@@ -553,6 +555,10 @@ export const files = (): Plugin => ({
             await deleteEntry(bodyString(body, 'path'));
 
             res.end(JSON.stringify({ ok: true }));
+          } else if (pathname === '/open-app') {
+            const launched = await launchAppBundle(bodyString(body, 'path'));
+
+            res.end(JSON.stringify({ launched }));
           } else {
             const result = await uninstallAppBundle(bodyString(body, 'path'));
 

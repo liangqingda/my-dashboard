@@ -19,6 +19,14 @@
   gap: 6px;
   min-width: 0;
   padding: 12px 8px;
+  color: inherit;
+  cursor: pointer;
+
+  &:disabled,
+  &[data-disabled] {
+    cursor: progress;
+    opacity: 0.6;
+  }
 }
 
 /* hover 才浮出的卸载按钮组：定位在 EntryTileActions，这里只挂 hover 显隐 */

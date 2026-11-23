@@ -1,98 +1,146 @@
 /**
- * 收藏目录弹层面板：顶部固定一条「系统应用程序」（`/Applications`），不可移除；
- * 其下是用户收藏的条目，整行点击直达；移除按钮靠右、自己吞掉冒泡。
- * 「收藏 / 取消收藏当前目录」整宽按钮排在列表下方。
+ * 收藏目录弹层面板：每条收藏都能点直达，右侧一颗固定图标（固定 / 未固定两种样式）
+ * 与未固定条目的移除按钮；固定项排在最上面、不显示移除按钮，其余条目可拖拽排序。
+ * 「系统应用程序」只是首次预置的一条已固定收藏，取消固定 / 改名之外的编辑与其余条目一致。
  * 条目两行：目录名在上，完整路径在下；路径过长省略，hover 显示全文。
- * 列表数据与持久化归 `useFavorites`，这里只排布与条目事件。
+ * 列表数据、固定状态与排序持久化归 `useFavorites`，这里只排布与条目事件。
  */
 
+import { useState } from 'react';
+import type { DragEvent } from 'react';
 import { Button, Stack, Text } from '@mantine/core';
-import { IconApps, IconX } from '@tabler/icons-react';
+import { IconPin, IconPinnedFilled, IconX } from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
 import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
-
-import { SYSTEM_APPS_FAVORITE } from '../../constants';
 
 import type { FavoritesPanelProps } from './types';
 
 import styles from './index.scss';
 
+/** 拖拽源 / 悬停目标都只存路径：面板里的列表很短，不需要索引之外的拖拽模型 */
 const FavoritesPanel = ({
   disabled,
   favorites,
   isFavorite,
   onClose,
+  onMove,
   onOpen,
   onRemove,
   onToggleFavorite,
-}: FavoritesPanelProps) => (
-  <Stack gap="sm">
-    <div
-      className={styles.row}
-      onClick={() => {
-        onOpen(SYSTEM_APPS_FAVORITE.path);
-        onClose();
-      }}
-    >
-      <IconApps aria-hidden="true" className={styles.pinnedIcon} size={15} />
-      <div className={styles.info}>
-        <FreeTruncatedText
-          className={styles.name}
-          text={SYSTEM_APPS_FAVORITE.name}
-        />
-        <FreeTruncatedText
-          className={styles.path}
-          text={SYSTEM_APPS_FAVORITE.path}
-        />
-      </div>
-    </div>
+  onTogglePinned,
+}: FavoritesPanelProps) => {
+  const [dragPath, setDragPath] = useState<string | null>(null);
+  const [overPath, setOverPath] = useState<string | null>(null);
 
-    {favorites.length === 0 ? (
-      <Text c="dimmed" size="xs">
-        还没有收藏的目录
-      </Text>
-    ) : (
-      <Stack gap={2}>
-        {favorites.map((entry) => (
-          <div
-            className={styles.row}
-            key={entry.path}
-            onClick={() => {
-              onOpen(entry.path);
-              onClose();
-            }}
-          >
-            <div className={styles.info}>
-              <FreeTruncatedText className={styles.name} text={entry.name} />
-              <FreeTruncatedText className={styles.path} text={entry.path} />
-            </div>
-            <FreeIconAction
-              label="移除收藏"
-              onClick={(event) => {
-                event.stopPropagation();
-                onRemove(entry.path);
+  /** 拖到某一行上：只接受条目之间的排序，不接外部文件 */
+  const handleDragOver = (path: string) => (event: DragEvent<HTMLDivElement>) => {
+    const { dataTransfer } = event;
+
+    event.preventDefault();
+    dataTransfer.dropEffect = 'move';
+    setOverPath(path);
+  };
+
+  const endDrag = () => {
+    setDragPath(null);
+    setOverPath(null);
+  };
+
+  return (
+    <Stack gap="sm">
+      {favorites.length === 0 ? (
+        <Text c="dimmed" size="xs">
+          还没有收藏的目录
+        </Text>
+      ) : (
+        <Stack gap={2}>
+          {favorites.map((entry) => (
+            <div
+              className={[
+                styles.row,
+                dragPath === entry.path ? styles.dragging : '',
+                overPath === entry.path && dragPath !== entry.path
+                  ? styles.dropTarget
+                  : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              draggable
+              key={entry.path}
+              onClick={() => {
+                onOpen(entry.path);
+                onClose();
               }}
-              size="xs"
-              tooltip="none"
-            >
-              <IconX size={13} />
-            </FreeIconAction>
-          </div>
-        ))}
-      </Stack>
-    )}
+              onDragEnd={endDrag}
+              onDragOver={handleDragOver(entry.path)}
+              onDragStart={(event) => {
+                const { dataTransfer } = event;
 
-    <Button
-      disabled={disabled}
-      fullWidth
-      onClick={onToggleFavorite}
-      size="sm"
-      variant="default"
-    >
-      {isFavorite ? '取消收藏当前目录' : '收藏当前目录'}
-    </Button>
-  </Stack>
-);
+                dataTransfer.effectAllowed = 'move';
+                // 有的浏览器不给 setData 就不启动拖拽
+                dataTransfer.setData('text/plain', entry.path);
+                setDragPath(entry.path);
+              }}
+              onDrop={(event) => {
+                event.preventDefault();
+
+                if (dragPath !== null) {
+                  onMove(dragPath, entry.path);
+                }
+
+                endDrag();
+              }}
+            >
+              <div className={styles.info}>
+                <FreeTruncatedText className={styles.name} text={entry.name} />
+                <FreeTruncatedText className={styles.path} text={entry.path} />
+              </div>
+              <FreeIconAction
+                label={entry.pinned ? '取消固定' : '固定到顶部'}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onTogglePinned(entry.path);
+                }}
+                size="xs"
+                tone={entry.pinned ? 'accent' : 'normal'}
+                tooltip="none"
+              >
+                {entry.pinned ? (
+                  <IconPinnedFilled size={13} />
+                ) : (
+                  <IconPin size={13} />
+                )}
+              </FreeIconAction>
+              {entry.pinned ? null : (
+                <FreeIconAction
+                  label="移除收藏"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onRemove(entry.path);
+                  }}
+                  size="xs"
+                  tooltip="none"
+                >
+                  <IconX size={13} />
+                </FreeIconAction>
+              )}
+            </div>
+          ))}
+        </Stack>
+      )}
+
+      <Button
+        disabled={disabled}
+        fullWidth
+        onClick={onToggleFavorite}
+        size="sm"
+        variant="default"
+      >
+        {isFavorite ? '取消收藏当前目录' : '收藏当前目录'}
+      </Button>
+    </Stack>
+  );
+};
 
 export default FavoritesPanel;

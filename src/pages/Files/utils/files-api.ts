@@ -40,6 +40,7 @@ const IMAGE_ENDPOINT = '/api/files/image';
 const CAPTURE_ENDPOINT = '/api/files/capture';
 const APP_ICON_ENDPOINT = '/api/files/app-icon';
 const APP_RESIDUE_ENDPOINT = '/api/files/app-residue';
+const OPEN_APP_ENDPOINT = '/api/files/open-app';
 const UNINSTALL_APP_ENDPOINT = '/api/files/uninstall-app';
 
 /** 取数请求的缓存策略：开发态必须实时，静态产物不读这个接口 */
@@ -267,6 +268,14 @@ export const fetchAppResidues = async (
   }
 
   return report;
+};
+
+/**
+ * 打开一个应用包：中间件校验 `.app` 后交给系统 `open`，等价于在 Finder 里双击。
+ * 只负责发起，成功与否由启动的窗口体现；失败抛错由调用方弹提示。
+ */
+export const openApp = async (pathValue: string): Promise<void> => {
+  await postJson(OPEN_APP_ENDPOINT, { path: pathValue });
 };
 
 /**

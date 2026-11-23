@@ -1,7 +1,7 @@
 /**
  * 目录表格：一行一个条目，三列「名称 / 类别 / 操作」，文件夹在前、应用其次、文件在后。
  * 名称前带类型图标（应用是真实图标，取不到时回落通用图标）；文件夹行整行可点进入下一层，
- * 视频 / 图片名称可点打开对应的预览弹窗，应用与其它文件只是展示（与网格一致）；
+ * 视频 / 图片名称可点打开对应的预览弹窗，应用名称可点交给系统打开（与网格一致）；
  * 指针停到视频行上时先预取文件头，点开时首帧更快。
  * 行可拖拽（应用除外，移动 .app 会破坏系统登记），文件夹行是放置目标；
  * 重命名 / 删除走与瓦片同一组按钮，应用只有卸载一项。
@@ -44,12 +44,14 @@ const FilesTable = memo(
   ({
     dragSource,
     dropTarget,
+    launchingApp,
     onDragEnd,
     onDragLeaveFolder,
     onDragOverFolder,
     onDragStartEntry,
     onDropFolder,
     onEditEntry,
+    onOpenApp,
     onOpenFolder,
     onOpenImage,
     onOpenVideo,
@@ -92,7 +94,7 @@ const FilesTable = memo(
       );
     };
 
-    /** 一行的名称单元格：图标 + 名称；文件夹整块可点，视频 / 图片名称可点，应用与其它文件只是展示 */
+    /** 一行的名称单元格：图标 + 名称；文件夹整块可点，应用名称可点打开，视频 / 图片名称可点预览 */
     const renderName = (row: FilesRow) => {
       const entry = entryOf(row);
       const content = (
@@ -123,9 +125,26 @@ const FilesTable = memo(
         );
       }
 
+      if (row.kind === 'app') {
+        return (
+          <UnstyledButton
+            aria-label={`打开 ${row.app.name}`}
+            className={styles.nameButton}
+            disabled={launchingApp === row.app.path}
+            onClick={(event) => {
+              event.stopPropagation();
+              onOpenApp(row.app);
+            }}
+            type="button"
+          >
+            {content}
+          </UnstyledButton>
+        );
+      }
+
       if (
-        row.kind === 'file' &&
-        (row.file.category === 'video' || row.file.category === 'image')
+        row.file.category === 'video' ||
+        row.file.category === 'image'
       ) {
         const { category, name: fileName } = row.file;
 

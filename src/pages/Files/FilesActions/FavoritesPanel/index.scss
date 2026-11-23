@@ -32,8 +32,11 @@
   line-height: 1.3;
 }
 
-/* 固定「系统应用程序」条目的图标：不随文字截断，颜色与路径同档 */
-.pinnedIcon {
-  flex: 0 0 auto;
-  color: var(--app-ink-faint);
+/* 拖拽中的行淡出、落点行上方给一条强调色，表示「会插到这里」 */
+.dragging {
+  opacity: 0.5;
+}
+
+.dropTarget {
+  box-shadow: inset 0 2px 0 var(--app-accent);
 }

@@ -16,7 +16,7 @@ import {
 import { createChoiceCodec } from '@/utils/local-storage';
 import { scopedStorageKey } from '@/utils/page-storage';
 
-import type { FileCategory, FilesViewMode } from './types';
+import type { FavoriteEntry, FileCategory, FilesViewMode } from './types';
 
 /**
  * 这一页在 localStorage 里的页面标识：对应路由 `/files`
@@ -135,11 +135,16 @@ export const CATEGORY_ICONS: Record<FileCategory, typeof IconFile> = {
 };
 
 /**
- * 固定的系统应用程序目录入口：macOS 的系统应用装在根目录下的 `/Applications`，
+ * 系统应用程序目录入口：macOS 的系统应用装在根目录下的 `/Applications`，
  * 而用户主目录里可能也有一个同名 `Applications`（Chrome 应用快捷方式之类），打开后者
- * 会看不到任何应用。收藏面板顶部固定放这一条，随时一键回到真正的应用目录。
+ * 会看不到任何应用。首次进入文件页时把它预置成一条「已固定」的收藏，之后与其余条目一样
+ * 可取消固定、拖动排序或移除。
  */
 export const SYSTEM_APPS_FAVORITE = {
   name: '系统应用程序',
   path: '/Applications',
+  pinned: true,
 } as const;
+
+/** 首次打开时预置的收藏：系统应用目录固定在最上面；之后可取消固定 / 移除 */
+export const DEFAULT_FAVORITES: FavoriteEntry[] = [SYSTEM_APPS_FAVORITE];

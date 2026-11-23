@@ -14,6 +14,10 @@ export type FilesTableProps = {
   dragSource: string | null;
   /** 当前悬停的放置目标文件夹路径；null 表示没有目标 */
   dropTarget: string | null;
+  /** 正在启动的应用路径 */
+  launchingApp: string | null;
+  /** 点应用名称交给系统打开该应用 */
+  onOpenApp: (app: AppEntry) => void;
   /** 打开某个子文件夹（点名称进入下一层） */
   onOpenFolder: (dir: string) => void;
   /** 打开某条视频（点名称交给视频预览弹窗） */

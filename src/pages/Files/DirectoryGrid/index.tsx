@@ -20,7 +20,7 @@ const allowMoveOverGrid = (event: DragEvent<HTMLDivElement>) => {
 /**
  * 目录网格：子文件夹排在前、应用其次、文件排在后，自适应列宽铺满内容区。
  * 改名统一走弹窗，不改动网格位置；文件夹与文件可拖拽，文件夹是放置目标；
- * 应用只展示与卸载，不参与拖拽移动。拖拽落在空白处不触发移动，等同取消。
+ * 应用可点击打开、也可卸载，不参与拖拽移动。拖拽落在空白处不触发移动，等同取消。
  * 条目数量已经整份在客户端，不做分页或虚拟滚动（见 `docs/pages.md`）。
  */
 /** 可预览的文件按分类分给对应的弹窗；其它文件点不动 */
@@ -53,10 +53,12 @@ const DirectoryGrid = ({
   onDropFolder,
   onEditEntry,
   onOpenFolder,
+  onOpenApp,
   onOpenImage,
   onOpenVideo,
   onRequestDeleteEntry,
   onRequestUninstallApp,
+  launchingApp,
   videoApp,
   videoOpenMode,
 }: DirectoryGridProps) => (
@@ -81,6 +83,8 @@ const DirectoryGrid = ({
       <AppTile
         app={app}
         key={app.path}
+        launching={launchingApp === app.path}
+        onOpen={() => onOpenApp(app)}
         onRequestUninstall={() => onRequestUninstallApp(app)}
       />
     ))}

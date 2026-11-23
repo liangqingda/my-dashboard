@@ -45,11 +45,13 @@ const FilesActions = ({
   onTypeFilterModeChange,
   onCreateFolder,
   onKeywordChange,
+  onMoveFavorite,
   onOpenFavorite,
   onPanelChange,
   onPickDir,
   onRemoveFavorite,
   onToggleFavorite,
+  onTogglePinnedFavorite,
   onToggleViewMode,
   openPanel,
   settings,
@@ -102,9 +104,11 @@ const FilesActions = ({
           favorites={favorites}
           isFavorite={isFavorite}
           onClose={() => onPanelChange(null)}
+          onMove={onMoveFavorite}
           onOpen={onOpenFavorite}
           onRemove={onRemoveFavorite}
           onToggleFavorite={onToggleFavorite}
+          onTogglePinned={onTogglePinnedFavorite}
         />
       </IconPopoverButton>
 

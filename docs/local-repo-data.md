@@ -166,9 +166,9 @@
 
 | 文件 | 职责 |
 | --- | --- |
-| `scripts/vite/files.ts` | 路由壳：`GET /api/files`（未带 `dir` 回落主目录）、`GET /api/files?dir=…`、`GET /api/files/content?path=…`（视频按 Range 流式读）、`GET /api/files/image?path=…`（图片字节）、`GET /api/files/thumb?path=…`（图片 / 视频缩略图，网格用）、`GET /api/files/video-apps`（能播视频的本机应用）、`GET /api/files/app-icon?path=…`（应用图标 PNG）、`GET /api/files/app-residue?path=…`（卸载残留清单）、`POST /api/files/pick-dir`（系统目录选择框）、`POST /api/files/new-folder`、`POST /api/files/rename`、`POST /api/files/move`、`POST /api/files/delete`、`POST /api/files/open`（交给外部播放器）、`POST /api/files/uninstall-app`、`POST /api/files/capture`（视频帧截图写目录，缺省桌面），错误归类成 HTTP 状态码 |
+| `scripts/vite/files.ts` | 路由壳：`GET /api/files`（未带 `dir` 回落主目录）、`GET /api/files?dir=…`、`GET /api/files/content?path=…`（视频按 Range 流式读）、`GET /api/files/image?path=…`（图片字节）、`GET /api/files/thumb?path=…`（图片 / 视频缩略图，网格用）、`GET /api/files/video-apps`（能播视频的本机应用）、`GET /api/files/app-icon?path=…`（应用图标 PNG）、`GET /api/files/app-residue?path=…`（卸载残留清单）、`POST /api/files/open-app`（打开应用包）、`POST /api/files/pick-dir`（系统目录选择框）、`POST /api/files/new-folder`、`POST /api/files/rename`、`POST /api/files/move`、`POST /api/files/delete`、`POST /api/files/open`（交给外部播放器）、`POST /api/files/uninstall-app`、`POST /api/files/capture`（视频帧截图写目录，缺省桌面），错误归类成 HTTP 状态码 |
 | `scripts/vite/files-store.ts` | 路径校验、条目归类、应用包从文件夹里分出来单独成列、文件夹直属条目计数与内含分类摘要（按扫描预算，供类型筛选过滤文件夹）、文件归类（视频 / PDF / Markdown / App / 其它）标记、选择器脚本拼装，以及新建 / 重命名 / 移动 / 删除的写盘与冲突拒绝、错误文案与错误码收口 |
-| `scripts/vite/files-apps.ts` | 应用包识别（`.app` 目录与指向它的符号链接）、Info.plist 解析（`plutil`）、残留推导（用户级与系统级）、卸载（先退应用再删整包与残留，权限不足时弹一次授权窗补删） |
+| `scripts/vite/files-apps.ts` | 应用包识别（`.app` 目录与指向它的符号链接）、Info.plist 解析（`plutil`）、残留推导（用户级与系统级）、打开（校验 `.app` 后交给系统 `open`）、卸载（先退应用再删整包与残留，权限不足时弹一次授权窗补删） |
 | `scripts/vite/files-app-icons.ts` | 应用图标按需抽取：从包内 `Contents/Resources` 找 `.icns`，`sips` 转成 PNG，按「包路径 + 修改时间」缓存在临时目录 |
 | `scripts/vite/files-video-apps.ts` | 能播视频的应用清单：扫 `/Applications`、`/System/Applications` 与 `~/Applications` 顶层的 `.app`，读 `Info.plist` 的 `CFBundleDocumentTypes`，声明了视频统一类型标识（或视频扩展名）的才算，按应用名去重；再剔掉 `EXCLUDED_VIDEO_APPS` 里那批「顺带能放视频、但不是播放器」的应用（网盘 / 阅读 / 聊天 / 音乐 / 系统 QuickTime） |
 | `scripts/vite/files-thumbs.ts` | 列表缩略图：图片用 `sips` 缩成 JPEG、视频用 `qlmanage` 抽 QuickLook 一帧，按「路径 + 体积 + 修改时间」缓存在临时目录，转码并发上限 2；转不出来的返回 null，前端回落分类图标 |
@@ -179,6 +179,7 @@
 - **列表不读文件内容**：列表接口只下发名称 / 路径 / 大小 / 修改时间等摘要；视频内容在点开预览时按需通过 `content` 接口流式读取（不再整份塞进 JSON），其它文件类型不提供内容接口；
 - **仅开发模式**：中间件挂在 `configureServer`，静态构建不带这些接口，页面回落「静态构建不支持读取本地目录」提示态，不产出目录快照；
 - **路径校验**：`~` 展开为用户主目录，其余必须是绝对路径；相对路径拒收，避免拼到进程 cwd 上读到意料之外的位置；隐藏条目（点开头）跳过；
+- **打开应用**：点网格里的应用瓦片把路径交给 `POST /api/files/open-app`，中间件校验是 `.app` 目录后调系统 `open`（等同 Finder 里双击）；启动请求在跑时不重复拉起，失败弹通知。
 - **应用包**：名字以 `.app` 结尾、且实际是目录（含符号链接）的条目单独进 `listing.apps`，不再当文件夹：列表中显示为一条应用（真实图标 + 「应用 / 系统应用」），也不参与文件夹条目计数与分类扫描——包里动辄几千个文件，既拖慢列表、分类也没有意义。普通符号链接仍跳过；符号链接到 `/System`、`/usr` 等只读路径的应用标记 `system: true`，只展示、不给卸载入口；
 - **应用图标**：`app-icon` 只接受 `.app` 路径，图标文件必须落在该包自己的 `Contents/Resources` 内；转码失败或只有 `Assets.car` 时回 404，前端回落通用应用图标，不影响条目；
 - **卸载**：`app-residue` 先按 bundle id 与显示名精确推导残留（Application Support / Caches / Preferences / Saved Application State / Logs / Cookies / HTTPStorages / WebKit / Containers / Application Scripts / Group Containers / LaunchAgents 与对应的 `/Library` 系统级路径），只返回真实存在的条目；确认弹窗逐条列出后才允许 `uninstall-app`。卸载时先尽力退出应用，再删整包与全部残留；普通删除遇到 `EACCES` / `EPERM` 时用一次 `osascript` 管理员授权补删（会弹 macOS 密码窗），用户取消就按「未删除」如实返回，不假装删干净；
@@ -186,7 +187,7 @@
 - **新建文件夹**：`new-folder` 在当前目录落一个默认名「未命名文件夹」的空目录，重名依次追加 `2、3…`，不覆盖已有文件夹；前端拿到后打开改名弹窗（取消保留条目，不删除）；
 - **重命名 / 移动**：`rename` 改一条条目名字，`move` 把文件或文件夹移入目标文件夹；目标已有同名条目按 409 冲突拒绝、不覆盖；文件夹不能移动到它自身或其子文件夹内；条目名拒收空名、路径分隔符、`.` `..` 与点开头的隐藏名；前端文件夹与文件统一在弹窗多行文本域改名，打开即聚焦并全选原名，回车保存、Shift+回车换行，空名或未改动时保存按钮禁用；应用不给改名 / 拖拽入口（移动或改名 `.app` 会让 Launchpad 与系统登记失效）；
 - **删除**：`delete` 删除一条条目，文件夹连同内部全部内容递归删除、文件直接删除，均不可恢复；前端 hover 文件夹 / 文件瓦片浮出重命名 / 删除按钮，删除先走 `ConfirmModal` 二次确认，弹窗与成功通知按文件夹 / 文件分别出文案；
-- **收藏目录**：收藏列表是页面偏好，存 localStorage（不经中间件、不写盘），条目为 `{ path, name }`，整行点击直达；面板顶部固定一条「系统应用程序」（`/Applications`，不可移除）——macOS 主目录里也可能有同名 `Applications`（Chrome 应用快捷方式之类），那条里没有真正的应用包，固定入口避免走错；条目两行展示目录名与完整路径，路径过长省略、hover 显示全文，尾部移除按钮自己吞冒泡；「收藏 / 取消当前目录」整宽按钮排在列表下方；
+- **收藏目录**：收藏列表是页面偏好，存 localStorage（不经中间件、不写盘），条目为 `{ path, name, pinned }`，整行点击直达；首次进入时预置一条已固定的「系统应用程序」（`/Applications`）——macOS 主目录里也可能有同名 `Applications`（Chrome 应用快捷方式之类），打开后者看不到应用包，预置这条避免走错；之后它和其余条目一样可取消固定、拖动排序或移除。固定项恒排在最前、不显示移除按钮，未固定项尾部一颗固定图标（固定 / 未固定两种样式）与移除按钮，图标自己吞冒泡；所有条目可拖拽排序，拖动只改非固定组内的先后；条目两行展示目录名与完整路径，路径过长省略、hover 显示全文；「收藏 / 取消当前目录」整宽按钮排在列表下方；
 - **排序**：文件夹与应用包各按**最后修改时间**倒序（新的在前），同一时刻按名称升序；
   文件**先按类别再按修改时间**——类别次序沿用筛选面板那排（视频 → 图片 → PDF → Markdown → 其它），
   同类别里新的在前。渲染顺序仍是「文件夹 → 应用 → 文件」，于是同类条目在网格 / 表格里连成一段；

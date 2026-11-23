@@ -127,6 +127,8 @@ export type FavoriteEntry = {
   path: string;
   /** 目录名（列表展示用） */
   name: string;
+  /** 是否固定在列表顶部；固定项不给移除按钮 */
+  pinned: boolean;
 };
 
 /** 展示形式：网格瓦片 / 表格平铺 */

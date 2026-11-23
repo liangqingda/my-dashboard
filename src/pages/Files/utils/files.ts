@@ -83,6 +83,26 @@ export const splitPathSegments = (dir: string): PathSegment[] => {
 export const isTypeFilterAllSelected = (selected: FileCategory[]): boolean =>
   selected.length === FILE_CATEGORY_VALUES.length;
 
+/** 空态文案：没勾类型 / 只勾 App / 有关键词或部分类型 / 真的空目录，四种口径 */
+export const emptyListingText = (
+  selected: FileCategory[],
+  keyword: string,
+): string => {
+  if (selected.length === 0) {
+    return '筛选里一个类型都没勾，勾上要看的类型或点「全部」';
+  }
+
+  if (selected.length === 1 && selected[0] === 'app') {
+    return '这个目录里没有应用，可点收藏里的「系统应用程序」去 /Applications';
+  }
+
+  if (keyword.trim() !== '' || !isTypeFilterAllSelected(selected)) {
+    return '没有符合筛选条件的条目';
+  }
+
+  return '这个目录里没有文件或子文件夹';
+};
+
 /** 按已勾选的分类过滤文件：全选整份保留，否则只留勾选的类 */
 export const filterFilesByCategory = (
   files: FileEntry[],

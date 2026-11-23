@@ -44,6 +44,10 @@ export type FilesActionsProps = {
   onOpenFavorite: (dir: string) => void;
   /** 移除一条收藏 */
   onRemoveFavorite: (path: string) => void;
+  /** 切换一条收藏的固定状态 */
+  onTogglePinnedFavorite: (path: string) => void;
+  /** 收藏面板里的拖拽排序 */
+  onMoveFavorite: (fromPath: string, toPath: string) => void;
   /** 换一批勾选的分类 */
   onSelectedCategoriesChange: (next: FileCategory[]) => void;
   /** 改类型筛选的操作方式（多选 / 单选） */
