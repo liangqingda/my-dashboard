@@ -1,71 +1,8 @@
-/* 视频预览弹窗：左侧目录 + 右侧舞台，舞台由播放器自己撑满 */
+/* 视频预览弹窗：左侧目录 + 右侧舞台（舞台由播放器自己撑满），这里只排这两列的横向关系 */
 
 .layout {
   display: flex;
   flex: 1 1 auto;
   min-width: 0;
   min-height: 0;
-}
-
-/* 舞台容器：给悬停浮出的翻篇按钮做定位祖先 */
-.stageWrap {
-  position: relative;
-  display: flex;
-  flex: 1 1 auto;
-  min-width: 0;
-  min-height: 0;
-}
-
-/*
- * 悬停才出现的翻篇大按钮：横排在进度条正上方、左右分列中心两侧。
- * 平时完全透明且不接指针（`visibility` 一并收掉，Tab 也不会落进看不见的按钮），
- * 鼠标进到舞台才亮起；两边的间距留得开，不挡画面主体。
- */
-.stageNav {
-  position: absolute;
-  bottom: 52px;
-  left: 50%;
-  z-index: 2;
-  display: flex;
-  gap: 130px;
-  visibility: hidden;
-  opacity: 0;
-  pointer-events: none;
-  transform: translateX(-50%);
-  transition:
-    opacity 160ms ease,
-    visibility 160ms ease;
-}
-
-.stageWrap:hover .stageNav {
-  visibility: visible;
-  opacity: 1;
-  pointer-events: auto;
-}
-
-/* 按钮压在黑色画面上：半透明圆底 + 浅色箭头，比 header 那排静默图标更显眼 */
-.navButton {
-  --ai-size: 52px;
-
-  width: 52px;
-  height: 52px;
-  min-width: 52px;
-  min-height: 52px;
-  border: 0;
-  border-radius: 50%;
-  background: rgb(0 0 0 / 38%);
-  color: rgb(255 255 255 / 88%);
-  transition:
-    background 140ms ease,
-    color 140ms ease;
-
-  &:hover:not(:disabled) {
-    background: rgb(0 0 0 / 62%);
-    color: #fff;
-  }
-
-  &:disabled {
-    background: rgb(0 0 0 / 18%);
-    color: rgb(255 255 255 / 32%);
-  }
 }

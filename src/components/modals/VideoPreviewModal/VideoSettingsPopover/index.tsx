@@ -67,6 +67,8 @@ const VideoSettingsPopover = ({
           { action: '播放 / 暂停', keys: ['空格'] },
           { action: '上一个 / 下一个', keys: ['[', ']'] },
           { action: '快进 / 后退', keys: ['←', '→'] },
+          { action: '静音 / 取消静音', keys: ['M'] },
+          { action: '显示 / 隐藏视频列表', keys: ['S'] },
           { action: '全屏 / 退出全屏', keys: ['F'] },
           { action: '退出全屏 / 关闭弹窗', keys: ['Esc'] },
           { action: '删除当前视频', keys: ['Delete'] },
@@ -74,6 +76,8 @@ const VideoSettingsPopover = ({
       : [
           { action: '播放 / 暂停', keys: ['空格'] },
           { action: '上一个 / 下一个', keys: ['[', ']', '←', '→'] },
+          { action: '静音 / 取消静音', keys: ['M'] },
+          { action: '显示 / 隐藏视频列表', keys: ['S'] },
           { action: '全屏 / 退出全屏', keys: ['F'] },
           { action: '退出全屏 / 关闭弹窗', keys: ['Esc'] },
           { action: '删除当前视频', keys: ['Delete'] },
@@ -222,9 +226,6 @@ const VideoSettingsPopover = ({
               </Group>
             </Group>
           ))}
-          <Text c="dimmed" fz="0.68rem">
-            方向键的去向与步长可在上面修改，其余键位固定。
-          </Text>
         </Stack>
       </Stack>
     </IconPopoverButton>

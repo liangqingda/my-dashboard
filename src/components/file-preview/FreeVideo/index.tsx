@@ -1,5 +1,5 @@
 /**
- * 视频播放器：`<video>` + 项目自己的控制栏（播放 / 进度 / 时间 / 静音 / 音量）。
+ * 视频播放器：`<video>` + 项目自己的控制栏（翻篇 / 播放 / 进度 / 时间 / 静音与音量）。
  *
  * 与「在哪预览」无关：调用方给一个地址就能播，不读路由、不弹窗、不做全屏与列表；
  * 需要取当前帧或从外部驱动播放时传 `videoRef`，组件会与内部 ref 合并后交给 `<video>`。
@@ -7,16 +7,19 @@
  * 不用浏览器自带 `controls`：原生控制栏样式跟着系统走，且自带一个「网页元素全屏」按钮，
  * 与整屏预览的交互不是同一件事。
  *
+ * 控制栏跟画面走：暂停恒显示，播放中指针一停就收起（1s），指针在控制栏上时始终显示。
+ *
  * 换片由调用方用 `key` 重挂（每个视频一个实例），不在这里监听 `src` 变化清状态。
  */
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { IconAlertTriangleFilled } from '@tabler/icons-react';
 import { Loader } from '@mantine/core';
 import { useMergedRef } from '@mantine/hooks';
 
 import { cx } from '@/utils/cx';
 
+import { CONTROLS_HIDE_DELAY } from './constants';
 import VideoControls from './VideoControls';
 import type { FreeVideoProps } from './types';
 
@@ -25,7 +28,7 @@ import styles from './index.scss';
 /** 播放状态：loading 还没解出画面，ready 可播，error 浏览器解不了 */
 type PlayerStatus = 'loading' | 'ready' | 'error';
 
-const FreeVideo = ({ className, src, videoRef }: FreeVideoProps) => {
+const FreeVideo = ({ className, nav, src, videoRef }: FreeVideoProps) => {
   const ownRef = useRef<HTMLVideoElement | null>(null);
   const mergedRef = useMergedRef(ownRef, videoRef);
   const [status, setStatus] = useState<PlayerStatus>('loading');
@@ -35,6 +38,70 @@ const FreeVideo = ({ className, src, videoRef }: FreeVideoProps) => {
   const [currentTime, setCurrentTime] = useState(0);
   const [volume, setVolume] = useState(1);
   const [muted, setMuted] = useState(false);
+  /** 控制栏是否可见：暂停恒显示，播放中指针静止一会儿就收起 */
+  const [controlsVisible, setControlsVisible] = useState(true);
+  /** 收起计时器：每次指针活动都重置 */
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** 播放状态与「指针是否停在控制栏上」的即时副本：计时器回调读不到渲染期的 state */
+  const playingRef = useRef(false);
+  const hoveringControlsRef = useRef(false);
+
+  /** 停掉收起计时（收起计时只在不该收时才会被拦住，所以先清干净） */
+  const clearHideTimer = () => {
+    if (hideTimerRef.current === null) {
+      return;
+    }
+
+    clearTimeout(hideTimerRef.current);
+    hideTimerRef.current = null;
+  };
+
+  /** 排一次收起：播放中、且指针不在控制栏上才真的收 */
+  const scheduleHide = () => {
+    clearHideTimer();
+
+    if (!playingRef.current || hoveringControlsRef.current) {
+      return;
+    }
+
+    hideTimerRef.current = setTimeout(() => {
+      hideTimerRef.current = null;
+      setControlsVisible(false);
+    }, CONTROLS_HIDE_DELAY);
+  };
+
+  /** 指针动一下就把控制栏亮出来，并重新开始计时 */
+  const revealControls = () => {
+    setControlsVisible(true);
+    scheduleHide();
+  };
+
+  /** 暂停 / 播完：控制栏常驻，不再计时收起 */
+  const showControlsForPaused = () => {
+    playingRef.current = false;
+    setPlaying(false);
+    clearHideTimer();
+    setControlsVisible(true);
+  };
+
+  /** 开播：控制栏先留着，指针一停再收 */
+  const handlePlaying = () => {
+    playingRef.current = true;
+    setPlaying(true);
+    setBuffering(false);
+    scheduleHide();
+  };
+
+  /** 卸载时清掉挂着的计时器 */
+  useEffect(
+    () => () => {
+      if (hideTimerRef.current !== null) {
+        clearTimeout(hideTimerRef.current);
+        hideTimerRef.current = null;
+      }
+    },
+    [],
+  );
 
   /** 播放 / 暂停：用户手势里调用，失败（编码不支持）由 error 事件接管 */
   const togglePlay = () => {
@@ -92,14 +159,18 @@ const FreeVideo = ({ className, src, videoRef }: FreeVideoProps) => {
   };
 
   return (
-    <div className={cx(styles.player, className)}>
+    <div
+      className={cx(styles.player, className)}
+      onPointerLeave={() => scheduleHide()}
+      onPointerMove={() => revealControls()}
+    >
       <div className={styles.stage}>
         <video
           className={styles.video}
           disablePictureInPicture
           onCanPlay={() => setStatus('ready')}
           onClick={togglePlay}
-          onEnded={() => setPlaying(false)}
+          onEnded={showControlsForPaused}
           onError={() => setStatus('error')}
           onLoadedData={() => {
             setStatus('ready');
@@ -109,11 +180,8 @@ const FreeVideo = ({ className, src, videoRef }: FreeVideoProps) => {
             setDuration(event.currentTarget.duration);
             setStatus('ready');
           }}
-          onPause={() => setPlaying(false)}
-          onPlaying={() => {
-            setPlaying(true);
-            setBuffering(false);
-          }}
+          onPause={showControlsForPaused}
+          onPlaying={handlePlaying}
           onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
           onVolumeChange={(event) => {
             setMuted(event.currentTarget.muted);
@@ -149,18 +217,40 @@ const FreeVideo = ({ className, src, videoRef }: FreeVideoProps) => {
         ) : null}
       </div>
 
-      <VideoControls
-        currentTime={currentTime}
-        duration={duration}
-        enabled={status === 'ready'}
-        muted={muted}
-        onSeek={seek}
-        onToggleMute={toggleMute}
-        onTogglePlay={togglePlay}
-        onVolumeChange={changeVolume}
-        playing={playing}
-        volume={volume}
-      />
+      {/*
+        控制栏浮层：收起只是淡出下移、不接收指针（不移出流，画面尺寸不跟着跳）。
+        `data-video-controls` 让 header 的自动隐藏知道「指针在这块上」，划过播放条不再唤出 header。
+      */}
+      <div
+        className={cx(
+          styles.controlsLayer,
+          !controlsVisible && styles.controlsLayerHidden,
+        )}
+        data-video-controls=""
+        onPointerEnter={() => {
+          hoveringControlsRef.current = true;
+          clearHideTimer();
+          setControlsVisible(true);
+        }}
+        onPointerLeave={() => {
+          hoveringControlsRef.current = false;
+          scheduleHide();
+        }}
+      >
+        <VideoControls
+          currentTime={currentTime}
+          duration={duration}
+          enabled={status === 'ready'}
+          muted={muted}
+          nav={nav}
+          onSeek={seek}
+          onToggleMute={toggleMute}
+          onTogglePlay={togglePlay}
+          onVolumeChange={changeVolume}
+          playing={playing}
+          volume={volume}
+        />
+      </div>
     </div>
   );
 };

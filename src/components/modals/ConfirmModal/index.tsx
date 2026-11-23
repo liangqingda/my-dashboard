@@ -14,6 +14,7 @@ import { Button, Group } from '@mantine/core';
 
 import FreeModal from '@/components/modals/FreeModal';
 
+import { CONFIRM_Z_INDEX } from './constants';
 import type { ConfirmModalProps } from './types';
 
 import styles from './index.scss';
@@ -33,6 +34,7 @@ const ConfirmModal = ({
   size = 420,
   title,
   trapFocus,
+  zIndex = CONFIRM_Z_INDEX,
 }: ConfirmModalProps) => (
   <FreeModal
     closeButton={!loading}
@@ -44,6 +46,7 @@ const ConfirmModal = ({
     size={size}
     title={title}
     trapFocus={trapFocus}
+    zIndex={zIndex}
   >
     <div className={styles.description}>{description}</div>
     {children}

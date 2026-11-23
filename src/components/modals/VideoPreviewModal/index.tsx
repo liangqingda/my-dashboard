@@ -3,21 +3,19 @@
  *
  * - header：翻篇 / 计数 / 文件名（外壳）+ 目录显隐、截图、设置、删除（本组件）；
  *   标题与右侧操作组之间恒留 20px，标题不换行、放不下才省略；
- * - 键盘：空格切播放 / 暂停（`FreeModal` 的 `media`），`[` / `]` 翻篇，
- *   `←` / `→` 默认按设置里的步长快进 / 后退（可在设置面板改成翻篇），
+ * - 键盘：空格切播放 / 暂停（`FreeModal` 的 `media`），`m` / `M` 静音、`s` / `S` 显隐目录列，
+ *   `[` / `]` 翻篇，`←` / `→` 默认按设置里的步长快进 / 后退（可在设置面板改成翻篇），
  *   `Delete` 触发删除确认；设置面板打开或删除确认开着时整组收掉；
  * - 设置面板：快进 / 后退步长、方向键去向、截图存放目录（默认桌面），并把全部键位列一遍；
- * - 悬停舞台时，进度条正上方浮出两个半透明的翻篇大按钮；
- * - 全屏走浏览器 Fullscreen API：侧栏收起时 header 浮在画面上、鼠标静止 3s 收起；
- *   侧栏唤出后 header 回到普通流（否则会盖住侧栏）；
+ * - 翻篇按钮排在播放器控制栏里、播放键左右两侧（与控制栏一起显隐）；
+ * - 全屏走浏览器 Fullscreen API：侧栏收起时 header 浮在画面上、鼠标静止 1s 收起；
+ *   侧栏唤出后 header 回到普通流（否则会盖住侧栏）；指针在控制栏上时不唤出 header；
  * - `Esc` 在全屏里交给浏览器退出全屏，非全屏才是关窗。
  */
 
 import { useCallback, useRef, useState } from 'react';
 import {
   IconCamera,
-  IconChevronLeft,
-  IconChevronRight,
   IconLayoutSidebarLeftCollapse,
   IconLayoutSidebarLeftExpand,
   IconTrash,
@@ -25,9 +23,11 @@ import {
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
 import FreeVideo from '@/components/file-preview/FreeVideo';
+import { CONTROLS_SELECTOR } from '@/components/file-preview/FreeVideo/constants';
 import FreeModal from '@/components/modals/FreeModal';
 import type { FreeModalSeekDirection } from '@/components/modals/FreeModal/types';
 
+import { HEADER_HIDE_DELAY } from './constants';
 import { useAutoHideHeader } from './hooks/useAutoHideHeader';
 import { useFrameCapture } from './hooks/useFrameCapture';
 import { useVideoFullscreen } from './hooks/useVideoFullscreen';
@@ -41,10 +41,6 @@ import styles from './index.scss';
 /** header 图标的尺寸与线宽：与外壳那排图标同一档 */
 const ICON_SIZE = 15;
 const ICON_STROKE = 1.8;
-
-/** 舞台上的翻篇按钮：比 header 那一档大一圈，压在黑色画面上要看得清 */
-const STAGE_NAV_ICON_SIZE = 26;
-const STAGE_NAV_ICON_STROKE = 1.7;
 
 const VideoPreviewModal = ({
   activeId,
@@ -78,6 +74,8 @@ const VideoPreviewModal = ({
   const headerOverlay = fullscreen && !sidebarVisible;
   const headerVisible = useAutoHideHeader(
     headerOverlay && !settingsOpen && !blocked,
+    HEADER_HIDE_DELAY,
+    CONTROLS_SELECTOR,
   );
 
   /** `←` / `→`：按设置的步长快进 / 后退；方向键交给它之后翻篇只剩方括号 */
@@ -118,6 +116,17 @@ const VideoPreviewModal = ({
     element.pause();
   }, []);
 
+  /** `m` / `M`：直接翻 `<video>` 的静音位，图标与音量条由元素自己的 `volumechange` 同步 */
+  const toggleMute = () => {
+    const element = videoRef.current;
+
+    if (element === null) {
+      return;
+    }
+
+    element.muted = !element.muted;
+  };
+
   /** 进全屏一律先收起侧栏（规格：全屏默认隐藏），退出全屏回到常规尺寸那份开关 */
   const toggleFullscreen = () => {
     if (!fullscreen) {
@@ -127,6 +136,7 @@ const VideoPreviewModal = ({
     toggle();
   };
 
+  /** `s` / `S` 与 header 的列表按钮共用 */
   const toggleSidebar = () => {
     if (fullscreen) {
       setSidebarOpenInFullscreen((prev) => !prev);
@@ -169,7 +179,7 @@ const VideoPreviewModal = ({
       headerActions={
         <>
           <FreeIconAction
-            label={sidebarVisible ? '隐藏视频列表' : '显示视频列表'}
+            label={sidebarVisible ? '隐藏视频列表（S）' : '显示视频列表（S）'}
             onClick={toggleSidebar}
           >
             {sidebarVisible ? (
@@ -211,7 +221,7 @@ const VideoPreviewModal = ({
           </FreeIconAction>
         ) : undefined
       }
-      media={{ onTogglePlay: togglePlay }}
+      media={{ onToggleMute: toggleMute, onTogglePlay: togglePlay }}
       nav={{
         index: index + 1,
         onNext: nextItem ? () => onSelect(nextItem.id) : null,
@@ -222,6 +232,7 @@ const VideoPreviewModal = ({
       onClose={requestClose}
       onRequestDelete={onRequestDelete ?? null}
       onSeek={settings.arrowMode === 'seek' ? seekBy : undefined}
+      onToggleSidebar={toggleSidebar}
       opened={opened}
       shortcutsEnabled={!blocked && !settingsOpen}
       title={activeItem.name}
@@ -235,35 +246,15 @@ const VideoPreviewModal = ({
             onSelect={onSelect}
           />
         ) : null}
-        <div className={styles.stageWrap}>
-          <FreeVideo key={activeItem.id} src={activeItem.src} videoRef={videoRef} />
-          <div className={styles.stageNav}>
-            <FreeIconAction
-              className={styles.navButton}
-              disabled={previousItem === null}
-              label="上一个视频"
-              onClick={previousItem ? () => onSelect(previousItem.id) : undefined}
-              size="lg"
-            >
-              <IconChevronLeft
-                size={STAGE_NAV_ICON_SIZE}
-                stroke={STAGE_NAV_ICON_STROKE}
-              />
-            </FreeIconAction>
-            <FreeIconAction
-              className={styles.navButton}
-              disabled={nextItem === null}
-              label="下一个视频"
-              onClick={nextItem ? () => onSelect(nextItem.id) : undefined}
-              size="lg"
-            >
-              <IconChevronRight
-                size={STAGE_NAV_ICON_SIZE}
-                stroke={STAGE_NAV_ICON_STROKE}
-              />
-            </FreeIconAction>
-          </div>
-        </div>
+        <FreeVideo
+          key={activeItem.id}
+          nav={{
+            onNext: nextItem ? () => onSelect(nextItem.id) : null,
+            onPrevious: previousItem ? () => onSelect(previousItem.id) : null,
+          }}
+          src={activeItem.src}
+          videoRef={videoRef}
+        />
       </div>
     </FreeModal>
   );

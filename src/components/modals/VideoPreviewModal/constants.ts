@@ -8,8 +8,8 @@
 import type { StoredFieldCodec } from '@/utils/local-storage';
 import { createChoiceFieldCodec } from '@/utils/local-storage';
 
-/** 全屏后鼠标静止多久收起 header（毫秒） */
-export const HEADER_HIDE_DELAY = 3000;
+/** 全屏后鼠标静止多久收起 header（毫秒）：与播放器控制栏同一个节奏 */
+export const HEADER_HIDE_DELAY = 1000;
 
 /** 截图成功通知的标题 */
 export const CAPTURE_NOTICE_TITLE = '已保存截图';

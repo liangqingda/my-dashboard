@@ -19,6 +19,23 @@
   min-height: 0;
 }
 
+/*
+ * 控制栏浮层：始终在流里（收起时也占位，画面尺寸不跟着跳），只是淡出下移、不接收指针。
+ * 音量浮层要往上探出控制栏，这里不能裁切。
+ */
+.controlsLayer {
+  flex: 0 0 auto;
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.controlsLayerHidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(12px);
+}
+
 /* 视频按比例完整显示，不留黑边裁切；整块可点，光标提示能切换播放 */
 .video {
   width: 100%;

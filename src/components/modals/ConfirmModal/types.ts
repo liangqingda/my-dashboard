@@ -30,4 +30,6 @@ export type ConfirmModalProps = {
   size?: number | string;
   /** 是否锁焦点，默认跟随外壳；表单类弹窗要自己聚焦输入框时可传 false */
   trapFocus?: boolean;
+  /** 层级，默认盖住所有弹窗（见 `constants.ts` 的 `CONFIRM_Z_INDEX`） */
+  zIndex?: number;
 };

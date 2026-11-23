@@ -52,6 +52,8 @@ export type FreeModalCopy = {
 export type FreeModalMedia = {
   /** 切换播放 / 暂停；不传则空格仍按 `closeOnSpace` 处理 */
   onTogglePlay?: () => void;
+  /** 切换静音；不传则 `m` / `M` 不动作 */
+  onToggleMute?: () => void;
 };
 
 /** 方向键的两种去向：回到调用方当快进 / 后退，或留在外壳里翻篇 */
@@ -77,8 +79,13 @@ export type FreeModalProps = {
    * 只影响外观，不卸载 header——按钮仍由业务侧决定是否可用（配合 `headerOverlay` 使用）。
    */
   headerHidden?: boolean;
-  /** 媒体快捷键：传了 `media`，空格切播放 / 暂停而不是关窗 */
+  /** 媒体快捷键：传了 `media`，空格切播放 / 暂停而不是关窗，`m` / `M` 切静音 */
   media?: FreeModalMedia;
+  /**
+   * `s` / `S` 切换某块面板的显隐（视频预览的目录列）。键位归外壳，动作归调用方：
+   * 面板状态由业务侧持有，外壳只把按键转成一个回调。
+   */
+  onToggleSidebar?: () => void;
   /**
    * ← / → 的方向键去向：传了就交给调用方（视频快进 / 后退），翻篇只剩 `[` / `]`；
    * 不传则方向键照旧翻篇。两种归属同一时刻只该有一种，所以用「给不给动作」表达。
@@ -135,4 +142,9 @@ export type FreeModalProps = {
    * （如子区域预览比主预览矮一档、全屏时四周留缝），框体边框 / 圆角 / 底色仍归本组件。
    */
   contentStyle?: CSSProperties;
+  /**
+   * 层级：默认走组件库的弹窗档。叠在另一层弹窗之上、又必须盖住它时由调用方显式抬高
+   * （典型是二次确认层压在预览弹窗上：两扇窗都用默认值时，谁先挂载谁在下）。
+   */
+  zIndex?: number;
 };

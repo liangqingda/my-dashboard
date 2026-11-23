@@ -60,11 +60,13 @@ const FreeModal = ({
   onClose,
   onRequestDelete,
   onSeek,
+  onToggleSidebar,
   opened,
   shortcutsEnabled = true,
   size = 'min(980px, 92vw)',
   title,
   trapFocus = true,
+  zIndex,
 }: FreeModalProps) => {
   /**
    * 全屏切换入口：`showToggle: false` 时只保留铺满外观、不画按钮、也不吃 `F`。
@@ -90,7 +92,9 @@ const FreeModal = ({
     onRequestDelete,
     onSeek,
     onToggleFullscreen,
+    onToggleMute: media?.onToggleMute,
     onTogglePlay: media?.onTogglePlay,
+    onToggleSidebar,
   });
 
   /** 翻页 tooltip 的快捷键提示：业务侧没给就用这套统一的键位 */
@@ -201,6 +205,7 @@ const FreeModal = ({
       transitionProps={{ duration: 140, transition: 'fade' }}
       trapFocus={trapFocus}
       withCloseButton={closeButton}
+      zIndex={zIndex}
     >
       {/*
         初始焦点落在隐藏节点上（`data-autofocus` + `tabindex=-1`，全局样式不给它画焦点环）：
