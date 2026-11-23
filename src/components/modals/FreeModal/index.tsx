@@ -8,6 +8,7 @@
  * 全屏状态由调用方持有（正文排版要跟着变），状态本身用 `hooks/useModalFullscreen` 记住。
  */
 
+import { useEffect, useRef } from 'react';
 import { FocusTrap, Modal } from '@mantine/core';
 import {
   IconChevronLeft,
@@ -29,6 +30,9 @@ import styles from './index.scss';
 const ICON_SIZE = 15;
 const STEP_ICON_SIZE = 16;
 const ICON_STROKE = 1.9;
+
+/** 窗口拿回焦点后这段时间内的遮罩点击只当「回焦」，不关窗 */
+const OVERLAY_FOCUS_GUARD_MS = 400;
 
 /** 翻页的默认快捷键提示，只进 tooltip */
 const NAV_SHORTCUT_HINT = '[ / ← · ] / →';
@@ -106,6 +110,32 @@ const FreeModal = ({
     onToggleSidebar,
   });
 
+  /** 窗口刚拿回焦点的时间点：从外部应用切回来的第一下点击只当回焦，不关窗 */
+  const focusAtRef = useRef(0);
+
+  useEffect(() => {
+    const onFocus = () => {
+      focusAtRef.current = performance.now();
+    };
+
+    window.addEventListener('focus', onFocus);
+
+    return () => window.removeEventListener('focus', onFocus);
+  }, []);
+
+  /** 遮罩点击：真正关窗的是这里（Mantine 那套关掉，换成带回焦保护的版本） */
+  const handleOverlayClick = () => {
+    if (!closeOnClickOutside) {
+      return;
+    }
+
+    if (performance.now() - focusAtRef.current < OVERLAY_FOCUS_GUARD_MS) {
+      return;
+    }
+
+    onClose();
+  };
+
   /** 翻页 tooltip 的快捷键提示：业务侧没给就用这套统一的键位 */
   const navHint = nav?.shortcutHint ?? NAV_SHORTCUT_HINT;
 
@@ -135,12 +165,16 @@ const FreeModal = ({
         title: styles.title,
       }}
       closeButtonProps={{ 'aria-label': closeLabel }}
-      closeOnClickOutside={closeOnClickOutside}
+      closeOnClickOutside={false}
       closeOnEscape={closeOnEscape}
       fullScreen={fullscreen?.active ?? false}
       onClose={onClose}
       opened={opened}
-      overlayProps={{ backgroundOpacity: 0.5, blur: 2 }}
+      overlayProps={{
+        backgroundOpacity: 0.5,
+        blur: 2,
+        onClick: handleOverlayClick,
+      }}
       padding={0}
       radius="md"
       size={size}

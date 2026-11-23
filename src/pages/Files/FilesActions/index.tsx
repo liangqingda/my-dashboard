@@ -28,10 +28,6 @@ const ICON_STROKE = 1.9;
 
 const FilesActions = ({
   createDisabled,
-  onVideoAppChange,
-  onVideoOpenModeChange,
-  videoApp,
-  videoOpenMode,
   excludedCategories,
   favoriteDisabled,
   favorites,
@@ -49,6 +45,7 @@ const FilesActions = ({
   onToggleFavorite,
   onToggleViewMode,
   openPanel,
+  settings,
 }: FilesActionsProps) => {
   /** 筛选有没有条件生效：排除项或关键词任一非空，图标用强调色 */
   const filterActive = excludedCategories.length > 0 || keyword.trim() !== '';
@@ -119,17 +116,21 @@ const FilesActions = ({
       </IconPopoverButton>
 
       <IconPopoverButton
-        active={videoOpenMode === 'external'}
+        active={settings.videoOpenMode === 'external'}
         icon={<IconSettings size={ICON_SIZE} stroke={ICON_STROKE} />}
         label="设置"
         onChange={(opened) => onPanelChange(opened ? 'settings' : null)}
         opened={openPanel === 'settings'}
       >
         <SettingsPanel
-          onVideoAppChange={onVideoAppChange}
-          onVideoOpenModeChange={onVideoOpenModeChange}
-          videoApp={videoApp}
-          videoOpenMode={videoOpenMode}
+          imageFullscreen={settings.imageFullscreen}
+          onImageFullscreenChange={settings.setImageFullscreen}
+          onVideoAppChange={settings.setVideoApp}
+          onVideoFullscreenChange={settings.setVideoFullscreen}
+          onVideoOpenModeChange={settings.setVideoOpenMode}
+          videoApp={settings.videoApp}
+          videoFullscreen={settings.videoFullscreen}
+          videoOpenMode={settings.videoOpenMode}
         />
       </IconPopoverButton>
 

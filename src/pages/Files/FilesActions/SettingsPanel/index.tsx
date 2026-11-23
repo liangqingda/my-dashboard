@@ -5,7 +5,14 @@
  * 后续加设置项直接往下追加分组，面板只读值、只回调，持久化在页面的设置 hook 里。
  */
 
-import { Loader, SegmentedControl, Select, Stack, Text } from '@mantine/core';
+import {
+  Loader,
+  SegmentedControl,
+  Select,
+  Stack,
+  Switch,
+  Text,
+} from '@mantine/core';
 
 import { PANEL_FIELD_STYLES } from '@/components/buttons/IconPopoverButton/constants';
 
@@ -23,9 +30,13 @@ const VIDEO_OPEN_MODE_OPTIONS = [
 ];
 
 const SettingsPanel = ({
+  imageFullscreen,
+  onImageFullscreenChange,
   onVideoAppChange,
+  onVideoFullscreenChange,
   onVideoOpenModeChange,
   videoApp,
+  videoFullscreen,
   videoOpenMode,
 }: SettingsPanelProps) => {
   /** 候选应用按需现取：面板挂载时取一次，页面别为一条设置常驻一份列表 */
@@ -83,6 +94,29 @@ const SettingsPanel = ({
           )}
         </Stack>
       ) : null}
+
+      <Stack gap={6}>
+        <Text className={styles.label}>预览默认全屏</Text>
+        <Switch
+          checked={imageFullscreen}
+          label="图片预览打开即全屏"
+          onChange={(event) =>
+            onImageFullscreenChange(event.currentTarget.checked)
+          }
+          size="xs"
+        />
+        <Switch
+          checked={videoFullscreen}
+          label="视频预览打开即全屏"
+          onChange={(event) =>
+            onVideoFullscreenChange(event.currentTarget.checked)
+          }
+          size="xs"
+        />
+        <Text className={styles.hint}>
+          打开预览时直接进入整屏；浏览器不给手势权限时会停在窗口尺寸，按 F 仍可手动切换。
+        </Text>
+      </Stack>
     </Stack>
   );
 };

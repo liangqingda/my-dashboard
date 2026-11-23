@@ -15,4 +15,12 @@ export type SettingsPanelProps = {
   onVideoOpenModeChange: (mode: VideoOpenMode) => void;
   /** 改外部打开的应用 */
   onVideoAppChange: (app: string) => void;
+  /** 图片预览弹窗默认是否全屏 */
+  imageFullscreen: boolean;
+  /** 视频预览弹窗默认是否全屏 */
+  videoFullscreen: boolean;
+  /** 改图片预览的默认全屏 */
+  onImageFullscreenChange: (enabled: boolean) => void;
+  /** 改视频预览的默认全屏 */
+  onVideoFullscreenChange: (enabled: boolean) => void;
 };

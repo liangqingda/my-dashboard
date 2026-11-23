@@ -2,11 +2,8 @@
  * 文件页标题栏操作按钮组的 props。
  */
 
-import type {
-  FileCategory,
-  FavoriteEntry,
-  VideoOpenMode,
-} from '../types';
+import type { UseFilesSettingsResult } from '../hooks/useFilesSettings';
+import type { FileCategory, FavoriteEntry } from '../types';
 
 /** 同时只开一块弹层：收藏面板 / 筛选面板 / 设置面板 */
 export type FilesActionsPanel = 'favorites' | 'filter' | 'settings';
@@ -29,14 +26,8 @@ export type FilesActionsProps = {
   excludedCategories: FileCategory[];
   /** 文件名关键词；空串表示不按关键词过滤 */
   keyword: string;
-  /** 视频点击后的去向（设置面板第一项） */
-  videoOpenMode: VideoOpenMode;
-  /** 外部打开用的应用名 */
-  videoApp: string;
-  /** 改视频去向 */
-  onVideoOpenModeChange: (mode: VideoOpenMode) => void;
-  /** 改外部打开的应用 */
-  onVideoAppChange: (app: string) => void;
+  /** 文件页设置：设置面板里读写的那几项（值 + 改值回调） */
+  settings: UseFilesSettingsResult;
   /** 当前打开的弹层；null 表示都关着 */
   openPanel: FilesActionsPanel | null;
   /** 调起系统目录选择器选择目录 */

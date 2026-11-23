@@ -35,13 +35,17 @@ const SIDEBAR_ICON_STROKE = 1.6;
 const ImagePreviewModal = ({
   activeId,
   blocked = false,
+  defaultFullscreen = false,
   items,
   onClose,
   onRequestDelete,
   onSelect,
   opened,
 }: ImagePreviewModalProps) => {
-  const { active: fullscreen, exit, toggle } = useBrowserFullscreen();
+  const { active: fullscreen, exit, toggle } = useBrowserFullscreen({
+    autoEnter: opened && defaultFullscreen,
+  });
+
   /** header 与侧栏是否展示：点图片切换，收起后舞台能看满整幅 */
   const [chromeVisible, setChromeVisible] = useState(true);
 
@@ -75,7 +79,6 @@ const ImagePreviewModal = ({
 
   return (
     <FreeModal
-      closeOnClickOutside={false}
       closeOnEscape={!fullscreen && !blocked}
       closeOnSpace={!blocked}
       fullscreen={{ active: fullscreen, onToggle: toggle }}

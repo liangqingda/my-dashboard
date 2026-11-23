@@ -24,6 +24,18 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* 音量数值：贴在滑杆左下方，跟着浮出的音量条一起出现（自带浮标靠右会被弹窗边缘裁掉） */
+.volumeValue {
+  position: absolute;
+  right: calc(50% + 12px);
+  bottom: 2px;
+  color: var(--app-ink-faint);
+  font-size: 0.66rem;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
 /* 音量：喇叭键是浮层的定位与悬停范围 */
 .volumeWrap {
   position: relative;
@@ -60,6 +72,7 @@
 }
 
 .volumePanel {
+  position: relative;
   padding: 8px 12px;
   border: 1px solid var(--app-line);
   border-radius: 10px;

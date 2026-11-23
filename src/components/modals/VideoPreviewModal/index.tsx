@@ -2,8 +2,7 @@
  * 视频预览弹窗：`FreeModal`（外壳）+ `FreeVideo`（播放器）的组合，左侧列当前目录的视频。
  *
  * - header：翻篇 / 计数 / 文件名（外壳）+ 目录显隐、截图、外部打开、设置、删除（本组件）；
- *   「外部打开」把视频交给 IINA（没装回落到系统默认播放器）——浏览器解不动的编码、
- *   或只是要更快起播时，走这条路比在弹窗里等软解划算；
+ *   「外部打开」把视频交给设置里选的应用（默认 IINA，回落系统默认），浏览器解不动的编码走它更划算；
  *   标题与右侧操作组之间恒留 20px，标题不换行、放不下才省略；
  * - 键盘：空格按设置切播放 / 暂停或关窗（`FreeModal` 的 `media` / `closeOnSpace`），
  *   `Enter` 截当前帧、`m` / `M` 静音、`s` / `S` 显隐目录列，
@@ -11,8 +10,8 @@
  *   `Delete` 触发删除确认；设置面板打开或删除确认开着时整组收掉；
  * - 设置面板：快进 / 后退步长、方向键去向、截图存放目录（默认桌面），并把全部键位列一遍；
  * - 控制栏的两颗箭头在播放键左右两侧，去向跟着「方向键去向」设置：快进 / 后退，或翻篇；
- * - 全屏走浏览器 Fullscreen API：侧栏收起时 header 浮在画面上、鼠标静止 1s 收起；
- *   侧栏唤出后 header 回到普通流（否则会盖住侧栏）；指针在控制栏上时不唤出 header；
+ * - 全屏走浏览器 Fullscreen API：侧栏收起时 header 浮在画面上、鼠标静止 1s 收起，
+ *   侧栏唤出后 header 回到普通流（否则会盖住侧栏）；设置里可让它「打开即全屏」；
  * - `Esc` 在全屏里交给浏览器退出全屏，非全屏才是关窗。
  */
 
@@ -54,6 +53,7 @@ const SIDEBAR_ICON_STROKE = 1.6;
 const VideoPreviewModal = ({
   activeId,
   blocked = false,
+  defaultFullscreen = false,
   items,
   onCapture,
   onClose,
@@ -71,7 +71,9 @@ const VideoPreviewModal = ({
   const [sidebarOpenInFullscreen, setSidebarOpenInFullscreen] = useState(false);
   /** 设置面板是否展开：开着手动隐藏 header、并收掉整组快捷键 */
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const { active: fullscreen, exit, toggle } = useBrowserFullscreen();
+  const { active: fullscreen, exit, toggle } = useBrowserFullscreen({
+    autoEnter: opened && defaultFullscreen,
+  });
   const { setArrowMode, setCaptureDir, setSeekStep, setSpaceMode, settings } =
     useVideoSettings(storageScope);
 
@@ -228,7 +230,6 @@ const VideoPreviewModal = ({
 
   return (
     <FreeModal
-      closeOnClickOutside={false}
       closeOnEscape={!fullscreen && !settingsOpen && !blocked}
       closeOnSpace={settings.spaceMode === 'close' && !settingsOpen && !blocked}
       fullscreen={{ active: fullscreen, onToggle: toggleFullscreen }}

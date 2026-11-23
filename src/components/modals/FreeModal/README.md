@@ -79,7 +79,7 @@
 | `copy` | `{ text, message }`；传了就有 `C` 复制键（`text` 进剪贴板，`message` 是成功提示），与 header 的复制按钮同一口径 |
 | `onRequestDelete` | 传了就有 `Delete` / `Backspace` 删除键；只应打开二次确认层，不直接删 |
 | `closeButton` | 是否显示关闭按钮，默认显示（编辑态这类「关不掉」的场景传 `false`） |
-| `closeOnClickOutside` | 点遮罩是否关窗，默认 `true`；媒体预览传 `false`（切到别的应用再切回来时，落点很容易砸在遮罩上） |
+| `closeOnClickOutside` | 点遮罩是否关窗，默认 `true`。遮罩点击由外壳自己接管：窗口拿回焦点后 400ms 内的那一下只当「回焦」不关窗，避免从外部应用切回来时误关 |
 | `closeOnEscape` / `closeOnSpace` / `trapFocus` | Esc 与空格是否关窗（`closeOnSpace` 默认跟随 `closeOnEscape`）、上层浮层开着时由调用方关掉，避免一下全关 / 焦点被抢、是否锁焦点 |
 | `shortcutsEnabled` | 默认 `true`；加载中、上层浮层开着时传 `false`，一次收掉翻页、方向键、`F` 全屏、`M` 静音、`S` 面板、`C` 复制与删除键（空格也一并收；只关窗的 `closeOnSpace` 另把关） |
 | `size` / `centered` / `closeLabel` | 宽度档（默认 `min(980px, 92vw)`）、是否垂直居中、关闭按钮的 `aria-label` |

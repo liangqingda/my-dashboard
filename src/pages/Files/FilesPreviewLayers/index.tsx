@@ -35,6 +35,10 @@ export type FilesPreviewLayersProps = {
   onOpenExternal: (id: string) => void;
   /** 当前目录的图片条目 */
   imageItems: ImagePreviewItem[];
+  /** 图片预览打开即全屏（来自文件页设置） */
+  imageDefaultFullscreen: boolean;
+  /** 视频预览打开即全屏（来自文件页设置） */
+  videoDefaultFullscreen: boolean;
   /** 正在看的图片；null 表示图片弹窗关着 */
   imageActiveId: string | null;
   /** 切到某张图片 */
@@ -52,6 +56,7 @@ export type FilesPreviewLayersProps = {
 const FilesPreviewLayers = ({
   blocked,
   imageActiveId,
+  imageDefaultFullscreen,
   imageItems,
   onCaptureVideo,
   onCloseImage,
@@ -63,6 +68,7 @@ const FilesPreviewLayers = ({
   onSelectVideo,
   storageScope,
   videoActiveId,
+  videoDefaultFullscreen,
   videoItems,
 }: FilesPreviewLayersProps) => (
   /* 容器只为挂载，`display: contents` 不进布局：两扇弹窗都挂在 body 里的 portal 上 */
@@ -70,6 +76,7 @@ const FilesPreviewLayers = ({
     <VideoPreviewModal
       activeId={videoActiveId}
       blocked={blocked}
+      defaultFullscreen={videoDefaultFullscreen}
       items={videoItems}
       onCapture={onCaptureVideo}
       onClose={onCloseVideo}
@@ -86,6 +93,7 @@ const FilesPreviewLayers = ({
     <ImagePreviewModal
       activeId={imageActiveId}
       blocked={blocked}
+      defaultFullscreen={imageDefaultFullscreen}
       items={imageItems}
       onClose={onCloseImage}
       onRequestDelete={

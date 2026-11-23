@@ -26,4 +26,6 @@ export type ImagePreviewModalProps = {
   onSelect: (id: string) => void;
   /** 请求删除当前图片：只应打开二次确认层；不传则没有删除按钮与删除键 */
   onRequestDelete?: (() => void) | null;
+  /** 打开时直接进整屏全屏（文件页设置项）；拿不到用户手势时静默停在这个尺寸 */
+  defaultFullscreen?: boolean;
 };

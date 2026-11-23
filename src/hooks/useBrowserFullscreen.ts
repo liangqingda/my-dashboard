@@ -16,14 +16,24 @@ import { getErrorMessage } from '@/utils/error';
 export type UseBrowserFullscreenResult = {
   /** 当前是否处于整屏全屏 */
   active: boolean;
+  /** 直接进入全屏；`silent` 为真时失败不弹通知（默认全屏用，浏览器不给手势就静默放弃） */
+  enter: (options?: { silent?: boolean }) => Promise<void>;
   /** 切换全屏；浏览器拒绝时给一条红色通知 */
   toggle: () => void;
   /** 主动退出全屏（关弹窗时用），已经不在全屏时直接返回 */
   exit: () => Promise<void>;
 };
 
+/** 调用方选项：`autoEnter` 为真时自动尝试进全屏（打开预览即全屏那种场景） */
+export type UseBrowserFullscreenOptions = {
+  /** 需要自动进全屏时为真；浏览器不给手势就静默放弃 */
+  autoEnter?: boolean;
+};
+
 /** 浏览器全屏状态同步 + 主动退出全屏；失败不抛给调用方，只提示一次 */
-export const useBrowserFullscreen = (): UseBrowserFullscreenResult => {
+export const useBrowserFullscreen = (
+  options: UseBrowserFullscreenOptions = {},
+): UseBrowserFullscreenResult => {
   const [active, setActive] = useState(false);
   /** 是不是这一次由本组件进入的全屏：卸载时只退出自己开的，不去动别的全屏 */
   const enteredRef = useRef(false);
@@ -68,18 +78,20 @@ export const useBrowserFullscreen = (): UseBrowserFullscreenResult => {
     }
   }, []);
 
-  const toggle = useCallback(() => {
-    const enter = async () => {
+  const enter = useCallback(
+    async (options: { silent?: boolean } = {}): Promise<void> => {
+      if (document.fullscreenElement !== null) {
+        return;
+      }
+
       try {
-        if (document.fullscreenElement !== null) {
-          await exit();
-
-          return;
-        }
-
         await document.documentElement.requestFullscreen();
         enteredRef.current = true;
       } catch (error) {
+        if (options.silent) {
+          return;
+        }
+
         notifications.show({
           autoClose: false,
           color: 'red',
@@ -87,10 +99,26 @@ export const useBrowserFullscreen = (): UseBrowserFullscreenResult => {
           title: '全屏失败',
         });
       }
-    };
+    },
+    [],
+  );
+
+  const toggle = useCallback(() => {
+    if (document.fullscreenElement !== null) {
+      void exit();
+
+      return;
+    }
 
     void enter();
-  }, [exit]);
+  }, [enter, exit]);
 
-  return { active, exit, toggle };
+  /** 自动进全屏：只在 `autoEnter` 变真时尝试一次，用户的点击激活窗口时才可能成功 */
+  useEffect(() => {
+    if (options.autoEnter === true) {
+      void enter({ silent: true });
+    }
+  }, [enter, options.autoEnter]);
+
+  return { active, enter, exit, toggle };
 };

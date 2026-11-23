@@ -39,15 +39,14 @@ import styles from './index.scss';
 /**
  * 文件浏览页：按 macOS 目录网格展示本机指定目录下的子文件夹、应用包与文件，不限文件类型；
  * 应用包按一条应用展示（真实图标 + 卸载入口），不当作可进入的文件夹。
- * 标题栏的图标按钮可在网格与表格（名称 / 类别 / 操作三列）两种展示形式之间切换，
- * 切换结果记在 localStorage，刷新后保持上次的形态。
+ * 标题栏的图标按钮可在网格与表格（名称 / 类别 / 操作三列）两种展示形式之间切换，结果记在 localStorage。
  * 点文件夹进入下一层，面包屑回退，`⌘↑` 回上一级；可收藏常用目录，在收藏面板里点选直达；
  * 标题栏筛选面板支持按名称关键词过滤与按类型勾选，取消勾选的类型连同对应文件夹一起隐藏。
  * 列表只列摘要；点视频条目会在弹窗里播放（设置里可改成交给外部播放器），
  * 点图片条目会在同形的弹窗里预览，两者的翻篇与目录侧栏都基于当前目录的同类列表（视频另有截图）。
  * 应用 hover 后右上角给卸载按钮，二次确认里先列清要删的残留，确认后由中间件删整包并清理缓存 / 配置 / 数据。
  * 目录读取走 Vite 中间件，仅开发模式可用。
- * 标题行右侧再显示本机剩余可用空间；当前目录在外接盘（移动硬盘）上时，连同那块盘的可用空间一起显示。
+ * 标题行右侧再显示本机剩余可用空间；当前目录在外接盘上时，连同那块盘的可用空间一起显示。
  */
 const Files = () => {
   const { currentDir, listing, loading, error, openDir, pickDir, refresh, reload } =
@@ -56,9 +55,8 @@ const Files = () => {
   const { excluded, onChange: onExcludedChange } = useTypeFilter();
   /** 展示形式：网格 / 表格，切换按钮在标题栏 */
   const { isGridView, toggle: toggleViewMode } = useFilesViewMode();
-  /** 设置项（放在视频预览之前）：视频点击后是弹窗预览还是交给外部应用 */
-  const { setVideoApp, setVideoOpenMode, videoApp, videoOpenMode } =
-    useFilesSettings();
+  /** 文件页设置（放在视频预览之前）：点视频的去向、两扇预览是否默认全屏 */
+  const settings = useFilesSettings();
 
   const folders = listing?.folders ?? [];
   const allFiles = listing?.files ?? [];
@@ -75,7 +73,7 @@ const Files = () => {
     openVideo,
     pickCaptureDir,
     selectVideo,
-  } = useVideoPreview(listing, { videoApp, videoOpenMode });
+  } = useVideoPreview(listing, settings);
   /** 图片预览：与视频预览同形，但没有播放 / 截图那一套 */
   const {
     activeId: previewImageId,
@@ -199,11 +197,8 @@ const Files = () => {
             }
           }}
           onToggleViewMode={toggleViewMode}
-          onVideoAppChange={setVideoApp}
-          onVideoOpenModeChange={setVideoOpenMode}
           openPanel={openPanel}
-          videoApp={videoApp}
-          videoOpenMode={videoOpenMode}
+          settings={settings}
         />
       }
       description={describeDirSpace(listing?.space ?? null)}
@@ -271,6 +266,7 @@ const Files = () => {
       <FilesPreviewLayers
         blocked={deletingEntry !== null}
         imageActiveId={previewImageId}
+        imageDefaultFullscreen={settings.imageFullscreen}
         imageItems={imageItems}
         onCaptureVideo={captureFrame}
         onCloseImage={closeImage}
@@ -282,6 +278,7 @@ const Files = () => {
         onSelectVideo={selectVideo}
         storageScope={FILES_STORAGE_SCOPE}
         videoActiveId={previewVideoId}
+        videoDefaultFullscreen={settings.videoFullscreen}
         videoItems={videoItems}
       />
 

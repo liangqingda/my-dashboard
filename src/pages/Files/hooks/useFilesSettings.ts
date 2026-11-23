@@ -6,12 +6,18 @@
  */
 
 import { useStoredState } from '@/hooks/useStoredState';
-import { createChoiceCodec, STRING_CODEC } from '@/utils/local-storage';
+import {
+  createChoiceCodec,
+  FLAG_CODEC,
+  STRING_CODEC,
+} from '@/utils/local-storage';
 
 import {
   DEFAULT_VIDEO_APP,
+  IMAGE_PREVIEW_FULLSCREEN_STORAGE_KEY,
   VIDEO_APP_STORAGE_KEY,
   VIDEO_OPEN_MODE_STORAGE_KEY,
+  VIDEO_PREVIEW_FULLSCREEN_STORAGE_KEY,
 } from '../constants';
 import type { VideoOpenMode } from '../types';
 
@@ -31,6 +37,14 @@ export type UseFilesSettingsResult = {
   setVideoOpenMode: (mode: VideoOpenMode) => void;
   /** 改外部打开用的应用 */
   setVideoApp: (app: string) => void;
+  /** 图片预览弹窗默认是否全屏 */
+  imageFullscreen: boolean;
+  /** 视频预览弹窗默认是否全屏 */
+  videoFullscreen: boolean;
+  /** 改图片预览的默认全屏 */
+  setImageFullscreen: (enabled: boolean) => void;
+  /** 改视频预览的默认全屏 */
+  setVideoFullscreen: (enabled: boolean) => void;
 };
 
 /** 文件页设置的读写：只在挂载时读一次存储，之后以状态为准 */
@@ -43,11 +57,23 @@ export const useFilesSettings = (): UseFilesSettingsResult => {
     VIDEO_APP_STORAGE_KEY,
     STRING_CODEC,
   );
+  const [imageFullscreen, setImageFullscreen] = useStoredState(
+    IMAGE_PREVIEW_FULLSCREEN_STORAGE_KEY,
+    FLAG_CODEC,
+  );
+  const [videoFullscreen, setVideoFullscreen] = useStoredState(
+    VIDEO_PREVIEW_FULLSCREEN_STORAGE_KEY,
+    FLAG_CODEC,
+  );
 
   return {
+    imageFullscreen,
+    setImageFullscreen,
     setVideoApp,
+    setVideoFullscreen,
     setVideoOpenMode,
     videoApp: storedApp.trim() || DEFAULT_VIDEO_APP,
+    videoFullscreen,
     videoOpenMode,
   };
 };

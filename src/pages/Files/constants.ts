@@ -48,6 +48,18 @@ export const VIDEO_APP_STORAGE_KEY = scopedStorageKey(
   'video-app',
 );
 
+/** 图片预览弹窗打开时是否直接进全屏 */
+export const IMAGE_PREVIEW_FULLSCREEN_STORAGE_KEY = scopedStorageKey(
+  FILES_STORAGE_SCOPE,
+  'image-preview-fullscreen',
+);
+
+/** 视频预览弹窗打开时是否直接进全屏 */
+export const VIDEO_PREVIEW_FULLSCREEN_STORAGE_KEY = scopedStorageKey(
+  FILES_STORAGE_SCOPE,
+  'video-preview-fullscreen',
+);
+
 /** 外部打开的默认应用：IINA（没装时中间件会回落到它名下，再不行才系统默认） */
 export const DEFAULT_VIDEO_APP = 'IINA';
 

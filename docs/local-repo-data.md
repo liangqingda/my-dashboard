@@ -199,6 +199,8 @@
   来回 seek 与翻篇回看都能命中浏览器缓存；不带 `Range` 的请求命中 `If-None-Match` 时回 304；`capture` 只接受 PNG data URL，写到 body 里的
   `dir`（缺省 `~/Desktop`），文件名为 `YYYY-MM-DD HH:mm:ss.png`，同一秒重名依次追加 ` (2)`、` (3)`，
   不覆盖已有截图。
+- **预览默认全屏**：文件页设置里的两项开关（图片 / 视频）决定两扇弹窗打开时是否直接进整屏
+  （`defaultFullscreen` → `useBrowserFullscreen` 的 `autoEnter`）；浏览器拿不到用户手势时静默停在这个尺寸，`F` 仍可手动切换。
 - **图片预览**：`GET /api/files/image?path=` 整份返回图片字节（不做 Range），只认图片扩展名
   （分类表里 `image` 那一档，不收 `.svg`），`Cache-Control: no-store`、支持 `HEAD`；
   浏览器直接把它塞进 `<img src>`，前端通过 `ImagePreviewModal` 消费。

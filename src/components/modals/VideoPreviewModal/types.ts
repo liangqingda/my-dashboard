@@ -60,4 +60,9 @@ export type VideoPreviewModalProps = {
    * 底下的播放器不再响应空格 / 方向键 / Delete。
    */
   blocked?: boolean;
+  /**
+   * 打开时直接进整屏全屏（文件页设置项）。需要浏览器还在用户的这次点击激活窗口内，
+   * 拿不到手势时静默停在这个尺寸，不弹失败提示。
+   */
+  defaultFullscreen?: boolean;
 };
