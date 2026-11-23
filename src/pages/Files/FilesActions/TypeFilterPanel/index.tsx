@@ -1,11 +1,18 @@
 /**
  * 筛选弹层面板：顶部关键词按名称模糊搜索，下方是「全部 + 分类」列表，改动即时生效。
- * 「全部」是复选框：全勾时选中、勾了一部分时半选、一个没勾时未选；
- * 多选模式点某一类即勾 / 取消，点「全部」全选或全清；单选模式下一次只能有一类。
+ * 「全部」与分类列表之间用分割线隔开：多选模式下「全部」是复选框（全勾选中、勾一部分半选、
+ * 一个没勾未选），单选模式下是单选框；多选点某一类即勾 / 取消，单选一次只能有一类。
  * 底部重置把分类退回全选并清空关键词。
  */
 
-import { Checkbox, Group, Radio, Stack, UnstyledButton } from '@mantine/core';
+import {
+  Checkbox,
+  Divider,
+  Group,
+  Radio,
+  Stack,
+  UnstyledButton,
+} from '@mantine/core';
 
 import { PANEL_FIELD_STYLES } from '@/components/buttons/IconPopoverButton/constants';
 import FreeSearchInput from '@/components/fields/FreeSearchInput';
@@ -76,15 +83,21 @@ const TypeFilterPanel = ({
       <Stack gap={2}>
         <UnstyledButton className={styles.row} onClick={pickAll}>
           <Group gap="xs" wrap="nowrap">
-            <Checkbox
-              checked={allSelected}
-              indeterminate={mode === 'multi' && partiallySelected}
-              readOnly
-              size="xs"
-            />
+            {mode === 'multi' ? (
+              <Checkbox
+                checked={allSelected}
+                indeterminate={partiallySelected}
+                readOnly
+                size="xs"
+              />
+            ) : (
+              <Radio checked={allSelected} readOnly size="xs" />
+            )}
             <span>{TYPE_FILTER_ALL_LABEL}</span>
           </Group>
         </UnstyledButton>
+
+        <Divider my={4} size="xs" />
 
         {FILE_CATEGORY_VALUES.map((value) => (
           <UnstyledButton

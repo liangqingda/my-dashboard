@@ -1,4 +1,4 @@
-/* 当前目录面包屑：分段可点，末段为当前目录 */
+/* 当前目录面包屑：根（本机）与分段可点，末段为当前目录 */
 
 .breadcrumb {
   display: flex;
@@ -11,8 +11,16 @@
   font-size: 0.8rem;
 }
 
-.home {
-  color: var(--app-ink-faint);
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--app-ink-soft);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--app-accent);
+  }
 }
 
 .segment {
@@ -36,6 +44,9 @@
 }
 
 .current {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   color: var(--app-ink);
   font-weight: 500;
 }
