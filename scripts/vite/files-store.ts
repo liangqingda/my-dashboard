@@ -31,7 +31,10 @@ const CATEGORY_EXTENSIONS: Readonly<Record<Exclude<FileCategory, 'app' | 'other'
     '.avi',
     '.webm',
     '.m4v',
-    '.ts',
+    /*
+     * 不收裸 `.ts`：MPEG 传输流与 TypeScript 源码同扩展名，项目目录里满屏 `.ts`
+     * 会被当成视频排到「视频」那一段。真要认，用 `.m2ts` 这类不会撞车的写法。
+     */
     '.flv',
     '.wmv',
     '.mpeg',
@@ -74,13 +77,25 @@ const FOLDER_CATEGORY_BUDGET = 2000;
 const FOLDER_CATEGORY_DEPTH = 6;
 
 /**
- * 列表排序：**创建时间新的在前**，同一时刻按名称兜底——同名不同路径的条目
- * （外接卷、复制品）才需要这条兜底，正常目录里很少撞上。
+ * 列表排序：**先按类别、再按最后修改时间新的在前**，同类里同刻按名称兜底。
+ *
+ * 类别的先后沿用 `CATEGORY_ORDER`（与筛选面板里那排顺序一致），于是网格里
+ * 「文件夹 → 应用 → 视频 → 图片 → PDF → Markdown → 其它」成段排开，同类才能连在一起。
+ * 目录自己内部（子文件夹 / 应用包）没有类别之分，只按修改时间排。
  */
-export const compareByCreatedDesc = (
-  a: { createdMs: number; name: string },
-  b: { createdMs: number; name: string },
-): number => b.createdMs - a.createdMs || a.name.localeCompare(b.name);
+export const compareFilesByCategoryThenUpdated = (
+  a: { category: FileCategory; updatedMs: number; name: string },
+  b: { category: FileCategory; updatedMs: number; name: string },
+): number =>
+  CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category) ||
+  b.updatedMs - a.updatedMs ||
+  a.name.localeCompare(b.name);
+
+/** 同一组条目内按最后修改时间新的在前，同刻按名称 */
+export const compareByUpdatedDesc = (
+  a: { updatedMs: number; name: string },
+  b: { updatedMs: number; name: string },
+): number => b.updatedMs - a.updatedMs || a.name.localeCompare(b.name);
 
 /** 目录里的一条子文件夹 */
 export type FolderEntry = {
@@ -92,8 +107,8 @@ export type FolderEntry = {
   itemCount: number;
   /** 文件夹内出现过的文件分类（含深层，按扫描预算收口）；按类型筛选时用它决定要不要露出这个文件夹 */
   categories: FileCategory[];
-  /** 创建时间（毫秒）：列表按「新的在前」排序用它 */
-  createdMs: number;
+  /** 最后修改时间（毫秒）：子文件夹之间按它「新的在前」 */
+  updatedMs: number;
 };
 
 /** 目录里的一条文件 */
@@ -106,8 +121,8 @@ export type FileEntry = {
   size: number;
   /** 最后修改时间（ISO 8601） */
   updatedAt: string;
-  /** 创建时间（毫秒）：列表按「新的在前」排序用它 */
-  createdMs: number;
+  /** 最后修改时间（毫秒）：同类别内按它「新的在前」 */
+  updatedMs: number;
   /** 文件归类，用于区分图标与类型筛选 */
   category: FileCategory;
 };
@@ -120,11 +135,11 @@ export type DirListing = {
   name: string;
   /** 父目录绝对路径；已经是文件系统根时为 null */
   parent: string | null;
-  /** 子文件夹（按创建时间新的在前） */
+  /** 子文件夹（按修改时间新的在前） */
   folders: FolderEntry[];
-  /** 直属应用包（`.app`，按创建时间新的在前）；单独成列，不混进文件夹 */
+  /** 直属应用包（`.app`，按修改时间新的在前）；单独成列，不混进文件夹 */
   apps: AppEntry[];
-  /** 直属文件（按创建时间新的在前） */
+  /** 直属文件（先按类别、同类别内按修改时间新的在前） */
   files: FileEntry[];
 };
 
@@ -261,7 +276,7 @@ const readEntries = async (dir: string): Promise<Dirent[]> => {
  */
 const scanFolder = async (
   dir: string,
-): Promise<{ itemCount: number; categories: FileCategory[]; createdMs: number }> => {
+): Promise<{ itemCount: number; categories: FileCategory[]; updatedMs: number }> => {
   const entries = (await readEntries(dir)).filter(isListedEntry);
   const found = new Set<FileCategory>();
   const folders: string[] = [];
@@ -332,15 +347,15 @@ const scanFolder = async (
     frontier = next;
   }
 
-  const createdMs = await stat(dir).then(
-    (info) => info.birthtimeMs,
+  const updatedMs = await stat(dir).then(
+    (info) => info.mtimeMs,
     () => 0,
   );
 
   return {
     categories: CATEGORY_ORDER.filter((category) => found.has(category)),
-    createdMs,
     itemCount,
+    updatedMs,
   };
 };
 
@@ -402,7 +417,7 @@ export const listDirectory = async (input: string): Promise<DirListing> => {
           path: entryPath,
           size: info.size,
           updatedAt: info.mtime.toISOString(),
-          createdMs: info.birthtimeMs,
+          updatedMs: info.mtimeMs,
           category: categoryForName(entry.name),
         });
       } catch {
@@ -411,10 +426,11 @@ export const listDirectory = async (input: string): Promise<DirListing> => {
     }
   }
 
-  // 三组各自按创建时间新的在前；表格把文件夹排在最前，网格按同一顺序铺
-  folders.sort(compareByCreatedDesc);
-  apps.sort(compareByCreatedDesc);
-  files.sort(compareByCreatedDesc);
+  // 文件夹 / 应用各按修改时间新的在前；文件先按类别成段、再按修改时间。
+  // 表格与网格都按「文件夹 → 应用 → 文件」组装，所以同类条目自然连在一起
+  folders.sort(compareByUpdatedDesc);
+  apps.sort(compareByUpdatedDesc);
+  files.sort(compareFilesByCategoryThenUpdated);
 
   const parent = path.dirname(dir) === dir ? null : path.dirname(dir);
 
@@ -504,10 +520,10 @@ export const createFolder = async (dirInput: string): Promise<FolderEntry> => {
 
   return {
     categories: [],
-    createdMs: created?.birthtimeMs ?? 0,
     itemCount: 0,
     name,
     path: target,
+    updatedMs: created?.mtimeMs ?? 0,
   };
 };
 

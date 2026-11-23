@@ -10,8 +10,8 @@ export type FolderEntry = {
   name: string;
   /** 文件夹绝对路径，点开时原样回传给中间件 */
   path: string;
-  /** 创建时间（毫秒时间戳）；读不到时为 0，排序时排在最后 */
-  createdMs: number;
+  /** 最后修改时间（毫秒时间戳）：子文件夹之间按它「新的在前」 */
+  updatedMs: number;
   /** 直属条目数（文件夹 + 文件，不递归子目录） */
   itemCount: number;
   /** 文件夹内出现过的文件分类（含深层，按中间件的扫描预算收口） */
@@ -29,8 +29,8 @@ export type AppEntry = {
   path: string;
   /** 包的最后修改时间（ISO 8601） */
   updatedAt: string;
-  /** 创建时间（毫秒）：列表按「新的在前」排序 */
-  createdMs: number;
+  /** 最后修改时间（毫秒）：应用之间按它「新的在前」 */
+  updatedMs: number;
   /** 是否系统自带：这类应用不给卸载入口 */
   system: boolean;
 };
@@ -45,8 +45,8 @@ export type FileEntry = {
   size: number;
   /** 最后修改时间（ISO 8601） */
   updatedAt: string;
-  /** 创建时间（毫秒）：列表按「新的在前」排序 */
-  createdMs: number;
+  /** 最后修改时间（毫秒）：同类别内按它「新的在前」 */
+  updatedMs: number;
   /** 文件归类，用于区分图标与类型筛选 */
   category: FileCategory;
 };
@@ -90,9 +90,9 @@ export type DirListing = {
   parent: string | null;
   /** 子文件夹（按名称排序） */
   folders: FolderEntry[];
-  /** 直属应用包（按创建时间倒序，同刻按显示名） */
+  /** 直属应用包（按修改时间倒序，同刻按显示名） */
   apps: AppEntry[];
-  /** 直属文件（按创建时间倒序，同刻按名称） */
+  /** 直属文件（先按类别、同类别内按修改时间倒序） */
   files: FileEntry[];
   /** 启动卷 / 外接卷的剩余空间；读不到时为 null，页面不显示这段描述 */
   space: DirSpace | null;

@@ -55,7 +55,7 @@ const normalizeFolder = (raw: unknown): FolderEntry | null => {
 
   return {
     categories: normalizeCategories(raw.categories),
-    createdMs: asNumber(raw.createdMs),
+    updatedMs: asNumber(raw.updatedMs),
     itemCount: asNumber(raw.itemCount),
     name,
     path,
@@ -76,7 +76,7 @@ const normalizeApp = (raw: unknown): AppEntry | null => {
   }
 
   return {
-    createdMs: asNumber(raw.createdMs),
+    updatedMs: asNumber(raw.updatedMs),
     name,
     path,
     system: raw.system === true,
@@ -104,7 +104,7 @@ const normalizeFile = (raw: unknown): FileEntry | null => {
 
   return {
     category,
-    createdMs: asNumber(raw.createdMs),
+    updatedMs: asNumber(raw.updatedMs),
     name,
     path,
     size: asNumber(raw.size),

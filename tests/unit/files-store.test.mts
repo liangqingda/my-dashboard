@@ -4,6 +4,7 @@ import {
   mkdtemp,
   rm,
   symlink,
+  utimes,
   writeFile,
 } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -12,7 +13,8 @@ import { after, before, describe, it } from 'node:test';
 
 import {
   buildPickerScript,
-  compareByCreatedDesc,
+  compareByUpdatedDesc,
+  compareFilesByCategoryThenUpdated,
   createFolder,
   deleteEntry,
   listDirectory,
@@ -41,6 +43,18 @@ describe('files-store', () => {
     await writeFile(path.join(root, 'archive.zip'), 'j');
     await writeFile(path.join(root, 'script.js'), 'k');
     await writeFile(path.join(root, '.hidden.mp4'), 'g');
+
+    /*
+     * 修改时间写死：写文件都在毫秒级内发生，靠真实 mtime 断不出先后。
+     * 「other」两档里 script.js 更新、archive.zip 更旧；三个文件夹也各给一个时间。
+     */
+    const stamp = (iso: string) => new Date(iso);
+
+    await utimes(path.join(root, 'script.js'), stamp('2026-06-01'), stamp('2026-06-01'));
+    await utimes(path.join(root, 'archive.zip'), stamp('2026-01-01'), stamp('2026-01-01'));
+    await utimes(path.join(root, 'folder-a'), stamp('2026-07-01'), stamp('2026-07-01'));
+    await utimes(path.join(root, 'folder-b'), stamp('2026-01-15'), stamp('2026-01-15'));
+    await utimes(path.join(root, 'sub'), stamp('2026-03-01'), stamp('2026-03-01'));
   });
 
   after(async () => {
@@ -55,20 +69,20 @@ describe('files-store', () => {
     assert.deepEqual(
       listing.folders.map((folder) => [folder.name, folder.itemCount]),
       [
+        ['folder-a', 3],
         ['sub', 1],
         ['folder-b', 0],
-        ['folder-a', 3],
       ],
     );
     assert.deepEqual(
       listing.files.map((file) => [file.name, file.category]),
       [
+        ['clip.webm', 'video'],
+        ['poster.png', 'image'],
+        ['guide.pdf', 'pdf'],
+        ['readme.md', 'markdown'],
         ['script.js', 'other'],
         ['archive.zip', 'other'],
-        ['readme.md', 'markdown'],
-        ['guide.pdf', 'pdf'],
-        ['poster.png', 'image'],
-        ['clip.webm', 'video'],
       ],
     );
   });
@@ -79,35 +93,61 @@ describe('files-store', () => {
     assert.deepEqual(
       listing.folders.map((folder) => [folder.name, folder.categories]),
       [
+        ['folder-a', ['video', 'other']],
         ['sub', ['video']],
         ['folder-b', []],
-        ['folder-a', ['video', 'other']],
       ],
     );
   });
 
-  it('文件夹与文件都带创建时间，按创建时间倒序（新的在前），同刻按名称', async () => {
+  it('列表先按类别分段、同类别内按修改时间新的在前', async () => {
     const listing = await listDirectory(root);
 
-    assert.ok(listing.folders.every((folder) => folder.createdMs > 0));
-    assert.ok(listing.files.every((file) => file.createdMs > 0));
+    assert.ok(listing.folders.every((folder) => folder.updatedMs > 0));
+    assert.ok(listing.files.every((file) => file.updatedMs > 0));
     assert.deepEqual(
-      [...listing.files]
-        .sort(compareByCreatedDesc)
-        .map((file) => file.name),
-      listing.files.map((file) => file.name),
+      listing.files.map((file) => file.category),
+      ['video', 'image', 'pdf', 'markdown', 'other', 'other'],
+    );
+    assert.deepEqual(
+      [...listing.folders]
+        .sort(compareByUpdatedDesc)
+        .map((folder) => folder.name),
+      listing.folders.map((folder) => folder.name),
     );
     assert.deepEqual(
       [
-        { createdMs: 0, name: 'b' },
-        { createdMs: 5, name: 'z' },
-        { createdMs: 0, name: 'a' },
-        { createdMs: 5, name: 'a' },
+        { category: 'other', name: 'a', updatedMs: 5 },
+        { category: 'video', name: 'b', updatedMs: 1 },
+        { category: 'other', name: 'b', updatedMs: 2 },
+        { category: 'video', name: 'a', updatedMs: 5 },
+        { category: 'image', name: 'c', updatedMs: 9 },
       ]
-        .sort(compareByCreatedDesc)
-        .map((entry) => `${entry.createdMs}:${entry.name}`),
-      ['5:a', '5:z', '0:a', '0:b'],
+        .sort(compareFilesByCategoryThenUpdated)
+        .map((entry) => `${entry.category}:${entry.name}`),
+      ['video:a', 'video:b', 'image:c', 'other:a', 'other:b'],
     );
+  });
+
+  it('裸 .ts 不算视频（那是 TypeScript），.m2ts 仍算', async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'files-store-ts-'));
+
+    try {
+      await writeFile(path.join(dir, 'config.ts'), 'export {};');
+      await writeFile(path.join(dir, 'stream.m2ts'), 'x');
+
+      const listing = await listDirectory(dir);
+
+      assert.deepEqual(
+        listing.files.map((file) => [file.name, file.category]),
+        [
+          ['stream.m2ts', 'video'],
+          ['config.ts', 'other'],
+        ],
+      );
+    } finally {
+      await rm(dir, { force: true, recursive: true });
+    }
   });
 
   it('文件条目带大小与修改时间，文件大小按字节保留', async () => {
