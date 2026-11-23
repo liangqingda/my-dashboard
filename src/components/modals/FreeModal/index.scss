@@ -56,8 +56,14 @@
   background: var(--preview-chrome);
 }
 
+/*
+ * 标题占满 header 的剩余宽度（关闭按钮另算），`min-width: 0` 允许它在长标题下真正收缩。
+ * 不能写 `width: 100%`：那会把宽度按整个 header 算，标题 + 关闭按钮加起来超出右侧内边距，
+ * 关闭按钮就被顶到框体边角上（视频预览的长文件名最容易触发）。
+ */
 .title {
-  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
   margin: 0;
 }
 
