@@ -119,7 +119,11 @@ const TypeFilterPanel = ({
 
       <FreePanelFooter
         disabled={!filterActive}
-        hint="勾选的类型才显示；App 不露出文件夹，可在设置里切换多选 / 单选"
+        hint={
+          mode === 'multi'
+            ? '勾选的类型才显示；App 不露出文件夹，可在设置里切换多选 / 单选'
+            : '一次只显示选中的一类；App 不露出文件夹，可在设置里切换多选 / 单选'
+        }
         onReset={onReset}
       />
     </Stack>
