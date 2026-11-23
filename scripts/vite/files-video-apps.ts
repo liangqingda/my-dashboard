@@ -159,6 +159,23 @@ const mapWithLimit = async <T, R>(
 };
 
 /**
+ * 明确不列出的应用：它们也声明了视频类型（网盘预览、阅读器、聊天、音乐、系统 QuickTime），
+ * 但列表要的是「专门拿来看片的播放器」，这些混进来只会让下拉变长。
+ * 名字是 `.app` 去掉后缀的包名，与 `open -a` 用的那份一致。
+ */
+const EXCLUDED_VIDEO_APPS: readonly string[] = [
+  'BaiduNetdisk_mac',
+  'Books',
+  'Messages',
+  'Music',
+  'QuickTime Player',
+];
+
+/** 这个应用要不要出现在列表里（按包名精确匹配） */
+export const isListableVideoApp = (name: string): boolean =>
+  !EXCLUDED_VIDEO_APPS.includes(name);
+
+/**
  * 列出能播放视频的应用：三处目录各自扫顶层 `.app`，按应用名去重、按名字排序。
  * 扫不到（目录不存在、包损坏）就给空数组，页面据此回落到「默认播放器」。
  */
@@ -179,7 +196,7 @@ export const listVideoApps = async (): Promise<VideoApp[]> => {
   const result: VideoApp[] = [];
 
   for (const app of apps) {
-    if (app === null || seen.has(app.name)) {
+    if (app === null || seen.has(app.name) || !isListableVideoApp(app.name)) {
       continue;
     }
 

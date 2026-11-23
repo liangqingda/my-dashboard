@@ -57,11 +57,6 @@ const SettingsPanel = ({
           size="xs"
           value={videoOpenMode}
         />
-        <Text className={styles.hint}>
-          {videoOpenMode === 'preview'
-            ? '默认：在弹窗里播放，可截图、翻篇与看目录里的其它视频。'
-            : '点视频直接把文件交给外部应用，跳过弹窗；应用起不来会回落到 IINA，再不行用系统默认播放器。'}
-        </Text>
       </Stack>
 
       {videoOpenMode === 'external' ? (
@@ -87,11 +82,7 @@ const SettingsPanel = ({
             <Text c="red" className={styles.hint}>
               {error}
             </Text>
-          ) : (
-            <Text className={styles.hint}>
-              列出本机声明了视频格式的应用；没装所选应用时回落到 IINA 或系统默认播放器。
-            </Text>
-          )}
+          ) : null}
         </Stack>
       ) : null}
 
@@ -113,9 +104,6 @@ const SettingsPanel = ({
           }
           size="xs"
         />
-        <Text className={styles.hint}>
-          打开预览时直接进入整屏；浏览器不给手势权限时会停在窗口尺寸，按 F 仍可手动切换。
-        </Text>
       </Stack>
     </Stack>
   );

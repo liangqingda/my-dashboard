@@ -170,7 +170,7 @@
 | `scripts/vite/files-store.ts` | 路径校验、条目归类、应用包从文件夹里分出来单独成列、文件夹直属条目计数与内含分类摘要（按扫描预算，供类型筛选过滤文件夹）、文件归类（视频 / PDF / Markdown / App / 其它）标记、选择器脚本拼装，以及新建 / 重命名 / 移动 / 删除的写盘与冲突拒绝、错误文案与错误码收口 |
 | `scripts/vite/files-apps.ts` | 应用包识别（`.app` 目录与指向它的符号链接）、Info.plist 解析（`plutil`）、残留推导（用户级与系统级）、卸载（先退应用再删整包与残留，权限不足时弹一次授权窗补删） |
 | `scripts/vite/files-app-icons.ts` | 应用图标按需抽取：从包内 `Contents/Resources` 找 `.icns`，`sips` 转成 PNG，按「包路径 + 修改时间」缓存在临时目录 |
-| `scripts/vite/files-video-apps.ts` | 能播视频的应用清单：扫 `/Applications`、`/System/Applications` 与 `~/Applications` 顶层的 `.app`，读 `Info.plist` 的 `CFBundleDocumentTypes`，声明了视频统一类型标识（或视频扩展名）的才算，按应用名去重 |
+| `scripts/vite/files-video-apps.ts` | 能播视频的应用清单：扫 `/Applications`、`/System/Applications` 与 `~/Applications` 顶层的 `.app`，读 `Info.plist` 的 `CFBundleDocumentTypes`，声明了视频统一类型标识（或视频扩展名）的才算，按应用名去重；再剔掉 `EXCLUDED_VIDEO_APPS` 里那批「顺带能放视频、但不是播放器」的应用（网盘 / 阅读 / 聊天 / 音乐 / 系统 QuickTime） |
 | `scripts/vite/files-open.ts` | 外部打开：按「指定应用 → IINA → 系统默认」逐级回落，`open -a <app>` 成功即返回实际用上的应用名 |
 | `scripts/vite/files-media.ts` | 媒体侧只读 / 写盘：视频路径校验与 MIME、`Range` 解析、读流，以及把 PNG 截图写进指定目录（缺省桌面；文件名取本地时间，重名追加序号） |
 | `scripts/vite/files-space.ts` | 卷空间只读侧：解析 `df -kP` 的挂载点与可用块数、按 `/Volumes/` 前缀判定外接卷、拼出 `DirSpace` |
