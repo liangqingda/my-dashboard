@@ -1,5 +1,6 @@
 /**
  * 能播放视频的本机应用列表：设置面板打开时取一次，供「外部打开用哪个应用」下拉。
+ * 请求本身带页面级缓存（`fetchVideoApps`），面板开关只读缓存，不再重扫应用目录。
  *
  * 取不到（中间件没开、`plutil` 被系统挡住）不报红：设置里仍然可以选默认的 IINA，
  * 只是下拉里没有别的候选。错误留在 `error` 里，面板按需展示。
@@ -31,15 +32,9 @@ export const useVideoApps = (): UseVideoAppsResult => {
   });
 
   useEffect(() => {
-    const controller = new AbortController();
-
-    fetchVideoApps(controller.signal).then(
+    fetchVideoApps().then(
       (apps) => setState({ apps, error: null, loading: false }),
       (caught: unknown) => {
-        if (caught instanceof DOMException && caught.name === 'AbortError') {
-          return;
-        }
-
         setState({
           apps: [],
           error: getErrorMessage(caught, '读取播放器列表失败'),
@@ -47,8 +42,6 @@ export const useVideoApps = (): UseVideoAppsResult => {
         });
       },
     );
-
-    return () => controller.abort();
   }, []);
 
   return state;

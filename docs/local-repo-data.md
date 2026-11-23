@@ -211,7 +211,10 @@
   返回 `{ app }` 为实际用上的应用名（`default` 表示系统默认播放器）；
   只收存在的绝对路径，非 macOS 直接回不支持。给的是「绕开浏览器」的那条路——
   浏览器解不动的编码（HEVC / mkv 等）或想更快起播时，本地播放器硬解 + 直接读盘快得多。
-  `app` 由文件页设置里的「外部应用」提供（候选来自 `video-apps`）。
+  `app` 由文件页设置里的「外部应用」提供（候选来自 `video-apps`）。这份候选要读十几个
+  `Info.plist`，所以前端带页面级缓存：`fetchVideoApps` 把结果/在途请求记在模块里（失败不缓存），
+  `FilesActions` 挂载时用 `resetVideoAppsCache` 清掉——同一次页面停留内反复开关设置面板不再重扫，
+  装完新播放器刷新页面即可看到。
   两处入口都用它：视频预览 header 那颗按钮（`VideoPreviewModal` 的 `onOpenExternal`），
   以及把设置改成「外部应用」后点视频直接交给播放器（`useVideoPreview` 的分流，不开弹窗）；
   由页面的 `useVideoPreview` 接成提示；列表里指针停在视频条目上时还会用 `Range` 预取前 512KB 文件头

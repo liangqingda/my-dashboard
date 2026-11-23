@@ -43,15 +43,9 @@ const normalizeVideoApps = (payload: unknown): VideoAppOption[] | null => {
   });
 };
 
-/** 能播放视频的本机应用：设置面板里的下拉选项 */
-export const fetchVideoApps = async (
-  signal?: AbortSignal,
-): Promise<VideoAppOption[]> => {
-  if (!import.meta.env.DEV) {
-    throw new Error('静态构建不支持操作本地目录，请在开发模式下打开');
-  }
-
-  const response = await fetch(VIDEO_APPS_ENDPOINT, { ...REQUEST_INIT, signal });
+/** 真正发请求那一步：缓存只包这一层，失败时能整块丢掉重来 */
+const requestVideoApps = async (): Promise<VideoAppOption[]> => {
+  const response = await fetch(VIDEO_APPS_ENDPOINT, REQUEST_INIT);
 
   if (!response.ok) {
     throw new Error(
@@ -72,7 +66,32 @@ export const fetchVideoApps = async (
   return apps;
 };
 
-/** 外部打开的回执：实际用上的应用名，`default` 表示系统默认应用；其它一律当格式不对 */
+/**
+ * 页面级缓存：扫应用目录要读十几个 `Info.plist`，设置面板反复开关不该每次都重扫。
+ * 一次进页面只扫一遍——进页面时由 `FilesActions` 清空，所以装完新播放器刷新页面就能看到。
+ * 失败不缓存（下次打开面板会重试）。
+ */
+let videoAppsRequest: Promise<VideoAppOption[]> | null = null;
+
+/** 清掉缓存：进页面时调一次，让本次停留内共用同一份结果 */
+export const resetVideoAppsCache = (): void => {
+  videoAppsRequest = null;
+};
+
+/** 能播放视频的本机应用：设置面板里的下拉选项，同一次页面停留内只请求一次 */
+export const fetchVideoApps = (): Promise<VideoAppOption[]> => {
+  if (!import.meta.env.DEV) {
+    throw new Error('静态构建不支持操作本地目录，请在开发模式下打开');
+  }
+
+  videoAppsRequest ??= requestVideoApps().catch((caught: unknown) => {
+    videoAppsRequest = null;
+    throw caught;
+  });
+
+  return videoAppsRequest;
+};
+
 /** 外部打开的回执：实际用上的应用名，`default` 表示系统默认应用；其它一律当格式不对 */
 const normalizeOpenAppResponse = (payload: unknown): string | null => {
   if (typeof payload !== 'object' || payload === null) {

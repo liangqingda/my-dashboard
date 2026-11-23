@@ -3,6 +3,7 @@
  * 网格 / 表格切换按钮。三块弹层互斥，同时只开一块；开合状态由页面层持有，这里只排按钮与弹层内容。
  */
 
+import { useEffect } from 'react';
 import {
   IconBookmark,
   IconBookmarkFilled,
@@ -16,6 +17,8 @@ import {
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
 import IconPopoverButton from '@/components/buttons/IconPopoverButton';
+
+import { resetVideoAppsCache } from '../utils/video-api';
 
 import FavoritesPanel from './FavoritesPanel';
 import SettingsPanel from './SettingsPanel';
@@ -47,6 +50,11 @@ const FilesActions = ({
   openPanel,
   settings,
 }: FilesActionsProps) => {
+  /** 进页面即清掉播放器列表的缓存：本次停留内设置面板开关共用一份，下次进页面重扫 */
+  useEffect(() => {
+    resetVideoAppsCache();
+  }, []);
+
   /** 筛选有没有条件生效：排除项或关键词任一非空，图标用强调色 */
   const filterActive = excludedCategories.length > 0 || keyword.trim() !== '';
 
