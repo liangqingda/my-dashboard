@@ -1,7 +1,8 @@
 /**
  * 目录表格：一行一个条目，三列「名称 / 类别 / 操作」，文件夹在前、应用其次、文件在后。
  * 名称前带类型图标（应用是真实图标，取不到时回落通用图标）；文件夹行整行可点进入下一层，
- * 视频 / 图片名称可点打开对应的预览弹窗，应用与其它文件只是展示（与网格一致）。
+ * 视频 / 图片名称可点打开对应的预览弹窗，应用与其它文件只是展示（与网格一致）；
+ * 指针停到视频行上时先预取文件头，点开时首帧更快。
  * 行可拖拽（应用除外，移动 .app 会破坏系统登记），文件夹行是放置目标；
  * 重命名 / 删除走与瓦片同一组按钮，应用只有卸载一项。
  * 表格外观（边框、表头吸顶、行 hover）由 `FreeTable` 统一给，这里只管列宽与内容。
@@ -20,6 +21,7 @@ import AppIcon from '../AppIcon';
 import EntryTileActions from '../EntryTileActions';
 import { CATEGORY_ICONS, ENTRY_KIND_LABELS, FILE_CATEGORY_LABELS } from '../constants';
 import type { AppEntry, FileEntry, FilesRow, FolderEntry } from '../types';
+import { prefetchVideoHead } from '../utils/video-prefetch';
 
 import type { FilesTableProps } from './types';
 
@@ -210,6 +212,11 @@ const FilesTable = memo(
                   onDragStartEntry(entry.path);
                 }}
                 onDrop={isFolder ? () => onDropFolder(entry.path) : undefined}
+                onMouseEnter={
+                  row.kind === 'file' && row.file.category === 'video'
+                    ? () => prefetchVideoHead(row.file.path)
+                    : undefined
+                }
               >
                 <FreeTable.Td>{renderName(row)}</FreeTable.Td>
                 <FreeTable.Td className={styles.kindWidth}>

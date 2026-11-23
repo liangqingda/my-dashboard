@@ -68,6 +68,7 @@ const Files = () => {
     captureFrame,
     closeVideo,
     items: videoItems,
+    openExternal: openVideoExternal,
     openVideo,
     pickCaptureDir,
     selectVideo,
@@ -267,6 +268,7 @@ const Files = () => {
         onCaptureVideo={captureFrame}
         onCloseImage={closeImage}
         onCloseVideo={closeVideo}
+        onOpenExternal={openVideoExternal}
         onPickCaptureDir={pickCaptureDir}
         onRequestDelete={requestDelete}
         onSelectImage={selectImage}

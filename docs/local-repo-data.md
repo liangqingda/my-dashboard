@@ -189,13 +189,22 @@
 - **文件夹分类摘要**：`listing.folders[].categories` 给出文件夹内出现过的分类（含深层），中间件按「先浅后深、找齐各档即停」扫描，累计 2000 个条目或 6 层为止，超出预算的深层内容不保证计入；应用包按一条 `app` 分类计入、不再往包里扫；只服务于筛选时决定文件夹露不露出，不是精确的全树统计；
 - **类型图标**：后端按扩展名归类，前端按分类换图标（视频与图片上蓝色，其余弱色）；视频帧封面抽取是单独任务。
 - **视频预览与截图**：`content` 接口只认视频扩展名（分类表与列表共用同一份），并按 `Range` 回 206
-  （浏览器靠它跳转与续播），没有 `Range` 时整份返回；`capture` 只接受 PNG data URL，写到 body 里的
+  （浏览器靠它跳转与续播），没有 `Range` 时整份返回；响应带 `Cache-Control: private, max-age=600`
+  与 `ETag` / `Last-Modified`（由体积与修改时间算出，文件一变即失效），同一片子重复打开、
+  来回 seek 与翻篇回看都能命中浏览器缓存；不带 `Range` 的请求命中 `If-None-Match` 时回 304；`capture` 只接受 PNG data URL，写到 body 里的
   `dir`（缺省 `~/Desktop`），文件名为 `YYYY-MM-DD HH:mm:ss.png`，同一秒重名依次追加 ` (2)`、` (3)`，
   不覆盖已有截图。
 - **图片预览**：`GET /api/files/image?path=` 整份返回图片字节（不做 Range），只认图片扩展名
   （分类表里 `image` 那一档，不收 `.svg`），`Cache-Control: no-store`、支持 `HEAD`；
   浏览器直接把它塞进 `<img src>`，前端通过 `ImagePreviewModal` 消费。
   `content` / `image` / `capture` 三个接口都只在开发模式存在。
+- **外部打开**：`POST /api/files/open`（body `{ path }`）用系统 `open` 调起播放器：先试 `open -a IINA`，
+  找不到应用就回落 `open <path>`（系统默认播放器），返回 `{ app: 'iina' | 'default' }`；
+  只收存在的绝对路径，非 macOS 直接回不支持。给的是「绕开浏览器」的那条路——
+  浏览器解不动的编码（HEVC / mkv 等）或想更快起播时，本地播放器硬解 + 直接读盘快得多。
+  前端在视频预览 header 有一颗按钮（`VideoPreviewModal` 的 `onOpenExternal`），
+  由页面的 `useVideoPreview` 接成提示；列表里指针停在视频条目上时还会用 `Range` 预取前 512KB 文件头
+  （`src/pages/Files/utils/video-prefetch.ts`，同路径一分钟内只拉一次），点开时首帧不必再等一次往返。
 - **可用空间**：`GET /api/files` 的 `listing.space` 同时下发启动卷 `/` 的剩余空间，以及当前目录
   所在的那一卷（只在它被判定为外接卷时给，`external` 为 `null` 表示目录就在启动卷上）。
   判定口径是「挂载点在 `/Volumes/` 下、且不等于启动卷的挂载点」，启动卷的 APFS 数据卷

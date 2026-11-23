@@ -14,7 +14,8 @@
  * - `POST /api/files/move`：body `{ source, targetDir }` 把一条条目移入目标目录；
  * - `POST /api/files/delete`：body `{ path }` 删除一条条目，文件夹连同内部内容递归删除；
  * - `POST /api/files/uninstall-app`：body `{ path }` 卸载应用包并清理残留，权限不足时弹一次授权窗补删；
- * - `POST /api/files/capture`：body `{ dataUrl, dir? }` 把一帧 PNG 截图写进 `dir`（缺省用户桌面），返回文件名与绝对路径。
+ * - `POST /api/files/capture`：body `{ dataUrl, dir? }` 把一帧 PNG 截图写进 `dir`（缺省用户桌面），返回文件名与绝对路径；
+ * - `POST /api/files/open`：body `{ path }` 用外部播放器打开（优先 IINA，没装回落系统默认），返回 `{ app }`。
  *
  * 写操作与媒体接口仅限开发服务器中间件，静态构建不带这些接口；列表只给摘要，视频内容按需流式读取。
  */
@@ -26,7 +27,8 @@ import type { Plugin } from 'vite';
 import { appIconPng } from './files-app-icons.js';
 import { scanAppResidues, uninstallAppBundle } from './files-apps.js';
 import { openImageFile } from './files-images.js';
-import { openVideoFile, openVideoStream, parseByteRange, saveCapture } from './files-media.js';
+import { openVideoFile, openVideoStream, parseByteRange, saveCapture, videoEtag } from './files-media.js';
+import { openExternalFile } from './files-open.js';
 import {
   createFolder,
   deleteEntry,
@@ -129,10 +131,27 @@ const serveVideoContent = async (
     const url = new URL(req.url ?? '', 'http://localhost');
     const video = await openVideoFile(url.searchParams.get('path') ?? '');
     const range = parseByteRange(req.headers.range, video.size);
+    const etag = videoEtag(video);
 
     res.setHeader('Content-Type', video.mime);
     res.setHeader('Accept-Ranges', 'bytes');
-    res.setHeader('Cache-Control', 'no-store');
+    /*
+     * 允许浏览器缓存已读过的字节：同一片子重复打开、来回 seek、翻篇再翻回去都省一次重读。
+     * `private` + 10 分钟；文件体积或修改时间一变，`ETag` 就变，旧缓存的 Range 片段自然失效。
+     */
+    res.setHeader('Cache-Control', 'private, max-age=600');
+    res.setHeader('ETag', etag);
+    res.setHeader('Last-Modified', new Date(video.mtimeMs).toUTCString());
+
+    // 整份请求可以只靠校验直接回 304；带 Range 的请求照常回 206
+    if (!range && req.headers['if-none-match'] === etag) {
+      res.statusCode = 304;
+      res.removeHeader('Content-Type');
+      res.removeHeader('Content-Length');
+      res.end();
+
+      return;
+    }
 
     if (range) {
       res.statusCode = 206;
@@ -352,6 +371,39 @@ export const files = (): Plugin => ({
             JSON.stringify({
               message:
                 error instanceof Error ? error.message : '选择目录失败',
+            }),
+          );
+        }
+
+        return;
+      }
+
+      if (pathname === '/open') {
+        if (req.method !== 'POST') {
+          res.statusCode = 405;
+          res.end(JSON.stringify({ message: '不支持的请求方法' }));
+
+          return;
+        }
+
+        if (!sameOrigin(req)) {
+          res.statusCode = 403;
+          res.end(JSON.stringify({ message: '跨站请求被拒绝' }));
+
+          return;
+        }
+
+        try {
+          const body = await readJsonBody(req);
+          const app = await openExternalFile(bodyString(body, 'path'));
+
+          res.end(JSON.stringify({ app }));
+        } catch (error) {
+          res.statusCode = statusForReadError(error);
+          res.end(
+            JSON.stringify({
+              message:
+                error instanceof Error ? error.message : '外部打开失败',
             }),
           );
         }

@@ -12,7 +12,7 @@
   `FreeVideo` 不认识弹窗，弹窗只传 `src` 与 `videoRef`；全屏、header、侧栏、设置、截图都留在本组件。
   整屏全屏的 hook 也已上提到 `src/hooks/useBrowserFullscreen.ts`（与图片预览共用一份）。
 - **header**：标题与右侧操作组之间恒留 20px（外壳 `.titleGap` 保证），标题单行不换行、
-  放不下才省略，hover 时用 tip 展示全名。操作组固定在标题右侧：目录显隐 → 截图 → 设置；
+  放不下才省略，hover 时用 tip 展示全名。操作组固定在标题右侧：目录显隐 → 截图 → 外部打开 → 设置；
   删除排在全屏之后（`headerTail`，最右），关窗前一条竖线由外壳画。
 - **整屏全屏**：走浏览器 Fullscreen API（`document.documentElement.requestFullscreen()`），
   占的是**整块屏幕**，不是把框体撑满视口。`fullscreenchange` 是唯一状态源：浏览器里按 `Esc`
@@ -33,6 +33,8 @@
   `settings.arrowMode`）：seek 模式是「后退 / 前进 N 秒」，nav 模式是「上一个 / 下一个视频」，
   文案跟着变，到头的一侧置灰。
 - **header 的翻篇按钮**：`[` / `]` 翻篇照旧，与控制栏箭头的 nav 语义互相独立。
+- **外部打开**：header 的「斜箭头」按钮把当前视频交给本地播放器（`onOpenExternal`）——
+  浏览器解不动的编码或想更快起播时走这条；组件只把条目 id 交回去，用什么应用、怎么提示归调用方。
 - **截图**：header 的相机图标把当前视频帧画进离屏 canvas（PNG），连同设置里的目录一起交给
   调用方落盘；失败 / 还没解出画面各给一条通知，不生成空白图。截图不改播放状态，暂停时截当前帧。
 - **键盘**：全部由 `FreeModal` 判，本组件只给动作——
@@ -70,6 +72,7 @@
 | `onSelect` | 切到某一条（翻篇、侧栏点选与舞台按钮共用） |
 | `onClose` | 关闭（内部会先退出整屏） |
 | `onCapture` | 把 PNG data URL 与目标目录（空串 = 桌面）交给页面落盘，返回 `{ message }` |
+| `onOpenExternal` | 用外部播放器打开当前视频（页面实现 IINA 优先、回落系统默认）；不传则 header 没有那颗按钮 |
 | `onPickCaptureDir` | 调系统目录选择框；返回 `null` 表示取消。不传则设置面板里没有「选择目录」 |
 | `onRequestDelete` | 请求删除当前视频：只应打开二次确认层；不传则没有删除按钮与 `Delete` 键 |
 | `blocked` | 删除确认开着：整组快捷键与焦点陷阱交给确认层 |

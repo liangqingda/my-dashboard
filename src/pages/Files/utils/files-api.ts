@@ -30,6 +30,7 @@ const MOVE_ENDPOINT = '/api/files/move';
 const DELETE_ENDPOINT = '/api/files/delete';
 const CONTENT_ENDPOINT = '/api/files/content';
 const IMAGE_ENDPOINT = '/api/files/image';
+const OPEN_ENDPOINT = '/api/files/open';
 const CAPTURE_ENDPOINT = '/api/files/capture';
 const APP_ICON_ENDPOINT = '/api/files/app-icon';
 const APP_RESIDUE_ENDPOINT = '/api/files/app-residue';
@@ -221,6 +222,36 @@ export const captureVideoFrame = async (
   }
 
   return name;
+};
+
+/** 外部打开的回执：只认 `iina` / `default` 两种，其它一律当格式不对 */
+const normalizeOpenAppResponse = (
+  payload: unknown,
+): 'iina' | 'default' | null => {
+  if (typeof payload !== 'object' || payload === null) {
+    return null;
+  }
+
+  const { app } = (payload as { app?: unknown });
+
+  return app === 'iina' || app === 'default' ? app : null;
+};
+
+/**
+ * 用外部播放器打开一个视频：优先 IINA，没装回落到系统默认应用。
+ * 走这条路径的意义是把解码交给本地播放器（硬解 + 直接读盘），比浏览器里软解快得多。
+ */
+export const openFileExternally = async (
+  pathValue: string,
+): Promise<'iina' | 'default'> => {
+  const payload = await postJson(OPEN_ENDPOINT, { path: pathValue });
+  const app = normalizeOpenAppResponse(payload);
+
+  if (app === null) {
+    throw new Error('外部打开回执格式不符合预期');
+  }
+
+  return app;
 };
 
 /**

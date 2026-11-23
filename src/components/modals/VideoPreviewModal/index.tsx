@@ -1,7 +1,9 @@
 /**
  * 视频预览弹窗：`FreeModal`（外壳）+ `FreeVideo`（播放器）的组合，左侧列当前目录的视频。
  *
- * - header：翻篇 / 计数 / 文件名（外壳）+ 目录显隐、截图、设置、删除（本组件）；
+ * - header：翻篇 / 计数 / 文件名（外壳）+ 目录显隐、截图、外部打开、设置、删除（本组件）；
+ *   「外部打开」把视频交给 IINA（没装回落到系统默认播放器）——浏览器解不动的编码、
+ *   或只是要更快起播时，走这条路比在弹窗里等软解划算；
  *   标题与右侧操作组之间恒留 20px，标题不换行、放不下才省略；
  * - 键盘：空格按设置切播放 / 暂停或关窗（`FreeModal` 的 `media` / `closeOnSpace`），
  *   `Enter` 截当前帧、`m` / `M` 静音、`s` / `S` 显隐目录列，
@@ -17,6 +19,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   IconCamera,
+  IconExternalLink,
   IconLayoutSidebarLeftCollapse,
   IconLayoutSidebarLeftExpand,
   IconTrash,
@@ -54,6 +57,7 @@ const VideoPreviewModal = ({
   items,
   onCapture,
   onClose,
+  onOpenExternal,
   onPickCaptureDir,
   onRequestDelete,
   onSelect,
@@ -246,6 +250,14 @@ const VideoPreviewModal = ({
           >
             <IconCamera size={ICON_SIZE} stroke={ICON_STROKE} />
           </FreeIconAction>
+          {onOpenExternal ? (
+            <FreeIconAction
+              label="用外部播放器打开（IINA 优先；浏览器解不动或想更快起播时用）"
+              onClick={() => onOpenExternal(activeItem.id)}
+            >
+              <IconExternalLink size={ICON_SIZE} stroke={ICON_STROKE} />
+            </FreeIconAction>
+          ) : null}
           <VideoSettingsPopover
             arrowMode={settings.arrowMode}
             captureDir={settings.captureDir}

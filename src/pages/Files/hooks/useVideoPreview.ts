@@ -5,15 +5,18 @@
  */
 
 import { useMemo } from 'react';
+import { notifications } from '@mantine/notifications';
 
 import type {
   VideoPreviewCaptureReceipt,
   VideoPreviewItem,
 } from '@/components/modals/VideoPreviewModal/types';
+import { getErrorMessage } from '@/utils/error';
 
 import type { DirListing, FileEntry } from '../types';
 import {
   captureVideoFrame,
+  openFileExternally,
   pickPickedDir,
   videoContentUrl,
 } from '../utils/files-api';
@@ -39,6 +42,8 @@ export type UseVideoPreviewResult = {
   ) => Promise<VideoPreviewCaptureReceipt>;
   /** 选截图目录（系统目录选择框，默认定位到当前目录）；取消返回 null */
   pickCaptureDir: () => Promise<string | null>;
+  /** 用外部播放器打开某条视频：IINA 优先，回落系统默认；结果给一条提示 */
+  openExternal: (id: string) => void;
 };
 
 /**
@@ -73,6 +78,28 @@ export const useVideoPreview = (
     return { message: `已保存到${target}：${name}` };
   };
 
+  /**
+   * 外部打开：把解码交给本地播放器（IINA / mpv 的硬解与直接读盘比浏览器快得多）。
+   * 提示里区分「IINA」与「系统默认」，失败也给原因，不让按钮点了没反应。
+   */
+  const openExternal = (id: string) => {
+    void openFileExternally(id)
+      .then((app) => {
+        notifications.show({
+          message:
+            app === 'iina'
+              ? '已用 IINA 打开这个视频'
+              : '已用系统默认播放器打开这个视频',
+        });
+      })
+      .catch((error: unknown) => {
+        notifications.show({
+          color: 'red',
+          message: getErrorMessage(error, '外部打开失败'),
+        });
+      });
+  };
+
   /** 选截图目录：默认从当前目录弹起，用户取消不当作失败 */
   const pickCaptureDir = async (): Promise<string | null> => {
     const picked = await pickPickedDir(listing?.path ?? null);
@@ -85,6 +112,7 @@ export const useVideoPreview = (
     captureFrame,
     closeVideo: list.close,
     items,
+    openExternal,
     openVideo: list.open,
     pickCaptureDir,
     selectVideo: list.select,

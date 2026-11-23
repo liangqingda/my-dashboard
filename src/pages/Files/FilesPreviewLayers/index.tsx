@@ -31,6 +31,8 @@ export type FilesPreviewLayersProps = {
   ) => Promise<VideoPreviewCaptureReceipt>;
   /** 选截图目录；取消返回 null */
   onPickCaptureDir: () => Promise<string | null>;
+  /** 用外部播放器打开某条视频 */
+  onOpenExternal: (id: string) => void;
   /** 当前目录的图片条目 */
   imageItems: ImagePreviewItem[];
   /** 正在看的图片；null 表示图片弹窗关着 */
@@ -54,6 +56,7 @@ const FilesPreviewLayers = ({
   onCaptureVideo,
   onCloseImage,
   onCloseVideo,
+  onOpenExternal,
   onPickCaptureDir,
   onRequestDelete,
   onSelectImage,
@@ -70,6 +73,7 @@ const FilesPreviewLayers = ({
       items={videoItems}
       onCapture={onCaptureVideo}
       onClose={onCloseVideo}
+      onOpenExternal={onOpenExternal}
       onPickCaptureDir={onPickCaptureDir}
       onRequestDelete={
         videoActiveId !== null ? () => onRequestDelete(videoActiveId) : null

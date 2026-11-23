@@ -41,12 +41,14 @@ export type ByteRange = {
   end: number;
 };
 
-/** 打开一个可播放视频的结果：路径、体积、MIME */
+/** 打开一个可播放视频的结果：路径、体积、MIME、修改时间 */
 export type VideoFile = {
   /** 校验后的文件绝对路径 */
   path: string;
   /** 文件字节数 */
   size: number;
+  /** 修改时间（毫秒）：缓存校验用，文件一改就让旧缓存失效 */
+  mtimeMs: number;
   /** 给响应头的 Content-Type */
   mime: string;
 };
@@ -108,10 +110,18 @@ export const openVideoFile = async (input: string): Promise<VideoFile> => {
     mime:
       VIDEO_MIME_BY_EXTENSION[path.extname(filePath).toLowerCase()] ??
       'application/octet-stream',
+    mtimeMs: info.mtimeMs,
     path: filePath,
     size: info.size,
   };
 };
+
+/**
+ * 视频响应的 `ETag`：体积 + 修改时间（毫秒）足够区分同一路径的不同版本，
+ * 文件挪动 / 改动后旧缓存自然失效，不必把整份内容算成摘要。
+ */
+export const videoEtag = (video: VideoFile): string =>
+  `W/"${video.size}-${Math.round(video.mtimeMs)}"`;
 
 /**
  * 解析 `Range: bytes=…` 请求头。支持 `start-end` / `start-` / `-suffix` 三种写法，

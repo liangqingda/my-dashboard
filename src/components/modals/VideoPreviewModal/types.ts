@@ -46,6 +46,11 @@ export type VideoPreviewModalProps = {
    */
   onPickCaptureDir?: () => Promise<string | null>;
   /**
+   * 用外部播放器打开当前视频（页面实现：IINA 优先，回落系统默认）。
+   * 不传则 header 没有那颗按钮——组件不认识「IINA」或「文件在哪」，只把条目 id 交回去。
+   */
+  onOpenExternal?: (id: string) => void;
+  /**
    * 删除当前视频的请求：只应打开二次确认层，不在这里直接删；
    * 不传则 header 没有删除按钮，`Delete` 键也不触发。
    */

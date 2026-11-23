@@ -8,6 +8,7 @@ import {
   captureDirectory,
   decodePngDataUrl,
   parseByteRange,
+  videoEtag,
 } from '../../scripts/vite/files-media.ts';
 
 describe('files-media 的纯函数', () => {
@@ -47,6 +48,20 @@ describe('files-media 的纯函数', () => {
     }
 
     assert.equal(parseByteRange('bytes=0-1', 0), null);
+  });
+
+  it('ETag 由体积与修改时间决定：任一变化都会换一个值', () => {
+    const base = { mime: 'video/mp4', path: '/tmp/a.mp4', size: 10, mtimeMs: 1700 };
+
+    assert.equal(videoEtag(base), 'W/"10-1700"');
+    assert.notEqual(
+      videoEtag({ ...base, size: 11 }),
+      videoEtag(base),
+    );
+    assert.notEqual(
+      videoEtag({ ...base, mtimeMs: 1800 }),
+      videoEtag(base),
+    );
   });
 
   it('截图文件名取本地时间的年月日与时分秒', () => {
