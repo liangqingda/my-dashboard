@@ -13,7 +13,7 @@ import FilesPreviewLayers from './FilesPreviewLayers';
 import FilesStates from './FilesStates';
 import RenameEntryModal from './RenameEntryModal';
 import UninstallAppConfirm from './UninstallAppConfirm';
-import { FILES_STORAGE_SCOPE } from './constants';
+import { FILES_STORAGE_SCOPE, TYPE_FILTER_ALL } from './constants';
 import { useAppUninstall } from './hooks/useAppUninstall';
 import { useEntryActions } from './hooks/useEntryActions';
 import { useEntryDelete } from './hooks/useEntryDelete';
@@ -52,7 +52,7 @@ const Files = () => {
   const { currentDir, listing, loading, error, openDir, pickDir, refresh, reload } =
     useFilesDir();
   const { favorites, isFavorite, toggleFavorite, removeFavorite } = useFavorites();
-  const { excluded, onChange: onExcludedChange } = useTypeFilter();
+  const { active: activeType, onChange: onActiveTypeChange } = useTypeFilter();
   /** 展示形式：网格 / 表格，切换按钮在标题栏 */
   const { isGridView, toggle: toggleViewMode } = useFilesViewMode();
   /** 文件页设置（放在视频预览之前）：点视频的去向、两扇预览是否默认全屏 */
@@ -105,17 +105,20 @@ const Files = () => {
   /** 类型 + 关键词筛选后的文件；文件夹不受关键词影响，按内含类型过滤 */
   const visibleFiles = listing
     ? filterFilesByKeyword(
-        filterFilesByCategory(listing.files, excluded),
+        filterFilesByCategory(listing.files, activeType),
         keyword,
       )
     : [];
-  /** 类型 + 关键词筛选后的应用；只有「App」这一档管它 */
+  /** 类型 + 关键词筛选后的应用：只有「App」这一档管它 */
   const visibleApps = listing
-    ? filterAppsByKeyword(filterAppsByCategory(listing.apps, excluded), keyword)
+    ? filterAppsByKeyword(
+        filterAppsByCategory(listing.apps, activeType),
+        keyword,
+      )
     : [];
-  /** 类型筛选后的文件夹：只剩仍有未排除类型的文件夹 */
+  /** 类型筛选后的文件夹：`all` 全留，其余只留含该类的；App 不列文件夹 */
   const visibleFolders = listing
-    ? filterFoldersByCategory(listing.folders, excluded)
+    ? filterFoldersByCategory(listing.folders, activeType)
     : [];
   /** 表格视图的行：文件夹在前、应用其次、文件在后，与网格同一顺序 */
   const tableRows = toFilesRows(visibleFolders, visibleApps, visibleFiles);
@@ -166,26 +169,29 @@ const Files = () => {
   let emptyText: string | null = null;
 
   if (showEmpty) {
-    emptyText =
-      excluded.length > 0 || keyword.trim() !== ''
-        ? '没有符合筛选条件的条目'
-        : '这个目录里没有文件或子文件夹';
+    if (activeType === 'app') {
+      emptyText = '这个目录里没有应用，可点收藏里的「系统应用程序」去 /Applications';
+    } else if (activeType !== TYPE_FILTER_ALL || keyword.trim() !== '') {
+      emptyText = '没有符合筛选条件的条目';
+    } else {
+      emptyText = '这个目录里没有文件或子文件夹';
+    }
   }
 
   return (
     <MenuContentLayout
       actions={
         <FilesActions
+          activeType={activeType}
           createDisabled={currentEntry === null}
-          excludedCategories={excluded}
           favoriteDisabled={currentEntry === null}
           favorites={favorites}
           isFavorite={currentEntry !== null && isFavorite(currentEntry.path)}
           isGridView={isGridView}
           keyword={keyword}
           loading={loading}
+          onActiveTypeChange={onActiveTypeChange}
           onCreateFolder={entryActions.createEntry}
-          onExcludedChange={onExcludedChange}
           onKeywordChange={setKeyword}
           onOpenFavorite={goToDir}
           onPanelChange={setOpenPanel}

@@ -104,13 +104,18 @@ export const FILE_CATEGORY_OPTIONS = (
 ).map((value) => ({ value, label: FILE_CATEGORY_LABELS[value] }));
 
 /**
- * 类型筛选的排除项（取消勾选的分类，刷新后保留；空数组表示各档全显示）。
- * 键名带 `excluded`：旧的「已选分类」存的是白名单，含义相反，不能沿用同一个键。
+ * 类型筛选的当前取值（`all` 或某一类），刷新后保留；没写过时按 `all`。
+ * 键名带 `active`：旧的排除项数组含义不同，不能沿用同一个键。
  */
 export const TYPE_FILTER_STORAGE_KEY = scopedStorageKey(
   FILES_STORAGE_SCOPE,
-  'type-filter-excluded',
+  'type-filter-active',
 );
+
+/** 类型筛选的「全部」档位与文案：列表固定排在最上面 */
+export const TYPE_FILTER_ALL = 'all' as const;
+
+export const TYPE_FILTER_ALL_LABEL = '全部';
 
 /** 分类 → 瓦片图标；视频额外上蓝色，应用走通用应用图标，其余用通用弱色 */
 export const CATEGORY_ICONS: Record<FileCategory, typeof IconFile> = {

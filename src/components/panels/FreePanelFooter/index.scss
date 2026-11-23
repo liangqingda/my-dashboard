@@ -1,0 +1,9 @@
+/* 底部一行：说明文字可换行并可被压缩，重置按钮保持完整宽度不被挤掉 */
+.hint {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.reset {
+  flex: 0 0 auto;
+}

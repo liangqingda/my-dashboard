@@ -2,13 +2,14 @@
  * 文件浏览页的纯函数：文件大小格式化、路径分段、类型筛选。不依赖 React。
  */
 
+import { TYPE_FILTER_ALL } from '../constants';
 import type {
   AppEntry,
   DirSpace,
-  FileCategory,
   FileEntry,
   FilesRow,
   FolderEntry,
+  TypeFilterValue,
 } from '../types';
 
 /** 字节数 → 可读体积（B / KB / MB / GB）；负数与 NaN 按 0 处理 */
@@ -78,44 +79,39 @@ export const splitPathSegments = (dir: string): PathSegment[] => {
   }));
 };
 
-/** 按排除项过滤文件：去掉被排除的分类；空排除项表示全部显示，整份保留 */
+/** 按类型筛选过滤文件：`all` 整份保留，其余只留同类 */
 export const filterFilesByCategory = (
   files: FileEntry[],
-  excluded: FileCategory[],
-): FileEntry[] => {
-  if (excluded.length === 0) {
-    return files;
-  }
+  active: TypeFilterValue,
+): FileEntry[] =>
+  active === TYPE_FILTER_ALL
+    ? files
+    : files.filter((file) => file.category === active);
 
-  const hidden = new Set(excluded);
-
-  return files.filter((file) => !hidden.has(file.category));
-};
-
-/** 按排除项过滤应用：只有「App」这一档管它，取消勾选就把应用整份隐藏 */
+/** 按类型筛选过滤应用：只有「App」这一档管它，选别的类型就整份隐藏 */
 export const filterAppsByCategory = (
   apps: AppEntry[],
-  excluded: FileCategory[],
-): AppEntry[] =>
-  excluded.includes('app') ? [] : apps;
+  active: TypeFilterValue,
+): AppEntry[] => (active === 'app' ? apps : []);
 
 /**
- * 按排除项过滤文件夹：只要文件夹里还有没被排除的类型就留下（含深层，靠中间件给的分类摘要）；
- * 空排除项表示全部显示，整份保留，空文件夹也不例外。
+ * 按类型筛选过滤文件夹：`all` 整份保留；其余只留内含该类型的文件夹（含深层，
+ * 靠中间件给的分类摘要）。但「App」是独立条目类型——文件夹本身不是应用，
+ * 只看 App 时不再列文件夹，避免「选了 App 还满屏文件夹」。
  */
 export const filterFoldersByCategory = (
   folders: FolderEntry[],
-  excluded: FileCategory[],
+  active: TypeFilterValue,
 ): FolderEntry[] => {
-  if (excluded.length === 0) {
+  if (active === TYPE_FILTER_ALL) {
     return folders;
   }
 
-  const hidden = new Set(excluded);
+  if (active === 'app') {
+    return [];
+  }
 
-  return folders.filter((folder) =>
-    folder.categories.some((category) => !hidden.has(category)),
-  );
+  return folders.filter((folder) => folder.categories.includes(active));
 };
 
 /** 按文件名关键词过滤；空白关键词表示不过滤，整份保留。大小写不敏感子串匹配 */

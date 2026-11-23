@@ -1,65 +1,42 @@
 /**
- * 文件类型筛选：各档默认全显示，勾掉哪类就把哪类排除。排除项是手动切换的展示偏好，
- * 持久化到 localStorage；读回时逐项校验分类档位，脏值 / 重复项丢掉，不认不认识的分类。
- * 空数组表示没有排除项（全部显示），所以默认状态不需要写任何值。
+ * 文件类型筛选：单选「全部 / 视频 / 图片 / PDF / Markdown / App / 其它」，默认全部。
+ * 选择是一个展示偏好，持久化到 localStorage；读回时校验档位，不认识的值回落「全部」。
+ * 用单选而不是多选：「选了 App 还看到别的」这种误读，多选框本身解释不清，单选一眼就是过滤。
  */
 
 import { useCallback } from 'react';
 
 import { useStoredState } from '@/hooks/useStoredState';
-import type { StoredCodec } from '@/utils/local-storage';
+import { createChoiceCodec } from '@/utils/local-storage';
 
-import { FILE_CATEGORY_OPTIONS, TYPE_FILTER_STORAGE_KEY } from '../constants';
-import type { FileCategory } from '../types';
+import {
+  FILE_CATEGORY_OPTIONS,
+  TYPE_FILTER_ALL,
+  TYPE_FILTER_STORAGE_KEY,
+} from '../constants';
+import type { TypeFilterValue } from '../types';
 
-const CATEGORY_VALUES = FILE_CATEGORY_OPTIONS.map((option) => option.value);
+const TYPE_FILTER_VALUES: TypeFilterValue[] = [
+  TYPE_FILTER_ALL,
+  ...FILE_CATEGORY_OPTIONS.map((option) => option.value),
+];
 
-/** 排除项数组的编解码：存 JSON 数组；逐项校验档位并按出现顺序去重 */
-const excludedFilterCodec: StoredCodec<FileCategory[]> = {
-  decode: (raw) => {
-    if (raw === null) {
-      return [];
-    }
-
-    let parsed: unknown;
-
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      return [];
-    }
-
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
-
-    const seen = new Set<FileCategory>();
-
-    for (const item of parsed) {
-      if (
-        typeof item === 'string' &&
-        (CATEGORY_VALUES as string[]).includes(item) &&
-        !seen.has(item as FileCategory)
-      ) {
-        seen.add(item as FileCategory);
-      }
-    }
-
-    return [...seen];
-  },
-  encode: (value) => JSON.stringify(value),
-};
+/** 存裸字符串（`all` / `app` …），不认识的值回落「全部」 */
+const typeFilterCodec = createChoiceCodec<TypeFilterValue>(
+  TYPE_FILTER_VALUES,
+  TYPE_FILTER_ALL,
+);
 
 export const useTypeFilter = () => {
-  const [excluded, setExcluded] = useStoredState(
+  const [active, setActive] = useStoredState(
     TYPE_FILTER_STORAGE_KEY,
-    excludedFilterCodec,
+    typeFilterCodec,
   );
 
   const onChange = useCallback(
-    (next: FileCategory[]) => setExcluded(next),
-    [setExcluded],
+    (next: TypeFilterValue) => setActive(next),
+    [setActive],
   );
 
-  return { excluded, onChange };
+  return { active, onChange };
 };

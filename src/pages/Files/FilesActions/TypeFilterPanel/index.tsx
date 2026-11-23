@@ -1,40 +1,44 @@
 /**
- * 筛选弹层面板：顶部关键词按文件名模糊搜索，下方 checkbox 多选分类，改动即时写回；
- * 底部重置清掉全部条件。分类选项是页面固定的档位、默认全选，取消勾选的类型不显示
- * （对应的文件与文件夹一并隐藏，分类摘要由中间件随列表下发）。
+ * 筛选弹层面板：顶部关键词按名称模糊搜索，下方是「全部 + 分类」单选列表，点哪一项即时生效；
+ * 底部重置把档位退回「全部」并清空关键词。档位是页面固定的，默认「全部」。
+ * 单选口径：选「App」只剩应用条目（文件夹一并隐藏），选其它类只留该类文件与含该类文件的文件夹。
  */
 
-import { Checkbox, Group, Stack, UnstyledButton } from '@mantine/core';
+import { Group, Radio, Stack, UnstyledButton } from '@mantine/core';
 
 import { PANEL_FIELD_STYLES } from '@/components/buttons/IconPopoverButton/constants';
 import FreeSearchInput from '@/components/fields/FreeSearchInput';
 import FreePanelFooter from '@/components/panels/FreePanelFooter';
 
-import { FILE_CATEGORY_OPTIONS } from '../../constants';
-import type { FileCategory } from '../../types';
+import {
+  FILE_CATEGORY_OPTIONS,
+  TYPE_FILTER_ALL,
+  TYPE_FILTER_ALL_LABEL,
+} from '../../constants';
+import type { TypeFilterValue } from '../../types';
 
 import type { TypeFilterPanelProps } from './types';
 
 import styles from './index.scss';
 
+/** 列表项：`全部` 在最上面，其后按固定的分类顺序 */
+const FILTER_ROWS: { label: string; value: TypeFilterValue }[] = [
+  { label: TYPE_FILTER_ALL_LABEL, value: TYPE_FILTER_ALL },
+  ...FILE_CATEGORY_OPTIONS.map((option) => ({
+    label: option.label,
+    value: option.value,
+  })),
+];
+
 const TypeFilterPanel = ({
-  excluded,
+  active,
   keyword,
   onChange,
   onKeywordChange,
   onReset,
 }: TypeFilterPanelProps) => {
-  /** 勾选 = 显示；取消勾选 = 把这一类加进排除项 */
-  const toggle = (value: FileCategory) => {
-    onChange(
-      excluded.includes(value)
-        ? excluded.filter((item) => item !== value)
-        : [...excluded, value],
-    );
-  };
-
-  /** 有没有条件生效：没有时「重置」置灰，点了也没东西可清 */
-  const active = excluded.length > 0 || keyword.trim() !== '';
+  /** 有没有条件生效：没选「全部」或有关键词时「重置」可点 */
+  const filterActive = active !== TYPE_FILTER_ALL || keyword.trim() !== '';
 
   return (
     <Stack gap="sm">
@@ -50,27 +54,23 @@ const TypeFilterPanel = ({
       />
 
       <Stack gap={2}>
-        {FILE_CATEGORY_OPTIONS.map((option) => (
+        {FILTER_ROWS.map((row) => (
           <UnstyledButton
             className={styles.row}
-            key={option.value}
-            onClick={() => toggle(option.value)}
+            key={row.value}
+            onClick={() => onChange(row.value)}
           >
             <Group gap="xs" wrap="nowrap">
-              <Checkbox
-                checked={!excluded.includes(option.value)}
-                readOnly
-                size="xs"
-              />
-              <span>{option.label}</span>
+              <Radio checked={active === row.value} readOnly size="xs" />
+              <span>{row.label}</span>
             </Group>
           </UnstyledButton>
         ))}
       </Stack>
 
       <FreePanelFooter
-        disabled={!active}
-        hint="默认全部勾选；只想看某类就取消其它项，文件夹同时隐藏"
+        disabled={!filterActive}
+        hint="单选；选 App 只列应用条目，文件夹一并隐藏"
         onReset={onReset}
       />
     </Stack>

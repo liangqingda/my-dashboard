@@ -4,7 +4,7 @@
 
 | 项 | 约定 |
 | --- | --- |
-| 结构 | `Group gap={8} justify="space-between" wrap="nowrap"`：左侧 `Text c="dimmed" size="xs"` + 右侧 `Button variant="subtle" size="compact-xs"` |
+| 结构 | `Group gap={8} justify="space-between" wrap="nowrap"`：左侧 `Text c="dimmed" size="xs"`（`flex: 1 1 auto` + `min-width: 0`，可换行可压缩）+ 右侧 `Button variant="subtle" size="compact-xs"`（`flex: 0 0 auto`，不被说明文字挤掉） |
 | props | `hint`（左侧边界说明）、`disabled`（无条件可清时置灰，口径由调用方判）、`onReset` |
 | 不负责 | 有没有条件生效、重置清什么、重置后要不要落存储 |
 

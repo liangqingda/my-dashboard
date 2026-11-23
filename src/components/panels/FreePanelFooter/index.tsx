@@ -11,12 +11,15 @@ import { Button, Group, Text } from '@mantine/core';
 
 import type { FreePanelFooterProps } from './types';
 
+import styles from './index.scss';
+
 const FreePanelFooter = ({ disabled, hint, onReset }: FreePanelFooterProps) => (
-  <Group gap={8} justify="space-between" wrap="nowrap">
-    <Text c="dimmed" size="xs">
+  <Group align="flex-start" gap={8} justify="space-between" wrap="nowrap">
+    <Text c="dimmed" className={styles.hint} size="xs">
       {hint}
     </Text>
     <Button
+      className={styles.reset}
       disabled={disabled}
       onClick={onReset}
       size="compact-xs"

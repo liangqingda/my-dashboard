@@ -21,6 +21,9 @@ export type FolderEntry = {
 /** 文件归类：与中间件 `FileCategory` 同一套档位，用于区分图标与类型筛选 */
 export type FileCategory = 'video' | 'image' | 'pdf' | 'markdown' | 'app' | 'other';
 
+/** 类型筛选的当前取值：`all` 表示不过滤，其余表示只看这一类 */
+export type TypeFilterValue = FileCategory | 'all';
+
 /** 列表里的一条应用包（`.app`） */
 export type AppEntry = {
   /** 显示名：文件名的 `.app` 后缀已去掉 */
