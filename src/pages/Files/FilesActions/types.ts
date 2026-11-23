@@ -2,10 +2,14 @@
  * 文件页标题栏操作按钮组的 props。
  */
 
-import type { FileCategory, FavoriteEntry } from '../types';
+import type {
+  FileCategory,
+  FavoriteEntry,
+  VideoOpenMode,
+} from '../types';
 
-/** 同时只开一块弹层：收藏面板 / 筛选面板 */
-export type FilesActionsPanel = 'favorites' | 'filter';
+/** 同时只开一块弹层：收藏面板 / 筛选面板 / 设置面板 */
+export type FilesActionsPanel = 'favorites' | 'filter' | 'settings';
 
 /** 标题栏操作按钮组的入参；开合状态与各事件都由页面层传入，这里只排按钮与弹层 */
 export type FilesActionsProps = {
@@ -25,6 +29,14 @@ export type FilesActionsProps = {
   excludedCategories: FileCategory[];
   /** 文件名关键词；空串表示不按关键词过滤 */
   keyword: string;
+  /** 视频点击后的去向（设置面板第一项） */
+  videoOpenMode: VideoOpenMode;
+  /** 外部打开用的应用名 */
+  videoApp: string;
+  /** 改视频去向 */
+  onVideoOpenModeChange: (mode: VideoOpenMode) => void;
+  /** 改外部打开的应用 */
+  onVideoAppChange: (app: string) => void;
   /** 当前打开的弹层；null 表示都关着 */
   openPanel: FilesActionsPanel | null;
   /** 调起系统目录选择器选择目录 */

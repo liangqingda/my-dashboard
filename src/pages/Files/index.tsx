@@ -17,6 +17,7 @@ import { FILES_STORAGE_SCOPE } from './constants';
 import { useAppUninstall } from './hooks/useAppUninstall';
 import { useEntryActions } from './hooks/useEntryActions';
 import { useEntryDelete } from './hooks/useEntryDelete';
+import { useFilesSettings } from './hooks/useFilesSettings';
 import { useFavorites } from './hooks/useFavorites';
 import { useFilesDir } from './hooks/useFilesDir';
 import { useFilesViewMode } from './hooks/useFilesViewMode';
@@ -41,11 +42,10 @@ import styles from './index.scss';
  * 标题栏的图标按钮可在网格与表格（名称 / 类别 / 操作三列）两种展示形式之间切换，
  * 切换结果记在 localStorage，刷新后保持上次的形态。
  * 点文件夹进入下一层，面包屑回退，`⌘↑` 回上一级；可收藏常用目录，在收藏面板里点选直达；
- * 标题栏筛选面板支持按名称关键词过滤与按类型勾选：视频 / PDF / Markdown / App / 其它默认全选，
- * 取消勾选的类型连同对应文件夹一起隐藏。列表只列摘要；点视频条目会在弹窗里播放、
+ * 标题栏筛选面板支持按名称关键词过滤与按类型勾选，取消勾选的类型连同对应文件夹一起隐藏。
+ * 列表只列摘要；点视频条目会在弹窗里播放（设置里可改成交给外部播放器），
  * 点图片条目会在同形的弹窗里预览，两者的翻篇与目录侧栏都基于当前目录的同类列表（视频另有截图）。
- * 应用 hover 后右上角给卸载按钮，
- * 二次确认里先列清要删的残留，确认后由中间件删整包并清理缓存 / 配置 / 数据。
+ * 应用 hover 后右上角给卸载按钮，二次确认里先列清要删的残留，确认后由中间件删整包并清理缓存 / 配置 / 数据。
  * 目录读取走 Vite 中间件，仅开发模式可用。
  * 标题行右侧再显示本机剩余可用空间；当前目录在外接盘（移动硬盘）上时，连同那块盘的可用空间一起显示。
  */
@@ -56,6 +56,9 @@ const Files = () => {
   const { excluded, onChange: onExcludedChange } = useTypeFilter();
   /** 展示形式：网格 / 表格，切换按钮在标题栏 */
   const { isGridView, toggle: toggleViewMode } = useFilesViewMode();
+  /** 设置项（放在视频预览之前）：视频点击后是弹窗预览还是交给外部应用 */
+  const { setVideoApp, setVideoOpenMode, videoApp, videoOpenMode } =
+    useFilesSettings();
 
   const folders = listing?.folders ?? [];
   const allFiles = listing?.files ?? [];
@@ -72,7 +75,7 @@ const Files = () => {
     openVideo,
     pickCaptureDir,
     selectVideo,
-  } = useVideoPreview(listing);
+  } = useVideoPreview(listing, { videoApp, videoOpenMode });
   /** 图片预览：与视频预览同形，但没有播放 / 截图那一套 */
   const {
     activeId: previewImageId,
@@ -196,7 +199,11 @@ const Files = () => {
             }
           }}
           onToggleViewMode={toggleViewMode}
+          onVideoAppChange={setVideoApp}
+          onVideoOpenModeChange={setVideoOpenMode}
           openPanel={openPanel}
+          videoApp={videoApp}
+          videoOpenMode={videoOpenMode}
         />
       }
       description={describeDirSpace(listing?.space ?? null)}

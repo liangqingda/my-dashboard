@@ -12,6 +12,7 @@ import { after, before, describe, it } from 'node:test';
 
 import {
   buildPickerScript,
+  compareByCreatedDesc,
   createFolder,
   deleteEntry,
   listDirectory,
@@ -54,20 +55,20 @@ describe('files-store', () => {
     assert.deepEqual(
       listing.folders.map((folder) => [folder.name, folder.itemCount]),
       [
-        ['folder-a', 3],
-        ['folder-b', 0],
         ['sub', 1],
+        ['folder-b', 0],
+        ['folder-a', 3],
       ],
     );
     assert.deepEqual(
       listing.files.map((file) => [file.name, file.category]),
       [
+        ['script.js', 'other'],
         ['archive.zip', 'other'],
-        ['clip.webm', 'video'],
+        ['readme.md', 'markdown'],
         ['guide.pdf', 'pdf'],
         ['poster.png', 'image'],
-        ['readme.md', 'markdown'],
-        ['script.js', 'other'],
+        ['clip.webm', 'video'],
       ],
     );
   });
@@ -78,10 +79,34 @@ describe('files-store', () => {
     assert.deepEqual(
       listing.folders.map((folder) => [folder.name, folder.categories]),
       [
-        ['folder-a', ['video', 'other']],
-        ['folder-b', []],
         ['sub', ['video']],
+        ['folder-b', []],
+        ['folder-a', ['video', 'other']],
       ],
+    );
+  });
+
+  it('文件夹与文件都带创建时间，按创建时间倒序（新的在前），同刻按名称', async () => {
+    const listing = await listDirectory(root);
+
+    assert.ok(listing.folders.every((folder) => folder.createdMs > 0));
+    assert.ok(listing.files.every((file) => file.createdMs > 0));
+    assert.deepEqual(
+      [...listing.files]
+        .sort(compareByCreatedDesc)
+        .map((file) => file.name),
+      listing.files.map((file) => file.name),
+    );
+    assert.deepEqual(
+      [
+        { createdMs: 0, name: 'b' },
+        { createdMs: 5, name: 'z' },
+        { createdMs: 0, name: 'a' },
+        { createdMs: 5, name: 'a' },
+      ]
+        .sort(compareByCreatedDesc)
+        .map((entry) => `${entry.createdMs}:${entry.name}`),
+      ['5:a', '5:z', '0:a', '0:b'],
     );
   });
 

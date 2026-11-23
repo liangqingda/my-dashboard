@@ -25,6 +25,8 @@ export type AppEntry = {
   path: string;
   /** 包的最后修改时间（ISO 8601） */
   updatedAt: string;
+  /** 创建时间（毫秒）：列表按「新的在前」排序用它 */
+  createdMs: number;
   /** 是否系统自带（符号链接指向 `/System` 等只读位置），这类应用不给卸载入口 */
   system: boolean;
 };
@@ -258,6 +260,7 @@ export const describeAppEntry = async (
       name: stripAppSuffix(fileName),
       path: entryPath,
       updatedAt: info.mtime.toISOString(),
+      createdMs: info.birthtimeMs,
       system: isSystemAppPath(realPath),
     };
   } catch {

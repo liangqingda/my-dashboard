@@ -36,6 +36,21 @@ export const FAVORITES_STORAGE_KEY = scopedStorageKey(
   'favorites',
 );
 
+/** 视频点击后的去向（弹窗预览 / 外部应用打开） */
+export const VIDEO_OPEN_MODE_STORAGE_KEY = scopedStorageKey(
+  FILES_STORAGE_SCOPE,
+  'video-open-mode',
+);
+
+/** 外部打开用的应用名；没写过就用默认播放器 */
+export const VIDEO_APP_STORAGE_KEY = scopedStorageKey(
+  FILES_STORAGE_SCOPE,
+  'video-app',
+);
+
+/** 外部打开的默认应用：IINA（没装时中间件会回落到它名下，再不行才系统默认） */
+export const DEFAULT_VIDEO_APP = 'IINA';
+
 /** 首屏骨架块的数量：只为给一个「正在读」的形状，不假装有数据 */
 export const SKELETON_TILES: readonly number[] = [0, 1, 2, 3, 4, 5, 6, 7];
 

@@ -82,26 +82,44 @@ const runOpen = (args: readonly string[]): Promise<void> =>
     });
   });
 
-/** 打开结果：`iina` 表示走的是首选播放器，`default` 表示回落到系统默认应用 */
-export type ExternalOpenApp = 'iina' | 'default';
+/**
+ * 打开结果：实际用上的应用名，`default` 表示回落到系统默认应用。
+ * 名字原样返回给前端，提示里直接说「已用 IINA 打开」。
+ */
+export type ExternalOpenApp = string;
 
 /**
- * 用外部应用打开一个文件：优先用 IINA，没装就回落到系统默认应用（`open <path>`）。
+ * 用外部应用打开一个文件：
+ * - 传了 `preferredApp` 就先用它，调不起来（没装 / 名字不对）再按后面的顺序回落；
+ * - 没传就照老规矩先用 IINA；
+ * - 都不行才用系统默认应用（`open <path>`）。
  * 只有 macOS 有这套；其它平台直接报不支持，而不是悄悄改成别的行为。
  */
 export const openExternalFile = async (
   input: string,
+  preferredApp?: string,
 ): Promise<ExternalOpenApp> => {
   if (process.platform !== 'darwin') {
     throw withCode('只有 macOS 支持用外部应用打开', 'ENOTSUP');
   }
 
   const filePath = await resolveOpenableFile(input);
+  const appName = preferredApp?.trim();
+
+  if (appName) {
+    try {
+      await runOpen(['-a', appName, filePath]);
+
+      return appName;
+    } catch {
+      // 指定的应用不存在或起不来：继续往下回落，不把这次点击变成一次报错
+    }
+  }
 
   try {
     await runOpen(['-a', PREFERRED_PLAYER, filePath]);
 
-    return 'iina';
+    return PREFERRED_PLAYER;
   } catch {
     await runOpen([filePath]);
 

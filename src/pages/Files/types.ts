@@ -10,6 +10,8 @@ export type FolderEntry = {
   name: string;
   /** 文件夹绝对路径，点开时原样回传给中间件 */
   path: string;
+  /** 创建时间（毫秒时间戳）；读不到时为 0，排序时排在最后 */
+  createdMs: number;
   /** 直属条目数（文件夹 + 文件，不递归子目录） */
   itemCount: number;
   /** 文件夹内出现过的文件分类（含深层，按中间件的扫描预算收口） */
@@ -27,6 +29,8 @@ export type AppEntry = {
   path: string;
   /** 包的最后修改时间（ISO 8601） */
   updatedAt: string;
+  /** 创建时间（毫秒）：列表按「新的在前」排序 */
+  createdMs: number;
   /** 是否系统自带：这类应用不给卸载入口 */
   system: boolean;
 };
@@ -41,9 +45,22 @@ export type FileEntry = {
   size: number;
   /** 最后修改时间（ISO 8601） */
   updatedAt: string;
+  /** 创建时间（毫秒）：列表按「新的在前」排序 */
+  createdMs: number;
   /** 文件归类，用于区分图标与类型筛选 */
   category: FileCategory;
 };
+
+/** 能播放视频的本机应用（外部打开的目标） */
+export type VideoAppOption = {
+  /** 应用名，`open -a` 用它；设置里就当选中值 */
+  name: string;
+  /** 应用包绝对路径，仅用于展示与判重 */
+  path: string;
+};
+
+/** 视频点击后的去向：弹窗预览 / 交给外部应用 */
+export type VideoOpenMode = 'preview' | 'external';
 
 /** 一个卷的剩余可用空间 */
 export type VolumeSpace = {
@@ -73,9 +90,9 @@ export type DirListing = {
   parent: string | null;
   /** 子文件夹（按名称排序） */
   folders: FolderEntry[];
-  /** 直属应用包（按显示名排序） */
+  /** 直属应用包（按创建时间倒序，同刻按显示名） */
   apps: AppEntry[];
-  /** 直属文件（按名称排序） */
+  /** 直属文件（按创建时间倒序，同刻按名称） */
   files: FileEntry[];
   /** 启动卷 / 外接卷的剩余空间；读不到时为 null，页面不显示这段描述 */
   space: DirSpace | null;

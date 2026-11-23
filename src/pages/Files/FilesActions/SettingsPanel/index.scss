@@ -1,0 +1,12 @@
+/* 设置项的标题：一行小字，比选项本身低一档 */
+.label {
+  color: var(--app-ink-faint);
+  font-size: 0.72rem;
+}
+
+/* 说明文字：紧跟选项，讲清默认值与回落行为 */
+.hint {
+  color: var(--app-ink-faint);
+  font-size: 0.7rem;
+  line-height: 1.5;
+}

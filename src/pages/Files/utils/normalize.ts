@@ -7,9 +7,6 @@
 import { FILE_CATEGORY_OPTIONS } from '../constants';
 import type {
   AppEntry,
-  AppResidue,
-  AppResidueReport,
-  AppUninstallResult,
   DirListing,
   DirSpace,
   FileCategory,
@@ -18,17 +15,10 @@ import type {
   VolumeSpace,
 } from '../types';
 
+import { asNumber, asString, isObject } from './normalize-primitives';
+
 /** 系统目录选择器返回值：选中给绝对路径，取消给 cancelled */
 export type PickedDir = { path: string } | { cancelled: true };
-
-const isObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
-
-const asString = (value: unknown): string =>
-  typeof value === 'string' ? value : '';
-
-const asNumber = (value: unknown): number =>
-  typeof value === 'number' && Number.isFinite(value) ? value : 0;
 
 /** 分类键的合法取值，用于归一化服务端回来的分类字段 */
 const CATEGORY_VALUES = FILE_CATEGORY_OPTIONS.map((option) => option.value) as string[];
@@ -65,6 +55,7 @@ const normalizeFolder = (raw: unknown): FolderEntry | null => {
 
   return {
     categories: normalizeCategories(raw.categories),
+    createdMs: asNumber(raw.createdMs),
     itemCount: asNumber(raw.itemCount),
     name,
     path,
@@ -85,6 +76,7 @@ const normalizeApp = (raw: unknown): AppEntry | null => {
   }
 
   return {
+    createdMs: asNumber(raw.createdMs),
     name,
     path,
     system: raw.system === true,
@@ -111,11 +103,12 @@ const normalizeFile = (raw: unknown): FileEntry | null => {
       : 'other';
 
   return {
+    category,
+    createdMs: asNumber(raw.createdMs),
     name,
     path,
     size: asNumber(raw.size),
     updatedAt: asString(raw.updatedAt),
-    category,
   };
 };
 
@@ -242,80 +235,4 @@ export const normalizeCaptureResponse = (payload: unknown): string | null => {
   return isObject(capture) && typeof capture.name === 'string' && capture.name
     ? capture.name
     : null;
-};
-
-/** 归一化一条残留；路径缺失时丢弃 */
-const normalizeResidue = (raw: unknown): AppResidue | null => {
-  if (!isObject(raw)) {
-    return null;
-  }
-
-  const path = asString(raw.path);
-  const label = asString(raw.label);
-
-  return path ? { label: label || '残留', path } : null;
-};
-
-/** 归一化 `{ report }` 应用残留响应体：应用名或路径缺失返回 null */
-export const normalizeAppResidueResponse = (
-  payload: unknown,
-): AppResidueReport | null => {
-  const report = isObject(payload) ? payload.report : null;
-
-  if (!isObject(report) || !isObject(report.app)) {
-    return null;
-  }
-
-  const name = asString(report.app.name);
-  const path = asString(report.app.path);
-
-  if (!name || !path) {
-    return null;
-  }
-
-  return {
-    app: {
-      bundleId: asString(report.app.bundleId) || null,
-      name,
-      path,
-      system: report.app.system === true,
-    },
-    residues: Array.isArray(report.residues)
-      ? report.residues.flatMap((item) => {
-          const residue = normalizeResidue(item);
-
-          return residue ? [residue] : [];
-        })
-      : [],
-  };
-};
-
-/** 归一化 `{ result }` 卸载响应体；结构不合格返回 null，调用方按错误态收口 */
-export const normalizeAppUninstallResponse = (
-  payload: unknown,
-): AppUninstallResult | null => {
-  const result = isObject(payload) ? payload.result : null;
-
-  if (!isObject(result)) {
-    return null;
-  }
-
-  return {
-    failed: Array.isArray(result.failed)
-      ? result.failed.flatMap((item) => {
-          if (!isObject(item)) {
-            return [];
-          }
-
-          const path = asString(item.path);
-
-          return path
-            ? [{ message: asString(item.message) || '删除失败', path }]
-            : [];
-        })
-      : [],
-    removed: Array.isArray(result.removed)
-      ? result.removed.filter((item): item is string => typeof item === 'string')
-      : [],
-  };
 };

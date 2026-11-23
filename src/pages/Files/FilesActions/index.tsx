@@ -1,6 +1,6 @@
 /**
- * 文件页标题栏操作按钮组：「新建文件夹」「打开本地目录」图标按钮、收藏弹层按钮、筛选弹层按钮、
- * 网格 / 表格切换按钮。两块弹层互斥，同时只开一块；开合状态由页面层持有，这里只排按钮与弹层内容。
+ * 文件页标题栏操作按钮组：「新建文件夹」「打开本地目录」图标按钮、收藏 / 筛选 / 设置弹层按钮、
+ * 网格 / 表格切换按钮。三块弹层互斥，同时只开一块；开合状态由页面层持有，这里只排按钮与弹层内容。
  */
 
 import {
@@ -11,12 +11,14 @@ import {
   IconFolderPlus,
   IconLayoutGrid,
   IconLayoutList,
+  IconSettings,
 } from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
 import IconPopoverButton from '@/components/buttons/IconPopoverButton';
 
 import FavoritesPanel from './FavoritesPanel';
+import SettingsPanel from './SettingsPanel';
 import TypeFilterPanel from './TypeFilterPanel';
 import type { FilesActionsProps } from './types';
 
@@ -26,6 +28,10 @@ const ICON_STROKE = 1.9;
 
 const FilesActions = ({
   createDisabled,
+  onVideoAppChange,
+  onVideoOpenModeChange,
+  videoApp,
+  videoOpenMode,
   excludedCategories,
   favoriteDisabled,
   favorites,
@@ -109,6 +115,21 @@ const FilesActions = ({
             onExcludedChange([]);
             onKeywordChange('');
           }}
+        />
+      </IconPopoverButton>
+
+      <IconPopoverButton
+        active={videoOpenMode === 'external'}
+        icon={<IconSettings size={ICON_SIZE} stroke={ICON_STROKE} />}
+        label="设置"
+        onChange={(opened) => onPanelChange(opened ? 'settings' : null)}
+        opened={openPanel === 'settings'}
+      >
+        <SettingsPanel
+          onVideoAppChange={onVideoAppChange}
+          onVideoOpenModeChange={onVideoOpenModeChange}
+          videoApp={videoApp}
+          videoOpenMode={videoOpenMode}
         />
       </IconPopoverButton>
 

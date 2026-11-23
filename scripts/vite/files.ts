@@ -15,7 +15,8 @@
  * - `POST /api/files/delete`：body `{ path }` 删除一条条目，文件夹连同内部内容递归删除；
  * - `POST /api/files/uninstall-app`：body `{ path }` 卸载应用包并清理残留，权限不足时弹一次授权窗补删；
  * - `POST /api/files/capture`：body `{ dataUrl, dir? }` 把一帧 PNG 截图写进 `dir`（缺省用户桌面），返回文件名与绝对路径；
- * - `POST /api/files/open`：body `{ path }` 用外部播放器打开（优先 IINA，没装回落系统默认），返回 `{ app }`。
+ * - `GET /api/files/video-apps`：列出能播放视频的本机应用（`open -a` 用应用名），供设置里选外部播放器；
+ * - `POST /api/files/open`：body `{ path, app? }` 用外部播放器打开（`app` 优先，其次 IINA，再回落系统默认），返回 `{ app }`。
  *
  * 写操作与媒体接口仅限开发服务器中间件，静态构建不带这些接口；列表只给摘要，视频内容按需流式读取。
  */
@@ -29,6 +30,7 @@ import { scanAppResidues, uninstallAppBundle } from './files-apps.js';
 import { openImageFile } from './files-images.js';
 import { openVideoFile, openVideoStream, parseByteRange, saveCapture, videoEtag } from './files-media.js';
 import { openExternalFile } from './files-open.js';
+import { listVideoApps } from './files-video-apps.js';
 import {
   createFolder,
   deleteEntry,
@@ -378,6 +380,30 @@ export const files = (): Plugin => ({
         return;
       }
 
+      if (pathname === '/video-apps') {
+        if (req.method !== 'GET') {
+          res.statusCode = 405;
+          res.end(JSON.stringify({ message: '不支持的请求方法' }));
+
+          return;
+        }
+
+        try {
+          const apps = await listVideoApps();
+
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.end(JSON.stringify({ apps }));
+        } catch (error) {
+          sendJsonError(
+            res,
+            statusForReadError(error),
+            error instanceof Error ? error.message : '读取播放器列表失败',
+          );
+        }
+
+        return;
+      }
+
       if (pathname === '/open') {
         if (req.method !== 'POST') {
           res.statusCode = 405;
@@ -395,7 +421,10 @@ export const files = (): Plugin => ({
 
         try {
           const body = await readJsonBody(req);
-          const app = await openExternalFile(bodyString(body, 'path'));
+          const app = await openExternalFile(
+            bodyString(body, 'path'),
+            bodyString(body, 'app') || undefined,
+          );
 
           res.end(JSON.stringify({ app }));
         } catch (error) {

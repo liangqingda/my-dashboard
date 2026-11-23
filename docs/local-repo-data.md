@@ -166,10 +166,12 @@
 
 | 文件 | 职责 |
 | --- | --- |
-| `scripts/vite/files.ts` | 路由壳：`GET /api/files`（未带 `dir` 回落主目录）、`GET /api/files?dir=…`、`GET /api/files/content?path=…`（视频按 Range 流式读）、`GET /api/files/app-icon?path=…`（应用图标 PNG）、`GET /api/files/app-residue?path=…`（卸载残留清单）、`POST /api/files/pick-dir`（系统目录选择框）、`POST /api/files/new-folder`、`POST /api/files/rename`、`POST /api/files/move`、`POST /api/files/delete`、`POST /api/files/uninstall-app`、`POST /api/files/capture`（视频帧截图写目录，缺省桌面），错误归类成 HTTP 状态码 |
+| `scripts/vite/files.ts` | 路由壳：`GET /api/files`（未带 `dir` 回落主目录）、`GET /api/files?dir=…`、`GET /api/files/content?path=…`（视频按 Range 流式读）、`GET /api/files/image?path=…`（图片字节）、`GET /api/files/video-apps`（能播视频的本机应用）、`GET /api/files/app-icon?path=…`（应用图标 PNG）、`GET /api/files/app-residue?path=…`（卸载残留清单）、`POST /api/files/pick-dir`（系统目录选择框）、`POST /api/files/new-folder`、`POST /api/files/rename`、`POST /api/files/move`、`POST /api/files/delete`、`POST /api/files/open`（交给外部播放器）、`POST /api/files/uninstall-app`、`POST /api/files/capture`（视频帧截图写目录，缺省桌面），错误归类成 HTTP 状态码 |
 | `scripts/vite/files-store.ts` | 路径校验、条目归类、应用包从文件夹里分出来单独成列、文件夹直属条目计数与内含分类摘要（按扫描预算，供类型筛选过滤文件夹）、文件归类（视频 / PDF / Markdown / App / 其它）标记、选择器脚本拼装，以及新建 / 重命名 / 移动 / 删除的写盘与冲突拒绝、错误文案与错误码收口 |
 | `scripts/vite/files-apps.ts` | 应用包识别（`.app` 目录与指向它的符号链接）、Info.plist 解析（`plutil`）、残留推导（用户级与系统级）、卸载（先退应用再删整包与残留，权限不足时弹一次授权窗补删） |
 | `scripts/vite/files-app-icons.ts` | 应用图标按需抽取：从包内 `Contents/Resources` 找 `.icns`，`sips` 转成 PNG，按「包路径 + 修改时间」缓存在临时目录 |
+| `scripts/vite/files-video-apps.ts` | 能播视频的应用清单：扫 `/Applications`、`/System/Applications` 与 `~/Applications` 顶层的 `.app`，读 `Info.plist` 的 `CFBundleDocumentTypes`，声明了视频统一类型标识（或视频扩展名）的才算，按应用名去重 |
+| `scripts/vite/files-open.ts` | 外部打开：按「指定应用 → IINA → 系统默认」逐级回落，`open -a <app>` 成功即返回实际用上的应用名 |
 | `scripts/vite/files-media.ts` | 媒体侧只读 / 写盘：视频路径校验与 MIME、`Range` 解析、读流，以及把 PNG 截图写进指定目录（缺省桌面；文件名取本地时间，重名追加序号） |
 | `scripts/vite/files-space.ts` | 卷空间只读侧：解析 `df -kP` 的挂载点与可用块数、按 `/Volumes/` 前缀判定外接卷、拼出 `DirSpace` |
 
@@ -184,6 +186,9 @@
 - **重命名 / 移动**：`rename` 改一条条目名字，`move` 把文件或文件夹移入目标文件夹；目标已有同名条目按 409 冲突拒绝、不覆盖；文件夹不能移动到它自身或其子文件夹内；条目名拒收空名、路径分隔符、`.` `..` 与点开头的隐藏名；前端文件夹与文件统一在弹窗多行文本域改名，打开即聚焦并全选原名，回车保存、Shift+回车换行，空名或未改动时保存按钮禁用；应用不给改名 / 拖拽入口（移动或改名 `.app` 会让 Launchpad 与系统登记失效）；
 - **删除**：`delete` 删除一条条目，文件夹连同内部全部内容递归删除、文件直接删除，均不可恢复；前端 hover 文件夹 / 文件瓦片浮出重命名 / 删除按钮，删除先走 `ConfirmModal` 二次确认，弹窗与成功通知按文件夹 / 文件分别出文案；
 - **收藏目录**：收藏列表是页面偏好，存 localStorage（不经中间件、不写盘），条目为 `{ path, name }`，整行点击直达；面板顶部固定一条「系统应用程序」（`/Applications`，不可移除）——macOS 主目录里也可能有同名 `Applications`（Chrome 应用快捷方式之类），那条里没有真正的应用包，固定入口避免走错；条目两行展示目录名与完整路径，路径过长省略、hover 显示全文，尾部移除按钮自己吞冒泡；「收藏 / 取消当前目录」整宽按钮排在列表下方；
+- **排序**：`listing.folders` / `apps` / `files` 各自按创建时间倒序（新的在前），同一时刻按名称升序；
+  文件夹的创建时间取目录自身的 `birthtime`，读不到时记 0 排在最后。渲染顺序仍是「文件夹 → 应用 → 文件」，
+  所以文件夹天然排在所有文件前面；
 - **计数口径**：文件夹副文案只数直属条目（文件夹 + 文件 + 应用包），不递归子目录；单条条目读不到就跳过，不影响同级其它条目；
 - **筛选**：前端在已取到本页的摘要上做两档过滤——名称关键词（大小写不敏感子串匹配，过滤文件与应用）与分类勾选（视频 / 图片 / PDF / Markdown / App / 其它默认全选，取消勾选的类型不显示：同时过滤文件与文件夹——文件夹只保留仍有未排除类型的；应用只看「App」这一档）；筛选项是页面固定的各档，不随当前目录内容增减；排除项持久化，空排除项表示全部显示；关键词为会话内状态不持久化；
 - **文件夹分类摘要**：`listing.folders[].categories` 给出文件夹内出现过的分类（含深层），中间件按「先浅后深、找齐各档即停」扫描，累计 2000 个条目或 6 层为止，超出预算的深层内容不保证计入；应用包按一条 `app` 分类计入、不再往包里扫；只服务于筛选时决定文件夹露不露出，不是精确的全树统计；
@@ -198,11 +203,14 @@
   （分类表里 `image` 那一档，不收 `.svg`），`Cache-Control: no-store`、支持 `HEAD`；
   浏览器直接把它塞进 `<img src>`，前端通过 `ImagePreviewModal` 消费。
   `content` / `image` / `capture` 三个接口都只在开发模式存在。
-- **外部打开**：`POST /api/files/open`（body `{ path }`）用系统 `open` 调起播放器：先试 `open -a IINA`，
-  找不到应用就回落 `open <path>`（系统默认播放器），返回 `{ app: 'iina' | 'default' }`；
+- **外部打开**：`POST /api/files/open`（body `{ path, app? }`）用系统 `open` 调起播放器：
+  给了 `app` 先试它，其次 `open -a IINA`，再回落 `open <path>`（系统默认播放器），
+  返回 `{ app }` 为实际用上的应用名（`default` 表示系统默认播放器）；
   只收存在的绝对路径，非 macOS 直接回不支持。给的是「绕开浏览器」的那条路——
   浏览器解不动的编码（HEVC / mkv 等）或想更快起播时，本地播放器硬解 + 直接读盘快得多。
-  前端在视频预览 header 有一颗按钮（`VideoPreviewModal` 的 `onOpenExternal`），
+  `app` 由文件页设置里的「外部应用」提供（候选来自 `video-apps`）。
+  两处入口都用它：视频预览 header 那颗按钮（`VideoPreviewModal` 的 `onOpenExternal`），
+  以及把设置改成「外部应用」后点视频直接交给播放器（`useVideoPreview` 的分流，不开弹窗）；
   由页面的 `useVideoPreview` 接成提示；列表里指针停在视频条目上时还会用 `Range` 预取前 512KB 文件头
   （`src/pages/Files/utils/video-prefetch.ts`，同路径一分钟内只拉一次），点开时首帧不必再等一次往返。
 - **可用空间**：`GET /api/files` 的 `listing.space` 同时下发启动卷 `/` 的剩余空间，以及当前目录

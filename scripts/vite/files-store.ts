@@ -73,6 +73,15 @@ const CATEGORY_ORDER: readonly FileCategory[] = [
 const FOLDER_CATEGORY_BUDGET = 2000;
 const FOLDER_CATEGORY_DEPTH = 6;
 
+/**
+ * 列表排序：**创建时间新的在前**，同一时刻按名称兜底——同名不同路径的条目
+ * （外接卷、复制品）才需要这条兜底，正常目录里很少撞上。
+ */
+export const compareByCreatedDesc = (
+  a: { createdMs: number; name: string },
+  b: { createdMs: number; name: string },
+): number => b.createdMs - a.createdMs || a.name.localeCompare(b.name);
+
 /** 目录里的一条子文件夹 */
 export type FolderEntry = {
   /** 文件夹名（不含路径） */
@@ -83,6 +92,8 @@ export type FolderEntry = {
   itemCount: number;
   /** 文件夹内出现过的文件分类（含深层，按扫描预算收口）；按类型筛选时用它决定要不要露出这个文件夹 */
   categories: FileCategory[];
+  /** 创建时间（毫秒）：列表按「新的在前」排序用它 */
+  createdMs: number;
 };
 
 /** 目录里的一条文件 */
@@ -95,6 +106,8 @@ export type FileEntry = {
   size: number;
   /** 最后修改时间（ISO 8601） */
   updatedAt: string;
+  /** 创建时间（毫秒）：列表按「新的在前」排序用它 */
+  createdMs: number;
   /** 文件归类，用于区分图标与类型筛选 */
   category: FileCategory;
 };
@@ -107,11 +120,11 @@ export type DirListing = {
   name: string;
   /** 父目录绝对路径；已经是文件系统根时为 null */
   parent: string | null;
-  /** 子文件夹（按名称排序） */
+  /** 子文件夹（按创建时间新的在前） */
   folders: FolderEntry[];
-  /** 直属应用包（`.app`，按显示名排序）；单独成列，不混进文件夹 */
+  /** 直属应用包（`.app`，按创建时间新的在前）；单独成列，不混进文件夹 */
   apps: AppEntry[];
-  /** 直属文件（按名称排序） */
+  /** 直属文件（按创建时间新的在前） */
   files: FileEntry[];
 };
 
@@ -248,7 +261,7 @@ const readEntries = async (dir: string): Promise<Dirent[]> => {
  */
 const scanFolder = async (
   dir: string,
-): Promise<{ itemCount: number; categories: FileCategory[] }> => {
+): Promise<{ itemCount: number; categories: FileCategory[]; createdMs: number }> => {
   const entries = (await readEntries(dir)).filter(isListedEntry);
   const found = new Set<FileCategory>();
   const folders: string[] = [];
@@ -319,8 +332,14 @@ const scanFolder = async (
     frontier = next;
   }
 
+  const createdMs = await stat(dir).then(
+    (info) => info.birthtimeMs,
+    () => 0,
+  );
+
   return {
     categories: CATEGORY_ORDER.filter((category) => found.has(category)),
+    createdMs,
     itemCount,
   };
 };
@@ -383,6 +402,7 @@ export const listDirectory = async (input: string): Promise<DirListing> => {
           path: entryPath,
           size: info.size,
           updatedAt: info.mtime.toISOString(),
+          createdMs: info.birthtimeMs,
           category: categoryForName(entry.name),
         });
       } catch {
@@ -391,9 +411,10 @@ export const listDirectory = async (input: string): Promise<DirListing> => {
     }
   }
 
-  folders.sort((a, b) => a.name.localeCompare(b.name));
-  apps.sort((a, b) => a.name.localeCompare(b.name));
-  files.sort((a, b) => a.name.localeCompare(b.name));
+  // 三组各自按创建时间新的在前；表格把文件夹排在最前，网格按同一顺序铺
+  folders.sort(compareByCreatedDesc);
+  apps.sort(compareByCreatedDesc);
+  files.sort(compareByCreatedDesc);
 
   const parent = path.dirname(dir) === dir ? null : path.dirname(dir);
 
@@ -479,8 +500,15 @@ export const createFolder = async (dirInput: string): Promise<FolderEntry> => {
   }
 
   await mkdir(target);
+  const created = await stat(target).catch(() => null);
 
-  return { categories: [], itemCount: 0, name, path: target };
+  return {
+    categories: [],
+    createdMs: created?.birthtimeMs ?? 0,
+    itemCount: 0,
+    name,
+    path: target,
+  };
 };
 
 /**
