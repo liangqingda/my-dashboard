@@ -1,8 +1,11 @@
 import assert from 'node:assert/strict';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
 import { describe, it } from 'node:test';
 
 import {
   captureBaseName,
+  captureDirectory,
   decodePngDataUrl,
   parseByteRange,
 } from '../../scripts/vite/files-media.ts';
@@ -50,6 +53,17 @@ describe('files-media 的纯函数', () => {
     const date = new Date(2026, 0, 2, 3, 4, 5);
 
     assert.equal(captureBaseName(date), '2026-01-02 03:04:05');
+  });
+
+  it('截图目录：缺省桌面，自定义绝对路径与 ~ 展开', () => {
+    const desktop = join(homedir(), 'Desktop');
+
+    assert.equal(captureDirectory(), desktop);
+    assert.equal(captureDirectory(''), desktop);
+    assert.equal(captureDirectory('   '), desktop);
+    assert.equal(captureDirectory('~'), homedir());
+    assert.equal(captureDirectory('~/Pictures/shots'), join(homedir(), 'Pictures/shots'));
+    assert.equal(captureDirectory('/tmp/shots'), '/tmp/shots');
   });
 
   it('截图只接受 PNG data URL', () => {

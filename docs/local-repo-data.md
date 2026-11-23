@@ -166,11 +166,11 @@
 
 | 文件 | 职责 |
 | --- | --- |
-| `scripts/vite/files.ts` | 路由壳：`GET /api/files`（未带 `dir` 回落主目录）、`GET /api/files?dir=…`、`GET /api/files/content?path=…`（视频按 Range 流式读）、`GET /api/files/app-icon?path=…`（应用图标 PNG）、`GET /api/files/app-residue?path=…`（卸载残留清单）、`POST /api/files/pick-dir`（系统目录选择框）、`POST /api/files/new-folder`、`POST /api/files/rename`、`POST /api/files/move`、`POST /api/files/delete`、`POST /api/files/uninstall-app`、`POST /api/files/capture`（视频帧截图写桌面），错误归类成 HTTP 状态码 |
+| `scripts/vite/files.ts` | 路由壳：`GET /api/files`（未带 `dir` 回落主目录）、`GET /api/files?dir=…`、`GET /api/files/content?path=…`（视频按 Range 流式读）、`GET /api/files/app-icon?path=…`（应用图标 PNG）、`GET /api/files/app-residue?path=…`（卸载残留清单）、`POST /api/files/pick-dir`（系统目录选择框）、`POST /api/files/new-folder`、`POST /api/files/rename`、`POST /api/files/move`、`POST /api/files/delete`、`POST /api/files/uninstall-app`、`POST /api/files/capture`（视频帧截图写目录，缺省桌面），错误归类成 HTTP 状态码 |
 | `scripts/vite/files-store.ts` | 路径校验、条目归类、应用包从文件夹里分出来单独成列、文件夹直属条目计数与内含分类摘要（按扫描预算，供类型筛选过滤文件夹）、文件归类（视频 / PDF / Markdown / App / 其它）标记、选择器脚本拼装，以及新建 / 重命名 / 移动 / 删除的写盘与冲突拒绝、错误文案与错误码收口 |
 | `scripts/vite/files-apps.ts` | 应用包识别（`.app` 目录与指向它的符号链接）、Info.plist 解析（`plutil`）、残留推导（用户级与系统级）、卸载（先退应用再删整包与残留，权限不足时弹一次授权窗补删） |
 | `scripts/vite/files-app-icons.ts` | 应用图标按需抽取：从包内 `Contents/Resources` 找 `.icns`，`sips` 转成 PNG，按「包路径 + 修改时间」缓存在临时目录 |
-| `scripts/vite/files-media.ts` | 媒体侧只读 / 写盘：视频路径校验与 MIME、`Range` 解析、读流，以及把 PNG 截图写进桌面（文件名取本地时间，重名追加序号） |
+| `scripts/vite/files-media.ts` | 媒体侧只读 / 写盘：视频路径校验与 MIME、`Range` 解析、读流，以及把 PNG 截图写进指定目录（缺省桌面；文件名取本地时间，重名追加序号） |
 | `scripts/vite/files-space.ts` | 卷空间只读侧：解析 `df -kP` 的挂载点与可用块数、按 `/Volumes/` 前缀判定外接卷、拼出 `DirSpace` |
 
 - **列表不读文件内容**：列表接口只下发名称 / 路径 / 大小 / 修改时间等摘要；视频内容在点开预览时按需通过 `content` 接口流式读取（不再整份塞进 JSON），其它文件类型不提供内容接口；
@@ -189,8 +189,9 @@
 - **文件夹分类摘要**：`listing.folders[].categories` 给出文件夹内出现过的分类（含深层），中间件按「先浅后深、找齐各档即停」扫描，累计 2000 个条目或 6 层为止，超出预算的深层内容不保证计入；应用包按一条 `app` 分类计入、不再往包里扫；只服务于筛选时决定文件夹露不露出，不是精确的全树统计；
 - **类型图标**：后端按扩展名归类，前端按分类换图标（视频上蓝色，其余弱色）；视频帧封面抽取是单独任务。
 - **视频预览与截图**：`content` 接口只认视频扩展名（分类表与列表共用同一份），并按 `Range` 回 206
-  （浏览器靠它跳转与续播），没有 `Range` 时整份返回；`capture` 只接受 PNG data URL，写到用户桌面
-  `~/Desktop/YYYY-MM-DD HH:mm:ss.png`，同一秒重名依次追加 ` (2)`、` (3)`，不覆盖已有截图。
+  （浏览器靠它跳转与续播），没有 `Range` 时整份返回；`capture` 只接受 PNG data URL，写到 body 里的
+  `dir`（缺省 `~/Desktop`），文件名为 `YYYY-MM-DD HH:mm:ss.png`，同一秒重名依次追加 ` (2)`、` (3)`，
+  不覆盖已有截图。
   两个接口都只在开发模式存在，前端通过 `VideoPreviewModal` 消费。
 - **可用空间**：`GET /api/files` 的 `listing.space` 同时下发启动卷 `/` 的剩余空间，以及当前目录
   所在的那一卷（只在它被判定为外接卷时给，`external` 为 `null` 表示目录就在启动卷上）。

@@ -5,7 +5,9 @@
  * - **空格**：关窗（给了媒体能力时改为播放 / 暂停），并 `preventDefault` 掉浏览器
  *   「空格 = 点击当前焦点按钮」的默认行为——焦点常留在 header 图标上，不拦的话按空格会莫名
  *   翻到下一条 / 切了全屏；
- * - **`[` / `【`、`←` 上一篇；`]` / `】`、`→` 下一篇**（有 `nav` 且没被禁用时）；
+ * - **`[` / `【`、`]` / `】` 上一篇 / 下一篇**（有 `nav` 且没被禁用时）；
+ * - **`←` / `→`**：默认同 `[` / `]` 翻篇；调用方给了 `onSeek` 时改为交给它快进 / 后退
+ *   （视频里方向键要留给播放进度，翻篇只剩方括号）；
  * - **`F` 全屏开关**（有全屏按钮时）；
  * - **`C` 复制**（调用方给了复制文本时）：与 header 的复制按钮同一口径，写进剪贴板并给一条提示；
  * - **`Delete` / `Backspace` 删除**（调用方给了删除请求时）：只触发确认，不直接删。
@@ -27,7 +29,7 @@ import { COPY_FAILED_NOTICE_ID } from '@/components/buttons/CopyIconButton/const
 import { COPY_FEEDBACK_DURATION, copyText } from '@/utils/clipboard';
 import { isTypingTarget } from '@/utils/typing-target';
 
-import type { FreeModalNav } from '../types';
+import type { FreeModalNav, FreeModalSeekDirection } from '../types';
 import { COPY_SUCCESS_NOTICE_ID } from '../constants';
 
 /** 上一篇的按键：中文输入法下同一个物理键打出全角方括号，两种形态都认 */
@@ -38,6 +40,12 @@ const NEXT_KEYS = new Set([']', '】']);
 
 /** 删除键的两种形态：Forward Delete 与 macOS 键盘上的 delete（Backspace） */
 const REMOVE_KEYS = new Set(['Delete', 'Backspace']);
+
+/** 方向键 → 快进 / 后退的方向：给了 `onSeek` 之后这两个键归媒体 */
+const ARROW_SEEK_DIRECTION: Record<string, FreeModalSeekDirection | undefined> = {
+  ArrowLeft: 'backward',
+  ArrowRight: 'forward',
+};
 
 /** 复制键 */
 const COPY_KEY = 'c';
@@ -61,6 +69,8 @@ type ModalShortcutsParams = {
   onToggleFullscreen?: () => void;
   /** 切换播放 / 暂停；传了之后空格归媒体，不再关窗 */
   onTogglePlay?: () => void;
+  /** 方向键快进 / 后退：传了之后 ← / → 不再翻篇 */
+  onSeek?: (direction: FreeModalSeekDirection) => void;
   /** 复制能力：要写进剪贴板的文本；不传表示没有复制按钮 */
   copy?: string;
   /** 复制成功的提示文案；不传用一句通用文案 */
@@ -79,6 +89,7 @@ export const useModalShortcuts = ({
   nav,
   onClose,
   onRequestDelete,
+  onSeek,
   onToggleFullscreen,
   onTogglePlay,
 }: ModalShortcutsParams): void => {
@@ -113,6 +124,14 @@ export const useModalShortcuts = ({
         return;
       }
 
+      /*
+       * 整组收掉时连空格一起收：上层浮层（如删除确认）开着，
+       * 底下的播放器不该还在响应「播放 / 暂停」
+       */
+      if (disabled) {
+        return;
+      }
+
       if (event.key === ' ') {
         if (onTogglePlay) {
           event.preventDefault();
@@ -126,10 +145,6 @@ export const useModalShortcuts = ({
           onClose();
         }
 
-        return;
-      }
-
-      if (disabled) {
         return;
       }
 
@@ -155,11 +170,24 @@ export const useModalShortcuts = ({
         return;
       }
 
+      // 方向键交给了媒体（视频快进 / 后退）就不再翻篇，翻篇只剩方括号
+      const seekDirection = onSeek ? ARROW_SEEK_DIRECTION[event.key] : undefined;
+
+      if (seekDirection !== undefined && onSeek) {
+        event.preventDefault();
+        onSeek(seekDirection);
+
+        return;
+      }
+
       if (nav === undefined || nav.disabled === true) {
         return;
       }
 
-      if (PREVIOUS_KEYS.has(event.key) || event.key === 'ArrowLeft') {
+      if (
+        PREVIOUS_KEYS.has(event.key) ||
+        (onSeek === undefined && event.key === 'ArrowLeft')
+      ) {
         if (nav.onPrevious) {
           event.preventDefault();
           nav.onPrevious();
@@ -168,7 +196,10 @@ export const useModalShortcuts = ({
         return;
       }
 
-      if (NEXT_KEYS.has(event.key) || event.key === 'ArrowRight') {
+      if (
+        NEXT_KEYS.has(event.key) ||
+        (onSeek === undefined && event.key === 'ArrowRight')
+      ) {
         if (nav.onNext) {
           event.preventDefault();
           nav.onNext();
@@ -188,6 +219,7 @@ export const useModalShortcuts = ({
     nav,
     onClose,
     onRequestDelete,
+    onSeek,
     onToggleFullscreen,
     onTogglePlay,
   ]);

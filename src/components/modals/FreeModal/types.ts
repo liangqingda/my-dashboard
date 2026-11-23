@@ -54,6 +54,9 @@ export type FreeModalMedia = {
   onTogglePlay?: () => void;
 };
 
+/** 方向键的两种去向：回到调用方当快进 / 后退，或留在外壳里翻篇 */
+export type FreeModalSeekDirection = 'backward' | 'forward';
+
 /** 基础弹窗外壳的入参 */
 export type FreeModalProps = {
   /** 是否打开 */
@@ -76,6 +79,11 @@ export type FreeModalProps = {
   headerHidden?: boolean;
   /** 媒体快捷键：传了 `media`，空格切播放 / 暂停而不是关窗 */
   media?: FreeModalMedia;
+  /**
+   * ← / → 的方向键去向：传了就交给调用方（视频快进 / 后退），翻篇只剩 `[` / `]`；
+   * 不传则方向键照旧翻篇。两种归属同一时刻只该有一种，所以用「给不给动作」表达。
+   */
+  onSeek?: (direction: FreeModalSeekDirection) => void;
   /** 翻页与计数；不传则 header 只有标题 */
   nav?: FreeModalNav;
   /** header 右侧第一组操作（阅读类：复制、筛选、刷新…） */

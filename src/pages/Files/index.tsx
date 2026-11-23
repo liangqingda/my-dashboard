@@ -12,7 +12,7 @@ import type { FilesActionsPanel } from './FilesActions/types';
 import FilesEntries from './FilesEntries';
 import RenameEntryModal from './RenameEntryModal';
 import UninstallAppConfirm from './UninstallAppConfirm';
-import { SKELETON_TILES } from './constants';
+import { FILES_STORAGE_SCOPE, SKELETON_TILES } from './constants';
 import { useAppUninstall } from './hooks/useAppUninstall';
 import { useEntryActions } from './hooks/useEntryActions';
 import { useEntryDelete } from './hooks/useEntryDelete';
@@ -66,6 +66,7 @@ const Files = () => {
     captureFrame,
     closeVideo,
     openVideo,
+    pickCaptureDir,
     selectVideo,
     videos: videoFiles,
   } = useVideoPreview(listing);
@@ -276,11 +277,19 @@ const Files = () => {
 
       <VideoPreviewModal
         activeId={previewVideoId}
+        blocked={deletingEntry !== null}
         items={videoItems}
         onCapture={captureFrame}
         onClose={closeVideo}
+        onPickCaptureDir={pickCaptureDir}
+        onRequestDelete={
+          previewVideoId !== null
+            ? () => requestDelete(previewVideoId)
+            : null
+        }
         onSelect={selectVideo}
         opened={previewVideoId !== null}
+        storageScope={FILES_STORAGE_SCOPE}
       />
 
       <RenameEntryModal

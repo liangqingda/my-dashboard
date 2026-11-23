@@ -11,8 +11,8 @@
  */
 
 import { useRef, useState } from 'react';
-import { IconAlertTriangleFilled, IconPlayerPlayFilled } from '@tabler/icons-react';
-import { Loader, UnstyledButton } from '@mantine/core';
+import { IconAlertTriangleFilled } from '@tabler/icons-react';
+import { Loader } from '@mantine/core';
 import { useMergedRef } from '@mantine/hooks';
 
 import { cx } from '@/utils/cx';
@@ -91,8 +91,6 @@ const FreeVideo = ({ className, src, videoRef }: FreeVideoProps) => {
     element.muted = !element.muted;
   };
 
-  const showPlayOverlay = status === 'ready' && !playing && !buffering;
-
   return (
     <div className={cx(styles.player, className)}>
       <div className={styles.stage}>
@@ -142,17 +140,6 @@ const FreeVideo = ({ className, src, videoRef }: FreeVideoProps) => {
               无法播放这个视频：浏览器不支持该文件格式或编码
             </span>
           </div>
-        ) : null}
-
-        {showPlayOverlay ? (
-          <UnstyledButton
-            aria-label="播放"
-            className={styles.bigPlay}
-            onClick={togglePlay}
-            type="button"
-          >
-            <IconPlayerPlayFilled size={26} />
-          </UnstyledButton>
         ) : null}
 
         {buffering && status === 'ready' ? (

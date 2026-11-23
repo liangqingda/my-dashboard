@@ -1,0 +1,28 @@
+/**
+ * 视频设置面板的契约：三项可改的偏好、目录选择与开合状态；
+ * 值本身由弹窗持有并持久化，面板只负责回传。
+ */
+
+import type { VideoArrowMode } from '../constants';
+
+/** 设置面板的入参 */
+export type VideoSettingsPopoverProps = {
+  /** ← / → 的去向 */
+  arrowMode: VideoArrowMode;
+  /** 截图目录；空串表示默认（桌面） */
+  captureDir: string;
+  /** 改方向键去向 */
+  onArrowModeChange: (mode: VideoArrowMode) => void;
+  /** 改截图目录；空串表示恢复默认 */
+  onCaptureDirChange: (dir: string) => void;
+  /** 弹层开合 */
+  onChangeOpened: (opened: boolean) => void;
+  /** 调系统目录选择框；返回 null 表示取消；不传则面板里没有「选择目录」 */
+  onPickCaptureDir?: () => Promise<string | null>;
+  /** 改步长（秒） */
+  onSeekStepChange: (seconds: number) => void;
+  /** 是否展开 */
+  opened: boolean;
+  /** 当前步长（秒） */
+  seekStep: number;
+};

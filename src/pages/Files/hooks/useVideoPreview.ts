@@ -8,7 +8,7 @@ import { useMemo, useState } from 'react';
 import type { VideoPreviewCaptureReceipt } from '@/components/modals/VideoPreviewModal/types';
 
 import type { DirListing, FileEntry } from '../types';
-import { captureVideoFrame } from '../utils/files-api';
+import { captureVideoFrame, pickPickedDir } from '../utils/files-api';
 
 /** 视频预览 hook 的返回 */
 export type UseVideoPreviewResult = {
@@ -22,8 +22,13 @@ export type UseVideoPreviewResult = {
   selectVideo: (id: string) => void;
   /** 关闭预览 */
   closeVideo: () => void;
-  /** 截图当前帧并写进桌面，返回给弹窗用的提示文案 */
-  captureFrame: (dataUrl: string) => Promise<VideoPreviewCaptureReceipt>;
+  /** 截图当前帧并写进目标目录，返回给弹窗用的提示文案 */
+  captureFrame: (
+    dataUrl: string,
+    captureDir: string,
+  ) => Promise<VideoPreviewCaptureReceipt>;
+  /** 选截图目录（系统目录选择框，默认定位到当前目录）；取消返回 null */
+  pickCaptureDir: () => Promise<string | null>;
 };
 
 /**
@@ -56,13 +61,22 @@ export const useVideoPreview = (
   const selectVideo = (id: string) => setActiveId(id);
   const closeVideo = () => setActiveId(null);
 
-  /** 中间件写盘后回文件名：提示里带上它，用户能直接去桌面找到 */
+  /** 中间件写盘后回文件名：提示里带上目标目录与文件名，用户能直接去找 */
   const captureFrame = async (
     dataUrl: string,
+    captureDir: string,
   ): Promise<VideoPreviewCaptureReceipt> => {
-    const name = await captureVideoFrame(dataUrl);
+    const name = await captureVideoFrame(dataUrl, captureDir);
+    const target = captureDir.length > 0 ? captureDir : '桌面';
 
-    return { message: `已保存到桌面：${name}` };
+    return { message: `已保存到${target}：${name}` };
+  };
+
+  /** 选截图目录：默认从当前目录弹起，用户取消不当作失败 */
+  const pickCaptureDir = async (): Promise<string | null> => {
+    const picked = await pickPickedDir(listing?.path ?? null);
+
+    return 'path' in picked ? picked.path : null;
   };
 
   return {
@@ -70,6 +84,7 @@ export const useVideoPreview = (
     captureFrame,
     closeVideo,
     openVideo,
+    pickCaptureDir,
     selectVideo,
     videos,
   };

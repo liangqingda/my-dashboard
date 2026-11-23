@@ -195,9 +195,17 @@ export const deleteEntry = async (pathValue: string): Promise<void> => {
 export const videoContentUrl = (pathValue: string): string =>
   `${CONTENT_ENDPOINT}?path=${encodeURIComponent(pathValue)}`;
 
-/** 把一帧 PNG 截图写进桌面；返回实际文件名（同秒重名后端会追加序号） */
-export const captureVideoFrame = async (dataUrl: string): Promise<string> => {
-  const payload = await postJson(CAPTURE_ENDPOINT, { dataUrl });
+/**
+ * 把一帧 PNG 截图写进目标目录（空串 = 用户桌面）；返回实际文件名（同秒重名后端会追加序号）。
+ */
+export const captureVideoFrame = async (
+  dataUrl: string,
+  dir: string,
+): Promise<string> => {
+  const payload = await postJson(
+    CAPTURE_ENDPOINT,
+    dir.length > 0 ? { dataUrl, dir } : { dataUrl },
+  );
   const name = normalizeCaptureResponse(payload);
 
   if (name === null) {

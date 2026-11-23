@@ -1,0 +1,9 @@
+/* 视频设置弹层：只补面板里的两处版式，其余走组件库与 IconPopoverButton 的内边距 */
+
+/* 截图目录：占满剩余宽度，放不下时省略、hover 看全 */
+.capturePath {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--app-ink-soft);
+  font-size: 0.72rem;
+}

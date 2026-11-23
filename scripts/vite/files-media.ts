@@ -213,27 +213,47 @@ export const decodePngDataUrl = (dataUrl: string): Buffer => {
   return buffer;
 };
 
-/** 截图落在哪个目录：当前用户桌面的绝对路径 */
-export const captureDirectory = (): string => path.join(homedir(), 'Desktop');
+/**
+ * 截图落在哪个目录：传了 `dir` 就用它（`~` 开头的按用户主目录展开），
+ * 没传（或空串）时回落当前用户桌面。
+ */
+export const captureDirectory = (dir?: string): string => {
+  const trimmed = dir?.trim() ?? '';
+
+  if (trimmed.length === 0) {
+    return path.join(homedir(), 'Desktop');
+  }
+
+  if (trimmed === '~') {
+    return homedir();
+  }
+
+  if (trimmed.startsWith('~/')) {
+    return path.join(homedir(), trimmed.slice(2));
+  }
+
+  return path.resolve(trimmed);
+};
 
 /**
- * 把一帧 PNG 截图写进桌面，文件名取写入时刻的本地时间；同一秒内重名依次追加 ` (2)`、` (3)`，
- * 不覆盖已有截图。返回实际文件名与绝对路径。
+ * 把一帧 PNG 截图写进目标目录（默认用户桌面），文件名取写入时刻的本地时间；
+ * 同一秒内重名依次追加 ` (2)`、` (3)`，不覆盖已有截图。返回实际文件名与绝对路径。
  */
 export const saveCapture = async (
   dataUrl: string,
+  dir?: string,
   now: Date = new Date(),
 ): Promise<SavedCapture> => {
   const buffer = decodePngDataUrl(dataUrl);
-  const dir = captureDirectory();
+  const targetDir = captureDirectory(dir);
 
-  await mkdir(dir, { recursive: true });
+  await mkdir(targetDir, { recursive: true });
 
   const base = captureBaseName(now);
 
   for (let attempt = 1; attempt <= 50; attempt += 1) {
     const name = attempt === 1 ? `${base}.png` : `${base} (${attempt}).png`;
-    const filePath = path.join(dir, name);
+    const filePath = path.join(targetDir, name);
 
     try {
       await writeFile(filePath, buffer, { flag: 'wx' });

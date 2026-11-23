@@ -59,6 +59,7 @@ const FreeModal = ({
   nav,
   onClose,
   onRequestDelete,
+  onSeek,
   opened,
   shortcutsEnabled = true,
   size = 'min(980px, 92vw)',
@@ -87,6 +88,7 @@ const FreeModal = ({
     nav,
     onClose,
     onRequestDelete,
+    onSeek,
     onToggleFullscreen,
     onTogglePlay: media?.onTogglePlay,
   });

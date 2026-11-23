@@ -53,21 +53,3 @@
   max-width: 68%;
   line-height: 1.5;
 }
-
-/* 暂停时的中央播放键：半透明圆底，悬停提亮 */
-.bigPlay {
-  position: absolute;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: rgb(0 0 0 / 48%);
-  color: #fff;
-  transition: background 120ms ease;
-
-  &:hover {
-    background: rgb(0 0 0 / 64%);
-  }
-}

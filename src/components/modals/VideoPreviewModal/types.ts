@@ -1,6 +1,8 @@
 /**
- * 视频预览弹窗的契约：弹窗只认「一组可播放条目 + 当前条目 + 截图能力」，
- * 目录语义与截图落到哪里由调用方决定。
+ * 视频预览的入参：
+ * - 条目与切换归调用方（它知道文件在哪）；
+ * - 截图落盘也归调用方，组件只给「一帧 + 目标目录」；
+ * - 界面偏好存在 localStorage，命名空间由调用方给（`storageScope`）。
  */
 
 /** 弹窗里可切换的一条视频 */
@@ -27,10 +29,30 @@ export type VideoPreviewModalProps = {
   items: readonly VideoPreviewItem[];
   /** 当前条目的 id；不在列表里时不渲染内容 */
   activeId: string | null;
+  /** 页面标识（对应路由）：拼设置项的存储键，组件自己不写死是哪一页 */
+  storageScope: string;
   /** 切换条目（侧栏点选、翻篇都走它） */
   onSelect: (id: string) => void;
   /** 关闭 */
   onClose: () => void;
-  /** 截图当前视频帧：入参是 PNG data URL，返回原名或落盘后的回执 */
-  onCapture: (dataUrl: string) => Promise<VideoPreviewCaptureReceipt>;
+  /** 截图当前视频帧：入参是 PNG data URL 与目标目录（空串表示默认桌面） */
+  onCapture: (
+    dataUrl: string,
+    captureDir: string,
+  ) => Promise<VideoPreviewCaptureReceipt>;
+  /**
+   * 选一个新的截图目录（系统目录选择框由调用方实现）；返回 null 表示用户取消。
+   * 不传则设置面板里没有「选择目录」。
+   */
+  onPickCaptureDir?: () => Promise<string | null>;
+  /**
+   * 删除当前视频的请求：只应打开二次确认层，不在这里直接删；
+   * 不传则 header 没有删除按钮，`Delete` 键也不触发。
+   */
+  onRequestDelete?: (() => void) | null;
+  /**
+   * 上层浮层（删除二次确认）开着：整组快捷键与焦点陷阱交给那一层，
+   * 底下的播放器不再响应空格 / 方向键 / Delete。
+   */
+  blocked?: boolean;
 };

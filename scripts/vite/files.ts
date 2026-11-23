@@ -13,7 +13,7 @@
  * - `POST /api/files/move`：body `{ source, targetDir }` 把一条条目移入目标目录；
  * - `POST /api/files/delete`：body `{ path }` 删除一条条目，文件夹连同内部内容递归删除；
  * - `POST /api/files/uninstall-app`：body `{ path }` 卸载应用包并清理残留，权限不足时弹一次授权窗补删；
- * - `POST /api/files/capture`：body `{ dataUrl }` 把一帧 PNG 截图写进桌面，返回文件名与路径。
+ * - `POST /api/files/capture`：body `{ dataUrl, dir? }` 把一帧 PNG 截图写进 `dir`（缺省用户桌面），返回文件名与绝对路径。
  *
  * 写操作与媒体接口仅限开发服务器中间件，静态构建不带这些接口；列表只给摘要，视频内容按需流式读取。
  */
@@ -329,7 +329,10 @@ export const files = (): Plugin => ({
           );
 
           if (pathname === '/capture') {
-            const capture = await saveCapture(bodyString(body, 'dataUrl'));
+            const capture = await saveCapture(
+              bodyString(body, 'dataUrl'),
+              bodyString(body, 'dir'),
+            );
 
             res.end(JSON.stringify({ capture }));
           } else if (pathname === '/new-folder') {

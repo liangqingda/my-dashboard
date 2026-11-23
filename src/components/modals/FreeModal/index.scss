@@ -77,9 +77,10 @@
   overflow-y: auto;
 }
 
-/* header 一行：翻页 + 计数 + 标题 + 右侧操作组 */
+/* header 一行：翻页 + 计数 + 标题 + 右侧操作组；标题再长也不换行，由它自己省略 */
 .titleRow {
   display: flex;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 8px;
   width: 100%;
@@ -107,16 +108,20 @@
   line-height: 1.4;
 }
 
-/* 标题之后吃掉剩余空间，把右侧操作组顶到最右 */
+/*
+ * 标题之后吃掉剩余空间，把右侧操作组顶到最右；标题与操作组之间至少留 20px——
+ * 两侧行内 gap 各 8px，加上自身最小 4px，压到最窄也正好 20px。
+ */
 .titleGap {
   flex: 1 1 auto;
-  min-width: 8px;
+  min-width: 4px;
 }
 
-/* 右侧操作组：组内间距与标题栏同一档 */
+/* 右侧操作组：组内间距与标题栏同一档，任何宽度下都不换行 */
 .actions {
   display: flex;
   flex: 0 0 auto;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 8px;
 }

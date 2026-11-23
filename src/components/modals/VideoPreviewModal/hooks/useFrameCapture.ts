@@ -20,8 +20,8 @@ const READY_STATE_WITH_FRAME = 2;
 
 /** 截图的返回：动作与进行中状态 */
 export type UseFrameCaptureResult = {
-  /** 截当前帧并落盘；同一时刻只允许一次 */
-  capture: () => Promise<void>;
+  /** 截当前帧并落盘；`captureDir` 为空串表示默认目录（桌面） */
+  capture: (captureDir: string) => Promise<void>;
   /** 落盘请求进行中（按钮转圈、禁用） */
   capturing: boolean;
 };
@@ -30,70 +30,79 @@ export type UseFrameCaptureResult = {
  * 管理一次截图流程。
  *
  * @param video 视频元素引用：读的是它当前显示的那一帧
- * @param onCapture 把 data URL 交给页面落盘，并返回成功提示文案
+ * @param onCapture 把 data URL 与目标目录交给页面落盘，并返回成功提示文案
  */
 export const useFrameCapture = (
   video: RefObject<HTMLVideoElement | null>,
-  onCapture: (dataUrl: string) => Promise<VideoPreviewCaptureReceipt>,
+  onCapture: (
+    dataUrl: string,
+    captureDir: string,
+  ) => Promise<VideoPreviewCaptureReceipt>,
 ): UseFrameCaptureResult => {
   const [capturing, setCapturing] = useState(false);
 
-  const capture = useCallback(async (): Promise<void> => {
-    const element = video.current;
+  const capture = useCallback(
+    async (captureDir: string): Promise<void> => {
+      const element = video.current;
 
-    if (!element || element.readyState < READY_STATE_WITH_FRAME) {
-      notifications.show({
-        autoClose: false,
-        color: 'yellow',
-        message: '等视频解出画面后再截图',
-        title: '现在截不到画面',
-      });
+      if (!element || element.readyState < READY_STATE_WITH_FRAME) {
+        notifications.show({
+          autoClose: false,
+          color: 'yellow',
+          message: '等视频解出画面后再截图',
+          title: '现在截不到画面',
+        });
 
-      return;
-    }
+        return;
+      }
 
-    const canvas = document.createElement('canvas');
+      const canvas = document.createElement('canvas');
 
-    canvas.width = element.videoWidth;
-    canvas.height = element.videoHeight;
+      canvas.width = element.videoWidth;
+      canvas.height = element.videoHeight;
 
-    const context = canvas.getContext('2d');
+      const context = canvas.getContext('2d');
 
-    if (!context) {
-      notifications.show({
-        autoClose: false,
-        color: 'red',
-        message: '当前浏览器不支持画布',
-        title: CAPTURE_FAILED_TITLE,
-      });
+      if (!context) {
+        notifications.show({
+          autoClose: false,
+          color: 'red',
+          message: '当前浏览器不支持画布',
+          title: CAPTURE_FAILED_TITLE,
+        });
 
-      return;
-    }
+        return;
+      }
 
-    setCapturing(true);
+      setCapturing(true);
 
-    try {
-      context.drawImage(element, 0, 0, canvas.width, canvas.height);
+      try {
+        context.drawImage(element, 0, 0, canvas.width, canvas.height);
 
-      const receipt = await onCapture(canvas.toDataURL('image/png'));
+        const receipt = await onCapture(
+          canvas.toDataURL('image/png'),
+          captureDir,
+        );
 
-      notifications.show({
-        autoClose: 4000,
-        color: 'teal',
-        message: receipt.message,
-        title: CAPTURE_NOTICE_TITLE,
-      });
-    } catch (error) {
-      notifications.show({
-        autoClose: false,
-        color: 'red',
-        message: getErrorMessage(error, '保存截图失败，请稍后重试'),
-        title: CAPTURE_FAILED_TITLE,
-      });
-    } finally {
-      setCapturing(false);
-    }
-  }, [onCapture, video]);
+        notifications.show({
+          autoClose: 4000,
+          color: 'teal',
+          message: receipt.message,
+          title: CAPTURE_NOTICE_TITLE,
+        });
+      } catch (error) {
+        notifications.show({
+          autoClose: false,
+          color: 'red',
+          message: getErrorMessage(error, '保存截图失败，请稍后重试'),
+          title: CAPTURE_FAILED_TITLE,
+        });
+      } finally {
+        setCapturing(false);
+      }
+    },
+    [onCapture, video],
+  );
 
   return { capture, capturing };
 };
