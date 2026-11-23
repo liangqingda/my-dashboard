@@ -21,8 +21,8 @@ export type FolderEntry = {
 /** 文件归类：与中间件 `FileCategory` 同一套档位，用于区分图标与类型筛选 */
 export type FileCategory = 'video' | 'image' | 'pdf' | 'markdown' | 'app' | 'other';
 
-/** 类型筛选的当前取值：`all` 表示不过滤，其余表示只看这一类 */
-export type TypeFilterValue = FileCategory | 'all';
+/** 类型筛选的操作方式：多选（可勾多类）/ 单选（一次一类），在设置面板里切 */
+export type TypeFilterMode = 'multi' | 'single';
 
 /** 列表里的一条应用包（`.app`） */
 export type AppEntry = {

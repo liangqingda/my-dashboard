@@ -3,7 +3,7 @@
  */
 
 import type { UseFilesSettingsResult } from '../hooks/useFilesSettings';
-import type { FavoriteEntry, TypeFilterValue } from '../types';
+import type { FavoriteEntry, FileCategory, TypeFilterMode } from '../types';
 
 /** 同时只开一块弹层：收藏面板 / 筛选面板 / 设置面板 */
 export type FilesActionsPanel = 'favorites' | 'filter' | 'settings';
@@ -22,8 +22,10 @@ export type FilesActionsProps = {
   favoriteDisabled: boolean;
   /** 收藏的目录列表，排成收藏面板的条目 */
   favorites: FavoriteEntry[];
-  /** 类型筛选的当前档位：`all` 表示全部，其余表示只看这一类 */
-  activeType: TypeFilterValue;
+  /** 类型筛选的操作方式：多选 / 单选 */
+  typeFilterMode: TypeFilterMode;
+  /** 当前勾选的分类（全选就是六类都在） */
+  selectedCategories: FileCategory[];
   /** 文件名关键词；空串表示不按关键词过滤 */
   keyword: string;
   /** 文件页设置：设置面板里读写的那几项（值 + 改值回调） */
@@ -42,8 +44,10 @@ export type FilesActionsProps = {
   onOpenFavorite: (dir: string) => void;
   /** 移除一条收藏 */
   onRemoveFavorite: (path: string) => void;
-  /** 切到某一类型档位（含「全部」） */
-  onActiveTypeChange: (next: TypeFilterValue) => void;
+  /** 换一批勾选的分类 */
+  onSelectedCategoriesChange: (next: FileCategory[]) => void;
+  /** 改类型筛选的操作方式（多选 / 单选） */
+  onTypeFilterModeChange: (mode: TypeFilterMode) => void;
   /** 改动文件名关键词 */
   onKeywordChange: (value: string) => void;
   /** 弹层开合：打开某一块，或传 null 全部收起 */

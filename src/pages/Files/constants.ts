@@ -95,26 +95,33 @@ export const VIEW_MODE_CODEC = createChoiceCodec<FilesViewMode>(
   'grid',
 );
 
+/** 分类键的固定顺序：筛选档位、全选判断都按这一份 */
+export const FILE_CATEGORY_VALUES = Object.keys(
+  FILE_CATEGORY_LABELS,
+) as FileCategory[];
+
 /**
  * 类型筛选下拉的选项（按上面的固定顺序）。
  * 是页面固定档位：不随当前目录里有没有该类型而增减。
  */
-export const FILE_CATEGORY_OPTIONS = (
-  Object.keys(FILE_CATEGORY_LABELS) as FileCategory[]
-).map((value) => ({ value, label: FILE_CATEGORY_LABELS[value] }));
+export const FILE_CATEGORY_OPTIONS = FILE_CATEGORY_VALUES.map((value) => ({
+  label: FILE_CATEGORY_LABELS[value],
+  value,
+}));
 
-/**
- * 类型筛选的当前取值（`all` 或某一类），刷新后保留；没写过时按 `all`。
- * 键名带 `active`：旧的排除项数组含义不同，不能沿用同一个键。
- */
+/** 当前勾选的分类（多选是若干项，单选是一或全部）；刷新后保留，没写过时全选 */
 export const TYPE_FILTER_STORAGE_KEY = scopedStorageKey(
   FILES_STORAGE_SCOPE,
-  'type-filter-active',
+  'type-filter-selected',
 );
 
-/** 类型筛选的「全部」档位与文案：列表固定排在最上面 */
-export const TYPE_FILTER_ALL = 'all' as const;
+/** 类型筛选的操作方式（多选 / 单选），在设置面板里切；没写过时多选 */
+export const TYPE_FILTER_MODE_STORAGE_KEY = scopedStorageKey(
+  FILES_STORAGE_SCOPE,
+  'type-filter-mode',
+);
 
+/** 「全部」那一项在筛选列表里固定排最上面 */
 export const TYPE_FILTER_ALL_LABEL = '全部';
 
 /** 分类 → 瓦片图标；视频额外上蓝色，应用走通用应用图标，其余用通用弱色 */

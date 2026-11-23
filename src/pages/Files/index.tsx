@@ -13,7 +13,7 @@ import FilesPreviewLayers from './FilesPreviewLayers';
 import FilesStates from './FilesStates';
 import RenameEntryModal from './RenameEntryModal';
 import UninstallAppConfirm from './UninstallAppConfirm';
-import { FILES_STORAGE_SCOPE, TYPE_FILTER_ALL } from './constants';
+import { FILE_CATEGORY_VALUES, FILES_STORAGE_SCOPE } from './constants';
 import { useAppUninstall } from './hooks/useAppUninstall';
 import { useEntryActions } from './hooks/useEntryActions';
 import { useEntryDelete } from './hooks/useEntryDelete';
@@ -31,8 +31,10 @@ import {
   filterFilesByCategory,
   filterFilesByKeyword,
   filterFoldersByCategory,
+  isTypeFilterAllSelected,
   toFilesRows,
 } from './utils/files';
+import type { TypeFilterMode } from './types';
 
 import styles from './index.scss';
 
@@ -52,7 +54,10 @@ const Files = () => {
   const { currentDir, listing, loading, error, openDir, pickDir, refresh, reload } =
     useFilesDir();
   const { favorites, isFavorite, toggleFavorite, removeFavorite } = useFavorites();
-  const { active: activeType, onChange: onActiveTypeChange } = useTypeFilter();
+  const {
+    onChange: onSelectedCategoriesChange,
+    selected: selectedCategories,
+  } = useTypeFilter();
   /** 展示形式：网格 / 表格，切换按钮在标题栏 */
   const { isGridView, toggle: toggleViewMode } = useFilesViewMode();
   /** 文件页设置（放在视频预览之前）：点视频的去向、两扇预览是否默认全屏 */
@@ -105,20 +110,20 @@ const Files = () => {
   /** 类型 + 关键词筛选后的文件；文件夹不受关键词影响，按内含类型过滤 */
   const visibleFiles = listing
     ? filterFilesByKeyword(
-        filterFilesByCategory(listing.files, activeType),
+        filterFilesByCategory(listing.files, selectedCategories),
         keyword,
       )
     : [];
-  /** 类型 + 关键词筛选后的应用：只有「App」这一档管它 */
+  /** 类型 + 关键词筛选后的应用：勾了 App 才列出来 */
   const visibleApps = listing
     ? filterAppsByKeyword(
-        filterAppsByCategory(listing.apps, activeType),
+        filterAppsByCategory(listing.apps, selectedCategories),
         keyword,
       )
     : [];
-  /** 类型筛选后的文件夹：`all` 全留，其余只留含该类的；App 不列文件夹 */
+  /** 类型筛选后的文件夹：全选时全留，否则只留含勾选文件类型的；只勾 App 时不列文件夹 */
   const visibleFolders = listing
-    ? filterFoldersByCategory(listing.folders, activeType)
+    ? filterFoldersByCategory(listing.folders, selectedCategories)
     : [];
   /** 表格视图的行：文件夹在前、应用其次、文件在后，与网格同一顺序 */
   const tableRows = toFilesRows(visibleFolders, visibleApps, visibleFiles);
@@ -165,13 +170,25 @@ const Files = () => {
     visibleFiles.length === 0;
   /** 还没选过目录：引导先填路径，不报错 */
   const showPrompt = !showSkeleton && listing === null && error === null;
+
+  /** 切筛选方式：从多选切到单选时选择不是「恰好一类」就收敛成全部，免得单选列表一个都没选中 */
+  const changeFilterMode = (mode: TypeFilterMode) => {
+    settings.setFilterMode(mode);
+
+    if (mode === 'single' && selectedCategories.length !== 1) {
+      onSelectedCategoriesChange([...FILE_CATEGORY_VALUES]);
+    }
+  };
+
   /** 空态文案：筛过条件与真的空目录给不同一句话；不是空态就是 null */
   let emptyText: string | null = null;
 
   if (showEmpty) {
-    if (activeType === 'app') {
+    if (selectedCategories.length === 0) {
+      emptyText = '筛选里一个类型都没勾，勾上要看的类型或点「全部」';
+    } else if (selectedCategories.length === 1 && selectedCategories[0] === 'app') {
       emptyText = '这个目录里没有应用，可点收藏里的「系统应用程序」去 /Applications';
-    } else if (activeType !== TYPE_FILTER_ALL || keyword.trim() !== '') {
+    } else if (keyword.trim() !== '' || !isTypeFilterAllSelected(selectedCategories)) {
       emptyText = '没有符合筛选条件的条目';
     } else {
       emptyText = '这个目录里没有文件或子文件夹';
@@ -182,7 +199,6 @@ const Files = () => {
     <MenuContentLayout
       actions={
         <FilesActions
-          activeType={activeType}
           createDisabled={currentEntry === null}
           favoriteDisabled={currentEntry === null}
           favorites={favorites}
@@ -190,21 +206,24 @@ const Files = () => {
           isGridView={isGridView}
           keyword={keyword}
           loading={loading}
-          onActiveTypeChange={onActiveTypeChange}
           onCreateFolder={entryActions.createEntry}
           onKeywordChange={setKeyword}
           onOpenFavorite={goToDir}
           onPanelChange={setOpenPanel}
           onPickDir={handlePickDir}
           onRemoveFavorite={removeFavorite}
+          onSelectedCategoriesChange={onSelectedCategoriesChange}
           onToggleFavorite={() => {
             if (currentEntry !== null) {
               toggleFavorite(currentEntry);
             }
           }}
           onToggleViewMode={toggleViewMode}
+          onTypeFilterModeChange={changeFilterMode}
           openPanel={openPanel}
+          selectedCategories={selectedCategories}
           settings={settings}
+          typeFilterMode={settings.filterMode}
         />
       }
       description={describeDirSpace(listing?.space ?? null)}

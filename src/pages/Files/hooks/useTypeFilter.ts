@@ -1,42 +1,72 @@
 /**
- * 文件类型筛选：单选「全部 / 视频 / 图片 / PDF / Markdown / App / 其它」，默认全部。
- * 选择是一个展示偏好，持久化到 localStorage；读回时校验档位，不认识的值回落「全部」。
- * 用单选而不是多选：「选了 App 还看到别的」这种误读，多选框本身解释不清，单选一眼就是过滤。
+ * 文件类型筛选：勾选哪些分类就显示哪些，默认全选；「全部」勾选框随其余项呈选中 / 半选 / 未选。
+ * 这里只管「勾了哪几类」（JSON 数组，持久化）；「多选 / 单选」是设置项，放在 `useFilesSettings`。
  */
 
 import { useCallback } from 'react';
 
 import { useStoredState } from '@/hooks/useStoredState';
-import { createChoiceCodec } from '@/utils/local-storage';
+import type { StoredCodec } from '@/utils/local-storage';
 
-import {
-  FILE_CATEGORY_OPTIONS,
-  TYPE_FILTER_ALL,
-  TYPE_FILTER_STORAGE_KEY,
-} from '../constants';
-import type { TypeFilterValue } from '../types';
+import { FILE_CATEGORY_VALUES, TYPE_FILTER_STORAGE_KEY } from '../constants';
+import type { FileCategory } from '../types';
 
-const TYPE_FILTER_VALUES: TypeFilterValue[] = [
-  TYPE_FILTER_ALL,
-  ...FILE_CATEGORY_OPTIONS.map((option) => option.value),
-];
+/** 默认全选 */
+const ALL_CATEGORIES: FileCategory[] = [...FILE_CATEGORY_VALUES];
 
-/** 存裸字符串（`all` / `app` …），不认识的值回落「全部」 */
-const typeFilterCodec = createChoiceCodec<TypeFilterValue>(
-  TYPE_FILTER_VALUES,
-  TYPE_FILTER_ALL,
-);
+/**
+ * 已选分类的编解码：没写过（`null`）按全选；存 JSON 数组，逐项校验并去重。
+ * 存成空数组是「一个都不勾」的合法状态，只有勾完再取消才会回「全部」。
+ */
+const selectedCodec: StoredCodec<FileCategory[]> = {
+  decode: (raw) => {
+    if (raw === null) {
+      return ALL_CATEGORIES;
+    }
+
+    let parsed: unknown;
+
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return ALL_CATEGORIES;
+    }
+
+    if (!Array.isArray(parsed)) {
+      return ALL_CATEGORIES;
+    }
+
+    const seen = new Set<FileCategory>();
+
+    for (const item of parsed) {
+      if (
+        typeof item === 'string' &&
+        (FILE_CATEGORY_VALUES as string[]).includes(item)
+      ) {
+        seen.add(item as FileCategory);
+      }
+    }
+
+    return [...seen];
+  },
+  encode: (value) => JSON.stringify(value),
+};
 
 export const useTypeFilter = () => {
-  const [active, setActive] = useStoredState(
+  const [selected, setSelected] = useStoredState(
     TYPE_FILTER_STORAGE_KEY,
-    typeFilterCodec,
+    selectedCodec,
   );
 
   const onChange = useCallback(
-    (next: TypeFilterValue) => setActive(next),
-    [setActive],
+    (next: FileCategory[]) => setSelected(next),
+    [setSelected],
   );
 
-  return { active, onChange };
+  return {
+    /** 当前勾选的分类 */
+    selected,
+    /** 换一批勾选的分类 */
+    onChange,
+  };
 };

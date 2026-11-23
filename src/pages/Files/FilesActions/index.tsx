@@ -19,7 +19,8 @@ import FreeIconAction from '@/components/buttons/FreeIconAction';
 import IconPopoverButton from '@/components/buttons/IconPopoverButton';
 
 import { resetVideoAppsCache } from '../utils/video-api';
-import { TYPE_FILTER_ALL } from '../constants';
+import { FILE_CATEGORY_VALUES } from '../constants';
+import { isTypeFilterAllSelected } from '../utils/files';
 
 import FavoritesPanel from './FavoritesPanel';
 import SettingsPanel from './SettingsPanel';
@@ -32,14 +33,16 @@ const ICON_STROKE = 1.9;
 
 const FilesActions = ({
   createDisabled,
-  activeType,
+  selectedCategories,
+  typeFilterMode,
   favoriteDisabled,
   favorites,
   isFavorite,
   isGridView,
   keyword,
   loading,
-  onActiveTypeChange,
+  onSelectedCategoriesChange,
+  onTypeFilterModeChange,
   onCreateFolder,
   onKeywordChange,
   onOpenFavorite,
@@ -57,7 +60,8 @@ const FilesActions = ({
   }, []);
 
   /** 筛选有没有条件生效：排除项或关键词任一非空，图标用强调色 */
-  const filterActive = activeType !== TYPE_FILTER_ALL || keyword.trim() !== '';
+  const filterActive =
+    !isTypeFilterAllSelected(selectedCategories) || keyword.trim() !== '';
 
   return (
     <>
@@ -113,14 +117,15 @@ const FilesActions = ({
         shortcut="S"
       >
         <TypeFilterPanel
-          active={activeType}
           keyword={keyword}
-          onChange={onActiveTypeChange}
+          mode={typeFilterMode}
+          onChange={onSelectedCategoriesChange}
           onKeywordChange={onKeywordChange}
           onReset={() => {
-            onActiveTypeChange(TYPE_FILTER_ALL);
+            onSelectedCategoriesChange([...FILE_CATEGORY_VALUES]);
             onKeywordChange('');
           }}
+          selected={selectedCategories}
         />
       </IconPopoverButton>
 
@@ -132,7 +137,9 @@ const FilesActions = ({
         opened={openPanel === 'settings'}
       >
         <SettingsPanel
+          filterMode={typeFilterMode}
           imageFullscreen={settings.imageFullscreen}
+          onFilterModeChange={onTypeFilterModeChange}
           onImageFullscreenChange={settings.setImageFullscreen}
           onVideoAppChange={settings.setVideoApp}
           onVideoFullscreenChange={settings.setVideoFullscreen}

@@ -2,14 +2,14 @@
  * 文件浏览页的纯函数：文件大小格式化、路径分段、类型筛选。不依赖 React。
  */
 
-import { TYPE_FILTER_ALL } from '../constants';
+import { FILE_CATEGORY_VALUES } from '../constants';
 import type {
   AppEntry,
   DirSpace,
+  FileCategory,
   FileEntry,
   FilesRow,
   FolderEntry,
-  TypeFilterValue,
 } from '../types';
 
 /** 字节数 → 可读体积（B / KB / MB / GB）；负数与 NaN 按 0 处理 */
@@ -79,39 +79,54 @@ export const splitPathSegments = (dir: string): PathSegment[] => {
   }));
 };
 
-/** 按类型筛选过滤文件：`all` 整份保留，其余只留同类 */
+/** 分类是否全选：筛选列表的「全部」勾选框与列表过滤共用这一个判据 */
+export const isTypeFilterAllSelected = (selected: FileCategory[]): boolean =>
+  selected.length === FILE_CATEGORY_VALUES.length;
+
+/** 按已勾选的分类过滤文件：全选整份保留，否则只留勾选的类 */
 export const filterFilesByCategory = (
   files: FileEntry[],
-  active: TypeFilterValue,
-): FileEntry[] =>
-  active === TYPE_FILTER_ALL
-    ? files
-    : files.filter((file) => file.category === active);
+  selected: FileCategory[],
+): FileEntry[] => {
+  if (isTypeFilterAllSelected(selected)) {
+    return files;
+  }
 
-/** 按类型筛选过滤应用：只有「App」这一档管它，选别的类型就整份隐藏 */
+  const shown = new Set(selected);
+
+  return files.filter((file) => shown.has(file.category));
+};
+
+/** 按已勾选的分类过滤应用：勾了「App」才列出来，没勾就整份隐藏 */
 export const filterAppsByCategory = (
   apps: AppEntry[],
-  active: TypeFilterValue,
-): AppEntry[] => (active === 'app' ? apps : []);
+  selected: FileCategory[],
+): AppEntry[] => (selected.includes('app') ? apps : []);
 
 /**
- * 按类型筛选过滤文件夹：`all` 整份保留；其余只留内含该类型的文件夹（含深层，
- * 靠中间件给的分类摘要）。但「App」是独立条目类型——文件夹本身不是应用，
- * 只看 App 时不再列文件夹，避免「选了 App 还满屏文件夹」。
+ * 按已勾选的分类过滤文件夹：全选整份保留；否则只留内含「勾选的某个文件类型」的文件夹
+ * （含深层，靠中间件给的分类摘要）。「App」是独立条目类型——文件夹本身不是应用，
+ * 只勾了 App 时不列文件夹，避免「选了 App 还满屏文件夹」。
  */
 export const filterFoldersByCategory = (
   folders: FolderEntry[],
-  active: TypeFilterValue,
+  selected: FileCategory[],
 ): FolderEntry[] => {
-  if (active === TYPE_FILTER_ALL) {
+  if (isTypeFilterAllSelected(selected)) {
     return folders;
   }
 
-  if (active === 'app') {
+  const relevant: FileCategory[] = selected.filter(
+    (category) => category !== 'app',
+  );
+
+  if (relevant.length === 0) {
     return [];
   }
 
-  return folders.filter((folder) => folder.categories.includes(active));
+  return folders.filter((folder) =>
+    folder.categories.some((category) => relevant.includes(category)),
+  );
 };
 
 /** 按文件名关键词过滤；空白关键词表示不过滤，整份保留。大小写不敏感子串匹配 */

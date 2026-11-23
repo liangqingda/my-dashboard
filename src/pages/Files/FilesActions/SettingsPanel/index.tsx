@@ -1,6 +1,6 @@
 /**
- * 文件页设置面板：目前只有「视频点击后」一项——弹窗预览还是交给外部应用打开，
- * 选外部时可再挑一个能播放视频的本机应用（默认 IINA）。
+ * 文件页设置面板：类型筛选方式（多选 / 单选）、视频点击后（弹窗预览 / 外部应用，
+ * 选外部时可再挑一个能播放视频的本机应用，默认 IINA）、预览默认全屏。
  *
  * 后续加设置项直接往下追加分组，面板只读值、只回调，持久化在页面的设置 hook 里。
  */
@@ -17,11 +17,17 @@ import {
 import { PANEL_FIELD_STYLES } from '@/components/buttons/IconPopoverButton/constants';
 
 import { useVideoApps } from '../../hooks/useVideoApps';
-import type { VideoOpenMode } from '../../types';
+import type { TypeFilterMode, VideoOpenMode } from '../../types';
 
 import type { SettingsPanelProps } from './types';
 
 import styles from './index.scss';
+
+/** 筛选方式的两档文案 */
+const FILTER_MODE_OPTIONS = [
+  { label: '多选', value: 'multi' },
+  { label: '单选', value: 'single' },
+];
 
 /** 视频去向的两档文案 */
 const VIDEO_OPEN_MODE_OPTIONS = [
@@ -30,7 +36,9 @@ const VIDEO_OPEN_MODE_OPTIONS = [
 ];
 
 const SettingsPanel = ({
+  filterMode,
   imageFullscreen,
+  onFilterModeChange,
   onImageFullscreenChange,
   onVideoAppChange,
   onVideoFullscreenChange,
@@ -48,6 +56,22 @@ const SettingsPanel = ({
 
   return (
     <Stack gap="md">
+      <Stack gap={6}>
+        <Text className={styles.label}>筛选方式</Text>
+        <SegmentedControl
+          data={FILTER_MODE_OPTIONS}
+          fullWidth
+          onChange={(value) => onFilterModeChange(value as TypeFilterMode)}
+          size="xs"
+          value={filterMode}
+        />
+        <Text c="dimmed" className={styles.hint}>
+          {filterMode === 'multi'
+            ? '可同时勾选多类；「全部」随勾选状态呈选中 / 半选 / 未选'
+            : '一次只能勾一类；「全部」表示不筛选'}
+        </Text>
+      </Stack>
+
       <Stack gap={6}>
         <Text className={styles.label}>视频点击后</Text>
         <SegmentedControl

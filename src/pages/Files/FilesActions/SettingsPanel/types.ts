@@ -1,9 +1,9 @@
 /**
- * 设置面板的入参：目前只有「视频点击后去哪儿」这一项，
+ * 设置面板的入参：视频去向 / 预览全屏 / 筛选用多选还是单选，
  * 值都由页面持有并持久化，面板只负责改。
  */
 
-import type { VideoOpenMode } from '../../types';
+import type { TypeFilterMode, VideoOpenMode } from '../../types';
 
 /** 设置面板 props */
 export type SettingsPanelProps = {
@@ -23,4 +23,8 @@ export type SettingsPanelProps = {
   onImageFullscreenChange: (enabled: boolean) => void;
   /** 改视频预览的默认全屏 */
   onVideoFullscreenChange: (enabled: boolean) => void;
+  /** 类型筛选：多选 / 单选 */
+  filterMode: TypeFilterMode;
+  /** 改类型筛选的操作方式 */
+  onFilterModeChange: (mode: TypeFilterMode) => void;
 };

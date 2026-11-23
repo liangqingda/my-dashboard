@@ -1,44 +1,64 @@
 /**
- * 筛选弹层面板：顶部关键词按名称模糊搜索，下方是「全部 + 分类」单选列表，点哪一项即时生效；
- * 底部重置把档位退回「全部」并清空关键词。档位是页面固定的，默认「全部」。
- * 单选口径：选「App」只剩应用条目（文件夹一并隐藏），选其它类只留该类文件与含该类文件的文件夹。
+ * 筛选弹层面板：顶部关键词按名称模糊搜索，下方是「全部 + 分类」列表，改动即时生效。
+ * 「全部」是复选框：全勾时选中、勾了一部分时半选、一个没勾时未选；
+ * 多选模式点某一类即勾 / 取消，点「全部」全选或全清；单选模式下一次只能有一类。
+ * 底部重置把分类退回全选并清空关键词。
  */
 
-import { Group, Radio, Stack, UnstyledButton } from '@mantine/core';
+import { Checkbox, Group, Radio, Stack, UnstyledButton } from '@mantine/core';
 
 import { PANEL_FIELD_STYLES } from '@/components/buttons/IconPopoverButton/constants';
 import FreeSearchInput from '@/components/fields/FreeSearchInput';
 import FreePanelFooter from '@/components/panels/FreePanelFooter';
 
 import {
-  FILE_CATEGORY_OPTIONS,
-  TYPE_FILTER_ALL,
+  FILE_CATEGORY_LABELS,
+  FILE_CATEGORY_VALUES,
   TYPE_FILTER_ALL_LABEL,
 } from '../../constants';
-import type { TypeFilterValue } from '../../types';
+import type { FileCategory } from '../../types';
+import { isTypeFilterAllSelected } from '../../utils/files';
 
 import type { TypeFilterPanelProps } from './types';
 
 import styles from './index.scss';
 
-/** 列表项：`全部` 在最上面，其后按固定的分类顺序 */
-const FILTER_ROWS: { label: string; value: TypeFilterValue }[] = [
-  { label: TYPE_FILTER_ALL_LABEL, value: TYPE_FILTER_ALL },
-  ...FILE_CATEGORY_OPTIONS.map((option) => ({
-    label: option.label,
-    value: option.value,
-  })),
-];
+/** 单选时某一类是否被选中：只有恰好一类且就是它 */
+const isSingleChoice = (selected: FileCategory[], value: FileCategory): boolean =>
+  selected.length === 1 && selected[0] === value;
 
 const TypeFilterPanel = ({
-  active,
+  mode,
+  selected,
   keyword,
   onChange,
   onKeywordChange,
   onReset,
 }: TypeFilterPanelProps) => {
-  /** 有没有条件生效：没选「全部」或有关键词时「重置」可点 */
-  const filterActive = active !== TYPE_FILTER_ALL || keyword.trim() !== '';
+  const allSelected = isTypeFilterAllSelected(selected);
+  const partiallySelected = selected.length > 0 && !allSelected;
+  /** 有没有条件生效：没全选或有关键词时「重置」可点 */
+  const filterActive = !allSelected || keyword.trim() !== '';
+
+  /** 点某一类：多选就勾 / 取消，单选就换成这一类 */
+  const pick = (value: FileCategory) => {
+    if (mode === 'single') {
+      onChange([value]);
+
+      return;
+    }
+
+    onChange(
+      selected.includes(value)
+        ? selected.filter((item) => item !== value)
+        : [...selected, value],
+    );
+  };
+
+  /** 点「全部」：多选时全勾 / 全清，单选时直接全选 */
+  const pickAll = () => {
+    onChange(mode === 'multi' && allSelected ? [] : [...FILE_CATEGORY_VALUES]);
+  };
 
   return (
     <Stack gap="sm">
@@ -54,15 +74,31 @@ const TypeFilterPanel = ({
       />
 
       <Stack gap={2}>
-        {FILTER_ROWS.map((row) => (
+        <UnstyledButton className={styles.row} onClick={pickAll}>
+          <Group gap="xs" wrap="nowrap">
+            <Checkbox
+              checked={allSelected}
+              indeterminate={mode === 'multi' && partiallySelected}
+              readOnly
+              size="xs"
+            />
+            <span>{TYPE_FILTER_ALL_LABEL}</span>
+          </Group>
+        </UnstyledButton>
+
+        {FILE_CATEGORY_VALUES.map((value) => (
           <UnstyledButton
             className={styles.row}
-            key={row.value}
-            onClick={() => onChange(row.value)}
+            key={value}
+            onClick={() => pick(value)}
           >
             <Group gap="xs" wrap="nowrap">
-              <Radio checked={active === row.value} readOnly size="xs" />
-              <span>{row.label}</span>
+              {mode === 'multi' ? (
+                <Checkbox checked={selected.includes(value)} readOnly size="xs" />
+              ) : (
+                <Radio checked={isSingleChoice(selected, value)} readOnly size="xs" />
+              )}
+              <span>{FILE_CATEGORY_LABELS[value]}</span>
             </Group>
           </UnstyledButton>
         ))}
@@ -70,7 +106,7 @@ const TypeFilterPanel = ({
 
       <FreePanelFooter
         disabled={!filterActive}
-        hint="单选；选 App 只列应用条目，文件夹一并隐藏"
+        hint="勾选的类型才显示；App 不露出文件夹，可在设置里切换多选 / 单选"
         onReset={onReset}
       />
     </Stack>
