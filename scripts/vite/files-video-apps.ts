@@ -158,6 +158,9 @@ const mapWithLimit = async <T, R>(
   return results;
 };
 
+/** 设置里没选应用时用的默认播放器名：与前端 `DEFAULT_VIDEO_APP` 一致 */
+const DEFAULT_VIDEO_APP_NAME = 'IINA';
+
 /**
  * 明确不列出的应用：它们也声明了视频类型（网盘预览、阅读器、聊天、音乐、系统 QuickTime），
  * 但列表要的是「专门拿来看片的播放器」，这些混进来只会让下拉变长。
@@ -205,4 +208,15 @@ export const listVideoApps = async (): Promise<VideoApp[]> => {
   }
 
   return result.sort((a, b) => a.name.localeCompare(b.name));
+};
+
+/**
+ * 按应用名找它的包路径：网格缩略图要用所选播放器的图标，而前端只存了名字。
+ * 名字为空按默认 IINA；找不到返回 null，前端回落分类图标。
+ */
+export const videoAppBundlePath = async (name: string): Promise<string | null> => {
+  const wanted = name.trim() === '' ? DEFAULT_VIDEO_APP_NAME : name.trim();
+  const apps = await listVideoApps();
+
+  return apps.find((app) => app.name === wanted)?.path ?? null;
 };

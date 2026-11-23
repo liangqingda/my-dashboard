@@ -57,6 +57,8 @@ const DirectoryGrid = ({
   onOpenVideo,
   onRequestDeleteEntry,
   onRequestUninstallApp,
+  videoApp,
+  videoOpenMode,
 }: DirectoryGridProps) => (
   <div className={styles.grid} onDragOver={allowMoveOverGrid}>
     {folders.map((folder) => (
@@ -92,6 +94,8 @@ const DirectoryGrid = ({
         onEdit={() => onEditEntry(file)}
         onOpen={previewHandler(file, onOpenVideo, onOpenImage)}
         onRequestDelete={() => onRequestDeleteEntry(file.path)}
+        videoApp={videoApp}
+        videoOpenMode={videoOpenMode}
       />
     ))}
   </div>

@@ -6,7 +6,9 @@
  *   以及启动卷 / 外接卷的剩余可用空间 `space`）；
  * - `GET /api/files/content?path=<绝对路径>`：按 HTTP Range 流式读一个视频文件（只在开发模式）；
  * - `GET /api/files/image?path=<绝对路径>`：整份返回一张图片（只在开发模式，给图片预览用）；
+ * - `GET /api/files/thumb?path=<绝对路径>`：图片缩略图 / 视频抽帧缩略图（带缓存，给网格用）；
  * - `GET /api/files/app-icon?path=<.app 路径>`：把应用包里的 `.icns` 转成 PNG 返回（带缓存）；
+ *   也可用 `?app=<应用名>` 按播放器名取图标（网格在「外部应用」模式下就是这么用的）；
  * - `GET /api/files/app-residue?path=<.app 路径>`：列卸载会一并删掉的残留（应用数据 / 缓存 / 偏好设置等）；
  * - `POST /api/files/pick-dir`：调起 macOS 系统目录选择框，body `{ dir }` 作为默认定位目录，返回选中目录的绝对路径（取消返回 cancelled）；
  * - `POST /api/files/new-folder`：在 body `{ dir }` 目录下新建文件夹，返回新条目；
@@ -26,11 +28,12 @@ import { readFile } from 'node:fs/promises';
 import type { Plugin } from 'vite';
 
 import { appIconPng } from './files-app-icons.js';
+import { fileThumb } from './files-thumbs.js';
 import { scanAppResidues, uninstallAppBundle } from './files-apps.js';
 import { openImageFile } from './files-images.js';
 import { openVideoFile, openVideoStream, parseByteRange, saveCapture, videoEtag } from './files-media.js';
 import { openExternalFile } from './files-open.js';
-import { listVideoApps } from './files-video-apps.js';
+import { listVideoApps, videoAppBundlePath } from './files-video-apps.js';
 import {
   createFolder,
   deleteEntry,
@@ -245,6 +248,49 @@ const serveImageContent = async (
 };
 
 /**
+ * 列表缩略图：图片给缩放后的 JPEG、视频给 QuickLook 抽的一帧 PNG。
+ * 转不出来就 404，前端回落分类图标，不拖垮条目本身。
+ */
+const serveThumb = async (
+  req: import('node:http').IncomingMessage,
+  res: import('node:http').ServerResponse,
+): Promise<void> => {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    sendJsonError(res, 405, '不支持的请求方法');
+
+    return;
+  }
+
+  const thumb = await fileThumb(
+    new URL(req.url ?? '', 'http://localhost').searchParams.get('path') ?? '',
+  );
+
+  if (thumb === null) {
+    sendJsonError(res, 404, '没有可用的缩略图');
+
+    return;
+  }
+
+  try {
+    const content = await readFile(thumb.path);
+
+    res.setHeader('Content-Type', thumb.mime);
+    res.setHeader('Cache-Control', 'private, max-age=600');
+    res.setHeader('Content-Length', String(content.byteLength));
+
+    if (req.method === 'HEAD') {
+      res.end();
+
+      return;
+    }
+
+    res.end(content);
+  } catch {
+    sendJsonError(res, 500, '读取缩略图失败');
+  }
+};
+
+/**
  * 应用图标：取 `.icns` 转好的 PNG 缓存按二进制返回。
  * 没有可用图标时 404，前端回落通用应用图标，不拖垮条目本身。
  */
@@ -259,7 +305,11 @@ const serveAppIcon = async (
   }
 
   const url = new URL(req.url ?? '', 'http://localhost');
-  const png = await appIconPng(url.searchParams.get('path') ?? '');
+  const explicitPath = url.searchParams.get('path') ?? '';
+  const appName = url.searchParams.get('app') ?? '';
+  const bundle =
+    explicitPath !== '' ? explicitPath : await videoAppBundlePath(appName);
+  const png = bundle === null ? null : await appIconPng(bundle);
 
   if (png === null) {
     sendJsonError(res, 404, '没有可用的应用图标');
@@ -271,7 +321,7 @@ const serveAppIcon = async (
     const content = await readFile(png);
 
     res.setHeader('Content-Type', 'image/png');
-    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Cache-Control', 'private, max-age=600');
 
     if (req.method === 'HEAD') {
       res.end();
@@ -303,6 +353,12 @@ export const files = (): Plugin => ({
 
       if (pathname === '/image') {
         await serveImageContent(req, res);
+
+        return;
+      }
+
+      if (pathname === '/thumb') {
+        await serveThumb(req, res);
 
         return;
       }

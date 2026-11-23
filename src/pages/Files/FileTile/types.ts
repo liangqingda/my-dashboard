@@ -2,7 +2,7 @@
  * 文件瓦片的 props。
  */
 
-import type { FileEntry } from '../types';
+import type { FileEntry, VideoOpenMode } from '../types';
 
 /** 网格里一条文件的入参 */
 export type FileTileProps = {
@@ -20,4 +20,8 @@ export type FileTileProps = {
   onEdit?: () => void;
   /** 请求删除这个文件（先弹二次确认） */
   onRequestDelete?: () => void;
+  /** 设置里选的播放器应用名：视频改用外部应用打开时，图标随它变 */
+  videoApp?: string;
+  /** 视频点击后去哪：`external` 时视频瓦片摆播放器图标，`preview` 时摆视频帧 */
+  videoOpenMode?: VideoOpenMode;
 };

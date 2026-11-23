@@ -4,7 +4,7 @@
 
 import type { DragEvent } from 'react';
 
-import type { AppEntry, FileEntry, FolderEntry } from '../types';
+import type { AppEntry, FileEntry, FolderEntry, VideoOpenMode } from '../types';
 
 /** 网格的入参 */
 export type DirectoryGridProps = {
@@ -18,6 +18,10 @@ export type DirectoryGridProps = {
   dragSource: string | null;
   /** 当前悬停的放置目标文件夹路径；null 表示没有目标 */
   dropTarget: string | null;
+  /** 设置里的播放器应用名：视频瓦片在外部模式下摆它的图标 */
+  videoApp: string;
+  /** 视频点击后去哪：决定视频瓦片是摆播放器图标还是摆视频帧 */
+  videoOpenMode: VideoOpenMode;
   /** 打开某个子文件夹 */
   onOpenFolder: (dir: string) => void;
   /** 打开某条视频（交给视频预览弹窗） */

@@ -242,6 +242,8 @@ const Files = () => {
             onRequestDeleteEntry={requestDelete}
             onRequestUninstallApp={appUninstall.requestUninstall}
             rows={tableRows}
+            videoApp={settings.videoApp}
+            videoOpenMode={settings.videoOpenMode}
           />
         ) : null}
       </Stack>

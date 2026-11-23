@@ -32,6 +32,8 @@ const FilesEntries = ({
   onOpenVideo,
   onRequestDeleteEntry,
   onRequestUninstallApp,
+  videoApp,
+  videoOpenMode,
 }: FilesEntriesProps) => (
   <ScrollArea
     className={isGridView ? styles.list : styles.tableList}
@@ -70,6 +72,8 @@ const FilesEntries = ({
         onOpenVideo={onOpenVideo}
         onRequestDeleteEntry={onRequestDeleteEntry}
         onRequestUninstallApp={onRequestUninstallApp}
+        videoApp={videoApp}
+        videoOpenMode={videoOpenMode}
       />
     ) : (
       <FilesTable

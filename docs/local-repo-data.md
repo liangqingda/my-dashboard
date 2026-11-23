@@ -166,11 +166,12 @@
 
 | 文件 | 职责 |
 | --- | --- |
-| `scripts/vite/files.ts` | 路由壳：`GET /api/files`（未带 `dir` 回落主目录）、`GET /api/files?dir=…`、`GET /api/files/content?path=…`（视频按 Range 流式读）、`GET /api/files/image?path=…`（图片字节）、`GET /api/files/video-apps`（能播视频的本机应用）、`GET /api/files/app-icon?path=…`（应用图标 PNG）、`GET /api/files/app-residue?path=…`（卸载残留清单）、`POST /api/files/pick-dir`（系统目录选择框）、`POST /api/files/new-folder`、`POST /api/files/rename`、`POST /api/files/move`、`POST /api/files/delete`、`POST /api/files/open`（交给外部播放器）、`POST /api/files/uninstall-app`、`POST /api/files/capture`（视频帧截图写目录，缺省桌面），错误归类成 HTTP 状态码 |
+| `scripts/vite/files.ts` | 路由壳：`GET /api/files`（未带 `dir` 回落主目录）、`GET /api/files?dir=…`、`GET /api/files/content?path=…`（视频按 Range 流式读）、`GET /api/files/image?path=…`（图片字节）、`GET /api/files/thumb?path=…`（图片 / 视频缩略图，网格用）、`GET /api/files/video-apps`（能播视频的本机应用）、`GET /api/files/app-icon?path=…`（应用图标 PNG）、`GET /api/files/app-residue?path=…`（卸载残留清单）、`POST /api/files/pick-dir`（系统目录选择框）、`POST /api/files/new-folder`、`POST /api/files/rename`、`POST /api/files/move`、`POST /api/files/delete`、`POST /api/files/open`（交给外部播放器）、`POST /api/files/uninstall-app`、`POST /api/files/capture`（视频帧截图写目录，缺省桌面），错误归类成 HTTP 状态码 |
 | `scripts/vite/files-store.ts` | 路径校验、条目归类、应用包从文件夹里分出来单独成列、文件夹直属条目计数与内含分类摘要（按扫描预算，供类型筛选过滤文件夹）、文件归类（视频 / PDF / Markdown / App / 其它）标记、选择器脚本拼装，以及新建 / 重命名 / 移动 / 删除的写盘与冲突拒绝、错误文案与错误码收口 |
 | `scripts/vite/files-apps.ts` | 应用包识别（`.app` 目录与指向它的符号链接）、Info.plist 解析（`plutil`）、残留推导（用户级与系统级）、卸载（先退应用再删整包与残留，权限不足时弹一次授权窗补删） |
 | `scripts/vite/files-app-icons.ts` | 应用图标按需抽取：从包内 `Contents/Resources` 找 `.icns`，`sips` 转成 PNG，按「包路径 + 修改时间」缓存在临时目录 |
 | `scripts/vite/files-video-apps.ts` | 能播视频的应用清单：扫 `/Applications`、`/System/Applications` 与 `~/Applications` 顶层的 `.app`，读 `Info.plist` 的 `CFBundleDocumentTypes`，声明了视频统一类型标识（或视频扩展名）的才算，按应用名去重；再剔掉 `EXCLUDED_VIDEO_APPS` 里那批「顺带能放视频、但不是播放器」的应用（网盘 / 阅读 / 聊天 / 音乐 / 系统 QuickTime） |
+| `scripts/vite/files-thumbs.ts` | 列表缩略图：图片用 `sips` 缩成 JPEG、视频用 `qlmanage` 抽 QuickLook 一帧，按「路径 + 体积 + 修改时间」缓存在临时目录，转码并发上限 2；转不出来的返回 null，前端回落分类图标 |
 | `scripts/vite/files-open.ts` | 外部打开：按「指定应用 → IINA → 系统默认」逐级回落，`open -a <app>` 成功即返回实际用上的应用名 |
 | `scripts/vite/files-media.ts` | 媒体侧只读 / 写盘：视频路径校验与 MIME、`Range` 解析、读流，以及把 PNG 截图写进指定目录（缺省桌面；文件名取本地时间，重名追加序号） |
 | `scripts/vite/files-space.ts` | 卷空间只读侧：解析 `df -kP` 的挂载点与可用块数、按 `/Volumes/` 前缀判定外接卷、拼出 `DirSpace` |
@@ -219,6 +220,13 @@
   以及把设置改成「外部应用」后点视频直接交给播放器（`useVideoPreview` 的分流，不开弹窗）；
   由页面的 `useVideoPreview` 接成提示；列表里指针停在视频条目上时还会用 `Range` 预取前 512KB 文件头
   （`src/pages/Files/utils/video-prefetch.ts`，同路径一分钟内只拉一次），点开时首帧不必再等一次往返。
+- **列表缩略图**：`GET /api/files/thumb?path=` 给网格瓦片出图——图片走 `sips` 缩到长边 256 的 JPEG，
+  视频走 `qlmanage -t` 让 QuickLook 抽一帧 PNG（用系统解码，前端的 `video + canvas` 拿不下的编码它也出得来）。
+  按「路径 + 体积 + 修改时间」缓存在临时目录，`Cache-Control: private, max-age=600`；转不出来返回 404，
+  前端（`utils/media-thumbs.ts` 拼 URL、`FileTile` 的 `onError`）回落分类图标。
+  网格里视频在「外部应用」模式下不摆帧，摆的是所选播放器的图标：`GET /api/files/app-icon?app=<应用名>`，
+  应用名由 `files-video-apps.ts` 的 `videoAppBundlePath` 映射成包路径，名字为空回落 IINA。
+  表格视图（`FilesTable`）仍是小号分类图标，不参与缩略图。
 - **可用空间**：`GET /api/files` 的 `listing.space` 同时下发启动卷 `/` 的剩余空间，以及当前目录
   所在的那一卷（只在它被判定为外接卷时给，`external` 为 `null` 表示目录就在启动卷上）。
   判定口径是「挂载点在 `/Volumes/` 下、且不等于启动卷的挂载点」，启动卷的 APFS 数据卷

@@ -4,7 +4,13 @@
 
 import type { DragEvent } from 'react';
 
-import type { AppEntry, FileEntry, FilesRow, FolderEntry } from '../types';
+import type {
+  AppEntry,
+  FileEntry,
+  FilesRow,
+  FolderEntry,
+  VideoOpenMode,
+} from '../types';
 
 /** 列表区入参：网格与表格共用同一套数据与事件 */
 export type FilesEntriesProps = {
@@ -22,6 +28,10 @@ export type FilesEntriesProps = {
   isGridView: boolean;
   /** 表格视图的行（文件夹 → 应用 → 文件） */
   rows: FilesRow[];
+  /** 设置里的播放器应用名：网格在外部模式下用它的图标 */
+  videoApp: string;
+  /** 视频点击后去哪：网格据此决定视频瓦片摆播放器图标还是视频帧 */
+  videoOpenMode: VideoOpenMode;
   /** 拖拽结束 */
   onDragEnd: () => void;
   /** 拖拽离开某文件夹 */

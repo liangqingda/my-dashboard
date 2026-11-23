@@ -45,6 +45,20 @@
   color: var(--mantine-color-blue-5);
 }
 
+/* 缩略图：与图标占同一块高度，等比缩放不裁切，四角按 Finder 的小圆角 */
+.thumb {
+  display: block;
+  width: 100%;
+  height: 74px;
+  border-radius: 6px;
+  object-fit: contain;
+}
+
+/* 播放器图标：正方形、保持原样居中，高度仍与缩略图齐平免得整行高低不一 */
+.appIcon {
+  width: 74px;
+}
+
 .body {
   display: flex;
   width: 100%;
