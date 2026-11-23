@@ -9,9 +9,11 @@
 
 import { readHttpErrorMessage } from '@/utils/error';
 
-import type { DirListing, FolderEntry } from '../types';
+import type { AppResidueReport, AppUninstallResult, DirListing, FolderEntry } from '../types';
 
 import {
+  normalizeAppResidueResponse,
+  normalizeAppUninstallResponse,
   normalizeCaptureResponse,
   normalizeEntryResponse,
   normalizeListingResponse,
@@ -28,6 +30,9 @@ const MOVE_ENDPOINT = '/api/files/move';
 const DELETE_ENDPOINT = '/api/files/delete';
 const CONTENT_ENDPOINT = '/api/files/content';
 const CAPTURE_ENDPOINT = '/api/files/capture';
+const APP_ICON_ENDPOINT = '/api/files/app-icon';
+const APP_RESIDUE_ENDPOINT = '/api/files/app-residue';
+const UNINSTALL_APP_ENDPOINT = '/api/files/uninstall-app';
 
 /** 取数请求的缓存策略：开发态必须实时，静态产物不读这个接口 */
 const REQUEST_INIT: RequestInit = import.meta.env.DEV
@@ -200,4 +205,60 @@ export const captureVideoFrame = async (dataUrl: string): Promise<string> => {
   }
 
   return name;
+};
+
+/**
+ * 应用图标的地址：中间件按需把 `.app` 里的 `.icns` 转成 PNG；
+ * 取不到时接口回 404，瓦片自己回落通用图标，不把地址当文件路径用。
+ */
+export const appIconUrl = (pathValue: string): string =>
+  `${APP_ICON_ENDPOINT}?path=${encodeURIComponent(pathValue)}`;
+
+/**
+ * 读取卸载前的残留清单：应用本体摘要 + 将一并删除的用户 / 系统级残留。
+ * 只用于确认弹窗展示，真正的删除目标由中间件重新算，前端不回传路径。
+ */
+export const fetchAppResidues = async (
+  pathValue: string,
+  signal?: AbortSignal,
+): Promise<AppResidueReport> => {
+  if (!import.meta.env.DEV) {
+    throw new Error('静态构建不支持读取本地目录，请在开发模式下打开');
+  }
+
+  const response = await fetch(
+    `${APP_RESIDUE_ENDPOINT}?path=${encodeURIComponent(pathValue)}`,
+    { ...REQUEST_INIT, signal },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      await readHttpErrorMessage(response, `读取应用残留失败（HTTP ${response.status}）`),
+    );
+  }
+
+  const report = normalizeAppResidueResponse(await readJson(response));
+
+  if (report === null) {
+    throw new Error('应用残留数据格式不符合预期');
+  }
+
+  return report;
+};
+
+/**
+ * 卸载一个应用包：中间件删整包并清理残留，权限不足时会弹一次 macOS 授权窗。
+ * 返回逐项结果，由调用方决定提示「已卸载」还是「部分残留未删掉」。
+ */
+export const uninstallApp = async (
+  pathValue: string,
+): Promise<AppUninstallResult> => {
+  const payload = await postJson(UNINSTALL_APP_ENDPOINT, { path: pathValue });
+  const result = normalizeAppUninstallResponse(payload);
+
+  if (result === null) {
+    throw new Error('卸载回执格式不符合预期');
+  }
+
+  return result;
 };

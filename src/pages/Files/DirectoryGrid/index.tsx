@@ -1,5 +1,6 @@
 import type { DragEvent } from 'react';
 
+import AppTile from '../AppTile';
 import FileTile from '../FileTile';
 import FolderTile from '../FolderTile';
 
@@ -16,12 +17,13 @@ const allowMoveOverGrid = (event: DragEvent<HTMLDivElement>) => {
 };
 
 /**
- * 目录网格：子文件夹排在前、文件排在后，自适应列宽铺满内容区。
- * 改名统一走弹窗，不改动网格位置；条目可拖拽，文件夹是放置目标。
- * 拖拽落在空白处不触发移动，等同取消。
+ * 目录网格：子文件夹排在前、应用其次、文件排在后，自适应列宽铺满内容区。
+ * 改名统一走弹窗，不改动网格位置；文件夹与文件可拖拽，文件夹是放置目标；
+ * 应用只展示与卸载，不参与拖拽移动。拖拽落在空白处不触发移动，等同取消。
  * 条目数量已经整份在客户端，不做分页或虚拟滚动（见 `docs/pages.md`）。
  */
 const DirectoryGrid = ({
+  apps,
   dragSource,
   dropTarget,
   files,
@@ -35,6 +37,7 @@ const DirectoryGrid = ({
   onOpenFolder,
   onOpenVideo,
   onRequestDeleteEntry,
+  onRequestUninstallApp,
 }: DirectoryGridProps) => (
   <div className={styles.grid} onDragOver={allowMoveOverGrid}>
     {folders.map((folder) => (
@@ -51,6 +54,13 @@ const DirectoryGrid = ({
         onEdit={() => onEditEntry(folder)}
         onOpen={onOpenFolder}
         onRequestDelete={() => onRequestDeleteEntry(folder.path)}
+      />
+    ))}
+    {apps.map((app) => (
+      <AppTile
+        app={app}
+        key={app.path}
+        onRequestUninstall={() => onRequestUninstallApp(app)}
       />
     ))}
     {files.map((file) => (

@@ -5,6 +5,7 @@
  */
 
 import {
+  IconApps,
   IconFile,
   IconFileText,
   IconMarkdown,
@@ -42,12 +43,14 @@ export const FILE_CATEGORY_LABELS: Record<FileCategory, string> = {
   video: '视频',
   pdf: 'PDF',
   markdown: 'Markdown',
+  app: 'App',
   other: '其它',
 };
 
 /** 条目类型 → 中文名词：表格「类别」列与操作按钮 tooltip 共用同一份 */
 export const ENTRY_KIND_LABELS = {
   folder: '文件夹',
+  app: '应用',
   file: '文件',
 } as const;
 
@@ -72,7 +75,7 @@ export const FILE_CATEGORY_OPTIONS = (
 ).map((value) => ({ value, label: FILE_CATEGORY_LABELS[value] }));
 
 /**
- * 类型筛选的排除项（取消勾选的分类，刷新后保留；空数组表示四类全显示）。
+ * 类型筛选的排除项（取消勾选的分类，刷新后保留；空数组表示各档全显示）。
  * 键名带 `excluded`：旧的「已选分类」存的是白名单，含义相反，不能沿用同一个键。
  */
 export const TYPE_FILTER_STORAGE_KEY = scopedStorageKey(
@@ -80,10 +83,11 @@ export const TYPE_FILTER_STORAGE_KEY = scopedStorageKey(
   'type-filter-excluded',
 );
 
-/** 分类 → 瓦片图标；视频额外上蓝色，其余用通用弱色 */
+/** 分类 → 瓦片图标；视频额外上蓝色，应用走通用应用图标，其余用通用弱色 */
 export const CATEGORY_ICONS: Record<FileCategory, typeof IconFile> = {
   video: IconVideo,
   pdf: IconFileText,
   markdown: IconMarkdown,
+  app: IconApps,
   other: IconFile,
 };

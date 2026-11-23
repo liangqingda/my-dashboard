@@ -21,7 +21,7 @@ export type FilesActionsProps = {
   favoriteDisabled: boolean;
   /** 收藏的目录列表，排成收藏面板的条目 */
   favorites: FavoriteEntry[];
-  /** 类型筛选的排除项（取消勾选的分类）；空数组表示四类全显示 */
+  /** 类型筛选的排除项（取消勾选的分类）；空数组表示各档全显示 */
   excludedCategories: FileCategory[];
   /** 文件名关键词；空串表示不按关键词过滤 */
   keyword: string;

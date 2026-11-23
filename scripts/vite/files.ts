@@ -1,22 +1,28 @@
 /**
- * 文件浏览页插件：把本机指定目录下的文件夹与文件暴露给前端。
+ * 文件浏览页插件：把本机指定目录下的文件夹、应用与文件暴露给前端。
  *
  * - `GET /api/files`：列用户主目录；
- * - `GET /api/files?dir=<绝对路径>`：列指定目录（含子文件夹直属条目数、文件大小与修改时间，
+ * - `GET /api/files?dir=<绝对路径>`：列指定目录（含子文件夹直属条目数、应用包摘要、文件大小与修改时间，
  *   以及启动卷 / 外接卷的剩余可用空间 `space`）；
  * - `GET /api/files/content?path=<绝对路径>`：按 HTTP Range 流式读一个视频文件（只在开发模式）；
+ * - `GET /api/files/app-icon?path=<.app 路径>`：把应用包里的 `.icns` 转成 PNG 返回（带缓存）；
+ * - `GET /api/files/app-residue?path=<.app 路径>`：列卸载会一并删掉的残留（应用数据 / 缓存 / 偏好设置等）；
  * - `POST /api/files/pick-dir`：调起 macOS 系统目录选择框，body `{ dir }` 作为默认定位目录，返回选中目录的绝对路径（取消返回 cancelled）；
  * - `POST /api/files/new-folder`：在 body `{ dir }` 目录下新建文件夹，返回新条目；
  * - `POST /api/files/rename`：body `{ path, name }` 重命名一条条目；
  * - `POST /api/files/move`：body `{ source, targetDir }` 把一条条目移入目标目录；
  * - `POST /api/files/delete`：body `{ path }` 删除一条条目，文件夹连同内部内容递归删除；
+ * - `POST /api/files/uninstall-app`：body `{ path }` 卸载应用包并清理残留，权限不足时弹一次授权窗补删；
  * - `POST /api/files/capture`：body `{ dataUrl }` 把一帧 PNG 截图写进桌面，返回文件名与路径。
  *
  * 写操作与媒体接口仅限开发服务器中间件，静态构建不带这些接口；列表只给摘要，视频内容按需流式读取。
  */
 
+import { readFile } from 'node:fs/promises';
 import type { Plugin } from 'vite';
 
+import { appIconPng } from './files-app-icons.js';
+import { scanAppResidues, uninstallAppBundle } from './files-apps.js';
 import { openVideoFile, openVideoStream, parseByteRange, saveCapture } from './files-media.js';
 import {
   createFolder,
@@ -165,8 +171,49 @@ const serveVideoContent = async (
 };
 
 /**
+ * 应用图标：取 `.icns` 转好的 PNG 缓存按二进制返回。
+ * 没有可用图标时 404，前端回落通用应用图标，不拖垮条目本身。
+ */
+const serveAppIcon = async (
+  req: import('node:http').IncomingMessage,
+  res: import('node:http').ServerResponse,
+): Promise<void> => {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    sendJsonError(res, 405, '不支持的请求方法');
+
+    return;
+  }
+
+  const url = new URL(req.url ?? '', 'http://localhost');
+  const png = await appIconPng(url.searchParams.get('path') ?? '');
+
+  if (png === null) {
+    sendJsonError(res, 404, '没有可用的应用图标');
+
+    return;
+  }
+
+  try {
+    const content = await readFile(png);
+
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'no-store');
+
+    if (req.method === 'HEAD') {
+      res.end();
+
+      return;
+    }
+
+    res.end(content);
+  } catch {
+    sendJsonError(res, 500, '读取应用图标失败');
+  }
+};
+
+/**
  * 目录浏览插件：读盘归类走 `files-store.ts`，视频流与截图走 `files-media.ts`，
- * 这里只做请求解析、错误归类与响应收口。
+ * 应用包与卸载走 `files-apps.ts`，这里只做请求解析、错误归类与响应收口。
  */
 export const files = (): Plugin => ({
   name: 'files',
@@ -176,6 +223,39 @@ export const files = (): Plugin => ({
 
       if (pathname === '/content') {
         await serveVideoContent(req, res);
+
+        return;
+      }
+
+      if (pathname === '/app-icon') {
+        await serveAppIcon(req, res);
+
+        return;
+      }
+
+      if (pathname === '/app-residue') {
+        if (req.method !== 'GET') {
+          res.statusCode = 405;
+          res.end(JSON.stringify({ message: '不支持的请求方法' }));
+
+          return;
+        }
+
+        try {
+          const appPath = new URL(req.url ?? '', 'http://localhost').searchParams.get(
+            'path',
+          );
+          const report = await scanAppResidues(appPath ?? '');
+
+          res.end(JSON.stringify({ report }));
+        } catch (error) {
+          res.statusCode = statusForReadError(error);
+          res.end(
+            JSON.stringify({
+              message: error instanceof Error ? error.message : '读取应用残留失败',
+            }),
+          );
+        }
 
         return;
       }
@@ -225,6 +305,7 @@ export const files = (): Plugin => ({
         pathname === '/rename' ||
         pathname === '/move' ||
         pathname === '/delete' ||
+        pathname === '/uninstall-app' ||
         pathname === '/capture'
       ) {
         if (req.method !== 'POST') {
@@ -269,10 +350,14 @@ export const files = (): Plugin => ({
             );
 
             res.end(JSON.stringify({ ok: true }));
-          } else {
+          } else if (pathname === '/delete') {
             await deleteEntry(bodyString(body, 'path'));
 
             res.end(JSON.stringify({ ok: true }));
+          } else {
+            const result = await uninstallAppBundle(bodyString(body, 'path'));
+
+            res.end(JSON.stringify({ result }));
           }
         } catch (error) {
           res.statusCode = statusForReadError(error);

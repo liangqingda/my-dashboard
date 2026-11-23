@@ -1,5 +1,11 @@
 import assert from 'node:assert/strict';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import {
+  mkdir,
+  mkdtemp,
+  rm,
+  symlink,
+  writeFile,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { after, before, describe, it } from 'node:test';
@@ -206,6 +212,36 @@ describe('files-store', () => {
       () => moveEntry(sub.path, child.path),
       /自身或其子文件夹/,
     );
+  });
+
+  it('应用包单独成列：不进文件夹、可来自符号链接，父文件夹摘要带上 app', async () => {
+    const zone = await mkdtemp(path.join(tmpdir(), 'files-store-apps-'));
+
+    try {
+      await mkdir(path.join(zone, 'Inner.app', 'Contents'), { recursive: true });
+      await mkdir(path.join(zone, 'Apps', 'Nested.app'), { recursive: true });
+      await symlink(
+        path.join(zone, 'Inner.app'),
+        path.join(zone, 'Linked.app'),
+      );
+
+      const listing = await listDirectory(zone);
+
+      assert.deepEqual(
+        listing.apps.map((app) => [app.name, app.system]),
+        [
+          ['Inner', false],
+          ['Linked', false],
+        ],
+      );
+      assert.deepEqual(
+        listing.folders.map((folder) => [folder.name, folder.categories]),
+        [['Apps', ['app']]],
+      );
+      assert.deepEqual(listing.files, []);
+    } finally {
+      await rm(zone, { force: true, recursive: true });
+    }
   });
 
   it('删除：空文件夹直接删除；非空文件夹连同内部文件与子文件夹递归删除；不存在的路径报错', async () => {

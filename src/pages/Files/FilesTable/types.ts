@@ -4,11 +4,11 @@
 
 import type { DragEvent } from 'react';
 
-import type { FileEntry, FilesRow, FolderEntry } from '../types';
+import type { AppEntry, FileEntry, FilesRow, FolderEntry } from '../types';
 
 /** 表格的入参：数据与事件都与网格一致，只是换一种排布 */
 export type FilesTableProps = {
-  /** 筛选后的行：文件夹在前、文件在后（见 `toFilesRows`） */
+  /** 筛选后的行：文件夹在前、应用其次、文件在后（见 `toFilesRows`） */
   rows: FilesRow[];
   /** 当前拖拽源条目路径；null 表示没在拖拽 */
   dragSource: string | null;
@@ -25,11 +25,13 @@ export type FilesTableProps = {
   /** 拖拽经过某文件夹 */
   onDragOverFolder: (path: string, event: DragEvent<HTMLElement>) => void;
   /** 拖拽离开某文件夹 */
-  onDragLeaveFolder: () => void;
+  onDragLeaveFolder: (path: string) => void;
   /** 松手放入某文件夹 */
   onDropFolder: (path: string) => void;
   /** 重命名某个条目（弹窗改名） */
   onEditEntry: (entry: FolderEntry | FileEntry) => void;
+  /** 请求卸载某个应用（先弹二次确认并列出残留） */
+  onRequestUninstallApp: (app: AppEntry) => void;
   /** 请求删除某个条目（先弹二次确认） */
   onRequestDeleteEntry: (path: string) => void;
 };

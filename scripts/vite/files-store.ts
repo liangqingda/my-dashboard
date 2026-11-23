@@ -14,13 +14,16 @@ import { promisify } from 'node:util';
 
 import type { Dirent } from 'node:fs';
 
+import { describeAppEntry, isAppBundleName } from './files-apps.ts';
+import type { AppEntry } from './files-apps.ts';
+
 const execFileAsync = promisify(execFile);
 
 /** 文件归类：前端按这一档换图标、做类型筛选；认不出扩展名的落 `other` */
-export type FileCategory = 'video' | 'pdf' | 'markdown' | 'other';
+export type FileCategory = 'video' | 'pdf' | 'markdown' | 'app' | 'other';
 
 /** 各分类识别的扩展名（小写、带点）；归类只看扩展名，不读文件内容 */
-const CATEGORY_EXTENSIONS: Readonly<Record<Exclude<FileCategory, 'other'>, readonly string[]>> = {
+const CATEGORY_EXTENSIONS: Readonly<Record<Exclude<FileCategory, 'app' | 'other'>, readonly string[]>> = {
   video: [
     '.mp4',
     '.mov',
@@ -45,6 +48,7 @@ const CATEGORY_ORDER: readonly FileCategory[] = [
   'video',
   'pdf',
   'markdown',
+  'app',
   'other',
 ];
 
@@ -91,6 +95,8 @@ export type DirListing = {
   parent: string | null;
   /** 子文件夹（按名称排序） */
   folders: FolderEntry[];
+  /** 直属应用包（`.app`，按显示名排序）；单独成列，不混进文件夹 */
+  apps: AppEntry[];
   /** 直属文件（按名称排序） */
   files: FileEntry[];
 };
@@ -218,7 +224,7 @@ const readEntries = async (dir: string): Promise<Dirent[]> => {
 
 /**
  * 扫描一个文件夹：直属条目数（文件夹 + 文件，不含隐藏项与符号链接），
- * 以及内部出现过的文件分类。分类按层往下找，找到四类就提前结束，
+ * 以及内部出现过的文件分类。分类按层往下找，各档都见到就提前结束，
  * 累计到预算上限或走完层数上限时按已发现的算——只服务于类型筛选的「露不露出这个文件夹」。
  * 读不到按空文件夹处理。
  */
@@ -233,6 +239,13 @@ const scanFolder = async (
   for (const entry of entries) {
     if (entry.isDirectory()) {
       itemCount += 1;
+
+      // 应用包按一条应用算，不往包里面扫：包里动辄几千个文件，分类也没有意义
+      if (isAppBundleName(entry.name)) {
+        found.add('app');
+        continue;
+      }
+
       folders.push(path.join(dir, entry.name));
       continue;
     }
@@ -271,7 +284,12 @@ const scanFolder = async (
         if (entry.isFile()) {
           found.add(categoryForName(entry.name));
         } else if (entry.isDirectory()) {
-          next.push(path.join(current, entry.name));
+          // 深层遇到的 .app 同样只算一档分类，不再往里扫
+          if (isAppBundleName(entry.name)) {
+            found.add('app');
+          } else {
+            next.push(path.join(current, entry.name));
+          }
         }
       }
 
@@ -305,14 +323,29 @@ export const listDirectory = async (input: string): Promise<DirListing> => {
   }
 
   const folders: FolderEntry[] = [];
+  const apps: AppEntry[] = [];
   const files: FileEntry[] = [];
 
   for (const entry of entries) {
-    if (isHiddenName(entry.name) || entry.isSymbolicLink()) {
+    if (isHiddenName(entry.name)) {
       continue;
     }
 
     const entryPath = path.join(dir, entry.name);
+
+    // 应用包既是目录、又通常是符号链接：先按应用识别，识别不出（例如只是个普通文件）再落回文件
+    if (isAppBundleName(entry.name)) {
+      const app = await describeAppEntry(entryPath, entry.name);
+
+      if (app !== null) {
+        apps.push(app);
+        continue;
+      }
+    }
+
+    if (entry.isSymbolicLink()) {
+      continue;
+    }
 
     if (entry.isDirectory()) {
       folders.push({
@@ -341,11 +374,12 @@ export const listDirectory = async (input: string): Promise<DirListing> => {
   }
 
   folders.sort((a, b) => a.name.localeCompare(b.name));
+  apps.sort((a, b) => a.name.localeCompare(b.name));
   files.sort((a, b) => a.name.localeCompare(b.name));
 
   const parent = path.dirname(dir) === dir ? null : path.dirname(dir);
 
-  return { folders, name: path.basename(dir), parent, path: dir, files };
+  return { apps, folders, name: path.basename(dir), parent, path: dir, files };
 };
 
 /** 未指定目录时的默认起点：当前用户主目录 */

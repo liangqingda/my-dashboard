@@ -17,7 +17,19 @@ export type FolderEntry = {
 };
 
 /** 文件归类：与中间件 `FileCategory` 同一套档位，用于区分图标与类型筛选 */
-export type FileCategory = 'video' | 'pdf' | 'markdown' | 'other';
+export type FileCategory = 'video' | 'pdf' | 'markdown' | 'app' | 'other';
+
+/** 列表里的一条应用包（`.app`） */
+export type AppEntry = {
+  /** 显示名：文件名的 `.app` 后缀已去掉 */
+  name: string;
+  /** 应用包绝对路径，卸载时原样回传给中间件 */
+  path: string;
+  /** 包的最后修改时间（ISO 8601） */
+  updatedAt: string;
+  /** 是否系统自带：这类应用不给卸载入口 */
+  system: boolean;
+};
 
 /** 列表里的一条文件 */
 export type FileEntry = {
@@ -61,6 +73,8 @@ export type DirListing = {
   parent: string | null;
   /** 子文件夹（按名称排序） */
   folders: FolderEntry[];
+  /** 直属应用包（按显示名排序） */
+  apps: AppEntry[];
   /** 直属文件（按名称排序） */
   files: FileEntry[];
   /** 启动卷 / 外接卷的剩余空间；读不到时为 null，页面不显示这段描述 */
@@ -108,7 +122,41 @@ export type UseFilesViewModeResult = {
   toggle: () => void;
 };
 
-/** 表格的一行：一个条目一行，文件夹在前、文件在后（与网格同一顺序） */
+/** 表格的一行：一个条目一行，文件夹在前、应用其次、文件在后（与网格同一顺序） */
 export type FilesRow =
   | { kind: 'folder'; folder: FolderEntry }
+  | { kind: 'app'; app: AppEntry }
   | { kind: 'file'; file: FileEntry };
+
+/** 卸载前扫出来的一条残留 */
+export type AppResidue = {
+  /** 绝对路径 */
+  path: string;
+  /** 中文说明，直接进确认弹窗 */
+  label: string;
+};
+
+/** 应用卸载前的中介报告：应用本体摘要 + 将一并删除的残留 */
+export type AppResidueReport = {
+  /** 应用本体摘要 */
+  app: {
+    /** 显示名 */
+    name: string;
+    /** 应用包绝对路径 */
+    path: string;
+    /** bundle id；读不到时为 null */
+    bundleId: string | null;
+    /** 是否系统自带（这类应用不给卸载入口） */
+    system: boolean;
+  };
+  /** 应用本体之外、将一并删除的残留 */
+  residues: AppResidue[];
+};
+
+/** 卸载结果 */
+export type AppUninstallResult = {
+  /** 已删除的绝对路径 */
+  removed: string[];
+  /** 删除失败的条目 */
+  failed: { path: string; message: string }[];
+};

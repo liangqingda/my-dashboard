@@ -3,6 +3,7 @@
  */
 
 import type {
+  AppEntry,
   DirSpace,
   FileCategory,
   FileEntry,
@@ -91,6 +92,13 @@ export const filterFilesByCategory = (
   return files.filter((file) => !hidden.has(file.category));
 };
 
+/** 按排除项过滤应用：只有「App」这一档管它，取消勾选就把应用整份隐藏 */
+export const filterAppsByCategory = (
+  apps: AppEntry[],
+  excluded: FileCategory[],
+): AppEntry[] =>
+  excluded.includes('app') ? [] : apps;
+
 /**
  * 按排除项过滤文件夹：只要文件夹里还有没被排除的类型就留下（含深层，靠中间件给的分类摘要）；
  * 空排除项表示全部显示，整份保留，空文件夹也不例外。
@@ -124,11 +132,27 @@ export const filterFilesByKeyword = (
   return files.filter((file) => file.name.toLowerCase().includes(query));
 };
 
-/** 把筛选后的文件夹与文件拼成表格行：文件夹在前、文件在后，与网格同一顺序 */
+/** 按应用显示名过滤；口径与文件关键词一致（大小写不敏感子串匹配） */
+export const filterAppsByKeyword = (
+  apps: AppEntry[],
+  keyword: string,
+): AppEntry[] => {
+  const query = keyword.trim().toLowerCase();
+
+  if (query === '') {
+    return apps;
+  }
+
+  return apps.filter((app) => app.name.toLowerCase().includes(query));
+};
+
+/** 把筛选后的文件夹、应用与文件拼成表格行：文件夹在前、应用其次、文件在后，与网格同一顺序 */
 export const toFilesRows = (
   folders: FolderEntry[],
+  apps: AppEntry[],
   files: FileEntry[],
 ): FilesRow[] => [
   ...folders.map((folder) => ({ kind: 'folder' as const, folder })),
+  ...apps.map((app) => ({ kind: 'app' as const, app })),
   ...files.map((file) => ({ kind: 'file' as const, file })),
 ];

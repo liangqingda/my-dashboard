@@ -6,6 +6,10 @@
 
 import { FILE_CATEGORY_OPTIONS } from '../constants';
 import type {
+  AppEntry,
+  AppResidue,
+  AppResidueReport,
+  AppUninstallResult,
   DirListing,
   DirSpace,
   FileCategory,
@@ -64,6 +68,27 @@ const normalizeFolder = (raw: unknown): FolderEntry | null => {
     itemCount: asNumber(raw.itemCount),
     name,
     path,
+  };
+};
+
+/** 归一化一条应用包；路径或名字缺失时丢弃，`system` 只认布尔真值 */
+const normalizeApp = (raw: unknown): AppEntry | null => {
+  if (!isObject(raw)) {
+    return null;
+  }
+
+  const name = asString(raw.name);
+  const path = asString(raw.path);
+
+  if (!name || !path) {
+    return null;
+  }
+
+  return {
+    name,
+    path,
+    system: raw.system === true,
+    updatedAt: asString(raw.updatedAt),
   };
 };
 
@@ -142,6 +167,13 @@ const normalizeListing = (raw: unknown): DirListing | null => {
   const parent = asString(raw.parent);
 
   return {
+    apps: Array.isArray(raw.apps)
+      ? raw.apps.flatMap((item) => {
+          const app = normalizeApp(item);
+
+          return app ? [app] : [];
+        })
+      : [],
     folders: Array.isArray(raw.folders)
       ? raw.folders.flatMap((item) => {
           const folder = normalizeFolder(item);
@@ -210,4 +242,80 @@ export const normalizeCaptureResponse = (payload: unknown): string | null => {
   return isObject(capture) && typeof capture.name === 'string' && capture.name
     ? capture.name
     : null;
+};
+
+/** 归一化一条残留；路径缺失时丢弃 */
+const normalizeResidue = (raw: unknown): AppResidue | null => {
+  if (!isObject(raw)) {
+    return null;
+  }
+
+  const path = asString(raw.path);
+  const label = asString(raw.label);
+
+  return path ? { label: label || '残留', path } : null;
+};
+
+/** 归一化 `{ report }` 应用残留响应体：应用名或路径缺失返回 null */
+export const normalizeAppResidueResponse = (
+  payload: unknown,
+): AppResidueReport | null => {
+  const report = isObject(payload) ? payload.report : null;
+
+  if (!isObject(report) || !isObject(report.app)) {
+    return null;
+  }
+
+  const name = asString(report.app.name);
+  const path = asString(report.app.path);
+
+  if (!name || !path) {
+    return null;
+  }
+
+  return {
+    app: {
+      bundleId: asString(report.app.bundleId) || null,
+      name,
+      path,
+      system: report.app.system === true,
+    },
+    residues: Array.isArray(report.residues)
+      ? report.residues.flatMap((item) => {
+          const residue = normalizeResidue(item);
+
+          return residue ? [residue] : [];
+        })
+      : [],
+  };
+};
+
+/** 归一化 `{ result }` 卸载响应体；结构不合格返回 null，调用方按错误态收口 */
+export const normalizeAppUninstallResponse = (
+  payload: unknown,
+): AppUninstallResult | null => {
+  const result = isObject(payload) ? payload.result : null;
+
+  if (!isObject(result)) {
+    return null;
+  }
+
+  return {
+    failed: Array.isArray(result.failed)
+      ? result.failed.flatMap((item) => {
+          if (!isObject(item)) {
+            return [];
+          }
+
+          const path = asString(item.path);
+
+          return path
+            ? [{ message: asString(item.message) || '删除失败', path }]
+            : [];
+        })
+      : [],
+    removed: Array.isArray(result.removed)
+      ? result.removed.filter((item): item is string => typeof item === 'string')
+      : [],
+  };
 };

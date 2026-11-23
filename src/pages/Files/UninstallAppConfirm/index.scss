@@ -1,0 +1,6 @@
+/* 卸载确认里的应用路径与残留路径：长路径整段换行，不撑破弹窗宽度 */
+
+.appPath,
+.residuePath {
+  word-break: break-all;
+}
