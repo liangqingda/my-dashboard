@@ -35,7 +35,10 @@ const ICON_STROKE = 1.8;
 const STEP_ICON_SIZE = 18;
 
 /** 翻篇箭头的 tip 只亮这么久就自己收掉：常挂在播放条上会挡住进度 */
-const STEP_TIP_DURATION = 1500;
+const STEP_TIP_DURATION = 500;
+
+/** 竖向音量条的高度：只够看刻度与拖动，不像进度条那样占半个画面 */
+const VOLUME_SLIDER_HEIGHT = 56;
 
 const VideoControls = ({
   currentTime,
@@ -123,7 +126,6 @@ const VideoControls = ({
         <div className={styles.volumePanel}>
           <Slider
             aria-label="音量"
-            className={styles.volume}
             disabled={!enabled}
             label={(value: number) => `${Math.round(value * 100)}%`}
             max={1}
@@ -131,6 +133,8 @@ const VideoControls = ({
             orientation="vertical"
             size="xs"
             step={0.01}
+            /* 竖向滑杆的高度只能走 styles 覆盖：Mantine 自己给竖版写死 200px，模块类压不过它 */
+            styles={{ root: { height: VOLUME_SLIDER_HEIGHT } }}
             thumbLabel="音量"
             value={muted ? 0 : volume}
           />

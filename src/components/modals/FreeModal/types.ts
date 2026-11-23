@@ -120,6 +120,11 @@ export type FreeModalProps = {
   closeButton?: boolean;
   /** Esc 是否关闭，默认是；上层浮层打开时由调用方关掉 */
   closeOnEscape?: boolean;
+  /**
+   * 点遮罩是否关窗（默认关）。媒体预览关掉它：切到别的应用再切回来、
+   * 或者从别处拉播放器时，落点很容易落在遮罩上，一次误点就把预览关了。
+   */
+  closeOnClickOutside?: boolean;
   /** 空格是否关闭，默认跟随 `closeOnEscape`（编辑态、上层浮层开着时一起收掉） */
   closeOnSpace?: boolean;
   /** 整组收掉翻页 / 全屏快捷键（加载中、上层浮层开着时传 false） */

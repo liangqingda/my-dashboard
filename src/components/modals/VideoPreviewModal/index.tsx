@@ -228,6 +228,7 @@ const VideoPreviewModal = ({
 
   return (
     <FreeModal
+      closeOnClickOutside={false}
       closeOnEscape={!fullscreen && !settingsOpen && !blocked}
       closeOnSpace={settings.spaceMode === 'close' && !settingsOpen && !blocked}
       fullscreen={{ active: fullscreen, onToggle: toggleFullscreen }}

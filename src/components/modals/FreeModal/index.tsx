@@ -49,6 +49,7 @@ const FreeModal = ({
   children,
   closeButton = true,
   closeLabel = '关闭',
+  closeOnClickOutside = true,
   closeOnEscape = true,
   closeOnSpace,
   contentClassName,
@@ -134,6 +135,7 @@ const FreeModal = ({
         title: styles.title,
       }}
       closeButtonProps={{ 'aria-label': closeLabel }}
+      closeOnClickOutside={closeOnClickOutside}
       closeOnEscape={closeOnEscape}
       fullScreen={fullscreen?.active ?? false}
       onClose={onClose}

@@ -63,11 +63,19 @@ const ImagePreviewModal = ({
     return null;
   }
 
-  const previousItem = index > 0 ? items[index - 1] : null;
-  const nextItem = index < items.length - 1 ? items[index + 1] : null;
+  /*
+   * 翻篇首尾相接：最后一张再往后回到第一张，第一张往前回到最后一张。
+   * 只有一张时不循环（否则「下一张」会原地重开，等于按了没反应）。
+   */
+  const canCycle = items.length > 1;
+  const previousItem = canCycle
+    ? items[(index - 1 + items.length) % items.length]
+    : null;
+  const nextItem = canCycle ? items[(index + 1) % items.length] : null;
 
   return (
     <FreeModal
+      closeOnClickOutside={false}
       closeOnEscape={!fullscreen && !blocked}
       closeOnSpace={!blocked}
       fullscreen={{ active: fullscreen, onToggle: toggle }}

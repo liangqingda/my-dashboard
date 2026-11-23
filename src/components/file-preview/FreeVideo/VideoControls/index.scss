@@ -32,13 +32,17 @@
 
 /*
  * 音量条平时不占横向空间，指针停在喇叭上才往上浮出，竖着排（下 0 上 100）。
+ * 左右两侧撑满 wrap 并居中：音量条正对着喇叭的中心线，看起来才是一条而不是偏在一侧。
  * 容器留一段透明内边距当「过桥」：指针从喇叭往上移进音量条时不会经过空白掉出悬停范围。
  */
 .volumePopover {
   position: absolute;
   right: 0;
   bottom: 100%;
+  left: 0;
   z-index: 1;
+  display: flex;
+  justify-content: center;
   padding-bottom: 8px;
   visibility: hidden;
   opacity: 0;
@@ -61,8 +65,4 @@
   border-radius: 10px;
   background: var(--app-surface);
   box-shadow: 0 8px 20px rgb(23 37 34 / 18%);
-}
-
-.volume {
-  height: 88px;
 }
