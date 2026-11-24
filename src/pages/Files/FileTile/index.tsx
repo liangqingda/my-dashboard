@@ -72,7 +72,7 @@ const FileTile = memo(
           <Icon
             aria-hidden="true"
             className={cx(styles.icon, isMedia && styles.iconMedia)}
-            size={48}
+            size={64}
             stroke={1.2}
           />
         ) : (

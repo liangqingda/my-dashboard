@@ -80,7 +80,7 @@ const FolderTile = memo(
         <IconFolderFilled
           aria-hidden="true"
           className={styles.icon}
-          size={48}
+          size={64}
           stroke={1.2}
         />
         <span className={styles.body}>

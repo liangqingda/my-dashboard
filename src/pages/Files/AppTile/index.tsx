@@ -42,7 +42,7 @@ const AppTile = memo(
       disabled={launching}
       onClick={onOpen}
     >
-      <AppIcon app={app} className={styles.icon} size={48} />
+      <AppIcon app={app} className={styles.icon} size={64} />
       <span className={styles.body}>
         <FreeTruncatedText
           className={styles.name}
