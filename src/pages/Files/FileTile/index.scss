@@ -26,16 +26,24 @@
   cursor: pointer;
 }
 
-/* hover 遮罩：盖住图源（缩略图 / 视频帧 / 播放器图标），文字与操作按钮压在它上面 */
+/*
+ * hover 玻璃层：盖住图源（缩略图 / 视频帧 / 播放器图标），文字与操作按钮压在它上面。
+ * 观感对齐 macOS 的 vibrancy——模糊底层画面 + 极淡冷色 + 一圈细高光，而不是压一块黑。
+ */
 .veil {
   position: absolute;
   z-index: 1;
   inset: 0;
+  /* 细高光描边模拟玻璃边缘：内亮外淡，深色底上不会糊成一团 */
+  box-sizing: border-box;
+  border: 1px solid rgb(255 255 255 / 12%);
   border-radius: 8px;
-  background: rgb(0 0 0 / 45%);
+  background: rgb(255 255 255 / 6%);
+  -webkit-backdrop-filter: blur(14px) saturate(130%);
+  backdrop-filter: blur(14px) saturate(130%);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 120ms ease;
+  transition: opacity 140ms ease;
 }
 
 .wrapper:hover .veil {
