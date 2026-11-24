@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 
 import DragGhost from '../DragGhost';
+import PendingFlyLayer from '../PendingFly';
 import PendingTray from '../PendingTray';
 
 import type { FilesDragLayersProps } from './types';
@@ -8,16 +9,17 @@ import type { FilesDragLayersProps } from './types';
 import styles from './index.scss';
 
 /**
- * 拖拽的两层浮层：顶部悬浮的待拖拽区 + 跟着指针走的拖拽影像，外加两者的收尾联动。
+ * 拖拽的三层浮层：覆盖侧栏的待拖拽区 + 跟着指针走的拖拽影像 + 点选加入时的飞入动画，
+ * 外加它们与移动会话的收尾联动。
  *
  * 为什么单独一层：它们都是 `position: fixed` 的浮层，跟列表的布局无关，
  * 挂在页面最外层（弹窗之上都由这一层统一处理），页面只负责把状态递进来。
  *
- * 收尾：移动会话结束（成功移入或关窗）就把待拖拽区清空——那一批条目已经各有去处。
+ * 收尾只摘掉这次**真正移成功**的条目（`movedPaths`）：关窗、Esc 取消时攒下的那些要留着。
  * 弹窗开着时待拖拽区只藏不卸：正在拖的条目就握在这条里，卸载等于取消整次拖拽。
  */
 const FilesDragLayers = ({ entryActions, pending }: FilesDragLayersProps) => {
-  const { dragActive, endDrag, session } = entryActions.dragMove;
+  const { dragActive, endDrag, movedPaths, session } = entryActions.dragMove;
   /** 起拖入口在条目动作编排上（它同时管拖拽源高亮），不在移动会话里 */
   const { dragStartEntries } = entryActions;
   /** 会话开过一次就置位：关掉时才清空待拖拽区（刚攒条目时不应该被清） */
@@ -30,11 +32,17 @@ const FilesDragLayers = ({ entryActions, pending }: FilesDragLayersProps) => {
       return;
     }
 
-    if (wasOpen.current) {
-      wasOpen.current = false;
-      pending.clear();
+    if (!wasOpen.current) {
+      return;
     }
-  }, [pending, session]);
+
+    wasOpen.current = false;
+
+    // 只摘掉这次真正移成功的：点 Esc 取消、或在弹窗里关掉，攒着的条目要留着
+    if (movedPaths.length > 0) {
+      pending.removePaths(movedPaths);
+    }
+  }, [movedPaths, pending, session]);
 
   return (
     <div className={styles.layers}>
@@ -51,6 +59,10 @@ const FilesDragLayers = ({ entryActions, pending }: FilesDragLayersProps) => {
       ) : null}
 
       {dragActive ? <DragGhost entries={session?.entries ?? pending.entries} /> : null}
+
+      {pending.fly === null ? null : (
+        <PendingFlyLayer fly={pending.fly} onDone={pending.clearFly} />
+      )}
     </div>
   );
 };

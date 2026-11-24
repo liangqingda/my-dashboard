@@ -35,10 +35,12 @@ export const useDragMove = ({
   const [hoverPath, setHoverPath] = useState<string | null>(null);
   /** 正在播弹起动画的文件夹路径 */
   const [springPath, setSpringPath] = useState<string | null>(null);
-  /** 拖拽在飞（页面瓦片或弹窗里的手持卡片拖起来的都算） */
+  /** 拖拽在飞（页面瓦片或弹窗里的待拖拽区拖起来的都算） */
   const [dragActive, setDragActive] = useState(false);
   /** 手持态：拖拽已经结束，条目放回手里等人再拖 */
   const [handed, setHanded] = useState(false);
+  /** 本会话已经移动成功的路径：会话结束时页面据此把它们从待拖拽区摘掉 */
+  const [movedPaths, setMovedPaths] = useState<string[]>([]);
 
   /** 状态镜像：事件回调里要读到「此刻」的值，不能依赖某一次渲染的闭包 */
   const sessionRef = useRef<DragMoveSession | null>(null);
@@ -87,7 +89,7 @@ export const useDragMove = ({
 
   /**
    * 拖起一批条目：弹窗从页面当前目录这一层打开，被拖的文件夹都不进落点列表。
-   * 会话记下条目本体：手持卡片按它们的类型换图标、层叠并标数量。
+   * 会话记下条目本体：弹窗里的待拖拽区按它们的类型换图标、平铺成一行一条。
    */
   const open = (entries: DraggableEntry[]) => {
     if (currentDir === null || entries.length === 0) {
@@ -98,6 +100,7 @@ export const useDragMove = ({
     cacheRef.current = new Map();
     setError(null);
     setHanded(false);
+    setMovedPaths([]);
     setDragActive(true);
 
     const active: DragMoveSession = { entries, origin: currentDir };
@@ -113,7 +116,27 @@ export const useDragMove = ({
     });
   };
 
-  /** 从弹窗里的手持卡片再次拖起：会话还在，只把拖拽状态重新点亮 */
+  /**
+   * 只搬手里的一条：弹窗里的待拖拽区平铺着一批，拖其中某一条时把会话收窄到它，
+   * 其余条目留在页面上的待拖拽区（会话结束后它们还在那儿）。
+   */
+  const focusEntry = (path: string) => {
+    const active = sessionRef.current;
+    const entry = active?.entries.find((item) => item.path === path);
+
+    if (active === null || entry === undefined) {
+      return false;
+    }
+
+    const focused: DragMoveSession = { entries: [entry], origin: active.origin };
+
+    sessionRef.current = focused;
+    setSession(focused);
+
+    return true;
+  };
+
+  /** 从弹窗里的待拖拽区再次拖起：会话还在，只把拖拽状态重新点亮 */
   const beginDrag = () => {
     resetHover();
     setHanded(false);
@@ -209,6 +232,7 @@ export const useDragMove = ({
       );
 
       if (results.every(Boolean)) {
+        setMovedPaths(sources);
         close();
         playMoveSound();
 
@@ -283,12 +307,14 @@ export const useDragMove = ({
     dropOnFolder,
     endDrag,
     error,
+    focusEntry,
     goTo,
     handed,
     hoverFolder,
     hoverPath,
     leaveFolder,
     loading,
+    movedPaths,
     open,
     refreshView,
     reset,

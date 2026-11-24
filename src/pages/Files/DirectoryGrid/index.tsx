@@ -7,6 +7,7 @@ import AppTile from '../AppTile';
 import type { FileEntry, FolderEntry } from '../types';
 import FileTile from '../FileTile';
 import FolderTile from '../FolderTile';
+import { tileIconSize } from '../utils/tile-metrics';
 
 import type { DirectoryGridProps } from './types';
 
@@ -123,7 +124,8 @@ const DirectoryGrid = ({
 
     event.preventDefault();
     event.stopPropagation();
-    onTogglePending(entry);
+    // 瓦片的屏幕矩形交给页面：加入待拖拽区时用它当飞行动画的起点
+    onTogglePending(entry, tile.getBoundingClientRect());
   };
 
   return (
@@ -138,6 +140,7 @@ const DirectoryGrid = ({
           dropActive={dropTarget === folder.path}
           folder={folder}
           hideActions={pendingActive}
+          iconSize={fixedColumns ? tileIconSize() : undefined}
           key={folder.path}
           loading={loading && loadingFolder === folder.path}
           onDragEnd={onDragEnd}

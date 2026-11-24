@@ -13,6 +13,12 @@ export type DragMoveModalProps = {
   dragMove: ReturnType<typeof useDragMove>;
   /** 在当前这一层新建文件夹（与目录页标题栏那颗按钮同一套流程：建完直接改名） */
   onCreateFolder: (dir: string) => void;
-  /** 用内置预览打开被拖的图片 / 视频（手持卡片上的图标点一下就走这里） */
+  /** 用内置预览打开被拖的图片 / 视频（弹窗待拖拽区里那一行的图标点一下就走这里） */
   onPreview?: (file: FileEntry) => void;
+  /** 某个目录是否已收藏：弹窗 header 的收藏按钮按当前这一层取状态 */
+  isFavorite: (path: string) => boolean;
+  /** 收藏 / 取消收藏当前这一层（名字由路径末段推出） */
+  onToggleFavorite: (path: string) => void;
+  /** 选择本地目录（与标题栏那颗按钮同一套流程） */
+  onPickDir: () => void;
 };

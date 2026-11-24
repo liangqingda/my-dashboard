@@ -24,8 +24,14 @@ export type FilesModalsProps = {
   volumeEject: ReturnType<typeof useVolumeEject>;
   /** 在当前目录新建文件夹（拖拽移动弹窗 header 那颗按钮） */
   onCreateFolder: (dir: string) => void;
-  /** 用内置预览打开一张图片（拖拽移动弹窗的手持卡片图标点一下就走这里） */
+  /** 用内置预览打开一张图片（拖拽移动弹窗待拖拽区的图标点一下就走这里） */
   onPreviewImage: (file: FileEntry) => void;
   /** 用内置预览打开一条视频：与点瓦片同一条路径，不看设置里的「外部应用」 */
   onPreviewVideo: (file: FileEntry) => void;
+  /** 某个目录是否已收藏（拖拽移动弹窗 header 的收藏按钮） */
+  isFavorite: (path: string) => boolean;
+  /** 收藏 / 取消收藏某个目录（名字由路径末段推出） */
+  onToggleFavorite: (path: string) => void;
+  /** 选择本地目录（与标题栏那颗按钮同一套流程） */
+  onPickDir: () => void;
 };

@@ -17,12 +17,19 @@ const dragMove = useDragMove({
 入口三个：`open(entries)`（dragstart，一批条目本体进来：文件夹 / 文件的区别由它身上有没有 `category` 判）、
 `endDrag()`（dragend，条目回到手里）、`reset()`（切目录这类页面级清场，连缓存一起丢）。
 弹窗里再拖一次走 `beginDrag()`（会话还在，只把拖拽状态重新点亮）；
-弹窗里新建 / 改名后走 `refreshView()`（丢掉当前层缓存、重读一次）。
+弹窗里改搬其中一条走 `focusEntry(path)`（会话收窄到这一条、保留 `origin`，其余条目不参与本次移动，
+仍留在页面侧栏的待拖拽区）；新建 / 改名后走 `refreshView()`（丢掉当前层缓存、重读一次）。
+
+## `movedPaths`
+
+一次会话里**真正移成功**的源路径，在 `close()` 之前 `setMovedPaths(sources)`、`open()` 时清空。
+页面靠它做收尾：`FilesDragLayers` 拿 `movedPaths` 调 `pending.removePaths`，只把搬走的那几条从
+待拖拽区摘掉；关窗 / Esc 取消时它是空的，攒下的条目原样留着。
 
 ## 三层状态
 
 - `session`：被拖的是谁（`entries` 明细 + `origin` 来源目录）。条目里没有 `category` 的就是文件夹，
-  弹窗据此换图标、决定图标能不能点开预览；`entries.length > 1` 时手持卡片层叠并标数量；
+  弹窗据此换图标、决定图标能不能点开预览；`entries.length > 1` 时弹窗里的待拖拽区平铺多条、可逐条拖起；
 - `view`：`{ path, folders }`，弹窗现在停在哪一层，`folders === null` 表示这一层还等着读盘；
 - `dragActive` / `handed`：条目「正在被拖」还是「已经放回手里」，两者互斥地决定提示语与点击是否生效。
 

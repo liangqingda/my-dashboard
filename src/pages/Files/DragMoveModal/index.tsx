@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { Group, Loader, ScrollArea, Text, UnstyledButton } from '@mantine/core';
-import { IconFolderFilled, IconFolderPlus } from '@tabler/icons-react';
+import {
+  IconFolderFilled,
+  IconFolderOpen,
+  IconFolderPlus,
+  IconStar,
+  IconStarFilled,
+} from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
 import FreeModal from '@/components/modals/FreeModal';
@@ -31,14 +37,21 @@ const NO_FOLDERS: FolderEntry[] = [];
 
 /**
  * 拖拽移动弹窗：拖起列表里的一条或一批条目后自动打开，占满整屏。正文三段——
- * 当前路径（可点的面包屑）、手持卡片（条目本体，能再次拖起）、这一层的子文件夹。
+ * 当前路径（可点的面包屑）、待拖拽区（条目平铺，能逐条或整批再拖起）、这一层的子文件夹。
  *
  * 松手在文件夹上＝移进去；停在同一个文件夹上 0.5 秒＝它先弹一下，然后进入它；
  * 松手在落点区的空白处＝放进当前这一层（悬在空白处时整块落点区会亮起来提示）；
  * 其余区域什么都不做、条目放回手里。只有移动成功才关窗，
  * 此外只认关闭按钮、Esc 与空格。
  */
-const DragMoveModal = ({ dragMove, onCreateFolder, onPreview }: DragMoveModalProps) => {
+const DragMoveModal = ({
+  dragMove,
+  isFavorite,
+  onCreateFolder,
+  onPickDir,
+  onPreview,
+  onToggleFavorite,
+}: DragMoveModalProps) => {
   const {
     beginDrag,
     close,
@@ -82,12 +95,25 @@ const DragMoveModal = ({ dragMove, onCreateFolder, onPreview }: DragMoveModalPro
       fullscreen={FULLSCREEN}
       headerActions={
         view === null ? null : (
-          <FreeIconAction
-            label="新建文件夹"
-            onClick={() => onCreateFolder(view.path)}
-          >
-            <IconFolderPlus size={16} stroke={1.9} />
-          </FreeIconAction>
+          <Group gap={2} wrap="nowrap">
+            <FreeIconAction
+              label={isFavorite(view.path) ? '取消收藏这个目录' : '收藏这个目录'}
+              onClick={() => onToggleFavorite(view.path)}
+              tone="accent"
+            >
+              {isFavorite(view.path) ? (
+                <IconStarFilled size={16} stroke={1.6} />
+              ) : (
+                <IconStar size={16} stroke={1.6} />
+              )}
+            </FreeIconAction>
+            <FreeIconAction label="新建文件夹" onClick={() => onCreateFolder(view.path)}>
+              <IconFolderPlus size={16} stroke={1.9} />
+            </FreeIconAction>
+            <FreeIconAction label="选择本地目录" onClick={onPickDir}>
+              <IconFolderOpen size={16} stroke={1.9} />
+            </FreeIconAction>
+          </Group>
         )
       }
       onClose={close}
@@ -106,6 +132,11 @@ const DragMoveModal = ({ dragMove, onCreateFolder, onPreview }: DragMoveModalPro
               onDragEnd={() => {
                 setBlankHovered(false);
                 endDrag();
+              }}
+              onDragEntry={(entry) => {
+                if (dragMove.focusEntry(entry.path)) {
+                  beginDrag();
+                }
               }}
               onDragStart={beginDrag}
               onPreview={onPreview}

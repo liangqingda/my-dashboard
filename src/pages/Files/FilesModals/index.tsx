@@ -16,18 +16,24 @@ const FilesModals = ({
   appUninstall,
   deleteState,
   entryActions,
+  isFavorite,
   onCreateFolder,
+  onPickDir,
   onPreviewImage,
   onPreviewVideo,
+  onToggleFavorite,
   volumeEject,
 }: FilesModalsProps) => (
   <>
     <DragMoveModal
       dragMove={entryActions.dragMove}
+      isFavorite={isFavorite}
       onCreateFolder={onCreateFolder}
+      onPickDir={onPickDir}
       onPreview={(file) =>
         file.category === 'image' ? onPreviewImage(file) : onPreviewVideo(file)
       }
+      onToggleFavorite={onToggleFavorite}
     />
 
     <DeleteEntryConfirm

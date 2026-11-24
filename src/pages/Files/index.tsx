@@ -31,6 +31,7 @@ import { useVolumeEject } from './hooks/useVolumeEject';
 import {
   describeDirSpace,
   emptyListingText,
+  favoriteTargetOf,
   isAppCatalogPath,
 } from './utils/files';
 import { describeFilesList } from './utils/entries-view';
@@ -43,8 +44,9 @@ import styles from './index.scss';
  * 标题栏的图标按钮可在网格与表格（名称 / 类别 / 操作三列）两种展示形式之间切换，结果记在 localStorage。
  * 点文件夹进入下一层，面包屑回退，`⌘↑` 回上一级；可收藏常用目录，在收藏面板里点选直达；
  * 拖起任一条目会打开移动弹窗：全屏逐层挑目标文件夹，面包屑换层，松手没落成移动就把条目留在手里；
- * 弹窗 header 可新建文件夹（与标题栏那颗按钮同一套流程），手持卡片上的图标按条目类型换、图 / 视频可点开预览。
- * 网格里用 ⌘ / Shift + 点击（或待拖拽区已经非空时直接点）把条目攒进顶部悬浮的待拖拽区，
+ * 弹窗 header 有收藏当前层 / 新建文件夹 / 选本地目录三颗按钮（都走页面同一套流程），
+ * 弹窗里这批条目平铺成待拖拽区，图标按条目类型换、图 / 视频可点开预览。
+ * 网格里用 ⌘ / Shift + 点击（或待拖拽区已经非空时直接点）把条目攒进覆盖侧栏的待拖拽区，
  * 攒下东西后点条目只做「加入 / 移除」，拖这块空白处整批搬、拖某个小图标只搬它一个。
  * 标题栏筛选面板支持按名称关键词过滤与按类型勾选，取消勾选的类型连同对应文件夹一起隐藏。
  * 列表只列摘要；点视频条目会在弹窗里播放（设置里可改成交给外部播放器），
@@ -298,9 +300,12 @@ const Files = () => {
           deletingEntry,
         }}
         entryActions={entryActions}
+        isFavorite={isFavorite}
         onCreateFolder={(dir) => void entryActions.createEntryIn(dir)}
+        onPickDir={handlePickDir}
         onPreviewImage={openImage}
         onPreviewVideo={openVideo}
+        onToggleFavorite={(path) => toggleFavorite(favoriteTargetOf(path))}
         volumeEject={volumeEject}
       />
 

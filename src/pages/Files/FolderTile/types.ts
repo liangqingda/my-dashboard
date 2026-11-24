@@ -22,6 +22,11 @@ export type FolderTileProps = {
   pending?: boolean;
   /** 待拖拽模式：hover 不再浮出重命名 / 删除 */
   hideActions?: boolean;
+  /**
+   * 图标的固定边长（px）：应用目录里给与应用图标同一个尺寸，别让文件夹按瓦片宽度铺满；
+   * 不传就按瓦片宽度自适应（普通目录的观感）。
+   */
+  iconSize?: number;
   /** 拖拽进行中：文件名不弹 hover 提示（提示会挡在拖拽物上） */
   tipOff?: boolean;
   /** 是当前拖拽的放置目标 */

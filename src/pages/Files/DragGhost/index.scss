@@ -48,6 +48,8 @@
 /* 数量：压在最左上的红点，多选时才出现 */
 .count {
   position: absolute;
+  /* 盖在层叠图标之上：那些图层各自有 z-index，不抬起来会被最上面那层压掉半个 */
+  z-index: 10;
   top: -8px;
   left: -8px;
   display: flex;

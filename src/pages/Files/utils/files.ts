@@ -94,6 +94,22 @@ export type PathRoot = {
 };
 
 /**
+ * 路径末段的目录名：收藏这类只要 `path` + `name` 的地方（拖拽弹窗里收藏当前层）用它补名字，
+ * `/` 自身与末尾带斜杠的路径都兜住。
+ */
+export const baseNameOfPath = (dir: string): string => {
+  const parts = dir.split('/').filter(Boolean);
+
+  return parts.length === 0 ? dir : parts[parts.length - 1];
+};
+
+/** 收藏接口要的载荷：路径 + 末段名（弹窗里收藏当前层、页面里收藏选中项共用） */
+export const favoriteTargetOf = (dir: string): { name: string; path: string } => ({
+  name: baseNameOfPath(dir),
+  path: dir,
+});
+
+/**
  * 按路径推出面包屑的根：`/Users/<用户>/…` 以主目录为根、`/Volumes/<卷>/…` 以该卷为根，
  * 其余以磁盘根 `/` 为根；根自身不再当作一段重复展示。只认这两类常见前缀，不猜别的挂载点。
  */

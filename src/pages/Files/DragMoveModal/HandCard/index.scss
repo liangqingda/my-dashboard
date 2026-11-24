@@ -1,21 +1,21 @@
 /*
- * 手持卡片：条目本体就在弹窗里，能再被拖起。
- * 实线 = 正拖着它，虚线 + 呼吸光 = 已经放回手里、等你再拖一次。
- * 多项时图标叠三层，左上角红点写数量——和鼠标底下那枚拖拽影像是同一套画法。
+ * 弹窗里的待拖拽区：一批条目平铺（每行一条，可单独拖），下面留一块空白（整批拖）。
+ * 实线 = 正拖着；虚线 + 呼吸光 = 已经放回手里。
  */
 
-.card {
-  position: relative;
+.tray {
   display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px 8px 12px;
+  flex: 0 1 auto;
+  flex-direction: column;
+  gap: 6px;
+  max-width: min(520px, 56vw);
+  max-height: 168px;
+  padding: 8px;
   border: 1px solid var(--app-line-strong);
   border-radius: 10px;
   background: var(--app-surface);
   cursor: grab;
-  user-select: none;
+  overflow-y: auto;
 }
 
 .live {
@@ -29,38 +29,43 @@
   animation: handPulse 1600ms ease-out infinite;
 }
 
-/* 图标堆：40px 见方的盒子，三层图标往里错开一点点 */
-.stack {
-  position: relative;
+/* 条目列表：一条一行，竖着排，行数多了在框内滚 */
+.chips {
+  display: flex;
   flex: 0 0 auto;
-  width: 40px;
-  height: 40px;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.layer {
-  position: absolute;
-  top: 0;
-  left: 0;
+.chip {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
+  gap: 6px;
+  min-width: 0;
+  padding: 4px 8px;
   border: 1px solid var(--app-line);
-  border-radius: 8px;
+  border-radius: 7px;
   background: var(--app-surface-subtle);
+  cursor: grab;
+}
+
+/* 抓手：说明这一条能单独拖 */
+.grip {
+  flex: 0 0 auto;
+  color: var(--app-ink-faint);
 }
 
 .icon {
+  flex: 0 0 auto;
   color: var(--mantine-color-blue-5);
 }
 
 /* 图标能点开预览时的那层按钮：不撑开间距，hover 才亮出可点 */
 .iconButton {
-  display: block;
+  display: flex;
   flex: 0 0 auto;
   padding: 0;
-  border-radius: 8px;
+  border-radius: 6px;
 }
 
 .iconClickable {
@@ -72,42 +77,19 @@
   color: var(--app-accent);
 }
 
-/* 数量红点：压在最左上的那个角 */
-.count {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 18px;
-  height: 18px;
-  padding-inline: 4px;
-  border-radius: 999px;
-  background: var(--app-status-danger-fill);
-  /* 红底永远配白字：暗色下 `--app-accent-contrast` 是深色，压在这块红上会糊 */
-  color: var(--mantine-color-white);
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1;
-}
-
-/* 名字：单行中间省略，宽度上限交给卡片本身 */
+/* 名字：单行中间省略，宽度上限交给框本身 */
 .name {
-  flex: 0 1 auto;
-  max-width: 220px;
+  flex: 1 1 auto;
+  min-width: 0;
   color: var(--app-ink);
   font-size: 13px;
 }
 
-/* 状态徽章：拖拽中 / 待拖拽 */
-.badge {
+/* 空白处提示：这块下面没别的东西，拖这里就是整批拖 */
+.hint {
   flex: 0 0 auto;
-  padding: 2px 7px;
-  border-radius: 999px;
-  background: var(--app-accent-soft);
-  color: var(--app-accent);
-  font-size: 11px;
+  padding-top: 2px;
+  color: var(--app-ink-faint);
   line-height: 1.5;
 }
 
