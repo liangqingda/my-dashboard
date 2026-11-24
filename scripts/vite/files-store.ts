@@ -16,7 +16,6 @@ import type { Dirent } from 'node:fs';
 
 import { describeAppEntry, isAppBundleName } from './files-apps.ts';
 import { pickNativeDirectory } from './files-picker.ts';
-import { isExternalMount, readMountPoint } from './files-space.ts';
 import type { AppEntry } from './files-apps.ts';
 
 const execFileAsync = promisify(execFile);
@@ -494,34 +493,9 @@ export const listDirectory = async (input: string): Promise<DirListing> => {
 };
 
 /**
- * 推出当前目录所在的外接盘：先按 `df` 找到真实挂载点，确认它在 `/Volumes/` 且不是启动卷，
- * 再交给 `diskutil eject`。盘被占用时把系统返回的原因原样带回，前端只展示不猜。
+ * 推出外接盘不在这一层：那是「释放本进程句柄 → 安全卸载 → 列占用者」的一整条流程，
+ * 见 `files-volume.ts`。store 只管路径校验与列表 / 写盘。
  */
-export const ejectVolumeAt = async (
-  dir: string,
-): Promise<{ mountPoint: string }> => {
-  if (process.platform !== 'darwin') {
-    throw new Error('只有 macOS 支持推出外接盘');
-  }
-
-  const mountPoint = await readMountPoint(dir);
-
-  if (mountPoint === null || !isExternalMount(mountPoint, '/')) {
-    throw new Error('当前目录不在可推出的外接盘上');
-  }
-
-  try {
-    await execFileAsync('diskutil', ['eject', mountPoint], {
-      timeout: 30_000,
-    });
-  } catch (error) {
-    const stderr = (error as { stderr?: string }).stderr?.trim();
-
-    throw new Error(stderr || '推出外接盘失败');
-  }
-
-  return { mountPoint };
-};
 
 /** 未指定目录时的默认起点：当前用户主目录 */
 export const homeDirectory = (): string => homedir();

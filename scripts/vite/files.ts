@@ -25,13 +25,15 @@
  * 写操作与媒体接口仅限开发服务器中间件，静态构建不带这些接口；列表只给摘要，视频内容按需流式读取。
  */
 
-import { createReadStream } from 'node:fs';
 import { readFile } from 'node:fs/promises';
+import { pipeline } from 'node:stream';
+import type { ReadStream } from 'node:fs';
 import type { Plugin } from 'vite';
 
 import { appIconPng } from './files-app-icons.js';
 import { fileThumb } from './files-thumbs.js';
 import { launchAppBundle, scanAppResidues, uninstallAppBundle } from './files-apps.js';
+import { openTrackedStream } from './files-handles.js';
 import { openImageFile } from './files-images.js';
 import { openVideoFile, openVideoStream, parseByteRange, saveCapture, videoEtag } from './files-media.js';
 import { openExternalFile } from './files-open.js';
@@ -40,7 +42,6 @@ import { listVideoApps, videoAppBundlePath } from './files-video-apps.js';
 import {
   createFolder,
   deleteEntry,
-  ejectVolumeAt,
   homeDirectory,
   listDirectory,
   moveEntry,
@@ -49,6 +50,7 @@ import {
   statusForReadError,
 } from './files-store.js';
 import { readDirSpace } from './files-space.js';
+import { ejectVolume } from './files-volume.js';
 
 /** 截图请求体上限：一帧 PNG 的 base64 通常几 MB，留出余量但拒绝超大载荷 */
 const CAPTURE_BODY_LIMIT = 40 * 1024 * 1024;
@@ -122,6 +124,44 @@ const readJsonBody = (
 const bodyString = (body: Record<string, unknown>, key: string): string =>
   typeof body[key] === 'string' ? body[key] : '';
 
+/** 从 body 取进程号数组：只留正整数，脏值丢掉（真正的授权判断在推出那一层） */
+const bodyPids = (body: Record<string, unknown>, key: string): number[] => {
+  const raw = body[key];
+
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+
+  return raw.filter(
+    (item): item is number => Number.isInteger(item) && (item as number) > 1,
+  );
+};
+
+/**
+ * 把读流递给响应，并保证读流一定被销毁：正常读完、读盘出错、浏览器中途断开（换页、拖进度条）
+ * 三种情况都会走到 `pipeline` 的收尾，句柄不会挂到下一次请求上。
+ * 这是文件页能正常退出外接盘的前提——本进程只要还开着盘上的文件，系统就不让卸载。
+ */
+const pipeToResponse = (
+  res: import('node:http').ServerResponse,
+  stream: ReadStream,
+  failureMessage: string,
+): void => {
+  pipeline(stream, res, (error) => {
+    if (error === null || error === undefined) {
+      return;
+    }
+
+    if (!res.headersSent) {
+      sendJsonError(res, 500, failureMessage);
+
+      return;
+    }
+
+    res.destroy();
+  });
+};
+
 /**
  * 流式读一个视频文件：视频元素靠 Range 请求跳转与续播，这里按 `Range` 回 206，
  * 没有 Range 时整份返回。只做 GET / HEAD，不接受写操作。
@@ -179,19 +219,7 @@ const serveVideoContent = async (
       return;
     }
 
-    const stream = openVideoStream(video, range);
-
-    stream.on('error', () => {
-      if (!res.headersSent) {
-        sendJsonError(res, 500, '读取视频失败');
-
-        return;
-      }
-
-      res.destroy();
-    });
-    res.on('close', () => stream.destroy());
-    stream.pipe(res);
+    pipeToResponse(res, openVideoStream(video, range), '读取视频失败');
   } catch (error) {
     sendJsonError(
       res,
@@ -229,19 +257,7 @@ const serveImageContent = async (
       return;
     }
 
-    const stream = createReadStream(image.path);
-
-    stream.on('error', () => {
-      if (!res.headersSent) {
-        sendJsonError(res, 500, '读取图片失败');
-
-        return;
-      }
-
-      res.destroy();
-    });
-    res.on('close', () => stream.destroy());
-    stream.pipe(res);
+    pipeToResponse(res, openTrackedStream(image.path), '读取图片失败');
   } catch (error) {
     sendJsonError(
       res,
@@ -563,7 +579,10 @@ export const files = (): Plugin => ({
 
             res.end(JSON.stringify({ ok: true }));
           } else if (pathname === '/eject') {
-            const result = await ejectVolumeAt(bodyString(body, 'dir'));
+            const result = await ejectVolume(
+              bodyString(body, 'dir'),
+              bodyPids(body, 'killPids'),
+            );
 
             res.end(JSON.stringify({ result }));
           } else if (pathname === '/open-app') {

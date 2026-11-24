@@ -166,8 +166,9 @@
 
 | 文件 | 职责 |
 | --- | --- |
-| `scripts/vite/files.ts` | 路由壳：`GET /api/files`（未带 `dir` 回落主目录）、`GET /api/files?dir=…`、`GET /api/files/content?path=…`（视频按 Range 流式读）、`GET /api/files/image?path=…`（图片字节）、`GET /api/files/thumb?path=…`（图片 / 视频缩略图，网格用）、`GET /api/files/video-apps`（能播视频的本机应用）、`GET /api/files/app-icon?path=…`（应用图标 PNG）、`GET /api/files/app-residue?path=…`（卸载残留清单）、`POST /api/files/open-app`（打开应用包）、`POST /api/files/pick-dir`（系统目录选择框）、`POST /api/files/new-folder`、`POST /api/files/rename`、`POST /api/files/move`、`POST /api/files/delete`、`POST /api/files/open`（交给外部播放器）、`POST /api/files/uninstall-app`、`POST /api/files/eject`（推出当前目录所在的外接盘）、`POST /api/files/capture`（视频帧截图写目录，缺省桌面），错误归类成 HTTP 状态码 |
-| `scripts/vite/files-store.ts` | 路径校验、条目归类、应用包从文件夹里分出来单独成列、文件夹直属条目计数、内含分类摘要与「直属是否含应用包」，供类型筛选过滤文件夹、文件归类（视频 / PDF / Markdown / App / 其它）标记、选择器脚本拼装，以及新建 / 重命名 / 移动 / 删除的写盘与冲突拒绝、错误文案与错误码收口；`ejectVolumeAt` 先按 `df` 查真实挂载点、确认是 `/Volumes/` 下的非启动卷，再交给 `diskutil eject` |
+| `scripts/vite/files.ts` | 路由壳：`GET /api/files`（未带 `dir` 回落主目录）、`GET /api/files?dir=…`、`GET /api/files/content?path=…`（视频按 Range 流式读）、`GET /api/files/image?path=…`（图片字节）、`GET /api/files/thumb?path=…`（图片 / 视频缩略图，网格用）、`GET /api/files/video-apps`（能播视频的本机应用）、`GET /api/files/app-icon?path=…`（应用图标 PNG）、`GET /api/files/app-residue?path=…`（卸载残留清单）、`POST /api/files/open-app`（打开应用包）、`POST /api/files/pick-dir`（系统目录选择框）、`POST /api/files/new-folder`、`POST /api/files/rename`、`POST /api/files/move`、`POST /api/files/delete`、`POST /api/files/open`（交给外部播放器）、`POST /api/files/uninstall-app`、`POST /api/files/eject`（body `{ dir, killPids? }`：推出当前目录所在的外接盘，返回 `{ result }`）、`POST /api/files/capture`（视频帧截图写目录，缺省桌面），错误归类成 HTTP 状态码 |
+| `scripts/vite/files-store.ts` | 路径校验、条目归类、应用包从文件夹里分出来单独成列、文件夹直属条目计数、内含分类摘要与「直属是否含应用包」，供类型筛选过滤文件夹、文件归类（视频 / PDF / Markdown / App / 其它）标记、选择器脚本拼装，以及新建 / 重命名 / 移动 / 删除的写盘与冲突拒绝、错误文案与错误码收口 |
+| `scripts/vite/files-handles.ts` | 本进程的读流登记表：`openTrackedStream` 打开即登记、`close` 自动销号，`releaseStreamsUnder` 在推出外接盘前把这一卷下的读流全部销毁并等它们真的关掉。读流生命周期只跟一次响应走，**不在模块里缓存句柄**——缓存一条流等于把整块盘的寿命绑在页面停留时长上 |
 | `scripts/vite/files-picker.ts` | 原生目录选择框：首次把一段 Swift `NSOpenPanel` 源码编进 `node_modules/.cache`，服务启动时后台预热，之后每次选择只起小二进制；编译 / 运行不可用时回落 `osascript` |
 | `scripts/vite/files-apps.ts` | 应用包识别（`.app` 目录与指向它的符号链接）、Info.plist 解析（`plutil`）、残留推导（用户级与系统级）、打开（校验 `.app` 后交给系统 `open`）、卸载（先退应用再删整包与残留，权限不足时弹一次授权窗补删） |
 | `scripts/vite/files-app-icons.ts` | 应用图标按需抽取：从包内 `Contents/Resources` 找 `.icns`，`sips` 转成 PNG，按「包路径 + 修改时间」缓存在临时目录 |
@@ -176,6 +177,7 @@
 | `scripts/vite/files-open.ts` | 外部打开：按「指定应用 → IINA → 系统默认」逐级回落，`open -a <app>` 成功即返回实际用上的应用名 |
 | `scripts/vite/files-media.ts` | 媒体侧只读 / 写盘：视频路径校验与 MIME、`Range` 解析、读流，以及把 PNG 截图写进指定目录（缺省桌面；文件名取本地时间，重名追加序号） |
 | `scripts/vite/files-space.ts` | 卷空间只读侧：解析 `df -kP` 的挂载点与可用块数、按 `/Volumes/` 前缀判定外接卷、拼出 `DirSpace` |
+| `scripts/vite/files-volume.ts` | 推出外接盘：释放本进程读流 + `sync` → `diskutil eject`（**从不带 `force`**）；失败时用 `lsof +D` 列占用者，按请求里的 `killPids` 结束同用户、非系统关键进程后重试，系统进程与别的用户进程只列不杀 |
 
 - **列表不读文件内容**：列表接口只下发名称 / 路径 / 大小 / 修改时间等摘要；视频内容在点开预览时按需通过 `content` 接口流式读取（不再整份塞进 JSON），其它文件类型不提供内容接口；
 - **仅开发模式**：中间件挂在 `configureServer`，静态构建不带这些接口，页面回落「静态构建不支持读取本地目录」提示态，不产出目录快照；
@@ -240,10 +242,20 @@
   读不到（`df` 不可用、路径读不出）`space` 就是 `null`，页面只是不显示那句描述，目录列表照常出；
   页面只把两个数字拼成文案（`src/pages/Files/utils/files.ts` 的 `describeDirSpace`）传给
   `MenuContentLayout` 的 `description`，不自己调 `df`，也不做后台定时刷新。
-- **推出外接盘**：只有当前目录落在 `external` 上时，标题栏才多一颗推出按钮；点击先弹
-  `ConfirmModal` 二次确认（显示卷名与挂载点），确认后调 `POST /api/files/eject`（body `{ dir }`）。
-  中间件用 `df` 反查真实挂载点、再核对 `/Volumes/` 与非启动卷，最后 `diskutil eject`；盘被占用时
-  把系统返回的原因带回来只提示、不切目录；成功后切回默认目录（收藏第一条），若那条也在要退的盘上就回落主目录。
+- **预览读流不牵挂外接盘**：视频 / 图片的字节都经 `openTrackedStream` 打开并登记，
+  响应一结束（正常读完、读盘出错、浏览器换页或拖进度条中途断开）由 `pipeline` 销毁读流；
+  不在模块里缓存句柄，句柄只跟这一次响应走，页面停多久都不会把盘钉住。
+- **推出外接盘**：只有当前目录落在 `external` 上时，标题栏才多一颗推出按钮（常态走强调色，
+  与收藏按钮同档）。点击先弹 `ConfirmModal` 二次确认（显示卷名与挂载点）；确认后页面先关掉
+  视频 / 图片预览（还开着的预览会继续从盘上取字节，刚放掉的句柄立刻又被拿回去），再调
+  `POST /api/files/eject`（body `{ dir }`）。中间件依次做：用 `df` 反查真实挂载点、核对
+  `/Volumes/` 与非启动卷 → 销毁本进程这一卷下的读流 → `sync` 落盘 → `diskutil eject`
+  （**从不带 `force`**）。成功返回 `status: 'ejected'`（带释放条数）；被别的程序占着时返回
+  `status: 'busy'` 与 `lsof +D` 列出的占用进程，页面据此弹第二次确认：用户点「结束 N 个进程并推出」
+  后带 `{ dir, killPids }` 再调一次，中间件只结束清单里**同用户、非系统关键**的进程
+  （先 `TERM`、等不到再 `KILL`），再 `sync` + 重试；系统进程（Spotlight / Finder 这类）与
+  别的用户起的进程只列出来、不做动作。任一步卸载失败都如实报原因，不强制推出、也不假装成功。
+  成功后切回默认目录（收藏第一条），若那条也在要退的盘上就回落主目录。
 
 ## 写操作的底线
 

@@ -9,9 +9,11 @@ import type {
   AppEntry,
   DirListing,
   DirSpace,
+  EjectVolumeResult,
   FileCategory,
   FileEntry,
   FolderEntry,
+  VolumeHolder,
   VolumeSpace,
 } from '../types';
 
@@ -237,3 +239,78 @@ export const normalizeCaptureResponse = (payload: unknown): string | null => {
     ? capture.name
     : null;
 };
+
+/** 进程号数组：只留正整数，其余丢掉 */
+const normalizePids = (raw: unknown): number[] =>
+  Array.isArray(raw)
+    ? raw.filter(
+        (item): item is number => typeof item === 'number' && Number.isInteger(item) && item > 1,
+      )
+    : [];
+
+/** 归一化一条占用进程；PID 或名字缺失就丢弃（列不出来的进程不假装知道） */
+const normalizeVolumeHolder = (raw: unknown): VolumeHolder | null => {
+  if (!isObject(raw)) {
+    return null;
+  }
+
+  const pid = asNumber(raw.pid);
+
+  if (!Number.isInteger(pid) || pid <= 1) {
+    return null;
+  }
+
+  return {
+    canKill: raw.canKill === true,
+    name: asString(raw.name) || `进程 ${pid}`,
+    pid,
+    reason: typeof raw.reason === 'string' && raw.reason ? raw.reason : null,
+    user: asString(raw.user),
+  };
+};
+
+/** 归一化推出结果；认不出 `status` 或没有挂载点时返回 null，由调用方按格式错误处理 */
+export const normalizeEjectResponse = (raw: unknown): EjectVolumeResult | null => {
+  if (!isObject(raw)) {
+    return null;
+  }
+
+  const mountPoint = asString(raw.mountPoint);
+
+  if (!mountPoint) {
+    return null;
+  }
+
+  const released = asNumber(raw.released);
+  const killed = normalizePids(raw.killed);
+
+  if (raw.status === 'ejected') {
+    return { killed, mountPoint, released, status: 'ejected' };
+  }
+
+  if (raw.status !== 'busy') {
+    return null;
+  }
+
+  const holders = Array.isArray(raw.holders)
+    ? raw.holders
+        .map(normalizeVolumeHolder)
+        .filter((holder): holder is VolumeHolder => holder !== null)
+    : [];
+
+  return {
+    holders,
+    holdersKnown: raw.holdersKnown === true,
+    killed,
+    message: asString(raw.message),
+    mountPoint,
+    released,
+    status: 'busy',
+  };
+};
+
+/** 归一化 `{ result }` 推出回执；取不到结果返回 null */
+export const normalizeEjectPayload = (
+  payload: unknown,
+): EjectVolumeResult | null =>
+  isObject(payload) ? normalizeEjectResponse(payload.result) : null;

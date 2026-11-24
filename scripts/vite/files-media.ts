@@ -6,7 +6,6 @@
  * 这里只放视频——内容接口不接受任意文件，免得把目录里的其它文件也变成可下载的 URL。
  */
 
-import { createReadStream } from 'node:fs';
 import { mkdir, stat, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
@@ -14,6 +13,7 @@ import path from 'node:path';
 import type { ReadStream } from 'node:fs';
 
 // 显式 `.ts`：单测用 Node 原生类型剥离直接跑这一层，不经过 Vite 的 `.js → .ts` 解析
+import { openTrackedStream } from './files-handles.ts';
 import { isVideoFileName } from './files-store.ts';
 
 /** 视频扩展名 → MIME；认不出的一律 `application/octet-stream`，让浏览器按嗅探处理 */
@@ -178,12 +178,12 @@ export const parseByteRange = (
   return { end, start };
 };
 
-/** 打开读流；调用方负责在响应结束时销毁 */
+/** 打开读流（登记进本进程的句柄表）；调用方负责在响应结束时销毁 */
 export const openVideoStream = (
   video: VideoFile,
   range: ByteRange | null,
 ): ReadStream =>
-  createReadStream(
+  openTrackedStream(
     video.path,
     range ? { end: range.end, start: range.start } : undefined,
   );

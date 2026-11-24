@@ -1,0 +1,5 @@
+/* 占用清单：与说明块留一段距离；行内排版交给组件库，这里只定这块的外边距 */
+
+.holderList {
+  margin-top: var(--mantine-spacing-sm);
+}

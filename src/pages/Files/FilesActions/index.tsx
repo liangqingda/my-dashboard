@@ -95,6 +95,7 @@ const FilesActions = ({
           label={ejecting ? '正在推出外接盘' : '推出外接盘'}
           loading={ejecting}
           onClick={onEject}
+          tone="accent"
         >
           <IconPlayerEject size={ICON_SIZE} stroke={ICON_STROKE} />
         </FreeIconAction>

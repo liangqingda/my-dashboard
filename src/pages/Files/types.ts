@@ -189,3 +189,44 @@ export type AppUninstallResult = {
   /** 删除失败的条目 */
   failed: { path: string; message: string }[];
 };
+
+/** 还占着外接盘的一个进程 */
+export type VolumeHolder = {
+  /** 进程号 */
+  pid: number;
+  /** 进程名 */
+  name: string;
+  /** 跑它的用户 */
+  user: string;
+  /** 能不能由本项目结束 */
+  canKill: boolean;
+  /** 不能结束的原因；能结束时为 null */
+  reason: string | null;
+};
+
+/** 一次推出请求的结果：已卸载，或还占着需要用户决定 */
+export type EjectVolumeResult =
+  | {
+      status: 'ejected';
+      /** 卷挂载点 */
+      mountPoint: string;
+      /** 本次释放的本站读流条数 */
+      released: number;
+      /** 本次结束的进程号 */
+      killed: number[];
+    }
+  | {
+      status: 'busy';
+      /** 卷挂载点 */
+      mountPoint: string;
+      /** 本次释放的本站读流条数 */
+      released: number;
+      /** 本次已结束的进程号（首次请求为空） */
+      killed: number[];
+      /** 仍占着盘的进程 */
+      holders: VolumeHolder[];
+      /** 占用清单是否枚举成功 */
+      holdersKnown: boolean;
+      /** 系统给的失败原因 */
+      message: string;
+    };

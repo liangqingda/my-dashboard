@@ -13,6 +13,7 @@ import type {
   AppResidueReport,
   AppUninstallResult,
   DirListing,
+  EjectVolumeResult,
   FolderEntry,
 } from '../types';
 
@@ -22,6 +23,7 @@ import {
 } from './normalize-app';
 import {
   normalizeCaptureResponse,
+  normalizeEjectPayload,
   normalizeEntryResponse,
   normalizeListingResponse,
   normalizePickedResponse,
@@ -193,9 +195,23 @@ export const moveEntry = async (
   await postJson(MOVE_ENDPOINT, { source, targetDir });
 };
 
-/** 推出当前目录所在的外接盘；盘被占用时中间件带回系统原因 */
-export const ejectVolume = async (dir: string): Promise<void> => {
-  await postJson(EJECT_ENDPOINT, { dir });
+/**
+ * 推出当前目录所在的外接盘：中间件先释放本站打开的读流再安全卸载；
+ * 被别的程序占着时回占用清单，带 `killPids` 再调一次表示「这些进程用户同意结束」。
+ * 成功与否都按结果类型返回，只有真正的请求失败（非 2xx）才抛错。
+ */
+export const ejectVolume = async (
+  dir: string,
+  killPids: readonly number[] = [],
+): Promise<EjectVolumeResult> => {
+  const payload = await postJson(EJECT_ENDPOINT, { dir, killPids });
+  const result = normalizeEjectPayload(payload);
+
+  if (result === null) {
+    throw new Error('推出回执格式不符合预期');
+  }
+
+  return result;
 };
 
 /** 删除一条条目；文件夹连同内部内容递归删除，不可恢复 */

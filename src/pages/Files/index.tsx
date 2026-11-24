@@ -157,6 +157,10 @@ const Files = () => {
     currentDir,
     external: listing?.space?.external ?? null,
     fallbackDir: defaultFavoriteDir,
+    onBeforeEject: () => {
+      closeVideo();
+      closeImage();
+    },
     onNavigate: goToDir,
   });
 
