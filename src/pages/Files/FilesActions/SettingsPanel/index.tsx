@@ -162,6 +162,7 @@ const SettingsPanel = ({
               max={100}
               min={0}
               onChange={onVeilOpacityChange}
+              showLabelOnHover={false}
               size="xs"
               step={5}
               value={veilOpacity}
