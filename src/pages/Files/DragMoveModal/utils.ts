@@ -1,5 +1,7 @@
 import type { DragEvent } from 'react';
 
+import type { DragMoveSession } from '../hooks/use-drag-move/types';
+
 /** 拖拽经过可放置区域都先关掉默认行为，否则浏览器不给 drop */
 export const acceptMove = (event: DragEvent<HTMLElement>) => {
   const { dataTransfer } = event;
@@ -23,4 +25,15 @@ export const leaveOutside = (
   if (!isInsideSelf(event)) {
     reset();
   }
+};
+
+/** 弹窗标题：单项报它的名字，多项只报数量（名字太长会把标题挤成一串省略号） */
+export const modalTitle = (session: DragMoveSession | null): string => {
+  if (session === null) {
+    return '';
+  }
+
+  return session.entries.length === 1
+    ? `移动「${session.entries[0].name}」`
+    : `移动 ${session.entries.length} 项`;
 };

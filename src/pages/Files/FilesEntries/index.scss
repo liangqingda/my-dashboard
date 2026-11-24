@@ -9,9 +9,13 @@
   border-radius: var(--mantine-radius-md);
 }
 
-/* 网格视图铺白底卡片；表格视图不铺（表头吸顶用的是页面底色 --app-bg） */
+/*
+ * 网格视图铺一档浅底（比页面底色深、比瓦片本身浅）：瓦片自己已经是白卡片，
+ * 外框再纯白就和内容糊成一片，浅底能把「这是一块区域」交代出来。
+ * 表格视图不铺，表头吸顶用的是页面底色 `--app-bg`。
+ */
 .gridFrame {
-  background: var(--app-surface);
+  background: var(--app-surface-subtle);
 }
 
 .scroll {

@@ -95,3 +95,37 @@ export const describeListState = (input: {
     showTableSkeleton: showSkeleton && !input.isGridView,
   };
 };
+
+/** 页面一次拿齐的东西：筛完的条目 + 此刻该给哪种占位态 */
+export type FilesListModel = VisibleEntries & ListState;
+
+/**
+ * 两段计算看的是同一份目录与同一组筛选条件，页面里合成一次调用：
+ * 少抄一遍入参，也保证「筛完几条」与「要不要给空态」用的是同一组可见条目。
+ */
+export const describeFilesList = (input: {
+  listing: DirListing | null;
+  selected: FileCategory[];
+  keyword: string;
+  currentDir: string;
+  loading: boolean;
+  error: string | null;
+  isGridView: boolean;
+}): FilesListModel => {
+  const visible = selectVisibleEntries(input.listing, input.selected, input.keyword);
+
+  return {
+    ...visible,
+    ...describeListState({
+      currentDir: input.currentDir,
+      error: input.error,
+      isGridView: input.isGridView,
+      listing: input.listing,
+      loading: input.loading,
+      visibleCount:
+        visible.visibleApps.length +
+        visible.visibleFiles.length +
+        visible.visibleFolders.length,
+    }),
+  };
+};

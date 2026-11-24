@@ -11,6 +11,7 @@ import {
   FILE_CATEGORY_LABELS,
 } from '../constants';
 import { formatFileSize } from '../utils/files';
+import { writeDragPayload } from '../utils/drag-image';
 import { fileThumbUrl, videoAppIconUrl } from '../utils/media-thumbs';
 import { tileIconSize } from '../utils/tile-metrics';
 import { prefetchVideoHead } from '../utils/video-prefetch';
@@ -37,12 +38,15 @@ const FileTile = memo(
   ({
     dragging = false,
     file,
+    hideActions = false,
     onDragEnd,
     onDragStartEntry,
     onEdit,
     onOpen,
     onOpenExternal,
     onRequestDelete,
+    pending = false,
+    tipOff = false,
     veilOpacity = 100,
     videoApp,
     videoOpenMode,
@@ -101,6 +105,7 @@ const FileTile = memo(
         <span className={styles.body}>
           <FreeTruncatedText
             className={styles.name}
+            disabled={tipOff}
             ellipsis="middle"
             lines={2}
             position="top"
@@ -148,14 +153,16 @@ const FileTile = memo(
 
     return (
       <div
-        className={cx(styles.wrapper, dragging && styles.dragging)}
+        className={cx(
+          styles.wrapper,
+          dragging && styles.dragging,
+          pending && styles.pending,
+        )}
+        data-entry-path={file.path}
         draggable
         onDragEnd={onDragEnd}
         onDragStart={(event) => {
-          const { dataTransfer } = event;
-
-          dataTransfer.effectAllowed = 'move';
-          dataTransfer.setData('text/plain', file.path);
+          writeDragPayload(event.dataTransfer, [file.path]);
           onDragStartEntry?.();
         }}
         onMouseEnter={() => {
@@ -178,12 +185,14 @@ const FileTile = memo(
           <div className={styles.tile}>{content}</div>
         )}
 
-        <EntryTileActions
-          className={styles.actions}
-          kind="file"
-          onEdit={() => onEdit?.()}
-          onRequestDelete={() => onRequestDelete?.()}
-        />
+        {hideActions ? null : (
+          <EntryTileActions
+            className={styles.actions}
+            kind="file"
+            onEdit={() => onEdit?.()}
+            onRequestDelete={() => onRequestDelete?.()}
+          />
+        )}
       </div>
     );
   },

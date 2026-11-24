@@ -10,6 +10,12 @@ export type FileTileProps = {
   file: FileEntry;
   /** 当前正在被拖拽 */
   dragging?: boolean;
+  /** 已在待拖拽区里：画一圈选中框，再点一下是移除 */
+  pending?: boolean;
+  /** 待拖拽模式：hover 不再浮出重命名 / 删除 */
+  hideActions?: boolean;
+  /** 拖拽进行中：文件名不弹 hover 提示（提示会挡在拖拽物上） */
+  tipOff?: boolean;
   /** 开始拖拽本条 */
   onDragStartEntry?: () => void;
   /** 拖拽结束（松开 / 取消） */

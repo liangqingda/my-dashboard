@@ -21,6 +21,7 @@ const FilesEntries = ({
   dragSource,
   dropTarget,
   files,
+  fixedColumns,
   folders,
   isGridView,
   launchingApp,
@@ -39,7 +40,11 @@ const FilesEntries = ({
   onOpenVideo,
   onRequestDeleteEntry,
   onRequestUninstallApp,
+  onTogglePending,
+  pendingActive,
+  pendingPaths,
   rows,
+  tipsOff,
   veilOpacity,
   videoApp,
   videoOpenMode,
@@ -71,6 +76,7 @@ const FilesEntries = ({
           dragSource={dragSource}
           dropTarget={dropTarget}
           files={files}
+          fixedColumns={fixedColumns}
           folders={folders}
           launchingApp={launchingApp}
           loading={loading}
@@ -88,6 +94,10 @@ const FilesEntries = ({
           onOpenVideo={onOpenVideo}
           onRequestDeleteEntry={onRequestDeleteEntry}
           onRequestUninstallApp={onRequestUninstallApp}
+          onTogglePending={onTogglePending}
+          pendingActive={pendingActive}
+          pendingPaths={pendingPaths}
+          tipsOff={tipsOff}
           veilOpacity={veilOpacity}
           videoApp={videoApp}
           videoOpenMode={videoOpenMode}
@@ -113,6 +123,7 @@ const FilesEntries = ({
           onRequestDeleteEntry={onRequestDeleteEntry}
           onRequestUninstallApp={onRequestUninstallApp}
           rows={rows}
+          tipsOff={tipsOff}
         />
       )}
     </ScrollArea>

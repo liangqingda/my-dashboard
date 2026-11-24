@@ -1,0 +1,136 @@
+/*
+ * 手持卡片：条目本体就在弹窗里，能再被拖起。
+ * 实线 = 正拖着它，虚线 + 呼吸光 = 已经放回手里、等你再拖一次。
+ * 多项时图标叠三层，左上角红点写数量——和鼠标底下那枚拖拽影像是同一套画法。
+ */
+
+.card {
+  position: relative;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px 8px 12px;
+  border: 1px solid var(--app-line-strong);
+  border-radius: 10px;
+  background: var(--app-surface);
+  cursor: grab;
+  user-select: none;
+}
+
+.live {
+  border-color: var(--app-accent);
+  cursor: grabbing;
+}
+
+.idle {
+  border-color: var(--app-accent);
+  border-style: dashed;
+  animation: handPulse 1600ms ease-out infinite;
+}
+
+/* 图标堆：40px 见方的盒子，三层图标往里错开一点点 */
+.stack {
+  position: relative;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+}
+
+.layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--app-line);
+  border-radius: 8px;
+  background: var(--app-surface-subtle);
+}
+
+.icon {
+  color: var(--mantine-color-blue-5);
+}
+
+/* 图标能点开预览时的那层按钮：不撑开间距，hover 才亮出可点 */
+.iconButton {
+  display: block;
+  flex: 0 0 auto;
+  padding: 0;
+  border-radius: 8px;
+}
+
+.iconClickable {
+  cursor: pointer;
+  transition: color 120ms ease;
+}
+
+.iconButton:hover .iconClickable {
+  color: var(--app-accent);
+}
+
+/* 数量红点：压在最左上的那个角 */
+.count {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding-inline: 4px;
+  border-radius: 999px;
+  background: var(--app-status-danger-fill);
+  /* 红底永远配白字：暗色下 `--app-accent-contrast` 是深色，压在这块红上会糊 */
+  color: var(--mantine-color-white);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* 名字：单行中间省略，宽度上限交给卡片本身 */
+.name {
+  flex: 0 1 auto;
+  max-width: 220px;
+  color: var(--app-ink);
+  font-size: 13px;
+}
+
+/* 状态徽章：拖拽中 / 待拖拽 */
+.badge {
+  flex: 0 0 auto;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--app-accent-soft);
+  color: var(--app-accent);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+@keyframes handPulse {
+  0% {
+    box-shadow: 0 0 0 0 var(--app-accent-soft);
+  }
+
+  70% {
+    box-shadow: 0 0 0 6px transparent;
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iconClickable {
+    transition: none;
+  }
+
+  .idle {
+    animation: none;
+  }
+}

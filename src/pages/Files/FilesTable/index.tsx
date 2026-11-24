@@ -21,6 +21,7 @@ import AppIcon from '../AppIcon';
 import EntryTileActions from '../EntryTileActions';
 import { CATEGORY_ICONS, ENTRY_KIND_LABELS, FILE_CATEGORY_LABELS } from '../constants';
 import type { AppEntry, FileEntry, FilesRow, FolderEntry } from '../types';
+import { writeDragPayload } from '../utils/drag-image';
 import { prefetchVideoHead } from '../utils/video-prefetch';
 
 import type { FilesTableProps } from './types';
@@ -60,6 +61,7 @@ const FilesTable = memo(
     onRequestDeleteEntry,
     onRequestUninstallApp,
     rows,
+    tipsOff,
   }: FilesTableProps) => {
     /** 名称前的类型图标：应用走真实图标 + 通用图标回落，其余按分类换图标 */
     const renderIcon = (row: FilesRow) => {
@@ -104,6 +106,7 @@ const FilesTable = memo(
           {renderIcon(row)}
           <FreeTruncatedText
             className={styles.name}
+            disabled={tipsOff}
             ellipsis="middle"
             lines={1}
             text={entry.name}
@@ -237,10 +240,7 @@ const FilesTable = memo(
                     return;
                   }
 
-                  const { dataTransfer } = event;
-
-                  dataTransfer.effectAllowed = 'move';
-                  dataTransfer.setData('text/plain', entry.path);
+                  writeDragPayload(event.dataTransfer, [entry.path]);
                   onDragStartEntry(row.kind === 'folder' ? row.folder : row.file);
                 }}
                 onDrop={isFolder ? () => onDropFolder(entry.path) : undefined}

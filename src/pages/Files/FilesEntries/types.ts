@@ -33,6 +33,16 @@ export type FilesEntriesProps = {
   loadingFolder: string | null;
   /** 表格视图的行（文件夹 → 应用 → 文件） */
   rows: FilesRow[];
+  /** 待拖拽区里已攒的条目路径：网格据此画选中框 */
+  pendingPaths: string[];
+  /** 待拖拽区非空：网格里点条目变成加入 / 移除 */
+  pendingActive: boolean;
+  /** 把某条目加入 / 移出待拖拽区 */
+  onTogglePending: (entry: FolderEntry | FileEntry) => void;
+  /** 拖拽进行中：文件名不弹 hover 提示（表格与网格同口径） */
+  tipsOff: boolean;
+  /** 应用目录用定宽列：文件夹与应用同尺寸、不随屏幕拉伸 */
+  fixedColumns: boolean;
   /** hover 玻璃层透明度（0–100） */
   veilOpacity: number;
   /** 设置里的播放器应用名：网格在外部模式下用它的图标 */

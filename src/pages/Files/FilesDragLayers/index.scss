@@ -1,0 +1,8 @@
+/*
+ * 两条浮层各自 `position: fixed` 定位，这一层自己不占位、也不画任何东西：
+ * `display: contents` 让它的盒子不参与布局，只留一个把两处浮层归在一起的位置。
+ */
+
+.layers {
+  display: contents;
+}

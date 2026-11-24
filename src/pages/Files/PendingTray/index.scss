@@ -1,0 +1,141 @@
+/*
+ * 待拖拽区：悬浮在列表顶部的一条横条（盖住 header 也在所不惜——它只在攒东西时出现）。
+ * 左侧是「拖这块空白处搬全部」，右侧是一排可以单独拖走、也可以叉掉的小图标。
+ */
+
+/* 弹窗开着时只藏不卸：正在拖的条目就握在这条里，卸载即等于取消拖拽 */
+.hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.tray {
+  position: fixed;
+  top: 10px;
+  right: 12px;
+  left: 12px;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--app-line-strong);
+  border-radius: 14px;
+  background: var(--app-surface);
+  box-shadow: 0 12px 30px rgb(23 37 34 / 18%);
+}
+
+/* 整批拖的那块：图标堆 + 两行文案，整块是拖拽源 */
+.main {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 10px;
+  cursor: grab;
+  user-select: none;
+}
+
+/* 图标堆：三层以内，右下角依次错开 */
+.stack {
+  position: relative;
+  display: block;
+  width: 34px;
+  height: 34px;
+}
+
+.layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--app-line);
+  border-radius: 9px;
+  background: var(--app-surface-subtle);
+}
+
+.layerIcon {
+  color: var(--mantine-color-blue-5);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--app-ink);
+  font-weight: 600;
+}
+
+.titleIcon {
+  color: var(--app-accent);
+}
+
+.hint {
+  color: var(--app-ink-faint);
+  white-space: nowrap;
+}
+
+/* 小图标：每一项一枚，可以单独拖走、hover 出叉号 */
+.chips {
+  display: flex;
+  flex: 1 1 auto;
+  flex-flow: row wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 200px;
+  padding: 2px 3px 2px 8px;
+  border: 1px solid var(--app-line);
+  border-radius: 8px;
+  background: var(--app-surface-subtle);
+  cursor: grab;
+}
+
+.chipIcon {
+  flex: 0 0 auto;
+  color: var(--mantine-color-blue-5);
+}
+
+.chipName {
+  flex: 0 1 auto;
+  min-width: 0;
+  color: var(--app-ink);
+  font-size: 12px;
+}
+
+/* hover 才浮出的移除叉号：占位不变，免得小图标随 hover 抖动 */
+.chipRemove {
+  flex: 0 0 auto;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.chip:hover .chipRemove,
+.chipRemove:focus-visible {
+  opacity: 1;
+}
+
+.clear {
+  flex: 0 0 auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chipRemove {
+    transition: none;
+  }
+}

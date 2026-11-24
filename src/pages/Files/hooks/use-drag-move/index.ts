@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-import type { FileEntry, FolderEntry } from '../../types';
+import type { DraggableEntry, FolderEntry } from '../../types';
 import { playMoveSound, primeMoveSound } from '../../utils/move-sound';
 
 import { SPRING_ENTER_MS, SPRING_HOVER_MS } from './constants';
@@ -86,11 +86,11 @@ export const useDragMove = ({
   };
 
   /**
-   * 拖起一条目：弹窗从页面当前目录这一层打开，被拖的那个文件夹不进列表。
-   * 会话记下条目本体：手持卡片按它换图标，图片 / 视频还能点开预览。
+   * 拖起一批条目：弹窗从页面当前目录这一层打开，被拖的文件夹都不进落点列表。
+   * 会话记下条目本体：手持卡片按它们的类型换图标、层叠并标数量。
    */
-  const open = (entry: FolderEntry | FileEntry) => {
-    if (currentDir === null) {
+  const open = (entries: DraggableEntry[]) => {
+    if (currentDir === null || entries.length === 0) {
       return;
     }
 
@@ -100,16 +100,17 @@ export const useDragMove = ({
     setHanded(false);
     setDragActive(true);
 
-    const active: DragMoveSession = {
-      file: 'category' in entry ? entry : null,
-      name: entry.name,
-      origin: currentDir,
-      path: entry.path,
-    };
+    const active: DragMoveSession = { entries, origin: currentDir };
 
     sessionRef.current = active;
     setSession(active);
-    setView({ folders: stripSelf(currentFolders, entry.path), path: currentDir });
+    setView({
+      folders: stripSelf(
+        currentFolders,
+        entries.map((entry) => entry.path),
+      ),
+      path: currentDir,
+    });
   };
 
   /** 从弹窗里的手持卡片再次拖起：会话还在，只把拖拽状态重新点亮 */
@@ -193,18 +194,28 @@ export const useDragMove = ({
     resetHover();
   };
 
-  /** 提交移动；成功才播落位音效（失败文案由 `moveEntry` 自己给） */
-  const runMove = async (source: string, targetDir: string) => {
+  /**
+   * 逐个提交移动：全部成功才播落位音效并关窗；有一条失败就停在手持态，
+   * 失败原因由 `moveEntry` 自己弹通知，成功的几条已经落位、列表由页面刷新。
+   */
+  const runMove = async (sources: string[], targetDir: string) => {
     // 这一步还在 drop 事件的任务里：先把音频解锁，移动成功后再出声
     primeMoveSound();
     movingRef.current = true;
 
     try {
-      const moved = await moveEntry(source, targetDir);
+      const results = await Promise.all(
+        sources.map((source) => moveEntry(source, targetDir)),
+      );
 
-      if (moved) {
+      if (results.every(Boolean)) {
+        close();
         playMoveSound();
+
+        return;
       }
+
+      endDrag();
     } finally {
       movingRef.current = false;
     }
@@ -214,12 +225,18 @@ export const useDragMove = ({
   const dropOnFolder = (targetDir: string) => {
     const active = sessionRef.current;
 
-    if (active === null || movingRef.current || active.path === targetDir) {
+    if (
+      active === null ||
+      movingRef.current ||
+      active.entries.some((entry) => entry.path === targetDir)
+    ) {
       return;
     }
 
-    close();
-    void runMove(active.path, targetDir);
+    void runMove(
+      active.entries.map((entry) => entry.path),
+      targetDir,
+    );
   };
 
   /**
@@ -240,8 +257,10 @@ export const useDragMove = ({
       return;
     }
 
-    close();
-    void runMove(active.path, current.path);
+    void runMove(
+      active.entries.map((entry) => entry.path),
+      current.path,
+    );
   };
 
   useEffect(

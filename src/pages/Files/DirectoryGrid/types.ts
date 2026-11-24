@@ -28,6 +28,19 @@ export type DirectoryGridProps = {
   dragSource: string | null;
   /** 当前悬停的放置目标文件夹路径；null 表示没有目标 */
   dropTarget: string | null;
+  /**
+   * 待拖拽区里已有的路径：这些瓦片画选中框，再点一下是移除。
+   * 应用包不参与（不进待拖拽区、也不能拖）。
+   */
+  pendingPaths: string[];
+  /** 待拖拽区非空：此时点条目是「加入 / 移除」，不再打开 */
+  pendingActive: boolean;
+  /** 把某条目加入 / 移出待拖拽区（点击语义，含 ⌘ / Shift + 点击） */
+  onTogglePending: (entry: FolderEntry | FileEntry) => void;
+  /** 拖拽进行中：文件名一律不弹 hover 提示 */
+  tipsOff: boolean;
+  /** 应用目录（`/Applications` 这类）用定宽列，文件夹与应用同尺寸、不随屏幕拉伸 */
+  fixedColumns: boolean;
   /** hover 玻璃层透明度（0–100） */
   veilOpacity: number;
   /** 设置里的播放器应用名：视频瓦片在外部模式下摆它的图标 */

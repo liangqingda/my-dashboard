@@ -17,10 +17,10 @@ export const clearTimer = (id: number | null, reset: () => void): void => {
 };
 
 /**
- * 被拖条目自己不能当落点。它本来就摆在自己所在那一层的列表里，
- * 不过滤掉的话会看到一个「移进自己」的瓦片——后端会拒，但提示文案像 bug。
+ * 被拖的条目自己不能当落点。它们本来就摆在自己所在那一层的列表里，
+ * 不过滤掉的话会看到「移进自己 / 移进同行的兄弟」的瓦片——后端会拒，但提示文案像 bug。
  */
 export const stripSelf = (
   folders: FolderEntry[],
-  source: string,
-): FolderEntry[] => folders.filter((folder) => folder.path !== source);
+  sources: string[],
+): FolderEntry[] => folders.filter((folder) => !sources.includes(folder.path));

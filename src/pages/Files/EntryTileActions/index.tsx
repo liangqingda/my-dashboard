@@ -27,7 +27,7 @@ const EntryTileActions = memo(
     const label = ENTRY_KIND_LABELS[kind];
 
     return (
-      <div className={cx(styles.actions, className)}>
+      <div className={cx(styles.actions, className)} data-tile-actions="true">
         {onEdit ? (
           <FreeIconAction
             label={`重命名${label}`}

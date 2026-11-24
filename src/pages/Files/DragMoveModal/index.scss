@@ -12,81 +12,9 @@
   padding: 12px 18px 16px;
 }
 
-/* 手持卡片这一行：卡片在左、提示吃满剩下的宽度 */
+/* 手持卡片这一行：卡片在左（样式在 `HandCard/`），提示吃满剩下的宽度 */
 .handRow {
   flex: 0 0 auto;
-}
-
-/*
- * 手持卡片：条目本体就在弹窗里，能再被拖起。
- * 实线＝正拖着它，虚线＋呼吸光＝已经放回手里、等你再拖一次。
- */
-.hand {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 8px;
-  max-width: min(360px, 42vw);
-  padding: 8px 10px 8px 12px;
-  border: 1px solid var(--app-line-strong);
-  border-radius: 10px;
-  background: var(--app-surface);
-  cursor: grab;
-  user-select: none;
-}
-
-/* 正在被拖：实线强调色，别再加动画（拖拽本身已经有拖动影像） */
-.handLive {
-  border-color: var(--app-accent);
-  cursor: grabbing;
-}
-
-/* 已经放回手里：虚线边 + 一圈呼吸光，「这是要待拖的文件 / 文件夹」一眼能看出来 */
-.handIdle {
-  border-color: var(--app-accent);
-  border-style: dashed;
-  animation: handPulse 1600ms ease-out infinite;
-}
-
-.handIcon {
-  flex: 0 0 auto;
-  color: var(--mantine-color-blue-5);
-}
-
-/* 图标能点开预览时的那层按钮：不撑开间距，hover 才亮出可点 */
-.handIconButton {
-  display: flex;
-  flex: 0 0 auto;
-  padding: 0;
-  border-radius: 6px;
-}
-
-.handIconClickable {
-  cursor: pointer;
-  transition: color 120ms ease;
-}
-
-.handIconButton:hover .handIconClickable {
-  color: var(--app-accent);
-}
-
-/* 文件名：单行中间省略，宽度上限交给卡片本身 */
-.handName {
-  flex: 0 1 auto;
-  max-width: 200px;
-  color: var(--app-ink);
-  font-size: 13px;
-}
-
-/* 状态徽章：拖拽中 / 待拖拽 */
-.handBadge {
-  flex: 0 0 auto;
-  padding: 2px 7px;
-  border-radius: 999px;
-  background: var(--app-accent-soft);
-  color: var(--app-accent);
-  font-size: 11px;
-  line-height: 1.5;
 }
 
 .handHint {
@@ -251,30 +179,13 @@
   }
 }
 
-/* 手持卡片的呼吸光：从虚线圈向外扩一圈再收回去，只画一圈、不闪 */
-@keyframes handPulse {
-  0% {
-    box-shadow: 0 0 0 0 var(--app-accent-soft);
-  }
-
-  70% {
-    box-shadow: 0 0 0 6px transparent;
-  }
-
-  100% {
-    box-shadow: 0 0 0 0 transparent;
-  }
-}
-
 /* 系统开了「减少动态」：倒计时、弹起与手持呼吸都只留结果，不做动画 */
 @media (prefers-reduced-motion: reduce) {
-  .folder,
-  .handIconClickable {
+  .folder {
     transition: none;
   }
 
-  .springing,
-  .handIdle {
+  .springing {
     animation: none;
   }
 }

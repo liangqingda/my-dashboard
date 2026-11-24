@@ -28,8 +28,11 @@ export const useViewFolders = ({
 
     fetchFileDir(path, controller.signal)
       .then((listing) => {
-        // 被拖条目自己不能当落点，取它现在的路径把这一项摘掉
-        const subFolders = stripSelf(listing.folders, sessionRef.current?.path ?? '');
+        // 被拖的文件夹自己不能当落点，按它们的路径把这几项摘掉
+        const subFolders = stripSelf(
+          listing.folders,
+          sessionRef.current?.entries.map((entry) => entry.path) ?? [],
+        );
 
         cacheRef.current.set(path, subFolders);
         setView((prev) =>

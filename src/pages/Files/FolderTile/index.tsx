@@ -8,6 +8,7 @@ import { cx } from '@/utils/cx';
 import EntryTileActions from '../EntryTileActions';
 import TileVeil from '../TileVeil';
 import { DEFAULT_TILE_MEDIA_SIZE } from '../constants';
+import { writeDragPayload } from '../utils/drag-image';
 
 import type { FolderTileProps } from './types';
 
@@ -52,10 +53,13 @@ const FolderTile = memo(
     onDragLeave,
     onDragOver,
     onDrop,
+    hideActions = false,
     onDragStartEntry,
     onEdit,
     onOpen,
     onRequestDelete,
+    pending = false,
+    tipOff = false,
     veilOpacity,
   }: FolderTileProps) => (
     <div
@@ -63,16 +67,15 @@ const FolderTile = memo(
         styles.wrapper,
         dragging && styles.dragging,
         dropActive && styles.dropActive,
+        pending && styles.pending,
       )}
+      data-entry-path={folder.path}
       draggable
       onDragEnd={onDragEnd}
       onDragLeave={onDragLeave}
       onDragOver={onDragOver}
       onDragStart={(event) => {
-        const { dataTransfer } = event;
-
-        dataTransfer.effectAllowed = 'move';
-        dataTransfer.setData('text/plain', folder.path);
+        writeDragPayload(event.dataTransfer, [folder.path]);
         onDragStartEntry?.();
       }}
       onDrop={onDrop}
@@ -95,6 +98,7 @@ const FolderTile = memo(
         <span className={styles.body}>
           <FreeTruncatedText
             className={styles.name}
+            disabled={tipOff}
             ellipsis="middle"
             lines={2}
             position="top"
@@ -106,12 +110,14 @@ const FolderTile = memo(
         </span>
       </UnstyledButton>
 
-      <EntryTileActions
-        className={styles.actions}
-        kind="folder"
-        onEdit={() => onEdit?.()}
-        onRequestDelete={() => onRequestDelete?.()}
-      />
+      {hideActions ? null : (
+        <EntryTileActions
+          className={styles.actions}
+          kind="folder"
+          onEdit={() => onEdit?.()}
+          onRequestDelete={() => onRequestDelete?.()}
+        />
+      )}
     </div>
   ),
 );

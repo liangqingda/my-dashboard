@@ -1,0 +1,90 @@
+/*
+ * 拖拽影像：跟着指针的一叠图标 + 左上角红色数量。
+ * `pointer-events: none` 是关键——它压在指针下面，不能吃掉下方瓦片的 dragover。
+ */
+
+.ghost {
+  position: fixed;
+  z-index: 700;
+  display: flex;
+  align-items: flex-start;
+  pointer-events: none;
+  transform: translate(-14px, -50%);
+  animation: ghostIn 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  &[data-placed='false'] {
+    opacity: 0;
+    animation: none;
+  }
+}
+
+/* 图标叠放区：后画的压在下面那层的右下角 */
+.stack {
+  position: relative;
+  display: block;
+  width: 46px;
+  height: 46px;
+}
+
+.layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border: 1px solid var(--app-line);
+  border-radius: 12px;
+  background: var(--app-surface);
+  box-shadow: 0 8px 20px rgb(23 37 34 / 16%);
+}
+
+.icon {
+  color: var(--mantine-color-blue-5);
+}
+
+/* 数量：压在最左上的红点，多选时才出现 */
+.count {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding-inline: 5px;
+  border-radius: 999px;
+  background: var(--app-status-danger-fill);
+  box-shadow: 0 2px 6px rgb(23 37 34 / 24%);
+  /* 红底永远配白字：暗色下 `--app-accent-contrast` 是深色，压在这块红上会糊 */
+  color: var(--mantine-color-white);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* 进场：从「瓦片大小的一半」放大到图标大小，看得出是它变成了拖拽物 */
+@keyframes ghostIn {
+  0% {
+    opacity: 0;
+    transform: translate(-14px, -50%) scale(0.6);
+  }
+
+  60% {
+    opacity: 1;
+    transform: translate(-14px, -50%) scale(1.06);
+  }
+
+  100% {
+    transform: translate(-14px, -50%) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ghost {
+    animation: none;
+  }
+}

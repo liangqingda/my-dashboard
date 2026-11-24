@@ -44,4 +44,6 @@ export type FilesTableProps = {
   onRequestUninstallApp: (app: AppEntry) => void;
   /** 请求删除某个条目（先弹二次确认） */
   onRequestDeleteEntry: (path: string) => void;
+  /** 拖拽进行中：名称一律不弹 hover 提示（提示会挡在拖拽物上） */
+  tipsOff: boolean;
 };

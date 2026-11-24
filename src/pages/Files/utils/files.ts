@@ -181,6 +181,13 @@ export const filterAppsByCategory = (
 /** 系统应用目录：即使这一层扫描没拿到 `hasApps`，也只可能是放应用的目录，勾 App 时必须露出 */
 const APP_CATALOG_PATHS = new Set(['/Applications', '/System/Applications']);
 
+/**
+ * 当前是不是应用目录本身（`/Applications`、`/System/Applications`）：
+ * 这两种目录里的文件夹是应用包自带的目录，瓦片尺寸要和应用一样、别随窗口被拉大。
+ */
+export const isAppCatalogPath = (dir: string | null): boolean =>
+  dir !== null && APP_CATALOG_PATHS.has(dir);
+
 const holdsApps = (folder: FolderEntry): boolean =>
   folder.hasApps || APP_CATALOG_PATHS.has(folder.path);
 

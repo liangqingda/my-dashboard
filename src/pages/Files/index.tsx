@@ -7,6 +7,7 @@ import { onPageRefresh } from '@/utils/page-refresh';
 import DirBreadcrumb from './DirBreadcrumb';
 import FilesActions from './FilesActions';
 import type { FilesActionsPanel } from './FilesActions/types';
+import FilesDragLayers from './FilesDragLayers';
 import FilesEntries from './FilesEntries';
 import FilesModals from './FilesModals';
 import FilesPreviewLayers from './FilesPreviewLayers';
@@ -14,6 +15,7 @@ import FilesStates from './FilesStates';
 import { FILES_STORAGE_SCOPE } from './constants';
 import { useAppLaunch } from './hooks/useAppLaunch';
 import { useAppUninstall } from './hooks/useAppUninstall';
+import { useDragPending } from './hooks/use-drag-pending';
 import { useEntryActions } from './hooks/useEntryActions';
 import { useEntryDelete } from './hooks/useEntryDelete';
 import { useFilesSettings } from './hooks/useFilesSettings';
@@ -29,11 +31,9 @@ import { useVolumeEject } from './hooks/useVolumeEject';
 import {
   describeDirSpace,
   emptyListingText,
+  isAppCatalogPath,
 } from './utils/files';
-import {
-  describeListState,
-  selectVisibleEntries,
-} from './utils/entries-view';
+import { describeFilesList } from './utils/entries-view';
 
 import styles from './index.scss';
 
@@ -44,6 +44,8 @@ import styles from './index.scss';
  * 点文件夹进入下一层，面包屑回退，`⌘↑` 回上一级；可收藏常用目录，在收藏面板里点选直达；
  * 拖起任一条目会打开移动弹窗：全屏逐层挑目标文件夹，面包屑换层，松手没落成移动就把条目留在手里；
  * 弹窗 header 可新建文件夹（与标题栏那颗按钮同一套流程），手持卡片上的图标按条目类型换、图 / 视频可点开预览。
+ * 网格里用 ⌘ / Shift + 点击（或待拖拽区已经非空时直接点）把条目攒进顶部悬浮的待拖拽区，
+ * 攒下东西后点条目只做「加入 / 移除」，拖这块空白处整批搬、拖某个小图标只搬它一个。
  * 标题栏筛选面板支持按名称关键词过滤与按类型勾选，取消勾选的类型连同对应文件夹一起隐藏。
  * 列表只列摘要；点视频条目会在弹窗里播放（设置里可改成交给外部播放器），
  * 点图片条目会在同形的弹窗里预览，两者的翻篇与目录侧栏都基于当前目录的同类列表（视频另有截图）。
@@ -73,10 +75,9 @@ const Files = () => {
     refresh,
     reload,
   } = useFilesDir(defaultFavoriteDir);
-  const {
-    onChange: onSelectedCategoriesChange,
-    selected: selectedCategories,
-  } = useTypeFilter();
+  const typeFilter = useTypeFilter();
+  const { onChange: onSelectedCategoriesChange, selected: selectedCategories } =
+    typeFilter;
   /** 展示形式：网格 / 表格，切换按钮在标题栏 */
   const { isGridView, toggle: toggleViewMode } = useFilesViewMode();
   /** 文件页设置（放在视频预览之前）：点视频的去向、两扇预览是否默认全屏 */
@@ -120,6 +121,9 @@ const Files = () => {
     resetDelete,
   } = useEntryDelete(folders, allFiles, reload);
 
+  /** 待拖拽区：攒起来的一批条目，攒下以后列表的点击语义跟着变 */
+  const pending = useDragPending();
+
   /** 同时只开一块弹层：收藏 / 筛选 */
   const [openPanel, setOpenPanel] = useState<FilesActionsPanel | null>(null);
   /** 文件名关键词；会话内状态，不持久化 */
@@ -131,13 +135,16 @@ const Files = () => {
   /** 当前目录作为收藏条目；还没选目录时为 null，收藏按钮禁用 */
   const currentEntry = listing ? { path: listing.path, name: listing.name } : null;
 
-  /** 筛完的文件夹 / 应用 / 文件，以及表格要的合并行 */
-  const {
-    rows: tableRows,
-    visibleApps,
-    visibleFiles,
-    visibleFolders,
-  } = selectVisibleEntries(listing, selectedCategories, keyword);
+  /** 筛完的条目、表格要的合并行，以及骨架 / 空态 / 引导的判定 */
+  const list = describeFilesList({
+    currentDir,
+    error,
+    isGridView,
+    keyword,
+    listing,
+    loading,
+    selected: selectedCategories,
+  });
 
   /** 切换某块弹层：再点一次同一块则收起 */
   const togglePanel = (panel: FilesActionsPanel) =>
@@ -170,22 +177,6 @@ const Files = () => {
     onNavigate: goToDir,
   });
 
-  /** 骨架 / 空态 / 首次引导：判定收在纯函数里，页面只挑状态渲染 */
-  const {
-    showEmpty,
-    showGridSkeleton,
-    showPrompt,
-    showSkeleton,
-    showTableSkeleton,
-  } = describeListState({
-    currentDir,
-    error,
-    isGridView,
-    listing,
-    loading,
-    visibleCount: visibleFolders.length + visibleApps.length + visibleFiles.length,
-  });
-
   /** 只勾 App 自动切到系统应用目录；多选切单选时收敛成全部 */
   const { changeFilterMode, changeSelectedCategories } = useFilesFilterActions({
     currentPath: listing?.path ?? null,
@@ -196,7 +187,7 @@ const Files = () => {
   });
 
   /** 空态文案：筛过条件与真的空目录给不同一句话；不是空态就是 null */
-  const emptyText = showEmpty
+  const emptyText = list.showEmpty
     ? emptyListingText(selectedCategories, keyword)
     : null;
 
@@ -250,21 +241,22 @@ const Files = () => {
         <FilesStates
           emptyText={emptyText}
           error={error}
-          gridSkeleton={showGridSkeleton}
+          gridSkeleton={list.showGridSkeleton}
           onRetry={refresh}
-          prompt={showPrompt}
-          tableSkeleton={showTableSkeleton}
+          prompt={list.showPrompt}
+          tableSkeleton={list.showTableSkeleton}
         />
 
         {/* 两种形态都自己滚：纵向滚动条浮在内容之上，右侧固定留出一段比
             常规内边距更宽的空白（滚动条 6px + 呼吸空间），别让滚动条贴住列表内容 */}
-        {listing !== null && !showSkeleton && !showEmpty ? (
+        {listing !== null && !list.showSkeleton && !list.showEmpty ? (
           <FilesEntries
-            apps={visibleApps}
+            apps={list.visibleApps}
             dragSource={entryActions.dragSource}
             dropTarget={entryActions.dropTarget}
-            files={visibleFiles}
-            folders={visibleFolders}
+            files={list.visibleFiles}
+            fixedColumns={isAppCatalogPath(listing.path)}
+            folders={list.visibleFolders}
             isGridView={isGridView}
             launchingApp={launchingPath}
             loading={loading}
@@ -282,7 +274,11 @@ const Files = () => {
             onOpenVideo={openVideo}
             onRequestDeleteEntry={requestDelete}
             onRequestUninstallApp={appUninstall.requestUninstall}
-            rows={tableRows}
+            onTogglePending={pending.toggle}
+            pendingActive={pending.active}
+            pendingPaths={pending.entries.map((entry) => entry.path)}
+            rows={list.rows}
+            tipsOff={entryActions.dragMove.dragActive}
             veilOpacity={settings.veilOpacity}
             videoApp={settings.videoApp}
             videoOpenMode={settings.videoOpenMode}
@@ -290,6 +286,8 @@ const Files = () => {
           />
         ) : null}
       </Stack>
+
+      <FilesDragLayers entryActions={entryActions} pending={pending} />
 
       <FilesModals
         appUninstall={appUninstall}

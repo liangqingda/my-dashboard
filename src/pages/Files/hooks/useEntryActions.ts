@@ -3,7 +3,7 @@ import { notifications } from '@mantine/notifications';
 
 import { getErrorMessage } from '@/utils/error';
 
-import type { FileEntry, FolderEntry } from '../types';
+import type { DraggableEntry, FileEntry, FolderEntry } from '../types';
 import { createFolder, moveEntry, renameEntry } from '../utils/files-api';
 
 import { useDragMove } from './use-drag-move';
@@ -168,11 +168,18 @@ export const useEntryActions = ({
   /** 关掉改名弹窗，不提交 */
   const closeRename = () => setRenamingEntry(null);
 
-  /** 拖起一条目：记下拖拽源，同时把移动弹窗打开在页面当前目录；条目本体一并交给会话 */
-  const dragStartEntry = (entry: FolderEntry | FileEntry) => {
-    setDragSource(entry.path);
-    dragMove.open(entry);
+  /**
+   * 拖起一批条目：把移动弹窗打开在页面当前目录，条目本体一并交给会话。
+   * 从瓦片 / 表格行拖起时只有一条；从待拖拽区整批拖起时是一整批。
+   */
+  const dragStartEntries = (entries: DraggableEntry[]) => {
+    // 拖拽源高亮只认第一条：多个条目时弹窗已经盖住列表，没必要逐条画「正在拖」
+    setDragSource(entries[0]?.path ?? null);
+    dragMove.open(entries);
   };
+
+  /** 拖起一条目：单条走的是同一个入口 */
+  const dragStartEntry = (entry: DraggableEntry) => dragStartEntries([entry]);
 
   /** 拖拽结束：收起移动弹窗；没有落下的移动一律不执行 */
   const endDrag = () => {
@@ -203,6 +210,7 @@ export const useEntryActions = ({
     dragMove,
     dragOverFolder,
     dragSource,
+    dragStartEntries,
     dragStartEntry,
     dropFolder,
     dropTarget,

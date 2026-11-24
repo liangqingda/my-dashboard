@@ -56,6 +56,9 @@ export type FileEntry = {
   category: FileCategory;
 };
 
+/** 能被拖拽移动的条目：文件夹与文件（应用包不参与移动） */
+export type DraggableEntry = FolderEntry | FileEntry;
+
 /** 能播放视频的本机应用（外部打开的目标） */
 export type VideoAppOption = {
   /** 应用名，`open -a` 用它；设置里就当选中值 */

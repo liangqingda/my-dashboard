@@ -33,6 +33,7 @@ const AppTile = memo(
     launching,
     onOpen,
     onRequestUninstall,
+    tipOff = false,
     veilOpacity,
   }: AppTileProps) => (
     <div className={styles.wrapper}>
@@ -47,6 +48,7 @@ const AppTile = memo(
       <span className={styles.body}>
         <FreeTruncatedText
           className={styles.name}
+          disabled={tipOff}
           ellipsis="middle"
           lines={2}
           position="top"

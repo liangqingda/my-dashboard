@@ -4,19 +4,15 @@
 
 import type { Dispatch, RefObject, SetStateAction } from 'react';
 
-import type { FileEntry, FolderEntry } from '../../types';
+import type { DraggableEntry, FolderEntry } from '../../types';
 
 /**
- * 一次拖拽移动会话：被拖的条目、它的来源目录。
- * 文件夹条目带不上文件字段，`file === null` 就是文件夹——手持卡片的图标与「能不能预览」都看它。
+ * 一次拖拽移动会话：这次要移动的条目（一个或多个）与它们的来源目录。
+ * 条目是文件夹还是文件由它身上有没有 `category` 判——手持卡片的图标与「能不能预览」都看这个。
  */
 export type DragMoveSession = {
-  /** 被拖条目的绝对路径：移动的 source，也是「它自己不能当落点」的判据 */
-  path: string;
-  /** 条目名：手持卡片与弹窗标题用 */
-  name: string;
-  /** 文件条目；文件夹拖拽时为 null */
-  file: FileEntry | null;
+  /** 要移动的条目；长度为 1 时手持卡片摆它自己，多于 1 时层叠并标数量 */
+  entries: DraggableEntry[];
   /** 来源目录：判断「松手就在原地」用 */
   origin: string;
 };
