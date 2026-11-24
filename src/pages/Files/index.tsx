@@ -42,7 +42,8 @@ import styles from './index.scss';
  * 应用包按一条应用展示（真实图标 + 卸载入口），不当作可进入的文件夹。
  * 标题栏的图标按钮可在网格与表格（名称 / 类别 / 操作三列）两种展示形式之间切换，结果记在 localStorage。
  * 点文件夹进入下一层，面包屑回退，`⌘↑` 回上一级；可收藏常用目录，在收藏面板里点选直达；
- * 拖起任一条目会打开移动弹窗：弹窗里逐层挑目标文件夹，底部取消区可退回最外层或取消整次移动。
+ * 拖起任一条目会打开移动弹窗：全屏逐层挑目标文件夹，面包屑换层，松手没落成移动就把条目留在手里；
+ * 弹窗 header 可新建文件夹（与标题栏那颗按钮同一套流程），手持卡片上的图标按条目类型换、图 / 视频可点开预览。
  * 标题栏筛选面板支持按名称关键词过滤与按类型勾选，取消勾选的类型连同对应文件夹一起隐藏。
  * 列表只列摘要；点视频条目会在弹窗里播放（设置里可改成交给外部播放器），
  * 点图片条目会在同形的弹窗里预览，两者的翻篇与目录侧栏都基于当前目录的同类列表（视频另有截图）。
@@ -299,6 +300,9 @@ const Files = () => {
           deletingEntry,
         }}
         entryActions={entryActions}
+        onCreateFolder={(dir) => void entryActions.createEntryIn(dir)}
+        onPreviewImage={openImage}
+        onPreviewVideo={openVideo}
         volumeEject={volumeEject}
       />
 

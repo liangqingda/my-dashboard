@@ -104,16 +104,16 @@ export const useEntryActions = ({
     dragMove.reset();
   };
 
-  /** 新建文件夹：后端落一个默认名条目，刷新后打开改名弹窗 */
-  const createEntry = async () => {
-    if (!currentDir) {
-      return;
-    }
-
+  /**
+   * 在指定目录新建文件夹：后端落一个默认名条目，刷新后打开改名弹窗。
+   * 目录页标题栏与拖拽移动弹窗的 header 共用这一条路径，交互完全一致。
+   */
+  const createEntryIn = async (dir: string) => {
     try {
-      const created = await createFolder(currentDir);
+      const created = await createFolder(dir);
 
       await reload();
+      dragMove.refreshView();
       setRenamingEntry({ path: created.path, name: created.name, kind: 'folder' });
     } catch (err) {
       notifications.show({
@@ -125,6 +125,15 @@ export const useEntryActions = ({
     }
   };
 
+  /** 新建文件夹：目录页标题栏那颗按钮，落在当前目录 */
+  const createEntry = async () => {
+    if (!currentDir) {
+      return;
+    }
+
+    await createEntryIn(currentDir);
+  };
+
   /** 提交改名：成功后刷新列表；失败弹提示并退出改名态，条目保留原名 */
   const renameCommit = async (path: string, name: string) => {
     setRenameLoading(true);
@@ -132,6 +141,8 @@ export const useEntryActions = ({
     try {
       await renameEntry(path, name);
       await reload();
+      /* 新文件夹改名后就地反映到拖拽弹窗那一层，不用退出重进 */
+      dragMove.refreshView();
       setRenamingEntry(null);
     } catch (err) {
       notifications.show({
@@ -157,14 +168,10 @@ export const useEntryActions = ({
   /** 关掉改名弹窗，不提交 */
   const closeRename = () => setRenamingEntry(null);
 
-  /** 拖起一条目：记下拖拽源，同时把移动弹窗打开在页面当前目录，带上条目类型 */
-  const dragStartEntry = (
-    path: string,
-    name: string,
-    kind: 'folder' | 'file',
-  ) => {
-    setDragSource(path);
-    dragMove.open(path, name, kind);
+  /** 拖起一条目：记下拖拽源，同时把移动弹窗打开在页面当前目录；条目本体一并交给会话 */
+  const dragStartEntry = (entry: FolderEntry | FileEntry) => {
+    setDragSource(entry.path);
+    dragMove.open(entry);
   };
 
   /** 拖拽结束：收起移动弹窗；没有落下的移动一律不执行 */
@@ -191,6 +198,7 @@ export const useEntryActions = ({
     clearDrag,
     closeRename,
     createEntry,
+    createEntryIn,
     dragLeaveFolder: () => setDropTarget(null),
     dragMove,
     dragOverFolder,

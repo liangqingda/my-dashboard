@@ -1,9 +1,8 @@
 /**
- * 拖拽移动会话的纯函数：计时器、路径的根 / 上一层、落点过滤。
+ * 拖拽移动会话的纯函数：计时器句柄与落点过滤。
  */
 
 import type { FolderEntry } from '../../types';
-import { describePathRoot } from '../../utils/files';
 
 /**
  * 清掉一个计时器句柄：`reset` 负责把持有它的 ref 置回 null——
@@ -15,27 +14,6 @@ export const clearTimer = (id: number | null, reset: () => void): void => {
   }
 
   reset();
-};
-
-/**
- * 路径的根：与目录页的同一条口径（家目录 / 外接卷 / 本机 `/`）。
- * 弹窗把它当「最外层」——再往上就不属于这个应用逛的范围了。
- */
-export const rootPath = (dir: string): string => describePathRoot(dir).path;
-
-/**
- * 上一层目录：已经到根就返回 null。
- * 用根判定而不是直接截末段，否则家目录再往上会爬到别人的家目录里去。
- */
-export const parentPath = (dir: string): string | null => {
-  if (dir === rootPath(dir)) {
-    return null;
-  }
-
-  const trimmed = dir.replace(/\/+$/, '');
-  const cut = trimmed.lastIndexOf('/');
-
-  return cut <= 0 ? '/' : trimmed.slice(0, cut);
 };
 
 /**

@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 
-import type { FolderEntry } from '../../types';
+import type { FileEntry, FolderEntry } from '../../types';
 import { playMoveSound, primeMoveSound } from '../../utils/move-sound';
 
-import { PARENT_HOVER_MS, SPRING_ENTER_MS, SPRING_HOVER_MS } from './constants';
+import { SPRING_ENTER_MS, SPRING_HOVER_MS } from './constants';
 import type { DragMoveSession, DragMoveView, UseDragMoveArgs } from './types';
 import { useViewFolders } from './use-view-folders';
-import { clearTimer, parentPath, rootPath, stripSelf } from './utils';
+import { clearTimer, stripSelf } from './utils';
 
 /**
  * 拖拽移动会话的状态与动作（调用方式与判定见同目录 `README.md`）：
@@ -35,8 +35,6 @@ export const useDragMove = ({
   const [hoverPath, setHoverPath] = useState<string | null>(null);
   /** 正在播弹起动画的文件夹路径 */
   const [springPath, setSpringPath] = useState<string | null>(null);
-  /** 「上一层」停靠区正在计时：弹窗据此点亮它 */
-  const [parentHovering, setParentHovering] = useState(false);
   /** 拖拽在飞（页面瓦片或弹窗里的手持卡片拖起来的都算） */
   const [dragActive, setDragActive] = useState(false);
   /** 手持态：拖拽已经结束，条目放回手里等人再拖 */
@@ -48,9 +46,6 @@ export const useDragMove = ({
   const hoverRef = useRef<string | null>(null);
   const hoverTimerRef = useRef<number | null>(null);
   const enterTimerRef = useRef<number | null>(null);
-  const parentTimerRef = useRef<number | null>(null);
-  /** 这一次停靠在「上一层」上是否还能再退：同一次停留不连续后退，离开再进来才重新计时 */
-  const parentArmedRef = useRef(true);
   /** 本会话读过盘的目录：来回进出同一层不必再扫一遍 */
   const cacheRef = useRef<Map<string, FolderEntry[]>>(new Map());
   /** 移动请求在飞：挡住重复松手带来的第二次提交 */
@@ -73,19 +68,9 @@ export const useDragMove = ({
     setSpringPath(null);
   };
 
-  /** 「上一层」停靠区归零：计时、点亮、可再退的标记一起清 */
-  const resetParentZone = () => {
-    clearTimer(parentTimerRef.current, () => {
-      parentTimerRef.current = null;
-    });
-    parentArmedRef.current = true;
-    setParentHovering(false);
-  };
-
   /** 关掉弹窗并清空会话：条目留在原位，什么都没写 */
   const close = () => {
     resetHover();
-    resetParentZone();
     sessionRef.current = null;
     setSession(null);
     setView(null);
@@ -100,30 +85,36 @@ export const useDragMove = ({
     cacheRef.current = new Map();
   };
 
-  /** 拖起一条目：弹窗从页面当前目录这一层打开，被拖的那个文件夹不进列表 */
-  const open = (path: string, name: string, kind: 'folder' | 'file') => {
+  /**
+   * 拖起一条目：弹窗从页面当前目录这一层打开，被拖的那个文件夹不进列表。
+   * 会话记下条目本体：手持卡片按它换图标，图片 / 视频还能点开预览。
+   */
+  const open = (entry: FolderEntry | FileEntry) => {
     if (currentDir === null) {
       return;
     }
 
     resetHover();
-    resetParentZone();
     cacheRef.current = new Map();
     setError(null);
     setHanded(false);
     setDragActive(true);
 
-    const active: DragMoveSession = { kind, name, origin: currentDir, path };
+    const active: DragMoveSession = {
+      file: 'category' in entry ? entry : null,
+      name: entry.name,
+      origin: currentDir,
+      path: entry.path,
+    };
 
     sessionRef.current = active;
     setSession(active);
-    setView({ folders: stripSelf(currentFolders, path), path: currentDir });
+    setView({ folders: stripSelf(currentFolders, entry.path), path: currentDir });
   };
 
   /** 从弹窗里的手持卡片再次拖起：会话还在，只把拖拽状态重新点亮 */
   const beginDrag = () => {
     resetHover();
-    resetParentZone();
     setHanded(false);
     setDragActive(true);
   };
@@ -141,32 +132,27 @@ export const useDragMove = ({
   /** 换一层：命中缓存就不再读盘，没缓存的那一趟由 effect 发起 */
   const goTo = (path: string) => {
     resetHover();
-    resetParentZone();
     setError(null);
     setView({ folders: cacheRef.current.get(path) ?? null, path });
   };
 
-  /** 上一层：已经到根就不动（根由 `rootPath` 判定，家目录 / 外接卷 / 本机 `/`） */
-  const goUp = () => {
+  /** 当前层被外部改过（新建文件夹、改名）：丢掉缓存、让读盘 effect 再走一趟 */
+  const refreshView = () => {
     const dir = viewRef.current?.path;
 
     if (dir === undefined) {
       return;
     }
 
-    const parent = parentPath(dir);
-
-    if (parent !== null) {
-      goTo(parent);
-    }
+    cacheRef.current.delete(dir);
+    setError(null);
+    setView({ folders: null, path: dir });
   };
 
   const activePath = view?.path ?? null;
   const activeFolders = view?.folders ?? null;
   /** 当前层还没有子文件夹结果、也没报错：就是在读盘（不用单独存一份 loading 状态） */
   const loading = activePath !== null && activeFolders === null && error === null;
-  /** 已经停在根上：上一层的停靠区没有去处 */
-  const isRoot = activePath !== null && activePath === rootPath(activePath);
 
   // 当前层没有结果时才读一次盘；切层即中止，迟到的响应按路径挡掉
   useViewFolders({
@@ -206,33 +192,6 @@ export const useDragMove = ({
 
     resetHover();
   };
-
-  /** 指针停在「上一层」停靠区：满半秒退一层，同一次停留只退一层 */
-  const hoverParentZone = () => {
-    const dir = viewRef.current?.path;
-
-    if (dir === undefined || parentPath(dir) === null) {
-      return;
-    }
-
-    if (!parentArmedRef.current || parentTimerRef.current !== null) {
-      return;
-    }
-
-    setParentHovering(true);
-    parentTimerRef.current = window.setTimeout(() => {
-      parentTimerRef.current = null;
-      /*
-       * 先退层、再收回「可再退」的标记：退层会清场并重新武装，
-       * 顺序反了就白清——指针停在原地，连续 dragover 会一路把目录退到根。
-       */
-      goUp();
-      parentArmedRef.current = false;
-    }, PARENT_HOVER_MS);
-  };
-
-  /** 指针离开「上一层」停靠区：清计时；再进来才能继续退 */
-  const leaveParentZone = () => resetParentZone();
 
   /** 提交移动；成功才播落位音效（失败文案由 `moveEntry` 自己给） */
   const runMove = async (source: string, targetDir: string) => {
@@ -285,12 +244,6 @@ export const useDragMove = ({
     void runMove(active.path, current.path);
   };
 
-  /** 松手 / 点在右下角取消区：整次移动作废并关窗，条目留在原位 */
-  const dropOnCancelZone = () => close();
-
-  /** 松手 / 点在左下角「上一层」：退一层，条目留在手里 */
-  const dropOnParentZone = () => goUp();
-
   useEffect(
     () => () => {
       clearTimer(hoverTimerRef.current, () => {
@@ -298,9 +251,6 @@ export const useDragMove = ({
       });
       clearTimer(enterTimerRef.current, () => {
         enterTimerRef.current = null;
-      });
-      clearTimer(parentTimerRef.current, () => {
-        parentTimerRef.current = null;
       });
     },
     [],
@@ -311,22 +261,17 @@ export const useDragMove = ({
     close,
     dragActive,
     dropOnBlank,
-    dropOnCancelZone,
     dropOnFolder,
-    dropOnParentZone,
     endDrag,
     error,
     goTo,
     handed,
     hoverFolder,
-    hoverParentZone,
     hoverPath,
-    isRoot,
     leaveFolder,
-    leaveParentZone,
     loading,
     open,
-    parentHovering,
+    refreshView,
     reset,
     session,
     springPath,

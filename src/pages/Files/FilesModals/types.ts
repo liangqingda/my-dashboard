@@ -7,6 +7,7 @@ import type { useAppUninstall } from '../hooks/useAppUninstall';
 import type { useEntryActions } from '../hooks/useEntryActions';
 import type { useEntryDelete } from '../hooks/useEntryDelete';
 import type { useVolumeEject } from '../hooks/useVolumeEject';
+import type { FileEntry } from '../types';
 
 /** 四扇弹窗的入参 */
 export type FilesModalsProps = {
@@ -21,4 +22,10 @@ export type FilesModalsProps = {
   entryActions: ReturnType<typeof useEntryActions>;
   /** 推出外接盘：待确认卷与请求状态 */
   volumeEject: ReturnType<typeof useVolumeEject>;
+  /** 在当前目录新建文件夹（拖拽移动弹窗 header 那颗按钮） */
+  onCreateFolder: (dir: string) => void;
+  /** 用内置预览打开一张图片（拖拽移动弹窗的手持卡片图标点一下就走这里） */
+  onPreviewImage: (file: FileEntry) => void;
+  /** 用内置预览打开一条视频：与点瓦片同一条路径，不看设置里的「外部应用」 */
+  onPreviewVideo: (file: FileEntry) => void;
 };

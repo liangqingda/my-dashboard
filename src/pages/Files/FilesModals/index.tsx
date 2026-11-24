@@ -16,10 +16,19 @@ const FilesModals = ({
   appUninstall,
   deleteState,
   entryActions,
+  onCreateFolder,
+  onPreviewImage,
+  onPreviewVideo,
   volumeEject,
 }: FilesModalsProps) => (
   <>
-    <DragMoveModal dragMove={entryActions.dragMove} />
+    <DragMoveModal
+      dragMove={entryActions.dragMove}
+      onCreateFolder={onCreateFolder}
+      onPreview={(file) =>
+        file.category === 'image' ? onPreviewImage(file) : onPreviewVideo(file)
+      }
+    />
 
     <DeleteEntryConfirm
       entry={deleteState.deletingEntry}

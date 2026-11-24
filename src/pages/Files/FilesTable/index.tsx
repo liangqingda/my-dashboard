@@ -232,11 +232,16 @@ const FilesTable = memo(
                     : undefined
                 }
                 onDragStart={(event) => {
+                  /* 应用不是拖拽源（整包移动会破坏系统登记），这里只是把类型收窄回来 */
+                  if (row.kind === 'app') {
+                    return;
+                  }
+
                   const { dataTransfer } = event;
 
                   dataTransfer.effectAllowed = 'move';
                   dataTransfer.setData('text/plain', entry.path);
-                  onDragStartEntry(entry.path, entry.name, isFolder ? 'folder' : 'file');
+                  onDragStartEntry(row.kind === 'folder' ? row.folder : row.file);
                 }}
                 onDrop={isFolder ? () => onDropFolder(entry.path) : undefined}
                 onMouseEnter={

@@ -45,7 +45,7 @@ export type DirectoryGridProps = {
   /** 打开某张图片（交给图片预览弹窗） */
   onOpenImage: (file: FileEntry) => void;
   /** 开始拖拽一条目：路径用于移动，名字用于移动弹窗标题 */
-  onDragStartEntry: (path: string, name: string, kind: 'folder' | 'file') => void;
+  onDragStartEntry: (entry: FolderEntry | FileEntry) => void;
   /** 拖拽结束 */
   onDragEnd: () => void;
   /** 拖拽经过某文件夹（网格与表格共用同一套移动口径） */
