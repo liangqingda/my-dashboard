@@ -1,11 +1,6 @@
 import { useState } from 'react';
 import { Group, Loader, ScrollArea, Text, UnstyledButton } from '@mantine/core';
-import {
-  IconArrowUp,
-  IconCornerUpLeft,
-  IconFile,
-  IconFolderFilled,
-} from '@tabler/icons-react';
+import { IconArrowUp, IconFile, IconFolderFilled, IconX } from '@tabler/icons-react';
 
 import FreeModal from '@/components/modals/FreeModal';
 import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
@@ -16,7 +11,7 @@ import { SPRING_HOVER_MS } from '../hooks/use-drag-move/constants';
 import type { FolderEntry } from '../types';
 
 import type { DragMoveModalProps } from './types';
-import { acceptMove, isInsideSelf } from './utils';
+import { acceptMove, leaveOutside } from './utils';
 
 import styles from './index.scss';
 
@@ -29,21 +24,18 @@ const FULLSCREEN = { active: true, onToggle: () => undefined, showToggle: false 
 /** 条目还在飞（正被拖着）时的提示 */
 const HINT_DRAGGING = '拖到文件夹上松手即移入；停留 0.5 秒会进入该文件夹继续挑。';
 
-/** 条目已经放回手里时的提示：这时只剩「再拖一次」与「点文件夹进去逛」两条路 */
-const HINT_HANDED =
-  '条目在手里：拖起来放到文件夹上松手即移入，点文件夹可以直接进去。';
-
 /** 还没有子文件夹时共用一个空数组，免得每次渲染都造一个新的 */
 const NO_FOLDERS: FolderEntry[] = [];
 
 /**
- * 拖拽移动弹窗：拖起列表里的任一条目后自动打开，占满整屏。正文五段——
+ * 拖拽移动弹窗：拖起列表里的任一条目后自动打开，占满整屏。正文四段——
  * 当前路径（可点的面包屑）、手持卡片（条目本体，能再次拖起）、这一层的子文件夹、
- * 底部两个停靠区（左「上一层」、右「回最外层」）。
+ * 底部两个停靠区（左「上一层」、右「取消移动」）。
  *
  * 松手在文件夹上＝移进去；停在同一文件夹上 0.5 秒＝它先弹一下，然后进入它；
- * 松手在列表空白处＝放进当前这一层；两个停靠区与其余区域只改「看哪一层」或什么都不做，
- * 条目一律放回手里、弹窗不关——关窗只认关闭按钮与 Esc。
+ * 松手在落点区的空白处＝放进当前这一层（悬在空白处时整块落点区会亮起来提示）；
+ * 左停靠区退一层、右停靠区取消并关窗，其余区域什么都不做、条目放回手里。
+ * 只有移动成功与取消区会关窗，此外只认关闭按钮与 Esc。
  */
 const DragMoveModal = ({ dragMove }: DragMoveModalProps) => {
   const {
@@ -70,12 +62,23 @@ const DragMoveModal = ({ dragMove }: DragMoveModalProps) => {
     springPath,
     view,
   } = dragMove;
-  /** 右下角停靠区正被拖拽经过：加深底纹，让「松手就回最外层」先被看见 */
-  const [rootHovered, setRootHovered] = useState(false);
+  /** 右下角取消区正被拖拽经过：加深底纹，让「松手就取消」先被看见 */
+  const [cancelHovered, setCancelHovered] = useState(false);
+  /**
+   * 指针正悬在落点区的空白处（不在任何文件夹上）：
+   * 这时给落点区挂一圈强调边 + 一句「松开即移入」，让人看出空白处也是一个落点。
+   */
+  const [blankHovered, setBlankHovered] = useState(false);
 
   const folders = view?.folders ?? NO_FOLDERS;
   /** 拖拽在飞时点不动任何东西：避免刚松手的那一下被当成点击 */
   const idle = !dragActive;
+  /*
+   * 两处拖拽高亮都再与 `dragActive` 相与：拖拽从页面瓦片发起、落在关窗的位置时，
+   * 这里记下的「正悬着」会留到下次打开，必须跟着拖拽状态一起失效。
+   */
+  const blankArmed = blankHovered && dragActive;
+  const cancelArmed = cancelHovered && dragActive;
 
   return (
     <FreeModal
@@ -96,7 +99,10 @@ const DragMoveModal = ({ dragMove }: DragMoveModalProps) => {
             <div
               className={cx(styles.hand, handed ? styles.handIdle : styles.handLive)}
               draggable
-              onDragEnd={endDrag}
+              onDragEnd={() => {
+                setBlankHovered(false);
+                endDrag();
+              }}
               onDragStart={(event) => {
                 const { dataTransfer } = event;
 
@@ -129,19 +135,31 @@ const DragMoveModal = ({ dragMove }: DragMoveModalProps) => {
                 {handed ? '待拖拽' : '拖拽中'}
               </Text>
             </div>
-            <Text c="dimmed" className={styles.handHint} size="xs">
-              {handed ? HINT_HANDED : HINT_DRAGGING}
-            </Text>
+            {dragActive ? (
+              <Text c="dimmed" className={styles.handHint} size="xs">
+                {HINT_DRAGGING}
+              </Text>
+            ) : null}
           </Group>
 
           <div
-            className={styles.list}
-            onDragOver={acceptMove}
+            className={cx(styles.list, blankArmed && styles.listArmed)}
+            onDragLeave={(event) => leaveOutside(event, () => setBlankHovered(false))}
+            onDragOver={(event) => {
+              acceptMove(event);
+              setBlankHovered(true);
+            }}
             onDrop={(event) => {
               event.preventDefault();
+              setBlankHovered(false);
               dropOnBlank();
             }}
           >
+            {blankArmed ? (
+              <Text className={styles.blankHint} size="xs">
+                松开即移入当前文件夹
+              </Text>
+            ) : null}
             {loading ? (
               <Group className={styles.notice} gap="xs" justify="center" wrap="nowrap">
                 <Loader size={14} type="oval" />
@@ -177,15 +195,13 @@ const DragMoveModal = ({ dragMove }: DragMoveModalProps) => {
                       )}
                       key={folder.path}
                       onClick={idle ? () => goTo(folder.path) : undefined}
-                      onDragLeave={(event) => {
-                        if (isInsideSelf(event)) {
-                          return;
-                        }
-
-                        leaveFolder(folder.path);
-                      }}
+                      onDragLeave={(event) =>
+                        leaveOutside(event, () => leaveFolder(folder.path))
+                      }
                       onDragOver={(event) => {
+                        event.stopPropagation();
                         acceptMove(event);
+                        setBlankHovered(false);
                         hoverFolder(folder.path);
                       }}
                       onDrop={(event) => {
@@ -229,13 +245,7 @@ const DragMoveModal = ({ dragMove }: DragMoveModalProps) => {
                 isRoot && styles.zoneMuted,
               )}
               onClick={idle ? dropOnParentZone : undefined}
-              onDragLeave={(event) => {
-                if (isInsideSelf(event)) {
-                  return;
-                }
-
-                leaveParentZone();
-              }}
+              onDragLeave={(event) => leaveOutside(event, leaveParentZone)}
               onDragOver={(event) => {
                 acceptMove(event);
                 hoverParentZone();
@@ -256,45 +266,38 @@ const DragMoveModal = ({ dragMove }: DragMoveModalProps) => {
                 {isRoot ? '没有上一层' : '回到上一层'}
               </Text>
               <Text className={styles.zoneHint} component="span" size="xs">
-                {isRoot ? '这里就是根目录' : '停 0.5 秒或点一下都能回去'}
+                {isRoot ? '这里就是根目录' : '停 0.5 秒或点击'}
               </Text>
             </UnstyledButton>
 
             <UnstyledButton
               className={cx(
                 styles.zone,
-                styles.rootZone,
-                rootHovered && styles.rootHovered,
-                isRoot && styles.zoneMuted,
+                styles.cancelZone,
+                cancelArmed && styles.zoneCanceled,
               )}
               onClick={idle ? dropOnCancelZone : undefined}
-              onDragEnter={() => setRootHovered(true)}
-              onDragLeave={(event) => {
-                if (isInsideSelf(event)) {
-                  return;
-                }
-
-                setRootHovered(false);
-              }}
+              onDragEnter={() => setCancelHovered(true)}
+              onDragLeave={(event) => leaveOutside(event, () => setCancelHovered(false))}
               onDragOver={acceptMove}
               onDrop={(event) => {
                 event.preventDefault();
                 event.stopPropagation();
-                setRootHovered(false);
+                setCancelHovered(false);
                 dropOnCancelZone();
               }}
             >
-              <IconCornerUpLeft
+              <IconX
                 aria-hidden="true"
                 className={styles.zoneIcon}
                 size={20}
                 stroke={1.8}
               />
               <Text className={styles.zoneTitle} component="span" size="md">
-                {isRoot ? '已经在最外层' : '回到最外层'}
+                取消移动
               </Text>
               <Text className={styles.zoneHint} component="span" size="xs">
-                {isRoot ? '条目留在手里，接着挑或关窗' : '一路回到根目录，条目留在手里'}
+                任意一层松手都会关窗，条目留在原位
               </Text>
             </UnstyledButton>
           </div>

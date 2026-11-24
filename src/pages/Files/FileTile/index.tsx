@@ -21,7 +21,9 @@ import styles from './index.scss';
 
 /**
  * 网格里的一条文件：图源居上居中，文件名与体积纵向排在下方并居中，可被拖拽移动。
- * 图源跟 Finder 一个观感：图片摆缩略图、视频摆中间一帧；设置里选了「外部应用」时
+ * 图源跟 Finder 一个观感：图片摆缩略图、视频摆中间一帧；图片摆的是缩略图时，
+ * 体积旁补一枚分类图标（与表格模式同一枚），缩略图不说明它是图片类型；
+ * 设置里选了「外部应用」时
  * 视频大图默认换那个播放器的图标，也可切成仍摆视频帧——这时播放器图标缩到体积右侧，
  * 用一条竖线隔开，既保留识别也还能看见画面。取不到图源回落分类图标。
  * hover 时右上角浮出重命名 / 删除按钮，同时盖一层暗色遮罩：缩略图与视频帧都偏亮，
@@ -70,6 +72,12 @@ const FileTile = memo(
       thumbSrc = usesAppIcon ? videoAppIconUrl(videoApp) : fileThumbUrl(file.path);
     }
 
+    /**
+     * 图片瓦片摆的是缩略图：体积旁补一枚图片图标，与表格模式同一枚分类图标。
+     * 缩略图取不到时主图标本身就是它，不必再来一枚。
+     */
+    const showsImageBadge = file.category === 'image' && thumbSrc !== null;
+
     const content = (
       <>
         {thumbSrc === null ? (
@@ -100,6 +108,14 @@ const FileTile = memo(
           />
           <span className={styles.meta}>
             {formatFileSize(file.size)}
+            {showsImageBadge ? (
+              <Icon
+                aria-hidden="true"
+                className={styles.imageBadge}
+                size={18}
+                stroke={1.2}
+              />
+            ) : null}
             {showsAppBadge && !appBadgeFailed ? (
               <Tooltip label={`用 ${videoApp} 打开`} withArrow>
                 <UnstyledButton

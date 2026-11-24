@@ -112,3 +112,9 @@
   padding: 0;
   border-radius: 4px;
 }
+
+/* 体积旁的图片图标：缩略图看不出类型时补一枚分类图标，尺寸与播放器小图标同档 */
+.imageBadge {
+  flex: 0 0 auto;
+  color: var(--mantine-color-blue-5);
+}

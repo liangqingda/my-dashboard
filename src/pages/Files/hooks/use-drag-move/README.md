@@ -29,7 +29,7 @@ const dragMove = useDragMove({
 
 ## 目录是自由上下，不是栈
 
-`goTo(path)` 换层、`goUp()` 退一层、`goRoot()` 一路退到 `rootPath` 判定的根；
+`goTo(path)` 换层、`goUp()` 退一层（退到 `rootPath` 判定的根就停）；
 `parentPath(dir)` 用根判定做钳制，家目录不会爬到别人的目录去。
 每次换层都先 `resetHover()` / `resetParentZone()` / 清 `error`，再看缓存里有没有这一层的 `folders`。
 
@@ -54,7 +54,7 @@ const dragMove = useDragMove({
 ## 两个停靠区与空白区
 
 - `dropOnParentZone()` = `goUp()`：退一层，条目留在手里；到根时不动（弹窗据此压淡）。
-- `dropOnCancelZone()` = `goRoot()`：一路退到根，条目留在手里。
+- `dropOnCancelZone()` = `close()`：整次移动作废并关窗，条目留在原位（任意一层都这样）。
 - `dropOnBlank()`：移进当前这一层；当前层就是 `session.origin`（原地）时改走 `endDrag()`，不提交。
 
 ## 事件里的「此刻」

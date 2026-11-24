@@ -161,15 +161,6 @@ export const useDragMove = ({
     }
   };
 
-  /** 回到最外层：一路退到 `rootPath` 判定的那层根 */
-  const goRoot = () => {
-    const dir = viewRef.current?.path;
-
-    if (dir !== undefined) {
-      goTo(rootPath(dir));
-    }
-  };
-
   const activePath = view?.path ?? null;
   const activeFolders = view?.folders ?? null;
   /** 当前层还没有子文件夹结果、也没报错：就是在读盘（不用单独存一份 loading 状态） */
@@ -294,8 +285,8 @@ export const useDragMove = ({
     void runMove(active.path, current.path);
   };
 
-  /** 松手 / 点在右下角「回最外层」：一路退到根，条目留在手里 */
-  const dropOnCancelZone = () => goRoot();
+  /** 松手 / 点在右下角取消区：整次移动作废并关窗，条目留在原位 */
+  const dropOnCancelZone = () => close();
 
   /** 松手 / 点在左下角「上一层」：退一层，条目留在手里 */
   const dropOnParentZone = () => goUp();
