@@ -39,6 +39,7 @@ const FilesEntries = ({
   onRequestDeleteEntry,
   onRequestUninstallApp,
   rows,
+  veilOpacity,
   videoApp,
   videoOpenMode,
   videoThumbStyle,
@@ -85,6 +86,7 @@ const FilesEntries = ({
           onOpenVideo={onOpenVideo}
           onRequestDeleteEntry={onRequestDeleteEntry}
           onRequestUninstallApp={onRequestUninstallApp}
+          veilOpacity={veilOpacity}
           videoApp={videoApp}
           videoOpenMode={videoOpenMode}
           videoThumbStyle={videoThumbStyle}

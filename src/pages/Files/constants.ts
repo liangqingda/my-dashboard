@@ -66,6 +66,12 @@ export const VIDEO_PREVIEW_FULLSCREEN_STORAGE_KEY = scopedStorageKey(
   'video-preview-fullscreen',
 );
 
+/** hover 玻璃层的透明度（0–100）：设置里用滑块调，默认 100 */
+export const VEIL_OPACITY_STORAGE_KEY = scopedStorageKey(
+  FILES_STORAGE_SCOPE,
+  'veil-opacity',
+);
+
 /** 外部打开的默认应用：IINA（没装时中间件会回落到它名下，再不行才系统默认） */
 export const DEFAULT_VIDEO_APP = 'IINA';
 

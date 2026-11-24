@@ -47,7 +47,7 @@
 }
 
 .wrapper:hover .veil {
-  opacity: 1;
+  opacity: var(--veil-opacity, 1);
 }
 
 /* 正在被拖拽的文件：弱化半透明，光标交给浏览器绘制（见 dragstart 的 effectAllowed） */

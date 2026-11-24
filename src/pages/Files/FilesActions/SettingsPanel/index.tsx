@@ -1,7 +1,11 @@
 /**
  * 文件页设置面板：类型筛选方式（多选 / 单选）、视频点击后（弹窗预览 / 外部应用，
  * 选外部时可再挑一个能播放视频的本机应用，默认 IINA，并可决定瓦片大图摆视频帧还是播放器图标）、
- * 预览默认全屏。
+ * hover 玻璃层透明度、预览默认全屏。
+ *
+ * 「外部应用」下拉必须 `comboboxProps={{ withinPortal: false }}`：Mantine 默认把下拉渲染到
+ * 独立 portal，点选项会被外层 `IconPopoverButton` 的点击外部判定当成点在外面，弹层直接关掉。
+ * 就地渲染后选项在弹层 DOM 内，选完弹层还在，可以接着调别的设置。
  *
  * 后续加设置项直接往下追加分组，面板只读值、只回调，持久化在页面的设置 hook 里。
  */
@@ -10,6 +14,7 @@ import {
   Loader,
   SegmentedControl,
   Select,
+  Slider,
   Stack,
   Switch,
   Text,
@@ -51,12 +56,14 @@ const SettingsPanel = ({
   imageFullscreen,
   onFilterModeChange,
   onImageFullscreenChange,
+  onVeilOpacityChange,
   onVideoAppChange,
   onVideoFullscreenChange,
   onVideoOpenModeChange,
   onVideoThumbStyleChange,
   videoApp,
   videoFullscreen,
+  veilOpacity,
   videoOpenMode,
   videoThumbStyle,
 }: SettingsPanelProps) => {
@@ -104,6 +111,7 @@ const SettingsPanel = ({
           ) : (
             <Select
               allowDeselect={false}
+              comboboxProps={{ withinPortal: false }}
               data={options}
               onChange={(value) => {
                 if (value !== null) {
@@ -142,6 +150,20 @@ const SettingsPanel = ({
           </Text>
         </Stack>
       ) : null}
+
+      <Stack gap={6}>
+        <Text className={styles.label}>悬浮玻璃透明度</Text>
+        <Slider
+          label={(value) => `${value}%`}
+          labelAlwaysOn
+          max={100}
+          min={0}
+          onChange={onVeilOpacityChange}
+          size="xs"
+          step={5}
+          value={veilOpacity}
+        />
+      </Stack>
 
       <Stack gap={6}>
         <Text className={styles.label}>预览默认全屏</Text>

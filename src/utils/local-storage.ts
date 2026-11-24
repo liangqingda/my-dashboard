@@ -32,6 +32,29 @@ export const STRING_CODEC: StoredCodec<string> = {
 };
 
 /**
+ * 区间数字编解码（滑块这类固定档位，如 0–100 的透明度）：存整数原文。
+ * 没写过、不是数字、越界都回落 fallback——被手改坏的档位回到安全值，而不是夹到边界。
+ */
+export const createRangedNumberCodec = (
+  min: number,
+  max: number,
+  fallback: number,
+): StoredCodec<number> => ({
+  decode: (raw) => {
+    if (raw === null || raw.trim() === '') {
+      return fallback;
+    }
+
+    const value = Number(raw);
+
+    return Number.isFinite(value) && value >= min && value <= max
+      ? Math.round(value)
+      : fallback;
+  },
+  encode: (value) => String(Math.round(value)),
+});
+
+/**
  * 枚举取值的统一校验：不是字符串、不在 choices 里（枚举改版、被手工改坏）
  * 一律回落 fallback，单值键与对象字段两条编解码都靠这一步，别各写一遍。
  */

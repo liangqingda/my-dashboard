@@ -28,7 +28,7 @@
 | Markdown 标题目录 | `@/utils/markdown-outline` 的 `extractMarkdownOutline` |
 | 单行 / 两行省略文本（默认中间省略，尾部省略传 `ellipsis="end"`）、截断才提示 | `@/components/texts/FreeTruncatedText` |
 | 悬停 / 聚焦意图 | `@/hooks/useHoverIntent` |
-| 界面状态的本地持久化（展开 / 收起、全屏、视图形态） | `@/hooks/useStoredState` + `@/utils/local-storage` 的 `FLAG_CODEC` / `STRING_CODEC` / `createChoiceCodec(choices, fallback)`；不在组件里直接读写 `localStorage`，也不自己 try/catch |
+| 界面状态的本地持久化（展开 / 收起、全屏、视图形态） | `@/hooks/useStoredState` + `@/utils/local-storage` 的 `FLAG_CODEC` / `STRING_CODEC` / `createChoiceCodec(choices, fallback)` / `createRangedNumberCodec(min, max, fallback)`（滑块这类固定档位，脏值与越界回落默认）；不在组件里直接读写 `localStorage`，也不自己 try/catch |
 | 一个弹窗的整组偏好（同一次阅读的全屏 / 字号 / 目录宽度…） | `@/hooks/useStoredField(key, field, codec)` + `FLAG_FIELD_CODEC` / `createChoiceFieldCodec(choices, fallback)` |
 | 存储键的拼法（不知道键该怎么起名） | `@/utils/page-storage` 的 `pageStorageScope` / `pageStorageKey` / `scopedStorageKey`；细则见下面「存储键的命名」，不要手拼字符串 |
 
@@ -51,6 +51,7 @@
   `english-knowledge-base:record-detail`、`english-notes:fullscreen`、
   `files:current-dir`、`files:favorites`、`files:type-filter`、`files:view-mode`、
   `files:video-preview`（视频预览的一组偏好）、`files:video-open-mode`、`files:video-app`、
+  `files:veil-opacity`（hover 玻璃层透明度 0–100）、
   `files:image-preview-fullscreen`、`files:video-preview-fullscreen`。
 - **同一个公共组件挂在不同页面必须各记一套**：页面把标识传给组件（如 `MarkdownPreviewModal` 的
   `storageScope`），组件内部再拼 `<标识>:<组件>`；组件不许自己写死页面标识，否则两页会共用同一份

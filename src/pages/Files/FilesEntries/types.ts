@@ -33,6 +33,8 @@ export type FilesEntriesProps = {
   loadingFolder: string | null;
   /** 表格视图的行（文件夹 → 应用 → 文件） */
   rows: FilesRow[];
+  /** hover 玻璃层透明度（0–100） */
+  veilOpacity: number;
   /** 设置里的播放器应用名：网格在外部模式下用它的图标 */
   videoApp: string;
   /** 外部打开时瓦片大图摆视频帧还是播放器图标 */

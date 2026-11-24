@@ -61,6 +61,7 @@ const DirectoryGrid = ({
   onRequestDeleteEntry,
   onRequestUninstallApp,
   launchingApp,
+  veilOpacity,
   videoApp,
   videoOpenMode,
   videoThumbStyle,
@@ -102,6 +103,7 @@ const DirectoryGrid = ({
         onEdit={() => onEditEntry(file)}
         onOpen={previewHandler(file, onOpenVideo, onOpenImage)}
         onRequestDelete={() => onRequestDeleteEntry(file.path)}
+        veilOpacity={veilOpacity}
         videoApp={videoApp}
         videoOpenMode={videoOpenMode}
         videoThumbStyle={videoThumbStyle}

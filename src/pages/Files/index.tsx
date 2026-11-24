@@ -272,6 +272,7 @@ const Files = () => {
             onRequestDeleteEntry={requestDelete}
             onRequestUninstallApp={appUninstall.requestUninstall}
             rows={tableRows}
+            veilOpacity={settings.veilOpacity}
             videoApp={settings.videoApp}
             videoOpenMode={settings.videoOpenMode}
             videoThumbStyle={settings.videoThumbStyle}

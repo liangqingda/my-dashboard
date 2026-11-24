@@ -28,6 +28,8 @@ export type DirectoryGridProps = {
   dragSource: string | null;
   /** 当前悬停的放置目标文件夹路径；null 表示没有目标 */
   dropTarget: string | null;
+  /** hover 玻璃层透明度（0–100） */
+  veilOpacity: number;
   /** 设置里的播放器应用名：视频瓦片在外部模式下摆它的图标 */
   videoApp: string;
   /** 外部打开时瓦片大图摆视频帧还是播放器图标 */

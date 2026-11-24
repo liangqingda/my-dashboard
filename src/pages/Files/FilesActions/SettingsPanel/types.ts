@@ -31,6 +31,10 @@ export type SettingsPanelProps = {
   onImageFullscreenChange: (enabled: boolean) => void;
   /** 改视频预览的默认全屏 */
   onVideoFullscreenChange: (enabled: boolean) => void;
+  /** hover 玻璃层透明度（0–100） */
+  veilOpacity: number;
+  /** 改 hover 玻璃层透明度 */
+  onVeilOpacityChange: (opacity: number) => void;
   /** 类型筛选：多选 / 单选 */
   filterMode: TypeFilterMode;
   /** 改类型筛选的操作方式 */

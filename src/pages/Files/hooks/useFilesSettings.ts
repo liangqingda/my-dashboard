@@ -1,6 +1,7 @@
 /**
  * 文件页的设置项（持久化到 localStorage）：视频点击后去哪儿（弹窗预览 / 外部应用）、
- * 外部打开时瓦片大图摆视频帧还是播放器图标、预览默认全屏，以及类型筛选用多选还是单选。
+ * 外部打开时瓦片大图摆视频帧还是播放器图标、hover 玻璃层透明度、预览默认全屏，
+ * 以及类型筛选用多选还是单选。
  *
  * 后续再添设置项时按同样的形状加一对 codec + 键，不要在页面里各写一份存储逻辑。
  */
@@ -8,6 +9,7 @@
 import { useStoredState } from '@/hooks/useStoredState';
 import {
   createChoiceCodec,
+  createRangedNumberCodec,
   FLAG_CODEC,
   STRING_CODEC,
 } from '@/utils/local-storage';
@@ -19,6 +21,7 @@ import {
   VIDEO_APP_STORAGE_KEY,
   VIDEO_OPEN_MODE_STORAGE_KEY,
   VIDEO_PREVIEW_FULLSCREEN_STORAGE_KEY,
+  VEIL_OPACITY_STORAGE_KEY,
   VIDEO_THUMB_STYLE_STORAGE_KEY,
 } from '../constants';
 import type { TypeFilterMode, VideoOpenMode, VideoThumbStyle } from '../types';
@@ -39,6 +42,9 @@ const VIDEO_OPEN_MODE_CODEC = createChoiceCodec<VideoOpenMode>(
   ['preview', 'external'],
   'preview',
 );
+
+/** hover 玻璃层透明度：0–100 的百分比，脏值回落 100（完全不透明） */
+const VEIL_OPACITY_CODEC = createRangedNumberCodec(0, 100, 100);
 
 /** 文件页设置的返回 */
 export type UseFilesSettingsResult = {
@@ -62,6 +68,10 @@ export type UseFilesSettingsResult = {
   setImageFullscreen: (enabled: boolean) => void;
   /** 改视频预览的默认全屏 */
   setVideoFullscreen: (enabled: boolean) => void;
+  /** hover 玻璃层的透明度（0–100） */
+  veilOpacity: number;
+  /** 改 hover 玻璃层的透明度 */
+  setVeilOpacity: (opacity: number) => void;
   /** 类型筛选：多选 / 单选 */
   filterMode: TypeFilterMode;
   /** 改类型筛选的操作方式 */
@@ -90,6 +100,10 @@ export const useFilesSettings = (): UseFilesSettingsResult => {
     VIDEO_PREVIEW_FULLSCREEN_STORAGE_KEY,
     FLAG_CODEC,
   );
+  const [veilOpacity, setVeilOpacity] = useStoredState(
+    VEIL_OPACITY_STORAGE_KEY,
+    VEIL_OPACITY_CODEC,
+  );
   const [filterMode, setFilterMode] = useStoredState(
     TYPE_FILTER_MODE_STORAGE_KEY,
     FILTER_MODE_CODEC,
@@ -103,7 +117,9 @@ export const useFilesSettings = (): UseFilesSettingsResult => {
     setVideoApp,
     setVideoFullscreen,
     setVideoOpenMode,
+    setVeilOpacity,
     setVideoThumbStyle,
+    veilOpacity,
     videoApp: storedApp.trim() || DEFAULT_VIDEO_APP,
     videoFullscreen,
     videoOpenMode,

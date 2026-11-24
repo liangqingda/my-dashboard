@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { memo, useState } from 'react';
 import { UnstyledButton } from '@mantine/core';
 
@@ -34,6 +35,7 @@ const FileTile = memo(
     onEdit,
     onOpen,
     onRequestDelete,
+    veilOpacity = 100,
     videoApp,
     videoOpenMode,
     videoThumbStyle = 'app-icon',
@@ -124,6 +126,7 @@ const FileTile = memo(
             prefetchVideoHead(file.path);
           }
         }}
+        style={{ '--veil-opacity': String(veilOpacity / 100) } as CSSProperties}
       >
         <span aria-hidden="true" className={styles.veil} />
         {onOpen ? (
