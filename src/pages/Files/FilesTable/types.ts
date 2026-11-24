@@ -29,7 +29,7 @@ export type FilesTableProps = {
   /** 打开某张图片（点名称交给图片预览弹窗） */
   onOpenImage: (file: FileEntry) => void;
   /** 开始拖拽一条目：路径用于移动，名字用于移动弹窗标题 */
-  onDragStartEntry: (path: string, name: string) => void;
+  onDragStartEntry: (path: string, name: string, kind: 'folder' | 'file') => void;
   /** 拖拽结束 */
   onDragEnd: () => void;
   /** 拖拽经过某文件夹 */

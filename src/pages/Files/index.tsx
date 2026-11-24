@@ -86,7 +86,6 @@ const Files = () => {
   const entryActions = useEntryActions({
     currentDir: listing?.path ?? null,
     currentFolders: folders,
-    currentName: listing?.name ?? '',
     reload,
   });
   /** 应用卸载：点卸载先取残留清单，确认后删整包并清理残留 */

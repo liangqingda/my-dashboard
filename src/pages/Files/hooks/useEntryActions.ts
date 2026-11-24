@@ -22,9 +22,7 @@ export type RenamingEntry = {
 export type UseEntryActionsArgs = {
   /** 当前目录绝对路径；还没选目录时为 null */
   currentDir: string | null;
-  /** 当前目录名：拖拽移动弹窗最外层用它 */
-  currentName: string;
-  /** 当前目录的子文件夹：拖拽移动弹窗最外层直接用，不再多发一次请求 */
+    /** 当前目录的子文件夹：拖拽移动弹窗最外层直接用，不再多发一次请求 */
   currentFolders: FolderEntry[];
   /** 静默刷新当前目录 */
   reload: () => Promise<void>;
@@ -39,7 +37,6 @@ export type UseEntryActionsArgs = {
  */
 export const useEntryActions = ({
   currentDir,
-  currentName,
   currentFolders,
   reload,
 }: UseEntryActionsArgs) => {
@@ -97,7 +94,6 @@ export const useEntryActions = ({
   const dragMove = useDragMove({
     currentDir,
     currentFolders,
-    currentName,
     moveEntry: moveEntryTo,
   });
 
@@ -161,10 +157,14 @@ export const useEntryActions = ({
   /** 关掉改名弹窗，不提交 */
   const closeRename = () => setRenamingEntry(null);
 
-  /** 拖起一条目：记下拖拽源，同时把移动弹窗打开在最外层（当前目录） */
-  const dragStartEntry = (path: string, name: string) => {
+  /** 拖起一条目：记下拖拽源，同时把移动弹窗打开在页面当前目录，带上条目类型 */
+  const dragStartEntry = (
+    path: string,
+    name: string,
+    kind: 'folder' | 'file',
+  ) => {
     setDragSource(path);
-    dragMove.open(path, name);
+    dragMove.open(path, name, kind);
   };
 
   /** 拖拽结束：收起移动弹窗；没有落下的移动一律不执行 */
