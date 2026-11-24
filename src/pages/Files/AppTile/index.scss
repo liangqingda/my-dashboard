@@ -29,6 +29,11 @@
   }
 }
 
+/* hover 时玻璃层一起浮出：玻璃层本体在 TileVeil，这里只挂显隐 */
+.wrapper:hover [data-tile-veil] {
+  opacity: var(--veil-opacity, 1);
+}
+
 /* hover 才浮出的卸载按钮组：定位在 EntryTileActions，这里只挂 hover 显隐 */
 .wrapper:hover .actions {
   opacity: 1;
@@ -40,6 +45,8 @@
 }
 
 .body {
+  position: relative;
+  z-index: 2;
   display: flex;
   width: 100%;
   min-width: 0;

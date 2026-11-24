@@ -5,6 +5,7 @@ import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
 
 import AppIcon from '../AppIcon';
 import EntryTileActions from '../EntryTileActions';
+import TileVeil from '../TileVeil';
 
 import type { AppTileProps } from './types';
 
@@ -25,8 +26,16 @@ const describeMeta = (launching: boolean, system: boolean): string => {
   return system ? '系统应用' : '应用';
 };
 
-const AppTile = memo(({ app, launching, onOpen, onRequestUninstall }: AppTileProps) => (
-  <div className={styles.wrapper}>
+const AppTile = memo(
+  ({
+    app,
+    launching,
+    onOpen,
+    onRequestUninstall,
+    veilOpacity,
+  }: AppTileProps) => (
+    <div className={styles.wrapper}>
+      <TileVeil opacity={veilOpacity} />
     <UnstyledButton
       aria-label={`打开 ${app.name}`}
       className={styles.tile}
@@ -56,6 +65,7 @@ const AppTile = memo(({ app, launching, onOpen, onRequestUninstall }: AppTilePro
       />
     )}
   </div>
-));
+  ),
+);
 
 export default AppTile;

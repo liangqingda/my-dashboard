@@ -6,6 +6,7 @@ import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
 import { cx } from '@/utils/cx';
 
 import EntryTileActions from '../EntryTileActions';
+import TileVeil from '../TileVeil';
 
 import type { FolderTileProps } from './types';
 
@@ -27,7 +28,7 @@ const renderFolderMeta = (folder: FolderTileProps['folder'], loading: boolean) =
 
 /**
  * 网格里的一条子文件夹：蓝色文件夹图标居上，名称与直属条目数纵向排在图标下方并居中，
- * 点击进入下一层目录；hover 时右上角浮出重命名 / 删除两个操作按钮。
+ * 点击进入下一层目录；hover 时盖上与文件瓦片同一份玻璃层，右上角浮出重命名 / 删除两个操作按钮。
  * 同时可作为拖拽源，也可作为其它条目拖入的目标。
  * 点开后到新目录回来之前本条目不可再点，计数位置显示「正在打开…」；
  * 计数只数直属条目，不递归子文件夹（与中间件口径一致）；
@@ -47,6 +48,7 @@ const FolderTile = memo(
     onEdit,
     onOpen,
     onRequestDelete,
+    veilOpacity,
   }: FolderTileProps) => (
     <div
       className={cx(
@@ -67,6 +69,7 @@ const FolderTile = memo(
       }}
       onDrop={onDrop}
     >
+      <TileVeil opacity={veilOpacity} />
       <UnstyledButton
         aria-label={`打开文件夹 ${folder.name}`}
         className={styles.tile}

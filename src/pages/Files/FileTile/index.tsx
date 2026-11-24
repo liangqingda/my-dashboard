@@ -1,4 +1,3 @@
-import type { CSSProperties } from 'react';
 import { memo, useState } from 'react';
 import { Tooltip, UnstyledButton } from '@mantine/core';
 
@@ -6,6 +5,7 @@ import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
 import { cx } from '@/utils/cx';
 
 import EntryTileActions from '../EntryTileActions';
+import TileVeil from '../TileVeil';
 import { CATEGORY_ICONS, FILE_CATEGORY_LABELS } from '../constants';
 import { formatFileSize } from '../utils/files';
 import { fileThumbUrl, videoAppIconUrl } from '../utils/media-thumbs';
@@ -143,9 +143,8 @@ const FileTile = memo(
             prefetchVideoHead(file.path);
           }
         }}
-        style={{ '--veil-opacity': String(veilOpacity / 100) } as CSSProperties}
       >
-        <span aria-hidden="true" className={styles.veil} />
+        <TileVeil opacity={veilOpacity} />
         {onOpen ? (
           <UnstyledButton
             aria-label={`预览${FILE_CATEGORY_LABELS[file.category]} ${file.name}`}

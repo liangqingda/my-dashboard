@@ -83,6 +83,7 @@ const DirectoryGrid = ({
         onEdit={() => onEditEntry(folder)}
         onOpen={onOpenFolder}
         onRequestDelete={() => onRequestDeleteEntry(folder.path)}
+        veilOpacity={veilOpacity}
       />
     ))}
     {apps.map((app) => (
@@ -92,6 +93,7 @@ const DirectoryGrid = ({
         launching={launchingApp === app.path}
         onOpen={() => onOpenApp(app)}
         onRequestUninstall={() => onRequestUninstallApp(app)}
+        veilOpacity={veilOpacity}
       />
     ))}
     {files.map((file) => (

@@ -14,6 +14,8 @@ export type FolderTileProps = {
   loading?: boolean;
   /** 打开这个文件夹 */
   onOpen: (path: string) => void;
+  /** hover 玻璃层不透明度（0–100），与文件瓦片同一档设置 */
+  veilOpacity?: number;
   /** 当前正在被拖拽 */
   dragging?: boolean;
   /** 是当前拖拽的放置目标 */

@@ -12,6 +12,8 @@ export type AppTileProps = {
   launching: boolean;
   /** 点瓦片打开应用 */
   onOpen: () => void;
+  /** hover 玻璃层不透明度（0–100），与文件瓦片同一档设置 */
+  veilOpacity?: number;
   /** 请求卸载这个应用（先弹二次确认，系统自带应用不会走到这里） */
   onRequestUninstall: () => void;
 };
