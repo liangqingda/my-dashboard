@@ -1,4 +1,4 @@
-/** 瓦片右上角浮出的操作按钮组：定位与排布收在这里，hover 显隐由各瓦片外壳控制 */
+/* 瓦片右上角浮出的操作按钮组：定位与排布收在这里，hover 显隐由各瓦片外壳控制 */
 
 .actions {
   position: absolute;
@@ -6,13 +6,11 @@
   top: 4px;
   right: 4px;
   display: flex;
-  gap: 4px;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--app-surface) 70%, transparent);
+  backdrop-filter: blur(10px);
   opacity: 0;
   transition: opacity 120ms ease;
-}
-
-/* 文字按钮：两枚按钮宽度随字走，别把瓦片右上角撑满 */
-.button {
-  flex: 0 0 auto;
-  padding-inline: 8px;
 }
