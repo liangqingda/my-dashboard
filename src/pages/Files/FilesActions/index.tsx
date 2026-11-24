@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 import {
   IconBookmark,
   IconBookmarkFilled,
+  IconPlayerEject,
   IconFilter,
   IconFolderOpen,
   IconFolderPlus,
@@ -32,7 +33,10 @@ const ICON_SIZE = 16;
 const ICON_STROKE = 1.9;
 
 const FilesActions = ({
+  canEject,
   createDisabled,
+  ejecting,
+  onEject,
   selectedCategories,
   typeFilterMode,
   favoriteDisabled,
@@ -84,6 +88,17 @@ const FilesActions = ({
       >
         <IconFolderOpen size={ICON_SIZE} stroke={ICON_STROKE} />
       </FreeIconAction>
+
+      {canEject ? (
+        <FreeIconAction
+          disabled={loading || ejecting}
+          label={ejecting ? '正在推出外接盘' : '推出外接盘'}
+          loading={ejecting}
+          onClick={onEject}
+        >
+          <IconPlayerEject size={ICON_SIZE} stroke={ICON_STROKE} />
+        </FreeIconAction>
+      ) : null}
 
       <IconPopoverButton
         active={isFavorite}

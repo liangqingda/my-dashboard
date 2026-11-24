@@ -1,0 +1,5 @@
+/* 推出外接盘确认：挂载点可能很长，允许在任意位置换行，不撑破弹窗 */
+
+.mountPoint {
+  word-break: break-all;
+}

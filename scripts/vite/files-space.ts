@@ -81,6 +81,10 @@ export const isExternalMount = (
   mountPoint.startsWith(EXTERNAL_MOUNT_PREFIX) &&
   mountPoint !== systemMountPoint;
 
+/** 读一个路径实际所在卷的挂载点；读不到返回 null（用于推出外接盘前确认真正要退的是哪一卷） */
+export const readMountPoint = async (target: string): Promise<string | null> =>
+  (await readVolume(target))?.mountPoint ?? null;
+
 /** 卷名：启动卷没有名字（页面只显示数字）；其它卷取挂载点最后一段 */
 const volumeNameOf = (mountPoint: string): string | null =>
   mountPoint === '/' ? null : path.basename(mountPoint) || null;

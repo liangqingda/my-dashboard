@@ -17,6 +17,7 @@
  * - `POST /api/files/delete`：body `{ path }` 删除一条条目，文件夹连同内部内容递归删除；
  * - `POST /api/files/open-app`：body `{ path }` 打开一个应用包（交给系统 `open`）；
  * - `POST /api/files/uninstall-app`：body `{ path }` 卸载应用包并清理残留，权限不足时弹一次授权窗补删；
+ * - `POST /api/files/eject`：body `{ dir }` 推出当前目录所在的外接盘（`diskutil eject`），返回挂载点；
  * - `POST /api/files/capture`：body `{ dataUrl, dir? }` 把一帧 PNG 截图写进 `dir`（缺省用户桌面），返回文件名与绝对路径；
  * - `GET /api/files/video-apps`：列出能播放视频的本机应用（`open -a` 用应用名），供设置里选外部播放器；
  * - `POST /api/files/open`：body `{ path, app? }` 用外部播放器打开（`app` 优先，其次 IINA，再回落系统默认），返回 `{ app }`。
@@ -39,6 +40,7 @@ import { listVideoApps, videoAppBundlePath } from './files-video-apps.js';
 import {
   createFolder,
   deleteEntry,
+  ejectVolumeAt,
   homeDirectory,
   listDirectory,
   moveEntry,
@@ -508,6 +510,7 @@ export const files = (): Plugin => ({
         pathname === '/delete' ||
         pathname === '/open-app' ||
         pathname === '/uninstall-app' ||
+        pathname === '/eject' ||
         pathname === '/capture'
       ) {
         if (req.method !== 'POST') {
@@ -559,6 +562,10 @@ export const files = (): Plugin => ({
             await deleteEntry(bodyString(body, 'path'));
 
             res.end(JSON.stringify({ ok: true }));
+          } else if (pathname === '/eject') {
+            const result = await ejectVolumeAt(bodyString(body, 'dir'));
+
+            res.end(JSON.stringify({ result }));
           } else if (pathname === '/open-app') {
             const launched = await launchAppBundle(bodyString(body, 'path'));
 

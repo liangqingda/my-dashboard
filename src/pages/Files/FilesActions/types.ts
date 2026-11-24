@@ -36,6 +36,12 @@ export type FilesActionsProps = {
   onPickDir: () => void;
   /** 目录选择框正在等待用户选择 */
   picking: boolean;
+  /** 当前目录在外接盘上：显示「推出外接盘」按钮 */
+  canEject: boolean;
+  /** 推出请求进行中 */
+  ejecting: boolean;
+  /** 点「推出外接盘」：由页面弹二次确认 */
+  onEject: () => void;
   /** 在当前目录下新建文件夹并进入改名态 */
   onCreateFolder: () => void;
   /** 收藏 / 取消收藏当前目录 */

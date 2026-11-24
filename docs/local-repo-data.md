@@ -166,8 +166,8 @@
 
 | 文件 | 职责 |
 | --- | --- |
-| `scripts/vite/files.ts` | 路由壳：`GET /api/files`（未带 `dir` 回落主目录）、`GET /api/files?dir=…`、`GET /api/files/content?path=…`（视频按 Range 流式读）、`GET /api/files/image?path=…`（图片字节）、`GET /api/files/thumb?path=…`（图片 / 视频缩略图，网格用）、`GET /api/files/video-apps`（能播视频的本机应用）、`GET /api/files/app-icon?path=…`（应用图标 PNG）、`GET /api/files/app-residue?path=…`（卸载残留清单）、`POST /api/files/open-app`（打开应用包）、`POST /api/files/pick-dir`（系统目录选择框）、`POST /api/files/new-folder`、`POST /api/files/rename`、`POST /api/files/move`、`POST /api/files/delete`、`POST /api/files/open`（交给外部播放器）、`POST /api/files/uninstall-app`、`POST /api/files/capture`（视频帧截图写目录，缺省桌面），错误归类成 HTTP 状态码 |
-| `scripts/vite/files-store.ts` | 路径校验、条目归类、应用包从文件夹里分出来单独成列、文件夹直属条目计数、内含分类摘要与「直属是否含应用包」，供类型筛选过滤文件夹、文件归类（视频 / PDF / Markdown / App / 其它）标记、选择器脚本拼装，以及新建 / 重命名 / 移动 / 删除的写盘与冲突拒绝、错误文案与错误码收口 |
+| `scripts/vite/files.ts` | 路由壳：`GET /api/files`（未带 `dir` 回落主目录）、`GET /api/files?dir=…`、`GET /api/files/content?path=…`（视频按 Range 流式读）、`GET /api/files/image?path=…`（图片字节）、`GET /api/files/thumb?path=…`（图片 / 视频缩略图，网格用）、`GET /api/files/video-apps`（能播视频的本机应用）、`GET /api/files/app-icon?path=…`（应用图标 PNG）、`GET /api/files/app-residue?path=…`（卸载残留清单）、`POST /api/files/open-app`（打开应用包）、`POST /api/files/pick-dir`（系统目录选择框）、`POST /api/files/new-folder`、`POST /api/files/rename`、`POST /api/files/move`、`POST /api/files/delete`、`POST /api/files/open`（交给外部播放器）、`POST /api/files/uninstall-app`、`POST /api/files/eject`（推出当前目录所在的外接盘）、`POST /api/files/capture`（视频帧截图写目录，缺省桌面），错误归类成 HTTP 状态码 |
+| `scripts/vite/files-store.ts` | 路径校验、条目归类、应用包从文件夹里分出来单独成列、文件夹直属条目计数、内含分类摘要与「直属是否含应用包」，供类型筛选过滤文件夹、文件归类（视频 / PDF / Markdown / App / 其它）标记、选择器脚本拼装，以及新建 / 重命名 / 移动 / 删除的写盘与冲突拒绝、错误文案与错误码收口；`ejectVolumeAt` 先按 `df` 查真实挂载点、确认是 `/Volumes/` 下的非启动卷，再交给 `diskutil eject` |
 | `scripts/vite/files-picker.ts` | 原生目录选择框：首次把一段 Swift `NSOpenPanel` 源码编进 `node_modules/.cache`，服务启动时后台预热，之后每次选择只起小二进制；编译 / 运行不可用时回落 `osascript` |
 | `scripts/vite/files-apps.ts` | 应用包识别（`.app` 目录与指向它的符号链接）、Info.plist 解析（`plutil`）、残留推导（用户级与系统级）、打开（校验 `.app` 后交给系统 `open`）、卸载（先退应用再删整包与残留，权限不足时弹一次授权窗补删） |
 | `scripts/vite/files-app-icons.ts` | 应用图标按需抽取：从包内 `Contents/Resources` 找 `.icns`，`sips` 转成 PNG，按「包路径 + 修改时间」缓存在临时目录 |
@@ -188,9 +188,9 @@
 - **新建文件夹**：`new-folder` 在当前目录落一个默认名「未命名文件夹」的空目录，重名依次追加 `2、3…`，不覆盖已有文件夹；前端拿到后打开改名弹窗（取消保留条目，不删除）；
 - **重命名 / 移动**：`rename` 改一条条目名字，`move` 把文件或文件夹移入目标文件夹；目标已有同名条目按 409 冲突拒绝、不覆盖；文件夹不能移动到它自身或其子文件夹内；条目名拒收空名、路径分隔符、`.` `..` 与点开头的隐藏名；前端文件夹与文件统一在弹窗多行文本域改名，打开即聚焦并全选原名，回车保存、Shift+回车换行，空名或未改动时保存按钮禁用；应用不给改名 / 拖拽入口（移动或改名 `.app` 会让 Launchpad 与系统登记失效）；
 - **删除**：`delete` 删除一条条目，文件夹连同内部全部内容递归删除、文件直接删除，均不可恢复；前端 hover 文件夹 / 文件瓦片浮出重命名 / 删除按钮，删除先走 `ConfirmModal` 二次确认，弹窗与成功通知按文件夹 / 文件分别出文案；
-- **收藏目录**：收藏列表是页面偏好，存 localStorage（不经中间件、不写盘），条目为 `{ path, name, pinned }`，整行点击直达；首次进入时预置一条已固定的「系统应用程序」（`/Applications`）——macOS 主目录里也可能有同名 `Applications`（Chrome 应用快捷方式之类），打开后者看不到应用包，预置这条避免走错；之后它和其余条目一样可取消固定、拖动排序或移除。固定项恒排在最前、不显示移除按钮，未固定项尾部一颗固定图标（固定实心 / 未固定描边，不上强调色）与移除按钮，图标自己吞冒泡；固定组与未固定组之间用一条分割线隔开；所有条目可拖拽排序，拖动只改非固定组内的先后；条目两行展示目录名与完整路径，路径过长省略、hover 显示全文；「收藏 / 取消当前目录」整宽按钮排在列表下方；
+- **收藏目录**：收藏列表是页面偏好，存 localStorage（不经中间件、不写盘），条目为 `{ path, name, pinned }`，整行点击直达；从没打开过目录时默认打开收藏里的第一条（固定项在前），推出外接盘后也回到这条；首次进入时预置一条已固定的「系统应用程序」（`/Applications`）——macOS 主目录里也可能有同名 `Applications`（Chrome 应用快捷方式之类），打开后者看不到应用包，预置这条避免走错；之后它和其余条目一样可取消固定、拖动排序或移除。固定项恒排在最前、不显示移除按钮，未固定项尾部一颗固定图标（固定实心 / 未固定描边，不上强调色）与移除按钮，图标自己吞冒泡；固定组与未固定组之间用一条分割线隔开；所有条目可拖拽排序，拖动只改非固定组内的先后；条目两行展示目录名与完整路径，路径过长省略、hover 显示全文；「收藏 / 取消当前目录」整宽按钮排在列表下方；
 - **路径根**：面包屑第一段按当前目录自动选根——`/Users/<用户>` 起为「主目录」（主目录图标、显示用户名）、`/Volumes/<卷>` 起为该卷（移动盘图标）、其余为「本机」（桌面图标、回 `/`）；根可点击直回根路径，根之后的分段按当前路径逐段呈现；
-- **加载态**：首次进页 / 切目录取数期间列表整块盖一层 `LoadingOverlay`（原有内容留在下面、滚动暂不可用），首次取到结果前仍是骨架；点文件夹时先在目标瓦片 / 表格行上出「正在打开…」与 mini loader，该条目暂不可点，这次取数结束即恢复，不常驻；
+- **加载态**：硬刷新进页时 `loading` 从 `true` 起步，首帧就是骨架 / 遮罩而不是空列表或引导文案；首次进页 / 切目录取数期间列表整块盖一层 `LoadingOverlay`（原有内容留在下面、滚动暂不可用），首次取到结果前仍是骨架；点文件夹时先在目标瓦片 / 表格行上出「正在打开…」与 mini loader，该条目暂不可点，这次取数结束即恢复，不常驻；
 - **排序**：文件夹与应用包各按**最后修改时间**倒序（新的在前），同一时刻按名称升序；
   文件**先按类别再按修改时间**——类别次序沿用筛选面板那排（视频 → 图片 → PDF → Markdown → 其它），
   同类别里新的在前。渲染顺序仍是「文件夹 → 应用 → 文件」，于是同类条目在网格 / 表格里连成一段；
@@ -240,6 +240,10 @@
   读不到（`df` 不可用、路径读不出）`space` 就是 `null`，页面只是不显示那句描述，目录列表照常出；
   页面只把两个数字拼成文案（`src/pages/Files/utils/files.ts` 的 `describeDirSpace`）传给
   `MenuContentLayout` 的 `description`，不自己调 `df`，也不做后台定时刷新。
+- **推出外接盘**：只有当前目录落在 `external` 上时，标题栏才多一颗推出按钮；点击先弹
+  `ConfirmModal` 二次确认（显示卷名与挂载点），确认后调 `POST /api/files/eject`（body `{ dir }`）。
+  中间件用 `df` 反查真实挂载点、再核对 `/Volumes/` 与非启动卷，最后 `diskutil eject`；盘被占用时
+  把系统返回的原因带回来只提示、不切目录；成功后切回默认目录（收藏第一条），若那条也在要退的盘上就回落主目录。
 
 ## 写操作的底线
 

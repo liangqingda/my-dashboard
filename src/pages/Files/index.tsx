@@ -4,15 +4,13 @@ import { Stack } from '@mantine/core';
 import MenuContentLayout from '@/layouts/MenuContentLayout';
 import { onPageRefresh } from '@/utils/page-refresh';
 
-import DeleteEntryConfirm from './DeleteEntryConfirm';
 import DirBreadcrumb from './DirBreadcrumb';
 import FilesActions from './FilesActions';
 import type { FilesActionsPanel } from './FilesActions/types';
 import FilesEntries from './FilesEntries';
+import FilesModals from './FilesModals';
 import FilesPreviewLayers from './FilesPreviewLayers';
 import FilesStates from './FilesStates';
-import RenameEntryModal from './RenameEntryModal';
-import UninstallAppConfirm from './UninstallAppConfirm';
 import { FILES_STORAGE_SCOPE } from './constants';
 import { useAppLaunch } from './hooks/useAppLaunch';
 import { useAppUninstall } from './hooks/useAppUninstall';
@@ -27,6 +25,7 @@ import { useFilesNavigation } from './hooks/useFilesNavigation';
 import { useImagePreview } from './hooks/useImagePreview';
 import { useTypeFilter } from './hooks/useTypeFilter';
 import { useVideoPreview } from './hooks/useVideoPreview';
+import { useVolumeEject } from './hooks/useVolumeEject';
 import {
   describeDirSpace,
   emptyListingText,
@@ -52,6 +51,16 @@ import styles from './index.scss';
  */
 const Files = () => {
   const {
+    favorites,
+    isFavorite,
+    moveFavorite,
+    removeFavorite,
+    toggleFavorite,
+    togglePinnedFavorite,
+  } = useFavorites();
+  /** 从没打开过目录时默认进收藏里的第一条（固定项在前）；推出外接盘也回到这里 */
+  const defaultFavoriteDir = favorites[0]?.path ?? null;
+  const {
     currentDir,
     listing,
     loading,
@@ -61,15 +70,7 @@ const Files = () => {
     picking,
     refresh,
     reload,
-  } = useFilesDir();
-  const {
-    favorites,
-    isFavorite,
-    moveFavorite,
-    removeFavorite,
-    toggleFavorite,
-    togglePinnedFavorite,
-  } = useFavorites();
+  } = useFilesDir(defaultFavoriteDir);
   const {
     onChange: onSelectedCategoriesChange,
     selected: selectedCategories,
@@ -151,6 +152,14 @@ const Files = () => {
       ],
     });
 
+  /** 推出外接盘：按钮只在当前目录确实落在外接卷上时出现；成功后回默认目录 */
+  const volumeEject = useVolumeEject({
+    currentDir,
+    external: listing?.space?.external ?? null,
+    fallbackDir: defaultFavoriteDir,
+    onNavigate: goToDir,
+  });
+
   /** 骨架 / 空态 / 首次引导：判定收在纯函数里，页面只挑状态渲染 */
   const {
     showEmpty,
@@ -185,7 +194,9 @@ const Files = () => {
     <MenuContentLayout
       actions={
         <FilesActions
+          canEject={volumeEject.canEject}
           createDisabled={currentEntry === null}
+          ejecting={volumeEject.ejecting}
           favoriteDisabled={currentEntry === null}
           favorites={favorites}
           isFavorite={currentEntry !== null && isFavorite(currentEntry.path)}
@@ -193,6 +204,7 @@ const Files = () => {
           keyword={keyword}
           loading={loading}
           onCreateFolder={entryActions.createEntry}
+          onEject={volumeEject.requestEject}
           onKeywordChange={setKeyword}
           onMoveFavorite={moveFavorite}
           onOpenFavorite={goToDir}
@@ -267,21 +279,16 @@ const Files = () => {
         ) : null}
       </Stack>
 
-      <DeleteEntryConfirm
-        entry={deletingEntry}
-        loading={deleteLoading}
-        onCancel={cancelDelete}
-        onConfirm={() => void confirmDelete()}
-      />
-
-      <UninstallAppConfirm
-        app={appUninstall.app}
-        loadingReport={appUninstall.loadingReport}
-        onCancel={appUninstall.cancel}
-        onConfirm={() => void appUninstall.confirm()}
-        report={appUninstall.report}
-        reportError={appUninstall.reportError}
-        uninstalling={appUninstall.uninstalling}
+      <FilesModals
+        appUninstall={appUninstall}
+        deleteState={{
+          cancelDelete,
+          confirmDelete,
+          deleteLoading,
+          deletingEntry,
+        }}
+        entryActions={entryActions}
+        volumeEject={volumeEject}
       />
 
       <FilesPreviewLayers
@@ -301,18 +308,6 @@ const Files = () => {
         videoActiveId={previewVideoId}
         videoDefaultFullscreen={settings.videoFullscreen}
         videoItems={videoItems}
-      />
-
-      <RenameEntryModal
-        entry={entryActions.renamingEntry}
-        key={entryActions.renamingEntry?.path ?? 'none'}
-        loading={entryActions.renameLoading}
-        onCancel={entryActions.closeRename}
-        onCommit={(name) => {
-          if (entryActions.renamingEntry !== null) {
-            void entryActions.renameCommit(entryActions.renamingEntry.path, name);
-          }
-        }}
       />
     </MenuContentLayout>
   );

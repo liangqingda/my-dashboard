@@ -14,13 +14,14 @@ import { fetchFileDir, pickPickedDir } from '../utils/files-api';
  * `refresh` 手动刷新（显示 loading），`reload` 静默同步，供页面标题栏的「刷新当前页面」。
  * 请求竞态由 requestId 收口：过期结果直接忽略。
  */
-export const useFilesDir = (): UseFilesDirResult => {
+export const useFilesDir = (fallbackDir?: string | null): UseFilesDirResult => {
   const [currentDir, setCurrentDir] = useStoredState(
     CURRENT_DIR_STORAGE_KEY,
     STRING_CODEC,
   );
   const [listing, setListing] = useState<DirListing | null>(null);
-  const [loading, setLoading] = useState(false);
+  /** 首次取数从 true 开始：硬刷新时先看到加载态，不是空列表或引导文案 */
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [picking, setPicking] = useState(false);
   const requestId = useRef(0);
@@ -150,8 +151,8 @@ export const useFilesDir = (): UseFilesDirResult => {
     }
   }, [currentDir, runFetch]);
 
-  // 首次进入：只按挂载时记住的目录取一次（没记住就取主目录）；之后切目录走 openDir / refresh
-  const [initialDir] = useState(currentDir);
+  // 首次进入：按记住的目录取一次；从没打开过就回落收藏里的第一个目录，再没有才取主目录
+  const [initialDir] = useState(currentDir || fallbackDir || '');
 
   useEffect(() => {
     const controller = new AbortController();

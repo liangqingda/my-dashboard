@@ -42,6 +42,7 @@ const APP_ICON_ENDPOINT = '/api/files/app-icon';
 const APP_RESIDUE_ENDPOINT = '/api/files/app-residue';
 const OPEN_APP_ENDPOINT = '/api/files/open-app';
 const UNINSTALL_APP_ENDPOINT = '/api/files/uninstall-app';
+const EJECT_ENDPOINT = '/api/files/eject';
 
 /** 取数请求的缓存策略：开发态必须实时，静态产物不读这个接口 */
 const REQUEST_INIT: RequestInit = import.meta.env.DEV
@@ -190,6 +191,11 @@ export const moveEntry = async (
   targetDir: string,
 ): Promise<void> => {
   await postJson(MOVE_ENDPOINT, { source, targetDir });
+};
+
+/** 推出当前目录所在的外接盘；盘被占用时中间件带回系统原因 */
+export const ejectVolume = async (dir: string): Promise<void> => {
+  await postJson(EJECT_ENDPOINT, { dir });
 };
 
 /** 删除一条条目；文件夹连同内部内容递归删除，不可恢复 */
