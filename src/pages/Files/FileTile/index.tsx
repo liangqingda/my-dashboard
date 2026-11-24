@@ -97,11 +97,11 @@ const FileTile = memo(
                   className={styles.appBadge}
                   decoding="async"
                   draggable={false}
-                  height={12}
+                  height={18}
                   loading="lazy"
                   onError={() => setAppBadgeFailed(true)}
                   src={videoAppIconUrl(videoApp)}
-                  width={12}
+                  width={18}
                 />
               </>
             ) : null}

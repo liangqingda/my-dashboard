@@ -105,15 +105,15 @@
 /* 体积与播放器图标之间的竖线：只用线色，不抢体积的弱色 */
 .metaDivider {
   width: 1px;
-  height: 10px;
+  height: 14px;
   background: var(--app-line);
 }
 
 /* 缩到体积右侧的播放器图标 */
 .appBadge {
   display: block;
-  width: 12px;
-  height: 12px;
-  border-radius: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
   object-fit: contain;
 }
