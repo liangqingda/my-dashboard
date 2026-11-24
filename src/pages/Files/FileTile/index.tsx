@@ -90,20 +90,17 @@ const FileTile = memo(
           <span className={styles.meta}>
             {formatFileSize(file.size)}
             {showsAppBadge && !appBadgeFailed ? (
-              <>
-                <span aria-hidden="true" className={styles.metaDivider} />
-                <img
-                  alt=""
-                  className={styles.appBadge}
-                  decoding="async"
-                  draggable={false}
-                  height={18}
-                  loading="lazy"
-                  onError={() => setAppBadgeFailed(true)}
-                  src={videoAppIconUrl(videoApp)}
-                  width={18}
-                />
-              </>
+              <img
+                alt=""
+                className={styles.appBadge}
+                decoding="async"
+                draggable={false}
+                height={22}
+                loading="lazy"
+                onError={() => setAppBadgeFailed(true)}
+                src={videoAppIconUrl(videoApp)}
+                width={22}
+              />
             ) : null}
           </span>
         </span>
