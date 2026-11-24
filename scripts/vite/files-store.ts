@@ -15,6 +15,7 @@ import { promisify } from 'node:util';
 import type { Dirent } from 'node:fs';
 
 import { describeAppEntry, isAppBundleName } from './files-apps.ts';
+import { pickNativeDirectory } from './files-picker.ts';
 import type { AppEntry } from './files-apps.ts';
 
 const execFileAsync = promisify(execFile);
@@ -270,6 +271,34 @@ const readEntries = async (dir: string): Promise<Dirent[]> => {
   }
 };
 
+/** 同级文件夹扫描的并发上限：根目录十几个大目录串行扫要好几秒，开几路能压到一秒内又不打满磁盘 */
+const FOLDER_SCAN_CONCURRENCY = 4;
+
+/** 固定并发地跑一组异步任务，结果按输入顺序返回；单个任务失败按调用方的语义处理 */
+const mapWithConcurrency = async <T, R>(
+  items: readonly T[],
+  limit: number,
+  run: (item: T) => Promise<R>,
+): Promise<R[]> => {
+  const results = new Array<R>(items.length);
+  let next = 0;
+
+  const worker = async (): Promise<void> => {
+    while (next < items.length) {
+      const index = next;
+
+      next += 1;
+      results[index] = await run(items[index]);
+    }
+  };
+
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, () => worker()),
+  );
+
+  return results;
+};
+
 /**
  * 扫描一个文件夹：直属条目数（文件夹 + 文件 + 应用包，不含隐藏项）、
  * 内部出现过的文件分类，以及直属有没有应用包。分类按层往下找，各档都见到就提前结束，
@@ -394,7 +423,7 @@ export const listDirectory = async (input: string): Promise<DirListing> => {
     throw toReadError(error, dir);
   }
 
-  const folders: FolderEntry[] = [];
+  const folderSources: { name: string; path: string }[] = [];
   const apps: AppEntry[] = [];
   const files: FileEntry[] = [];
 
@@ -420,11 +449,7 @@ export const listDirectory = async (input: string): Promise<DirListing> => {
     }
 
     if (entry.isDirectory()) {
-      folders.push({
-        name: entry.name,
-        path: entryPath,
-        ...(await scanFolder(entryPath)),
-      });
+      folderSources.push({ name: entry.name, path: entryPath });
       continue;
     }
 
@@ -445,6 +470,16 @@ export const listDirectory = async (input: string): Promise<DirListing> => {
       }
     }
   }
+
+  const folders = await mapWithConcurrency(
+    folderSources,
+    FOLDER_SCAN_CONCURRENCY,
+    async (source) => ({
+      name: source.name,
+      path: source.path,
+      ...(await scanFolder(source.path)),
+    }),
+  );
 
   // 文件夹 / 应用各按修改时间新的在前；文件先按类别成段、再按修改时间。
   // 表格与网格都按「文件夹 → 应用 → 文件」组装，所以同类条目自然连在一起
@@ -677,6 +712,13 @@ export const buildPickerScript = (defaultDir?: string): string =>
  * `defaultDir` 传入时选择框默认定位到该目录；传空则从用户主目录开始。
  */
 export const pickDirectory = async (defaultDir?: string): Promise<PickedDir> => {
+  const native = await pickNativeDirectory(defaultDir).catch(() => null);
+
+  if (native !== null) {
+    return native;
+  }
+
+  /** 原生面板不可用（无编译器 / 非 macOS）时回落到 AppleScript */
   const script = buildPickerScript(defaultDir);
 
   try {

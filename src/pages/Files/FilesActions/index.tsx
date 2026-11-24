@@ -49,6 +49,7 @@ const FilesActions = ({
   onOpenFavorite,
   onPanelChange,
   onPickDir,
+  picking,
   onRemoveFavorite,
   onToggleFavorite,
   onTogglePinnedFavorite,
@@ -76,8 +77,9 @@ const FilesActions = ({
       </FreeIconAction>
 
       <FreeIconAction
-        disabled={loading}
-        label="选择本地目录"
+        disabled={loading || picking}
+        label={picking ? '正在打开目录选择框' : '选择本地目录'}
+        loading={picking}
         onClick={onPickDir}
       >
         <IconFolderOpen size={ICON_SIZE} stroke={ICON_STROKE} />
@@ -148,9 +150,11 @@ const FilesActions = ({
           onVideoAppChange={settings.setVideoApp}
           onVideoFullscreenChange={settings.setVideoFullscreen}
           onVideoOpenModeChange={settings.setVideoOpenMode}
+          onVideoThumbStyleChange={settings.setVideoThumbStyle}
           videoApp={settings.videoApp}
           videoFullscreen={settings.videoFullscreen}
           videoOpenMode={settings.videoOpenMode}
+          videoThumbStyle={settings.videoThumbStyle}
         />
       </IconPopoverButton>
 

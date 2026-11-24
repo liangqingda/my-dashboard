@@ -23,20 +23,18 @@ import { useFavorites } from './hooks/useFavorites';
 import { useFilesDir } from './hooks/useFilesDir';
 import { useFilesFilterActions } from './hooks/useFilesFilterActions';
 import { useFilesViewMode } from './hooks/useFilesViewMode';
-import { useFolderOpening } from './hooks/useFolderOpening';
+import { useFilesNavigation } from './hooks/useFilesNavigation';
 import { useImagePreview } from './hooks/useImagePreview';
 import { useTypeFilter } from './hooks/useTypeFilter';
 import { useVideoPreview } from './hooks/useVideoPreview';
 import {
   describeDirSpace,
   emptyListingText,
-  filterAppsByCategory,
-  filterAppsByKeyword,
-  filterFilesByCategory,
-  filterFilesByKeyword,
-  filterFoldersByCategory,
-  toFilesRows,
 } from './utils/files';
+import {
+  describeListState,
+  selectVisibleEntries,
+} from './utils/entries-view';
 
 import styles from './index.scss';
 
@@ -53,8 +51,17 @@ import styles from './index.scss';
  * 标题行右侧再显示本机剩余可用空间；当前目录在外接盘上时，连同那块盘的可用空间一起显示。
  */
 const Files = () => {
-  const { currentDir, listing, loading, error, openDir, pickDir, refresh, reload } =
-    useFilesDir();
+  const {
+    currentDir,
+    listing,
+    loading,
+    error,
+    openDir,
+    pickDir,
+    picking,
+    refresh,
+    reload,
+  } = useFilesDir();
   const {
     favorites,
     isFavorite,
@@ -117,70 +124,48 @@ const Files = () => {
   /** 当前目录作为收藏条目；还没选目录时为 null，收藏按钮禁用 */
   const currentEntry = listing ? { path: listing.path, name: listing.name } : null;
 
-  /** 类型 + 关键词筛选后的文件；文件夹不受关键词影响，按内含类型过滤 */
-  const visibleFiles = listing
-    ? filterFilesByKeyword(
-        filterFilesByCategory(listing.files, selectedCategories),
-        keyword,
-      )
-    : [];
-  /** 类型 + 关键词筛选后的应用：勾了 App 才列出来 */
-  const visibleApps = listing
-    ? filterAppsByKeyword(
-        filterAppsByCategory(listing.apps, selectedCategories),
-        keyword,
-      )
-    : [];
-  /** 类型筛选后的文件夹：全选时全留，否则只留含勾选文件类型的；只勾 App 时不列文件夹 */
-  const visibleFolders = listing
-    ? filterFoldersByCategory(listing.folders, selectedCategories)
-    : [];
-  /** 表格视图的行：文件夹在前、应用其次、文件在后，与网格同一顺序 */
-  const tableRows = toFilesRows(visibleFolders, visibleApps, visibleFiles);
+  /** 筛完的文件夹 / 应用 / 文件，以及表格要的合并行 */
+  const {
+    rows: tableRows,
+    visibleApps,
+    visibleFiles,
+    visibleFolders,
+  } = selectVisibleEntries(listing, selectedCategories, keyword);
 
   /** 切换某块弹层：再点一次同一块则收起 */
   const togglePanel = (panel: FilesActionsPanel) =>
     setOpenPanel((prev) => (prev === panel ? null : panel));
 
-  /** 离开当前目录前清掉改名、拖拽、待删除、待卸载与两种预览状态，不沿用到新目录 */
-  const resetTransientState = () => {
-    entryActions.resetTransient();
-    resetDelete();
-    appUninstall.reset();
-    closeVideo();
-    closeImage();
-  };
+  /** 目录导航：切目录前统一清掉临时状态（改名 / 拖拽 / 待删除 / 待卸载 / 预览） */
+  const { goToDir, handlePickDir, navigateParent, openFolder, openingFolder } =
+    useFilesNavigation({
+      openDir,
+      parentDir: listing?.parent ?? null,
+      pickDir,
+      resetTransientFns: [
+        entryActions.resetTransient,
+        resetDelete,
+        appUninstall.reset,
+        closeVideo,
+        closeImage,
+      ],
+    });
 
-  /** 切目录：先清临时状态再交 hook 取数 */
-  const goToDir = (dir: string) => {
-    resetTransientState();
-    openDir(dir);
-  };
-
-  const { openFolder, openingFolder } = useFolderOpening(goToDir);
-  /** 已是文件系统根时没有上级目录，快捷键不动作 */
-  const parentDir = listing?.parent ?? null;
-  const navigateParent =
-    parentDir !== null ? () => goToDir(parentDir) : undefined;
-
-  const handlePickDir = () => {
-    resetTransientState();
-    pickDir();
-  };
-
-  /** 首次 / 切目录还没拿到结果：先给骨架形状，不报 0；骨架跟着当前展示形式走 */
-  const showSkeleton = loading && listing === null;
-  const showGridSkeleton = showSkeleton && isGridView;
-  const showTableSkeleton = showSkeleton && !isGridView;
-  /** 拿到结果但筛完既没有文件夹、也没有应用与文件 */
-  const showEmpty =
-    !showSkeleton &&
-    listing !== null &&
-    visibleFolders.length === 0 &&
-    visibleApps.length === 0 &&
-    visibleFiles.length === 0;
-  /** 还没选过目录：引导先填路径，不报错 */
-  const showPrompt = !showSkeleton && listing === null && error === null;
+  /** 骨架 / 空态 / 首次引导：判定收在纯函数里，页面只挑状态渲染 */
+  const {
+    showEmpty,
+    showGridSkeleton,
+    showPrompt,
+    showSkeleton,
+    showTableSkeleton,
+  } = describeListState({
+    currentDir,
+    error,
+    isGridView,
+    listing,
+    loading,
+    visibleCount: visibleFolders.length + visibleApps.length + visibleFiles.length,
+  });
 
   /** 只勾 App 自动切到系统应用目录；多选切单选时收敛成全部 */
   const { changeFilterMode, changeSelectedCategories } = useFilesFilterActions({
@@ -224,6 +209,7 @@ const Files = () => {
           onToggleViewMode={toggleViewMode}
           onTypeFilterModeChange={changeFilterMode}
           openPanel={openPanel}
+          picking={picking}
           selectedCategories={selectedCategories}
           settings={settings}
           typeFilterMode={settings.filterMode}
@@ -250,7 +236,7 @@ const Files = () => {
 
         {/* 两种形态都自己滚：纵向滚动条浮在内容之上，右侧固定留出一段比
             常规内边距更宽的空白（滚动条 6px + 呼吸空间），别让滚动条贴住列表内容 */}
-        {listing !== null && !showEmpty ? (
+        {listing !== null && !showSkeleton && !showEmpty ? (
           <FilesEntries
             apps={visibleApps}
             dragSource={entryActions.dragSource}
@@ -276,6 +262,7 @@ const Files = () => {
             rows={tableRows}
             videoApp={settings.videoApp}
             videoOpenMode={settings.videoOpenMode}
+            videoThumbStyle={settings.videoThumbStyle}
           />
         ) : null}
       </Stack>

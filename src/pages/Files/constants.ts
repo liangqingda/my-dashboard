@@ -42,6 +42,12 @@ export const VIDEO_OPEN_MODE_STORAGE_KEY = scopedStorageKey(
   'video-open-mode',
 );
 
+/** 外部应用打开视频时，瓦片大图摆视频帧还是播放器图标 */
+export const VIDEO_THUMB_STYLE_STORAGE_KEY = scopedStorageKey(
+  FILES_STORAGE_SCOPE,
+  'video-thumb-style',
+);
+
 /** 外部打开用的应用名；没写过就用默认播放器 */
 export const VIDEO_APP_STORAGE_KEY = scopedStorageKey(
   FILES_STORAGE_SCOPE,

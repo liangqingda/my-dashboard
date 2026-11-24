@@ -26,6 +26,22 @@
   cursor: pointer;
 }
 
+/* hover 遮罩：盖住图源（缩略图 / 视频帧 / 播放器图标），文字与操作按钮压在它上面 */
+.veil {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  border-radius: 8px;
+  background: rgb(0 0 0 / 45%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.wrapper:hover .veil {
+  opacity: 1;
+}
+
 /* 正在被拖拽的文件：弱化半透明，光标交给浏览器绘制（见 dragstart 的 effectAllowed） */
 .dragging {
   opacity: 0.4;
@@ -60,6 +76,8 @@
 }
 
 .body {
+  position: relative;
+  z-index: 2;
   display: flex;
   width: 100%;
   min-width: 0;
@@ -76,7 +94,26 @@
 }
 
 .meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   color: var(--app-ink-faint);
   font-size: 0.75rem;
   line-height: 1.3;
+}
+
+/* 体积与播放器图标之间的竖线：只用线色，不抢体积的弱色 */
+.metaDivider {
+  width: 1px;
+  height: 10px;
+  background: var(--app-line);
+}
+
+/* 缩到体积右侧的播放器图标 */
+.appBadge {
+  display: block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  object-fit: contain;
 }

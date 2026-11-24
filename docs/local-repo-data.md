@@ -168,6 +168,7 @@
 | --- | --- |
 | `scripts/vite/files.ts` | 路由壳：`GET /api/files`（未带 `dir` 回落主目录）、`GET /api/files?dir=…`、`GET /api/files/content?path=…`（视频按 Range 流式读）、`GET /api/files/image?path=…`（图片字节）、`GET /api/files/thumb?path=…`（图片 / 视频缩略图，网格用）、`GET /api/files/video-apps`（能播视频的本机应用）、`GET /api/files/app-icon?path=…`（应用图标 PNG）、`GET /api/files/app-residue?path=…`（卸载残留清单）、`POST /api/files/open-app`（打开应用包）、`POST /api/files/pick-dir`（系统目录选择框）、`POST /api/files/new-folder`、`POST /api/files/rename`、`POST /api/files/move`、`POST /api/files/delete`、`POST /api/files/open`（交给外部播放器）、`POST /api/files/uninstall-app`、`POST /api/files/capture`（视频帧截图写目录，缺省桌面），错误归类成 HTTP 状态码 |
 | `scripts/vite/files-store.ts` | 路径校验、条目归类、应用包从文件夹里分出来单独成列、文件夹直属条目计数、内含分类摘要与「直属是否含应用包」，供类型筛选过滤文件夹、文件归类（视频 / PDF / Markdown / App / 其它）标记、选择器脚本拼装，以及新建 / 重命名 / 移动 / 删除的写盘与冲突拒绝、错误文案与错误码收口 |
+| `scripts/vite/files-picker.ts` | 原生目录选择框：首次把一段 Swift `NSOpenPanel` 源码编进 `node_modules/.cache`，服务启动时后台预热，之后每次选择只起小二进制；编译 / 运行不可用时回落 `osascript` |
 | `scripts/vite/files-apps.ts` | 应用包识别（`.app` 目录与指向它的符号链接）、Info.plist 解析（`plutil`）、残留推导（用户级与系统级）、打开（校验 `.app` 后交给系统 `open`）、卸载（先退应用再删整包与残留，权限不足时弹一次授权窗补删） |
 | `scripts/vite/files-app-icons.ts` | 应用图标按需抽取：从包内 `Contents/Resources` 找 `.icns`，`sips` 转成 PNG，按「包路径 + 修改时间」缓存在临时目录 |
 | `scripts/vite/files-video-apps.ts` | 能播视频的应用清单：扫 `/Applications`、`/System/Applications` 与 `~/Applications` 顶层的 `.app`，读 `Info.plist` 的 `CFBundleDocumentTypes`，声明了视频统一类型标识（或视频扩展名）的才算，按应用名去重；再剔掉 `EXCLUDED_VIDEO_APPS` 里那批「顺带能放视频、但不是播放器」的应用（网盘 / 阅读 / 聊天 / 音乐 / 系统 QuickTime） |
@@ -183,7 +184,7 @@
 - **应用包**：名字以 `.app` 结尾、且实际是目录（含符号链接）的条目单独进 `listing.apps`，不再当文件夹：列表中显示为一条应用（真实图标 + 「应用 / 系统应用」），也不参与文件夹条目计数与分类扫描——包里动辄几千个文件，既拖慢列表、分类也没有意义。普通符号链接仍跳过；符号链接到 `/System`、`/usr` 等只读路径的应用标记 `system: true`，只展示、不给卸载入口；
 - **应用图标**：`app-icon` 只接受 `.app` 路径，图标文件必须落在该包自己的 `Contents/Resources` 内；转码失败或只有 `Assets.car` 时回 404，前端回落通用应用图标，不影响条目；
 - **卸载**：`app-residue` 先按 bundle id 与显示名精确推导残留（Application Support / Caches / Preferences / Saved Application State / Logs / Cookies / HTTPStorages / WebKit / Containers / Application Scripts / Group Containers / LaunchAgents 与对应的 `/Library` 系统级路径），只返回真实存在的条目；确认弹窗逐条列出后才允许 `uninstall-app`。卸载时先尽力退出应用，再删整包与全部残留；普通删除遇到 `EACCES` / `EPERM` 时用一次 `osascript` 管理员授权补删（会弹 macOS 密码窗），用户取消就按「未删除」如实返回，不假装删干净；
-- **目录选择**：`pick-dir` 走 `osascript` 调起 macOS 系统选择框，body 里的当前目录作为 `default location` 让选择框默认停在当前路径；返回 POSIX 路径；用户取消按 `cancelled` 收口，不报错；
+- **目录选择**：`pick-dir` 优先走原生 `NSOpenPanel` 小工具——首次把一段 Swift 源码编进 `node_modules/.cache`，服务启动时后台预热，之后点按钮几乎即时弹出；编译 / 运行不可用时回落到原来的 `osascript` `choose folder`。body 里的当前目录作为默认位置，返回 POSIX 路径；用户取消按 `cancelled` 收口，不报错；前端在选择框等待期间把按钮置为 loading（「正在打开目录选择框」）；
 - **新建文件夹**：`new-folder` 在当前目录落一个默认名「未命名文件夹」的空目录，重名依次追加 `2、3…`，不覆盖已有文件夹；前端拿到后打开改名弹窗（取消保留条目，不删除）；
 - **重命名 / 移动**：`rename` 改一条条目名字，`move` 把文件或文件夹移入目标文件夹；目标已有同名条目按 409 冲突拒绝、不覆盖；文件夹不能移动到它自身或其子文件夹内；条目名拒收空名、路径分隔符、`.` `..` 与点开头的隐藏名；前端文件夹与文件统一在弹窗多行文本域改名，打开即聚焦并全选原名，回车保存、Shift+回车换行，空名或未改动时保存按钮禁用；应用不给改名 / 拖拽入口（移动或改名 `.app` 会让 Launchpad 与系统登记失效）；
 - **删除**：`delete` 删除一条条目，文件夹连同内部全部内容递归删除、文件直接删除，均不可恢复；前端 hover 文件夹 / 文件瓦片浮出重命名 / 删除按钮，删除先走 `ConfirmModal` 二次确认，弹窗与成功通知按文件夹 / 文件分别出文案；
@@ -195,7 +196,7 @@
   同类别里新的在前。渲染顺序仍是「文件夹 → 应用 → 文件」，于是同类条目在网格 / 表格里连成一段；
   中间件的 `updatedMs` 是排序用的毫秒值，`updatedAt` 是同一份时间的 ISO 文本，读不到时记 0 排在最后；
 - **计数口径**：文件夹副文案只数直属条目（文件夹 + 文件 + 应用包），不递归子目录；单条条目读不到就跳过，不影响同级其它条目；
-- **筛选**：前端在已取到本页的摘要上做两档过滤——名称关键词（大小写不敏感子串匹配，过滤文件与应用）与分类勾选（视频 / 图片 / PDF / Markdown / App / 其它，默认全选）：勾了哪类就显示哪类，文件按自身分类、应用按「App」这一档、文件夹按内含分类；勾了 App 时另列**直属含应用包**的文件夹（`hasApps`，如 `/` 下的 `Applications`、`System` 能点进去），只有包里深层才有的 app 不算；「全部」与分类列表用一条分割线隔开：多选模式下它是复选框（全勾选中、部分勾选半选、一个没勾未选，点它全选 / 全清），单选模式下是单选框。只勾「App」时会自动切到收藏里的「系统应用程序」目录（已在 `/Applications` 不重复打开）。操作方式可在设置面板切「多选 / 单选」：多选可同时勾几类，单选一次只能留一类（「全部」表示不筛选），从多选切到单选时选择不是「恰好一类」就收敛成全部。勾选与操作方式都持久化（键 `type-filter-selected` / `type-filter-mode`）；关键词为会话内状态不持久化；
+- **筛选**：前端在已取到本页的摘要上做两档过滤——名称关键词（大小写不敏感子串匹配，过滤文件与应用）与分类勾选（视频 / 图片 / PDF / Markdown / App / 其它，默认全选）：勾了哪类就显示哪类，文件按自身分类、应用按「App」这一档、文件夹按内含分类；勾了 App 时另列**直属含应用包**的文件夹（`hasApps`，如 `/` 下的 `Applications`、`System` 能点进去），`/Applications` 与 `/System/Applications` 即使扫描没标出 `hasApps` 也按应用目录露出（兜住权限 / 缓存异常）；只有包里深层才有的 app 不算；「全部」与分类列表用一条分割线隔开：多选模式下它是复选框（全勾选中、部分勾选半选、一个没勾未选，点它全选 / 全清），单选模式下是单选框。只勾「App」时会自动切到收藏里的「系统应用程序」目录（已在 `/Applications` 不重复打开）。操作方式可在设置面板切「多选 / 单选」：多选可同时勾几类，单选一次只能留一类（「全部」表示不筛选），从多选切到单选时选择不是「恰好一类」就收敛成全部。勾选与操作方式都持久化（键 `type-filter-selected` / `type-filter-mode`）；关键词为会话内状态不持久化；
 - **文件夹分类摘要**：`listing.folders[].categories` 给出文件夹内出现过的分类（含深层），中间件按「先浅后深、找齐各档即停」扫描，累计 2000 个条目或 6 层为止，超出预算的深层内容不保证计入；应用包按一条 `app` 分类计入、不再往包里扫；另有 `hasApps` 只表示**直属子项**里有应用包。两者只服务于筛选时决定文件夹露不露出，不是精确的全树统计；
 - **类型图标**：后端按扩展名归类，前端按分类换图标（视频与图片上蓝色，其余弱色）；视频帧封面抽取是单独任务。
 - **视频预览与截图**：`content` 接口只认视频扩展名（分类表与列表共用同一份），并按 `Range` 回 206
@@ -227,8 +228,10 @@
   视频走 `qlmanage -t` 让 QuickLook 抽一帧 PNG（用系统解码，前端的 `video + canvas` 拿不下的编码它也出得来）。
   按「路径 + 体积 + 修改时间」缓存在临时目录，`Cache-Control: private, max-age=600`；转不出来返回 404，
   前端（`utils/media-thumbs.ts` 拼 URL、`FileTile` 的 `onError`）回落分类图标。
-  网格里视频在「外部应用」模式下不摆帧，摆的是所选播放器的图标：`GET /api/files/app-icon?app=<应用名>`，
-  应用名由 `files-video-apps.ts` 的 `videoAppBundlePath` 映射成包路径，名字为空回落 IINA。
+  网格里视频在「外部应用」模式下由设置 `video-thumb-style` 决定大图：默认摆所选播放器的图标
+  （`GET /api/files/app-icon?app=<应用名>`，应用名由 `files-video-apps.ts` 的
+  `videoAppBundlePath` 映射成包路径，名字为空回落 IINA）；选「视频帧」时大图仍走缩略图，
+  播放器图标缩成 12px 小徽标排在体积右侧、中间一条竖线隔开，取不到图标就只留体积。
   表格视图（`FilesTable`）仍是小号分类图标，不参与缩略图。
 - **可用空间**：`GET /api/files` 的 `listing.space` 同时下发启动卷 `/` 的剩余空间，以及当前目录
   所在的那一卷（只在它被判定为外接卷时给，`external` 为 `null` 表示目录就在启动卷上）。

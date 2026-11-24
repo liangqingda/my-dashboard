@@ -34,6 +34,8 @@ export type FilesActionsProps = {
   openPanel: FilesActionsPanel | null;
   /** 调起系统目录选择器选择目录 */
   onPickDir: () => void;
+  /** 目录选择框正在等待用户选择 */
+  picking: boolean;
   /** 在当前目录下新建文件夹并进入改名态 */
   onCreateFolder: () => void;
   /** 收藏 / 取消收藏当前目录 */

@@ -3,7 +3,11 @@
  * 值都由页面持有并持久化，面板只负责改。
  */
 
-import type { TypeFilterMode, VideoOpenMode } from '../../types';
+import type {
+  TypeFilterMode,
+  VideoOpenMode,
+  VideoThumbStyle,
+} from '../../types';
 
 /** 设置面板 props */
 export type SettingsPanelProps = {
@@ -11,6 +15,10 @@ export type SettingsPanelProps = {
   videoOpenMode: VideoOpenMode;
   /** 外部打开用的应用名 */
   videoApp: string;
+  /** 外部打开时瓦片大图摆视频帧还是播放器图标 */
+  videoThumbStyle: VideoThumbStyle;
+  /** 改瓦片大图 */
+  onVideoThumbStyleChange: (style: VideoThumbStyle) => void;
   /** 改视频去向 */
   onVideoOpenModeChange: (mode: VideoOpenMode) => void;
   /** 改外部打开的应用 */

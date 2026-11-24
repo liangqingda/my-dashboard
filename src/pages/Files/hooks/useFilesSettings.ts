@@ -1,6 +1,6 @@
 /**
  * 文件页的设置项（持久化到 localStorage）：视频点击后去哪儿（弹窗预览 / 外部应用）、
- * 预览默认全屏，以及类型筛选用多选还是单选。
+ * 外部打开时瓦片大图摆视频帧还是播放器图标、预览默认全屏，以及类型筛选用多选还是单选。
  *
  * 后续再添设置项时按同样的形状加一对 codec + 键，不要在页面里各写一份存储逻辑。
  */
@@ -19,12 +19,19 @@ import {
   VIDEO_APP_STORAGE_KEY,
   VIDEO_OPEN_MODE_STORAGE_KEY,
   VIDEO_PREVIEW_FULLSCREEN_STORAGE_KEY,
+  VIDEO_THUMB_STYLE_STORAGE_KEY,
 } from '../constants';
-import type { TypeFilterMode, VideoOpenMode } from '../types';
+import type { TypeFilterMode, VideoOpenMode, VideoThumbStyle } from '../types';
 
 const FILTER_MODE_CODEC = createChoiceCodec<TypeFilterMode>(
   ['multi', 'single'],
   'multi',
+);
+
+/** 瓦片大图：视频帧 / 播放器图标，脏值回落图标（与旧行为一致） */
+const VIDEO_THUMB_STYLE_CODEC = createChoiceCodec<VideoThumbStyle>(
+  ['frame', 'app-icon'],
+  'app-icon',
 );
 
 /** 视频去向：只有「弹窗」「外部」两档，脏值回落弹窗 */
@@ -39,6 +46,10 @@ export type UseFilesSettingsResult = {
   videoOpenMode: VideoOpenMode;
   /** 外部打开用的应用名；空串表示用默认播放器 */
   videoApp: string;
+  /** 外部打开时瓦片大图摆什么 */
+  videoThumbStyle: VideoThumbStyle;
+  /** 改瓦片大图 */
+  setVideoThumbStyle: (style: VideoThumbStyle) => void;
   /** 改视频去向 */
   setVideoOpenMode: (mode: VideoOpenMode) => void;
   /** 改外部打开用的应用 */
@@ -62,6 +73,10 @@ export const useFilesSettings = (): UseFilesSettingsResult => {
   const [videoOpenMode, setVideoOpenMode] = useStoredState(
     VIDEO_OPEN_MODE_STORAGE_KEY,
     VIDEO_OPEN_MODE_CODEC,
+  );
+  const [videoThumbStyle, setVideoThumbStyle] = useStoredState(
+    VIDEO_THUMB_STYLE_STORAGE_KEY,
+    VIDEO_THUMB_STYLE_CODEC,
   );
   const [storedApp, setVideoApp] = useStoredState(
     VIDEO_APP_STORAGE_KEY,
@@ -88,8 +103,10 @@ export const useFilesSettings = (): UseFilesSettingsResult => {
     setVideoApp,
     setVideoFullscreen,
     setVideoOpenMode,
+    setVideoThumbStyle,
     videoApp: storedApp.trim() || DEFAULT_VIDEO_APP,
     videoFullscreen,
     videoOpenMode,
+    videoThumbStyle,
   };
 };

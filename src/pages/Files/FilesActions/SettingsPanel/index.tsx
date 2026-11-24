@@ -1,6 +1,7 @@
 /**
  * 文件页设置面板：类型筛选方式（多选 / 单选）、视频点击后（弹窗预览 / 外部应用，
- * 选外部时可再挑一个能播放视频的本机应用，默认 IINA）、预览默认全屏。
+ * 选外部时可再挑一个能播放视频的本机应用，默认 IINA，并可决定瓦片大图摆视频帧还是播放器图标）、
+ * 预览默认全屏。
  *
  * 后续加设置项直接往下追加分组，面板只读值、只回调，持久化在页面的设置 hook 里。
  */
@@ -17,7 +18,11 @@ import {
 import { PANEL_FIELD_STYLES } from '@/components/buttons/IconPopoverButton/constants';
 
 import { useVideoApps } from '../../hooks/useVideoApps';
-import type { TypeFilterMode, VideoOpenMode } from '../../types';
+import type {
+  TypeFilterMode,
+  VideoOpenMode,
+  VideoThumbStyle,
+} from '../../types';
 
 import type { SettingsPanelProps } from './types';
 
@@ -27,6 +32,12 @@ import styles from './index.scss';
 const FILTER_MODE_OPTIONS = [
   { label: '多选', value: 'multi' },
   { label: '单选', value: 'single' },
+];
+
+/** 外部打开时瓦片大图的两档文案 */
+const VIDEO_THUMB_STYLE_OPTIONS = [
+  { label: '视频帧', value: 'frame' },
+  { label: '应用图标', value: 'app-icon' },
 ];
 
 /** 视频去向的两档文案 */
@@ -43,9 +54,11 @@ const SettingsPanel = ({
   onVideoAppChange,
   onVideoFullscreenChange,
   onVideoOpenModeChange,
+  onVideoThumbStyleChange,
   videoApp,
   videoFullscreen,
   videoOpenMode,
+  videoThumbStyle,
 }: SettingsPanelProps) => {
   /** 候选应用按需现取：面板挂载时取一次，页面别为一条设置常驻一份列表 */
   const { apps, error, loading } = useVideoApps();
@@ -107,6 +120,26 @@ const SettingsPanel = ({
               {error}
             </Text>
           ) : null}
+        </Stack>
+      ) : null}
+
+      {videoOpenMode === 'external' ? (
+        <Stack gap={6}>
+          <Text className={styles.label}>视频瓦片封面</Text>
+          <SegmentedControl
+            data={VIDEO_THUMB_STYLE_OPTIONS}
+            fullWidth
+            onChange={(value) =>
+              onVideoThumbStyleChange(value as VideoThumbStyle)
+            }
+            size="xs"
+            value={videoThumbStyle}
+          />
+          <Text c="dimmed" className={styles.hint}>
+            {videoThumbStyle === 'frame'
+              ? '瓦片摆视频帧，播放器图标缩到体积右侧'
+              : '瓦片直接摆播放器图标'}
+          </Text>
         </Stack>
       ) : null}
 

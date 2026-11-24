@@ -63,6 +63,7 @@ const DirectoryGrid = ({
   launchingApp,
   videoApp,
   videoOpenMode,
+  videoThumbStyle,
 }: DirectoryGridProps) => (
   <div className={styles.grid} onDragOver={allowMoveOverGrid}>
     {folders.map((folder) => (
@@ -103,6 +104,7 @@ const DirectoryGrid = ({
         onRequestDelete={() => onRequestDeleteEntry(file.path)}
         videoApp={videoApp}
         videoOpenMode={videoOpenMode}
+        videoThumbStyle={videoThumbStyle}
       />
     ))}
   </div>

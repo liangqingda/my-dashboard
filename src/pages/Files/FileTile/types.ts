@@ -2,7 +2,7 @@
  * 文件瓦片的 props。
  */
 
-import type { FileEntry, VideoOpenMode } from '../types';
+import type { FileEntry, VideoOpenMode, VideoThumbStyle } from '../types';
 
 /** 网格里一条文件的入参 */
 export type FileTileProps = {
@@ -22,6 +22,8 @@ export type FileTileProps = {
   onRequestDelete?: () => void;
   /** 设置里选的播放器应用名：视频改用外部应用打开时，图标随它变 */
   videoApp?: string;
-  /** 视频点击后去哪：`external` 时视频瓦片摆播放器图标，`preview` 时摆视频帧 */
+  /** 视频点击后去哪：`external` 时按 `videoThumbStyle` 摆图，`preview` 时摆视频帧 */
   videoOpenMode?: VideoOpenMode;
+  /** 外部打开时大图摆视频帧还是播放器图标 */
+  videoThumbStyle?: VideoThumbStyle;
 };

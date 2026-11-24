@@ -67,6 +67,9 @@ export type VideoAppOption = {
 /** 视频点击后的去向：弹窗预览 / 交给外部应用 */
 export type VideoOpenMode = 'preview' | 'external';
 
+/** 外部应用打开视频时，瓦片大图摆什么：视频帧 / 播放器图标 */
+export type VideoThumbStyle = 'frame' | 'app-icon';
+
 /** 一个卷的剩余可用空间 */
 export type VolumeSpace = {
   /** 卷名：外接卷取挂载点最后一段；启动卷没有名字，为 null */
@@ -117,6 +120,8 @@ export type UseFilesDirResult = {
   openDir: (dir: string) => void;
   /** 调起系统目录选择器，选中后打开；取消则保持当前目录 */
   pickDir: () => void;
+  /** 目录选择框正在等待用户选择：按钮据此显示进度 */
+  picking: boolean;
   /** 手动刷新当前目录（显示 loading） */
   refresh: () => void;
   /** 静默刷新当前目录，供页面级刷新订阅 */

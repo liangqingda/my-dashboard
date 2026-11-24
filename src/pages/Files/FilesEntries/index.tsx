@@ -41,6 +41,7 @@ const FilesEntries = ({
   rows,
   videoApp,
   videoOpenMode,
+  videoThumbStyle,
 }: FilesEntriesProps) => (
   <div className={cx(styles.frame, isGridView && styles.gridFrame)}>
     <ScrollArea
@@ -86,6 +87,7 @@ const FilesEntries = ({
           onRequestUninstallApp={onRequestUninstallApp}
           videoApp={videoApp}
           videoOpenMode={videoOpenMode}
+          videoThumbStyle={videoThumbStyle}
         />
       ) : (
         <FilesTable

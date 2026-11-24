@@ -34,6 +34,7 @@ import { launchAppBundle, scanAppResidues, uninstallAppBundle } from './files-ap
 import { openImageFile } from './files-images.js';
 import { openVideoFile, openVideoStream, parseByteRange, saveCapture, videoEtag } from './files-media.js';
 import { openExternalFile } from './files-open.js';
+import { warmNativePicker } from './files-picker.js';
 import { listVideoApps, videoAppBundlePath } from './files-video-apps.js';
 import {
   createFolder,
@@ -343,6 +344,9 @@ const serveAppIcon = async (
 export const files = (): Plugin => ({
   name: 'files',
   configureServer(server) {
+    /** 先把原生目录选择框编好，用户点按钮时不必再等编译 */
+    warmNativePicker();
+
     server.middlewares.use('/api/files', async (req, res) => {
       const pathname = (req.url ?? '').split('?')[0];
 

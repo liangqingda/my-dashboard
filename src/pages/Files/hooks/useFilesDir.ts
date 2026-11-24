@@ -22,6 +22,7 @@ export const useFilesDir = (): UseFilesDirResult => {
   const [listing, setListing] = useState<DirListing | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [picking, setPicking] = useState(false);
   const requestId = useRef(0);
 
   /** 把请求结果落到状态上；请求已过期时直接忽略。当前目录以成功扫描到的路径为准并记住 */
@@ -102,13 +103,18 @@ export const useFilesDir = (): UseFilesDirResult => {
    * 选择过程本身失败时记进页面错误条，重抛在这里吞掉，避免未处理的 Promise 拒绝。
    */
   const pickDir = useCallback(() => {
+    setPicking(true);
+
     void pickPickedDir(currentDir)
       .then((picked) => {
+        setPicking(false);
+
         if ('path' in picked) {
           openDir(picked.path);
         }
       })
       .catch((caught: unknown) => {
+        setPicking(false);
         fail(caught, requestId.current);
       });
   }, [currentDir, openDir, fail]);
@@ -175,6 +181,7 @@ export const useFilesDir = (): UseFilesDirResult => {
     loading,
     openDir,
     pickDir,
+    picking,
     refresh,
     reload,
   };
