@@ -13,6 +13,12 @@ import type { FolderTileProps } from './types';
 
 import styles from './index.scss';
 
+/**
+ * 文件夹图标的视图框：Tabler 原始 24×24 视图框里上下左都有大片空白（图形本身约 2–22 / 3–20），
+ * 直接按原视图框画，图源盒子等高时图形会小一圈；这里裁到图形边界并留一点余量，让它在盒子高度内画满。
+ */
+const FOLDER_ICON_VIEWBOX = '1.8 2.8 20.4 17.4';
+
 /** 计数位内容：取数期间换成进度，不显示条目数以免误导 */
 const renderFolderMeta = (folder: FolderTileProps['folder'], loading: boolean) => {
   if (loading) {
@@ -84,6 +90,7 @@ const FolderTile = memo(
           className={styles.icon}
           size={DEFAULT_TILE_MEDIA_SIZE}
           stroke={1.2}
+          viewBox={FOLDER_ICON_VIEWBOX}
         />
         <span className={styles.body}>
           <FreeTruncatedText
