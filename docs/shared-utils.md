@@ -52,6 +52,7 @@
   `files:current-dir`、`files:favorites`、`files:type-filter`、`files:view-mode`、
   `files:video-preview`（视频预览的一组偏好）、`files:video-open-mode`、`files:video-app`、
   `files:veil-opacity`（hover 玻璃层透明度 0–100）、
+  `files:tile-size`（网格瓦片图源边长 px）、`files:tile-name-size`（瓦片名称字号 px）、
   `files:image-preview-fullscreen`、`files:video-preview-fullscreen`。
 - **同一个公共组件挂在不同页面必须各记一套**：页面把标识传给组件（如 `MarkdownPreviewModal` 的
   `storageScope`），组件内部再拼 `<标识>:<组件>`；组件不许自己写死页面标识，否则两页会共用同一份

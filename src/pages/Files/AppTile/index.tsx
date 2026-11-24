@@ -4,8 +4,10 @@ import { UnstyledButton } from '@mantine/core';
 import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
 
 import AppIcon from '../AppIcon';
+import { DEFAULT_TILE_NAME_SIZE, DEFAULT_TILE_SIZE } from '../constants';
 import EntryTileActions from '../EntryTileActions';
 import TileVeil from '../TileVeil';
+import { tileIconSize, tileSizeVars } from '../utils/tile-metrics';
 
 import type { AppTileProps } from './types';
 
@@ -30,11 +32,13 @@ const AppTile = memo(
   ({
     app,
     launching,
+    nameSize = DEFAULT_TILE_NAME_SIZE,
     onOpen,
     onRequestUninstall,
+    tileSize = DEFAULT_TILE_SIZE,
     veilOpacity,
   }: AppTileProps) => (
-    <div className={styles.wrapper}>
+    <div className={styles.wrapper} style={tileSizeVars(tileSize, nameSize)}>
       <TileVeil opacity={veilOpacity} />
     <UnstyledButton
       aria-label={`打开 ${app.name}`}
@@ -42,7 +46,7 @@ const AppTile = memo(
       disabled={launching}
       onClick={onOpen}
     >
-      <AppIcon app={app} className={styles.icon} size={64} />
+      <AppIcon app={app} className={styles.icon} size={tileIconSize(tileSize)} />
       <span className={styles.body}>
         <FreeTruncatedText
           className={styles.name}

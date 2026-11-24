@@ -51,6 +51,7 @@ const DirectoryGrid = ({
   onDragEnd,
   onDragLeaveFolder,
   onDragOverFolder,
+  nameSize,
   onDragStartEntry,
   onDropFolder,
   onEditEntry,
@@ -61,6 +62,7 @@ const DirectoryGrid = ({
   onOpenVideo,
   onRequestDeleteEntry,
   onRequestUninstallApp,
+  tileSize,
   launchingApp,
   veilOpacity,
   videoApp,
@@ -75,6 +77,7 @@ const DirectoryGrid = ({
         folder={folder}
         key={folder.path}
         loading={loading && loadingFolder === folder.path}
+        nameSize={nameSize}
         onDragEnd={onDragEnd}
         onDragLeave={() => onDragLeaveFolder(folder.path)}
         onDragOver={(event) => onDragOverFolder(folder.path, event)}
@@ -83,6 +86,7 @@ const DirectoryGrid = ({
         onEdit={() => onEditEntry(folder)}
         onOpen={onOpenFolder}
         onRequestDelete={() => onRequestDeleteEntry(folder.path)}
+        tileSize={tileSize}
         veilOpacity={veilOpacity}
       />
     ))}
@@ -91,8 +95,10 @@ const DirectoryGrid = ({
         app={app}
         key={app.path}
         launching={launchingApp === app.path}
+        nameSize={nameSize}
         onOpen={() => onOpenApp(app)}
         onRequestUninstall={() => onRequestUninstallApp(app)}
+        tileSize={tileSize}
         veilOpacity={veilOpacity}
       />
     ))}
@@ -101,12 +107,14 @@ const DirectoryGrid = ({
         dragging={dragSource === file.path}
         file={file}
         key={file.path}
+        nameSize={nameSize}
         onDragEnd={onDragEnd}
         onDragStartEntry={() => onDragStartEntry(file.path)}
         onEdit={() => onEditEntry(file)}
         onOpen={previewHandler(file, onOpenVideo, onOpenImage)}
         onOpenExternal={onOpenExternalVideo}
         onRequestDelete={() => onRequestDeleteEntry(file.path)}
+        tileSize={tileSize}
         veilOpacity={veilOpacity}
         videoApp={videoApp}
         videoOpenMode={videoOpenMode}

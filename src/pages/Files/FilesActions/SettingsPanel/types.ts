@@ -1,5 +1,5 @@
 /**
- * 设置面板的入参：视频去向 / 预览全屏 / 筛选用多选还是单选，
+ * 设置面板的入参：视频去向 / 瓦片尺寸 / 预览全屏 / 筛选用多选还是单选，
  * 值都由页面持有并持久化，面板只负责改。
  */
 
@@ -35,6 +35,14 @@ export type SettingsPanelProps = {
   veilOpacity: number;
   /** 改 hover 玻璃层透明度 */
   onVeilOpacityChange: (opacity: number) => void;
+  /** 网格瓦片图源边长（px） */
+  tileSize: number;
+  /** 改图源边长 */
+  onTileSizeChange: (size: number) => void;
+  /** 网格瓦片名称字号（px） */
+  nameSize: number;
+  /** 改名称字号 */
+  onNameSizeChange: (size: number) => void;
   /** 类型筛选：多选 / 单选 */
   filterMode: TypeFilterMode;
   /** 改类型筛选的操作方式 */

@@ -54,14 +54,16 @@
 .thumb {
   display: block;
   width: 100%;
-  height: 104px;
-  border-radius: 6px;
+  height: var(--tile-media-size, 104px);
+  border-radius: 10px;
   object-fit: contain;
 }
 
-/* 播放器图标：正方形、保持原样居中，高度仍与缩略图齐平免得整行高低不一 */
+/* 播放器图标：正方形、保持原样居中，边长仍与缩略图齐平免得整行高低不一 */
 .appIcon {
-  width: 104px;
+  width: var(--tile-media-size, 104px);
+  height: var(--tile-media-size, 104px);
+  border-radius: 10px;
 }
 
 .body {
@@ -77,7 +79,7 @@
 
 .name {
   color: var(--app-ink);
-  font-size: 0.86rem;
+  font-size: var(--tile-name-size, 14px);
   line-height: 1.35;
   text-align: center;
 }

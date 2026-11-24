@@ -16,6 +16,10 @@ export type FileTileProps = {
   onDragEnd?: () => void;
   /** 打开这个文件（视频 / 图片会传，交给对应预览弹窗） */
   onOpen?: () => void;
+  /** 名称字号（px） */
+  nameSize?: number;
+  /** 图源边长（px）：缩略图高度与图标边长都由它换算 */
+  tileSize?: number;
   /** 用外部播放器打开这个视频（体积旁的小播放器图标点一下就走这里） */
   onOpenExternal?: (path: string) => void;
   /** 重命名这个文件 */

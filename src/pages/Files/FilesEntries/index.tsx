@@ -26,6 +26,7 @@ const FilesEntries = ({
   launchingApp,
   loading,
   loadingFolder,
+  nameSize,
   onDragEnd,
   onDragLeaveFolder,
   onDragOverFolder,
@@ -40,6 +41,7 @@ const FilesEntries = ({
   onRequestDeleteEntry,
   onRequestUninstallApp,
   rows,
+  tileSize,
   veilOpacity,
   videoApp,
   videoOpenMode,
@@ -75,6 +77,7 @@ const FilesEntries = ({
           launchingApp={launchingApp}
           loading={loading}
           loadingFolder={loadingFolder}
+          nameSize={nameSize}
           onDragEnd={onDragEnd}
           onDragLeaveFolder={onDragLeaveFolder}
           onDragOverFolder={onDragOverFolder}
@@ -88,6 +91,7 @@ const FilesEntries = ({
           onOpenVideo={onOpenVideo}
           onRequestDeleteEntry={onRequestDeleteEntry}
           onRequestUninstallApp={onRequestUninstallApp}
+          tileSize={tileSize}
           veilOpacity={veilOpacity}
           videoApp={videoApp}
           videoOpenMode={videoOpenMode}

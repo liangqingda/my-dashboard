@@ -161,13 +161,17 @@ const FilesActions = ({
         <SettingsPanel
           filterMode={typeFilterMode}
           imageFullscreen={settings.imageFullscreen}
+          nameSize={settings.nameSize}
           onFilterModeChange={onTypeFilterModeChange}
           onImageFullscreenChange={settings.setImageFullscreen}
+          onNameSizeChange={settings.setNameSize}
+          onTileSizeChange={settings.setTileSize}
           onVeilOpacityChange={settings.setVeilOpacity}
           onVideoAppChange={settings.setVideoApp}
           onVideoFullscreenChange={settings.setVideoFullscreen}
           onVideoOpenModeChange={settings.setVideoOpenMode}
           onVideoThumbStyleChange={settings.setVideoThumbStyle}
+          tileSize={settings.tileSize}
           veilOpacity={settings.veilOpacity}
           videoApp={settings.videoApp}
           videoFullscreen={settings.videoFullscreen}

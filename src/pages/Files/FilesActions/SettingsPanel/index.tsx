@@ -1,5 +1,6 @@
 /**
- * 文件页设置面板：筛选方式、视频点击后与外部应用、视频封面、悬浮玻璃透明度、预览默认全屏。
+ * 文件页设置面板：筛选方式、视频点击后与外部应用、视频封面、瓦片图源尺寸与名称字号、
+ * 悬浮玻璃透明度、预览默认全屏。
  * 设置项会越加越多，所以按主题分组（每组一块浅底色、不描边），组内字段横向排、放不下自动换行。
  *
  * 「外部应用」下拉必须 `comboboxProps={{ withinPortal: false }}`：Mantine 默认把下拉渲染到
@@ -21,6 +22,14 @@ import {
 
 import { PANEL_FIELD_STYLES } from '@/components/buttons/IconPopoverButton/constants';
 
+import {
+  TILE_NAME_SIZE_MAX,
+  TILE_NAME_SIZE_MIN,
+  TILE_NAME_SIZE_STEP,
+  TILE_SIZE_MAX,
+  TILE_SIZE_MIN,
+  TILE_SIZE_STEP,
+} from '../../constants';
 import { useVideoApps } from '../../hooks/useVideoApps';
 import type {
   TypeFilterMode,
@@ -55,11 +64,15 @@ const SettingsPanel = ({
   imageFullscreen,
   onFilterModeChange,
   onImageFullscreenChange,
+  onNameSizeChange,
+  onTileSizeChange,
   onVeilOpacityChange,
   onVideoAppChange,
   onVideoFullscreenChange,
   onVideoOpenModeChange,
   onVideoThumbStyleChange,
+  nameSize,
+  tileSize,
   veilOpacity,
   videoApp,
   videoFullscreen,
@@ -147,6 +160,38 @@ const SettingsPanel = ({
               />
             </div>
           ) : null}
+        </div>
+      </section>
+
+      <section className={styles.group}>
+        <Text className={styles.groupTitle}>瓦片</Text>
+        <div className={styles.fields}>
+          <div className={styles.field}>
+            <Text className={styles.label}>图源尺寸</Text>
+            <Slider
+              label={(value) => `${value}px`}
+              labelAlwaysOn
+              max={TILE_SIZE_MAX}
+              min={TILE_SIZE_MIN}
+              onChange={onTileSizeChange}
+              size="xs"
+              step={TILE_SIZE_STEP}
+              value={tileSize}
+            />
+          </div>
+          <div className={styles.field}>
+            <Text className={styles.label}>名称字号</Text>
+            <Slider
+              label={(value) => `${value}px`}
+              labelAlwaysOn
+              max={TILE_NAME_SIZE_MAX}
+              min={TILE_NAME_SIZE_MIN}
+              onChange={onNameSizeChange}
+              size="xs"
+              step={TILE_NAME_SIZE_STEP}
+              value={nameSize}
+            />
+          </div>
         </div>
       </section>
 

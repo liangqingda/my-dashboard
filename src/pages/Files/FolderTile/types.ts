@@ -14,6 +14,10 @@ export type FolderTileProps = {
   loading?: boolean;
   /** 打开这个文件夹 */
   onOpen: (path: string) => void;
+  /** 名称字号（px） */
+  nameSize?: number;
+  /** 图源边长（px）：文件夹图标边长由它换算 */
+  tileSize?: number;
   /** hover 玻璃层不透明度（0–100），与文件瓦片同一档设置 */
   veilOpacity?: number;
   /** 当前正在被拖拽 */

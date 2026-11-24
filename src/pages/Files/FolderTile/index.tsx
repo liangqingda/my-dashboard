@@ -5,8 +5,10 @@ import { IconFolderFilled } from '@tabler/icons-react';
 import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
 import { cx } from '@/utils/cx';
 
+import { DEFAULT_TILE_NAME_SIZE, DEFAULT_TILE_SIZE } from '../constants';
 import EntryTileActions from '../EntryTileActions';
 import TileVeil from '../TileVeil';
+import { folderIconSize, tileSizeVars } from '../utils/tile-metrics';
 
 import type { FolderTileProps } from './types';
 
@@ -47,7 +49,9 @@ const FolderTile = memo(
     onDragStartEntry,
     onEdit,
     onOpen,
+    nameSize = DEFAULT_TILE_NAME_SIZE,
     onRequestDelete,
+    tileSize = DEFAULT_TILE_SIZE,
     veilOpacity,
   }: FolderTileProps) => (
     <div
@@ -68,6 +72,7 @@ const FolderTile = memo(
         onDragStartEntry?.();
       }}
       onDrop={onDrop}
+      style={tileSizeVars(tileSize, nameSize)}
     >
       <TileVeil opacity={veilOpacity} />
       <UnstyledButton
@@ -80,7 +85,7 @@ const FolderTile = memo(
         <IconFolderFilled
           aria-hidden="true"
           className={styles.icon}
-          size={64}
+          size={folderIconSize(tileSize)}
           stroke={1.2}
         />
         <span className={styles.body}>

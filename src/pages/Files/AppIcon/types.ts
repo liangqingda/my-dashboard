@@ -8,8 +8,8 @@ import type { AppEntry } from '../types';
 export type AppIconProps = {
   /** 应用摘要：路径用于取图标 */
   app: AppEntry;
-  /** 图标边长（像素）：瓦片 64、表格行 16 */
-  size: 16 | 64;
+  /** 图标边长（像素）：瓦片按设置里的图源尺寸换算，表格行 16 */
+  size: number;
   /** 附加 class：只补颜色 / 布局，不改尺寸 */
   className?: string;
 };

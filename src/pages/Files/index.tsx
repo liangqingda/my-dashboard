@@ -259,6 +259,7 @@ const Files = () => {
             launchingApp={launchingPath}
             loading={loading}
             loadingFolder={openingFolder}
+            nameSize={settings.nameSize}
             onDragEnd={entryActions.clearDrag}
             onDragLeaveFolder={entryActions.dragLeaveFolder}
             onDragOverFolder={entryActions.dragOverFolder}
@@ -273,6 +274,7 @@ const Files = () => {
             onRequestDeleteEntry={requestDelete}
             onRequestUninstallApp={appUninstall.requestUninstall}
             rows={tableRows}
+            tileSize={settings.tileSize}
             veilOpacity={settings.veilOpacity}
             videoApp={settings.videoApp}
             videoOpenMode={settings.videoOpenMode}
