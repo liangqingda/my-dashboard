@@ -119,3 +119,10 @@
   border-radius: 5px;
   object-fit: contain;
 }
+
+/* 体积旁的小播放器图标：自己是一枚按钮，点一下就交给外部应用打开 */
+.appBadgeButton {
+  display: flex;
+  padding: 0;
+  border-radius: 4px;
+}

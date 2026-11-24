@@ -266,6 +266,7 @@ const Files = () => {
             onDropFolder={entryActions.dropFolder}
             onEditEntry={entryActions.editEntry}
             onOpenApp={launchApp}
+            onOpenExternalVideo={openVideoExternal}
             onOpenFolder={openFolder}
             onOpenImage={openImage}
             onOpenVideo={openVideo}

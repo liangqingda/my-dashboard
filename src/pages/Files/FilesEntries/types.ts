@@ -61,6 +61,8 @@ export type FilesEntriesProps = {
   onOpenFolder: (dir: string) => void;
   /** 打开某条视频 */
   onOpenVideo: (file: FileEntry) => void;
+  /** 用外部播放器打开某个视频（瓦片上那枚播放器小图标） */
+  onOpenExternalVideo: (path: string) => void;
   /** 打开某张图片 */
   onOpenImage: (file: FileEntry) => void;
   /** 请求删除某个条目 */

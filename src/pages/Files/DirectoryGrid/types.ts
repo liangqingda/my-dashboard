@@ -40,6 +40,8 @@ export type DirectoryGridProps = {
   onOpenFolder: (dir: string) => void;
   /** 打开某条视频（交给视频预览弹窗） */
   onOpenVideo: (file: FileEntry) => void;
+  /** 用外部播放器打开某个视频（瓦片上那枚播放器小图标） */
+  onOpenExternalVideo: (path: string) => void;
   /** 打开某张图片（交给图片预览弹窗） */
   onOpenImage: (file: FileEntry) => void;
   /** 开始拖拽一条目 */

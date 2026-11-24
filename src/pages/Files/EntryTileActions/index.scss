@@ -6,7 +6,13 @@
   top: 4px;
   right: 4px;
   display: flex;
-  gap: 2px;
+  gap: 4px;
   opacity: 0;
   transition: opacity 120ms ease;
+}
+
+/* 文字按钮：两枚按钮宽度随字走，别把瓦片右上角撑满 */
+.button {
+  flex: 0 0 auto;
+  padding-inline: 8px;
 }

@@ -33,6 +33,7 @@ const FilesEntries = ({
   onDropFolder,
   onEditEntry,
   onOpenApp,
+  onOpenExternalVideo,
   onOpenFolder,
   onOpenImage,
   onOpenVideo,
@@ -81,6 +82,7 @@ const FilesEntries = ({
           onDropFolder={onDropFolder}
           onEditEntry={onEditEntry}
           onOpenApp={onOpenApp}
+          onOpenExternalVideo={onOpenExternalVideo}
           onOpenFolder={onOpenFolder}
           onOpenImage={onOpenImage}
           onOpenVideo={onOpenVideo}

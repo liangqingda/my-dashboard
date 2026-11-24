@@ -54,6 +54,7 @@ const DirectoryGrid = ({
   onDragStartEntry,
   onDropFolder,
   onEditEntry,
+  onOpenExternalVideo,
   onOpenFolder,
   onOpenApp,
   onOpenImage,
@@ -102,6 +103,7 @@ const DirectoryGrid = ({
         onDragStartEntry={() => onDragStartEntry(file.path)}
         onEdit={() => onEditEntry(file)}
         onOpen={previewHandler(file, onOpenVideo, onOpenImage)}
+        onOpenExternal={onOpenExternalVideo}
         onRequestDelete={() => onRequestDeleteEntry(file.path)}
         veilOpacity={veilOpacity}
         videoApp={videoApp}

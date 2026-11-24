@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import { memo, useState } from 'react';
-import { UnstyledButton } from '@mantine/core';
+import { Tooltip, UnstyledButton } from '@mantine/core';
 
 import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
 import { cx } from '@/utils/cx';
@@ -23,6 +23,7 @@ import styles from './index.scss';
  * hover 时右上角浮出重命名 / 删除按钮，同时盖一层暗色遮罩：缩略图与视频帧都偏亮，
  * 不压一层按钮和文字都看不清。遮罩盖住图源、文字与按钮浮在它上面。
  * 视频 / 图片（调用方传了 `onOpen`）整块可点，交给对应的预览弹窗；其它文件仍只是展示。
+ * 体积旁的播放器小图标可单独点（`onOpenExternal`），绕开弹窗直接交给外部应用。
  * 名称最多两行，超出做中间省略保留尾部，hover 时给全量。
  * 指针停到视频瓦片上时先悄悄预取文件头，点开时首帧不必再等一次往返。
  */
@@ -34,6 +35,7 @@ const FileTile = memo(
     onDragStartEntry,
     onEdit,
     onOpen,
+    onOpenExternal,
     onRequestDelete,
     veilOpacity = 100,
     videoApp,
@@ -43,13 +45,16 @@ const FileTile = memo(
     const Icon = CATEGORY_ICONS[file.category];
     /** 媒体（视频 / 图片）图标单独上蓝，和文档类区分开 */
     const isMedia = file.category === 'video' || file.category === 'image';
+    const isVideo = file.category === 'video';
     /** 视频交给外部应用打开：默认瓦片上摆的就是那个播放器的图标 */
-    const isExternalVideo =
-      file.category === 'video' && videoOpenMode === 'external';
+    const isExternalVideo = isVideo && videoOpenMode === 'external';
     /** 大图到底摆不摆播放器图标：外部打开且设置里选了「应用图标」时才摆 */
     const usesAppIcon = isExternalVideo && videoThumbStyle === 'app-icon';
-    /** 大图摆视频帧时，播放器图标缩到体积右侧 */
-    const showsAppBadge = isExternalVideo && videoThumbStyle === 'frame';
+    /**
+     * 封面是视频帧时（外部模式的「视频帧」一档，或干脆是弹窗预览），播放器图标缩到体积右侧；
+     * 这枚小图标可点，点它就绕开弹窗、直接交给外部应用。
+     */
+    const showsAppBadge = isVideo && !usesAppIcon;
     /** 图源加载失败（转码不出来 / 播放器没图标）后改回分类图标，不再重试 */
     const [thumbFailed, setThumbFailed] = useState(false);
     /** 体积旁的小播放器图标同样取不到就只留体积，不占空位 */
@@ -92,17 +97,29 @@ const FileTile = memo(
           <span className={styles.meta}>
             {formatFileSize(file.size)}
             {showsAppBadge && !appBadgeFailed ? (
-              <img
-                alt=""
-                className={styles.appBadge}
-                decoding="async"
-                draggable={false}
-                height={22}
-                loading="lazy"
-                onError={() => setAppBadgeFailed(true)}
-                src={videoAppIconUrl(videoApp)}
-                width={22}
-              />
+              <Tooltip label={`用 ${videoApp} 打开`} withArrow>
+                <UnstyledButton
+                  aria-label={`用 ${videoApp} 打开 ${file.name}`}
+                  className={styles.appBadgeButton}
+                  component="span"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onOpenExternal?.(file.path);
+                  }}
+                >
+                  <img
+                    alt=""
+                    className={styles.appBadge}
+                    decoding="async"
+                    draggable={false}
+                    height={22}
+                    loading="lazy"
+                    onError={() => setAppBadgeFailed(true)}
+                    src={videoAppIconUrl(videoApp)}
+                    width={22}
+                  />
+                </UnstyledButton>
+              </Tooltip>
             ) : null}
           </span>
         </span>

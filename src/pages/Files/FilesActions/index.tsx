@@ -156,6 +156,7 @@ const FilesActions = ({
         label="设置"
         onChange={(opened) => onPanelChange(opened ? 'settings' : null)}
         opened={openPanel === 'settings'}
+        width="min(380px, calc(100vw - 24px))"
       >
         <SettingsPanel
           filterMode={typeFilterMode}

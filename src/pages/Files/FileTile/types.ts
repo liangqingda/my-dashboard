@@ -16,6 +16,8 @@ export type FileTileProps = {
   onDragEnd?: () => void;
   /** 打开这个文件（视频 / 图片会传，交给对应预览弹窗） */
   onOpen?: () => void;
+  /** 用外部播放器打开这个视频（体积旁的小播放器图标点一下就走这里） */
+  onOpenExternal?: (path: string) => void;
   /** 重命名这个文件 */
   onEdit?: () => void;
   /** 请求删除这个文件（先弹二次确认） */
