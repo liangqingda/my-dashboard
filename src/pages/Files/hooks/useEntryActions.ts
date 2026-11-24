@@ -6,6 +6,8 @@ import { getErrorMessage } from '@/utils/error';
 import type { FileEntry, FolderEntry } from '../types';
 import { createFolder, moveEntry, renameEntry } from '../utils/files-api';
 
+import { useDragMove } from './use-drag-move';
+
 /** 等待弹窗改名的一条目：类型决定弹窗标题与说明文案 */
 export type RenamingEntry = {
   /** 条目绝对路径，提交改名时回传 */
@@ -16,14 +18,31 @@ export type RenamingEntry = {
   kind: 'folder' | 'file';
 };
 
+/** 条目写操作的入参：当前目录的信息由页面给，写操作成功后由 `reload` 拉回最新列表 */
+export type UseEntryActionsArgs = {
+  /** 当前目录绝对路径；还没选目录时为 null */
+  currentDir: string | null;
+  /** 当前目录名：拖拽移动弹窗最外层用它 */
+  currentName: string;
+  /** 当前目录的子文件夹：拖拽移动弹窗最外层直接用，不再多发一次请求 */
+  currentFolders: FolderEntry[];
+  /** 静默刷新当前目录 */
+  reload: () => Promise<void>;
+};
+
 /**
  * 条目写操作编排：新建文件夹、弹窗改名、拖拽移动的临时状态与接口调用收口在这里。
  * 成功后静默刷新列表；失败弹红色通知，不改原位置。弹窗类的删除编排归 `useEntryDelete`。
+ *
+ * 拖拽移动本身是一次会话（逐层挑目标文件夹、取消区、落位音效），那套状态归 `useDragMove`；
+ * 这里只把它接到拖动源的「开始拖」与「拖拽结束」两个事件上。
  */
-export const useEntryActions = (
-  currentDir: string | null,
-  reload: () => Promise<void>,
-) => {
+export const useEntryActions = ({
+  currentDir,
+  currentName,
+  currentFolders,
+  reload,
+}: UseEntryActionsArgs) => {
   /** 正在弹窗改名的条目；null 表示改名弹窗关闭 */
   const [renamingEntry, setRenamingEntry] = useState<RenamingEntry | null>(null);
   /** 改名请求进行中：弹窗按钮转圈并禁用 */
@@ -38,10 +57,55 @@ export const useEntryActions = (
     setDropTarget(null);
   };
 
+  /** 拖拽移动：同名冲突 / 移入自身后代由后端拒绝，失败不改动原位置；成功返回 true */
+  const moveEntryTo = async (
+    source: string,
+    targetDir: string,
+  ): Promise<boolean> => {
+    if (!source || source === targetDir) {
+      clearDrag();
+
+      return false;
+    }
+
+    try {
+      await moveEntry(source, targetDir);
+      await reload();
+      notifications.show({
+        title: '已移动',
+        message: '条目已移入目标文件夹',
+        color: 'teal',
+        autoClose: 4000,
+      });
+
+      return true;
+    } catch (err) {
+      notifications.show({
+        title: '移动失败',
+        message: getErrorMessage(err, '请稍后重试'),
+        color: 'red',
+        autoClose: false,
+      });
+
+      return false;
+    } finally {
+      clearDrag();
+    }
+  };
+
+  /** 拖拽移动弹窗：逐层找目标文件夹、取消区与落位音效都在这个会话里 */
+  const dragMove = useDragMove({
+    currentDir,
+    currentFolders,
+    currentName,
+    moveEntry: moveEntryTo,
+  });
+
   /** 切目录前清掉改名与拖拽临时状态，不沿用到新目录 */
   const resetTransient = () => {
     setRenamingEntry(null);
     clearDrag();
+    dragMove.reset();
   };
 
   /** 新建文件夹：后端落一个默认名条目，刷新后打开改名弹窗 */
@@ -97,33 +161,16 @@ export const useEntryActions = (
   /** 关掉改名弹窗，不提交 */
   const closeRename = () => setRenamingEntry(null);
 
-  /** 拖拽移动：同名冲突 / 移入自身后代由后端拒绝，失败不改动原位置 */
-  const moveEntryTo = async (source: string, targetDir: string) => {
-    if (!source || source === targetDir) {
-      clearDrag();
+  /** 拖起一条目：记下拖拽源，同时把移动弹窗打开在最外层（当前目录） */
+  const dragStartEntry = (path: string, name: string) => {
+    setDragSource(path);
+    dragMove.open(path, name);
+  };
 
-      return;
-    }
-
-    try {
-      await moveEntry(source, targetDir);
-      await reload();
-      notifications.show({
-        title: '已移动',
-        message: '条目已移入目标文件夹',
-        color: 'teal',
-        autoClose: 4000,
-      });
-    } catch (err) {
-      notifications.show({
-        title: '移动失败',
-        message: getErrorMessage(err, '请稍后重试'),
-        color: 'red',
-        autoClose: false,
-      });
-    } finally {
-      clearDrag();
-    }
+  /** 拖拽结束：收起移动弹窗；没有落下的移动一律不执行 */
+  const endDrag = () => {
+    clearDrag();
+    dragMove.endDrag();
   };
 
   const dragOverFolder = (path: string, event: DragEvent<HTMLElement>) => {
@@ -142,18 +189,20 @@ export const useEntryActions = (
 
   return {
     clearDrag,
+    closeRename,
+    createEntry,
     dragLeaveFolder: () => setDropTarget(null),
+    dragMove,
     dragOverFolder,
     dragSource,
-    dragStartEntry: setDragSource,
+    dragStartEntry,
     dropFolder,
     dropTarget,
     editEntry,
-    closeRename,
+    endDrag,
     renameCommit,
     renameLoading,
     renamingEntry,
     resetTransient,
-    createEntry,
   };
 };

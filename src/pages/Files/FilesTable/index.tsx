@@ -236,7 +236,7 @@ const FilesTable = memo(
 
                   dataTransfer.effectAllowed = 'move';
                   dataTransfer.setData('text/plain', entry.path);
-                  onDragStartEntry(entry.path);
+                  onDragStartEntry(entry.path, entry.name);
                 }}
                 onDrop={isFolder ? () => onDropFolder(entry.path) : undefined}
                 onMouseEnter={

@@ -78,7 +78,7 @@ const DirectoryGrid = ({
         onDragEnd={onDragEnd}
         onDragLeave={() => onDragLeaveFolder(folder.path)}
         onDragOver={(event) => onDragOverFolder(folder.path, event)}
-        onDragStartEntry={() => onDragStartEntry(folder.path)}
+        onDragStartEntry={() => onDragStartEntry(folder.path, folder.name)}
         onDrop={() => onDropFolder(folder.path)}
         onEdit={() => onEditEntry(folder)}
         onOpen={onOpenFolder}
@@ -102,7 +102,7 @@ const DirectoryGrid = ({
         file={file}
         key={file.path}
         onDragEnd={onDragEnd}
-        onDragStartEntry={() => onDragStartEntry(file.path)}
+        onDragStartEntry={() => onDragStartEntry(file.path, file.name)}
         onEdit={() => onEditEntry(file)}
         onOpen={previewHandler(file, onOpenVideo, onOpenImage)}
         onOpenExternal={onOpenExternalVideo}

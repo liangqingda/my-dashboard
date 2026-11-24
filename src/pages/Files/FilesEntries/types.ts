@@ -47,8 +47,8 @@ export type FilesEntriesProps = {
   onDragLeaveFolder: (path: string) => void;
   /** 拖拽经过某文件夹 */
   onDragOverFolder: (path: string, event: DragEvent<HTMLElement>) => void;
-  /** 开始拖拽一条目 */
-  onDragStartEntry: (path: string) => void;
+  /** 开始拖拽一条目：路径用于移动，名字用于移动弹窗标题 */
+  onDragStartEntry: (path: string, name: string) => void;
   /** 松手放入某文件夹 */
   onDropFolder: (path: string) => void;
   /** 重命名某个条目 */
