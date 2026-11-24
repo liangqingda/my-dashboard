@@ -4,6 +4,7 @@
   position: relative;
   display: flex;
   min-width: 0;
+  align-self: start;
   border-radius: 8px;
 
   &:hover {
@@ -16,9 +17,9 @@
   width: 100%;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
-  padding: 12px 8px;
+  padding: 0;
 }
 
 /* 可打开的视频瓦片：整块是按钮，补上小手与键盘可达的语义 */
@@ -72,6 +73,7 @@
   display: flex;
   width: 100%;
   min-width: 0;
+  padding-inline: 8px;
   flex-direction: column;
   align-items: center;
   gap: 2px;
