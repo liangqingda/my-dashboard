@@ -1,7 +1,7 @@
-/* 目录网格：按瓦片宽度自动折列，文件夹与文件混排 */
+/* 目录网格：按瓦片宽度自动折列，文件夹与文件混排；横纵都用 12px 的等距留白 */
 
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
-  gap: 8px 12px;
+  gap: 12px;
 }

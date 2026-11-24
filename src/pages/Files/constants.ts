@@ -73,17 +73,14 @@ export const VEIL_OPACITY_STORAGE_KEY = scopedStorageKey(
 );
 
 /**
- * 网格图源基准边长（px）：缩略图随瓦片宽度自适应，分类 / 应用 / 文件夹图标按这个基准换算比例。
+ * 网格图源基准边长（px）：分类图标、应用图标固定按这个基准换算；缩略图与文件夹图源自适应瓦片宽度。
  */
 export const DEFAULT_TILE_MEDIA_SIZE = 96;
 
 /**
- * 图标画成图源基准边长的多少：分类图标、应用图标是方形整块，占 62% 才与缩略图的视觉分量相当；
- * 文件夹图标在 viewBox 里上下留白更多（形状扁），按 74% 画出来才与其它图标一样大。
+ * 分类图标、应用图标画成图源基准边长的多少：方形整块占 62%，与缩略图的视觉分量相当。
  */
 export const TILE_ICON_SCALE = 0.62;
-
-export const FOLDER_ICON_SCALE = 0.74;
 
 /** 外部打开的默认应用：IINA（没装时中间件会回落到它名下，再不行才系统默认） */
 export const DEFAULT_VIDEO_APP = 'IINA';

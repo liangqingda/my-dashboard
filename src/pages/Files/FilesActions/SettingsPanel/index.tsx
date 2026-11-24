@@ -158,11 +158,12 @@ const SettingsPanel = ({
               <Text className={styles.label}>透明度</Text>
               <Text className={styles.labelValue}>{veilOpacity}%</Text>
             </div>
+            {/* 数值只在标题行里给：气泡一拖就浮出来会挡手，这里彻底关掉（传 null 后 hover / 拖拽 / 聚焦都不渲染） */}
             <Slider
+              label={null}
               max={100}
               min={0}
               onChange={onVeilOpacityChange}
-              showLabelOnHover={false}
               size="xs"
               step={5}
               value={veilOpacity}
