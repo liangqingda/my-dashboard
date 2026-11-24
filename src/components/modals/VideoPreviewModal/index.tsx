@@ -1,14 +1,17 @@
 /**
  * 视频预览弹窗：`FreeModal`（外壳）+ `FreeVideo`（播放器）的组合，左侧列当前目录的视频。
  *
- * - header：翻篇 / 计数 / 文件名（外壳）+ 目录显隐、截图、外部打开、设置、删除（本组件）；
+ * - header：翻篇 / 计数 / 文件名（外壳）+ 目录显隐、截图、导出音频、外部打开、设置、删除（本组件）；
  *   「外部打开」把视频交给设置里选的应用（默认 IINA，回落系统默认），浏览器解不动的编码走它更划算；
  *   标题与右侧操作组之间恒留 20px，标题不换行、放不下才省略；
  * - 键盘：空格按设置切播放 / 暂停或关窗（`FreeModal` 的 `media` / `closeOnSpace`），
  *   `Enter` 截当前帧、`m` / `M` 静音、`s` / `S` 显隐目录列，
  *   `[` / `]` 翻篇，`←` / `→` 默认按设置里的步长快进 / 后退（可在设置面板改成翻篇），
  *   `Delete` 触发删除确认；设置面板打开或删除确认开着时整组收掉；
- * - 设置面板：快进 / 后退步长、方向键去向、截图存放目录（默认桌面），并把全部键位列一遍；
+ * - 设置面板：按「播放 / 导出 / 快捷键」分组，可改步长、方向键去向、空格去向、
+ *   截图与音频的存放目录（截图默认桌面，音频默认视频所在目录），全部键位双列列一遍；
+ * - 导出音频：确认后把当前视频的音轨抽成 WebM（Opus），经调用方写进设置里的目录；
+ *   解码 / 编码都在浏览器里做（`utils/extract-audio.ts`），不按实时录制，长片子也不用等播放完；
  * - 控制栏的两颗箭头在播放键左右两侧，去向跟着「方向键去向」设置：快进 / 后退，或翻篇；
  * - 全屏走浏览器 Fullscreen API：侧栏收起时 header 浮在画面上、鼠标静止 1s 收起，
  *   侧栏唤出后 header 回到普通流（否则会盖住侧栏）；设置里可让它「打开即全屏」；
@@ -16,14 +19,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  IconCamera,
-  IconExternalLink,
-  IconLayoutSidebarLeftCollapse,
-  IconLayoutSidebarLeftExpand,
-  IconTrash,
-  IconVideo,
-} from '@tabler/icons-react';
+import { IconTrash, IconVideo } from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
 import FreeVideo from '@/components/file-preview/FreeVideo';
@@ -33,11 +29,15 @@ import FreeModal, { MODAL_HEADER_SELECTOR } from '@/components/modals/FreeModal'
 import type { FreeModalSeekDirection } from '@/components/modals/FreeModal/types';
 import PreviewSidebar from '@/components/modals/PreviewSidebar';
 
+import AudioExportConfirm from './AudioExportConfirm';
 import { HEADER_HIDE_DELAY } from './constants';
+import { useAudioExport } from './hooks/useAudioExport';
 import { useAutoHideHeader } from './hooks/useAutoHideHeader';
 import { useFrameCapture } from './hooks/useFrameCapture';
 import { useVideoSettings } from './hooks/useVideoSettings';
 import type { VideoPreviewModalProps } from './types';
+import { seekTargetTime } from './utils/seek';
+import VideoHeaderActions from './VideoHeaderActions';
 import VideoSettingsPopover from './VideoSettingsPopover';
 
 import styles from './index.scss';
@@ -57,8 +57,9 @@ const VideoPreviewModal = ({
   items,
   onCapture,
   onClose,
+  onExportAudio,
   onOpenExternal,
-  onPickCaptureDir,
+  onPickDir,
   onRequestDelete,
   onSelect,
   opened,
@@ -74,8 +75,17 @@ const VideoPreviewModal = ({
   const { active: fullscreen, exit, toggle } = useBrowserFullscreen({
     autoEnter: opened && defaultFullscreen,
   });
-  const { setArrowMode, setCaptureDir, setSeekStep, setSpaceMode, settings } =
-    useVideoSettings(storageScope);
+  const {
+    setArrowMode,
+    setAudioDir,
+    setCaptureDir,
+    setSeekStep,
+    setSpaceMode,
+    settings,
+  } = useVideoSettings(storageScope);
+  const index = items.findIndex((item) => item.id === activeId);
+  const activeItem = index >= 0 ? items[index] : null;
+  const audio = useAudioExport(activeItem, settings.audioDir, onExportAudio);
 
   const sidebarVisible = fullscreen ? sidebarOpenInFullscreen : sidebarOpen;
 
@@ -85,7 +95,7 @@ const VideoPreviewModal = ({
    */
   const headerOverlay = fullscreen && !sidebarVisible;
   const headerVisible = useAutoHideHeader(
-    headerOverlay && !settingsOpen && !blocked,
+    headerOverlay && !settingsOpen && !audio.confirmOpen && !blocked,
     HEADER_HIDE_DELAY,
     CONTROLS_SELECTOR,
     MODAL_HEADER_SELECTOR,
@@ -95,19 +105,9 @@ const VideoPreviewModal = ({
   const seekBy = (direction: FreeModalSeekDirection) => {
     const element = videoRef.current;
 
-    if (element === null) {
-      return;
+    if (element !== null) {
+      element.currentTime = seekTargetTime(element, direction, settings.seekStep);
     }
-
-    const duration = Number.isFinite(element.duration) ? element.duration : 0;
-    const delta = direction === 'forward' ? settings.seekStep : -settings.seekStep;
-    /** 时长还没解出来时不设上界，只保证不落到负数 */
-    const upper = duration > 0 ? duration : Number.POSITIVE_INFINITY;
-
-    element.currentTime = Math.min(
-      upper,
-      Math.max(0, element.currentTime + delta),
-    );
   };
 
   const { capture, capturing } = useFrameCapture(videoRef, onCapture);
@@ -203,12 +203,13 @@ const VideoPreviewModal = ({
     void exit().then(onClose);
   };
 
-  const index = items.findIndex((item) => item.id === activeId);
-  const activeItem = index >= 0 ? items[index] : null;
-
   if (activeItem === null) {
     return null;
   }
+
+  /** 二次确认层与上层的删除确认同一口径：任一层开着，底下整组键位与焦点都收掉 */
+  const interactionBlocked = blocked || audio.confirmOpen;
+  const audioTargetLabel = settings.audioDir || '视频所在目录';
 
   const previousItem = index > 0 ? items[index - 1] : null;
   const nextItem = index < items.length - 1 ? items[index + 1] : null;
@@ -229,109 +230,109 @@ const VideoPreviewModal = ({
     : '下一个视频（]）';
 
   return (
-    <FreeModal
-      closeOnEscape={!fullscreen && !settingsOpen && !blocked}
-      closeOnSpace={settings.spaceMode === 'close' && !settingsOpen && !blocked}
-      fullscreen={{ active: fullscreen, onToggle: toggleFullscreen }}
-      headerActions={
-        <>
-          <FreeIconAction
-            label={sidebarVisible ? '隐藏视频列表（S）' : '显示视频列表（S）'}
-            onClick={toggleSidebar}
-          >
-            {sidebarVisible ? (
-              <IconLayoutSidebarLeftCollapse size={ICON_SIZE} stroke={ICON_STROKE} />
-            ) : (
-              <IconLayoutSidebarLeftExpand size={ICON_SIZE} stroke={ICON_STROKE} />
-            )}
-          </FreeIconAction>
-          <FreeIconAction
-            label="截图当前画面（存到设置的目录）"
-            loading={capturing}
-            onClick={() => void capture(settings.captureDir)}
-          >
-            <IconCamera size={ICON_SIZE} stroke={ICON_STROKE} />
-          </FreeIconAction>
-          {onOpenExternal ? (
+    <>
+      <FreeModal
+        closeOnEscape={!fullscreen && !settingsOpen && !interactionBlocked}
+        closeOnSpace={
+          settings.spaceMode === 'close' && !settingsOpen && !interactionBlocked
+        }
+        fullscreen={{ active: fullscreen, onToggle: toggleFullscreen }}
+        headerActions={
+          <>
+            <VideoHeaderActions
+              capturing={capturing}
+              exportingAudio={audio.exporting}
+              onCapture={() => void capture(settings.captureDir)}
+              onOpenExternal={
+                onOpenExternal ? () => onOpenExternal(activeItem.id) : undefined
+              }
+              onRequestExportAudio={onExportAudio ? audio.openConfirm : undefined}
+              onToggleSidebar={toggleSidebar}
+              sidebarVisible={sidebarVisible}
+            />
+            <VideoSettingsPopover
+              arrowMode={settings.arrowMode}
+              audioDir={settings.audioDir}
+              captureDir={settings.captureDir}
+              onArrowModeChange={setArrowMode}
+              onAudioDirChange={setAudioDir}
+              onCaptureDirChange={setCaptureDir}
+              onChangeOpened={setSettingsOpen}
+              onPickDir={onPickDir}
+              onSeekStepChange={setSeekStep}
+              onSpaceModeChange={setSpaceMode}
+              opened={settingsOpen}
+              seekStep={settings.seekStep}
+              spaceMode={settings.spaceMode}
+            />
+          </>
+        }
+        headerHidden={headerOverlay && !headerVisible}
+        headerOverlay={headerOverlay}
+        headerTail={
+          onRequestDelete ? (
             <FreeIconAction
-              label="用外部播放器打开（IINA 优先；浏览器解不动或想更快起播时用）"
-              onClick={() => onOpenExternal(activeItem.id)}
+              label="删除这个视频（Delete）"
+              onClick={requestDelete}
+              tone="danger"
             >
-              <IconExternalLink size={ICON_SIZE} stroke={ICON_STROKE} />
+              <IconTrash size={ICON_SIZE} stroke={ICON_STROKE} />
             </FreeIconAction>
+          ) : undefined
+        }
+        media={{
+          onToggleMute: toggleMute,
+          onTogglePlay: settings.spaceMode === 'play' ? togglePlay : undefined,
+        }}
+        nav={{
+          index: index + 1,
+          onNext: nextItem ? () => onSelect(nextItem.id) : null,
+          onPrevious: previousItem ? () => onSelect(previousItem.id) : null,
+          shortcutHint: navShortcutHint,
+          total: items.length,
+        }}
+        onCapture={() => void capture(settings.captureDir)}
+        onClose={requestClose}
+        onRequestDelete={onRequestDelete ? requestDelete : null}
+        onSeek={settings.arrowMode === 'seek' ? seekBy : undefined}
+        onToggleSidebar={toggleSidebar}
+        opened={opened}
+        shortcutsEnabled={!interactionBlocked && !settingsOpen}
+        title={activeItem.name}
+        trapFocus={!interactionBlocked}
+      >
+        <div className={styles.layout}>
+          {sidebarVisible ? (
+            <PreviewSidebar
+              activeId={activeItem.id}
+              icon={<IconVideo size={SIDEBAR_ICON_SIZE} stroke={SIDEBAR_ICON_STROKE} />}
+              items={items}
+              onSelect={onSelect}
+              title="当前目录视频"
+            />
           ) : null}
-          <VideoSettingsPopover
-            arrowMode={settings.arrowMode}
-            captureDir={settings.captureDir}
-            onArrowModeChange={setArrowMode}
-            onCaptureDirChange={setCaptureDir}
-            onChangeOpened={setSettingsOpen}
-            onPickCaptureDir={onPickCaptureDir}
-            onSeekStepChange={setSeekStep}
-            onSpaceModeChange={setSpaceMode}
-            opened={settingsOpen}
-            seekStep={settings.seekStep}
-            spaceMode={settings.spaceMode}
+          <FreeVideo
+            key={activeItem.id}
+            nav={{
+              nextLabel: stepNextLabel,
+              onNext: stepForward,
+              onPrevious: stepBackward,
+              previousLabel: stepPreviousLabel,
+            }}
+            src={activeItem.src}
+            videoRef={videoRef}
           />
-        </>
-      }
-      headerHidden={headerOverlay && !headerVisible}
-      headerOverlay={headerOverlay}
-      headerTail={
-        onRequestDelete ? (
-          <FreeIconAction
-            label="删除这个视频（Delete）"
-            onClick={requestDelete}
-            tone="danger"
-          >
-            <IconTrash size={ICON_SIZE} stroke={ICON_STROKE} />
-          </FreeIconAction>
-        ) : undefined
-      }
-      media={{
-        onToggleMute: toggleMute,
-        onTogglePlay: settings.spaceMode === 'play' ? togglePlay : undefined,
-      }}
-      nav={{
-        index: index + 1,
-        onNext: nextItem ? () => onSelect(nextItem.id) : null,
-        onPrevious: previousItem ? () => onSelect(previousItem.id) : null,
-        shortcutHint: navShortcutHint,
-        total: items.length,
-      }}
-      onCapture={() => void capture(settings.captureDir)}
-      onClose={requestClose}
-      onRequestDelete={onRequestDelete ? requestDelete : null}
-      onSeek={settings.arrowMode === 'seek' ? seekBy : undefined}
-      onToggleSidebar={toggleSidebar}
-      opened={opened}
-      shortcutsEnabled={!blocked && !settingsOpen}
-      title={activeItem.name}
-      trapFocus={!blocked}
-    >
-      <div className={styles.layout}>
-        {sidebarVisible ? (
-          <PreviewSidebar
-            activeId={activeItem.id}
-            icon={<IconVideo size={SIDEBAR_ICON_SIZE} stroke={SIDEBAR_ICON_STROKE} />}
-            items={items}
-            onSelect={onSelect}
-            title="当前目录视频"
-          />
-        ) : null}
-        <FreeVideo
-          key={activeItem.id}
-          nav={{
-            nextLabel: stepNextLabel,
-            onNext: stepForward,
-            onPrevious: stepBackward,
-            previousLabel: stepPreviousLabel,
-          }}
-          src={activeItem.src}
-          videoRef={videoRef}
-        />
-      </div>
-    </FreeModal>
+        </div>
+      </FreeModal>
+
+      <AudioExportConfirm
+        itemName={activeItem.name}
+        onCancel={audio.closeConfirm}
+        onConfirm={() => void audio.confirm()}
+        opened={audio.confirmOpen}
+        targetLabel={audioTargetLabel}
+      />
+    </>
   );
 };
 

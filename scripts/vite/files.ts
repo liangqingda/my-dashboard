@@ -19,6 +19,7 @@
  * - `POST /api/files/uninstall-app`：body `{ path }` 卸载应用包并清理残留，权限不足时弹一次授权窗补删；
  * - `POST /api/files/eject`：body `{ dir }` 推出当前目录所在的外接盘（`diskutil eject`），返回挂载点；
  * - `POST /api/files/capture`：body `{ dataUrl, dir? }` 把一帧 PNG 截图写进 `dir`（缺省用户桌面），返回文件名与绝对路径；
+ * - `POST /api/files/audio?dir=&name=`：body 是 WebM 字节，把导出的音频写进 `dir`（缺省用户桌面），文件名以 `name` 打头；
  * - `GET /api/files/video-apps`：列出能播放视频的本机应用（`open -a` 用应用名），供设置里选外部播放器；
  * - `POST /api/files/open`：body `{ path, app? }` 用外部播放器打开（`app` 优先，其次 IINA，再回落系统默认），返回 `{ app }`。
  *
@@ -35,7 +36,14 @@ import { fileThumb } from './files-thumbs.js';
 import { launchAppBundle, scanAppResidues, uninstallAppBundle } from './files-apps.js';
 import { openTrackedStream } from './files-handles.js';
 import { openImageFile } from './files-images.js';
-import { openVideoFile, openVideoStream, parseByteRange, saveCapture, videoEtag } from './files-media.js';
+import {
+  openVideoFile,
+  openVideoStream,
+  parseByteRange,
+  saveAudio,
+  saveCapture,
+  videoEtag,
+} from './files-media.js';
 import { openExternalFile } from './files-open.js';
 import { warmNativePicker } from './files-picker.js';
 import { listVideoApps, videoAppBundlePath } from './files-video-apps.js';
@@ -54,6 +62,9 @@ import { ejectVolume } from './files-volume.js';
 
 /** 截图请求体上限：一帧 PNG 的 base64 通常几 MB，留出余量但拒绝超大载荷 */
 const CAPTURE_BODY_LIMIT = 40 * 1024 * 1024;
+
+/** 音频请求体上限：96k 的 Opus 一小时约 45MB，留出余量给更长的片子 */
+const AUDIO_BODY_LIMIT = 160 * 1024 * 1024;
 
 /** 统一的 JSON 错误响应 */
 const sendJsonError = (
@@ -118,6 +129,44 @@ const readJsonBody = (
       }
     });
     req.on('error', () => resolve({}));
+  });
+
+/**
+ * 读 POST 二进制 body（导出音频走这条）：超限就断开连接并抛错，
+ * 不让一个超大载荷把中间件的内存吃光。
+ */
+const readBinaryBody = (
+  req: import('node:http').IncomingMessage,
+  limit: number,
+): Promise<Buffer> =>
+  new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    let size = 0;
+    let aborted = false;
+
+    req.on('data', (chunk: Buffer) => {
+      if (aborted) {
+        return;
+      }
+
+      size += chunk.length;
+
+      if (size > limit) {
+        aborted = true;
+        req.destroy();
+        reject(new Error('音频数据过大，无法写入'));
+
+        return;
+      }
+
+      chunks.push(chunk);
+    });
+    req.on('end', () => {
+      if (!aborted) {
+        resolve(Buffer.concat(chunks));
+      }
+    });
+    req.on('error', (error) => reject(error));
   });
 
 /** 从 body 取字符串字段；缺失 / 非字符串按空串处理，校验留在 store 层 */
@@ -512,6 +561,43 @@ export const files = (): Plugin => ({
             JSON.stringify({
               message:
                 error instanceof Error ? error.message : '外部打开失败',
+            }),
+          );
+        }
+
+        return;
+      }
+
+      if (pathname === '/audio') {
+        if (req.method !== 'POST') {
+          res.statusCode = 405;
+          res.end(JSON.stringify({ message: '不支持的请求方法' }));
+
+          return;
+        }
+
+        if (!sameOrigin(req)) {
+          res.statusCode = 403;
+          res.end(JSON.stringify({ message: '跨站请求被拒绝' }));
+
+          return;
+        }
+
+        try {
+          const url = new URL(req.url ?? '', 'http://localhost');
+          const data = await readBinaryBody(req, AUDIO_BODY_LIMIT);
+          const audio = await saveAudio(
+            data,
+            url.searchParams.get('dir') ?? undefined,
+            url.searchParams.get('name') ?? '',
+          );
+
+          res.end(JSON.stringify({ audio }));
+        } catch (error) {
+          res.statusCode = statusForReadError(error);
+          res.end(
+            JSON.stringify({
+              message: error instanceof Error ? error.message : '导出音频失败',
             }),
           );
         }

@@ -12,7 +12,6 @@ import FilesEntries from './FilesEntries';
 import FilesModals from './FilesModals';
 import FilesPreviewLayers from './FilesPreviewLayers';
 import FilesStates from './FilesStates';
-import { FILES_STORAGE_SCOPE } from './constants';
 import { useAppLaunch } from './hooks/useAppLaunch';
 import { useAppUninstall } from './hooks/useAppUninstall';
 import { useDragPending } from './hooks/use-drag-pending';
@@ -100,10 +99,11 @@ const Files = () => {
     activeId: previewVideoId,
     captureFrame,
     closeVideo,
+    exportAudio: exportVideoAudio,
     items: videoItems,
     openExternal: openVideoExternal,
     openVideo,
-    pickCaptureDir,
+    pickExportDir,
     selectVideo,
   } = useVideoPreview(listing, settings);
   /** 图片预览：与视频预览同形，但没有播放 / 截图那一套 */
@@ -311,20 +311,19 @@ const Files = () => {
 
       <FilesPreviewLayers
         blocked={deletingEntry !== null}
+        defaultFullscreen={{ image: settings.imageFullscreen, video: settings.videoFullscreen }}
         imageActiveId={previewImageId}
-        imageDefaultFullscreen={settings.imageFullscreen}
         imageItems={imageItems}
         onCaptureVideo={captureFrame}
         onCloseImage={closeImage}
         onCloseVideo={closeVideo}
+        onExportVideoAudio={exportVideoAudio}
         onOpenExternal={openVideoExternal}
-        onPickCaptureDir={pickCaptureDir}
+        onPickDir={pickExportDir}
         onRequestDelete={requestDelete}
         onSelectImage={selectImage}
         onSelectVideo={selectVideo}
-        storageScope={FILES_STORAGE_SCOPE}
         videoActiveId={previewVideoId}
-        videoDefaultFullscreen={settings.videoFullscreen}
         videoItems={videoItems}
       />
     </MenuContentLayout>

@@ -1,6 +1,6 @@
 /**
- * 视频文件的媒体侧能力：把本机视频按 HTTP Range 读给浏览器播放，以及把浏览器截下来的
- * 视频帧写进桌面。
+ * 视频文件的媒体侧能力：把本机视频按 HTTP Range 读给浏览器播放，以及把浏览器产出的
+ * 截图（PNG）与导出音频（WebM）写进指定目录。
  *
  * 与 `files-store.ts` 同一层定位：只做路径校验、读 / 写收口与纯函数，路由壳只拼响应。
  * 这里只放视频——内容接口不接受任意文件，免得把目录里的其它文件也变成可下载的 URL。
@@ -188,9 +188,9 @@ export const openVideoStream = (
     range ? { end: range.end, start: range.start } : undefined,
   );
 
-/** 一帧截图的落地结果 */
-export type SavedCapture = {
-  /** 文件名（含 `.png`） */
+/** 一次落盘的结果（截图与导出音频共用） */
+export type SavedFile = {
+  /** 文件名（含扩展名） */
   name: string;
   /** 文件绝对路径 */
   path: string;
@@ -224,10 +224,10 @@ export const decodePngDataUrl = (dataUrl: string): Buffer => {
 };
 
 /**
- * 截图落在哪个目录：传了 `dir` 就用它（`~` 开头的按用户主目录展开），
- * 没传（或空串）时回落当前用户桌面。
+ * 导出文件落在哪个目录：传了 `dir` 就用它（`~` 开头的按用户主目录展开），
+ * 没传（或空串）时回落当前用户桌面（截图不传目录时的默认）。
  */
-export const captureDirectory = (dir?: string): string => {
+export const exportDirectory = (dir?: string): string => {
   const trimmed = dir?.trim() ?? '';
 
   if (trimmed.length === 0) {
@@ -253,9 +253,9 @@ export const saveCapture = async (
   dataUrl: string,
   dir?: string,
   now: Date = new Date(),
-): Promise<SavedCapture> => {
+): Promise<SavedFile> => {
   const buffer = decodePngDataUrl(dataUrl);
-  const targetDir = captureDirectory(dir);
+  const targetDir = exportDirectory(dir);
 
   await mkdir(targetDir, { recursive: true });
 
@@ -279,4 +279,66 @@ export const saveCapture = async (
   }
 
   throw new Error('同一秒内截图过多，稍后再试');
+};
+
+/** WebM 文件头（EBML 魔数）：只认这个开头，避免把别的二进制当成音频写盘 */
+const WEBM_MAGIC = Buffer.from([0x1a, 0x45, 0xdf, 0xa3]);
+
+/** 判断一段字节是不是 WebM：EBML 头占前 4 字节 */
+export const isWebmBuffer = (buffer: Buffer): boolean =>
+  buffer.length > WEBM_MAGIC.length &&
+  buffer.subarray(0, WEBM_MAGIC.length).equals(WEBM_MAGIC);
+
+/**
+ * 文件名基底：视频名去掉扩展名后直接当基底时可能带路径分隔符 / 控制字符，
+ * 这里只留可打印字符并截断，空串回落「音频」。
+ */
+export const audioBaseName = (name: string): string => {
+  const cleaned = name
+    .replace(/[\u0000-\u001f\u007f]/g, '')
+    .replace(/[/\\:*?"<>|]/g, ' ')
+    .trim()
+    .slice(0, 80);
+
+  return cleaned.length > 0 ? cleaned : '音频';
+};
+
+/**
+ * 把导出的音频（WebM / Opus）写进目标目录（默认用户桌面），文件名是
+ * `<视频名> <写入时刻>.webm`；同名依次追加 ` (2)`、` (3)`，不覆盖已有文件。
+ */
+export const saveAudio = async (
+  data: Buffer,
+  dir: string | undefined,
+  baseName: string,
+  now: Date = new Date(),
+): Promise<SavedFile> => {
+  if (!isWebmBuffer(data)) {
+    throw new Error('音频数据不是有效的 WebM 文件');
+  }
+
+  const targetDir = exportDirectory(dir);
+
+  await mkdir(targetDir, { recursive: true });
+
+  const base = `${audioBaseName(baseName)} ${captureBaseName(now)}`;
+
+  for (let attempt = 1; attempt <= 50; attempt += 1) {
+    const name = attempt === 1 ? `${base}.webm` : `${base} (${attempt}).webm`;
+    const filePath = path.join(targetDir, name);
+
+    try {
+      await writeFile(filePath, data, { flag: 'wx' });
+
+      return { name, path: filePath };
+    } catch (error) {
+      if (errorCode(error) === 'EEXIST') {
+        continue;
+      }
+
+      throw error;
+    }
+  }
+
+  throw new Error('同一秒内导出的音频过多，稍后再试');
 };

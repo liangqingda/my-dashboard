@@ -17,12 +17,19 @@ export const CAPTURE_NOTICE_TITLE = '已保存截图';
 /** 截图失败通知的标题 */
 export const CAPTURE_FAILED_TITLE = '截图失败';
 
+/** 音频导出成功通知的标题 */
+export const AUDIO_NOTICE_TITLE = '已导出音频';
+
+/** 音频导出失败通知的标题 */
+export const AUDIO_FAILED_TITLE = '导出音频失败';
+
 /** 偏好在 localStorage 里的能力名：拼成 `<页面标识>:video-preview` */
 export const SETTINGS_CAPABILITY = 'video-preview';
 
 /** 设置对象的字段名：改字段等于让已存的偏好失效，别随手改名 */
 export const SETTINGS_FIELD = {
   arrowMode: 'arrowMode',
+  audioDir: 'audioDir',
   captureDir: 'captureDir',
   seekStep: 'seekStep',
   spaceMode: 'spaceMode',
@@ -70,11 +77,14 @@ export const SEEK_STEP_CODEC: StoredFieldCodec<number> = {
   encode: (value) => value,
 };
 
-/** 截图目录的编解码：空串表示默认（用户桌面），由调用方的落盘接口解释 */
-export const CAPTURE_DIR_CODEC: StoredFieldCodec<string> = {
+/**
+ * 导出目录的编解码：截图与音频共用同一套口径——空串表示默认，
+ * 默认落到哪里由调用方的落盘接口解释（截图是桌面，音频是视频所在目录）。
+ */
+export const EXPORT_DIR_CODEC: StoredFieldCodec<string> = {
   decode: (value) => (typeof value === 'string' ? value : ''),
   encode: (value) => value,
 };
 
-/** 设置弹层宽度：一档表单 + 快捷键清单正好排开 */
-export const SETTINGS_PANEL_WIDTH = 332;
+/** 设置弹层宽度：三列字段 + 双列快捷键也要排得开 */
+export const SETTINGS_PANEL_WIDTH = 520;

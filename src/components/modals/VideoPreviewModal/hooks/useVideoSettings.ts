@@ -1,7 +1,7 @@
 /**
- * 视频预览的四项界面偏好：方向键去向、快进 / 后退步长、空格键去向、截图存放目录。
+ * 视频预览的五项界面偏好：方向键去向、快进 / 后退步长、空格键去向、截图存放目录、音频导出目录。
  *
- * 四项同属一个 localStorage 命名空间（`<页面标识>:video-preview`），各写各的字段：
+ * 五项同属一个 localStorage 命名空间（`<页面标识>:video-preview`），各写各的字段：
  * 改步长不会把已选的截图目录冲掉。页面标识由调用方给（`storageScope`），
  * 同一个组件挂到第二页时不该共用第一页的偏好。
  */
@@ -13,7 +13,7 @@ import { scopedStorageKey } from '@/utils/page-storage';
 
 import {
   ARROW_MODE_CODEC,
-  CAPTURE_DIR_CODEC,
+  EXPORT_DIR_CODEC,
   MAX_SEEK_STEP,
   MIN_SEEK_STEP,
   SETTINGS_CAPABILITY,
@@ -30,6 +30,8 @@ export type VideoPreviewSettings = {
   arrowMode: VideoArrowMode;
   /** 截图存放目录；空串表示默认（用户桌面） */
   captureDir: string;
+  /** 导出音频的目录；空串表示默认（视频所在目录） */
+  audioDir: string;
   /** 快进 / 后退步长（秒） */
   seekStep: number;
   /** 空格键是播放 / 暂停还是关闭弹窗 */
@@ -44,6 +46,8 @@ export type UseVideoSettingsResult = {
   setArrowMode: (next: VideoArrowMode) => void;
   /** 改截图目录；传空串表示恢复默认（桌面） */
   setCaptureDir: (next: string) => void;
+  /** 改导出音频目录；传空串表示恢复默认（视频所在目录） */
+  setAudioDir: (next: string) => void;
   /** 改步长；越界值夹回合法区间 */
   setSeekStep: (next: number) => void;
   /** 改空格键去向 */
@@ -65,10 +69,15 @@ export const useVideoSettings = (
       SETTINGS_FIELD.arrowMode,
       ARROW_MODE_CODEC,
     ),
+    audioDir: readStoredField(
+      storageKey,
+      SETTINGS_FIELD.audioDir,
+      EXPORT_DIR_CODEC,
+    ),
     captureDir: readStoredField(
       storageKey,
       SETTINGS_FIELD.captureDir,
-      CAPTURE_DIR_CODEC,
+      EXPORT_DIR_CODEC,
     ),
     seekStep: readStoredField(
       storageKey,
@@ -100,10 +109,23 @@ export const useVideoSettings = (
       writeStoredField(
         storageKey,
         SETTINGS_FIELD.captureDir,
-        CAPTURE_DIR_CODEC,
+        EXPORT_DIR_CODEC,
         next,
       );
       setSettings((prev) => ({ ...prev, captureDir: next }));
+    },
+    [storageKey],
+  );
+
+  const setAudioDir = useCallback(
+    (next: string) => {
+      writeStoredField(
+        storageKey,
+        SETTINGS_FIELD.audioDir,
+        EXPORT_DIR_CODEC,
+        next,
+      );
+      setSettings((prev) => ({ ...prev, audioDir: next }));
     },
     [storageKey],
   );
@@ -143,5 +165,12 @@ export const useVideoSettings = (
     [storageKey],
   );
 
-  return { setArrowMode, setCaptureDir, setSeekStep, setSpaceMode, settings };
+  return {
+    setArrowMode,
+    setAudioDir,
+    setCaptureDir,
+    setSeekStep,
+    setSpaceMode,
+    settings,
+  };
 };

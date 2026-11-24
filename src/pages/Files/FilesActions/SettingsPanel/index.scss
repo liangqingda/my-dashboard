@@ -1,66 +1,6 @@
-/* 设置分组：一块浅底色把同类设置圈在一起，不描边 */
-.group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: var(--app-surface-hover);
-}
+/* 文件页设置面板：分组与字段的版式走 Free 层，这里只留错误文案 */
 
-/* 分组标题：比字段标题重一档 */
-.groupTitle {
-  color: var(--app-ink);
-  font-size: 0.78rem;
-  font-weight: 600;
-}
-
-/* 组内字段横向排：宽度不够时按各字段的 flex-basis 自然换行 */
-.fields {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 12px;
-}
-
-/* 单个字段：标题在上、控件在下 */
-.field {
-  display: flex;
-  min-width: 0;
-  flex: 1 1 148px;
-  flex-direction: column;
-  gap: 6px;
-}
-
-/* 占满整行的字段：滑块这类要长边才调得准 */
-.fieldWide {
-  display: flex;
-  flex-basis: 100%;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 0;
-}
-
-/* 设置项的标题：一行小字，比选项本身低一档 */
-.label {
-  color: var(--app-ink-faint);
-  font-size: 0.72rem;
-}
-
-/* 标题行：标题在左、当前值在右，值不挂滑块气泡 */
-.labelRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-/* 标题旁的当前值：与标题同档小字，只换个可读的颜色 */
-.labelValue {
-  color: var(--app-ink);
-  font-size: 0.72rem;
-}
-
-/* 错误文案：只在读播放器列表失败时出现，不参与分组排版 */
+/* 错误文案：只在读播放器列表失败时出现 */
 .hint {
   color: var(--app-ink-faint);
   font-size: 0.7rem;

@@ -8,9 +8,12 @@ import ImagePreviewModal from '@/components/modals/ImagePreviewModal';
 import type { ImagePreviewItem } from '@/components/modals/ImagePreviewModal/types';
 import VideoPreviewModal from '@/components/modals/VideoPreviewModal';
 import type {
+  VideoPreviewAudioReceipt,
   VideoPreviewCaptureReceipt,
   VideoPreviewItem,
 } from '@/components/modals/VideoPreviewModal/types';
+
+import { FILES_STORAGE_SCOPE } from '../constants';
 
 import styles from './index.scss';
 
@@ -29,16 +32,20 @@ export type FilesPreviewLayersProps = {
     dataUrl: string,
     dir: string,
   ) => Promise<VideoPreviewCaptureReceipt>;
-  /** 选截图目录；取消返回 null */
-  onPickCaptureDir: () => Promise<string | null>;
+  /** 导出当前视频的音频并落盘 */
+  onExportVideoAudio: (
+    blob: Blob,
+    dir: string,
+    baseName: string,
+  ) => Promise<VideoPreviewAudioReceipt>;
+  /** 选导出目录（截图与音频共用）；取消返回 null */
+  onPickDir: () => Promise<string | null>;
   /** 用外部播放器打开某条视频 */
   onOpenExternal: (id: string) => void;
   /** 当前目录的图片条目 */
   imageItems: ImagePreviewItem[];
-  /** 图片预览打开即全屏（来自文件页设置） */
-  imageDefaultFullscreen: boolean;
-  /** 视频预览打开即全屏（来自文件页设置） */
-  videoDefaultFullscreen: boolean;
+  /** 两扇预览是否打开即全屏（来自文件页设置） */
+  defaultFullscreen: { image: boolean; video: boolean };
   /** 正在看的图片；null 表示图片弹窗关着 */
   imageActiveId: string | null;
   /** 切到某张图片 */
@@ -49,26 +56,23 @@ export type FilesPreviewLayersProps = {
   onRequestDelete: (path: string) => void;
   /** 删除确认开着：两扇弹窗都收掉快捷键与焦点陷阱 */
   blocked: boolean;
-  /** 播放偏好的存储命名空间 */
-  storageScope: string;
 };
 
 const FilesPreviewLayers = ({
   blocked,
+  defaultFullscreen,
   imageActiveId,
-  imageDefaultFullscreen,
   imageItems,
   onCaptureVideo,
   onCloseImage,
   onCloseVideo,
+  onExportVideoAudio,
   onOpenExternal,
-  onPickCaptureDir,
+  onPickDir,
   onRequestDelete,
   onSelectImage,
   onSelectVideo,
-  storageScope,
   videoActiveId,
-  videoDefaultFullscreen,
   videoItems,
 }: FilesPreviewLayersProps) => (
   /* 容器只为挂载，`display: contents` 不进布局：两扇弹窗都挂在 body 里的 portal 上 */
@@ -76,24 +80,25 @@ const FilesPreviewLayers = ({
     <VideoPreviewModal
       activeId={videoActiveId}
       blocked={blocked}
-      defaultFullscreen={videoDefaultFullscreen}
+      defaultFullscreen={defaultFullscreen.video}
       items={videoItems}
       onCapture={onCaptureVideo}
       onClose={onCloseVideo}
+      onExportAudio={onExportVideoAudio}
       onOpenExternal={onOpenExternal}
-      onPickCaptureDir={onPickCaptureDir}
+      onPickDir={onPickDir}
       onRequestDelete={
         videoActiveId !== null ? () => onRequestDelete(videoActiveId) : null
       }
       onSelect={onSelectVideo}
       opened={videoActiveId !== null}
-      storageScope={storageScope}
+      storageScope={FILES_STORAGE_SCOPE}
     />
 
     <ImagePreviewModal
       activeId={imageActiveId}
       blocked={blocked}
-      defaultFullscreen={imageDefaultFullscreen}
+      defaultFullscreen={defaultFullscreen.image}
       items={imageItems}
       onClose={onCloseImage}
       onRequestDelete={

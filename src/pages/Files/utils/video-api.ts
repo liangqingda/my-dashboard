@@ -1,6 +1,6 @@
 /**
- * 视频的两条接口：本机能播放视频的应用列表（设置里的「外部应用」下拉），
- * 以及把某个视频交给外部播放器打开。
+ * 视频的三条接口：本机能播放视频的应用列表（设置里的「外部应用」下拉）、
+ * 把某个视频交给外部播放器打开，以及把浏览器抽好的音轨写盘。
  *
  * 扫描与判断都在 Vite 中间件（`scripts/vite/files-video-apps.ts`、`files-open.ts`），
  * 这里只发请求、把回执收窄；静态构建下这些接口不存在，直接给出可读的错。
@@ -10,8 +10,11 @@ import { readHttpErrorMessage } from '@/utils/error';
 
 import type { VideoAppOption } from '../types';
 
+import { normalizeAudioResponse } from './normalize';
+
 const VIDEO_APPS_ENDPOINT = '/api/files/video-apps';
 const OPEN_ENDPOINT = '/api/files/open';
+const AUDIO_ENDPOINT = '/api/files/audio';
 
 /** 取数请求的缓存策略：开发态必须实时，静态产物不读这个接口 */
 const REQUEST_INIT: RequestInit = import.meta.env.DEV
@@ -137,4 +140,49 @@ export const openFileExternally = async (
   }
 
   return app;
+};
+
+/**
+ * 把导出的音频（WebM 字节）写进目标目录；文件名以 `baseName`（视频名）打头，时间戳由后端补，
+ * 同一秒重名后端会追加序号。返回实际文件名。
+ */
+export const saveAudioFile = async (
+  blob: Blob,
+  dir: string,
+  baseName: string,
+): Promise<string> => {
+  if (!import.meta.env.DEV) {
+    throw new Error('静态构建不支持操作本地目录，请在开发模式下打开');
+  }
+
+  const query = new URLSearchParams({ name: baseName });
+
+  if (dir.length > 0) {
+    query.set('dir', dir);
+  }
+
+  const response = await fetch(`${AUDIO_ENDPOINT}?${query.toString()}`, {
+    ...REQUEST_INIT,
+    body: blob,
+    headers: { 'Content-Type': 'audio/webm' },
+    method: 'POST',
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      await readHttpErrorMessage(
+        response,
+        `导出音频失败（HTTP ${response.status}）`,
+      ),
+    );
+  }
+
+  const payload: unknown = await response.json();
+  const name = normalizeAudioResponse(payload);
+
+  if (name === null) {
+    throw new Error('导出音频回执格式不符合预期');
+  }
+
+  return name;
 };

@@ -1,0 +1,30 @@
+/* 分组：一块浅底色把同类设置圈在一起，不描边 */
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--app-surface-hover);
+}
+
+/* 分组标题：比字段标题重一档 */
+.groupTitle {
+  color: var(--app-ink);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+/* 组内字段横向排：宽度不够时按各字段的 flex-basis 自然换行 */
+.fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 12px;
+}
+
+/* 组内内容竖向排：快捷键清单这类一行一条 */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}

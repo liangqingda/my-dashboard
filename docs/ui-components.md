@@ -25,6 +25,8 @@
 | 搜索框（左搜索图标 + 一键清空） | `FreeSearchInput` |
 | 多行输入（普通表单） | `Textarea` |
 | 下拉单选 / 多选 | `Select` / `MultiSelect` |
+| 弹层设置面板里的一组设置（浅底色分组 + 组标题） | `FreePanelGroup`（组内字段配 `FreePanelField`） |
+| 弹层设置面板里的字段（标题 + 控件，可带当前值、可整行） | `FreePanelField` |
 | 弹层面板里的字段（标题 + 下拉 + 一行口径说明） | `FreeSelectField` |
 | 弹层面板底部（一句边界说明 + 重置） | `FreePanelFooter` |
 | 日期选择 | `@mantine/dates` 的 `DatePicker`（内联日历）/ `DatePickerInput`（带弹层的日期输入）；全站日历口径（中文、周一为第一天）由 `src/main.tsx` 的 `DatesProvider` 统一给，不要自己拼日历或改用原生 `type="date"` |
@@ -85,7 +87,7 @@
 | `buttons` | 按钮、图标按钮、按钮触发的弹层外壳 | `FreeIconAction`、`CopyIconButton`、`FilterButton`、`IconPopoverButton` |
 | `tables` | 表格基线 | `FreeTable` |
 | `fields` | 字段 / 输入控件组 | `FreeSelectField`、`FreeSearchInput` |
-| `panels` | 面板级排布件（底栏、面板内布局） | `FreePanelFooter` |
+| `panels` | 面板级排布件（底栏、分组、字段） | `FreePanelFooter`、`FreePanelGroup`、`FreePanelField` |
 | `texts` | 文本展示与截断 | `FreeTruncatedText` |
 | `feedback` | 加载、空态、提示这类状态呈现 | `PageLoading` |
 | `file-preview` | 把文件内容渲染 / 播放出来的组件（视频、后续 PDF / 文档播放器） | `FreeVideo` |
@@ -143,6 +145,8 @@
 | `FreeTable` | `src/components/tables/FreeTable/README.md` |
 | `FreeSelectField` | `src/components/fields/FreeSelectField/README.md` |
 | `FreePanelFooter` | `src/components/panels/FreePanelFooter/README.md` |
+| `FreePanelGroup` | `src/components/panels/FreePanelGroup/README.md` |
+| `FreePanelField` | `src/components/panels/FreePanelField/README.md` |
 | `FreeModal` | `src/components/modals/FreeModal/README.md` |
 | `FreeTruncatedText` | `src/components/texts/FreeTruncatedText/README.md` |
 | `FreeIconAction` | `src/components/buttons/FreeIconAction/README.md` |

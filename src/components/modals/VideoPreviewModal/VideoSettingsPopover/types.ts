@@ -9,16 +9,20 @@ import type { VideoArrowMode, VideoSpaceMode } from '../constants';
 export type VideoSettingsPopoverProps = {
   /** ← / → 的去向 */
   arrowMode: VideoArrowMode;
+  /** 音频导出目录；空串表示默认（视频所在目录） */
+  audioDir: string;
   /** 截图目录；空串表示默认（桌面） */
   captureDir: string;
   /** 改方向键去向 */
   onArrowModeChange: (mode: VideoArrowMode) => void;
+  /** 改音频导出目录；空串表示恢复默认 */
+  onAudioDirChange: (dir: string) => void;
   /** 改截图目录；空串表示恢复默认 */
   onCaptureDirChange: (dir: string) => void;
   /** 弹层开合 */
   onChangeOpened: (opened: boolean) => void;
-  /** 调系统目录选择框；返回 null 表示取消；不传则面板里没有「选择目录」 */
-  onPickCaptureDir?: () => Promise<string | null>;
+  /** 调系统目录选择框（截图与音频共用）；返回 null 表示取消；不传则两条路径都没有「选择目录」 */
+  onPickDir?: () => Promise<string | null>;
   /** 改空格键去向 */
   onSpaceModeChange: (mode: VideoSpaceMode) => void;
   /** 改步长（秒） */

@@ -4,9 +4,11 @@ import { join } from 'node:path';
 import { describe, it } from 'node:test';
 
 import {
+  audioBaseName,
   captureBaseName,
-  captureDirectory,
   decodePngDataUrl,
+  exportDirectory,
+  isWebmBuffer,
   parseByteRange,
   videoEtag,
 } from '../../scripts/vite/files-media.ts';
@@ -70,15 +72,30 @@ describe('files-media 的纯函数', () => {
     assert.equal(captureBaseName(date), '2026-01-02 03:04:05');
   });
 
-  it('截图目录：缺省桌面，自定义绝对路径与 ~ 展开', () => {
+  it('导出目录：缺省桌面，自定义绝对路径与 ~ 展开', () => {
     const desktop = join(homedir(), 'Desktop');
 
-    assert.equal(captureDirectory(), desktop);
-    assert.equal(captureDirectory(''), desktop);
-    assert.equal(captureDirectory('   '), desktop);
-    assert.equal(captureDirectory('~'), homedir());
-    assert.equal(captureDirectory('~/Pictures/shots'), join(homedir(), 'Pictures/shots'));
-    assert.equal(captureDirectory('/tmp/shots'), '/tmp/shots');
+    assert.equal(exportDirectory(), desktop);
+    assert.equal(exportDirectory(''), desktop);
+    assert.equal(exportDirectory('   '), desktop);
+    assert.equal(exportDirectory('~'), homedir());
+    assert.equal(exportDirectory('~/Pictures/shots'), join(homedir(), 'Pictures/shots'));
+    assert.equal(exportDirectory('/tmp/shots'), '/tmp/shots');
+  });
+
+  it('导出音频只认 WebM：EBML 魔数打头才算，名字里的分隔符被抹掉', () => {
+    const webm = Buffer.concat([
+      Buffer.from([0x1a, 0x45, 0xdf, 0xa3]),
+      Buffer.from('body'),
+    ]);
+
+    assert.equal(isWebmBuffer(webm), true);
+    assert.equal(isWebmBuffer(Buffer.from('not webm')), false);
+    assert.equal(isWebmBuffer(Buffer.from([0x1a, 0x45, 0xdf, 0xa3])), false);
+
+    assert.equal(audioBaseName('讲座 第一讲'), '讲座 第一讲');
+    assert.equal(audioBaseName('../a/b:c?d'), '.. a b c d');
+    assert.equal(audioBaseName('   '), '音频');
   });
 
   it('截图只接受 PNG data URL', () => {

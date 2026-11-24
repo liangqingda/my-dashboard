@@ -1,9 +1,34 @@
-/* 视频设置弹层：只补面板里的两处版式，其余走组件库与 IconPopoverButton 的内边距 */
+/* 视频设置弹层：分组与字段的版式走 Free 层，这里只补面板自己的两处排布 */
 
-/* 截图目录：占满剩余宽度，放不下时省略、hover 看全 */
-.capturePath {
+/* 分组之间留一档间距 */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* 目录路径：占满剩余宽度，放不下时省略、hover 看全 */
+.directoryPath {
   flex: 1 1 auto;
   min-width: 0;
   color: var(--app-ink-soft);
   font-size: 0.72rem;
+}
+
+/* 快捷键区：双列排，一屏看完；长文案在这一列里省略 */
+.shortcuts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 16px;
+}
+
+/* 单条快捷键：动作在左、键位在右 */
+.shortcut {
+  min-width: 0;
+}
+
+/* 动作文案：放不下时省略，不把键位挤出去 */
+.shortcutAction {
+  min-width: 0;
+  flex: 1 1 auto;
 }

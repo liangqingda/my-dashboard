@@ -1,0 +1,37 @@
+/* 单个字段：标题在上、控件在下；横向排布时按 148px 基准自动换行 */
+.field {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 148px;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* 占满整行的字段：滑块、路径行这类要长边才好用 */
+.fieldWide {
+  display: flex;
+  flex-basis: 100%;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* 字段标题：一行小字，比选项本身低一档 */
+.label {
+  color: var(--app-ink-faint);
+  font-size: 0.72rem;
+}
+
+/* 标题行：标题在左、当前值在右 */
+.labelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* 标题旁的当前值：与标题同档小字，只换个可读的颜色 */
+.labelValue {
+  color: var(--app-ink);
+  font-size: 0.72rem;
+}

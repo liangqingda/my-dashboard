@@ -166,7 +166,7 @@
 
 | 文件 | 职责 |
 | --- | --- |
-| `scripts/vite/files.ts` | 路由壳：`GET /api/files`（未带 `dir` 回落主目录）、`GET /api/files?dir=…`、`GET /api/files/content?path=…`（视频按 Range 流式读）、`GET /api/files/image?path=…`（图片字节）、`GET /api/files/thumb?path=…`（图片 / 视频缩略图，网格用）、`GET /api/files/video-apps`（能播视频的本机应用）、`GET /api/files/app-icon?path=…`（应用图标 PNG）、`GET /api/files/app-residue?path=…`（卸载残留清单）、`POST /api/files/open-app`（打开应用包）、`POST /api/files/pick-dir`（系统目录选择框）、`POST /api/files/new-folder`、`POST /api/files/rename`、`POST /api/files/move`、`POST /api/files/delete`、`POST /api/files/open`（交给外部播放器）、`POST /api/files/uninstall-app`、`POST /api/files/eject`（body `{ dir, killPids? }`：推出当前目录所在的外接盘，返回 `{ result }`）、`POST /api/files/capture`（视频帧截图写目录，缺省桌面），错误归类成 HTTP 状态码 |
+| `scripts/vite/files.ts` | 路由壳：`GET /api/files`（未带 `dir` 回落主目录）、`GET /api/files?dir=…`、`GET /api/files/content?path=…`（视频按 Range 流式读）、`GET /api/files/image?path=…`（图片字节）、`GET /api/files/thumb?path=…`（图片 / 视频缩略图，网格用）、`GET /api/files/video-apps`（能播视频的本机应用）、`GET /api/files/app-icon?path=…`（应用图标 PNG）、`GET /api/files/app-residue?path=…`（卸载残留清单）、`POST /api/files/open-app`（打开应用包）、`POST /api/files/pick-dir`（系统目录选择框）、`POST /api/files/new-folder`、`POST /api/files/rename`、`POST /api/files/move`、`POST /api/files/delete`、`POST /api/files/open`（交给外部播放器）、`POST /api/files/uninstall-app`、`POST /api/files/eject`（body `{ dir, killPids? }`：推出当前目录所在的外接盘，返回 `{ result }`）、`POST /api/files/capture`（视频帧截图写目录，缺省桌面）、`POST /api/files/audio`（body 是导出音频的 WebM 字节，`?dir=&name=` 指定目录与文件名基底，缺省桌面），错误归类成 HTTP 状态码 |
 | `scripts/vite/files-store.ts` | 路径校验、条目归类、应用包从文件夹里分出来单独成列、文件夹直属条目计数、内含分类摘要与「直属是否含应用包」，供类型筛选过滤文件夹、文件归类（视频 / PDF / Markdown / App / 其它）标记、选择器脚本拼装，以及新建 / 重命名 / 移动 / 删除的写盘与冲突拒绝、错误文案与错误码收口 |
 | `scripts/vite/files-handles.ts` | 本进程的读流登记表：`openTrackedStream` 打开即登记、`close` 自动销号，`releaseStreamsUnder` 在推出外接盘前把这一卷下的读流全部销毁并等它们真的关掉。读流生命周期只跟一次响应走，**不在模块里缓存句柄**——缓存一条流等于把整块盘的寿命绑在页面停留时长上 |
 | `scripts/vite/files-picker.ts` | 原生目录选择框：首次把一段 Swift `NSOpenPanel` 源码编进 `node_modules/.cache`，服务启动时后台预热，之后每次选择只起小二进制；编译 / 运行不可用时回落 `osascript` |
@@ -207,12 +207,17 @@
   来回 seek 与翻篇回看都能命中浏览器缓存；不带 `Range` 的请求命中 `If-None-Match` 时回 304；`capture` 只接受 PNG data URL，写到 body 里的
   `dir`（缺省 `~/Desktop`），文件名为 `YYYY-MM-DD HH:mm:ss.png`，同一秒重名依次追加 ` (2)`、` (3)`，
   不覆盖已有截图。
+- **导出音频**：抽取在浏览器里做（`decodeAudioData` → WebCodecs `AudioEncoder` 编 Opus →
+  `webm-muxer` 封 WebM），不按实时录制，长片子也不必等播放完；中间件 `POST /api/files/audio`
+  只收 WebM 字节（EBML 魔数校验），目录与文件名基底走查询串 `?dir=&name=`，文件名写成
+  `<视频名> YYYY-MM-DD HH:mm:ss.webm`，同一秒重名追加序号，不覆盖已有文件；不传 `dir` 时回落桌面
+  （页面默认传视频所在目录）。
 - **预览默认全屏**：文件页设置里的两项开关（图片 / 视频）决定两扇弹窗打开时是否直接进整屏
   （`defaultFullscreen` → `useBrowserFullscreen` 的 `autoEnter`）；浏览器拿不到用户手势时静默停在这个尺寸，`F` 仍可手动切换。
 - **图片预览**：`GET /api/files/image?path=` 整份返回图片字节（不做 Range），只认图片扩展名
   （分类表里 `image` 那一档，不收 `.svg`），`Cache-Control: no-store`、支持 `HEAD`；
   浏览器直接把它塞进 `<img src>`，前端通过 `ImagePreviewModal` 消费。
-  `content` / `image` / `capture` 三个接口都只在开发模式存在。
+  `content` / `image` / `capture` / `audio` 四个接口都只在开发模式存在。
 - **外部打开**：`POST /api/files/open`（body `{ path, app? }`）用系统 `open` 调起播放器：
   给了 `app` 先试它，其次 `open -a IINA`，再回落 `open <path>`（系统默认播放器），
   返回 `{ app }` 为实际用上的应用名（`default` 表示系统默认播放器）；
