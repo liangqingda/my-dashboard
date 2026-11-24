@@ -15,7 +15,8 @@ const dragMove = useDragMove({
 ```
 
 页面侧只有三个入口：`open(path, name)`（dragstart）、`endDrag()`（dragend）、`reset()`（切目录清场）；
-弹窗用 `levels` / `loading` / `error` / `hoverPath` / `springPath` 渲染，用其余动作处理落点。
+弹窗用 `levels` / `loading` / `error` / `hoverPath` / `springPath` / `parentHovering` / `dragEnded` 渲染，
+用其余动作处理落点。
 
 ## 目录栈与读盘
 
@@ -24,23 +25,40 @@ const dragMove = useDragMove({
 没缓存才进 effect 拿 `AbortController` 读一次，切层即中止，迟到的响应由 `fillLevelFolders`
 挡在「还没结果的那一层」之外。
 
+每一层的列表都过一道 `stripSelf`：**被拖的那个文件夹不进列表**——它本来就摆在自己这一层，
+留着就会出现一个「移进自己」的落点。
+
 `loading` 是派生值（`folders === null && error === null`），不另存一份状态——否则中止请求、
 退回上层这类路径要额外维护它，最容易漏成「一直转圈」。
 
-## 两条互斥判定
+## 三条互斥判定
 
 - **悬停计时**：`hoverFolder(path)` 只在「目标换了」时才起 `SPRING_HOVER_MS` 计时，
   同一目标的连续 `dragover` 不会把计时器反复重启；满 1.5 秒先置 `springPath` 播弹起动画，
   再等 `SPRING_ENTER_MS` 真正换层（`enterFolder`）。
 - **立刻松手**：`dropOnFolder` 直接移动，不进入——它先清计时器，再关弹窗、提交移动。
   计时器不清的话，松手后它还会把用户带进某个文件夹。
+- **退回计时**：`hoverParentZone()` 管底部「上一层」停靠区，满 `PARENT_HOVER_MS`（0.5 秒）
+  退一层；同一次停留只退一次（`parentArmedRef`），指针离开再进来才重新计时，免得一直停着
+  就把目录栈一路退到顶。
 
-所有落点动作（含 `dropOnBlank` / `dropOnCancelZone` / 关闭 / `endDrag`）都先 `resetHover`。
+所有落点动作（含 `dropOnBlank` / 取消区 / 「上一层」 / 关闭 / `endDrag`）都先 `resetHover`。
 
-## 取消区
+## 底部两个停靠区
 
-- 已在起点层：`dropOnCancelZone` 直接取消整次移动并关窗；
-- 已在更深的层：把目录栈截回第一层，弹窗保持打开，可继续挑目标。
+都在 `stepBack(steps)` 里收口：多层时退回 `steps` 层并**留着弹窗**，已在起点层则取消并关窗。
+
+- 右下角取消区 → `dropOnCancelZone`，`steps` 取当前层数，一次退回最外层；
+- 左下角「上一层」 → `dropOnParentZone`，`steps = 1`，退一层。
+
+`hoverParentZone` 命中后走的也是 `goOuter(1)`，区别是这时拖拽还在继续，没有松手。
+
+## 松手之后为什么还能留在那儿
+
+浏览器在 `drop` 那一刻就结束了整次拖拽，`dragend` 随后一定到。要让「退回上层，弹窗不关闭」
+成立，就先 `keepOpen()` 立一个标记，`endDrag` 见到它便不关窗，并把 `dragEnded` 置真。
+这时拖拽已经结束，弹窗里只剩**点选**一条路（弹窗据此换提示、并给文件夹瓦片挂 `onClick`）；
+点一下就走 `dropOnFolder`，点右下角取消走 `close`。
 
 ## 事件里的「此刻」
 
@@ -49,6 +67,7 @@ const dragMove = useDragMove({
 
 ## 副作用清理
 
-- 两个计时器在离开、松手、换层、关窗时都清；卸载时再兜一次（`useEffect` 返回的清理函数）；
+- 三个计时器（文件夹悬停、进入延迟、上一层退步）在离开、松手、换层、关窗时都清；
+  卸载时再兜一次（`useEffect` 返回的清理函数），清完句柄置回 `null`（`clearTimer`）；
 - 读盘请求用 `AbortController`，切层或关窗即中止；
 - 移动请求用 `movingRef` 挡住重复提交：`drop` 与 `dragend` 之间、连点两下的情况只认第一次。

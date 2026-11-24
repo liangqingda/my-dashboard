@@ -1,24 +1,32 @@
 /*
- * 拖拽移动弹窗：框体与 header 归 FreeModal，正文自己排「当前位置 → 文件夹落点 → 取消区」三段。
- * 取消区永远贴在正文底部、不随文件夹列表滚动；文件夹列表最高一档，免得把它挤出视线。
+ * 拖拽移动弹窗：框体与 header 归 FreeModal，正文自己排「面包屑 → 文件夹落点 → 底部停靠区」三段。
+ * 弹窗占满整屏，文件夹列表吃掉剩余高度，两个停靠区（左：上一层 / 右：取消）压在底部。
  */
 
 .root {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   min-height: 0;
+  padding: 14px 18px 16px;
 }
 
-/* 目录栈：从拖拽起点到当前这一层；长路径整段换行，别撑宽弹窗 */
+/* 面包屑 + 操作提示：两行贴在一起，跟下面的落点网格拉开一档间距 */
+.head {
+  flex: 0 0 auto;
+}
+
+/* 目录栈：从拖拽起点到当前这一层；长路径整段换行，别把弹窗撑宽 */
 .trail {
   color: var(--app-ink-soft);
   word-break: break-all;
 }
 
-/* 加载 / 空 / 失败三种提示共用一块占位高度，换状态时弹窗不跳 */
+/* 加载 / 空 / 失败三种提示共用一块留白，换状态时不跳 */
 .notice {
-  padding: 14px 0;
+  flex: 0 0 auto;
+  padding: 20px 0;
   text-align: center;
 }
 
@@ -26,15 +34,21 @@
   color: var(--app-status-danger);
 }
 
-/* 文件夹列表：按瓦片宽度自动折列，与目录页的网格同一档间距 */
-.scroll {
+/*
+ * 文件夹列表：唯一可伸缩的一段，向上把落点铺开、向下把停靠区顶到底。
+ * `min-height: 0` 是滚动的前提——不加的话 flex 子项按内容撑开，永远不出滚动条。
+ */
+.list {
+  flex: 1 1 auto;
   min-height: 0;
 }
 
+/* 文件夹落点：瓦片按宽度自动折列，间距与目录页同一档 */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
+  gap: 10px;
+  padding-bottom: 2px;
 }
 
 /* 一个文件夹落点：图标在上、名字在下，整格就是放置目标 */
@@ -43,11 +57,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  gap: 6px;
   min-width: 0;
-  padding: 10px 8px 8px;
+  padding: 18px 12px 16px;
   border: 1px solid var(--app-line);
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--app-surface);
   transition:
     background-color 120ms ease,
@@ -65,6 +80,13 @@
   animation: springOpen 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* 键盘聚焦：与落点高亮同一套色，不额外加一圈别的颜色 */
+.folder:focus-visible,
+.zone:focus-visible {
+  outline: 2px solid var(--app-accent);
+  outline-offset: 2px;
+}
+
 .folderIcon {
   flex: 0 0 auto;
   color: var(--mantine-color-blue-5);
@@ -73,68 +95,104 @@
 .folderName {
   width: 100%;
   color: var(--app-ink);
-  font-size: 12px;
-  line-height: 1.3;
+  font-size: 13px;
+  line-height: 1.35;
   text-align: center;
 }
 
 /* 1.5 秒倒计时：从左往右填满，填完就进入这个文件夹 */
 .countdown {
   position: absolute;
-  right: 8px;
-  bottom: 4px;
-  left: 8px;
-  height: 2px;
-  border-radius: 2px;
+  right: 10px;
+  bottom: 6px;
+  left: 10px;
+  height: 3px;
+  border-radius: 3px;
   transform-origin: left center;
   background: var(--app-accent);
   animation: hoverCountdown 1500ms linear forwards;
 }
 
-/* 取消区：斜纹底纹 + 虚线边，与上面的文件夹落点明显不是一个区域 */
-.cancelZone {
+/*
+ * 底部停靠区：左「上一层」、右「取消」，各占一半。
+ * `margin-top: auto` 兜住「这一层没有子文件夹」的情况，两边永远贴底。
+ */
+.dock {
   display: flex;
   flex: 0 0 auto;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
+  gap: 12px;
+  margin-top: auto;
+}
+
+/* 一个停靠区：整块都是放置目标，题字三行——图标、动作、触发条件 */
+.zone {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
+  min-height: 104px;
+  padding: 16px 22px;
   border: 1px dashed var(--app-line-strong);
-  border-radius: 8px;
-  background: repeating-linear-gradient(
-    -45deg,
-    transparent 0 6px,
-    var(--app-surface-subtle) 6px 12px
-  );
+  border-radius: 12px;
+  background: var(--app-surface-subtle);
+  text-align: left;
   transition:
     background-color 120ms ease,
     border-color 120ms ease;
 }
 
-/* 拖到这上面：边线与文字转成危险色，斜纹换成一块软底，松开即取消 */
+/* 右侧取消区：斜纹底纹 + 虚线边，与左侧的「往回走」明显不是一个动作 */
+.cancelZone {
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent 0 8px,
+    var(--app-surface-subtle) 8px 16px
+  );
+}
+
+/* 拖到取消区上：边线与文字转成危险色，斜纹换成一块软底，松开即取消 */
 .cancelHovered {
   border-color: var(--app-status-danger);
   background: var(--app-status-danger-soft);
 }
 
-.cancelIcon {
+/* 停在「上一层」上：转强调色，表示这一步是往回走、不写数据 */
+.backHovered {
+  border-color: var(--app-accent);
+  background: var(--app-accent-soft);
+}
+
+/* 已在最外层：左边这块没有去处，压淡到提示级 */
+.zoneMuted {
+  opacity: 0.55;
+}
+
+.zoneIcon {
   flex: 0 0 auto;
   color: var(--app-ink-soft);
 }
 
-.cancelTitle {
+.zoneTitle {
   flex: 0 0 auto;
   color: var(--app-ink);
+  font-weight: 600;
 }
 
-.cancelHint {
-  margin-left: auto;
+.zoneHint {
+  flex: 0 0 auto;
   color: var(--app-ink-faint);
-  text-align: right;
 }
 
-.cancelHovered .cancelIcon,
-.cancelHovered .cancelTitle {
+.cancelHovered .zoneIcon,
+.cancelHovered .zoneTitle {
   color: var(--app-status-danger);
+}
+
+.backHovered .zoneIcon,
+.backHovered .zoneTitle {
+  color: var(--app-accent);
 }
 
 @keyframes springOpen {
@@ -161,10 +219,22 @@
   }
 }
 
+/* 窄屏：两个停靠区改成上下排，各让出一点高度 */
+@media (max-width: 640px) {
+  .dock {
+    flex-direction: column;
+  }
+
+  .zone {
+    min-height: 76px;
+    padding: 12px 16px;
+  }
+}
+
 /* 系统开了「减少动态」：倒计时与弹起都只留结果，不做位移动画 */
 @media (prefers-reduced-motion: reduce) {
   .folder,
-  .cancelZone {
+  .zone {
     transition: none;
   }
 
