@@ -8,13 +8,11 @@ import EntryTileActions from '../EntryTileActions';
 import TileVeil from '../TileVeil';
 import {
   CATEGORY_ICONS,
-  DEFAULT_TILE_NAME_SIZE,
-  DEFAULT_TILE_SIZE,
   FILE_CATEGORY_LABELS,
 } from '../constants';
 import { formatFileSize } from '../utils/files';
 import { fileThumbUrl, videoAppIconUrl } from '../utils/media-thumbs';
-import { tileIconSize, tileSizeVars } from '../utils/tile-metrics';
+import { tileIconSize } from '../utils/tile-metrics';
 import { prefetchVideoHead } from '../utils/video-prefetch';
 
 import type { FileTileProps } from './types';
@@ -43,8 +41,6 @@ const FileTile = memo(
     onOpen,
     onOpenExternal,
     onRequestDelete,
-    nameSize = DEFAULT_TILE_NAME_SIZE,
-    tileSize = DEFAULT_TILE_SIZE,
     veilOpacity = 100,
     videoApp,
     videoOpenMode,
@@ -80,7 +76,7 @@ const FileTile = memo(
           <Icon
             aria-hidden="true"
             className={cx(styles.icon, isMedia && styles.iconMedia)}
-            size={tileIconSize(tileSize)}
+            size={tileIconSize()}
             stroke={1.2}
           />
         ) : (
@@ -151,7 +147,6 @@ const FileTile = memo(
             prefetchVideoHead(file.path);
           }
         }}
-        style={tileSizeVars(tileSize, nameSize)}
       >
         <TileVeil opacity={veilOpacity} />
         {onOpen ? (

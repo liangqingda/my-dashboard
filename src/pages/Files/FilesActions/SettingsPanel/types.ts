@@ -35,14 +35,6 @@ export type SettingsPanelProps = {
   veilOpacity: number;
   /** 改 hover 玻璃层透明度 */
   onVeilOpacityChange: (opacity: number) => void;
-  /** 网格瓦片图源边长（px） */
-  tileSize: number;
-  /** 改图源边长 */
-  onTileSizeChange: (size: number) => void;
-  /** 网格瓦片名称字号（px） */
-  nameSize: number;
-  /** 改名称字号 */
-  onNameSizeChange: (size: number) => void;
   /** 类型筛选：多选 / 单选 */
   filterMode: TypeFilterMode;
   /** 改类型筛选的操作方式 */

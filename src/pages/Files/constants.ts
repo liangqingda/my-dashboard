@@ -72,36 +72,13 @@ export const VEIL_OPACITY_STORAGE_KEY = scopedStorageKey(
   'veil-opacity',
 );
 
-/** 瓦片图源（缩略图 / 图标）边长与名称字号：设置面板里两颗滑块调，范围只在这里定 */
-export const TILE_SIZE_STORAGE_KEY = scopedStorageKey(
-  FILES_STORAGE_SCOPE,
-  'tile-size',
-);
-
-export const TILE_SIZE_MIN = 64;
-
-export const TILE_SIZE_MAX = 160;
-
-export const TILE_SIZE_STEP = 8;
-
-export const DEFAULT_TILE_SIZE = 104;
-
-/** 名称字号（像素）：与图源分开调，图源大而名字小才不会挤 */
-export const TILE_NAME_SIZE_STORAGE_KEY = scopedStorageKey(
-  FILES_STORAGE_SCOPE,
-  'tile-name-size',
-);
-
-export const TILE_NAME_SIZE_MIN = 12;
-
-export const TILE_NAME_SIZE_MAX = 20;
-
-export const TILE_NAME_SIZE_STEP = 1;
-
-export const DEFAULT_TILE_NAME_SIZE = 14;
+/**
+ * 网格图源基准边长（px）：缩略图随瓦片宽度自适应，分类 / 应用 / 文件夹图标按这个基准换算比例。
+ */
+export const DEFAULT_TILE_MEDIA_SIZE = 96;
 
 /**
- * 图标画成图源边长的多少：分类图标、应用图标是方形整块，占 62% 才与缩略图的视觉分量相当；
+ * 图标画成图源基准边长的多少：分类图标、应用图标是方形整块，占 62% 才与缩略图的视觉分量相当；
  * 文件夹图标在 viewBox 里上下留白更多（形状扁），按 74% 画出来才与其它图标一样大。
  */
 export const TILE_ICON_SCALE = 0.62;

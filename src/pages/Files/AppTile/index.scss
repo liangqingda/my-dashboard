@@ -19,7 +19,7 @@
   align-items: center;
   gap: 4px;
   min-width: 0;
-  padding: 0;
+  padding: 0 0 6px;
   color: inherit;
   cursor: pointer;
 
@@ -59,7 +59,7 @@
 
 .name {
   color: var(--app-ink);
-  font-size: var(--tile-name-size, 14px);
+  font-size: 14px;
   line-height: 1.35;
   text-align: center;
 }

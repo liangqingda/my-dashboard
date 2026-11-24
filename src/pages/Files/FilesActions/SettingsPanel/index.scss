@@ -46,6 +46,20 @@
   font-size: 0.72rem;
 }
 
+/* 标题行：标题在左、当前值在右，值不挂滑块气泡 */
+.labelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* 标题旁的当前值：与标题同档小字，只换个可读的颜色 */
+.labelValue {
+  color: var(--app-ink);
+  font-size: 0.72rem;
+}
+
 /* 错误文案：只在读播放器列表失败时出现，不参与分组排版 */
 .hint {
   color: var(--app-ink-faint);

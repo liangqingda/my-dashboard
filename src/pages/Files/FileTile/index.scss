@@ -19,7 +19,7 @@
   align-items: center;
   gap: 4px;
   min-width: 0;
-  padding: 0;
+  padding: 0 0 6px;
 }
 
 /* 可打开的视频瓦片：整块是按钮，补上小手与键盘可达的语义 */
@@ -51,20 +51,21 @@
   color: var(--mantine-color-blue-5);
 }
 
-/* 缩略图：与图标占同一块高度，等比缩放不裁切，四角按 Finder 的小圆角 */
+/* 缩略图：宽度跟随瓦片自适应，16:10 的盒子等比裁切，四角圆角固定不丢 */
 .thumb {
   display: block;
   width: 100%;
-  height: var(--tile-media-size, 104px);
+  aspect-ratio: 16 / 10;
   border-radius: 10px;
-  object-fit: contain;
+  object-fit: cover;
 }
 
-/* 播放器图标：正方形、保持原样居中，边长仍与缩略图齐平免得整行高低不一 */
+/* 播放器图标：正方形、保持原样居中，边长固定 96px，与缩略图视觉分量相当 */
 .appIcon {
-  width: var(--tile-media-size, 104px);
-  height: var(--tile-media-size, 104px);
+  width: 96px;
+  height: 96px;
   border-radius: 10px;
+  object-fit: contain;
 }
 
 .body {
@@ -81,7 +82,7 @@
 
 .name {
   color: var(--app-ink);
-  font-size: var(--tile-name-size, 14px);
+  font-size: 14px;
   line-height: 1.35;
   text-align: center;
 }

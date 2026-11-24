@@ -38,10 +38,6 @@ export type DirectoryGridProps = {
   videoOpenMode: VideoOpenMode;
   /** 打开某个子文件夹 */
   onOpenFolder: (dir: string) => void;
-  /** 网格瓦片名称字号（px） */
-  nameSize: number;
-  /** 网格瓦片图源边长（px） */
-  tileSize: number;
   /** 打开某条视频（交给视频预览弹窗） */
   onOpenVideo: (file: FileEntry) => void;
   /** 用外部播放器打开某个视频（瓦片上那枚播放器小图标） */
