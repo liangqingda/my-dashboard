@@ -130,7 +130,8 @@
 
 示例：`FreeModal` 锁框体 / header / 正文区外观与键位（底下是 Mantine `Modal`）；`FreePanelFooter`
 锁面板底部布局 + `Button` subtle 小号（底下没有现成组件）；`PageLoading` 是页面 chunk 的占位实现，
-不构成「全站加载态唯一入口」，所以不挂 `Free`。品类级但尚未落地的 `FreeInput` / `FreePdf` 同理：判据成立，等真需要统一时再建，**建之前不许在业务里各自起一套口径**。
+不构成「全站加载态唯一入口」，所以不挂 `Free`。密码框不另立组件：它是 `FreeInput` 的一档
+（`type="password"`，遮罩与「眼睛」一起锁在里面），单独封一层就等于同一类对象有两个入口。
 
 目录结构与其它组件一致（见 `docs/code-splitting.md`）：`index.tsx` + `types.ts`（需要跨文件共享时），
 要写自己的样式才加 `index.scss`，一个 `index.tsx` 只放一个组件。
