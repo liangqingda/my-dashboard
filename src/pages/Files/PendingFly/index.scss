@@ -25,3 +25,16 @@
   flex: 0 0 auto;
   color: var(--mantine-color-blue-5);
 }
+
+/*
+ * 表格行的飞行真身：`<tr>` 不能绝对定位，名称格被装进这个普通块。
+ * 尺寸由内联给（与整行等大），底色取页面纸，飞起来就是「整行被拎起来」。
+ */
+.rowBody {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding-inline: 12px;
+  border-radius: 6px;
+  background: var(--app-bg);
+}

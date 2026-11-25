@@ -42,6 +42,49 @@ const chipOf = (path: string): HTMLElement | null => {
 };
 
 /**
+ * 飞行块的「真身」：网格里直接拷那张瓦片；表格行不能照抄——`position: absolute`
+ * 对 `<tr>` 不生效，拷进固定定位的浮层会散架。所以把名称那一格的内容装进一个普通块，
+ * 尺寸与整行一致，飞起来看上去仍是「整行被拎起来」。
+ */
+const cloneFlightBody = (
+  tile: HTMLElement,
+  width: number,
+  height: number,
+): HTMLElement => {
+  if (!(tile instanceof HTMLTableRowElement)) {
+    return tile.cloneNode(true) as HTMLElement;
+  }
+
+  const shell = document.createElement('div');
+
+  shell.className = styles.rowBody;
+
+  const cell = tile.querySelector('td');
+
+  if (cell !== null) {
+    const copy = cell.cloneNode(true) as HTMLElement;
+
+    // 行里的操作按钮跟着拷过来只会变成浮在半空的图标：飞行块只留名称那一列
+    for (const node of copy.querySelectorAll('[data-tile-actions]')) {
+      node.remove();
+    }
+
+    for (const node of copy.querySelectorAll('[tabindex]')) {
+      node.removeAttribute('tabindex');
+    }
+
+    shell.append(...[...copy.childNodes]);
+  }
+
+  Object.assign(shell.style, {
+    height: `${height}px`,
+    width: `${width}px`,
+  });
+
+  return shell;
+};
+
+/**
  * 让拷贝保持「列表里那一项的原样」，只改会影响它自己跑起来的部分：
  * 去掉 `id`（重复 id 会让样式 / 查询串味），不响应指针，也不要再被当成点选目标。
  */
@@ -143,7 +186,10 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
     /** 落进那一格时再收一点、同时淡出，把位置交还真实的 chip */
     const landScale = endScale * 0.85;
 
-    const clone = tile?.cloneNode(true) as HTMLElement | undefined;
+    const clone =
+      tile === null
+        ? undefined
+        : cloneFlightBody(tile, tileBox.width, tileBox.height);
 
     if (clone !== undefined) {
       dressClone(clone, tileBox.width, tileBox.height);

@@ -3,8 +3,9 @@
  *
  * 与视频预览同形，但更朴素——没有播放器，也就没有播放 / 快进 / 截图那一套：
  *
- * - header 与侧栏默认常驻；点一下图片把它们一起收起，再看整幅图，再点一下回来
- *   （不做「鼠标静止自动隐藏」，收起只由点击决定）；
+ * - header 与侧栏**默认藏着**（看整幅图优先）；点一下图片把它们一起展开，再点一下收起
+ *   （不做「鼠标静止自动隐藏」，显隐只由点击决定）；
+ * - 翻篇（按钮 / 侧栏 / 键盘都算）后左上角浮出一下「3 / 12」，1 秒后自己收掉（`PreviewCounter`）；
  * - 键盘：`[` / `]` 与 `←` / `→` 都翻篇，`F` 全屏，`Esc` 退出 / 关窗，`Delete` 触发删除确认，
  *   空格关窗（与其它弹窗一致，只有视频弹窗把空格让给了播放）；删除确认开着时整组快捷键收掉；
  * - 全屏走浏览器 Fullscreen API，与视频预览同一份 `useBrowserFullscreen`。
@@ -15,6 +16,7 @@ import { UnstyledButton } from '@mantine/core';
 import { IconPhoto, IconTrash } from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
+import PreviewCounter from '@/components/feedback/PreviewCounter';
 import { useBrowserFullscreen } from '@/hooks/useBrowserFullscreen';
 import FreeModal from '@/components/modals/FreeModal';
 import PreviewSidebar from '@/components/modals/PreviewSidebar';
@@ -46,8 +48,10 @@ const ImagePreviewModal = ({
     autoEnter: opened && defaultFullscreen,
   });
 
-  /** header 与侧栏是否展示：点图片切换，收起后舞台能看满整幅 */
-  const [chromeVisible, setChromeVisible] = useState(true);
+  /** header 与侧栏是否展示：默认藏起来看整幅图，点图片展开，再点一下收起 */
+  const [chromeVisible, setChromeVisible] = useState(false);
+  /** 翻过几次：每切一张加一，左上角的计数浮标据此浮出再自动收掉 */
+  const [switchTick, setSwitchTick] = useState(0);
 
   /** 关窗：先退出整屏全屏，再真正关闭，避免弹窗没了页面还停在全屏 */
   const requestClose = () => {
@@ -77,6 +81,12 @@ const ImagePreviewModal = ({
     : null;
   const nextItem = canCycle ? items[(index + 1) % items.length] : null;
 
+  /** 翻篇与侧栏点选共用一个入口：顺手让计数浮标闪一下 */
+  const selectItem = (id: string) => {
+    setSwitchTick((prev) => prev + 1);
+    onSelect(id);
+  };
+
   return (
     <FreeModal
       closeOnEscape={!fullscreen && !blocked}
@@ -98,8 +108,8 @@ const ImagePreviewModal = ({
       nav={{
         index: index + 1,
         nextLabel: '下一张图片（]）',
-        onNext: nextItem ? () => onSelect(nextItem.id) : null,
-        onPrevious: previousItem ? () => onSelect(previousItem.id) : null,
+        onNext: nextItem ? () => selectItem(nextItem.id) : null,
+        onPrevious: previousItem ? () => selectItem(previousItem.id) : null,
         previousLabel: '上一张图片（[）',
         shortcutHint: '[ · ← · →]',
         total: items.length,
@@ -128,6 +138,7 @@ const ImagePreviewModal = ({
           type="button"
         >
           <ImageStage key={activeItem.id} name={activeItem.name} src={activeItem.src} />
+          <PreviewCounter index={index + 1} tick={switchTick} total={items.length} />
         </UnstyledButton>
       </div>
     </FreeModal>

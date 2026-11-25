@@ -18,6 +18,8 @@ import {
   DEFAULT_VIDEO_APP,
   GROUPED_DISPLAY_STORAGE_KEY,
   IMAGE_PREVIEW_FULLSCREEN_STORAGE_KEY,
+  LOCK_ENABLED_STORAGE_KEY,
+  LOCK_PASSWORD_STORAGE_KEY,
   TYPE_FILTER_MODE_STORAGE_KEY,
   VIDEO_APP_STORAGE_KEY,
   VIDEO_OPEN_MODE_STORAGE_KEY,
@@ -81,6 +83,14 @@ export type UseFilesSettingsResult = {
   grouped: boolean;
   /** 改分组展示开关 */
   setGrouped: (enabled: boolean) => void;
+  /** 页面安全锁是否开启 */
+  lockEnabled: boolean;
+  /** 安全锁密码；空串表示还没设，此时锁不生效 */
+  lockPassword: string;
+  /** 改安全锁开关 */
+  setLockEnabled: (enabled: boolean) => void;
+  /** 改安全锁密码 */
+  setLockPassword: (password: string) => void;
 };
 
 /** 文件页设置的读写：只在挂载时读一次存储，之后以状态为准 */
@@ -117,13 +127,25 @@ export const useFilesSettings = (): UseFilesSettingsResult => {
     GROUPED_DISPLAY_STORAGE_KEY,
     FLAG_CODEC,
   );
+  const [lockEnabled, setLockEnabled] = useStoredState(
+    LOCK_ENABLED_STORAGE_KEY,
+    FLAG_CODEC,
+  );
+  const [lockPassword, setLockPassword] = useStoredState(
+    LOCK_PASSWORD_STORAGE_KEY,
+    STRING_CODEC,
+  );
 
   return {
     filterMode,
     grouped,
     imageFullscreen,
+    lockEnabled,
+    lockPassword,
     setFilterMode,
     setGrouped,
+    setLockEnabled,
+    setLockPassword,
     setImageFullscreen,
     setVideoApp,
     setVideoFullscreen,

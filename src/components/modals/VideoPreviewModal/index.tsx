@@ -12,8 +12,9 @@
  *   与截图存放目录
  *   （默认桌面），全部键位双列列一遍；
  * - 控制栏的两颗箭头在播放键左右两侧，去向跟着「方向键去向」设置：快进 / 后退，或翻篇；
- * - 全屏走浏览器 Fullscreen API：侧栏收起时 header 浮在画面上、鼠标静止 1s 收起，
+ * - **header 与侧栏默认藏着**：打开就看到画面，鼠标一动 header 浮出，静止 1s 收起；
  *   侧栏唤出后 header 回到普通流（否则会盖住侧栏）；设置里可让它「打开即全屏」；
+ * - 翻篇（按钮 / 侧栏 / `[` `]` 都算）后左上角浮出一下「3 / 12」，1 秒后自己收掉（`PreviewCounter`）；
  * - `Esc` 在全屏里交给浏览器退出全屏，非全屏才是关窗。
  */
 
@@ -21,6 +22,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { IconTrash, IconVideo } from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
+import PreviewCounter from '@/components/feedback/PreviewCounter';
 import FreeVideo from '@/components/file-preview/FreeVideo';
 import { CONTROLS_SELECTOR } from '@/components/file-preview/FreeVideo/constants';
 import { useBrowserFullscreen } from '@/hooks/useBrowserFullscreen';
@@ -62,8 +64,10 @@ const VideoPreviewModal = ({
   storageScope,
 }: VideoPreviewModalProps) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  /** 常规尺寸下侧栏是否显示：默认显示 */
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  /** 常规尺寸下侧栏是否显示：默认收起，要看目录列再唤出 */
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  /** 翻过几次：每次切到下一条加一，左上角的计数浮标据此浮出再自动收掉 */
+  const [switchTick, setSwitchTick] = useState(0);
   /** 全屏下侧栏是否显示：进全屏默认收起（与常规尺寸各记一份，来回切不互相覆盖） */
   const [sidebarOpenInFullscreen, setSidebarOpenInFullscreen] = useState(false);
   /** 设置面板是否展开：开着手动隐藏 header、并收掉整组快捷键 */
@@ -85,10 +89,10 @@ const VideoPreviewModal = ({
   const sidebarVisible = fullscreen ? sidebarOpenInFullscreen : sidebarOpen;
 
   /**
-   * header 只在「全屏 + 侧栏收起」时做浮层：侧栏一旦唤出，浮层会把侧栏顶部盖住，
+   * header 在「侧栏收起」时做浮层：侧栏一旦唤出，浮层会把侧栏顶部盖住，
    * 这时回到普通流，让侧栏从头到尾完整可见（代价是画面让出一行高度）。
    */
-  const headerOverlay = fullscreen && !sidebarVisible;
+  const headerOverlay = !sidebarVisible;
   const headerVisible = useAutoHideHeader(
     headerOverlay && !settingsOpen && !blocked,
     HEADER_HIDE_DELAY,
@@ -205,6 +209,12 @@ const VideoPreviewModal = ({
   /** 二次确认层与上层的删除确认同一口径：任一层开着，底下整组键位与焦点都收掉 */
   const interactionBlocked = blocked;
 
+  /** 翻篇与侧栏点选共用一个入口：顺手让计数浮标闪一下 */
+  const selectItem = (id: string) => {
+    setSwitchTick((prev) => prev + 1);
+    onSelect(id);
+  };
+
   const previousItem = index > 0 ? items[index - 1] : null;
   const nextItem = index < items.length - 1 ? items[index + 1] : null;
   /** 方向键快进时翻篇只剩方括号；tooltip 跟着改口径 */
@@ -212,8 +222,8 @@ const VideoPreviewModal = ({
     settings.arrowMode === 'seek' ? '[ · ]' : '[ / ← · ] / →';
   /** 控制栏那两颗箭头与实体方向键同一套去向：seek 模式快进 / 后退，nav 模式翻篇 */
   const stepSeek = settings.arrowMode === 'seek';
-  const navBackward = previousItem ? () => onSelect(previousItem.id) : null;
-  const navForward = nextItem ? () => onSelect(nextItem.id) : null;
+  const navBackward = previousItem ? () => selectItem(previousItem.id) : null;
+  const navForward = nextItem ? () => selectItem(nextItem.id) : null;
   const stepBackward = stepSeek ? () => seekBy('backward') : navBackward;
   const stepForward = stepSeek ? () => seekBy('forward') : navForward;
   const stepPreviousLabel = stepSeek
@@ -277,8 +287,8 @@ const VideoPreviewModal = ({
         }}
         nav={{
           index: index + 1,
-          onNext: nextItem ? () => onSelect(nextItem.id) : null,
-          onPrevious: previousItem ? () => onSelect(previousItem.id) : null,
+          onNext: nextItem ? () => selectItem(nextItem.id) : null,
+          onPrevious: previousItem ? () => selectItem(previousItem.id) : null,
           shortcutHint: navShortcutHint,
           total: items.length,
         }}
@@ -298,22 +308,25 @@ const VideoPreviewModal = ({
               activeId={activeItem.id}
               icon={<IconVideo size={SIDEBAR_ICON_SIZE} stroke={SIDEBAR_ICON_STROKE} />}
               items={items}
-              onSelect={onSelect}
+              onSelect={selectItem}
               title="当前目录视频"
             />
           ) : null}
-          <FreeVideo
-            key={activeItem.id}
-            nav={{
-              nextLabel: stepNextLabel,
-              onNext: stepForward,
-              onPrevious: stepBackward,
-              previousLabel: stepPreviousLabel,
-            }}
-            previewScale={settings.previewScale / 100}
-            src={activeItem.src}
-            videoRef={videoRef}
-          />
+          <div className={styles.stage}>
+            <FreeVideo
+              key={activeItem.id}
+              nav={{
+                nextLabel: stepNextLabel,
+                onNext: stepForward,
+                onPrevious: stepBackward,
+                previousLabel: stepPreviousLabel,
+              }}
+              previewScale={settings.previewScale / 100}
+              src={activeItem.src}
+              videoRef={videoRef}
+            />
+            <PreviewCounter index={index + 1} tick={switchTick} total={items.length} />
+          </div>
         </div>
     </FreeModal>
   );

@@ -89,7 +89,7 @@
 | `fields` | 字段 / 输入控件组 | `FreeSelectField`、`FreeSearchInput` |
 | `panels` | 面板级排布件（底栏、分组、字段） | `FreePanelFooter`、`FreePanelGroup`、`FreePanelField` |
 | `texts` | 文本展示与截断 | `FreeTruncatedText` |
-| `feedback` | 加载、空态、提示这类状态呈现 | `PageLoading` |
+| `feedback` | 加载、空态、提示这类状态呈现 | `PageLoading`、`PreviewCounter` |
 | `file-preview` | 把文件内容渲染 / 播放出来的组件（视频、后续 PDF / 文档播放器） | `FreeVideo` |
 
 - **分类目录一律小写**（`@liangqingda/eslint-config` 1.8.0 起放行 `components` 下一层的分类名单，

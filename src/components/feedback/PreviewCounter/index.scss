@@ -1,0 +1,31 @@
+/* 切换计数浮标：预览区左上角，显隐各一段过渡 */
+
+.counter {
+  position: absolute;
+  z-index: 4;
+  top: 14px;
+  left: 14px;
+  padding: 4px 10px;
+  border: 1px solid var(--app-line);
+  border-radius: 8px;
+  background: var(--app-surface-subtle);
+  color: var(--app-ink);
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.35;
+  pointer-events: none;
+
+  /* 出现：从上方一点落下来、同时放大到原位；收起时按同一套反过来走 */
+  opacity: 0;
+  transform: translateY(-8px) scale(0.94);
+  transition:
+    opacity 160ms ease,
+    transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  visibility: hidden;
+}
+
+.visible {
+  opacity: 1;
+  transform: none;
+  visibility: visible;
+}

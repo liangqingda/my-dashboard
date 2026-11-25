@@ -1,6 +1,7 @@
 /**
  * 文件页设置面板：外观（视图形态、分组展示、悬浮玻璃透明度）、筛选方式、视频点击后与外部应用、
- * 视频封面、预览默认全屏。
+ * 视频封面、预览默认全屏、页面安全锁（密码 + 开关）。
+ * 密码不做任何强度 / 格式限制：原样存进 localStorage，这里只保证「没密码时开关不可开」。
  * 设置项会越加越多，所以按主题分组（每组一块浅底色、不描边），组内字段横向排、放不下自动换行；
  * 分组与字段的外观走 `FreePanelGroup` / `FreePanelField`，与视频预览的设置面板同一套。
  *
@@ -22,6 +23,7 @@ import {
 } from '@mantine/core';
 
 import { PANEL_FIELD_STYLES } from '@/components/buttons/IconPopoverButton/constants';
+import FreeInput from '@/components/fields/FreeInput';
 import FreePanelField from '@/components/panels/FreePanelField';
 import FreePanelGroup from '@/components/panels/FreePanelGroup';
 
@@ -71,9 +73,13 @@ const SettingsPanel = ({
   filterMode,
   grouped,
   imageFullscreen,
+  lockEnabled,
+  lockPassword,
   onFilterModeChange,
   onGroupedChange,
   onImageFullscreenChange,
+  onLockEnabledChange,
+  onLockPasswordChange,
   onVeilOpacityChange,
   onVideoAppChange,
   onVideoFullscreenChange,
@@ -186,6 +192,27 @@ const SettingsPanel = ({
             />
           </FreePanelField>
         ) : null}
+      </FreePanelGroup>
+
+      <FreePanelGroup title="安全">
+        <FreePanelField label="进入密码">
+          <FreeInput
+            ariaLabel="进入密码"
+            onChange={onLockPasswordChange}
+            placeholder="任意内容，不做限制"
+            styles={PANEL_FIELD_STYLES}
+            value={lockPassword}
+          />
+        </FreePanelField>
+        <FreePanelField label="页面安全锁">
+          <Switch
+            checked={lockEnabled}
+            disabled={lockPassword === ''}
+            label={lockPassword === '' ? '先设置密码' : '进入前需要输入密码'}
+            onChange={(event) => onLockEnabledChange(event.currentTarget.checked)}
+            size="xs"
+          />
+        </FreePanelField>
       </FreePanelGroup>
 
       <FreePanelGroup title="预览">

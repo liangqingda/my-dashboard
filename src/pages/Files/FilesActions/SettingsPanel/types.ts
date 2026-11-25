@@ -1,5 +1,5 @@
 /**
- * 设置面板的入参：视频去向 / 瓦片尺寸 / 预览全屏 / 筛选用多选还是单选，
+ * 设置面板的入参：视频去向 / 瓦片尺寸 / 预览全屏 / 筛选用多选还是单选 / 页面安全锁，
  * 值都由页面持有并持久化，面板只负责改。
  */
 
@@ -44,6 +44,14 @@ export type SettingsPanelProps = {
   grouped: boolean;
   /** 改分组展示开关 */
   onGroupedChange: (enabled: boolean) => void;
+  /** 页面安全锁是否开启 */
+  lockEnabled: boolean;
+  /** 安全锁密码：空串表示还没设，此时开关不可开 */
+  lockPassword: string;
+  /** 改安全锁开关 */
+  onLockEnabledChange: (enabled: boolean) => void;
+  /** 改安全锁密码 */
+  onLockPasswordChange: (password: string) => void;
   /** 当前展示形态：网格 / 表格 */
   view: FilesViewMode;
   /** 改展示形态 */

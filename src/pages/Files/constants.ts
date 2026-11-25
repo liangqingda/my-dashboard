@@ -176,6 +176,18 @@ export const GROUPED_DISPLAY_STORAGE_KEY = scopedStorageKey(
   'grouped-display',
 );
 
+/** 页面安全锁是否开启（进入前先输密码）；没写过时关闭 */
+export const LOCK_ENABLED_STORAGE_KEY = scopedStorageKey(
+  FILES_STORAGE_SCOPE,
+  'lock-enabled',
+);
+
+/** 页面安全锁的密码：原样存一份，不做任何强度 / 格式限制；空串表示还没设 */
+export const LOCK_PASSWORD_STORAGE_KEY = scopedStorageKey(
+  FILES_STORAGE_SCOPE,
+  'lock-password',
+);
+
 /** 「全部」那一项在筛选列表里固定排最上面 */
 export const TYPE_FILTER_ALL_LABEL = '全部';
 

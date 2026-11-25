@@ -1,9 +1,10 @@
 /**
- * 全屏时 header 的自动隐藏：鼠标一停就收起，一动就浮出。
+ * header 的自动隐藏：鼠标一停就收起，一动就浮出。
  *
- * 只在全屏里生效；非全屏时恒为可见。监听挂在 window 上而不是 header 自身——
- * header 收起后指针不可能再停在它上面，挂在它自己身上就再也唤不出来。
- * 每次活动都重置计时器，按住不放的移动不会被当成「静止」。
+ * 预览弹窗打开时就该先看见画面，所以**初始是收起态**，第一次动鼠标才浮出——
+ * 不再「进场先亮 1 秒」那样闪一下。禁用（设置面板 / 确认层开着）时恒为可见。
+ * 监听挂在 window 上而不是 header 自身——header 收起后指针不可能再停在它上面，
+ * 挂在它自己身上就再也唤不出来。每次活动都重置计时器，按住不放的移动不会被当成「静止」。
  *
  * `ignoreSelector` 圈出一块「不该唤出 header」的区域（播放器控制栏）：
  * 指针在那一带上活动时既不亮 header、也不重置计时，让它按原来的节奏收起。
@@ -27,7 +28,7 @@ const isIgnored = (
 /**
  * 返回 header 当前是否应该显示。
  *
- * @param enabled 是否启用自动隐藏（全屏时传 true）
+ * @param enabled 是否启用自动隐藏（侧栏收起、且没有面板压在上面时传 true）
  * @param delay 静止多久收起（毫秒）
  * @param ignoreSelector 这个选择器命中的区域内活动不算「唤出 header」
  */
@@ -37,7 +38,7 @@ export const useAutoHideHeader = (
   ignoreSelector?: string,
   holdSelector?: string,
 ): boolean => {
-  const [visible, setVisible] = useState(true);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     if (!enabled) {
@@ -45,7 +46,7 @@ export const useAutoHideHeader = (
     }
 
     let timer: ReturnType<typeof setTimeout> | undefined;
-    // 以上一次「显示的」状态为起点：上次全屏结束时可能停在隐藏态，这里必须重新亮出 header
+    // 以上一次「显示的」状态为起点：重新启用时先按收起态算，动鼠标才浮出
     let lastVisible = false;
     // 指针是否正停在「不收起」区域里；在里面时不排收起计时
     let holding = false;
@@ -115,9 +116,7 @@ export const useAutoHideHeader = (
       restartTimer();
     };
 
-    // 刚进入全屏（或鼠标在别处）也先亮一会儿，再由计时器收起
-    reveal();
-
+    // 不再在启用时先亮一下：打开预览要先看到画面，第一次动鼠标才浮出 header
     window.addEventListener('pointermove', handleActivity);
     window.addEventListener('pointerdown', handleActivity);
     window.addEventListener('wheel', handleActivity, { passive: true });

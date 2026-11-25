@@ -1,0 +1,21 @@
+/* 安全锁输入窗：说明在上、输入居中、两个出口靠右 */
+
+.gate {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 输错了：贴在输入框下面一行，红色但不用整块 error 样式 */
+.error {
+  color: var(--mantine-color-red-6);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+/* 一句口径说明：比正文弱一档，读起来不抢输入框 */
+.hint {
+  color: var(--app-ink-faint);
+  font-size: 0.78rem;
+  line-height: 1.6;
+}

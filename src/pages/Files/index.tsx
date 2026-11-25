@@ -8,6 +8,7 @@ import DirBreadcrumb from './DirBreadcrumb';
 import FilesActions from './FilesActions';
 import type { FilesActionsPanel } from './FilesActions/types';
 import FilesEntries from './FilesEntries';
+import FilesLockGate from './FilesLockGate';
 import FilesOverlays from './FilesOverlays';
 import FilesStates from './FilesStates';
 import { useAppLaunch } from './hooks/useAppLaunch';
@@ -15,6 +16,7 @@ import { useAppUninstall } from './hooks/useAppUninstall';
 import { useDragPending } from './hooks/use-drag-pending';
 import { useEntryActions } from './hooks/useEntryActions';
 import { useEntryDelete } from './hooks/useEntryDelete';
+import { useFilesLock } from './hooks/useFilesLock';
 import { useFilesSettings } from './hooks/useFilesSettings';
 import { useFavorites } from './hooks/useFavorites';
 import { useFilesDir } from './hooks/useFilesDir';
@@ -52,6 +54,7 @@ import styles from './index.scss';
  * 应用 hover 后右上角给卸载按钮，二次确认里先列清要删的残留，确认后由中间件删整包并清理缓存 / 配置 / 数据。
  * 目录读取走 Vite 中间件，仅开发模式可用。
  * 标题行右侧再显示本机剩余可用空间；当前目录在外接盘上时，连同那块盘的可用空间一起显示。
+ * 设置里可以给这一页加安全锁：设了密码并开启后，每次进入都先弹一扇关不掉的密码窗，对上才进。
  */
 const Files = () => {
   /** 收藏 hook 整个留着：拖拽弹窗里的收藏面板直接复用同一套动作 */
@@ -84,8 +87,10 @@ const Files = () => {
   const { isGridView, setView, view } = useFilesViewMode();
   /** 分组折叠：会话内状态，网格 / 表格共用同一份收起集合 */
   const { collapsedGroups, toggleGroup } = useGroupCollapse();
-  /** 文件页设置（放在视频预览之前）：点视频的去向、两扇预览是否默认全屏 */
+  /** 文件页设置（放在视频预览之前）：点视频的去向、两扇预览是否默认全屏、页面安全锁 */
   const settings = useFilesSettings();
+  /** 本次停留是否已经输对过密码：只在会话内有效，离开页面重新进就再问一次 */
+  const { locked, unlock } = useFilesLock(settings.lockEnabled, settings.lockPassword);
 
   const folders = listing?.folders ?? [];
   const allFiles = listing?.files ?? [];
@@ -203,9 +208,12 @@ const Files = () => {
   });
 
   /** 空态文案：筛过条件与真的空目录给不同一句话；不是空态就是 null */
-  const emptyText = list.showEmpty
-    ? emptyListingText(selectedCategories, keyword)
-    : null;
+  const emptyText = list.showEmpty ? emptyListingText(selectedCategories, keyword) : null;
+
+  /** 安全锁开着、密码也设了：本次停留还没输对，就只给那一扇密码窗 */
+  if (locked) {
+    return <FilesLockGate onUnlock={unlock} />;
+  }
 
   return (
     <MenuContentLayout
