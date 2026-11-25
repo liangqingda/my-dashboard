@@ -16,6 +16,7 @@ import {
 
 import {
   DEFAULT_VIDEO_APP,
+  GROUPED_DISPLAY_STORAGE_KEY,
   IMAGE_PREVIEW_FULLSCREEN_STORAGE_KEY,
   TYPE_FILTER_MODE_STORAGE_KEY,
   VIDEO_APP_STORAGE_KEY,
@@ -76,6 +77,10 @@ export type UseFilesSettingsResult = {
   filterMode: TypeFilterMode;
   /** 改类型筛选的操作方式 */
   setFilterMode: (mode: TypeFilterMode) => void;
+  /** 列表是否按类型分组成段展示 */
+  grouped: boolean;
+  /** 改分组展示开关 */
+  setGrouped: (enabled: boolean) => void;
 };
 
 /** 文件页设置的读写：只在挂载时读一次存储，之后以状态为准 */
@@ -108,11 +113,17 @@ export const useFilesSettings = (): UseFilesSettingsResult => {
     TYPE_FILTER_MODE_STORAGE_KEY,
     FILTER_MODE_CODEC,
   );
+  const [grouped, setGrouped] = useStoredState(
+    GROUPED_DISPLAY_STORAGE_KEY,
+    FLAG_CODEC,
+  );
 
   return {
     filterMode,
+    grouped,
     imageFullscreen,
     setFilterMode,
+    setGrouped,
     setImageFullscreen,
     setVideoApp,
     setVideoFullscreen,

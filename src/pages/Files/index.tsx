@@ -36,6 +36,7 @@ import styles from './index.scss';
  * 文件浏览页：按 macOS 目录网格展示本机指定目录下的子文件夹、应用包与文件，不限文件类型；
  * 应用包按一条应用展示（真实图标 + 卸载入口），不当作可进入的文件夹。
  * 标题栏的图标按钮可在网格与表格（名称 / 类别 / 操作三列）两种展示形式之间切换，结果记在 localStorage。
+ * 设置面板可开启按类型分组成段（文件夹 / 应用 / 文件，对齐 macOS 访达分组），默认平铺，偏好同样持久化。
  * 点文件夹进入下一层，面包屑回退，`⌘↑` 回上一级；可收藏常用目录，在收藏面板里点选直达；
  * 拖起任一条目会打开移动弹窗：全屏逐层挑目标文件夹，面包屑换层，松手没落成移动就把条目留在手里；
  * 弹窗 header 有收藏当前层 / 新建文件夹 / 选本地目录三颗按钮（都走页面同一套流程），
@@ -260,6 +261,7 @@ const Files = () => {
             files={list.visibleFiles}
             fixedColumns={isAppCatalogPath(listing.path)}
             folders={list.visibleFolders}
+            grouped={settings.grouped}
             isGridView={isGridView}
             launchingApp={launchingPath}
             loading={loading}

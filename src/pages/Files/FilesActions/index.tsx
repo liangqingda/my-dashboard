@@ -161,8 +161,10 @@ const FilesActions = ({
       >
         <SettingsPanel
           filterMode={typeFilterMode}
+          grouped={settings.grouped}
           imageFullscreen={settings.imageFullscreen}
           onFilterModeChange={onTypeFilterModeChange}
+          onGroupedChange={settings.setGrouped}
           onImageFullscreenChange={settings.setImageFullscreen}
           onVeilOpacityChange={settings.setVeilOpacity}
           onVideoAppChange={settings.setVideoApp}

@@ -1,5 +1,5 @@
 /**
- * 文件页设置面板：筛选方式、视频点击后与外部应用、视频封面、悬浮玻璃透明度、预览默认全屏。
+ * 文件页设置面板：分组展示、筛选方式、视频点击后与外部应用、视频封面、悬浮玻璃透明度、预览默认全屏。
  * 设置项会越加越多，所以按主题分组（每组一块浅底色、不描边），组内字段横向排、放不下自动换行；
  * 分组与字段的外观走 `FreePanelGroup` / `FreePanelField`，与视频预览的设置面板同一套。
  *
@@ -55,8 +55,10 @@ const VIDEO_OPEN_MODE_OPTIONS = [
 
 const SettingsPanel = ({
   filterMode,
+  grouped,
   imageFullscreen,
   onFilterModeChange,
+  onGroupedChange,
   onImageFullscreenChange,
   onVeilOpacityChange,
   onVideoAppChange,
@@ -78,6 +80,17 @@ const SettingsPanel = ({
 
   return (
     <Stack gap="sm">
+      <FreePanelGroup title="外观">
+        <FreePanelField label="分组展示">
+          <Switch
+            checked={grouped}
+            label="按类型分组排列"
+            onChange={(event) => onGroupedChange(event.currentTarget.checked)}
+            size="xs"
+          />
+        </FreePanelField>
+      </FreePanelGroup>
+
       <FreePanelGroup title="筛选">
         <FreePanelField label="筛选方式">
           <SegmentedControl

@@ -143,6 +143,12 @@ export const TYPE_FILTER_MODE_STORAGE_KEY = scopedStorageKey(
   'type-filter-mode',
 );
 
+/** 列表是否按类型分组成段展示（文件夹 / 应用 / 文件），在设置面板里切；没写过时平铺 */
+export const GROUPED_DISPLAY_STORAGE_KEY = scopedStorageKey(
+  FILES_STORAGE_SCOPE,
+  'grouped-display',
+);
+
 /** 「全部」那一项在筛选列表里固定排最上面 */
 export const TYPE_FILTER_ALL_LABEL = '全部';
 

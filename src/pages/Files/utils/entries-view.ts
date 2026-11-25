@@ -21,12 +21,58 @@ import {
   toFilesRows,
 } from './files';
 
+/** 一行对应的条目：三种形态共用名称列与操作列 */
+export const entryOf = (row: FilesRow): AppEntry | FileEntry | FolderEntry => {
+  switch (row.kind) {
+    case 'folder':
+      return row.folder;
+    case 'app':
+      return row.app;
+    case 'file':
+      return row.file;
+  }
+};
+
 /** 一次筛选后的可见条目：三份列表 + 表格要的合并行 */
 export type VisibleEntries = {
   visibleFolders: FolderEntry[];
   visibleApps: AppEntry[];
   visibleFiles: FileEntry[];
   rows: FilesRow[];
+};
+
+/** 分组的条目类型：与表格行的 kind 同一套 */
+export type EntryGroupKey = FilesRow['kind'];
+
+/** 分组的固定顺序：文件夹 → 应用 → 文件，与平铺顺序一致 */
+export const ENTRY_GROUP_KEYS: readonly EntryGroupKey[] = [
+  'folder',
+  'app',
+  'file',
+];
+
+/** 一个非空分组：标题取 `ENTRY_KIND_LABELS[key]` */
+export type EntryGroup<T> = {
+  key: EntryGroupKey;
+  entries: T[];
+};
+
+/** 把表格行按类型归进固定顺序的分组；空组丢掉，顺序与平铺一致 */
+export const groupFilesRows = (rows: FilesRow[]): EntryGroup<FilesRow>[] => {
+  const buckets: Record<EntryGroupKey, FilesRow[]> = {
+    app: [],
+    file: [],
+    folder: [],
+  };
+
+  for (const row of rows) {
+    buckets[row.kind] = [...buckets[row.kind], row];
+  }
+
+  return ENTRY_GROUP_KEYS.map((key) => ({
+    entries: buckets[key],
+    key,
+  })).filter((group) => group.entries.length > 0);
 };
 
 /** 按类型与关键词筛出这一页要展示的条目；还没拿到目录时全为空 */

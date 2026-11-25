@@ -23,6 +23,7 @@ const FilesEntries = ({
   files,
   fixedColumns,
   folders,
+  grouped,
   isGridView,
   launchingApp,
   loading,
@@ -78,6 +79,7 @@ const FilesEntries = ({
           files={files}
           fixedColumns={fixedColumns}
           folders={folders}
+          grouped={grouped}
           launchingApp={launchingApp}
           loading={loading}
           loadingFolder={loadingFolder}
@@ -107,6 +109,7 @@ const FilesEntries = ({
         <FilesTable
           dragSource={dragSource}
           dropTarget={dropTarget}
+          grouped={grouped}
           launchingApp={launchingApp}
           listLoading={loading}
           loadingFolder={loadingFolder}

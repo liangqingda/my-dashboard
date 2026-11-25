@@ -14,3 +14,17 @@
   grid-template-columns: repeat(auto-fill, 132px);
   justify-content: start;
 }
+
+/* 分组模式：外层改成纵向堆叠的分组段，段内仍走上面的网格列宽 */
+.grouped {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 一个分组段：标题在上，瓦片网格在下 */
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}

@@ -27,6 +27,8 @@ export type FilesEntriesProps = {
   folders: FolderEntry[];
   /** 网格 / 表格 */
   isGridView: boolean;
+  /** 列表是否按类型分组成段展示 */
+  grouped: boolean;
   /** 正在切目录取数：整块列表蒙一层 loading */
   loading: boolean;
   /** 正在打开的文件夹路径：该瓦片 / 行显示进度 */

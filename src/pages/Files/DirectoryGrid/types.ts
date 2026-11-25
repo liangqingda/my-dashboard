@@ -20,6 +20,8 @@ export type DirectoryGridProps = {
   apps: AppEntry[];
   /** 直属文件（已按名称排序） */
   files: FileEntry[];
+  /** 列表是否按类型分组成段展示 */
+  grouped: boolean;
   /** 列表正在取数：只有取数期间才给对应文件夹瓦片挂进度 */
   loading: boolean;
   /** 正在打开的文件夹路径；null 表示没有打开请求在跑 */

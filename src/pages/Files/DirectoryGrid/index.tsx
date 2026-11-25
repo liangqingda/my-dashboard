@@ -1,9 +1,11 @@
-import type { DragEvent, MouseEvent } from 'react';
+import type { DragEvent, MouseEvent, ReactNode } from 'react';
 import { useMemo } from 'react';
 
 import { cx } from '@/utils/cx';
 
 import AppTile from '../AppTile';
+import EntryGroupHeader from '../EntryGroupHeader';
+import { ENTRY_KIND_LABELS } from '../constants';
 import type { FileEntry, FolderEntry } from '../types';
 import FileTile from '../FileTile';
 import FolderTile from '../FolderTile';
@@ -27,6 +29,9 @@ const allowMoveOverGrid = (event: DragEvent<HTMLDivElement>) => {
  * 改名统一走弹窗，不改动网格位置；文件夹与文件可拖拽，文件夹是放置目标；
  * 应用可点击打开、也可卸载，不参与拖拽移动。拖拽落在空白处不触发移动，等同取消。
  * 条目数量已经整份在客户端，不做分页或虚拟滚动（见 `docs/pages.md`）。
+ *
+ * 分组模式下按「文件夹 → 应用 → 文件」切成纵向分段，每段带一条分组标题，
+ * 外观对齐 macOS 访达的分组；分组开关在设置面板里，默认平铺。
  *
  * 多选（待拖拽区）在**容器**上一次性接住，而不是给每个瓦片加一层 onClick：
  * 瓦片自己的点击是「打开 / 预览」，这里在捕获阶段先判断——带 ⌘ / Shift，
@@ -56,6 +61,7 @@ const DirectoryGrid = ({
   files,
   fixedColumns,
   folders,
+  grouped,
   loading,
   loadingFolder,
   onDragEnd,
@@ -133,67 +139,112 @@ const DirectoryGrid = ({
     onTogglePending(entry, tile.getBoundingClientRect());
   };
 
+  const renderFolders = () =>
+    folders.map((folder) => (
+      <FolderTile
+        dragging={dragSource === folder.path}
+        dropActive={dropTarget === folder.path}
+        folder={folder}
+        hideActions={pendingActive}
+        iconSize={
+          fixedColumns || isAppFolder(folder) ? tileIconSize() : undefined
+        }
+        key={folder.path}
+        loading={loading && loadingFolder === folder.path}
+        onDragEnd={onDragEnd}
+        onDragLeave={() => onDragLeaveFolder(folder.path)}
+        onDragOver={(event) => onDragOverFolder(folder.path, event)}
+        onDragStartEntry={() => onDragStartEntry(folder)}
+        onDrop={() => onDropFolder(folder.path)}
+        onEdit={() => onEditEntry(folder)}
+        onOpen={onOpenFolder}
+        onRequestDelete={() => onRequestDeleteEntry(folder.path)}
+        pending={pendingSet.has(folder.path)}
+        tipOff={tipsOff}
+        veilOpacity={veilOpacity}
+      />
+    ));
+
+  const renderApps = () =>
+    apps.map((app) => (
+      <AppTile
+        app={app}
+        key={app.path}
+        launching={launchingApp === app.path}
+        onOpen={() => onOpenApp(app)}
+        onRequestUninstall={() => onRequestUninstallApp(app)}
+        tipOff={tipsOff}
+        veilOpacity={veilOpacity}
+      />
+    ));
+
+  const renderFiles = () =>
+    files.map((file) => (
+      <FileTile
+        dragging={dragSource === file.path}
+        file={file}
+        hideActions={pendingActive}
+        key={file.path}
+        onDragEnd={onDragEnd}
+        onDragStartEntry={() => onDragStartEntry(file)}
+        onEdit={() => onEditEntry(file)}
+        onOpen={previewHandler(file, onOpenVideo, onOpenImage)}
+        onOpenExternal={onOpenExternalVideo}
+        onRequestDelete={() => onRequestDeleteEntry(file.path)}
+        pending={pendingSet.has(file.path)}
+        tipOff={tipsOff}
+        veilOpacity={veilOpacity}
+        videoApp={videoApp}
+        videoOpenMode={videoOpenMode}
+        videoThumbStyle={videoThumbStyle}
+      />
+    ));
+
+  /** 段内瓦片网格：列宽口径与平铺网格同一份规则 */
+  const groupGrid = (tiles: ReactNode) => (
+    <div className={cx(styles.grid, fixedColumns && styles.gridFixed)}>{tiles}</div>
+  );
+
+  const renderGrouped = () => (
+    <>
+      {folders.length > 0 ? (
+        <section className={styles.group}>
+          <EntryGroupHeader label={ENTRY_KIND_LABELS.folder} />
+          {groupGrid(renderFolders())}
+        </section>
+      ) : null}
+      {apps.length > 0 ? (
+        <section className={styles.group}>
+          <EntryGroupHeader label={ENTRY_KIND_LABELS.app} />
+          {groupGrid(renderApps())}
+        </section>
+      ) : null}
+      {files.length > 0 ? (
+        <section className={styles.group}>
+          <EntryGroupHeader label={ENTRY_KIND_LABELS.file} />
+          {groupGrid(renderFiles())}
+        </section>
+      ) : null}
+    </>
+  );
+
   return (
     <div
-      className={cx(styles.grid, fixedColumns && styles.gridFixed)}
+      className={cx(
+        styles.grid,
+        fixedColumns && styles.gridFixed,
+        grouped && styles.grouped,
+      )}
       onClickCapture={handleClickCapture}
       onDragOver={allowMoveOverGrid}
     >
-      {folders.map((folder) => (
-        <FolderTile
-          dragging={dragSource === folder.path}
-          dropActive={dropTarget === folder.path}
-          folder={folder}
-          hideActions={pendingActive}
-          iconSize={
-            fixedColumns || isAppFolder(folder) ? tileIconSize() : undefined
-          }
-          key={folder.path}
-          loading={loading && loadingFolder === folder.path}
-          onDragEnd={onDragEnd}
-          onDragLeave={() => onDragLeaveFolder(folder.path)}
-          onDragOver={(event) => onDragOverFolder(folder.path, event)}
-          onDragStartEntry={() => onDragStartEntry(folder)}
-          onDrop={() => onDropFolder(folder.path)}
-          onEdit={() => onEditEntry(folder)}
-          onOpen={onOpenFolder}
-          onRequestDelete={() => onRequestDeleteEntry(folder.path)}
-          pending={pendingSet.has(folder.path)}
-          tipOff={tipsOff}
-          veilOpacity={veilOpacity}
-        />
-      ))}
-      {apps.map((app) => (
-        <AppTile
-          app={app}
-          key={app.path}
-          launching={launchingApp === app.path}
-          onOpen={() => onOpenApp(app)}
-          onRequestUninstall={() => onRequestUninstallApp(app)}
-          tipOff={tipsOff}
-          veilOpacity={veilOpacity}
-        />
-      ))}
-      {files.map((file) => (
-        <FileTile
-          dragging={dragSource === file.path}
-          file={file}
-          hideActions={pendingActive}
-          key={file.path}
-          onDragEnd={onDragEnd}
-          onDragStartEntry={() => onDragStartEntry(file)}
-          onEdit={() => onEditEntry(file)}
-          onOpen={previewHandler(file, onOpenVideo, onOpenImage)}
-          onOpenExternal={onOpenExternalVideo}
-          onRequestDelete={() => onRequestDeleteEntry(file.path)}
-          pending={pendingSet.has(file.path)}
-          tipOff={tipsOff}
-          veilOpacity={veilOpacity}
-          videoApp={videoApp}
-          videoOpenMode={videoOpenMode}
-          videoThumbStyle={videoThumbStyle}
-        />
-      ))}
+      {grouped ? renderGrouped() : (
+        <>
+          {renderFolders()}
+          {renderApps()}
+          {renderFiles()}
+        </>
+      )}
     </div>
   );
 };

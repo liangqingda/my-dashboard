@@ -39,4 +39,8 @@ export type SettingsPanelProps = {
   filterMode: TypeFilterMode;
   /** 改类型筛选的操作方式 */
   onFilterModeChange: (mode: TypeFilterMode) => void;
+  /** 列表是否按类型分组成段展示 */
+  grouped: boolean;
+  /** 改分组展示开关 */
+  onGroupedChange: (enabled: boolean) => void;
 };

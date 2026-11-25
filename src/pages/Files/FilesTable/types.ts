@@ -10,6 +10,8 @@ import type { AppEntry, FileEntry, FilesRow, FolderEntry } from '../types';
 export type FilesTableProps = {
   /** 筛选后的行：文件夹在前、应用其次、文件在后（见 `toFilesRows`） */
   rows: FilesRow[];
+  /** 列表是否按类型分组成段展示 */
+  grouped: boolean;
   /** 当前拖拽源条目路径；null 表示没在拖拽 */
   dragSource: string | null;
   /** 当前悬停的放置目标文件夹路径；null 表示没有目标 */
