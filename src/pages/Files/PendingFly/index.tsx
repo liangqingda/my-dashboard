@@ -12,6 +12,9 @@ const FLY_MS = 560;
 /** 换成真身（列表里那一项的原样拷贝）的时刻（占整趟的比例）：先给图标露个脸 */
 const MORPH_AT = 0.3;
 
+/** 收进待拖拽区时，缩到多小才把真身换回图标（占整趟的比例）：与回来那趟的 0.3 对称 */
+const SHRINK_TO_ICON_AT = 0.62;
+
 /** 系统开了「减少动态」就只留结果、不做位移 */
 const prefersReducedMotion = (): boolean =>
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -96,9 +99,9 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
     const { direction, entry, from } = flight;
     const finish = () => doneRef.current();
 
-    // 连着飞第二条时复用同一个外壳：图标先摆回来，等换真身时再藏
+    // 复用同一个外壳时要复位：移出先图标，移入首帧就是真身（图标先藏着，别闪一下巨大图标）
     if (iconRef.current !== null) {
-      iconRef.current.style.visibility = '';
+      iconRef.current.style.visibility = direction === 'in' ? 'hidden' : '';
     }
 
     if (prefersReducedMotion()) {
@@ -135,7 +138,10 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
       direction === 'in'
         ? Math.min(box.width / tileBox.width, box.height / tileBox.height, 1)
         : 1;
-    const restScale = endScale * 0.42;
+    /** 飞在半路时的尺寸：比落点略大一圈，看得出「正在缩进去」 */
+    const midScale = direction === 'in' ? Math.max(endScale * 1.6, 0.4) : 0.46;
+    /** 落进那一格时再收一点、同时淡出，把位置交还真实的 chip */
+    const landScale = endScale * 0.85;
 
     const clone = tile?.cloneNode(true) as HTMLElement | undefined;
 
@@ -143,30 +149,64 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
       dressClone(clone, tileBox.width, tileBox.height);
     }
 
-    /** 换真身：图标让位，原样拷贝上台；此时飞行块还很小，看不出拼接 */
-    const morph = window.setTimeout(() => {
-      if (iconRef.current !== null) {
-        iconRef.current.style.visibility = 'hidden';
+    /**
+     * 真身与图标什么时候换班：
+     * - 移回列表：先图标，到三成时换真身（此时还小，看不出拼接）；
+     * - 收进待拖拽区：反过来——刚离开时就是**整块的自己**（盖在原位上），
+     *   一路缩到很小时把真身换回图标，再落进那一格。
+     */
+    const swap = (toClone: boolean) => {
+      if (toClone) {
+        if (iconRef.current !== null) {
+          iconRef.current.style.visibility = 'hidden';
+        }
+
+        if (clone !== undefined) {
+          block.appendChild(clone);
+        }
+
+        return;
       }
 
-      if (clone !== undefined) {
-        block.appendChild(clone);
+      clone?.remove();
+
+      if (iconRef.current !== null) {
+        iconRef.current.style.visibility = '';
       }
-    }, FLY_MS * MORPH_AT);
+    };
+
+    if (direction === 'in') {
+      /*
+       * 收进待拖拽区时，列表里那一项还亮着：飞行块就是它的整块拷贝，
+       * 原件先藏起来，否则看起来像「一个东西走了、一个还杵在那儿」。
+       */
+      if (tile !== null) {
+        tile.style.visibility = 'hidden';
+      }
+
+      swap(true);
+    }
+
+    const morph = window.setTimeout(
+      () => swap(direction !== 'in'),
+      FLY_MS * (direction === 'in' ? SHRINK_TO_ICON_AT : MORPH_AT),
+    );
 
     const frames =
       direction === 'in'
         ? [
-            { opacity: 1, transform: 'translate(0, 0) scale(0.3)' },
-            { opacity: 1, offset: 0.16, transform: 'translate(0, -6px) scale(0.3)' },
+            { opacity: 1, transform: 'translate(0, 0) scale(1)' },
+            { opacity: 1, offset: 0.08, transform: 'translate(0, -6px) scale(1)' },
+            { opacity: 1, offset: 0.2, transform: 'translate(0, -8px) scale(0.9)' },
+            { opacity: 1, offset: 0.32, transform: 'translate(0, -8px) scale(0.9)' },
             {
               opacity: 1,
-              offset: 0.6,
-              transform: `translate(${dx * 0.86}px, ${dy * 0.86}px) scale(${Math.max(restScale, 0.34)})`,
+              offset: 0.62,
+              transform: `translate(${dx * 0.86}px, ${dy * 0.86}px) scale(${midScale})`,
             },
             { opacity: 1, offset: 0.84, transform: `translate(${dx}px, ${dy}px) scale(${endScale})` },
             { opacity: 1, offset: 0.92, transform: `translate(${dx}px, ${dy}px) scale(${endScale})` },
-            { opacity: 0, transform: `translate(${dx}px, ${dy}px) scale(${endScale})` },
+            { opacity: 0, transform: `translate(${dx}px, ${dy}px) scale(${landScale})` },
           ]
         : [
             { opacity: 1, transform: 'translate(0, 0) scale(0.3)' },
@@ -174,7 +214,7 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
             {
               opacity: 1,
               offset: 0.62,
-              transform: `translate(${dx * 0.86}px, ${dy * 0.86}px) scale(0.46)`,
+              transform: `translate(${dx * 0.86}px, ${dy * 0.86}px) scale(${midScale})`,
             },
             { opacity: 1, offset: 0.84, transform: `translate(${dx}px, ${dy}px) scale(0.9)` },
             { opacity: 1, offset: 0.93, transform: `translate(${dx}px, ${dy}px) scale(0.9)` },
@@ -192,6 +232,10 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
     return () => {
       window.clearTimeout(morph);
       move.cancel();
+
+      if (tile !== null && direction === 'in') {
+        tile.style.visibility = '';
+      }
     };
   }, [flight]);
 
@@ -210,7 +254,11 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
         width: size.width,
       }}
     >
-      <span className={styles.icon} ref={iconRef}>
+      <span
+        className={styles.icon}
+        ref={iconRef}
+        style={{ visibility: flight.direction === 'in' ? 'hidden' : undefined }}
+      >
         {createElement(entryIcon(flight.entry), {
           'aria-hidden': true,
           className: styles.iconGlyph,
