@@ -215,7 +215,7 @@ const DirectoryGrid = ({
     const collapsed = collapsedGroups.has(key);
 
     return (
-      <section className={styles.group}>
+      <section className={cx(styles.group, collapsed && styles.groupCollapsed)}>
         <EntryGroupHeader
           collapsed={collapsed}
           label={ENTRY_GROUP_LABELS[key]}

@@ -191,9 +191,11 @@ const FilesTable = memo(
               tipsOff={tipsOff}
             />
           </FreeTable.Td>
-          <FreeTable.Td className={styles.kindWidth}>
-            {categoryLabel(row)}
-          </FreeTable.Td>
+          {!grouped && (
+            <FreeTable.Td className={styles.kindWidth}>
+              {categoryLabel(row)}
+            </FreeTable.Td>
+          )}
           <FreeTable.Td className={styles.actionWidth}>
             <EntryTileActions
               className={styles.rowActions}
@@ -212,9 +214,11 @@ const FilesTable = memo(
           <FreeTable.Thead>
             <FreeTable.Tr>
               <FreeTable.Th scope="col">名称</FreeTable.Th>
-              <FreeTable.Th className={styles.kindWidth} scope="col">
-                类别
-              </FreeTable.Th>
+              {!grouped && (
+                <FreeTable.Th className={styles.kindWidth} scope="col">
+                  类别
+                </FreeTable.Th>
+              )}
               <FreeTable.Th className={styles.actionWidth} scope="col">
                 操作
               </FreeTable.Th>
@@ -231,7 +235,7 @@ const FilesTable = memo(
                       key={group.key}
                       onClick={() => onToggleGroup(group.key)}
                     >
-                      <FreeTable.Td colSpan={3}>
+                      <FreeTable.Td colSpan={2}>
                         <EntryGroupHeader
                           align="center"
                           collapsed={collapsed}

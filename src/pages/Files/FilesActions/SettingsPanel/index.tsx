@@ -43,6 +43,12 @@ const VIEW_MODE_OPTIONS = [
   { label: '表格', value: 'table' },
 ];
 
+/** 分组展示的两档文案：平铺为默认，分组按类型切段 */
+const GROUPED_OPTIONS = [
+  { label: '平铺', value: 'off' },
+  { label: '分组', value: 'on' },
+];
+
 /** 筛选方式的两档文案 */
 const FILTER_MODE_OPTIONS = [
   { label: '多选', value: 'multi' },
@@ -101,11 +107,12 @@ const SettingsPanel = ({
           />
         </FreePanelField>
         <FreePanelField label="分组展示">
-          <Switch
-            checked={grouped}
-            label="按类型分组排列"
-            onChange={(event) => onGroupedChange(event.currentTarget.checked)}
+          <SegmentedControl
+            data={GROUPED_OPTIONS}
+            fullWidth
+            onChange={(value) => onGroupedChange(value === 'on')}
             size="xs"
+            value={grouped ? 'on' : 'off'}
           />
         </FreePanelField>
         <FreePanelField label="悬浮玻璃透明度" value={`${veilOpacity}%`} wide>

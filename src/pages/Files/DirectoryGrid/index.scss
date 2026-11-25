@@ -19,7 +19,6 @@
 .grouped {
   display: flex;
   flex-direction: column;
-  gap: 16px;
 }
 
 /* 一个分组段：标题在上，瓦片网格在下 */
@@ -33,6 +32,11 @@
 .group + .group {
   border-top: 1px solid var(--app-line);
   padding-top: 12px;
+}
+
+/* 收起后段内不留标题与空主体之间的间隙，段间上下间距一致 */
+.groupCollapsed {
+  gap: 0;
 }
 
 /* 收起动画：外层网格行高 1fr → 0fr，内层裁掉溢出内容 */

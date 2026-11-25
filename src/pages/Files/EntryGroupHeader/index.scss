@@ -11,7 +11,12 @@
   border-radius: var(--mantine-radius-sm);
 }
 
-/* 表格分组行：整行内容居中，箭头随标题一起居中 */
+/* hover：箭头与标题一起变主色（图标走 currentColor，跟随文字色） */
+.header:hover {
+  color: var(--app-accent);
+}
+
+/* 表格分组行：整行内容居中，箭头与标题作为一个整体居中 */
 .headerCenter {
   justify-content: center;
 }
@@ -27,7 +32,7 @@
 }
 
 .label {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   text-align: left;
 }
 
