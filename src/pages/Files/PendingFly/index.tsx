@@ -233,6 +233,11 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
 
   const tile = tileOf(flight.entry.path);
   const size = tile?.getBoundingClientRect() ?? flight.from;
+  /*
+   * 图标按瓦片的六成画：换班那一刻飞行块已经缩到四成上下，
+   * 图标约等于「刚才那张卡片的三分之二」，看上去是它收成了图标，不是突然变小。
+   */
+  const glyphSize = Math.round(Math.min(size.width, size.height) * 0.6);
 
   return (
     <div
@@ -254,7 +259,7 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
         {createElement(entryIcon(flight.entry), {
           'aria-hidden': true,
           className: styles.iconGlyph,
-          size: 30,
+          size: glyphSize,
           stroke: 1.2,
         })}
       </span>

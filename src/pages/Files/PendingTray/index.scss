@@ -136,6 +136,19 @@
   border-radius: 8px;
   background: var(--app-surface);
   text-align: start;
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+/*
+ * 正飞进来的那一格：先占着位子但看不见（飞行块要拿它的矩形当落点），
+ * 落定那一刻才淡入、并从 0.85 长到 1——与飞行末段的收缩接上，看上去是同一个东西落进来。
+ */
+.landing {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.85);
 }
 
 .chip:hover {

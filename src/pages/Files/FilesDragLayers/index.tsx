@@ -63,6 +63,9 @@ const FilesDragLayers = ({
         closed={!pending.active}
         entries={pending.entries}
         hidden={session !== null}
+        landingPath={
+          pending.flight?.direction === 'in' ? pending.flight.entry.path : null
+        }
         onClear={pending.clear}
         onDragAll={() => dragStartEntries(pending.entries)}
         onDragEnd={endDrag}
