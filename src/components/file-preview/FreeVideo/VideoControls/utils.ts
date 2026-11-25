@@ -1,9 +1,10 @@
 /**
  * 进度条悬停预览的取值：把指针位置摊成「这一处的时间 + 浮层横向位置」。
  *
- * 时间必须按**滑杆轨道**的矩形算，不能按外层容器：Mantine 的 root 左右各留了半个拇指宽的内边距
- * （轨道比容器窄 8px），按容器算会和松手后实际跳到的位置差不到一整个拇指，片子上就是一两秒。
- * 浮层位置仍以容器为坐标系（它以容器为定位祖先），只是中心点跟着轨道上的比例算。
+ * 时间必须与 Mantine Slider 松手后取值**同一套坐标系**：它用 root 的矩形（`useMove` 里
+ * `(clientX - rootRect.left) / rootRect.width`）算比例，轨道本身左右各缩进半个拇指宽，
+ * 按轨道算与按 root 算差出来的是固定比例，片子越长差得越多——两三个小时的长片上就是好几秒。
+ * 浮层位置同样以容器为坐标系（它以容器为定位祖先）。
  */
 
 import { SEEK_PREVIEW_EDGE_GAP } from '../constants';
@@ -28,24 +29,22 @@ const clampPreviewCenter = (
   );
 };
 
-/** 指针位置 → 浮层位置与这一处的时间（时间按滑杆轨道算，与松手后跳到的位置一致） */
+/** 指针位置 → 浮层位置与这一处的时间（与 Mantine 松手取值同一套坐标系，分毫不差） */
 export const seekPreviewAt = ({
   clientX,
   containerLeft,
   containerWidth,
   duration,
   previewWidth,
-  trackLeft,
-  trackWidth,
 }: SeekPreviewParams): SeekPreviewState => {
-  /** 轨道量不出来时退回容器：至少还在同一段上，不会算到片外 */
-  const left = trackWidth > 0 ? trackLeft : containerLeft;
-  const width = trackWidth > 0 ? trackWidth : containerWidth;
-  const ratio = Math.min(Math.max((clientX - left) / width, 0), 1);
+  const ratio = Math.min(
+    Math.max((clientX - containerLeft) / containerWidth, 0),
+    1,
+  );
 
   return {
     left: clampPreviewCenter(
-      left - containerLeft + ratio * width,
+      ratio * containerWidth,
       containerWidth,
       previewWidth,
     ),

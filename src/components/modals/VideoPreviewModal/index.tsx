@@ -93,11 +93,16 @@ const VideoPreviewModal = ({
    * 这时回到普通流，让侧栏从头到尾完整可见（代价是画面让出一行高度）。
    */
   const headerOverlay = !sidebarVisible;
+  /**
+   * 指针停在 header 或播放器控制栏上时 header 不收起：控制栏里最常用的是进度条，
+   * 悬停看预览帧的这段时间 header 得一直在（全屏与常规尺寸同一套）。
+   */
+  const headerHoldSelector = `:is(${MODAL_HEADER_SELECTOR}, ${CONTROLS_SELECTOR})`;
   const headerVisible = useAutoHideHeader(
     headerOverlay && !settingsOpen && !blocked,
     HEADER_HIDE_DELAY,
-    CONTROLS_SELECTOR,
-    MODAL_HEADER_SELECTOR,
+    undefined,
+    headerHoldSelector,
   );
 
   /** `←` / `→`：按设置的步长快进 / 后退；方向键交给它之后翻篇只剩方括号 */

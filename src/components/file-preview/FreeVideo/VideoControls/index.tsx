@@ -119,23 +119,12 @@ const VideoControls = ({
       return;
     }
 
-    /**
-     * 时间要按滑杆轨道算：Mantine 的 root 左右各留半个拇指宽的内边距，
-     * 按容器算会与松手后实际跳到的位置差出一整段（长片上就是一两秒）。
-     */
-    const track = event.currentTarget.querySelector<HTMLElement>(
-      `.${styles.sliderTrack}`,
-    );
-    const trackRect = track?.getBoundingClientRect() ?? null;
-
     const next = seekPreviewAt({
       clientX: event.clientX,
       containerLeft: rect.left,
       containerWidth: rect.width,
       duration,
       previewWidth,
-      trackLeft: trackRect?.left ?? 0,
-      trackWidth: trackRect?.width ?? 0,
     });
 
     setPreview(next);
@@ -237,7 +226,6 @@ const VideoControls = ({
         <Slider
           aria-label="播放进度"
           className={styles.progress}
-          classNames={{ track: styles.sliderTrack }}
           disabled={!enabled || duration <= 0}
           /* 预览可用时数字浮标让位给帧浮层，免两套浮层叠在一起 */
           label={previewReady ? null : formatProgressLabel}
