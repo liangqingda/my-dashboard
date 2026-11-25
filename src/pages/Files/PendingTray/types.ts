@@ -24,4 +24,9 @@ export type PendingTrayProps = {
    * 只是藏起来、仍挂在 DOM 上——拖拽源被卸载会直接取消整次拖拽。
    */
   hidden?: boolean;
+  /**
+   * 没有条目（整块收起）。面板常挂 DOM，靠这个类做过渡：
+   * 清空 / 取消时就是「滑出 + 淡出」的退场动画，而不是瞬间消失。
+   */
+  closed?: boolean;
 };

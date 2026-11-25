@@ -10,6 +10,7 @@
  * 这里只排正文。
  */
 
+import { useMemo } from 'react';
 import { Button, Group } from '@mantine/core';
 
 import FreeModal from '@/components/modals/FreeModal';
@@ -35,43 +36,58 @@ const ConfirmModal = ({
   title,
   trapFocus,
   zIndex = CONFIRM_Z_INDEX,
-}: ConfirmModalProps) => (
-  <FreeModal
-    closeButton={!loading}
-    closeLabel={closeLabel}
-    closeOnEscape={!loading}
-    height="auto"
-    onClose={onCancel}
-    opened={opened}
-    size={size}
-    title={title}
-    trapFocus={trapFocus}
-    zIndex={zIndex}
-  >
-    <div className={styles.description}>{description}</div>
-    {children}
-    <div className={styles.footer}>
-      <Group gap="sm" justify="flex-end" wrap="nowrap">
-        <Button
-          disabled={loading}
-          onClick={onCancel}
-          size="sm"
-          variant="default"
-        >
-          {cancelLabel}
-        </Button>
-        <Button
-          className={danger ? styles.dangerButton : undefined}
-          disabled={confirmDisabled}
-          loading={loading}
-          onClick={onConfirm}
-          size="sm"
-        >
-          {confirmLabel}
-        </Button>
-      </Group>
-    </div>
-  </FreeModal>
-);
+}: ConfirmModalProps) => {
+  /**
+   * 回车＝确定：全站所有确认窗同一口径，不必再去点按钮。
+   * 加载中或按钮不可点时不动作；空格不参与——那是外壳的关窗键，方向相反。
+   */
+  const extraKeys = useMemo(
+    () => ({
+      enter: () => {
+        if (loading || confirmDisabled) {
+          return;
+        }
+
+        onConfirm();
+      },
+    }),
+    [confirmDisabled, loading, onConfirm],
+  );
+
+  return (
+    <FreeModal
+      closeButton={!loading}
+      closeLabel={closeLabel}
+      closeOnEscape={!loading}
+      extraKeys={extraKeys}
+      height="auto"
+      onClose={onCancel}
+      opened={opened}
+      size={size}
+      title={title}
+      trapFocus={trapFocus}
+      zIndex={zIndex}
+    >
+      <div className={styles.description}>{description}</div>
+      {children}
+      <div className={styles.footer}>
+        <Group gap="sm" justify="flex-end" wrap="nowrap">
+          <Button disabled={loading} onClick={onCancel} size="sm" variant="default">
+            {cancelLabel}
+          </Button>
+          <Button
+            className={danger ? styles.dangerButton : undefined}
+            disabled={confirmDisabled}
+            loading={loading}
+            onClick={onConfirm}
+            size="sm"
+          >
+            {confirmLabel}
+          </Button>
+        </Group>
+      </div>
+    </FreeModal>
+  );
+};
 
 export default ConfirmModal;

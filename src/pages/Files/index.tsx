@@ -98,7 +98,11 @@ const Files = () => {
   const imagePreview = useImagePreview(listing);
   const { closeImage, openImage } = imagePreview;
   /** 删除条目：整份结果也给浮层层复用（弹窗的 four 字段从它挑） */
-  const entryDelete = useEntryDelete(folders, allFiles, reload);
+  const entryDelete = useEntryDelete(folders, allFiles, reload, (path) => {
+    // 删掉的正好是预览中的那一张：先切到下一条（没有了才关窗）
+    videoPreview.skipDeletedVideo(path);
+    imagePreview.skipDeletedImage(path);
+  });
   const { deletingEntry, requestDelete, resetDelete } = entryDelete;
 
   /** 待拖拽区：攒起来的一批条目，攒下以后列表的点击语义跟着变 */

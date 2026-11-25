@@ -38,6 +38,7 @@ const PREVIEW_CATEGORIES = new Set<FileEntry['category']>(['image', 'video']);
 const HandCard = ({
   entries,
   focusPath = null,
+  ghostAll = false,
   handed,
   onDragEnd,
   onDragEntry,
@@ -71,29 +72,28 @@ const HandCard = ({
           const Icon = entryIcon(entry);
           const previewable = previewFile !== null && previewFile.path === entry.path;
 
-          // 单条拖起时，它自己这一格留成虚位：其它条目不挪位置，也能看出「它还在这一格」
-          if (focusPath === entry.path) {
-            return (
-              <div
-                aria-hidden="true"
-                className={styles.slot}
-                key={entry.path}
-              />
-            );
-          }
+          /*
+           * 正被单条拖的那一格、以及整批搬起时的全部条目，都留成「虚」的一格：
+           * 位子不动、内容照旧看得见（图标与名字压暗、边换虚线），只是不再是可拖的实体。
+           */
+          const ghost = ghostAll || focusPath === entry.path;
 
           return (
             <div
-              className={styles.chip}
-              draggable
+              className={cx(styles.chip, ghost && styles.ghost)}
+              draggable={!ghost}
               key={entry.path}
-              onDragEnd={onDragEnd}
-              onDragStart={(event) => {
-                // 这一条自己就是拖拽源，别让外层「整批拖」再拦一次
-                event.stopPropagation();
-                writeDragPayload(event.dataTransfer, [entry.path]);
-                onDragEntry(entry);
-              }}
+              onDragEnd={ghost ? undefined : onDragEnd}
+              onDragStart={
+                ghost
+                  ? undefined
+                  : (event) => {
+                      // 这一条自己就是拖拽源，别让外层「整批拖」再拦一次
+                      event.stopPropagation();
+                      writeDragPayload(event.dataTransfer, [entry.path]);
+                      onDragEntry(entry);
+                    }
+              }
             >
               <IconGripVertical aria-hidden="true" className={styles.grip} size={13} stroke={1.6} />
               {previewable ? (

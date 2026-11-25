@@ -6,8 +6,8 @@ import type { PendingFlightLayerProps } from './types';
 
 import styles from './index.scss';
 
-const FLY_IN_MS = 420;
-const FLY_OUT_MS = 360;
+/** 一趟完整的「缩小 → 飞过去 → 长回来 → 落定」用这么久 */
+const FLY_MS = 560;
 
 /** 系统开了「减少动态」就只留结果、不做位移 */
 const prefersReducedMotion = (): boolean =>
@@ -73,7 +73,7 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
     if (to === null) {
       // 落点不存在（已经移出视野 / 侧栏收起）：原地淡掉，别乱飞
       const fade = block.animate([{ opacity: 1 }, { opacity: 0 }], {
-        duration: FLY_OUT_MS,
+        duration: FLY_MS,
         easing: 'ease-out',
         fill: 'forwards',
       });
@@ -88,18 +88,44 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
     const box = to.getBoundingClientRect();
     const dx = box.left + box.width / 2 - (from.left + from.width / 2);
     const dy = box.top + box.height / 2 - (from.top + from.height / 2);
-    // 起飞块与落脚块的尺寸差压进缩放：落到那一格时正好同大，接得上后面已经渲染好的那一格
-    const sx = Math.min(box.width / from.width, 1.4);
-    const sy = Math.min(box.height / from.height, 1.4);
-    const opacity = direction === 'in' ? 1 : 0.9;
+    /*
+     * 起落两端的尺寸差决定缩放。放大这一趟（飞回列表）不许超过 1.6——
+     * 再大就只剩一块放大的空框，反而不像那一枚瓦片；落定时本来就压在真瓦片上面，看得到本体。
+     */
+    const sx = Math.min(Math.max(box.width / from.width, 0.2), 1.6);
+    const sy = Math.min(Math.max(box.height / from.height, 0.2), 1.6);
 
+    /*
+     * 一条「整块 → 小图标 → 飞过去 → 一边长回来一边落定 → 停一下 → 往下落」的轨迹：
+     * 先缩成小图标，靠近落点再长回目标尺寸，最后一次几像素的下坠收尾，
+     * 让人看得出「它变成原来那么大、落进那个位置」。
+     */
     const move = block.animate(
       [
         { opacity: 1, transform: 'translate(0, 0) scale(1)' },
-        { opacity, transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})` },
+        { opacity: 1, offset: 0.16, transform: 'translate(0, -6px) scale(0.34)' },
+        {
+          opacity: 1,
+          offset: 0.62,
+          transform: `translate(${dx * 0.84}px, ${dy * 0.84}px) scale(0.34)`,
+        },
+        {
+          opacity: 1,
+          offset: 0.86,
+          transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`,
+        },
+        {
+          opacity: 1,
+          offset: 0.93,
+          transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`,
+        },
+        {
+          opacity: direction === 'in' ? 1 : 0.55,
+          transform: `translate(${dx}px, ${dy + 4}px) scale(${sx}, ${sy})`,
+        },
       ],
       {
-        duration: direction === 'in' ? FLY_IN_MS : FLY_OUT_MS,
+        duration: FLY_MS,
         easing: 'cubic-bezier(0.32, 0.72, 0.24, 1)',
         fill: 'forwards',
       },

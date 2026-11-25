@@ -3,6 +3,9 @@
  *
  * 视频与图片预览的差异（截图、显示偏好）留在各自 hook 里，这里只管「列表 + 选中项」，
  * 免得两份几乎一样的 useMemo + 派生选中项各写一遍。
+ *
+ * 正在预览的这一条**在弹窗里被删掉**时，不是直接关窗，而是顺着原位切到下一条（末尾删掉则回到上一条）；
+ * 只有列表里一条都不剩才关窗。换目录不算删除——那是另一回事，照旧关窗。
  */
 
 import { useMemo, useState } from 'react';
@@ -21,6 +24,8 @@ export type PreviewListResult = {
   select: (id: string) => void;
   /** 关闭预览 */
   close: () => void;
+  /** 预览中的这一条被删掉：切到下一条（没有了就关窗） */
+  skipDeleted: (path: string) => void;
 };
 
 /**
@@ -42,20 +47,31 @@ export const usePreviewList = (
   );
 
   /**
-   * 条目已经不在列表里（删除、换目录）就按「没在预览」处理：
-   * 地址指向已删文件时浏览器只会报错，留着弹层没有意义。
-   * 在读时算派生值，不拿 effect 回写状态——否则每删一条都要多渲染一轮。
+   * 预览中的这一条刚被删掉：先替它选好下一条（原位置的下一条，末尾删掉则回到上一条），
+   * 列表里一条都不剩就关窗。由删除流程在重读列表**之前**调——那时旧的顺序还在，
+   * 位置一定找得到；等重读完再算，删掉的那一条已经不见了，只能凭记忆猜。
    */
-  const activeItemId =
-    activeId !== null && items.some((file) => file.path === activeId)
-      ? activeId
-      : null;
+  const skipDeleted = (path: string) => {
+    if (activeId !== path) {
+      return;
+    }
+
+    const at = items.findIndex((file) => file.path === path);
+    // `at()` 越界会给 undefined（下标访问在类型上是非空，得靠它兜住首尾）
+    const fallback = items.at(at + 1) ?? items.at(at - 1) ?? null;
+
+    setActiveId(fallback === null ? null : fallback.path);
+  };
 
   return {
-    activeId: activeItemId,
+    activeId:
+      activeId !== null && items.some((file) => file.path === activeId)
+        ? activeId
+        : null,
     close: () => setActiveId(null),
     items,
     open: (file: FileEntry) => setActiveId(file.path),
     select: (id: string) => setActiveId(id),
+    skipDeleted,
   };
 };

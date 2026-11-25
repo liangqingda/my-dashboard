@@ -15,15 +15,23 @@
 | 操作 | 结果 |
 | --- | --- |
 | 从面板 `.main` 上拖起（`data-pending-drop`，整块都可拖） | 整批一起进移动弹窗；不要求落在空白处 |
-| 从列表拖条目过来（列表处于批量状态时） | **面板边缘也算热区**：收件的 `dragenter/over/drop` 挂在整个面板上（只有 header 除外），
-松手就收进来；拖拽经过时整块面板（含四周留白）亮成落点 |
-| **点某一条**（`.chip`，带 `data-pending-chip`） | 移出待拖拽区，并从这一格做一记「飞回列表原位」的动画；不挂 hover 叉号，也不支持单独拖它 |
+| 从列表拖条目过来（列表处于批量状态时） | **整条面板都是热区（含 header）**：收件的 `dragenter/over/drop` 挂在面板根上，松手就收进来；
+拖拽经过时整块面板（含四周留白）亮成落点。header 上的文字 `user-select: none`，拖拽不会拖出选择区 |
+| **点某一条**（`.chip`，带 `data-pending-chip`） | 移出待拖拽区，并从这一格做一记「缩小成小图标 → 飞回去 → 长回瓦片大小 → 落定」的动画；
+不挂 hover 叉号，也不支持单独拖它 |
+| 在列表里再点一次已经选中的条目 | 同上：从待拖拽区那一格起飞，飞回被点的那张瓦片（取消选择） |
 | 顶部右侧「清空」 | 全部清空（不做逐个飞回的动画） |
 
 条目不单独作为拖拽源：要单独搬某一条，去移动弹窗里的待拖拽区拖它那一行。
 收件判定只看载荷类型（`utils/drag-image.ts` 的 `hasDragPaths`）：`dragover` 阶段浏览器不让读
 `getData` 的具体内容，等真去读就永远 `preventDefault` 不了、也就收不到 `drop`。
 面板里名字的 hover 提示一律 `disabled`：拖拽时不该冒 tooltip。
+
+## 常挂 DOM，靠类收起
+
+这条面板**始终挂载**，没有条目时加 `.closed`：`opacity / transform / visibility` 一起过渡，
+所以清空或 `Esc` 取消时是「往侧栏方向滑出 + 淡出」的退场，而不是瞬间消失；
+`prefers-reduced-motion` 下只淡出、不位移。`closed` 时 `pointer-events: none`、`aria-hidden`。
 
 ## 藏起来，不卸掉
 

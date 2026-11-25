@@ -51,19 +51,15 @@
 }
 
 /*
- * 单条拖起后原位留的虚位：尺寸与一张 chip 完全一致（同 padding、同边框宽度），
- * 只把内容与底色抽掉，网格里其它条目因此一格都不动。
+ * 虚态：正在被拖的那一格 / 整批搬起时全部。
+ * 位子和内容都不动，只是压暗、换虚线边——看得出「它正被搬走，但还在这里占位」。
  */
-.slot {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  padding: 6px 8px;
-  border: 1px dashed var(--app-line);
-  border-radius: 8px;
-  min-height: 32px;
+.ghost {
+  border-style: dashed;
+  border-color: var(--app-line-strong);
   background: transparent;
+  cursor: default;
+  opacity: 0.45;
 }
 
 /* 抓手：说明这一条能单独拖 */

@@ -25,6 +25,8 @@ export type UseImagePreviewResult = {
   selectImage: (id: string) => void;
   /** 关闭预览 */
   closeImage: () => void;
+  /** 预览中的这张图被删掉：切到下一张（没有了就关窗） */
+  skipDeletedImage: (path: string) => void;
 };
 
 /**
@@ -54,5 +56,6 @@ export const useImagePreview = (
     items,
     openImage: list.open,
     selectImage: list.select,
+    skipDeletedImage: list.skipDeleted,
   };
 };

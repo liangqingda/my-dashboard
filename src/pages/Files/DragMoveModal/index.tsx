@@ -188,6 +188,7 @@ const DragMoveModal = ({
             <HandCard
               entries={handEntries}
               focusPath={focusPath}
+              ghostAll={dragActive && focusPath === null}
               handed={handed}
               onDragEnd={() => {
                 setBlankHovered(false);

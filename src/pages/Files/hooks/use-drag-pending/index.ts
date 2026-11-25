@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import type { DraggableEntry } from '../../types';
+import { pendingChipRect } from '../../utils/pending-dom';
 
 import type { DragPendingState, PendingFlight } from './types';
 
@@ -49,7 +50,10 @@ export const useDragPending = (): DragPendingState => {
 
   const toggle = (entry: DraggableEntry, from?: DOMRect) => {
     if (has(entry.path)) {
-      remove(entry);
+      // 取消：从待拖拽区那一格起飞，飞回列表里被点的那张瓦片（量不到就不播）
+      const chip = pendingChipRect(entry.path);
+
+      remove(entry, chip ?? undefined);
 
       return;
     }

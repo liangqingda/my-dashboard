@@ -24,6 +24,8 @@ export const useEntryDelete = (
   folders: FolderEntry[],
   files: FileEntry[],
   reload: () => Promise<void>,
+  /** 删除成功、重读列表之前通知一次：预览层据此切到下一条，而不是等列表刷新后自己关窗 */
+  onDeleted?: (path: string) => void,
 ) => {
   const [deletingPath, setDeletingPath] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -64,6 +66,8 @@ export const useEntryDelete = (
 
     try {
       await deleteEntry(deletingPath);
+      // 先按旧顺序把预览挪到下一条，再重读：那时列表里还有这一条，位置一定找得到
+      onDeleted?.(deletingPath);
       await reload();
       setDeletingPath(null);
       notifications.show({

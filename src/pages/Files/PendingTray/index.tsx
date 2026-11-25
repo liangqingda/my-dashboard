@@ -1,4 +1,3 @@
-import type { DragEvent } from 'react';
 import { useEffect, useState } from 'react';
 import { Text, UnstyledButton } from '@mantine/core';
 import { IconStack2, IconX } from '@tabler/icons-react';
@@ -41,6 +40,7 @@ const PendingTray = ({
   onDragEnd,
   onDropPaths,
   onRemove,
+  closed = false,
 }: PendingTrayProps) => {
   const [rect, setRect] = useState<SidebarRect | null>(null);
   /** 正有东西拖在板上（拖拽经过），用于给整块加一圈落点边 */
@@ -68,23 +68,17 @@ const PendingTray = ({
   /** 整块的落点态：列表正拖过来（`armed`）或指针正压在板上（`over`）都算 */
   const dropActive = armed || over;
 
-  /** 落在 header 上不算收件：那一条是标题与清空，属于除了它之外整块都是热区 */
-  const onHead = (event: DragEvent<HTMLDivElement>): boolean => {
-    const { target } = event;
-
-    return target instanceof Element && target.closest('[data-tray-head]') !== null;
-  };
-
   return (
     <div
-      aria-hidden={hidden}
+      aria-hidden={hidden || closed}
       aria-label="待拖拽区"
-      className={cx(styles.tray, hidden && styles.hidden, dropActive && styles.armed)}
-      onDragEnter={(event) => {
-        if (!onHead(event)) {
-          setOver(true);
-        }
-      }}
+      className={cx(
+        styles.tray,
+        hidden && styles.hidden,
+        dropActive && styles.armed,
+        closed && styles.closed,
+      )}
+      onDragEnter={() => setOver(true)}
       onDragLeave={(event) => {
         // 在面板内部从一块挪到另一块不算离开；真出了面板才收高亮
         if (event.relatedTarget instanceof Node && event.currentTarget.contains(event.relatedTarget)) {
@@ -96,7 +90,7 @@ const PendingTray = ({
       onDragOver={(event) => {
         const { dataTransfer } = event;
 
-        if (onHead(event) || !hasDragPaths(dataTransfer)) {
+        if (!hasDragPaths(dataTransfer)) {
           return;
         }
 
@@ -105,10 +99,6 @@ const PendingTray = ({
         setOver(true);
       }}
       onDrop={(event) => {
-        if (onHead(event)) {
-          return;
-        }
-
         event.preventDefault();
         setOver(false);
 
@@ -121,7 +111,7 @@ const PendingTray = ({
       role="region"
       style={rect ?? undefined}
     >
-      <div className={styles.head} data-tray-head="true">
+      <div className={styles.head}>
         <Text className={styles.title} size="sm">
           <IconStack2 aria-hidden="true" className={styles.titleIcon} size={14} stroke={1.8} />
           {entries.length} 项待移动

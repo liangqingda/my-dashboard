@@ -35,6 +35,8 @@ export type UseVideoPreviewResult = {
   selectVideo: (id: string) => void;
   /** 关闭预览 */
   closeVideo: () => void;
+  /** 预览中的这条视频被删掉：切到下一条（没有了就关窗） */
+  skipDeletedVideo: (path: string) => void;
   /** 截图当前帧并写进目标目录，返回给弹窗用的提示文案 */
   captureFrame: (
     dataUrl: string,
@@ -137,5 +139,6 @@ export const useVideoPreview = (
     openVideo,
     pickMediaDir,
     selectVideo: list.select,
+    skipDeletedVideo: list.skipDeleted,
   };
 };

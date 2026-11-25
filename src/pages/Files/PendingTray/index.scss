@@ -1,7 +1,7 @@
 /*
  * 待拖拽区：整块盖住左侧栏（顶栏之下），位置与尺寸由 `index.tsx` 实测侧栏那列后内联给出；
  * 这里的 184 / 44 只是量不到侧栏时的兜底，与 `BasicLayout` 的 AppShell 配置一致。
- * 顶部一行标题 + 清空；下面整块（不含 header）都是热区：拖它＝整批搬，拖来的条目也落在这里。
+ * 顶部一行标题 + 清空；整条面板（**含 header**）都是收件热区，除 header 外还能拖起整批。
  */
 
 .tray {
@@ -19,12 +19,26 @@
   border-right: 1px solid var(--app-line-strong);
   background: var(--app-surface);
   box-shadow: 8px 0 24px rgb(23 37 34 / 18%);
+  /* 整条面板（含 header）都是拖拽热区：上面任何文字都不该能被选中、也不该拖出选择区 */
+  user-select: none;
+  transition:
+    opacity 220ms ease,
+    transform 220ms cubic-bezier(0.4, 0, 0.2, 1),
+    visibility 220ms;
 }
 
 /* 弹窗开着时只藏不卸：正在拖的条目就握在这条里，卸载即等于取消拖拽 */
 .hidden {
   visibility: hidden;
   pointer-events: none;
+}
+
+/* 没有条目：整条往侧栏方向滑出并淡掉（清空 / 取消时的退场），播完再彻底隐掉 */
+.closed {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-18px);
 }
 
 .head {
@@ -49,7 +63,7 @@
   color: var(--app-accent);
 }
 
-/* 除 header 外整块：既是「整批拖」的拖拽源，也是列表拖过来的落点 */
+/* 除 header 外整块：是「整批拖」的拖拽源（收件的落点整条面板都算） */
 .main {
   display: flex;
   flex: 1 1 auto;
@@ -112,4 +126,15 @@
   min-width: 0;
   color: var(--app-ink);
   font-size: 12px;
+}
+
+/* 减少动态：退场只淡出，不位移 */
+@media (prefers-reduced-motion: reduce) {
+  .tray {
+    transition: opacity 220ms ease, visibility 220ms;
+  }
+
+  .closed {
+    transform: none;
+  }
 }

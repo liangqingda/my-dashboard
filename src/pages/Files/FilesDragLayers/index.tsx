@@ -52,18 +52,18 @@ const FilesDragLayers = ({ entryActions, onDropPaths, pending }: FilesDragLayers
 
   return (
     <div className={styles.layers}>
-      {pending.active ? (
-        <PendingTray
-          armed={pending.trayDrag !== null}
-          entries={pending.entries}
-          hidden={session !== null}
-          onClear={pending.clear}
-          onDragAll={() => dragStartEntries(pending.entries)}
-          onDragEnd={endDrag}
-          onDropPaths={onDropPaths}
-          onRemove={pending.remove}
-        />
-      ) : null}
+      {/* 常挂着：没有条目时只收起（`.closed` 走过渡），清空 / 取消才有「滑走」的退场动画 */}
+      <PendingTray
+        armed={pending.trayDrag !== null}
+        closed={!pending.active}
+        entries={pending.entries}
+        hidden={session !== null}
+        onClear={pending.clear}
+        onDragAll={() => dragStartEntries(pending.entries)}
+        onDragEnd={endDrag}
+        onDropPaths={onDropPaths}
+        onRemove={pending.remove}
+      />
 
       {ghostEntries === null ? null : (
         <DragGhost
