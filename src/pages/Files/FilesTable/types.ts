@@ -4,7 +4,13 @@
 
 import type { DragEvent } from 'react';
 
-import type { AppEntry, FileEntry, FilesRow, FolderEntry } from '../types';
+import type {
+  AppEntry,
+  EntryGroupKey,
+  FileEntry,
+  FilesRow,
+  FolderEntry,
+} from '../types';
 
 /** 表格的入参：数据与事件都与网格一致，只是换一种排布 */
 export type FilesTableProps = {
@@ -12,6 +18,10 @@ export type FilesTableProps = {
   rows: FilesRow[];
   /** 列表是否按类型分组成段展示 */
   grouped: boolean;
+  /** 已收起的分组键集合；空集表示全部展开 */
+  collapsedGroups: ReadonlySet<EntryGroupKey>;
+  /** 切换某一组的展开 / 收起 */
+  onToggleGroup: (key: EntryGroupKey) => void;
   /** 当前拖拽源条目路径；null 表示没在拖拽 */
   dragSource: string | null;
   /** 当前悬停的放置目标文件夹路径；null 表示没有目标 */

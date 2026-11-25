@@ -4,6 +4,7 @@
  */
 
 import type {
+  FilesViewMode,
   TypeFilterMode,
   VideoOpenMode,
   VideoThumbStyle,
@@ -43,4 +44,8 @@ export type SettingsPanelProps = {
   grouped: boolean;
   /** 改分组展示开关 */
   onGroupedChange: (enabled: boolean) => void;
+  /** 当前展示形态：网格 / 表格 */
+  view: FilesViewMode;
+  /** 改展示形态 */
+  onViewModeChange: (view: FilesViewMode) => void;
 };

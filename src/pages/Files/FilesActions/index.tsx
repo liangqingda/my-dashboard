@@ -1,6 +1,7 @@
 /**
- * 文件页标题栏操作按钮组：「新建文件夹」「打开本地目录」图标按钮、收藏 / 筛选 / 设置弹层按钮、
- * 网格 / 表格切换按钮。三块弹层互斥，同时只开一块；开合状态由页面层持有，这里只排按钮与弹层内容。
+ * 文件页标题栏操作按钮组：「新建文件夹」「打开本地目录」图标按钮、收藏 / 筛选 / 设置弹层按钮。
+ * 视图形态（网格 / 表格）的切换入口收在设置面板外观组里，不在标题栏放按钮。
+ * 三块弹层互斥，同时只开一块；开合状态由页面层持有，这里只排按钮与弹层内容。
  */
 
 import { useEffect } from 'react';
@@ -11,8 +12,6 @@ import {
   IconFilter,
   IconFolderOpen,
   IconFolderPlus,
-  IconLayoutGrid,
-  IconLayoutList,
   IconSettings,
 } from '@tabler/icons-react';
 
@@ -42,7 +41,6 @@ const FilesActions = ({
   favoriteDisabled,
   favorites,
   isFavorite,
-  isGridView,
   keyword,
   loading,
   onSelectedCategoriesChange,
@@ -57,9 +55,10 @@ const FilesActions = ({
   onRemoveFavorite,
   onToggleFavorite,
   onTogglePinnedFavorite,
-  onToggleViewMode,
+  onViewModeChange,
   openPanel,
   settings,
+  view,
 }: FilesActionsProps) => {
   /** 进页面即清掉播放器列表的缓存：本次停留内设置面板开关共用一份，下次进页面重扫 */
   useEffect(() => {
@@ -171,24 +170,15 @@ const FilesActions = ({
           onVideoFullscreenChange={settings.setVideoFullscreen}
           onVideoOpenModeChange={settings.setVideoOpenMode}
           onVideoThumbStyleChange={settings.setVideoThumbStyle}
+          onViewModeChange={onViewModeChange}
           veilOpacity={settings.veilOpacity}
           videoApp={settings.videoApp}
           videoFullscreen={settings.videoFullscreen}
           videoOpenMode={settings.videoOpenMode}
           videoThumbStyle={settings.videoThumbStyle}
+          view={view}
         />
       </IconPopoverButton>
-
-      <FreeIconAction
-        label={isGridView ? '切换为表格形式' : '切换为网格形式'}
-        onClick={onToggleViewMode}
-      >
-        {isGridView ? (
-          <IconLayoutGrid size={ICON_SIZE} stroke={ICON_STROKE} />
-        ) : (
-          <IconLayoutList size={ICON_SIZE} stroke={ICON_STROKE} />
-        )}
-      </FreeIconAction>
     </>
   );
 };

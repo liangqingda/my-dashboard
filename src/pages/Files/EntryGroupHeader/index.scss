@@ -1,7 +1,36 @@
-/* 分组标题：次级字色半粗，比条目行重一档；纯展示，不承担可点交互 */
+/* 分组标题：次级字色半粗，整行可点；纯展示文字 + 折叠箭头，不承担条目打开行为 */
 .header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
   color: var(--app-ink-soft);
   font-size: 0.82rem;
   font-weight: 600;
   line-height: 1.4;
+  border-radius: var(--mantine-radius-sm);
+}
+
+/* 表格分组行：整行内容居中，箭头随标题一起居中 */
+.headerCenter {
+  justify-content: center;
+}
+
+.chevron {
+  flex: 0 0 auto;
+  transition: transform 120ms ease;
+}
+
+/* 展开态：箭头朝下；收起态朝右，旋转口径与折叠动画一致 */
+.chevronOpen {
+  transform: rotate(90deg);
+}
+
+.label {
+  flex: 1 1 auto;
+  text-align: left;
+}
+
+.headerCenter .label {
+  text-align: center;
 }

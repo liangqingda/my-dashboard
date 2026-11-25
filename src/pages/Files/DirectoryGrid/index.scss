@@ -28,3 +28,25 @@
   flex-direction: column;
   gap: 10px;
 }
+
+/* 段与段之间用分割线隔开（访达风格），只作用在非表格视图 */
+.group + .group {
+  border-top: 1px solid var(--app-line);
+  padding-top: 12px;
+}
+
+/* 收起动画：外层网格行高 1fr → 0fr，内层裁掉溢出内容 */
+.body {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 160ms ease;
+}
+
+.bodyCollapsed {
+  grid-template-rows: 0fr;
+}
+
+.bodyInner {
+  min-height: 0;
+  overflow: hidden;
+}

@@ -150,9 +150,12 @@ export type UseFilesViewModeResult = {
   view: FilesViewMode;
   /** 是不是网格形态；页面据此决定渲染哪一份 */
   isGridView: boolean;
-  /** 切到另一种形态并写回存储 */
-  toggle: () => void;
+  /** 切到指定形态并写回存储 */
+  setView: (view: FilesViewMode) => void;
 };
+
+/** 列表分组键：文件夹 / 应用 / 文件分类（应用包文件并入「其它」，不另成一段） */
+export type EntryGroupKey = 'folder' | 'app' | Exclude<FileCategory, 'app'>;
 
 /** 表格的一行：一个条目一行，文件夹在前、应用其次、文件在后（与网格同一顺序） */
 export type FilesRow =

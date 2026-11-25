@@ -6,6 +6,7 @@ import type { DragEvent } from 'react';
 
 import type {
   AppEntry,
+  EntryGroupKey,
   FileEntry,
   FilesRow,
   FolderEntry,
@@ -29,6 +30,10 @@ export type FilesEntriesProps = {
   isGridView: boolean;
   /** 列表是否按类型分组成段展示 */
   grouped: boolean;
+  /** 已收起的分组键集合；空集表示全部展开 */
+  collapsedGroups: ReadonlySet<EntryGroupKey>;
+  /** 切换某一组的展开 / 收起 */
+  onToggleGroup: (key: EntryGroupKey) => void;
   /** 正在切目录取数：整块列表蒙一层 loading */
   loading: boolean;
   /** 正在打开的文件夹路径：该瓦片 / 行显示进度 */

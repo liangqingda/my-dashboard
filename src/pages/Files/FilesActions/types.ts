@@ -3,7 +3,12 @@
  */
 
 import type { UseFilesSettingsResult } from '../hooks/useFilesSettings';
-import type { FavoriteEntry, FileCategory, TypeFilterMode } from '../types';
+import type {
+  FavoriteEntry,
+  FileCategory,
+  FilesViewMode,
+  TypeFilterMode,
+} from '../types';
 
 /** 同时只开一块弹层：收藏面板 / 筛选面板 / 设置面板 */
 export type FilesActionsPanel = 'favorites' | 'filter' | 'settings';
@@ -16,8 +21,8 @@ export type FilesActionsProps = {
   createDisabled: boolean;
   /** 当前目录是否已收藏 */
   isFavorite: boolean;
-  /** 当前是不是网格形态（决定切换按钮的图标与文案） */
-  isGridView: boolean;
+  /** 当前展示形态：网格 / 表格（视图切换入口在设置面板里） */
+  view: FilesViewMode;
   /** 还没选目录时收藏按钮禁用 */
   favoriteDisabled: boolean;
   /** 收藏的目录列表，排成收藏面板的条目 */
@@ -46,8 +51,8 @@ export type FilesActionsProps = {
   onCreateFolder: () => void;
   /** 收藏 / 取消收藏当前目录 */
   onToggleFavorite: () => void;
-  /** 网格 ⇄ 表格切换 */
-  onToggleViewMode: () => void;
+  /** 改展示形态（网格 / 表格） */
+  onViewModeChange: (view: FilesViewMode) => void;
   /** 点收藏面板某一条直达该目录 */
   onOpenFavorite: (dir: string) => void;
   /** 移除一条收藏 */

@@ -5,10 +5,11 @@ import { cx } from '@/utils/cx';
 
 import AppTile from '../AppTile';
 import EntryGroupHeader from '../EntryGroupHeader';
-import { ENTRY_KIND_LABELS } from '../constants';
-import type { FileEntry, FolderEntry } from '../types';
+import { ENTRY_GROUP_LABELS } from '../constants';
+import type { EntryGroupKey, FileEntry, FolderEntry } from '../types';
 import FileTile from '../FileTile';
 import FolderTile from '../FolderTile';
+import { groupFilesByCategory } from '../utils/entries-view';
 import { isAppFolder } from '../utils/files';
 import { tileIconSize } from '../utils/tile-metrics';
 
@@ -30,13 +31,14 @@ const allowMoveOverGrid = (event: DragEvent<HTMLDivElement>) => {
  * 应用可点击打开、也可卸载，不参与拖拽移动。拖拽落在空白处不触发移动，等同取消。
  * 条目数量已经整份在客户端，不做分页或虚拟滚动（见 `docs/pages.md`）。
  *
- * 分组模式下按「文件夹 → 应用 → 文件」切成纵向分段，每段带一条分组标题，
- * 外观对齐 macOS 访达的分组；分组开关在设置面板里，默认平铺。
+ * 分组模式下按「文件夹 → 应用 → 文件分类」切成纵向分段，每段带一条分组标题，
+ * 点标题整行切换展开 / 收起（收起有高度过渡），段与段之间用分割线隔开；
+ * 分组开关在设置面板里，默认平铺。
  *
- * 多选（待拖拽区）在**容器**上一次性接住，而不是给每个瓦片加一层 onClick：
- * 瓦片自己的点击是「打开 / 预览」，这里在捕获阶段先判断——带 ⌘ / Shift，
- * 或待拖拽区已经非空时，点条目就变成加入 / 移除，并拦住瓦片原本的打开行为。
+ * 多选（待拖拽区）在容器捕获阶段统一接住：带 ⌘ / Shift，或待拖拽区已非空时，
+ * 点条目变成加入 / 移除，并拦住瓦片原本的打开行为。
  */
+
 /** 可预览的文件按分类分给对应的弹窗；其它文件点不动 */
 const previewHandler = (
   file: FileEntry,
@@ -56,6 +58,7 @@ const previewHandler = (
 
 const DirectoryGrid = ({
   apps,
+  collapsedGroups,
   dragSource,
   dropTarget,
   files,
@@ -77,6 +80,7 @@ const DirectoryGrid = ({
   onOpenVideo,
   onRequestDeleteEntry,
   onRequestUninstallApp,
+  onToggleGroup,
   onTogglePending,
   pendingActive,
   pendingPaths,
@@ -103,6 +107,9 @@ const DirectoryGrid = ({
 
     return map;
   }, [files, folders]);
+
+  /** 文件按分类归段：分组模式下每一段一种分类 */
+  const fileGroups = useMemo(() => groupFilesByCategory(files), [files]);
 
   const handleClickCapture = (event: MouseEvent<HTMLDivElement>) => {
     const { target } = event;
@@ -178,71 +185,84 @@ const DirectoryGrid = ({
       />
     ));
 
-  const renderFiles = () =>
-    files.map((file) => (
-      <FileTile
-        dragging={dragSource === file.path}
-        file={file}
-        hideActions={pendingActive}
-        key={file.path}
-        onDragEnd={onDragEnd}
-        onDragStartEntry={() => onDragStartEntry(file)}
-        onEdit={() => onEditEntry(file)}
-        onOpen={previewHandler(file, onOpenVideo, onOpenImage)}
-        onOpenExternal={onOpenExternalVideo}
-        onRequestDelete={() => onRequestDeleteEntry(file.path)}
-        pending={pendingSet.has(file.path)}
-        tipOff={tipsOff}
-        veilOpacity={veilOpacity}
-        videoApp={videoApp}
-        videoOpenMode={videoOpenMode}
-        videoThumbStyle={videoThumbStyle}
-      />
-    ));
-
-  /** 段内瓦片网格：列宽口径与平铺网格同一份规则 */
-  const groupGrid = (tiles: ReactNode) => (
-    <div className={cx(styles.grid, fixedColumns && styles.gridFixed)}>{tiles}</div>
+  const renderFileTile = (file: FileEntry) => (
+    <FileTile
+      dragging={dragSource === file.path}
+      file={file}
+      hideActions={pendingActive}
+      key={file.path}
+      onDragEnd={onDragEnd}
+      onDragStartEntry={() => onDragStartEntry(file)}
+      onEdit={() => onEditEntry(file)}
+      onOpen={previewHandler(file, onOpenVideo, onOpenImage)}
+      onOpenExternal={onOpenExternalVideo}
+      onRequestDelete={() => onRequestDeleteEntry(file.path)}
+      pending={pendingSet.has(file.path)}
+      tipOff={tipsOff}
+      veilOpacity={veilOpacity}
+      videoApp={videoApp}
+      videoOpenMode={videoOpenMode}
+      videoThumbStyle={videoThumbStyle}
+    />
   );
+
+  /** 一个分组段：标题整行可折叠，段内瓦片走网格列宽规则 */
+  const renderGroup = (key: EntryGroupKey, tiles: ReactNode, count: number) => {
+    if (count === 0) {
+      return null;
+    }
+
+    const collapsed = collapsedGroups.has(key);
+
+    return (
+      <section className={styles.group}>
+        <EntryGroupHeader
+          collapsed={collapsed}
+          label={ENTRY_GROUP_LABELS[key]}
+          onToggle={() => onToggleGroup(key)}
+        />
+        <div className={cx(styles.body, collapsed && styles.bodyCollapsed)}>
+          <div className={styles.bodyInner}>
+            <div className={cx(styles.grid, fixedColumns && styles.gridFixed)}>
+              {tiles}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  };
 
   const renderGrouped = () => (
     <>
-      {folders.length > 0 ? (
-        <section className={styles.group}>
-          <EntryGroupHeader label={ENTRY_KIND_LABELS.folder} />
-          {groupGrid(renderFolders())}
-        </section>
-      ) : null}
-      {apps.length > 0 ? (
-        <section className={styles.group}>
-          <EntryGroupHeader label={ENTRY_KIND_LABELS.app} />
-          {groupGrid(renderApps())}
-        </section>
-      ) : null}
-      {files.length > 0 ? (
-        <section className={styles.group}>
-          <EntryGroupHeader label={ENTRY_KIND_LABELS.file} />
-          {groupGrid(renderFiles())}
-        </section>
-      ) : null}
+      {renderGroup('folder', renderFolders(), folders.length)}
+      {renderGroup('app', renderApps(), apps.length)}
+      {fileGroups.map((group) =>
+        renderGroup(
+          group.key,
+          group.entries.map(renderFileTile),
+          group.entries.length,
+        ),
+      )}
     </>
   );
 
   return (
     <div
-      className={cx(
-        styles.grid,
-        fixedColumns && styles.gridFixed,
-        grouped && styles.grouped,
-      )}
+      className={
+        grouped
+          ? styles.grouped
+          : cx(styles.grid, fixedColumns && styles.gridFixed)
+      }
       onClickCapture={handleClickCapture}
       onDragOver={allowMoveOverGrid}
     >
-      {grouped ? renderGrouped() : (
+      {grouped ? (
+        renderGrouped()
+      ) : (
         <>
           {renderFolders()}
           {renderApps()}
-          {renderFiles()}
+          {files.map(renderFileTile)}
         </>
       )}
     </div>

@@ -16,7 +16,12 @@ import {
 import { createChoiceCodec } from '@/utils/local-storage';
 import { scopedStorageKey } from '@/utils/page-storage';
 
-import type { FavoriteEntry, FileCategory, FilesViewMode } from './types';
+import type {
+  EntryGroupKey,
+  FavoriteEntry,
+  FileCategory,
+  FilesViewMode,
+} from './types';
 
 /**
  * 这一页在 localStorage 里的页面标识：对应路由 `/files`
@@ -104,6 +109,28 @@ export const ENTRY_KIND_LABELS = {
   app: '应用',
   file: '文件',
 } as const;
+
+/** 分组键的固定顺序：文件夹 → 应用 → 文件分类，与平铺顺序一致 */
+export const ENTRY_GROUP_KEYS: readonly EntryGroupKey[] = [
+  'folder',
+  'app',
+  'video',
+  'image',
+  'pdf',
+  'markdown',
+  'other',
+];
+
+/** 分组键 → 中文标题：文件夹 / 应用沿用条目类型名，文件分类沿用分类标签 */
+export const ENTRY_GROUP_LABELS: Record<EntryGroupKey, string> = {
+  folder: ENTRY_KIND_LABELS.folder,
+  app: ENTRY_KIND_LABELS.app,
+  video: FILE_CATEGORY_LABELS.video,
+  image: FILE_CATEGORY_LABELS.image,
+  pdf: FILE_CATEGORY_LABELS.pdf,
+  markdown: FILE_CATEGORY_LABELS.markdown,
+  other: FILE_CATEGORY_LABELS.other,
+};
 
 /** 展示形式（网格 / 表格）的存储键：刷新页面重新进入后保持上次切换到的形态 */
 export const VIEW_MODE_STORAGE_KEY = scopedStorageKey(

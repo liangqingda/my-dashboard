@@ -6,6 +6,7 @@ import type { DragEvent } from 'react';
 
 import type {
   AppEntry,
+  EntryGroupKey,
   FileEntry,
   FolderEntry,
   VideoOpenMode,
@@ -22,6 +23,10 @@ export type DirectoryGridProps = {
   files: FileEntry[];
   /** 列表是否按类型分组成段展示 */
   grouped: boolean;
+  /** 已收起的分组键集合；空集表示全部展开 */
+  collapsedGroups: ReadonlySet<EntryGroupKey>;
+  /** 切换某一组的展开 / 收起 */
+  onToggleGroup: (key: EntryGroupKey) => void;
   /** 列表正在取数：只有取数期间才给对应文件夹瓦片挂进度 */
   loading: boolean;
   /** 正在打开的文件夹路径；null 表示没有打开请求在跑 */

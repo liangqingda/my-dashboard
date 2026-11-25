@@ -3,7 +3,7 @@
  * 行可拖拽（应用除外，移动 .app 会破坏系统登记），文件夹行是放置目标；
  * 重命名 / 删除走与瓦片同一组按钮，应用只有卸载一项。
  * 表格外观（边框、表头吸顶、行 hover）由 `FreeTable` 统一给，这里只管列宽与内容。
- * 分组模式下按「文件夹 → 应用 → 文件」切成纵向分段，段标题外观走 `EntryGroupHeader`。
+ * 分组模式下按「文件夹 → 应用 → 文件分类」切成纵向分段，段标题整行可点折叠、整行居中。
  */
 
 import type { DragEvent, MouseEvent } from 'react';
@@ -15,7 +15,7 @@ import { cx } from '@/utils/cx';
 import EntryGroupHeader from '../EntryGroupHeader';
 import EntryTileActions from '../EntryTileActions';
 import TableNameCell from '../TableNameCell';
-import { ENTRY_KIND_LABELS } from '../constants';
+import { ENTRY_GROUP_LABELS, ENTRY_KIND_LABELS, FILE_CATEGORY_LABELS } from '../constants';
 import type { FileEntry, FilesRow, FolderEntry } from '../types';
 import { entryOf, groupFilesRows } from '../utils/entries-view';
 import { writeDragPayload } from '../utils/drag-image';
@@ -25,8 +25,22 @@ import type { FilesTableProps } from './types';
 
 import styles from './index.scss';
 
+/** 类别列文案：文件夹 / 应用沿用类型名，文件落到细分分类 */
+const categoryLabel = (row: FilesRow): string => {
+  if (row.kind === 'folder') {
+    return ENTRY_KIND_LABELS.folder;
+  }
+
+  if (row.kind === 'app') {
+    return ENTRY_KIND_LABELS.app;
+  }
+
+  return FILE_CATEGORY_LABELS[row.file.category];
+};
+
 const FilesTable = memo(
   ({
+    collapsedGroups,
     dragSource,
     dropTarget,
     grouped,
@@ -45,6 +59,7 @@ const FilesTable = memo(
     onOpenVideo,
     onRequestDeleteEntry,
     onRequestUninstallApp,
+    onToggleGroup,
     onTogglePending,
     pendingActive,
     pendingPaths,
@@ -68,7 +83,7 @@ const FilesTable = memo(
       return map;
     }, [rows]);
 
-    /** 分组模式：把行按类型归进固定顺序的分段，空组已丢掉 */
+    /** 分组模式：把行按分组键归进固定顺序的分段，空组已丢掉 */
     const groups = useMemo(
       () => (grouped ? groupFilesRows(rows) : []),
       [grouped, rows],
@@ -177,7 +192,7 @@ const FilesTable = memo(
             />
           </FreeTable.Td>
           <FreeTable.Td className={styles.kindWidth}>
-            {ENTRY_KIND_LABELS[row.kind]}
+            {categoryLabel(row)}
           </FreeTable.Td>
           <FreeTable.Td className={styles.actionWidth}>
             <EntryTileActions
@@ -207,14 +222,27 @@ const FilesTable = memo(
           </FreeTable.Thead>
           <FreeTable.Tbody>
             {grouped
-              ? groups.flatMap((group) => [
-                  <FreeTable.Tr className={styles.groupRow} key={group.key}>
-                    <FreeTable.Td colSpan={3}>
-                      <EntryGroupHeader label={ENTRY_KIND_LABELS[group.key]} />
-                    </FreeTable.Td>
-                  </FreeTable.Tr>,
-                  ...group.entries.map(renderRow),
-                ])
+              ? groups.flatMap((group) => {
+                  const collapsed = collapsedGroups.has(group.key);
+
+                  return [
+                    <FreeTable.Tr
+                      className={styles.groupRow}
+                      key={group.key}
+                      onClick={() => onToggleGroup(group.key)}
+                    >
+                      <FreeTable.Td colSpan={3}>
+                        <EntryGroupHeader
+                          align="center"
+                          collapsed={collapsed}
+                          label={ENTRY_GROUP_LABELS[group.key]}
+                          onToggle={() => onToggleGroup(group.key)}
+                        />
+                      </FreeTable.Td>
+                    </FreeTable.Tr>,
+                    ...(collapsed ? [] : group.entries.map(renderRow)),
+                  ];
+                })
               : rows.map(renderRow)}
           </FreeTable.Tbody>
         </FreeTable>

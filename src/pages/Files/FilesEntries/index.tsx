@@ -18,6 +18,7 @@ import styles from './index.scss';
 
 const FilesEntries = ({
   apps,
+  collapsedGroups,
   dragSource,
   dropTarget,
   files,
@@ -41,6 +42,7 @@ const FilesEntries = ({
   onOpenVideo,
   onRequestDeleteEntry,
   onRequestUninstallApp,
+  onToggleGroup,
   onTogglePending,
   pendingActive,
   pendingPaths,
@@ -74,6 +76,7 @@ const FilesEntries = ({
       {isGridView ? (
         <DirectoryGrid
           apps={apps}
+          collapsedGroups={collapsedGroups}
           dragSource={dragSource}
           dropTarget={dropTarget}
           files={files}
@@ -96,6 +99,7 @@ const FilesEntries = ({
           onOpenVideo={onOpenVideo}
           onRequestDeleteEntry={onRequestDeleteEntry}
           onRequestUninstallApp={onRequestUninstallApp}
+          onToggleGroup={onToggleGroup}
           onTogglePending={onTogglePending}
           pendingActive={pendingActive}
           pendingPaths={pendingPaths}
@@ -107,6 +111,7 @@ const FilesEntries = ({
         />
       ) : (
         <FilesTable
+          collapsedGroups={collapsedGroups}
           dragSource={dragSource}
           dropTarget={dropTarget}
           grouped={grouped}
@@ -125,6 +130,7 @@ const FilesEntries = ({
           onOpenVideo={onOpenVideo}
           onRequestDeleteEntry={onRequestDeleteEntry}
           onRequestUninstallApp={onRequestUninstallApp}
+          onToggleGroup={onToggleGroup}
           onTogglePending={onTogglePending}
           pendingActive={pendingActive}
           pendingPaths={pendingPaths}

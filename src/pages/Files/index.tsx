@@ -20,6 +20,7 @@ import { useFavorites } from './hooks/useFavorites';
 import { useFilesDir } from './hooks/useFilesDir';
 import { useFilesFilterActions } from './hooks/useFilesFilterActions';
 import { useFilesViewMode } from './hooks/useFilesViewMode';
+import { useGroupCollapse } from './hooks/useGroupCollapse';
 import { useFilesNavigation } from './hooks/useFilesNavigation';
 import { useImagePreview } from './hooks/useImagePreview';
 import { usePendingDrag } from './hooks/usePendingDrag';
@@ -35,8 +36,9 @@ import styles from './index.scss';
 /**
  * 文件浏览页：按 macOS 目录网格展示本机指定目录下的子文件夹、应用包与文件，不限文件类型；
  * 应用包按一条应用展示（真实图标 + 卸载入口），不当作可进入的文件夹。
- * 标题栏的图标按钮可在网格与表格（名称 / 类别 / 操作三列）两种展示形式之间切换，结果记在 localStorage。
- * 设置面板可开启按类型分组成段（文件夹 / 应用 / 文件，对齐 macOS 访达分组），默认平铺，偏好同样持久化。
+ * 网格与表格（名称 / 类别 / 操作三列）两种展示形式在设置面板外观组里切换，结果记在 localStorage。
+ * 设置面板可开启按类型分组成段（文件夹 / 应用 / 视频 / 图片 / PDF / Markdown / 其它，对齐 macOS 访达分组），
+ * 段标题整行可点折叠收起；默认平铺，分组偏好持久化，折叠状态只留在会话内。
  * 点文件夹进入下一层，面包屑回退，`⌘↑` 回上一级；可收藏常用目录，在收藏面板里点选直达；
  * 拖起任一条目会打开移动弹窗：全屏逐层挑目标文件夹，面包屑换层，松手没落成移动就把条目留在手里；
  * 弹窗 header 有收藏当前层 / 新建文件夹 / 选本地目录三颗按钮（都走页面同一套流程），
@@ -78,8 +80,10 @@ const Files = () => {
   const typeFilter = useTypeFilter();
   const { onChange: onSelectedCategoriesChange, selected: selectedCategories } =
     typeFilter;
-  /** 展示形式：网格 / 表格，切换按钮在标题栏 */
-  const { isGridView, toggle: toggleViewMode } = useFilesViewMode();
+  /** 展示形式：网格 / 表格，切换入口在设置面板外观组里 */
+  const { isGridView, setView, view } = useFilesViewMode();
+  /** 分组折叠：会话内状态，网格 / 表格共用同一份收起集合 */
+  const { collapsedGroups, toggleGroup } = useGroupCollapse();
   /** 文件页设置（放在视频预览之前）：点视频的去向、两扇预览是否默认全屏 */
   const settings = useFilesSettings();
 
@@ -213,7 +217,6 @@ const Files = () => {
           favoriteDisabled={currentEntry === null}
           favorites={favorites}
           isFavorite={currentEntry !== null && isFavorite(currentEntry.path)}
-          isGridView={isGridView}
           keyword={keyword}
           loading={loading}
           onCreateFolder={entryActions.createEntry}
@@ -231,13 +234,14 @@ const Files = () => {
             }
           }}
           onTogglePinnedFavorite={togglePinnedFavorite}
-          onToggleViewMode={toggleViewMode}
           onTypeFilterModeChange={changeFilterMode}
+          onViewModeChange={setView}
           openPanel={openPanel}
           picking={picking}
           selectedCategories={selectedCategories}
           settings={settings}
           typeFilterMode={settings.filterMode}
+          view={view}
         />
       }
       description={describeDirSpace(listing?.space ?? null)}
@@ -266,6 +270,7 @@ const Files = () => {
         {listing !== null && !list.showSkeleton && !list.showEmpty ? (
           <FilesEntries
             apps={list.visibleApps}
+            collapsedGroups={collapsedGroups}
             dragSource={entryActions.dragSource}
             dropTarget={entryActions.dropTarget}
             files={list.visibleFiles}
@@ -289,6 +294,7 @@ const Files = () => {
             onOpenVideo={openVideo}
             onRequestDeleteEntry={requestDelete}
             onRequestUninstallApp={appUninstall.requestUninstall}
+            onToggleGroup={toggleGroup}
             onTogglePending={pending.toggle}
             pendingActive={pending.active}
             pendingPaths={pending.entries.map((entry) => entry.path)}

@@ -1,5 +1,6 @@
 /**
- * 文件页设置面板：分组展示、筛选方式、视频点击后与外部应用、视频封面、悬浮玻璃透明度、预览默认全屏。
+ * 文件页设置面板：外观（视图形态、分组展示、悬浮玻璃透明度）、筛选方式、视频点击后与外部应用、
+ * 视频封面、预览默认全屏。
  * 设置项会越加越多，所以按主题分组（每组一块浅底色、不描边），组内字段横向排、放不下自动换行；
  * 分组与字段的外观走 `FreePanelGroup` / `FreePanelField`，与视频预览的设置面板同一套。
  *
@@ -26,6 +27,7 @@ import FreePanelGroup from '@/components/panels/FreePanelGroup';
 
 import { useVideoApps } from '../../hooks/useVideoApps';
 import type {
+  FilesViewMode,
   TypeFilterMode,
   VideoOpenMode,
   VideoThumbStyle,
@@ -34,6 +36,12 @@ import type {
 import type { SettingsPanelProps } from './types';
 
 import styles from './index.scss';
+
+/** 展示形态的两档文案 */
+const VIEW_MODE_OPTIONS = [
+  { label: '网格', value: 'grid' },
+  { label: '表格', value: 'table' },
+];
 
 /** 筛选方式的两档文案 */
 const FILTER_MODE_OPTIONS = [
@@ -65,11 +73,13 @@ const SettingsPanel = ({
   onVideoFullscreenChange,
   onVideoOpenModeChange,
   onVideoThumbStyleChange,
+  onViewModeChange,
   veilOpacity,
   videoApp,
   videoFullscreen,
   videoOpenMode,
   videoThumbStyle,
+  view,
 }: SettingsPanelProps) => {
   /** 候选应用按需现取：面板挂载时取一次，页面别为一条设置常驻一份列表 */
   const { apps, error, loading } = useVideoApps();
@@ -81,12 +91,33 @@ const SettingsPanel = ({
   return (
     <Stack gap="sm">
       <FreePanelGroup title="外观">
+        <FreePanelField label="视图形态">
+          <SegmentedControl
+            data={VIEW_MODE_OPTIONS}
+            fullWidth
+            onChange={(value) => onViewModeChange(value as FilesViewMode)}
+            size="xs"
+            value={view}
+          />
+        </FreePanelField>
         <FreePanelField label="分组展示">
           <Switch
             checked={grouped}
             label="按类型分组排列"
             onChange={(event) => onGroupedChange(event.currentTarget.checked)}
             size="xs"
+          />
+        </FreePanelField>
+        <FreePanelField label="悬浮玻璃透明度" value={`${veilOpacity}%`} wide>
+          {/* 数值只在标题行里给：气泡一拖就浮出来会挡手，这里彻底关掉（传 null 后 hover / 拖拽 / 聚焦都不渲染） */}
+          <Slider
+            label={null}
+            max={100}
+            min={0}
+            onChange={onVeilOpacityChange}
+            size="xs"
+            step={5}
+            value={veilOpacity}
           />
         </FreePanelField>
       </FreePanelGroup>
@@ -148,21 +179,6 @@ const SettingsPanel = ({
             />
           </FreePanelField>
         ) : null}
-      </FreePanelGroup>
-
-      <FreePanelGroup title="悬浮玻璃">
-        <FreePanelField label="透明度" value={`${veilOpacity}%`} wide>
-          {/* 数值只在标题行里给：气泡一拖就浮出来会挡手，这里彻底关掉（传 null 后 hover / 拖拽 / 聚焦都不渲染） */}
-          <Slider
-            label={null}
-            max={100}
-            min={0}
-            onChange={onVeilOpacityChange}
-            size="xs"
-            step={5}
-            value={veilOpacity}
-          />
-        </FreePanelField>
       </FreePanelGroup>
 
       <FreePanelGroup title="预览">

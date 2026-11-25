@@ -19,6 +19,7 @@
 | 新建 / 修改任何规范文档：`docs/`、入口 `AGENTS.md`、组件或 hook 的 `README.md` | `docs/doc-writing.md` |
 | 要在 `../learn-english` 这类目标仓库里加能力 / 改它的代码或数据、新增或修改本机仓库读写、动 `scripts/vite/*` 与自动提交、笔记数据修源头 | `docs/local-repo-data.md` |
 | 收尾 / 提交 / 交付前 | `docs/self-check.md` |
+| 自审 / 开发中遇到工具兜不住、容易返工的常见小坑，对照已积累条目修复并补记 | `docs/lessons.md` |
 
 ## 硬约束速览
 

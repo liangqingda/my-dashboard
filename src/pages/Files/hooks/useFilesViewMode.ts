@@ -5,8 +5,6 @@
  * 两种形态读的是同一份目录结果，切视图只决定渲染哪一份，不重新取数。
  */
 
-import { useCallback } from 'react';
-
 import { useStoredState } from '@/hooks/useStoredState';
 
 import { VIEW_MODE_CODEC, VIEW_MODE_STORAGE_KEY } from '../constants';
@@ -15,9 +13,5 @@ import type { UseFilesViewModeResult } from '../types';
 export const useFilesViewMode = (): UseFilesViewModeResult => {
   const [view, setView] = useStoredState(VIEW_MODE_STORAGE_KEY, VIEW_MODE_CODEC);
 
-  const toggle = useCallback(() => {
-    setView(view === 'grid' ? 'table' : 'grid');
-  }, [setView, view]);
-
-  return { isGridView: view === 'grid', toggle, view };
+  return { isGridView: view === 'grid', setView, view };
 };

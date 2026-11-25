@@ -3,9 +3,11 @@
  * 两块纯计算从页面里挪出来，页面只接结果。
  */
 
+import { ENTRY_GROUP_KEYS } from '../constants';
 import type {
   AppEntry,
   DirListing,
+  EntryGroupKey,
   FileCategory,
   FileEntry,
   FilesRow,
@@ -41,36 +43,38 @@ export type VisibleEntries = {
   rows: FilesRow[];
 };
 
-/** 分组的条目类型：与表格行的 kind 同一套 */
-export type EntryGroupKey = FilesRow['kind'];
-
-/** 分组的固定顺序：文件夹 → 应用 → 文件，与平铺顺序一致 */
-export const ENTRY_GROUP_KEYS: readonly EntryGroupKey[] = [
-  'folder',
-  'app',
-  'file',
-];
-
-/** 一个非空分组：标题取 `ENTRY_KIND_LABELS[key]` */
+/** 一个非空分组：标题取 `ENTRY_GROUP_LABELS[key]` */
 export type EntryGroup<T> = {
   key: EntryGroupKey;
   entries: T[];
 };
 
-/** 把表格行按类型归进固定顺序的分组；空组丢掉，顺序与平铺一致 */
+/** 文件归类到分组键：分类为应用包的文件并入「其它」，不与应用段重复 */
+const fileGroupKey = (file: FileEntry): EntryGroupKey =>
+  file.category === 'app' ? 'other' : file.category;
+
+/** 把文件按分类归段，顺序沿用分组档位；空组丢掉 */
+export const groupFilesByCategory = (
+  files: FileEntry[],
+): EntryGroup<FileEntry>[] =>
+  ENTRY_GROUP_KEYS.map((key) => ({
+    entries: files.filter((file) => fileGroupKey(file) === key),
+    key,
+  })).filter((group) => group.entries.length > 0);
+
+/** 把表格行按分组键归进固定顺序的分段；空组丢掉，顺序与平铺一致 */
 export const groupFilesRows = (rows: FilesRow[]): EntryGroup<FilesRow>[] => {
-  const buckets: Record<EntryGroupKey, FilesRow[]> = {
-    app: [],
-    file: [],
-    folder: [],
-  };
+  const buckets: Partial<Record<EntryGroupKey, FilesRow[]>> = {};
 
   for (const row of rows) {
-    buckets[row.kind] = [...buckets[row.kind], row];
+    const key: EntryGroupKey =
+      row.kind === 'file' ? fileGroupKey(row.file) : row.kind;
+
+    buckets[key] = [...(buckets[key] ?? []), row];
   }
 
   return ENTRY_GROUP_KEYS.map((key) => ({
-    entries: buckets[key],
+    entries: buckets[key] ?? [],
     key,
   })).filter((group) => group.entries.length > 0);
 };
