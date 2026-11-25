@@ -71,8 +71,8 @@ export const SEEK_STEP_CODEC: StoredFieldCodec<number> = {
 };
 
 /**
- * 导出目录的编解码：截图与音频共用同一套口径——空串表示默认，
- * 默认落到哪里由调用方的落盘接口解释（截图是桌面，音频是视频所在目录）。
+ * 截图目录的编解码：空串表示默认，默认落到桌面——
+ * 具体落点由调用方的落盘接口解释。
  */
 export const EXPORT_DIR_CODEC: StoredFieldCodec<string> = {
   decode: (value) => (typeof value === 'string' ? value : ''),

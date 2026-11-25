@@ -57,7 +57,7 @@
 入口文档行数与索引对应 / `CLAUDE.md` 软链形态，项目事实不上提；例外要在脚本白名单里登记）、
 `liangqingda-check-scss src`（共享包零依赖 CLI，样式块间空行 / 选择器列表 / 行尾空格 /
 类名：非 ASCII、数字或连字符开头、下划线、同文件混用 camelCase 与 kebab-case）、
-`scripts/check-imports.mjs`（只剩页面内部必须相对路径）与 `pnpm check:md`（Markdown 往返），
+`scripts/check-imports.mjs`（页面内部必须相对路径 / `dependencies` 都有源码 import）与 `pnpm check:md`（Markdown 往返），
 不合规直接失败。禁裸 `eslint-disable` / 失效 disable / `@ts-ignore`
 由 `@liangqingda/eslint-config@1.6.0` 起的规则兜住（`eslint-comments` 与 `ban-ts-comment`）。
 

@@ -61,8 +61,6 @@ import { ejectVolume } from './files-volume.js';
 /** 截图请求体上限：一帧 PNG 的 base64 通常几 MB，留出余量但拒绝超大载荷 */
 const CAPTURE_BODY_LIMIT = 40 * 1024 * 1024;
 
-/** 音频请求体上限：96k 的 Opus 一小时约 45MB，留出余量给更长的片子 */
-
 /** 统一的 JSON 错误响应 */
 const sendJsonError = (
   res: import('node:http').ServerResponse,

@@ -30,6 +30,13 @@ dev 阶段 `optimizeDeps` 会把依赖入口整包预打包（没用到的也进
 - 反过来，库的语义与自家用法完全一致、又没类型收益（防抖、UUID、深哈希、日期串解析这类）
   就该用库——自己写才会出事。
 
+## 装进来就要能删掉
+
+包只服务某个能力时，那个能力下线要在**同一次改动**里把它从 `package.json` 与 lockfile 移除
+（`pnpm remove <包>` 一步做完），不留「以后也许还用到」。判据是「`src` 与 `scripts/vite` 里
+已经没有任何 `import`」——`pnpm lint` 的 `check-imports` 会按 `dependencies` 逐条校验，
+没人 import 的包直接判失败。
+
 ## 已定案的个例不复述
 
 具体到某个文件为什么没换社区版 / Mantine 版，理由写在**它自己的 JSDoc 头部**

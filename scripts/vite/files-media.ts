@@ -1,6 +1,6 @@
 /**
  * 视频文件的媒体侧能力：把本机视频按 HTTP Range 读给浏览器播放，以及把浏览器产出的
- * 截图（PNG）与导出音频（WebM）写进指定目录。
+ * 截图（PNG）写进指定目录。
  *
  * 与 `files-store.ts` 同一层定位：只做路径校验、读 / 写收口与纯函数，路由壳只拼响应。
  * 这里只放视频——内容接口不接受任意文件，免得把目录里的其它文件也变成可下载的 URL。
@@ -188,7 +188,7 @@ export const openVideoStream = (
     range ? { end: range.end, start: range.start } : undefined,
   );
 
-/** 一次落盘的结果（截图与导出音频共用） */
+/** 一次落盘的结果 */
 export type SavedFile = {
   /** 文件名（含扩展名） */
   name: string;

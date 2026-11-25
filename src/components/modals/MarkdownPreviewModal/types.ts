@@ -550,16 +550,6 @@ export type NoteEditingState = {
   keepEditing: () => void;
 };
 
-/** 翻篇导航的入参：快捷键开关 + 两个翻篇动作（都已收好 header 弹层） */
-export type StepNavigationParams = {
-  /** 是否启用快捷键（弹窗打开、不在编辑态、不在加载中） */
-  enabled: boolean;
-  /** 上一篇动作；null / 不传表示没有相邻文档 */
-  onPrevious?: (() => void) | null;
-  /** 下一篇动作；null / 不传表示没有相邻文档 */
-  onNext?: (() => void) | null;
-};
-
 /** 关闭请求的入参：决定「照常关」还是「拦下来并提示」 */
 export type CloseRequestParams = {
   /** 是否正在编辑（含草稿预览）：这时弹窗不许关，只提示 */

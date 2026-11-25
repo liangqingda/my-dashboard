@@ -1,15 +1,17 @@
 #!/usr/bin/env node
 /**
- * My Dashboard — 页面内部引用检查（补共享 ESLint 配置查不到的那一条）
+ * My Dashboard — 引用检查（补共享 ESLint 配置查不到的那几条）
  *
  * 分组、组间空行、`@/pages/**` 排在公共 `@/**` 之后、值导入里的 `type` 必须单独成句，
  * 这些现在都由 `@liangqingda/eslint-config` 的 `react-typed` 强制（共享包 1.4.0 起），
- * 本脚本不再重复实现，只保留唯一一个 ESLint 表达不了的规则：
+ * 本脚本不再重复实现，只保留 ESLint 表达不了的两条：
  *
- *   页面 / 组件 / 布局目录内部引用自己的文件必须用相对路径，不得绕回 `@/`。
- *   「相对自己这一页」这种判断 ESLint 的 `no-restricted-imports` 写不出来
- *   （它只能禁止某个 pattern，不能表达「只禁止本目录的别名写法」），所以留在这里。
- *   跨出所属目录才用 `@/`（相对路径跨出页面目录由 check-structure.mjs 拦截）。
+ *   1. 页面 / 组件 / 布局目录内部引用自己的文件必须用相对路径，不得绕回 `@/`。
+ *      「相对自己这一页」这种判断 ESLint 的 `no-restricted-imports` 写不出来
+ *      （它只能禁止某个 pattern，不能表达「只禁止本目录的别名写法」），所以留在这里。
+ *      跨出所属目录才用 `@/`（相对路径跨出页面目录由 check-structure.mjs 拦截）。
+ *   2. `dependencies` 里的包必须在源码里真的被 import。功能下线后遗留的包没人会再看
+ *      package.json 才发现，ESLint 也不判依赖清单，只能在这里对一遍。
  *
  * 别在这里再加回分组/顺序/type 的判断：规则一旦在共享包里，两处维护必然漂移。
  */
@@ -115,12 +117,43 @@ const files = collectFiles(SRC);
 
 for (const file of files) checkFile(file);
 
+/** 依赖清单与源码两处要对上：源码 import 过的包才算在用 */
+function checkDependencies() {
+  const pkg = JSON.parse(readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
+  const dependencyNames = Object.keys(pkg.dependencies ?? {});
+  const scriptFiles = collectFiles(path.join(ROOT, 'scripts', 'vite'));
+  const agentFiles = readdirSync(path.join(ROOT, 'agent'))
+    .filter((name) => name.endsWith('.mjs'))
+    .map((name) => path.join(ROOT, 'agent', name));
+  const specifiers = [...files, ...scriptFiles, ...agentFiles].flatMap((file) =>
+    parseImports(readFileSync(file, 'utf8')).map((item) =>
+      extractSpecifier(item.statement),
+    ),
+  );
+
+  for (const name of dependencyNames) {
+    const used = specifiers.some(
+      (specifier) => specifier === name || specifier.startsWith(`${name}/`),
+    );
+
+    if (!used) {
+      errors.push(
+        `package.json 的依赖 "${name}" 没有任何源码 import：能力下线时同步删掉这个包与 lockfile 条目`,
+      );
+    }
+  }
+}
+
+checkDependencies();
+
 if (errors.length > 0) {
-  console.error('[×] 页面内部引用检查未通过：');
+  console.error('[×] 引用检查未通过：');
 
   for (const message of errors) console.error(`  ${message}`);
 
   process.exit(1);
 }
 
-console.log(`[✓] 页面内部引用检查通过：${files.length} 个源文件内部引用均为相对路径`);
+console.log(
+  `[✓] 引用检查通过：${files.length} 个源文件内部引用均为相对路径，dependencies 均有源码 import`,
+);

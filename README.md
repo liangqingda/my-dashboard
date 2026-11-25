@@ -42,8 +42,8 @@ pnpm preview          # 预览构建产物
   `@liangqingda/eslint-config` 的 `react-typed` 强制，`eslint.config.js` 不再覆写 `import/order`。
 - 样式排版（块间空行 / 选择器列表 / 行尾空格）：由共享包的零依赖 CLI
   `liangqingda-check-scss src` 校验（`pnpm check:scss`）。
-- `scripts/check-imports.mjs` 只保留一条 ESLint 表达不了的规则：页面 / 组件 / 布局目录
-  内部必须用相对路径。
+- `scripts/check-imports.mjs` 保留两条 ESLint 表达不了的规则：页面 / 组件 / 布局目录
+  内部必须用相对路径；`dependencies` 里每个包都要在源码里真的被 import。
 - `scripts/check-structure.mjs` 是项目事实（`features` 废弃、菜单页布局），不上提。
 
 ## 本机服务 agent
