@@ -67,6 +67,7 @@ const VideoControls = ({
   enabled,
   muted,
   nav,
+  onPreviewFrameChange,
   onSeek,
   onToggleMute,
   onTogglePlay,
@@ -100,6 +101,18 @@ const VideoControls = ({
   };
 
   useEffect(() => clearRequestTimer, []);
+
+  /**
+   * 把「现在悬停帧显示在哪一秒」告诉播放器：弹窗按回车截图时，
+   * 有悬停帧就存这一帧，没有才退回当前播放画面。
+   */
+  useEffect(() => {
+    onPreviewFrameChange(
+      preview !== null && shownFrame !== null
+        ? { time: preview.time, url: shownFrame }
+        : null,
+    );
+  }, [onPreviewFrameChange, preview, shownFrame]);
 
   /** 指针横向位置 → 时间与浮层位置；停下 80ms 再抽这一秒的帧 */
   const handlePreviewMove = (event: ReactPointerEvent<HTMLDivElement>) => {

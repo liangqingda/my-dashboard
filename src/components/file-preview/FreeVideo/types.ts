@@ -20,6 +20,9 @@ export type FreeVideoNav = {
   nextLabel?: string;
 };
 
+/** 悬停帧快照：有悬停预览时给一张 PNG data URL（尽力按视频原始尺寸），否则 `null` */
+export type HoverFrameGrabber = () => Promise<string | null>;
+
 /** 播放器入参 */
 export type FreeVideoProps = {
   /** 视频地址 */
@@ -33,6 +36,11 @@ export type FreeVideoProps = {
    * 越界值在这里夹回区间，调用方可以放心传。
    */
   previewScale?: number;
+  /**
+   * 交出「取此刻悬停预览那一帧」的函数：截图时优先用它，拿到的是全分辨率原图，
+   * 不是浮层里那张缩小过的缩略帧。悬停帧收起时回调 `null`，调用方自己退回当前播放帧。
+   */
+  onHoverFrameGrabberReady?: (grabber: HoverFrameGrabber | null) => void;
   /** 附加 class，只用来补外部布局 */
   className?: string;
 };

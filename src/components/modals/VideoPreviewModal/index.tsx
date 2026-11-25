@@ -114,7 +114,8 @@ const VideoPreviewModal = ({
     }
   };
 
-  const { capture, capturing } = useFrameCapture(videoRef, onCapture);
+  const { capture, capturing, handleHoverFrameGrabberReady } =
+    useFrameCapture(videoRef, onCapture);
 
   /** 空格 / header 按钮共用：视频还没解出画面时按了不动 */
   const togglePlay = useCallback(() => {
@@ -326,6 +327,7 @@ const VideoPreviewModal = ({
                 onPrevious: stepBackward,
                 previousLabel: stepPreviousLabel,
               }}
+              onHoverFrameGrabberReady={handleHoverFrameGrabberReady}
               previewScale={settings.previewScale / 100}
               src={activeItem.src}
               videoRef={videoRef}

@@ -44,6 +44,11 @@ export type VideoControlsProps = {
   requestFrame: (time: number, onFrame: (url: string) => void) => void;
   /** 抽帧是否可用（探针已拿到元数据）：false 时不显示预览、进度条回落数字浮标 */
   previewReady: boolean;
+  /**
+   * 悬停帧是否正显示在上面：显示时给这一帧的时间与图片（`url` 是浮层里的缩略图），
+   * 收起 / 转圈等还没出图时给 `null`。截图按它决定存哪一帧。
+   */
+  onPreviewFrameChange: (frame: { time: number; url: string } | null) => void;
   /** 预览框宽（CSS px）：跟着视频画面大小走 */
   previewWidth: number;
   /** 预览框高（CSS px） */

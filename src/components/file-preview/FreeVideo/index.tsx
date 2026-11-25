@@ -30,6 +30,7 @@ import {
   VIDEO_FALLBACK_ASPECT,
 } from './constants';
 import { useControlsVisibility } from './hooks/use-controls-visibility';
+import { useHoverFrameGrabber } from './hooks/use-hover-frame-grabber';
 import { useVideoFrames } from './hooks/use-video-frames';
 import { seekPreviewSize, type SeekPreviewSize } from './utils/preview-size';
 import VideoControls from './VideoControls';
@@ -43,6 +44,7 @@ type PlayerStatus = 'loading' | 'ready' | 'error';
 const FreeVideo = ({
   className,
   nav,
+  onHoverFrameGrabberReady,
   previewScale = SEEK_PREVIEW_SCALE_DEFAULT,
   src,
   videoRef,
@@ -90,6 +92,12 @@ const FreeVideo = ({
     frameLongestEdge,
     probeRef,
     src,
+  });
+
+  /** 悬停帧快照：截图优先存它（全分辨率），悬停收起后交回 `null` */
+  const { handlePreviewFrameChange } = useHoverFrameGrabber({
+    onReady: onHoverFrameGrabberReady,
+    probeRef,
   });
 
   /** 舞台尺寸或画面比例变化时重算预览框：窗口缩放、换屏、竖屏视频都靠这次计算 */
@@ -277,6 +285,7 @@ const FreeVideo = ({
           enabled={status === 'ready'}
           muted={muted}
           nav={nav}
+          onPreviewFrameChange={handlePreviewFrameChange}
           onSeek={seek}
           onToggleMute={toggleMute}
           onTogglePlay={togglePlay}
