@@ -113,16 +113,14 @@
   transition:
     background-color 120ms ease,
     border-color 120ms ease,
-    box-shadow 120ms ease,
-    transform 120ms ease;
+    box-shadow 120ms ease;
 }
 
-/* 平常的 hover：整格亮成强调色并微微抬起——只靠小手说不清「这一格能点 / 能放」 */
+/* 平常的 hover：整格亮成强调色，阴影只往下打——滚动视口会裁掉超出格子上沿的部分，往上抬会把上边框切掉 */
 .folder:hover {
   border-color: var(--app-accent);
   background: var(--app-accent-soft);
   box-shadow: 0 2px 10px rgb(23 37 34 / 12%);
-  transform: translateY(-1px);
 }
 
 .folder:hover .folderIcon {
