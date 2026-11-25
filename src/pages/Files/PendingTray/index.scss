@@ -144,11 +144,12 @@
 }
 
 /*
- * 正飞进来的那一格：**先摆一个空位**（虚线框、透明底），空间立刻占住、位置也不会再变，
- * 飞行块就落在这个空位上；内容（图标 + 名字）在飞行期间是透明的，落定后才淡入——
- * 所以是「空位先出现 → 东西落进去 → 内容淡入」，中间没有跳动。
+ * 正上下飞的那一格：**先摆一个虚位**（虚线框、透明底），空间立刻占住、位置也不会再变，
+ * 飞行块就落在这个虚位上；内容（图标 + 名字）在飞行期间是透明的。
+ * 进来时 = 虚位先出现 → 东西落进去 → 内容由小到大长出；
+ * 出去时 = 整格先变虚位 → 那块飞回列表 → 落定后虚位才撤掉。
  */
-.landing {
+.placeholder {
   border-style: dashed;
   border-color: var(--app-line-strong);
   background: transparent;
@@ -156,7 +157,7 @@
   box-shadow: none;
 }
 
-.landing .chipBody {
+.placeholder .chipBody {
   opacity: 0;
   transform: scale(0.5);
 }

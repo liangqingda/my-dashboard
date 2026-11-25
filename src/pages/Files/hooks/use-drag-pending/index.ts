@@ -19,6 +19,11 @@ export const useDragPending = (): DragPendingState => {
   const [flight, setFlight] = useState<PendingFlight | null>(null);
   /** 列表正往待拖拽区拖的一批；null 表示没有这一程 */
   const [trayDrag, setTrayDrag] = useState<DraggableEntry[] | null>(null);
+  /**
+   * 正飞回列表的那一条：它还留在 `entries` 里，只是那一格改成虚位占着，
+   * 等飞行落定（`clearFlight`）才真正摘掉——否则动画还在半路，格子已经先没了。
+   */
+  const [leaving, setLeaving] = useState<string | null>(null);
 
   const has = (path: string) => entries.some((entry) => entry.path === path);
 
@@ -36,17 +41,25 @@ export const useDragPending = (): DragPendingState => {
       return incoming.length === 0 ? prev : [...prev, ...incoming];
     });
 
-  /** 移出：给了待拖拽区那一格的矩形就播「飞回列表」，否则原地消失 */
+  /**
+   * 移出：给了待拖拽区那一格的矩形就播「飞回列表」——那一条先留在原处变成虚位，
+   * 飞行落定后才摘掉；没给矩形（量不到那一格）就当场移除。
+   */
   const remove = (entry: DraggableEntry, from?: DOMRect) => {
-    if (from !== undefined) {
-      setFlight({ direction: 'out', entry, from });
+    if (from === undefined) {
+      setEntries((prev) => prev.filter((item) => item.path !== entry.path));
+
+      return;
     }
 
-    setEntries((prev) => prev.filter((item) => item.path !== entry.path));
+    setFlight({ direction: 'out', entry, from });
+    setLeaving(entry.path);
   };
 
-  const removePaths = (paths: string[]) =>
+  const removePaths = (paths: string[]) => {
+    setLeaving(null);
     setEntries((prev) => prev.filter((entry) => !paths.includes(entry.path)));
+  };
 
   const toggle = (entry: DraggableEntry, from?: DOMRect) => {
     if (has(entry.path)) {
@@ -69,6 +82,7 @@ export const useDragPending = (): DragPendingState => {
   const clear = () => {
     setEntries([]);
     setFlight(null);
+    setLeaving(null);
   };
 
   return {
@@ -77,11 +91,22 @@ export const useDragPending = (): DragPendingState => {
     addMany,
     beginTrayDrag: (batch) => setTrayDrag(batch),
     clear,
-    clearFlight: () => setFlight(null),
+    /** 飞行播完：进来的那条已经在 `entries` 里，出去的那条到这一刻才摘掉 */
+    clearFlight: () => {
+      if (leaving !== null) {
+        const path = leaving;
+
+        setEntries((prev) => prev.filter((item) => item.path !== path));
+        setLeaving(null);
+      }
+
+      setFlight(null);
+    },
     endTrayDrag: () => setTrayDrag(null),
     entries,
     flight,
     has,
+    leaving,
     remove,
     removePaths,
     toggle,

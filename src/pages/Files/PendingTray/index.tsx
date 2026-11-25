@@ -38,7 +38,7 @@ const PendingTray = ({
   onDragAll,
   onDragEnd,
   onDropPaths,
-  landingPath = null,
+  placeholderPath = null,
   onRemove,
   onSelectAll,
   closed = false,
@@ -127,7 +127,7 @@ const PendingTray = ({
             return (
               <UnstyledButton
                 aria-label={`从待拖拽区移除 ${entry.name}`}
-                className={cx(styles.chip, entry.path === landingPath && styles.landing)}
+                className={cx(styles.chip, entry.path === placeholderPath && styles.placeholder)}
                 data-pending-chip={entry.path}
                 key={entry.path}
                 onClick={(event) =>

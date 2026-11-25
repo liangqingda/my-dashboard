@@ -33,9 +33,11 @@ export type DragPendingState = {
   toggle: (entry: DraggableEntry, from?: DOMRect) => void;
   /** 正在飞的这一条；null 表示没有动画在跑 */
   flight: PendingFlight | null;
-  /** 动画播完（或没播成）时收掉它 */
+  /** 动画播完（或没播成）时收掉它；飞回来的那一条就在这一刻才从 `entries` 里摘掉 */
   clearFlight: () => void;
-  /** 点这一项就移除；带上它在待拖拽区里的矩形就播「飞回列表」 */
+  /** 正飞回列表的那一条（仍在 `entries` 里，那一格先占成虚位）；null 表示没有 */
+  leaving: string | null;
+  /** 点这一项就移除；带上它在待拖拽区里的矩形就播「飞回列表」（那一条留到动画播完才摘） */
   remove: (entry: DraggableEntry, from?: DOMRect) => void;
   /** 批量移除：移动成功的条目从这里摘掉 */
   removePaths: (paths: string[]) => void;
