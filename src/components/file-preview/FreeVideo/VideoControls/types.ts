@@ -2,16 +2,13 @@
  * 播放器控制栏的契约：只展示进度与声音状态，动作全部回调给播放器。
  */
 
-import type { VideoFrame } from '../hooks/use-video-frames';
 import type { FreeVideoNav } from '../types';
 
-/** 进度条悬停预览的落点：帧下标、浮层横向位置与时间 */
+/** 进度条悬停预览的落点：浮层横向位置与这一处的时间 */
 export type SeekPreviewState = {
-  /** 帧图数组里的下标（已夹在数组范围内） */
-  index: number;
   /** 浮层中心相对进度条容器左沿的像素位置（已夹在容器内） */
   left: number;
-  /** 这一处对应的时间（秒） */
+  /** 这一处对应的时间（秒）：帧图就按这个时间去抽，时间标签显示的也是它 */
   time: number;
 };
 
@@ -25,10 +22,8 @@ export type SeekPreviewParams = {
   containerWidth: number;
   /** 视频总时长（秒） */
   duration: number;
-  /** 已备好的帧数 */
-  frameCount: number;
-  /** 一帧覆盖的时长（秒） */
-  frameSpan: number;
+  /** 预览框宽度（CSS px）：贴边夹取要用 */
+  previewWidth: number;
 };
 
 /** 控制栏入参 */
@@ -45,10 +40,14 @@ export type VideoControlsProps = {
   playing: boolean;
   /** 翻篇：给了就画在播放键两侧，到头的一侧置灰；不传则没有这两颗箭头 */
   nav?: FreeVideoNav;
-  /** 进度条悬停预览的帧图：定长数组，抽不到的格子是 null；未备好传 null（回落到数字浮标） */
-  frames?: VideoFrame[] | null;
-  /** 一帧覆盖的时长（秒）：配合 `frames` 换算悬停位置对应哪一帧 */
-  frameSpan?: number;
+  /** 请求某一时刻的帧：已缓存同步回调，否则排队现抽；抽到后回调拿到图 */
+  requestFrame: (time: number, onFrame: (url: string) => void) => void;
+  /** 抽帧是否可用（探针已拿到元数据）：false 时不显示预览、进度条回落数字浮标 */
+  previewReady: boolean;
+  /** 预览框宽（CSS px）：跟着视频画面大小走 */
+  previewWidth: number;
+  /** 预览框高（CSS px） */
+  previewHeight: number;
   /** 播放 / 暂停 */
   onTogglePlay: () => void;
   /** 静音 / 取消静音 */

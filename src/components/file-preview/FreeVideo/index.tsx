@@ -9,6 +9,10 @@
  *
  * 控制栏跟画面走：暂停恒显示，播放中指针一停就收起（1s），指针在控制栏上时始终显示。
  *
+ * 进度条悬停预览：帧图按指针位置现抽（见 `hooks/use-video-frames`）。预览框宽度取
+ * 视频**画面实际显示区域**的 60%（不是舞台宽度，竖屏视频两侧黑边不算在内），
+ * 高度按画面比例算并受舞台高度约束；帧图分辨率跟着预览框 × 设备像素比走，窗口越大越清。
+ *
  * 换片由调用方用 `key` 重挂（每个视频一个实例），不在这里监听 `src` 变化清状态。
  */
 
@@ -19,8 +23,14 @@ import { useMergedRef } from '@mantine/hooks';
 
 import { cx } from '@/utils/cx';
 
-import { CONTROLS_HIDE_DELAY } from './constants';
+import {
+  CONTROLS_HIDE_DELAY,
+  SEEK_PREVIEW_DPR_CAP,
+  VIDEO_FALLBACK_ASPECT,
+} from './constants';
+import { useControlsVisibility } from './hooks/use-controls-visibility';
 import { useVideoFrames } from './hooks/use-video-frames';
+import { seekPreviewSize, type SeekPreviewSize } from './utils/preview-size';
 import VideoControls from './VideoControls';
 import type { FreeVideoProps } from './types';
 
@@ -31,10 +41,11 @@ type PlayerStatus = 'loading' | 'ready' | 'error';
 
 const FreeVideo = ({ className, nav, src, videoRef }: FreeVideoProps) => {
   const ownRef = useRef<HTMLVideoElement | null>(null);
+  /** 舞台引用：预览框尺寸按它和视频画面比例算 */
+  const stageRef = useRef<HTMLDivElement | null>(null);
   /** 抽帧探针：不进画面、不接指针，只给进度条悬停预览取帧 */
   const probeRef = useRef<HTMLVideoElement | null>(null);
   const mergedRef = useMergedRef(ownRef, videoRef);
-  const { frameSpan, frames } = useVideoFrames({ probeRef, src });
   const [status, setStatus] = useState<PlayerStatus>('loading');
   const [buffering, setBuffering] = useState(false);
   const [playing, setPlaying] = useState(false);
@@ -42,70 +53,77 @@ const FreeVideo = ({ className, nav, src, videoRef }: FreeVideoProps) => {
   const [currentTime, setCurrentTime] = useState(0);
   const [volume, setVolume] = useState(1);
   const [muted, setMuted] = useState(false);
-  /** 控制栏是否可见：暂停恒显示，播放中指针静止一会儿就收起 */
-  const [controlsVisible, setControlsVisible] = useState(true);
-  /** 收起计时器：每次指针活动都重置 */
-  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  /** 播放状态与「指针是否停在控制栏上」的即时副本：计时器回调读不到渲染期的 state */
-  const playingRef = useRef(false);
-  const hoveringControlsRef = useRef(false);
+  /** 视频画面比例：竖屏 / 宽幅视频的预览框高矮靠它 */
+  const [videoAspect, setVideoAspect] = useState(VIDEO_FALLBACK_ASPECT);
+  /** 预览框尺寸：跟着舞台与视频比例变化 */
+  const [previewSize, setPreviewSize] = useState<SeekPreviewSize>(() =>
+    seekPreviewSize({ aspect: VIDEO_FALLBACK_ASPECT, stageHeight: 0, stageWidth: 0 }),
+  );
+  /** 控制栏显隐：暂停恒显示，播放中指针静止一会儿收起 */
+  const {
+    enterControls,
+    hold: holdControls,
+    leaveControls,
+    leavePlayer,
+    resume: resumeControls,
+    reveal,
+    visible: controlsVisible,
+  } = useControlsVisibility(CONTROLS_HIDE_DELAY);
 
-  /** 停掉收起计时（收起计时只在不该收时才会被拦住，所以先清干净） */
-  const clearHideTimer = () => {
-    if (hideTimerRef.current === null) {
+  /** 帧图最长边：预览框宽 × 设备像素比（封顶 2 倍），窗口越大帧图越清 */
+  const frameLongestEdge = Math.round(
+    previewSize.width * Math.min(window.devicePixelRatio, SEEK_PREVIEW_DPR_CAP),
+  );
+  const { ready: previewReady, requestFrame } = useVideoFrames({
+    frameLongestEdge,
+    probeRef,
+    src,
+  });
+
+  /** 舞台尺寸或画面比例变化时重算预览框：窗口缩放、换屏、竖屏视频都靠这次计算 */
+  useEffect(() => {
+    const stage = stageRef.current;
+
+    if (stage === null) {
       return;
     }
 
-    clearTimeout(hideTimerRef.current);
-    hideTimerRef.current = null;
-  };
+    const measure = () => {
+      const rect = stage.getBoundingClientRect();
+      const next = seekPreviewSize({
+        aspect: videoAspect,
+        stageHeight: rect.height,
+        stageWidth: rect.width,
+      });
 
-  /** 排一次收起：播放中、且指针不在控制栏上才真的收 */
-  const scheduleHide = () => {
-    clearHideTimer();
+      setPreviewSize((previous) =>
+        previous.height === next.height && previous.width === next.width
+          ? previous
+          : next,
+      );
+    };
 
-    if (!playingRef.current || hoveringControlsRef.current) {
-      return;
-    }
+    measure();
 
-    hideTimerRef.current = setTimeout(() => {
-      hideTimerRef.current = null;
-      setControlsVisible(false);
-    }, CONTROLS_HIDE_DELAY);
-  };
+    const observer = new ResizeObserver(measure);
 
-  /** 指针动一下就把控制栏亮出来，并重新开始计时 */
-  const revealControls = () => {
-    setControlsVisible(true);
-    scheduleHide();
-  };
+    observer.observe(stage);
+
+    return () => observer.disconnect();
+  }, [videoAspect]);
 
   /** 暂停 / 播完：控制栏常驻，不再计时收起 */
   const showControlsForPaused = () => {
-    playingRef.current = false;
     setPlaying(false);
-    clearHideTimer();
-    setControlsVisible(true);
+    holdControls();
   };
 
   /** 开播：控制栏先留着，指针一停再收 */
   const handlePlaying = () => {
-    playingRef.current = true;
     setPlaying(true);
     setBuffering(false);
-    scheduleHide();
+    resumeControls();
   };
-
-  /** 卸载时清掉挂着的计时器 */
-  useEffect(
-    () => () => {
-      if (hideTimerRef.current !== null) {
-        clearTimeout(hideTimerRef.current);
-        hideTimerRef.current = null;
-      }
-    },
-    [],
-  );
 
   /** 播放 / 暂停：用户手势里调用，失败（编码不支持）由 error 事件接管 */
   const togglePlay = () => {
@@ -165,10 +183,10 @@ const FreeVideo = ({ className, nav, src, videoRef }: FreeVideoProps) => {
   return (
     <div
       className={cx(styles.player, className)}
-      onPointerLeave={() => scheduleHide()}
-      onPointerMove={() => revealControls()}
+      onPointerLeave={leavePlayer}
+      onPointerMove={reveal}
     >
-      <div className={styles.stage}>
+      <div className={styles.stage} ref={stageRef}>
         <video
           className={styles.video}
           disablePictureInPicture
@@ -181,8 +199,14 @@ const FreeVideo = ({ className, nav, src, videoRef }: FreeVideoProps) => {
             setBuffering(false);
           }}
           onLoadedMetadata={(event) => {
-            setDuration(event.currentTarget.duration);
+            const { duration: total, videoHeight, videoWidth } = event.currentTarget;
+
+            setDuration(total);
             setStatus('ready');
+
+            if (videoWidth > 0 && videoHeight > 0) {
+              setVideoAspect(videoWidth / videoHeight);
+            }
           }}
           onPause={showControlsForPaused}
           onPlaying={handlePlaying}
@@ -231,22 +255,13 @@ const FreeVideo = ({ className, nav, src, videoRef }: FreeVideoProps) => {
           !controlsVisible && styles.controlsLayerHidden,
         )}
         data-video-controls=""
-        onPointerEnter={() => {
-          hoveringControlsRef.current = true;
-          clearHideTimer();
-          setControlsVisible(true);
-        }}
-        onPointerLeave={() => {
-          hoveringControlsRef.current = false;
-          scheduleHide();
-        }}
+        onPointerEnter={enterControls}
+        onPointerLeave={leaveControls}
       >
         <VideoControls
           currentTime={currentTime}
           duration={duration}
           enabled={status === 'ready'}
-          frameSpan={frameSpan}
-          frames={frames}
           muted={muted}
           nav={nav}
           onSeek={seek}
@@ -254,18 +269,24 @@ const FreeVideo = ({ className, nav, src, videoRef }: FreeVideoProps) => {
           onTogglePlay={togglePlay}
           onVolumeChange={changeVolume}
           playing={playing}
+          previewHeight={previewSize.height}
+          previewReady={previewReady}
+          previewWidth={previewSize.width}
+          requestFrame={requestFrame}
           volume={volume}
         />
       </div>
 
       {/*
-        抽帧探针：同源同地址的第二支 `<video>`，只拿元数据、按需 seek 取帧；
+        抽帧探针：同源同地址的第二支 `<video>`，只按需 seek 取帧；
         1px + 透明 + 不接指针，看不见也不参与布局。用正在播的那支会把它 seek 走。
+        `preload="auto"`：按需抽帧要的就是「seek 后立刻有画面」，先拉点数据比事后临时请求快；
+        探针本身不播、不出声，多下的数据不影响主视频（同一地址走同一份缓存）。
       */}
       <video
         aria-hidden="true"
         className={styles.frameProbe}
-        preload="metadata"
+        preload="auto"
         ref={probeRef}
         src={src}
         tabIndex={-1}

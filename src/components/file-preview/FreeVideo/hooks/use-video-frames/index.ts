@@ -1,175 +1,112 @@
 /**
- * 进度条预览帧：用调用方渲染的一支隐藏探针 `<video>` 均匀抽帧，给进度条 hover 时展示该处画面。
+ * 进度条预览帧：指针停在哪就抽哪一帧，抽过的按时间桶缓存复用。
  *
- * 为什么不用正在播的那个 `<video>`：抽帧要按时间点 seek，seek 一改它的 `currentTime`，
+ * 为什么不用正在播的那个 `<video>`：抽帧要按时间点 seek，seek 一改 `currentTime`，
  * 画面就跟着跳走。所以播放器另挂一支 1px 的探针视频，同源同地址、只负责解码与绘制。
  *
- * 流程：等元数据 → 按「每 4 秒一帧」定出帧数（8–40 档）→ 逐个 seek 到每段中点、
- * 等画面呈现后 `drawImage` 进离屏 canvas、转 JPEG data URL 存进定长数组。
- * 每抽出一帧就更新一次数组（渐进可用）：鼠标停在靠前的位置时不必等整轮跑完。
- * 某一步超时只让那一格留空，浮层取最近的可用帧；整轮拿不到元数据就保持 `null`，
- * 进度条回落到原来的数字浮标，不报错也不影响播放。
+ * 为什么是「按需抽」而不是「预先铺满」：均匀网格的帧只在中点时间上准确，指针落在
+ * 格与格之间时只能拿旧帧顶替，看起来就「差几秒」；按需抽的是指针那一刻的时间，
+ * 浮层的时间标签与画面才对得上。缓存按 0.25 秒一个桶，抽过的位置再 hover 直接出图。
  *
- * 一支探针一次只能 seek 一个点，所以抽帧是串行的（`captureAt` 递归下一帧），
- * 不用循环内 await。
+ * 只抽被问到的位置，不预抽左右邻帧：一支探针一次只能 seek 一个点，预抽会在高码率大文件上
+ * 把探针占住好几秒，指针真正停下时要等更久；抽一帧的代价全花在用户看得见的那一帧上。
+ *
+ * 抽不到（超时 / 数据没到 / 呈现的画面对不上这一秒）就不进缓存，回调不触发，浮层继续转圈，
+ * 下次 hover 再抽；
+ * 整轮拿不到元数据时 `ready` 保持 false，进度条回落到原来的数字浮标，不报错也不影响播放。
+ *
+ * 结果走回调而不是 state：调用方在 hover 事件里就等着这一张图，回调直接 setState，
+ * 不用再为「抽好了」加一层订阅；也避免在 effect 里同步 setState。
  */
 
-import { useEffect, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 
 import {
-  FALLBACK_ASPECT,
+  FRAME_CACHE_LIMIT,
   FRAME_JPEG_QUALITY,
-  FRAME_LONGEST_EDGE,
-  FRAME_PRESENT_TIMEOUT,
-  FRAME_SEEK_TIMEOUT,
   FRAME_TAIL_GUARD,
-  MAX_FRAME_COUNT,
-  MIN_FRAME_COUNT,
-  PROBE_METADATA_TIMEOUT,
-  READY_STATE_METADATA,
-  SECONDS_PER_FRAME,
 } from './constants';
-
-/** 一帧图（JPEG data URL）；抽失败的位置留 null，按下标与时间对齐 */
-export type VideoFrame = string | null;
+import {
+  bucketOf,
+  frameCanvasSize,
+  readDuration,
+  waitData,
+  waitPresented,
+  waitSeeked,
+} from './utils';
 
 /** 抽帧入参 */
 export type UseVideoFramesOptions = {
-  /** 探针视频引用：调用方渲染的隐藏 `<video preload="metadata">` */
+  /** 探针视频引用：调用方渲染的隐藏 `<video>` */
   probeRef: RefObject<HTMLVideoElement | null>;
-  /** 视频地址：换片即整轮重来 */
+  /** 视频地址：换片即清缓存重来 */
   src: string;
+  /** 帧图最长边像素：预览框宽 × 设备像素比，窗口越大帧图越清 */
+  frameLongestEdge: number;
 };
+
+/** 帧就绪回调：给这一时刻的 JPEG data URL */
+export type FrameCallback = (url: string) => void;
 
 /** 抽帧结果 */
 export type UseVideoFramesResult = {
-  /** 均匀抽出的帧图，按时间顺序定长排列；整轮还没备好时为 null */
-  frames: VideoFrame[] | null;
-  /** 一帧覆盖的时长（秒）：浮层用「指针时间 / frameSpan」换下标 */
-  frameSpan: number;
+  /** 请求某一时刻的帧：命中缓存同步回调，否则排队现抽 */
+  requestFrame: (time: number, onFrame: FrameCallback) => void;
+  /** 探针是否已拿到元数据：false 时预览整块不可用 */
+  ready: boolean;
 };
 
-/** 帧数：每 4 秒一帧，短视频保底 8 帧、长视频封顶 40 帧 */
-const frameCountFor = (duration: number): number =>
-  Math.min(
-    MAX_FRAME_COUNT,
-    Math.max(MIN_FRAME_COUNT, Math.ceil(duration / SECONDS_PER_FRAME)),
-  );
-
-/** 帧图的长宽：最长边固定，比例跟视频一致；尺寸读不出来时按 16:9 兜底 */
-const frameCanvasSize = (
-  video: HTMLVideoElement,
-): { width: number; height: number } => {
-  if (video.videoWidth <= 0 || video.videoHeight <= 0) {
-    return {
-      width: FRAME_LONGEST_EDGE,
-      height: Math.round(FRAME_LONGEST_EDGE / FALLBACK_ASPECT),
-    };
-  }
-
-  const scale = FRAME_LONGEST_EDGE / Math.max(video.videoWidth, video.videoHeight);
-
-  return {
-    width: Math.round(video.videoWidth * scale),
-    height: Math.round(video.videoHeight * scale),
-  };
+/** 一帧的检索与抽取单位：时间桶号 + 取帧秒数 + 拿到图后交给谁 */
+type FrameJob = {
+  /** 缓存键（时间桶号） */
+  bucket: number;
+  /** 抽好后回调 */
+  onFrame: FrameCallback;
+  /** seek 到的秒数 */
+  time: number;
 };
 
-/** 等元数据：已经在载的等 `loadedmetadata`，已经好了直接给时长 */
-const readDuration = (video: HTMLVideoElement): Promise<number> => {
-  if (
-    video.readyState >= READY_STATE_METADATA &&
-    Number.isFinite(video.duration) &&
-    video.duration > 0
-  ) {
-    return Promise.resolve(video.duration);
-  }
-
-  return new Promise<number>((resolve, reject) => {
-    const timerId = setTimeout(() => {
-      reject(new Error('探针视频元数据超时'));
-    }, PROBE_METADATA_TIMEOUT);
-
-    video.addEventListener(
-      'error',
-      () => {
-        clearTimeout(timerId);
-        reject(new Error('探针视频加载失败'));
-      },
-      { once: true },
-    );
-
-    video.addEventListener(
-      'loadedmetadata',
-      () => {
-        clearTimeout(timerId);
-
-        if (Number.isFinite(video.duration) && video.duration > 0) {
-          resolve(video.duration);
-
-          return;
-        }
-
-        reject(new Error('探针视频时长不可用'));
-      },
-      { once: true },
-    );
-  });
-};
-
-/** seek 到某一秒：`seeked` 到了返回 true，超时返回 false（这一帧留空） */
-const waitSeeked = (video: HTMLVideoElement): Promise<boolean> =>
-  new Promise<boolean>((resolve) => {
-    const timerId = setTimeout(() => {
-      resolve(false);
-    }, FRAME_SEEK_TIMEOUT);
-
-    video.addEventListener(
-      'seeked',
-      () => {
-        clearTimeout(timerId);
-        resolve(true);
-      },
-      { once: true },
-    );
-  });
-
-/** 等画面真正呈现：有 `requestVideoFrameCallback` 就等它，没有就等一帧 rAF；超时也放行 */
-const waitPresented = (video: HTMLVideoElement): Promise<void> =>
-  new Promise<void>((resolve) => {
-    let settled = false;
-    let timerId: ReturnType<typeof setTimeout> | null = null;
-
-    const settle = () => {
-      if (settled) {
-        return;
-      }
-
-      settled = true;
-
-      if (timerId !== null) {
-        clearTimeout(timerId);
-      }
-
-      resolve();
-    };
-
-    if (typeof video.requestVideoFrameCallback === 'function') {
-      video.requestVideoFrameCallback(() => settle());
-    } else {
-      requestAnimationFrame(() => settle());
-    }
-
-    timerId = setTimeout(settle, FRAME_PRESENT_TIMEOUT);
-  });
-
-/** 抽一轮帧：返回定长数组，抽不到的位置是 null */
 export const useVideoFrames = ({
+  frameLongestEdge,
   probeRef,
   src,
 }: UseVideoFramesOptions): UseVideoFramesResult => {
-  const [frames, setFrames] = useState<VideoFrame[] | null>(null);
-  const [frameSpan, setFrameSpan] = useState(0);
+  const [ready, setReady] = useState(false);
+  /** 时间桶号 → JPEG data URL */
+  const cacheRef = useRef<Map<number, string>>(new Map());
+  /** 悬停请求：只留最新一个，后来的覆盖先来的 */
+  const pendingRef = useRef<FrameJob | null>(null);
+  /** 抽帧循环的启动函数：effect 里换实现，卸载后置空 */
+  const pumpRef = useRef<(() => void) | null>(null);
+  /** 请求代次：每来一个新位置的请求就加一，正在跑的旧请求看到代次变了就提前收手 */
+  const latestRef = useRef(0);
+
+  const requestFrame = useCallback(
+    (time: number, onFrame: FrameCallback): void => {
+      const bucket = bucketOf(time);
+      const cached = cacheRef.current.get(bucket);
+
+      if (cached !== undefined) {
+        onFrame(cached);
+
+        return;
+      }
+
+      latestRef.current += 1;
+
+      const pending = pendingRef.current;
+
+      if (pending?.bucket === bucket) {
+        pending.onFrame = onFrame;
+
+        return;
+      }
+
+      pendingRef.current = { bucket, onFrame, time };
+      pumpRef.current?.();
+    },
+    [],
+  );
 
   useEffect(() => {
     const element = probeRef.current;
@@ -179,96 +116,149 @@ export const useVideoFrames = ({
     }
 
     /**
-     * 取消开关：cleanup 里 `abort()`，异步链路每步看 `signal.aborted`。
+     * 取消开关：cleanup 里 `abort()`，异步链路每步看 `isCancelled()`。
      * 用 AbortController 而不是裸布尔——裸布尔 / 对象属性会被 TS 在闭包里窄化成恒假。
      */
     const controller = new AbortController();
-
-    /** 取消状态：包成函数再读，避免 TS 把 `readonly` 的 `aborted` 在闭包里窄化成恒假 */
     const isCancelled = (): boolean => controller.signal.aborted;
 
-    setFrames(null);
-    setFrameSpan(0);
+    cacheRef.current = new Map();
+    pendingRef.current = null;
+    latestRef.current = 0;
+    setReady(false);
 
+    const canvas = document.createElement('canvas');
+    let context: CanvasRenderingContext2D | null = null;
+    let duration = 0;
+    let running = false;
+
+    /** 取帧时间夹在片内：片尾留一点余量，避免停在最后一帧 */
+    const clampTime = (time: number): number =>
+      Math.min(Math.max(time, 0), Math.max(duration - FRAME_TAIL_GUARD, 0));
+
+    /** 抽一帧：seek → 等数据 → 等这一帧真的呈现 → 画进离屏 canvas → 存成 JPEG data URL → 回调 */
+    const capture = async (job: FrameJob): Promise<void> => {
+      /** 这一趟开始时的代次：指针已经换到别处就不要再等这一帧了 */
+      const generation = latestRef.current;
+      /** 过期 / 卸载：seek 到新位置会打断旧 seek，不必等旧的超时 */
+      const giveUp = (): boolean => isCancelled() || latestRef.current !== generation;
+
+      const target = clampTime(job.time);
+      /**
+       * 呈现回调要在 seek 之前就挂上：探针是暂停的，帧一旦画出来就不会再触发
+       * `requestVideoFrameCallback`，seeked 之后再注册会错过唯一那次回调，永远等不到。
+       */
+      const presentedPromise = waitPresented(element, target);
+
+      element.currentTime = target;
+
+      const seeked = await waitSeeked(element);
+
+      if (giveUp() || !seeked) {
+        return;
+      }
+
+      const available = await waitData(element);
+
+      if (giveUp() || !available) {
+        return;
+      }
+
+      const presented = await presentedPromise;
+
+      if (giveUp() || context === null || !presented) {
+        return;
+      }
+
+      context.drawImage(element, 0, 0, canvas.width, canvas.height);
+
+      const url = canvas.toDataURL('image/jpeg', FRAME_JPEG_QUALITY);
+      const cache = cacheRef.current;
+
+      cache.set(job.bucket, url);
+
+      if (cache.size > FRAME_CACHE_LIMIT) {
+        const oldest = cache.keys().next().value;
+
+        if (oldest !== undefined) {
+          cache.delete(oldest);
+        }
+      }
+
+      job.onFrame(url);
+    };
+
+    /** 取下一个任务：只有悬停请求；同一时刻被覆盖的旧请求已在 `requestFrame` 里被顶掉 */
+    const takeJob = (): FrameJob | null => {
+      const pending = pendingRef.current;
+
+      pendingRef.current = null;
+
+      return pending;
+    };
+
+    /** 串行跑任务：一支探针一次只能 seek 一个点，抽完一帧再取下一条 */
+    const pump = (): void => {
+      if (running) {
+        return;
+      }
+
+      running = true;
+
+      const step = async (): Promise<void> => {
+        if (isCancelled()) {
+          running = false;
+
+          return;
+        }
+
+        const job = takeJob();
+
+        if (job === null) {
+          running = false;
+
+          return;
+        }
+
+        await capture(job);
+        await step();
+      };
+
+      void step();
+    };
+
+    /** 等元数据 → 定好画布尺寸 → 打开可用开关；之后全部由 `requestFrame` 驱动 */
     const run = async (): Promise<void> => {
       try {
-        const duration = await readDuration(element);
+        const seconds = await readDuration(element);
 
         if (isCancelled()) {
           return;
         }
 
-        const count = frameCountFor(duration);
-        const span = duration / count;
-        const size = frameCanvasSize(element);
-        const canvas = document.createElement('canvas');
+        duration = seconds;
+
+        const size = frameCanvasSize(element, frameLongestEdge);
 
         canvas.width = size.width;
         canvas.height = size.height;
-
-        const context = canvas.getContext('2d');
-
-        if (context === null) {
-          return;
-        }
-
-        setFrameSpan(span);
-
-        let collected: VideoFrame[] = Array.from({ length: count }, () => null);
-
-        /** 抽第 index 帧，抽完接着抽下一帧；取消或抽满就停 */
-        const captureAt = async (index: number): Promise<void> => {
-          if (isCancelled() || index >= count) {
-            return;
-          }
-
-          element.currentTime = Math.min(
-            (index + 0.5) * span,
-            Math.max(duration - FRAME_TAIL_GUARD, 0),
-          );
-
-          const seeked = await waitSeeked(element);
-
-          if (isCancelled()) {
-            return;
-          }
-
-          if (!seeked) {
-            await captureAt(index + 1);
-
-            return;
-          }
-
-          await waitPresented(element);
-
-          if (isCancelled()) {
-            return;
-          }
-
-          context.drawImage(element, 0, 0, canvas.width, canvas.height);
-
-          const url = canvas.toDataURL('image/jpeg', FRAME_JPEG_QUALITY);
-
-          collected = collected.map((item, position) =>
-            position === index ? url : item,
-          );
-          setFrames(collected);
-
-          await captureAt(index + 1);
-        };
-
-        await captureAt(0);
+        context = canvas.getContext('2d');
+        setReady(true);
       } catch {
-        // 抽不到就保持 `null`（或已抽出的那部分）：进度条回落到数字浮标，不在界面上留痕迹
+        // 拿不到元数据：预览保持不可用，进度条回落数字浮标，界面上不留痕迹
       }
     };
 
+    pumpRef.current = pump;
     void run();
 
     return () => {
       controller.abort();
+      pumpRef.current = null;
+      pendingRef.current = null;
+      cacheRef.current = new Map();
     };
-  }, [probeRef, src]);
+  }, [frameLongestEdge, probeRef, src]);
 
-  return { frames, frameSpan };
+  return { ready, requestFrame };
 };

@@ -1,35 +1,57 @@
-/* 进度条悬停预览：浮在进度条上方的黑底小屏，帧图与时间标签叠在一起 */
+/* 进度条悬停预览：浮在进度条上方的一块毛玻璃面板，帧图贴在里面 */
 
 .preview {
   position: absolute;
   bottom: calc(100% + 10px);
   z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
-  border: 1px solid rgb(255 255 255 / 16%);
-  border-radius: 8px;
-  background: #000;
-  box-shadow: 0 10px 24px rgb(0 0 0 / 45%);
+  padding: 5px;
+  border: 1px solid rgb(255 255 255 / 22%);
+  border-radius: 14px;
+  background: rgb(255 255 255 / 8%);
+  box-shadow:
+    0 16px 40px rgb(0 0 0 / 50%),
+    inset 0 1px 0 rgb(255 255 255 / 18%);
   transform: translateX(-50%);
+  backdrop-filter: blur(20px) saturate(1.35);
   pointer-events: none;
 }
 
-/* 帧图按原比例完整显示：竖屏视频在框里居中留黑边，不裁画面 */
+/* 帧图：圆角黑底，竖屏视频在框里居中留黑边，不裁画面 */
 .image {
   display: block;
   width: 100%;
   height: 100%;
+  border-radius: 10px;
+  background: #000;
   object-fit: contain;
+}
+
+/* 抽帧还没回来：同尺寸的深色底 + 转圈，浮层尺寸不跟着跳 */
+.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+  background: rgb(0 0 0 / 60%);
 }
 
 /* 时间标签：压在画面右下角，深底浅字，播放中数字宽度不跳 */
 .time {
   position: absolute;
-  right: 6px;
-  bottom: 6px;
-  padding: 1px 5px;
-  border-radius: 4px;
-  background: rgb(0 0 0 / 64%);
-  color: rgb(255 255 255 / 88%);
-  font-size: 0.68rem;
+  right: 10px;
+  bottom: 10px;
+  padding: 1px 6px;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 6px;
+  background: rgb(0 0 0 / 55%);
+  color: rgb(255 255 255 / 92%);
+  font-size: 0.72rem;
   font-variant-numeric: tabular-nums;
+  backdrop-filter: blur(6px);
 }

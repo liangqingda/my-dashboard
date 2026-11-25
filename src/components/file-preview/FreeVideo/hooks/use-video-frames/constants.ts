@@ -1,32 +1,36 @@
 /**
- * 抽帧参数：均匀取帧的间隔与上限、绘制分辨率、各一步的超时。
+ * 抽帧参数：缓存粒度与容量、绘制质量与各一步的超时。
  *
- * 分辨率跟着进度条的预览框走（`SEEK_PREVIEW_WIDTH`），按 2 倍设备像素比绘制：
- * 帧图存的是 data URL，画大了只是内存多几百 KB，缩窗后画质才不掉。
+ * 帧图分辨率不再写死：由调用方按「预览框宽度 × 设备像素比」传 `frameLongestEdge`，
+ * 预览框跟着视频窗口大小（60%）走，窗口越大帧图越清。
  */
 
-import { SEEK_PREVIEW_WIDTH } from '../../constants';
+/** 时间桶（秒）：同一个桶内 hover 复用同一张图；粗一点少抽帧，半秒内的画面差别看不出来 */
+export const FRAME_TIME_BUCKET = 0.5;
 
-/** 每多少秒取一帧：再密收益很小，只会拖长首轮准备时间 */
-export const SECONDS_PER_FRAME = 4;
+/** 缓存上限（张）：按插入顺序淘汰最早的，80 张约 3–5 MB */
+export const FRAME_CACHE_LIMIT = 80;
 
-/** 最少帧数：短视频也留几档，不能只剩一两张 */
-export const MIN_FRAME_COUNT = 8;
+/** JPEG 质量：预览图再高只是多占内存，0.88 已看不出块 */
+export const FRAME_JPEG_QUALITY = 0.88;
 
-/** 最多帧数：首轮抽帧要在后台几秒内跑完，不随时长线性涨 */
-export const MAX_FRAME_COUNT = 40;
+/** 等 `seeked` 的上限：高码率大文件跳远位置要解码到关键帧，给足再判失败 */
+export const FRAME_SEEK_TIMEOUT = 5000;
 
-/** 帧图最长边像素：预览框宽的两倍（贴 2x 屏的清晰度） */
-export const FRAME_LONGEST_EDGE = SEEK_PREVIEW_WIDTH * 2;
+/** 等「当前帧数据真的可用」（`readyState >= 2`）的上限：`seeked` 之后仍可能只有元数据 */
+export const FRAME_DATA_TIMEOUT = 2000;
 
-/** JPEG 质量：缩略图再高只是浪费内存，0.86 已看不出块 */
-export const FRAME_JPEG_QUALITY = 0.86;
+/** 等数据可用的轮询间隔（毫秒）：事件不一定齐，轮询兜住 */
+export const FRAME_DATA_POLL = 100;
 
-/** 等 `seeked` 的上限：超时这一帧留空，不卡住整轮 */
-export const FRAME_SEEK_TIMEOUT = 3000;
+/** 等画面真正呈现的上限：从挂在 seek 之前算起，要盖住整个 seek 耗时；超时就丢掉这一帧 */
+export const FRAME_PRESENT_TIMEOUT = 8000;
 
-/** 等画面真正呈现的上限：给 `requestVideoFrameCallback` 兜底，它不回调也不吊死 */
-export const FRAME_PRESENT_TIMEOUT = 1000;
+/** 呈现帧与目标时间的容差（秒）：`mediaTime` 落在这么近才算「就是这一帧」 */
+export const FRAME_PRESENT_TOLERANCE = 0.5;
+
+/** `readyState` 到「当前帧数据可用」的档位：低于它 `drawImage` 会画出空白 */
+export const FRAME_DRAW_READY_STATE = 2;
 
 /** 探针视频拿到元数据的上限：拿不到就整轮放弃，进度条回落到数字浮标 */
 export const PROBE_METADATA_TIMEOUT = 10000;
@@ -34,8 +38,5 @@ export const PROBE_METADATA_TIMEOUT = 10000;
 /** `readyState` 到「已有元数据」的档位：到这一档才读得到时长与画面尺寸 */
 export const READY_STATE_METADATA = 1;
 
-/** 视频尺寸读不出来时的兜底比例（16:9）：只影响帧图长宽，不影响功能 */
-export const FALLBACK_ASPECT = 16 / 9;
-
-/** 抽帧时间离片尾留的余量（秒）：seek 到正片尾会停在最后一帧，多留一点更稳 */
-export const FRAME_TAIL_GUARD = 0.1;
+/** 抽帧时间离片尾留的余量（秒）：seek 到正片尾可能停在最后一帧，多留一点更稳 */
+export const FRAME_TAIL_GUARD = 0.05;

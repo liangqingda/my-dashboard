@@ -8,11 +8,14 @@
  * 进度条拖到哪就 seek 到哪（拖动过程连续 seek，松手不额外跳一次）；
  * 时长还没解出来时进度条禁用，避免 0 上限的滑块把当前时间压成 0。
  *
- * 进度条悬停预览：帧图备好后指针停在进度条上，就在上方浮出这一处的画面 + 时间；
- * 没备好（还没抽帧 / 抽不到）沿用原来的数字浮标，不出现空浮层。
+ * 进度条悬停预览：指针停在进度条上，上方浮出「那一秒的画面 + 时间」。
+ * 帧按指针落下的时间现抽（见 `hooks/use-video-frames`），停下 120ms 才发请求，
+ * 免得扫过去的过程中把探针一路 seek；移动中不换图，抽到后整块换一次——
+ * 不会出现「先一张、再换一张」的闪动。停下换到没抽过的位置时先转圈，
+ * 帧到了再一次性出现，避免「时间已经变了、画面还是上一处」的错配。
  */
 
-import { useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { Slider } from '@mantine/core';
 import {
   IconChevronLeft,
@@ -33,7 +36,7 @@ import { seekPreviewAt } from './utils';
 
 import styles from './index.scss';
 
-/** 控制栏图标的尺寸与线宽：与弹窗 header 图标同一档 */
+/** 控制栏图标的尺寸与线宽：与弹窗 header 同一档 */
 const ICON_SIZE = 16;
 const ICON_STROKE = 1.8;
 
@@ -46,12 +49,13 @@ const STEP_TIP_DURATION = 1000;
 /** 竖向音量条的高度：只够看刻度与拖动，不像进度条那样占半个画面 */
 const VOLUME_SLIDER_HEIGHT = 56;
 
+/** 指针停下多久才去抽那一帧（毫秒）：扫过去的途中不抽，探针不用一路 seek */
+const HOVER_REQUEST_DELAY = 120;
+
 const VideoControls = ({
   currentTime,
   duration,
   enabled,
-  frameSpan = 0,
-  frames = null,
   muted,
   nav,
   onSeek,
@@ -59,14 +63,36 @@ const VideoControls = ({
   onTogglePlay,
   onVolumeChange,
   playing,
+  previewHeight,
+  previewReady,
+  previewWidth,
+  requestFrame,
   volume,
 }: VideoControlsProps) => {
   /** 指针落在进度条上时的预览落点：null 表示不显示 */
   const [preview, setPreview] = useState<SeekPreviewState | null>(null);
+  /** 已显示的那一帧：指针移动过程中保持不动，停下抽到新位置的帧再整块换掉 */
+  const [shownFrame, setShownFrame] = useState<string | null>(null);
+  /** 停下后才发起的抽帧请求 */
+  const requestTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** 请求序号：抽好的图回来时指针已经移开，就不要它了，免得乱序覆盖 */
+  const requestTokenRef = useRef(0);
 
-  /** 指针横向位置 → 帧下标与浮层位置；帧还没备好就什么都不做，走原来的数字浮标 */
+  /** 清掉待发的抽帧请求（指针离开 / 按下拖动 / 卸载都要清） */
+  const clearRequestTimer = () => {
+    if (requestTimerRef.current === null) {
+      return;
+    }
+
+    clearTimeout(requestTimerRef.current);
+    requestTimerRef.current = null;
+  };
+
+  useEffect(() => clearRequestTimer, []);
+
+  /** 指针横向位置 → 时间与浮层位置；停下 120ms 再抽这一秒的帧 */
   const handlePreviewMove = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (frames === null || frameSpan <= 0 || duration <= 0) {
+    if (!previewReady || duration <= 0) {
       return;
     }
 
@@ -81,16 +107,46 @@ const VideoControls = ({
       return;
     }
 
-    setPreview(
-      seekPreviewAt({
-        clientX: event.clientX,
-        containerLeft: rect.left,
-        containerWidth: rect.width,
-        duration,
-        frameCount: frames.length,
-        frameSpan,
-      }),
-    );
+    const next = seekPreviewAt({
+      clientX: event.clientX,
+      containerLeft: rect.left,
+      containerWidth: rect.width,
+      duration,
+      previewWidth,
+    });
+
+    setPreview(next);
+    clearRequestTimer();
+
+    const token = requestTokenRef.current + 1;
+
+    requestTokenRef.current = token;
+    requestTimerRef.current = setTimeout(() => {
+      requestTimerRef.current = null;
+      // 换位置的这一帧还没到就先转圈：留着上一张会变成「时间变了、画面还是老位置」
+      setShownFrame(null);
+      requestFrame(next.time, (url) => {
+        if (requestTokenRef.current !== token) {
+          return;
+        }
+
+        setShownFrame(url);
+      });
+    }, HOVER_REQUEST_DELAY);
+  };
+
+  /** 离开进度条：收起浮层，取消还没发出的抽帧 */
+  const handlePreviewLeave = () => {
+    clearRequestTimer();
+    setPreview(null);
+    setShownFrame(null);
+  };
+
+  /** 按下拖动进度条：收起浮层（数字与画面都在时间那一栏看），拖动中不再抽帧 */
+  const handlePreviewDown = () => {
+    clearRequestTimer();
+    setPreview(null);
+    setShownFrame(null);
   };
 
   return (
@@ -131,15 +187,16 @@ const VideoControls = ({
 
       <div
         className={styles.progressWrap}
-        onPointerLeave={() => setPreview(null)}
+        onPointerDown={handlePreviewDown}
+        onPointerLeave={handlePreviewLeave}
         onPointerMove={handlePreviewMove}
       >
         <Slider
           aria-label="播放进度"
           className={styles.progress}
           disabled={!enabled || duration <= 0}
-          /* 帧就绪后浮标换成帧图 + 时间，数字浮标让位，免两套浮层叠在一起 */
-          label={frames !== null && frameSpan > 0 ? null : formatProgressLabel}
+          /* 预览可用时数字浮标让位给帧浮层，免两套浮层叠在一起 */
+          label={previewReady ? null : formatProgressLabel}
           max={duration > 0 ? duration : 1}
           onChange={onSeek}
           size="xs"
@@ -148,8 +205,14 @@ const VideoControls = ({
           value={Math.min(currentTime, duration > 0 ? duration : 1)}
         />
 
-        {frames !== null && preview !== null ? (
-          <SeekPreview frames={frames} preview={preview} />
+        {preview !== null ? (
+          <SeekPreview
+            frame={shownFrame}
+            height={previewHeight}
+            left={preview.left}
+            time={preview.time}
+            width={previewWidth}
+          />
         ) : null}
       </div>
 
