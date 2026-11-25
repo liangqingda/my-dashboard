@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import type { DraggableEntry } from '../../types';
 
-import type { DragPendingState, PendingFly } from './types';
+import type { DragPendingState, PendingFlight } from './types';
 
 /**
  * 待拖拽区的状态（交互与判定见同目录 `README.md`）。
@@ -14,8 +14,8 @@ import type { DragPendingState, PendingFly } from './types';
  */
 export const useDragPending = (): DragPendingState => {
   const [entries, setEntries] = useState<DraggableEntry[]>([]);
-  /** 刚飞进来的那一条：起点矩形交给动画层，播完由它 clearFly */
-  const [fly, setFly] = useState<PendingFly | null>(null);
+  /** 刚飞的那一条：矩形交给动画层，播完由它 clearFlight */
+  const [flight, setFlight] = useState<PendingFlight | null>(null);
   /** 列表正往待拖拽区拖的一批；null 表示没有这一程 */
   const [trayDrag, setTrayDrag] = useState<DraggableEntry[] | null>(null);
 
@@ -35,22 +35,28 @@ export const useDragPending = (): DragPendingState => {
       return incoming.length === 0 ? prev : [...prev, ...incoming];
     });
 
-  const remove = (path: string) =>
-    setEntries((prev) => prev.filter((entry) => entry.path !== path));
+  /** 移出：给了待拖拽区那一格的矩形就播「飞回列表」，否则原地消失 */
+  const remove = (entry: DraggableEntry, from?: DOMRect) => {
+    if (from !== undefined) {
+      setFlight({ direction: 'out', entry, from });
+    }
+
+    setEntries((prev) => prev.filter((item) => item.path !== entry.path));
+  };
 
   const removePaths = (paths: string[]) =>
     setEntries((prev) => prev.filter((entry) => !paths.includes(entry.path)));
 
   const toggle = (entry: DraggableEntry, from?: DOMRect) => {
     if (has(entry.path)) {
-      remove(entry.path);
+      remove(entry);
 
       return;
     }
 
-    // 加进去才播「挪到待拖拽区」的动画；移除是原地消失，不需要飞
+    // 加进去才播「挪到待拖拽区」的动画；移除走 `remove` 那条（它自己带矩形）
     if (from !== undefined) {
-      setFly({ entry, from });
+      setFlight({ direction: 'in', entry, from });
     }
 
     add(entry);
@@ -58,7 +64,7 @@ export const useDragPending = (): DragPendingState => {
 
   const clear = () => {
     setEntries([]);
-    setFly(null);
+    setFlight(null);
   };
 
   return {
@@ -67,10 +73,10 @@ export const useDragPending = (): DragPendingState => {
     addMany,
     beginTrayDrag: (batch) => setTrayDrag(batch),
     clear,
-    clearFly: () => setFly(null),
+    clearFlight: () => setFlight(null),
     endTrayDrag: () => setTrayDrag(null),
     entries,
-    fly,
+    flight,
     has,
     remove,
     removePaths,

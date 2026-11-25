@@ -1,3 +1,4 @@
+import type { DragEvent } from 'react';
 import { useEffect, useState } from 'react';
 import { Text, UnstyledButton } from '@mantine/core';
 import { IconStack2, IconX } from '@tabler/icons-react';
@@ -67,15 +68,60 @@ const PendingTray = ({
   /** 整块的落点态：列表正拖过来（`armed`）或指针正压在板上（`over`）都算 */
   const dropActive = armed || over;
 
+  /** 落在 header 上不算收件：那一条是标题与清空，属于除了它之外整块都是热区 */
+  const onHead = (event: DragEvent<HTMLDivElement>): boolean => {
+    const { target } = event;
+
+    return target instanceof Element && target.closest('[data-tray-head]') !== null;
+  };
+
   return (
     <div
       aria-hidden={hidden}
       aria-label="待拖拽区"
       className={cx(styles.tray, hidden && styles.hidden, dropActive && styles.armed)}
+      onDragEnter={(event) => {
+        if (!onHead(event)) {
+          setOver(true);
+        }
+      }}
+      onDragLeave={(event) => {
+        // 在面板内部从一块挪到另一块不算离开；真出了面板才收高亮
+        if (event.relatedTarget instanceof Node && event.currentTarget.contains(event.relatedTarget)) {
+          return;
+        }
+
+        setOver(false);
+      }}
+      onDragOver={(event) => {
+        const { dataTransfer } = event;
+
+        if (onHead(event) || !hasDragPaths(dataTransfer)) {
+          return;
+        }
+
+        event.preventDefault();
+        dataTransfer.dropEffect = 'move';
+        setOver(true);
+      }}
+      onDrop={(event) => {
+        if (onHead(event)) {
+          return;
+        }
+
+        event.preventDefault();
+        setOver(false);
+
+        const paths = readDragPaths(event.dataTransfer);
+
+        if (paths.length > 0) {
+          onDropPaths(paths);
+        }
+      }}
       role="region"
       style={rect ?? undefined}
     >
-      <div className={styles.head}>
+      <div className={styles.head} data-tray-head="true">
         <Text className={styles.title} size="sm">
           <IconStack2 aria-hidden="true" className={styles.titleIcon} size={14} stroke={1.8} />
           {entries.length} 项待移动
@@ -93,36 +139,12 @@ const PendingTray = ({
           setOver(false);
           onDragEnd();
         }}
-        onDragEnter={() => setOver(true)}
-        onDragLeave={() => setOver(false)}
-        onDragOver={(event) => {
-          const { dataTransfer } = event;
-
-          // 只接「条目路径」这一种载荷：别的拖拽（外面拖进来的文件）不归这里管
-          if (!hasDragPaths(dataTransfer)) {
-            return;
-          }
-
-          event.preventDefault();
-          dataTransfer.dropEffect = 'move';
-          setOver(true);
-        }}
         onDragStart={(event) => {
           writeDragPayload(
             event.dataTransfer,
             entries.map((entry) => entry.path),
           );
           onDragAll();
-        }}
-        onDrop={(event) => {
-          event.preventDefault();
-          setOver(false);
-
-          const paths = readDragPaths(event.dataTransfer);
-
-          if (paths.length > 0) {
-            onDropPaths(paths);
-          }
         }}
       >
         <div className={styles.chips}>
@@ -133,8 +155,11 @@ const PendingTray = ({
               <UnstyledButton
                 aria-label={`从待拖拽区移除 ${entry.name}`}
                 className={styles.chip}
+                data-pending-chip={entry.path}
                 key={entry.path}
-                onClick={() => onRemove(entry.path)}
+                onClick={(event) =>
+                  onRemove(entry, event.currentTarget.getBoundingClientRect())
+                }
               >
                 <Icon aria-hidden="true" className={styles.chipIcon} size={15} stroke={1.2} />
                 <FreeTruncatedText

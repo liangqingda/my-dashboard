@@ -1,6 +1,6 @@
 /*
- * 「挪进待拖拽区」的飞行块：位置与尺寸全部来自点选那一刻的瓦片矩形（内联给出），
- * 这里只管外观——它飞过去时越来越小、越来越淡，落到侧栏面板上。
+ * 在列表与待拖拽区之间挪动的飞行块：位置与尺寸来自起飞那一端（内联给出），
+ * 位移与缩放由 Web Animations 算到落脚那一格，这里只管外观。
  */
 
 .fly {
@@ -15,8 +15,10 @@
   background: var(--app-surface);
   box-shadow: 0 8px 20px rgb(23 37 34 / 16%);
   transform-origin: center;
+  overflow: hidden;
 }
 
 .icon {
+  flex: 0 0 auto;
   color: var(--mantine-color-blue-5);
 }

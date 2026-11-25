@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 
 import DragGhost from '../DragGhost';
-import PendingFlyLayer from '../PendingFly';
+import PendingFlightLayer from '../PendingFly';
 import PendingTray from '../PendingTray';
 
 import type { FilesDragLayersProps } from './types';
@@ -65,10 +65,15 @@ const FilesDragLayers = ({ entryActions, onDropPaths, pending }: FilesDragLayers
         />
       ) : null}
 
-      {ghostEntries === null ? null : <DragGhost entries={ghostEntries} />}
+      {ghostEntries === null ? null : (
+        <DragGhost
+          entries={ghostEntries}
+          showCount={pending.trayDrag === null}
+        />
+      )}
 
-      {pending.fly === null ? null : (
-        <PendingFlyLayer fly={pending.fly} onDone={pending.clearFly} />
+      {pending.flight === null ? null : (
+        <PendingFlightLayer flight={pending.flight} onDone={pending.clearFlight} />
       )}
     </div>
   );

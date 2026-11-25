@@ -11,6 +11,8 @@
 - 外层 `.tray`：整块 `draggable`（拖它的空白处 = 整批搬），`data-hand-blank` 给样式认；
 - 里面 `.chips` 是 `grid`（`repeat(auto-fill, minmax(168px, 1fr))`、`gap: 12px`），每条 `.chip`：抓手图标 + 按类型取的图标（`utils/entry-icon.ts`）+ 名字；
   每个 chip 自己 `draggable` 且 `stopPropagation`（拖某一条只搬它，别的留在页面侧栏的待拖拽区）。
+- **按整批的原顺序平铺**（`use-drag-move/utils.ts` 的 `sessionLayout`）：单独拖起某一条时，
+  它那一条的位置换成虚位（`.slot`，虚线边、同尺寸），其余条目一格都不动——看得出「从哪一格拿起、松手回哪一格」。
 
 ## 交互
 

@@ -1,7 +1,7 @@
 # useDragPending
 
 待拖拽区的状态：攒了哪些条目（`entries`，顺序即加入顺序）、有没有正在往这儿拖的一批
-（`trayDrag`），以及加入 / 移除 / 清空这类动作。展示在 `PendingTray`，接线在 `FilesDragLayers`。
+（`trayDrag`）、条目在列表与面板之间那一记动画（`flight`），以及加入 / 移除 / 清空这类动作。展示在 `PendingTray`，接线在 `FilesDragLayers`。
 
 ## 两条规矩
 
@@ -17,9 +17,9 @@
 
 | 动作 | 用途 |
 | --- | --- |
-| `toggle(entry, from?)` | 点一下的落点：已选中就移除；否则加入，并把 `fly` 设成 `{ entry, from }`，让 `PendingFly` 从瓦片原位飞过去。`from` 只有点选路径才给 |
+| `toggle(entry, from?)` | 点一下的落点：已选中就移除；否则加入，并把 `flight` 设成 `{ direction: 'in', entry, from }`，让 `PendingFly` 从瓦片原位飞到它落座的那一格。`from` 只有点选路径才给 |
 | `add(entry)` / `addMany(entries)` | 直接加入（`addMany` 已在里面的跳过）：从列表拖进待拖拽区时按路径认条目后走 `addMany` |
-| `has(path)` / `remove(path)` / `clear()` | 判选中 / 点条目移出 / 整体清空（Esc 也走 `clear`） |
+| `has(path)` / `remove(entry, from?)` / `clear()` | 判选中 / 点条目移出（给了那一格的矩形就播「飞回列表」）/ 整体清空（Esc 也走 `clear`，不逐条飞） |
 | `removePaths(paths)` | 移动会话成功后把移成功的几条摘掉；只搬了一条时其余留下 |
 | `beginTrayDrag(entries)` / `endTrayDrag()` | 「正从列表往待拖拽区拖」那一程的开合，`FilesDragLayers` 据此画拖拽影像与落点高亮 |
-| `clearFly()` | 飞入动画播完，动画层自己收掉 `fly` |
+| `clearFlight()` | 动画播完，动画层自己收掉 `flight` |

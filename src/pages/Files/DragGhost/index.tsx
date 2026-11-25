@@ -17,7 +17,7 @@ const MAX_LAYERS = 3;
  * 图标比瓦片小一圈、进场时缩放一下，拖动时能一眼看出「拖的是哪几项、几项」。
  * 位置只认 `dragover` 的坐标——拖拽事件每秒几十次，这里只存一份坐标、不碰其它状态。
  */
-const DragGhost = ({ entries }: DragGhostProps) => {
+const DragGhost = ({ entries, showCount = true }: DragGhostProps) => {
   const [point, setPoint] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
@@ -57,7 +57,7 @@ const DragGhost = ({ entries }: DragGhostProps) => {
           );
         })}
       </div>
-      {entries.length > 1 ? (
+      {showCount && entries.length > 1 ? (
         <span className={styles.count}>{entries.length}</span>
       ) : null}
     </div>

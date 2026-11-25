@@ -19,7 +19,8 @@ import { cx } from '@/utils/cx';
 import DirBreadcrumb from '../DirBreadcrumb';
 import FavoritesPanel from '../FilesActions/FavoritesPanel';
 import { SPRING_HOVER_MS } from '../hooks/use-drag-move/constants';
-import type { FolderEntry } from '../types';
+import { sessionLayout } from '../hooks/use-drag-move/utils';
+import type { DraggableEntry, FolderEntry } from '../types';
 
 import HandCard from './HandCard';
 import type { DragMoveModalProps } from './types';
@@ -39,8 +40,9 @@ const HINT_DRAGGING = '拖到文件夹上松手即移入；停留 0.5 秒会进�
 /** 弹窗里收藏弹层的层级：要盖在全屏弹窗的遮罩与框体之上 */
 const POPOVER_Z_INDEX = 600;
 
-/** 还没有子文件夹时共用一个空数组，免得每次渲染都造一个新的 */
+/** 还没有子文件夹 / 条目时共用一个空数组，免得每次渲染都造一个新的 */
 const NO_FOLDERS: FolderEntry[] = [];
+const NO_ENTRIES: DraggableEntry[] = [];
 
 /**
  * 拖拽移动弹窗：拖起列表里的一条或一批条目后自动打开，占满整屏。正文三段——
@@ -96,6 +98,9 @@ const DragMoveModal = ({
   const blankArmed = blankHovered && dragActive;
   /** 这一层就是条目原本所在的目录：松手不做移动，提示也要说清楚 */
   const blankInOrigin = view !== null && session !== null && view.path === session.origin;
+  /** 待拖拽区按整批的原位平铺；单独拖起某一条时，那一条的位置留成虚位 */
+  const handEntries = session === null ? NO_ENTRIES : sessionLayout(session);
+  const focusPath = session?.rest === undefined ? null : (session.entries[0]?.path ?? null);
 
   return (
     <FreeModal
@@ -179,11 +184,10 @@ const DragMoveModal = ({
     >
       {session === null || view === null ? null : (
         <div className={styles.root}>
-          <DirBreadcrumb currentDir={view.path} onNavigate={goTo} />
-
           <div className={styles.handRow}>
             <HandCard
-              entries={session.entries}
+              entries={handEntries}
+              focusPath={focusPath}
               handed={handed}
               onDragEnd={() => {
                 setBlankHovered(false);
@@ -203,6 +207,8 @@ const DragMoveModal = ({
               </Text>
             ) : null}
           </div>
+
+          <DirBreadcrumb currentDir={view.path} onNavigate={goTo} />
 
           <div
             className={cx(

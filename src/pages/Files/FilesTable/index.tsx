@@ -79,11 +79,12 @@ const FilesTable = memo(
     const handleClickCapture = (event: MouseEvent<HTMLDivElement>) => {
       const { target } = event;
 
-      if (target instanceof HTMLElement && target.closest('[data-tile-actions]') !== null) {
+      // 用 `Element`：行里的类型图标是 SVG，点图标时目标不是 HTML 元素
+      if (target instanceof Element && target.closest('[data-tile-actions]') !== null) {
         return;
       }
 
-      const row = target instanceof HTMLElement ? target.closest('[data-entry-path]') : null;
+      const row = target instanceof Element ? target.closest('[data-entry-path]') : null;
 
       if (!(row instanceof HTMLElement) || row.dataset.entryPath === undefined) {
         return;

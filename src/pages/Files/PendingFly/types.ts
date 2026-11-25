@@ -1,9 +1,9 @@
-import type { PendingFly } from '../hooks/use-drag-pending/types';
+import type { PendingFlight } from '../hooks/use-drag-pending/types';
 
-/** 动画层的入参：飞的是哪一条、从哪来，播完通知页面收掉 */
-export type PendingFlyLayerProps = {
-  /** 待飞的一条 */
-  fly: PendingFly;
+/** 动画层的入参：这一次往哪飞、从哪起飞，播完通知页面收掉 */
+export type PendingFlightLayerProps = {
+  /** 待飞的一次 */
+  flight: PendingFlight;
   /** 播完（或没播成）时收掉它 */
   onDone: () => void;
 };

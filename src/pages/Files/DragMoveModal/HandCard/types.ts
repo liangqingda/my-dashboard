@@ -2,8 +2,13 @@ import type { DraggableEntry, FileEntry } from '../../types';
 
 /** 弹窗里待拖拽区的入参：一批条目平铺着，整批或单条都能拖起 */
 export type HandCardProps = {
-  /** 手里的条目：平铺成一行行，每条可单独拖，空白处整批拖 */
+  /** 手里的条目（按整批的原顺序平铺）：每条可单独拖，空白处整批拖 */
   entries: DraggableEntry[];
+  /**
+   * 正被单条拖着的那一条路径：它在网格里留一个虚位，
+   * 其余条目位置不动，看得出「它从这一格拿起来、松手还回这一格」。
+   */
+  focusPath?: string | null;
   /** 已经成为「待拖拽」（拖拽结束、条目回到手里） */
   handed: boolean;
   /** 拖起整批：由弹窗把拖拽状态重新点亮 */

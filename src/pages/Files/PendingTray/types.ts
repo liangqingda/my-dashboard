@@ -15,8 +15,8 @@ export type PendingTrayProps = {
   onDragEnd: () => void;
   /** 从列表拖过来的条目在板上松手：按路径收进来（已在里面的跳过） */
   onDropPaths: (paths: string[]) => void;
-  /** 点某一项就把它移出待拖拽区（没有单独的移除按钮） */
-  onRemove: (path: string) => void;
+  /** 点某一项就把它移出待拖拽区（带上那一格的矩形，动画据此飞回列表原位） */
+  onRemove: (entry: DraggableEntry, from: DOMRect) => void;
   /** 整个清空 */
   onClear: () => void;
   /**

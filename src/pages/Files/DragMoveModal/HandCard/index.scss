@@ -50,6 +50,22 @@
   cursor: grab;
 }
 
+/*
+ * 单条拖起后原位留的虚位：尺寸与一张 chip 完全一致（同 padding、同边框宽度），
+ * 只把内容与底色抽掉，网格里其它条目因此一格都不动。
+ */
+.slot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px dashed var(--app-line);
+  border-radius: 8px;
+  min-height: 32px;
+  background: transparent;
+}
+
 /* 抓手：说明这一条能单独拖 */
 .grip {
   flex: 0 0 auto;

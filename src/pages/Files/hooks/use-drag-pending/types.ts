@@ -4,11 +4,16 @@
 
 import type { DraggableEntry } from '../../types';
 
-/** 一次「飞进待拖拽区」的动画：从哪个瓦片来（它的屏幕矩形） */
-export type PendingFly = {
+/**
+ * 一次「在列表与待拖拽区之间挪动」的动画。
+ * 进去：从瓦片原位飞到它在待拖拽区里的那一格；出来：从待拖拽区那一格飞回瓦片原位。
+ */
+export type PendingFlight = {
+  /** 方向：`in` 是挪进待拖拽区，`out` 是移出、回到列表 */
+  direction: 'in' | 'out';
   /** 飞的是哪一条（按路径认，动画本身只画图标） */
   entry: DraggableEntry;
-  /** 起点矩形：点选那一刻瓦片的位置 */
+  /** 起点矩形：进去时是瓦片位置，出来时是待拖拽区里那一格的位置 */
   from: DOMRect;
 };
 
@@ -27,11 +32,11 @@ export type DragPendingState = {
   /** 有就移除、没有就加入：列表里的点选走它；加进去时给个起点就播一记「飞过去」 */
   toggle: (entry: DraggableEntry, from?: DOMRect) => void;
   /** 正在飞的这一条；null 表示没有动画在跑 */
-  fly: PendingFly | null;
+  flight: PendingFlight | null;
   /** 动画播完（或没播成）时收掉它 */
-  clearFly: () => void;
-  /** 按路径移除（点这一项就移除） */
-  remove: (path: string) => void;
+  clearFlight: () => void;
+  /** 点这一项就移除；带上它在待拖拽区里的矩形就播「飞回列表」 */
+  remove: (entry: DraggableEntry, from?: DOMRect) => void;
   /** 批量移除：移动成功的条目从这里摘掉 */
   removePaths: (paths: string[]) => void;
   /** 清空 */

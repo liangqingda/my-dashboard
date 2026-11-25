@@ -102,11 +102,15 @@ const DirectoryGrid = ({
     const { target } = event;
 
     // 瓦片右上角的重命名 / 删除自带 onClick，带 ⌘ 点它们不该被当成「选中条目」
-    if (target instanceof HTMLElement && target.closest('[data-tile-actions]') !== null) {
+    /*
+     * 用 `Element` 而不是 `HTMLElement`：文件夹 / 文件图标是 SVG，
+     * 点图标时目标不是 HTML 元素，按 `HTMLElement` 判会漏掉「点图标选中」这一路。
+     */
+    if (target instanceof Element && target.closest('[data-tile-actions]') !== null) {
       return;
     }
 
-    const tile = target instanceof HTMLElement ? target.closest('[data-entry-path]') : null;
+    const tile = target instanceof Element ? target.closest('[data-entry-path]') : null;
 
     if (!(tile instanceof HTMLElement)) {
       return;

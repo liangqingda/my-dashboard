@@ -17,6 +17,8 @@ export type DragMoveSession = {
   origin: string;
   /** 从一整批里单独拖起某一条时，其余那些（没搬成就还原回整批） */
   rest?: DraggableEntry[];
+  /** 被单独拖起的那一条在整批里的原位置：还原时按原位插回去，别把顺序打乱 */
+  restAt?: number;
 };
 
 /** 逐条搬的进度：弹窗据此画「像 macOS 那样的移动进度」 */

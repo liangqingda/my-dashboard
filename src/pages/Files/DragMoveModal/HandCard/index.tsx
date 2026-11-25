@@ -37,6 +37,7 @@ const PREVIEW_CATEGORIES = new Set<FileEntry['category']>(['image', 'video']);
  */
 const HandCard = ({
   entries,
+  focusPath = null,
   handed,
   onDragEnd,
   onDragEntry,
@@ -69,6 +70,17 @@ const HandCard = ({
         {entries.map((entry) => {
           const Icon = entryIcon(entry);
           const previewable = previewFile !== null && previewFile.path === entry.path;
+
+          // 单条拖起时，它自己这一格留成虚位：其它条目不挪位置，也能看出「它还在这一格」
+          if (focusPath === entry.path) {
+            return (
+              <div
+                aria-hidden="true"
+                className={styles.slot}
+                key={entry.path}
+              />
+            );
+          }
 
           return (
             <div

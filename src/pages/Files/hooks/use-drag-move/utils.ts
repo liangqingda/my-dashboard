@@ -2,7 +2,7 @@
  * 拖拽移动会话的纯函数：计时器句柄与落点过滤。
  */
 
-import type { FolderEntry } from '../../types';
+import type { DraggableEntry, FolderEntry } from '../../types';
 
 import type { DragMoveSession } from './types';
 
@@ -35,23 +35,58 @@ export const focusSession = (
   session: DragMoveSession,
   path: string,
 ): DragMoveSession | null => {
-  const entry = session.entries.find((item) => item.path === path);
+  const restAt = session.entries.findIndex((item) => item.path === path);
 
-  if (entry === undefined) {
+  if (restAt === -1) {
     return null;
   }
 
+  const entry = session.entries[restAt];
   const rest = session.entries.filter((item) => item.path !== path);
 
   return {
     entries: [entry],
     origin: session.origin,
     rest: rest.length > 0 ? rest : undefined,
+    restAt,
   };
 };
 
-/** 单条没搬成：把 `rest` 里的条目还原回整批；没有 `rest` 就原样返回 */
-export const restoreSession = (session: DragMoveSession): DragMoveSession =>
-  session.rest === undefined
-    ? session
-    : { entries: [...session.entries, ...session.rest], origin: session.origin };
+/**
+ * 单条没搬成：把 `rest` 里的条目按原位插回去，还原成整批；没有 `rest` 就原样返回。
+ * 按原位还原（而不是接在最后）——弹窗里的待拖拽区要看到「它从哪儿来、回哪儿去」。
+ */
+export const restoreSession = (session: DragMoveSession): DragMoveSession => {
+  if (session.rest === undefined) {
+    return session;
+  }
+
+  const restAt = session.restAt ?? session.rest.length;
+
+  return {
+    entries: [
+      ...session.rest.slice(0, restAt),
+      ...session.entries.slice(0, 1),
+      ...session.rest.slice(restAt),
+    ],
+    origin: session.origin,
+  };
+};
+
+/**
+ * 这一批条目按原顺序排好的完整列表（单独拖起某一条时，它自己站在原位、其余在 `rest`）：
+ * 弹窗里的待拖拽区按原位平铺，正在被拖的那一条也留下它的槽位。
+ */
+export const sessionLayout = (session: DragMoveSession): DraggableEntry[] => {
+  if (session.rest === undefined) {
+    return session.entries;
+  }
+
+  const restAt = session.restAt ?? session.rest.length;
+
+  return [
+    ...session.rest.slice(0, restAt),
+    ...session.entries.slice(0, 1),
+    ...session.rest.slice(restAt),
+  ];
+};
