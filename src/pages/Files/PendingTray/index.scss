@@ -64,15 +64,21 @@
   color: var(--app-accent);
 }
 
-/* 条目列（收件的落点整条面板都算；这里只负责排列与滚动，本身不是拖拽源） */
+/*
+ * 条目列（收件的落点整条面板都算；这里只负责排列与滚动，本身不是拖拽源）。
+ * 内容区比上下两条深一档：header 与 footer 保持面板底色，中间这块用浅底 + 描边区分开，
+ * 攒着的那批条目就读得清「这是待拖的东西」，不是又一层导航。
+ */
 .main {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
   min-height: 0;
   padding: 4px;
-  border: 1px dashed transparent;
+  overflow: hidden;
+  border: 1px solid var(--app-line);
   border-radius: 10px;
+  background: var(--app-surface-subtle);
   user-select: none;
 }
 
@@ -128,7 +134,7 @@
   padding: 5px 8px;
   border: 1px solid var(--app-line);
   border-radius: 8px;
-  background: var(--app-surface-subtle);
+  background: var(--app-surface);
   text-align: start;
 }
 

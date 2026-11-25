@@ -30,6 +30,12 @@ header 上只有一句「N 项待移动」，不再挂清空叉号——清空�
 `getData` 的具体内容，等真去读就永远 `preventDefault` 不了、也就收不到 `drop`。
 面板里名字的 hover 提示一律 `disabled`：拖拽时不该冒 tooltip。
 
+## 三块的分层
+
+顶部 header（计数）与底部 footer（三颗按钮）用面板底色 `--app-surface`，中间的条目区
+（`.main`）换成浅一档的 `--app-surface-subtle` 并描一圈 `--app-line`：一眼能分出「上面说的是什么、
+中间攒着什么、下面能做什么」。条目本身回到面板底色（`--app-surface`），在浅底上能立起来。
+
 ## 常挂 DOM，靠类收起
 
 这条面板**始终挂载**，没有条目时加 `.closed`：`opacity / transform / visibility` 一起过渡，
