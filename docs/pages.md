@@ -80,9 +80,10 @@ library），定一个就一直用它，别两套并存。
 5. 页面自己的操作按钮通过 `actions` prop 传入，排在上述两个内置按钮之前；有页面按钮时，
    它们与内置按钮之间由外壳加一条竖向分割线。按钮组件就近放在该页面目录下
    （`src/pages/<Page>/<Button>/`）。（示例：服务页的「重启 agent」。）
-6. 页面可选再挂三条快捷键回调：`onToggleFilter`（`S` 开合页面筛选面板）、
-   `onToggleFavorites`（`C` 开合收藏面板）、`onNavigateParent`（`⌘↑` 回上一级目录）；
-   不传对应回调则该键不动作。键位监听只在布局层 hook 里，业务页面不自写 `keydown`。
+6. 页面可选再挂快捷键回调：`onToggleFilter`（`S` 开合页面筛选面板）、
+   `onToggleFavorites`（`C` 开合收藏面板）、`onNavigateParent`（`⌘↑` 回上一级目录）、
+   `onEscape` / `onSpace`（收掉页面自己的临时状态；示例：文件页取消批量拖拽）；
+   不传对应回调则该键不动作、也不拦默认行为。键位监听只在布局层 hook 里，业务页面不自写 `keydown`。
 7. 标题右侧的一句描述通过 `description` 传入（示例：文件页的「13.78 GB 可用」）：
    页面只按数据拼文案，字号 / 颜色 / 单行省略 / 截断才弹 tip 都由外壳统一（走 `FreeTruncatedText`），
    页面不要给这段文本再写样式。描述只收字符串——要放进按钮或徽标请走 `actions`。

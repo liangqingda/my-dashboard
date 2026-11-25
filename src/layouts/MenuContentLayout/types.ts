@@ -27,4 +27,9 @@ export type MenuContentLayoutProps = {
   onEscape?: () => void;
   /** `C` 开合页面自己的收藏面板；不传则该键不动作 */
   onToggleFavorites?: () => void;
+  /**
+   * 空格收掉页面自己的临时状态（文件页用来取消批量拖拽并清空待拖拽区）；
+   * 不传则该键不接管，空格仍归浏览器默认行为 / 聚焦控件。
+   */
+  onSpace?: () => void;
 };

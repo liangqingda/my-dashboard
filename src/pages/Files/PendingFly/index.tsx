@@ -177,13 +177,9 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
 
     if (direction === 'in') {
       /*
-       * 收进待拖拽区时，列表里那一项还亮着：飞行块就是它的整块拷贝，
-       * 原件先藏起来，否则看起来像「一个东西走了、一个还杵在那儿」。
+       * 原件一直留在原位、不藏不换：飞行块本来就是它的整块拷贝，
+       * 起步时正好盖住它，之后缩小着离开——原位那项从头到尾都看得见，不会闪。
        */
-      if (tile !== null) {
-        tile.style.visibility = 'hidden';
-      }
-
       swap(true);
     }
 
@@ -232,10 +228,6 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
     return () => {
       window.clearTimeout(morph);
       move.cancel();
-
-      if (tile !== null && direction === 'in') {
-        tile.style.visibility = '';
-      }
     };
   }, [flight]);
 

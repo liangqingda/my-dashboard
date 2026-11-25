@@ -1,6 +1,6 @@
 /**
  * 页面级操作快捷键：`r` 刷新当前页面、`f` 切换全屏；页面可选再挂 `s` 开合筛选面板、
- * `c` 开合收藏面板、`⌘↑` 回到上一级目录，以及 `Esc` 收掉页面自己的临时状态（不传就不接管）。
+ * `c` 开合收藏面板、`⌘↑` 回到上一级目录，以及 `Esc` / 空格 收掉页面自己的临时状态（不传就不接管）。
  *
  * 放行口径与弹窗快捷键一致：带 ⌘ / Ctrl / Alt 的组合键归浏览器或系统（`⌘↑` 是唯一例外，
  * 由页面显式给了上级目录回调才接管）；正在输入（输入框、文本域、可编辑区）时字符属于
@@ -41,12 +41,18 @@ type PageActionShortcutParams = {
    * 不传就不接管；弹窗开着时事件落在弹窗内，按容器判定直接放行，仍由弹窗自己处理。
    */
   onEscape?: () => void;
+  /**
+   * 空格收掉页面自己的临时状态（文件页用来取消批量拖拽 / 清空待拖拽区）。
+   * 不传就不接管；媒体播放这类「空格归播放器」的场景由弹窗自己处理（事件落在弹窗外壳里即放行）。
+   */
+  onSpace?: () => void;
 };
 
 /** 监听页面操作键，分别触发刷新、全屏与页面可选的面板 / 目录动作 */
 export function usePageActionShortcuts({
   containerRef,
   onEscape,
+  onSpace,
   onNavigateParent,
   onRefresh,
   onToggleFilter,
@@ -99,6 +105,16 @@ export function usePageActionShortcuts({
         return;
       }
 
+      // 空格默认会翻页 / 触发聚焦控件：只在页面确实给了动作时才抢并拦默认行为
+      if (event.key === ' ' || event.code === 'Space') {
+        if (onSpace) {
+          event.preventDefault();
+          onSpace();
+        }
+
+        return;
+      }
+
       /** 有回调才抢键并拦默认行为；没回调的档位不吞字符 */
       const run = (handler?: () => void) => {
         if (handler) {
@@ -133,6 +149,7 @@ export function usePageActionShortcuts({
     onEscape,
     onNavigateParent,
     onRefresh,
+    onSpace,
     onToggleFilter,
     onToggleFavorites,
     onToggleFullscreen,

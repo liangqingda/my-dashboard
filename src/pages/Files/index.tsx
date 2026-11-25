@@ -248,6 +248,7 @@ const Files = () => {
       fill
       onEscape={pending.active ? pending.clear : undefined}
       onNavigateParent={navigateParent}
+      onSpace={pending.active ? pending.clear : undefined}
       onToggleFavorites={() => togglePanel('favorites')}
       onToggleFilter={() => togglePanel('filter')}
       title="文件"
