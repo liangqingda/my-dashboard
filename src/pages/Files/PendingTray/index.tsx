@@ -134,13 +134,16 @@ const PendingTray = ({
                   onRemove(entry, event.currentTarget.getBoundingClientRect())
                 }
               >
-                <Icon aria-hidden="true" className={styles.chipIcon} size={15} stroke={1.2} />
-                <FreeTruncatedText
-                  className={styles.chipName}
-                  disabled
-                  ellipsis="end"
-                  text={entry.name}
-                />
+                {/* 内容单独一层：落进空位时由它做「由小到大」的显形，边框与底色照旧属于整格 */}
+                <span className={styles.chipBody}>
+                  <Icon aria-hidden="true" className={styles.chipIcon} size={15} stroke={1.2} />
+                  <FreeTruncatedText
+                    className={styles.chipName}
+                    disabled
+                    ellipsis="end"
+                    text={entry.name}
+                  />
+                </span>
               </UnstyledButton>
             );
           })}

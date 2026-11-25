@@ -156,8 +156,9 @@
   box-shadow: none;
 }
 
-.landing > * {
+.landing .chipBody {
   opacity: 0;
+  transform: scale(0.5);
 }
 
 .chip:hover {
@@ -165,10 +166,22 @@
   background: var(--app-surface-hover);
 }
 
+/* 内容层：飞行期间藏着（由空位占位），落定后自己由小到大长出来——不再从列表样式渐变过来 */
+.chipBody {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  transform-origin: center;
+  transition:
+    opacity 200ms ease,
+    transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
 .chipIcon {
   flex: 0 0 auto;
   color: var(--mantine-color-blue-5);
-  transition: opacity 180ms ease;
 }
 
 .chipName {
@@ -176,7 +189,6 @@
   min-width: 0;
   color: var(--app-ink);
   font-size: 12px;
-  transition: opacity 180ms ease;
 }
 
 /* 减少动态：退场只淡出，不位移 */
