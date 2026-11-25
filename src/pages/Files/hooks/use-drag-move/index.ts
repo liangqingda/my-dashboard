@@ -162,6 +162,12 @@ export const useDragMove = ({
       return;
     }
 
+    /*
+     * 松手先把悬停计时清掉：指针还压在某一行 / 某个文件夹上时，
+     * 500ms 的「停留＝进入」和之后的弹起还会接着跑，看起来像「松手了还要等一下才回去」。
+     */
+    resetHover();
+
     // 只拖了其中一条又没搬成：把其余条目还原回来，整批仍在弹窗里等着
     if (active.rest !== undefined) {
       const restored = restoreSession(active);

@@ -56,6 +56,8 @@ const dragMove = useDragMove({
 - **悬停计时**：`hoverFolder(path)` 只在「目标换了」时才起 `SPRING_HOVER_MS`（0.5 秒）计时，
   同一目标的连续 `dragover` 不重启；满 0.5 秒置 `springPath` 播弹起动画，再等 `SPRING_ENTER_MS`
   调 `goTo` 真正换层。`leaveFolder(path)` 只清自己那份计时，别误清刚停上去的新目标。
+- **松手先清计时**：`endDrag()` 一进来就 `resetHover()`。指针还可能压在某一行上，
+  不停掉那套 500ms 的「停留＝进入」，松手后它还会接着跑，看起来就是「松手了还要等一下才回去」。
 - **立刻松手**：`dropOnFolder(targetDir)` 直接移动（把 `session.entries` 逐个提交），不进入——
   先清计时器再关窗提交，计时器不清的话松手后它还会把用户带进某个文件夹。
 

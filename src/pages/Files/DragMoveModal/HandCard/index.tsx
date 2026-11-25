@@ -74,18 +74,23 @@ const HandCard = ({
 
           /*
            * 正被单条拖的那一格、以及整批搬起时的全部条目，都留成「虚」的一格：
-           * 位子不动、内容照旧看得见（图标与名字压暗、边换虚线），只是不再是可拖的实体。
+           * 位子不动、内容照旧看得见（图标与名字压暗、边换虚线）。
+           *
+           * 但**正在被拖的那一格自己不能再被摘掉 `draggable`**：拖拽途中把源元素改成不可拖，
+           * 浏览器会把这趟拖拽晾在那儿（`dragend` 迟迟不来），松手后要等一下才「回去」。
+           * 整批搬起时全部锁住才是真不能拖。
            */
+          const locked = ghostAll;
           const ghost = ghostAll || focusPath === entry.path;
 
           return (
             <div
               className={cx(styles.chip, ghost && styles.ghost)}
-              draggable={!ghost}
+              draggable={!locked}
               key={entry.path}
-              onDragEnd={ghost ? undefined : onDragEnd}
+              onDragEnd={locked ? undefined : onDragEnd}
               onDragStart={
-                ghost
+                locked
                   ? undefined
                   : (event) => {
                       // 这一条自己就是拖拽源，别让外层「整批拖」再拦一次
