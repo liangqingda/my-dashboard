@@ -21,6 +21,7 @@ export type FilesOverlaysProps = {
     entryActions: ReturnType<typeof useEntryActions>;
     pending: ReturnType<typeof useDragPending>;
     onDropPaths: (paths: string[]) => void;
+    onSelectAll: () => void;
   };
   /** 业务弹窗：删除 / 改名 / 卸载 / 推出外接盘 / 拖拽移动 */
   modals: {

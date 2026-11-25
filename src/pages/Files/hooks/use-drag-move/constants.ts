@@ -7,3 +7,9 @@ export const SPRING_HOVER_MS = 500;
 
 /** 弹起动画播多久再真正换层，让用户看清「进的是哪一个」 */
 export const SPRING_ENTER_MS = 220;
+
+/**
+ * 一次移动至少演这么久（毫秒）：本机同一块盘上搬一条是几毫秒的事，
+ * 进度窗一闪而过反而像没做成；给足一秒，进度、结果、要不要关窗都在这之后才判。
+ */
+export const MIN_MOVE_MS = 1000;

@@ -48,6 +48,26 @@
   border-radius: 8px;
   background: var(--app-surface-subtle);
   cursor: grab;
+  transition:
+    border-color 120ms ease,
+    background 120ms ease,
+    box-shadow 120ms ease,
+    transform 120ms ease;
+}
+
+/*
+ * 可单独拖的样子全交给样式：hover 时整格亮成强调色、微微抬起、抓手跟着变色，
+ * 不弹任何文字提示——一眼就知道「这一格本身可以拎走」。
+ */
+.chip:not(.ghost):hover {
+  border-color: var(--app-accent);
+  background: var(--app-accent-soft);
+  box-shadow: 0 2px 8px rgb(23 37 34 / 14%);
+  transform: translateY(-1px);
+}
+
+.chip:not(.ghost):hover .grip {
+  color: var(--app-accent);
 }
 
 /*

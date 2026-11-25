@@ -49,6 +49,8 @@ export type UseDragMoveArgs = {
   currentFolders: FolderEntry[];
   /** 执行移动；成功返回 true（失败时调用方自己弹提示，弹窗不重复报） */
   moveEntry: (source: string, targetDir: string) => Promise<boolean>;
+  /** 整批都搬走了、弹窗自动关掉：把最后落成的目录回给别人（页面据此跟过去） */
+  onAllMoved?: (targetDir: string) => void;
 };
 
 /** 读盘 hook 的入参：路径与结果由会话给，缓存与回填也还回到会话里 */

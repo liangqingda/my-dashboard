@@ -14,4 +14,6 @@ export type FilesDragLayersProps = {
   entryActions: ReturnType<typeof useEntryActions>;
   /** 从列表拖过来的条目在待拖拽区松手：按路径收进来（页面按当前列表把这些路径认成条目） */
   onDropPaths: (paths: string[]) => void;
+  /** 待拖拽区底部的「选择全部」：页面把当前列表的所有条目收进来 */
+  onSelectAll: () => void;
 };

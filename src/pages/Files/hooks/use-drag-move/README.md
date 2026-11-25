@@ -11,6 +11,7 @@ const dragMove = useDragMove({
   currentDir,      // 页面当前目录；null 时 open 不生效
   currentFolders,  // 页面已有的子文件夹列表：最外层不再多发一次请求
   moveEntry,       // (source, targetDir) => Promise<boolean>，成功才播音效
+  onAllMoved,      // 可选：整批都搬走、弹窗自动关掉时回传最后落成的目录（页面据此切过去）
 });
 ```
 
@@ -22,7 +23,8 @@ const dragMove = useDragMove({
 
 ## `movedPaths`
 
-一次会话里**真正移成功**的源路径，在 `close()` 之前 `setMovedPaths(sources)`、`open()` 时清空。
+一次会话里**真正移成功**的源路径，`open()` 时清空，之后每成功一趟就**累加**（`movedRef` 是判定用的那份），
+所以「一批里先搬一条、再搬剩下的」也能正确收尾。
 页面靠它做收尾：`FilesDragLayers` 拿 `movedPaths` 调 `pending.removePaths`，只把搬走的那几条从
 待拖拽区摘掉；关窗 / Esc 取消时它是空的，攒下的条目原样留着。
 
@@ -33,7 +35,9 @@ const dragMove = useDragMove({
 - `view`：`{ path, folders }`，弹窗现在停在哪一层，`folders === null` 表示这一层还等着读盘；
 - `dragActive` / `handed`：条目「正在被拖」还是「已经放回手里」，两者互斥地决定提示语与点击是否生效。
 
-只有成功移动（或用户主动关窗）会 `close()`；其余松手一律 `endDrag()` → `handed`，弹窗不关。
+只有**这一批条目全部搬走**（或用户主动关窗）才 `close()`；只搬走其中一条时弹窗留着，
+把剩下的条目接着摆在待拖拽区（`session.entries` 换成剩下的那批），其余松手一律 `endDrag()` → `handed`。
+自动关窗发生在「所有待拖拽项都搬走」那次移动之后，并回传最后一个落成的目录（`onAllMoved`）。
 渲染用的 `loading` 是派生值（`folders === null && error === null`），不另存状态，
 免得中止请求、换层时要额外维护。
 
@@ -62,11 +66,19 @@ const dragMove = useDragMove({
 `dropOnBlank()` 把这一批条目移进当前这一层；当前层正好是 `session.origin`（它原本就在这儿）时
 改走 `endDrag()`——没有可移动的距离，只把条目放回手里，弹窗留着（弹窗据此把提示改成「松开不做移动」）。
 
+## 搬这一趟的节奏（`use-move-runner.ts`）
+
+松手到真正落位的那一程单独收在 `use-move-runner.ts`：逐条提交（进度由 `run-move.ts` 推）、
+**至少演 `MIN_MOVE_MS`＝1 秒**（本机搬一条是毫秒级的事，进度窗一闪而过反而像没做成），
+等满一秒之后才判要不要关窗。中途有一条失败就停在手持态，失败原因由 `moveEntry` 自己弹通知。
+搬成功的几条先进 `movedRef`，再按「整批里还剩谁」决定：剩 0 条 → `close()` + 音效 + `onAllMoved(targetDir)`；
+还剩 → 会话换成剩下的那批、`handed = true`，弹窗不关。
+
 ## 事件里的「此刻」
 
 拖拽事件频率高、闭包容易读到上一次渲染的状态，所以会话、当前层、悬停目标、计时器句柄
 都另存 ref（`sessionRef` / `viewRef` / `hoverRef` / `hoverTimerRef` / `enterTimerRef` /
-`cacheRef` / `movingRef`），动作读 ref、渲染读 state，由 `useEffect` 把 `view` 同步进 `viewRef`。
+`cacheRef` / `movingRef` / `movedRef`），动作读 ref、渲染读 state，由 `useEffect` 把 `view` 同步进 `viewRef`。
 
 ## 副作用清理
 

@@ -22,6 +22,7 @@ const FilesOverlays = ({ drag, modals, preview }: FilesOverlaysProps) => {
       <FilesDragLayers
         entryActions={drag.entryActions}
         onDropPaths={drag.onDropPaths}
+        onSelectAll={drag.onSelectAll}
         pending={drag.pending}
       />
 

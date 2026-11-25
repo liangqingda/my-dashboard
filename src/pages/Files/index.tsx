@@ -42,7 +42,8 @@ import styles from './index.scss';
  * 弹窗 header 有收藏当前层 / 新建文件夹 / 选本地目录三颗按钮（都走页面同一套流程），
  * 弹窗里这批条目平铺成待拖拽区，图标按条目类型换、图 / 视频可点开预览。
  * 网格里用 ⌘ / Shift + 点击（或待拖拽区已经非空时直接点）把条目攒进覆盖侧栏的待拖拽区，
- * 攒下东西后点条目只做「加入 / 移除」，拖这块空白处整批搬、拖某个小图标只搬它一个。
+ * 攒下东西后点条目只做「加入 / 移除」，整批搬走归待拖拽区底部的「拖拽全部」按钮，
+ * 「选择全部 / 取消」也在那条底部条上（面板本身不再是拖拽热区）。
  * 标题栏筛选面板支持按名称关键词过滤与按类型勾选，取消勾选的类型连同对应文件夹一起隐藏。
  * 列表只列摘要；点视频条目会在弹窗里播放（设置里可改成交给外部播放器），
  * 点图片条目会在同形的弹窗里预览，两者的翻篇与目录侧栏都基于当前目录的同类列表（视频另有截图）。
@@ -88,6 +89,8 @@ const Files = () => {
     currentDir: listing?.path ?? null,
     currentFolders: folders,
     reload,
+    // 整批搬完、弹窗自己关掉后，列表跟到最后落成的目录
+    onAllMoved: openDir,
   });
   /** 应用卸载：点卸载先取残留清单，确认后删整包并清理残留 */
   const appUninstall = useAppUninstall(reload);
@@ -147,6 +150,13 @@ const Files = () => {
     loading,
     selected: selectedCategories,
   });
+
+  /**
+   * 待拖拽区底部的「选择全部」：只收**当前列表里看得见的**那些（已过关键词与类型筛选）；
+   * 应用包不参与移动，天然不在里面。
+   */
+  const handleSelectAll = () =>
+    pending.addMany([...list.visibleFolders, ...list.visibleFiles]);
 
   /** 切换某块弹层：再点一次同一块则收起 */
   const togglePanel = (panel: FilesActionsPanel) =>
@@ -293,7 +303,12 @@ const Files = () => {
       </Stack>
 
       <FilesOverlays
-        drag={{ entryActions, onDropPaths: handleTrayDrop, pending }}
+        drag={{
+          entryActions,
+          onDropPaths: handleTrayDrop,
+          onSelectAll: handleSelectAll,
+          pending,
+        }}
         modals={{
           appUninstall,
           deleteEntry: entryDelete,

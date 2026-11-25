@@ -1,19 +1,23 @@
 # PendingFly
 
-「条目挪进待拖拽区」的那一下动画：点选（`⌘` / `Shift` + 点击，或待拖拽区非空后的普通点击）
-把一个瓦片收进去时，从瓦片原位飞一块小图标到侧栏面板上，让人看清「它被挪到哪儿了」。
+「条目在列表与待拖拽区之间挪动」的那一下动画，两个方向共用一套：
+- **移入**：点选（`⌘` / `Shift` + 点击，或待拖拽区非空后的普通点击）把瓦片收进侧栏；
+- **移出**：点待拖拽区里的某一格（或在列表里再点一次已选中的条目）让它飞回原位。
 
 ## 怎么做
 
-- 起点：点选那一刻瓦片的屏幕矩形，由 `DirectoryGrid` 量好、经 `useDragPending` 的 `toggle(entry, from)`
-  存进 `fly: { entry, from }`；
-- 终点：`document.querySelector('[data-pending-drop]')`（`PendingTray` 里那块空白）实测矩形，
-  再往里内缩 `DROP_INSET`；
-- 用 Web Animations API 一次 `translate + scale(0.36) + 淡出`，`FLY_MS = 420`、
-  `cubic-bezier(0.32, 0.72, 0.24, 1)`、`fill: 'forwards'`；`onfinish` 回调页面 `clearFly` 收掉这一层。
+- 起点：`flight.from`（移入是那张瓦片的矩形，移出是待拖拽区那一格的矩形），由 `useDragPending` 量好带进来；
+- 终点：移入遍历 `[data-pending-chip]` 找**它真正落脚的那一格**，移出遍历 `[data-entry-path]` 找**它那张瓦片**；
+  命不中（侧栏收起 / 该条已不在采光内）就原地淡掉；
+- 飞行块按**落点尺寸**建，终点正好盖住那块目标。轨迹分四段，一条 `FLY_MS = 560` 播完：
+  1. 以一枚图标起步（`scale(0.3)`、轻微上浮）；
+  2. 到三成时换成「那一项小小的样子」——图标 + 名字的小卡片（`cardFace`，`setTimeout` 到点换面孔）；
+  3. 飞过去，到落点上方长到 **90%** 并停一下（让人看清落点）；
+  4. 再补到 100% 并往下沉 4px，落进位子。
+  缓动 `cubic-bezier(0.32, 0.72, 0.24, 1)`、`fill: 'forwards'`，`onfinish` 回调 `clearFlight` 收掉这一层。
 
 ## 兜底
 
 - 系统开了「减少动态」（`prefers-reduced-motion`）→ 不做位移，直接 `onDone`；
-- DOM 上没有起点或终点（侧栏收起、面板刚卸）→ 同样直接 `onDone`，不留在屏幕上；
+- DOM 上找不到终点（侧栏收起、那一格已不在）→ 就地淡掉后 `onDone`，不乱飞；
 - 回调放 `doneRef`（在 effect 里同步），effect 只依赖 `fly`：父级每次渲染的新函数不会让动画重启动。

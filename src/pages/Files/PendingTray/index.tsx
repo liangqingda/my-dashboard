@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Text, UnstyledButton } from '@mantine/core';
-import { IconStack2, IconX } from '@tabler/icons-react';
+import { Button, Text, UnstyledButton } from '@mantine/core';
+import { IconGripVertical, IconStack2 } from '@tabler/icons-react';
 
-import FreeIconAction from '@/components/buttons/FreeIconAction';
 import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
 import { cx } from '@/utils/cx';
 
@@ -40,6 +39,7 @@ const PendingTray = ({
   onDragEnd,
   onDropPaths,
   onRemove,
+  onSelectAll,
   closed = false,
 }: PendingTrayProps) => {
   const [rect, setRect] = useState<SidebarRect | null>(null);
@@ -116,27 +116,9 @@ const PendingTray = ({
           <IconStack2 aria-hidden="true" className={styles.titleIcon} size={14} stroke={1.8} />
           {entries.length} 项待移动
         </Text>
-        <FreeIconAction label="清空待拖拽区" onClick={onClear} size="xs" tone="danger">
-          <IconX size={14} stroke={1.9} />
-        </FreeIconAction>
       </div>
 
-      <div
-        className={styles.main}
-        data-pending-drop="true"
-        draggable
-        onDragEnd={() => {
-          setOver(false);
-          onDragEnd();
-        }}
-        onDragStart={(event) => {
-          writeDragPayload(
-            event.dataTransfer,
-            entries.map((entry) => entry.path),
-          );
-          onDragAll();
-        }}
-      >
+      <div className={styles.main} data-pending-drop="true">
         <div className={styles.chips}>
           {entries.map((entry) => {
             const Icon = entryIcon(entry);
@@ -161,6 +143,37 @@ const PendingTray = ({
               </UnstyledButton>
             );
           })}
+        </div>
+      </div>
+
+      <div className={styles.foot}>
+        <Button
+          className={styles.dragAll}
+          draggable
+          fullWidth
+          leftSection={<IconGripVertical size={16} stroke={1.6} />}
+          onDragEnd={() => {
+            setOver(false);
+            onDragEnd();
+          }}
+          onDragStart={(event) => {
+            writeDragPayload(
+              event.dataTransfer,
+              entries.map((entry) => entry.path),
+            );
+            onDragAll();
+          }}
+          variant="filled"
+        >
+          拖拽全部
+        </Button>
+        <div className={styles.footRow}>
+          <Button flex={1} onClick={onSelectAll} size="xs" variant="default">
+            选择全部
+          </Button>
+          <Button flex={1} onClick={onClear} size="xs" variant="subtle">
+            取消
+          </Button>
         </div>
       </div>
     </div>

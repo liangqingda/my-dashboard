@@ -1,10 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 
 import type { DraggableEntry, FolderEntry } from '../../types';
-import { playMoveSound, primeMoveSound } from '../../utils/move-sound';
 
 import { SPRING_ENTER_MS, SPRING_HOVER_MS } from './constants';
-import { runSequentialMove } from './run-move';
 import { clearTimer, focusSession, restoreSession, stripSelf } from './utils';
 import type {
   DragMoveSession,
@@ -12,6 +10,7 @@ import type {
   MoveProgress,
   UseDragMoveArgs,
 } from './types';
+import { useMoveRunner } from './use-move-runner';
 import { useViewFolders } from './use-view-folders';
 
 /**
@@ -30,6 +29,7 @@ export const useDragMove = ({
   currentDir,
   currentFolders,
   moveEntry,
+  onAllMoved,
 }: UseDragMoveArgs) => {
   /** 当前会话；null 表示弹窗关闭 */
   const [session, setSession] = useState<DragMoveSession | null>(null);
@@ -60,6 +60,8 @@ export const useDragMove = ({
   const cacheRef = useRef<Map<string, FolderEntry[]>>(new Map());
   /** 移动请求在飞：挡住重复松手带来的第二次提交 */
   const movingRef = useRef(false);
+  /** 本会话已搬成功的路径（跨多次「拖一条搬一条」累计；状态那份给界面用，这份给判定用） */
+  const movedRef = useRef<string[]>([]);
 
   useEffect(() => {
     viewRef.current = view;
@@ -110,6 +112,7 @@ export const useDragMove = ({
     setError(null);
     setHanded(false);
     setMovedPaths([]);
+    movedRef.current = [];
     setProgress(null);
     setDragActive(true);
 
@@ -239,37 +242,22 @@ export const useDragMove = ({
    * 逐条提交移动（顺序与进度归 `run-move.ts`）：全部成功才播落位音效并关窗；
    * 有一条失败就停在手持态，失败原因由 `moveEntry` 自己弹通知，成功的几条已经落位、列表由页面刷新。
    */
-  const runMove = async (sources: string[], targetDir: string) => {
-    // 这一步还在 drop 事件的任务里：先把音频解锁，移动成功后再出声
-    primeMoveSound();
-    movingRef.current = true;
-
-    try {
-      const succeeded = await runSequentialMove({
-        moveOne: (source, dir) => moveEntry(source, dir),
-        onProgress: setProgress,
-        sources,
-        targetDir,
-      });
-
-      if (succeeded.length > 0) {
-        setMovedPaths(succeeded);
-      }
-
-      setProgress(null);
-
-      if (succeeded.length === sources.length) {
-        close();
-        playMoveSound();
-
-        return;
-      }
-
-      endDrag();
-    } finally {
-      movingRef.current = false;
-    }
-  };
+  /** 松手搬这一批：逐条提交、最低一秒、搬完再判要不要关窗（都在 `use-move-runner`） */
+  const runMove = useMoveRunner({
+    close,
+    endDrag,
+    moveEntry,
+    movedRef,
+    movingRef,
+    onAllMoved,
+    resetHover,
+    sessionRef,
+    setDragActive,
+    setHanded,
+    setMovedPaths,
+    setProgress,
+    setSession,
+  });
 
   /** 松手 / 点在某文件夹上：立刻移进去（停留到半秒那条路径是「进入」，不是「移入」） */
   const dropOnFolder = (targetDir: string) => {

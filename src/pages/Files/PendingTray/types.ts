@@ -7,8 +7,8 @@ export type PendingTrayProps = {
   /** 列表正往这儿拖着东西：整块亮成落点，提示「松手就收进来」 */
   armed?: boolean;
   /**
-   * 从这块区域拖起（除 header 外整块都是热区）：整批一起进移动弹窗。
-   * 条目本身不可拖——想单独搬一条，去弹窗里的待拖拽区拖它那一行。
+   * 底部的「拖拽全部」：整批一起进移动弹窗。
+   * 面板本身不再是拖拽热区——想整批搬，只能按这颗按钮；单条搬到弹窗里再拖。
    */
   onDragAll: () => void;
   /** 拖拽结束（松手 / Esc），收掉拖拽状态 */
@@ -17,8 +17,10 @@ export type PendingTrayProps = {
   onDropPaths: (paths: string[]) => void;
   /** 点某一项就把它移出待拖拽区（带上那一格的矩形，动画据此飞回列表原位） */
   onRemove: (entry: DraggableEntry, from: DOMRect) => void;
-  /** 整个清空 */
+  /** 整个清空（底部的「取消」） */
   onClear: () => void;
+  /** 底部的「选择全部」：当前列表里的所有条目一次收进来 */
+  onSelectAll: () => void;
   /**
    * 移动弹窗开着时把它藏起来：弹窗铺满整屏，这条会浮在弹窗之上。
    * 只是藏起来、仍挂在 DOM 上——拖拽源被卸载会直接取消整次拖拽。

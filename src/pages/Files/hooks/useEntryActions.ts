@@ -26,6 +26,8 @@ export type UseEntryActionsArgs = {
   currentFolders: FolderEntry[];
   /** 静默刷新当前目录 */
   reload: () => Promise<void>;
+  /** 整批都搬走、移动弹窗自动关掉：把最后落成的目录交回页面（页面据此切过去） */
+  onAllMoved?: (targetDir: string) => void;
 };
 
 /**
@@ -39,6 +41,7 @@ export const useEntryActions = ({
   currentDir,
   currentFolders,
   reload,
+  onAllMoved,
 }: UseEntryActionsArgs) => {
   /** 正在弹窗改名的条目；null 表示改名弹窗关闭 */
   const [renamingEntry, setRenamingEntry] = useState<RenamingEntry | null>(null);
@@ -95,6 +98,7 @@ export const useEntryActions = ({
     currentDir,
     currentFolders,
     moveEntry: moveEntryTo,
+    onAllMoved,
   });
 
   /** 切目录前清掉改名与拖拽临时状态，不沿用到新目录 */

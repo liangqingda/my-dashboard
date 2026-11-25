@@ -21,7 +21,12 @@ import styles from './index.scss';
  * 收尾只摘掉这次**真正移成功**的条目（`movedPaths`）：关窗、Esc 取消时攒下的那些要留着。
  * 弹窗开着时待拖拽区只藏不卸：正在拖的条目就握在这条里，卸载等于取消整次拖拽。
  */
-const FilesDragLayers = ({ entryActions, onDropPaths, pending }: FilesDragLayersProps) => {
+const FilesDragLayers = ({
+  entryActions,
+  onDropPaths,
+  onSelectAll,
+  pending,
+}: FilesDragLayersProps) => {
   const { dragActive, endDrag, movedPaths, session } = entryActions.dragMove;
   /** 起拖入口在条目动作编排上（它同时管拖拽源高亮），不在移动会话里 */
   const { dragStartEntries } = entryActions;
@@ -63,6 +68,7 @@ const FilesDragLayers = ({ entryActions, onDropPaths, pending }: FilesDragLayers
         onDragEnd={endDrag}
         onDropPaths={onDropPaths}
         onRemove={pending.remove}
+        onSelectAll={onSelectAll}
       />
 
       {ghostEntries === null ? null : (

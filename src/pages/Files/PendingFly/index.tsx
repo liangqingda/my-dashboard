@@ -1,4 +1,6 @@
-import { createElement, useEffect, useRef } from 'react';
+import { createElement, useEffect, useRef, useState } from 'react';
+
+import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
 
 import { entryIcon } from '../utils/entry-icon';
 
@@ -6,8 +8,11 @@ import type { PendingFlightLayerProps } from './types';
 
 import styles from './index.scss';
 
-/** 一趟完整的「缩小 → 飞过去 → 长回来 → 落定」用这么久 */
+/** 一趟完整的「图标 → 小卡片 → 飞到位置 → 长到 90% → 停一下 → 落成 100%」用这么久 */
 const FLY_MS = 560;
+
+/** 换成卡片形态的时刻（占整趟的比例）：先给图标露个脸，再变成那一项的样子 */
+const CARD_AT = 0.3;
 
 /** 系统开了「减少动态」就只留结果、不做位移 */
 const prefersReducedMotion = (): boolean =>
@@ -38,15 +43,17 @@ const chipOf = (path: string): HTMLElement | null => {
 /**
  * 「条目在列表与待拖拽区之间挪动」的那一下动画。
  *
- * 不是飞到一个大概位置就淡掉，而是**飞到它真正落脚的那一格**：
- * - 移入：终点实测待拖拽区里那一格（已经渲染好，顺手先把它滚进视野），缩放也对到那一格的尺寸；
- * - 移出：终点实测列表里那张瓦片，飞回去落定。
- * 两端量不到（侧栏收起 / 瓦片不在屏幕上）就只做淡出淡入，不做越界位移。
+ * 飞行块按**落点**的尺寸建（终点正好是那一格 / 那张瓦片），过程分四段：
+ * 先用图标露个脸 → 变成「那一项小小的样子」（图标 + 名字的小卡片）飞过去 →
+ * 到落点上方长到九成 → 停一下 → 再补到十成并往下沉几像素，落进位子。
+ * 落点量不到（侧栏收起 / 瓦片不在屏幕上）就只做淡出，不乱飞。
  */
 const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
   const ref = useRef<HTMLDivElement>(null);
   /** 回调放 ref：effect 只跟「飞哪一条」走，别因为父级每次渲染的新函数重启动画 */
   const doneRef = useRef(onDone);
+  /** 形态：先图标、后小卡片 */
+  const [cardFace, setCardFace] = useState(false);
 
   useEffect(() => {
     doneRef.current = onDone;
@@ -88,41 +95,30 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
     const box = to.getBoundingClientRect();
     const dx = box.left + box.width / 2 - (from.left + from.width / 2);
     const dy = box.top + box.height / 2 - (from.top + from.height / 2);
-    /*
-     * 起落两端的尺寸差决定缩放。放大这一趟（飞回列表）不许超过 1.6——
-     * 再大就只剩一块放大的空框，反而不像那一枚瓦片；落定时本来就压在真瓦片上面，看得到本体。
-     */
-    const sx = Math.min(Math.max(box.width / from.width, 0.2), 1.6);
-    const sy = Math.min(Math.max(box.height / from.height, 0.2), 1.6);
 
-    /*
-     * 一条「整块 → 小图标 → 飞过去 → 一边长回来一边落定 → 停一下 → 往下落」的轨迹：
-     * 先缩成小图标，靠近落点再长回目标尺寸，最后一次几像素的下坠收尾，
-     * 让人看得出「它变成原来那么大、落进那个位置」。
-     */
+    /** 形态换代：图标换成「小的那一项」，此时飞行块还小，看不出拼接 */
+    const morph = window.setTimeout(() => setCardFace(true), FLY_MS * CARD_AT);
+
     const move = block.animate(
       [
-        { opacity: 1, transform: 'translate(0, 0) scale(1)' },
-        { opacity: 1, offset: 0.16, transform: 'translate(0, -6px) scale(0.34)' },
+        { opacity: 1, transform: 'translate(0, 0) scale(0.3)' },
+        { opacity: 1, offset: 0.16, transform: 'translate(0, -6px) scale(0.3)' },
         {
           opacity: 1,
           offset: 0.62,
-          transform: `translate(${dx * 0.84}px, ${dy * 0.84}px) scale(0.34)`,
+          transform: `translate(${dx * 0.86}px, ${dy * 0.86}px) scale(0.42)`,
         },
         {
           opacity: 1,
-          offset: 0.86,
-          transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`,
+          offset: 0.84,
+          transform: `translate(${dx}px, ${dy}px) scale(0.9)`,
         },
         {
           opacity: 1,
           offset: 0.93,
-          transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`,
+          transform: `translate(${dx}px, ${dy}px) scale(0.9)`,
         },
-        {
-          opacity: direction === 'in' ? 1 : 0.55,
-          transform: `translate(${dx}px, ${dy + 4}px) scale(${sx}, ${sy})`,
-        },
+        { opacity: 1, transform: `translate(${dx}px, ${dy + 4}px) scale(1)` },
       ],
       {
         duration: FLY_MS,
@@ -133,8 +129,14 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
 
     move.onfinish = finish;
 
-    return () => move.cancel();
+    return () => {
+      window.clearTimeout(morph);
+      move.cancel();
+    };
   }, [flight]);
+
+  const box = flight.direction === 'in' ? chipOf(flight.entry.path) : tileOf(flight.entry.path);
+  const size = box?.getBoundingClientRect() ?? flight.from;
 
   return (
     <div
@@ -142,13 +144,35 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
       className={styles.fly}
       ref={ref}
       style={{
-        height: flight.from.height,
-        left: flight.from.left,
-        top: flight.from.top,
-        width: flight.from.width,
+        height: size.height,
+        left: flight.from.left + flight.from.width / 2 - size.width / 2,
+        top: flight.from.top + flight.from.height / 2 - size.height / 2,
+        width: size.width,
       }}
     >
-      {createElement(entryIcon(flight.entry), { className: styles.icon, size: 40, stroke: 1.2 })}
+      {cardFace ? (
+        <div className={styles.card}>
+          {createElement(entryIcon(flight.entry), {
+            'aria-hidden': true,
+            className: styles.cardIcon,
+            size: 20,
+            stroke: 1.2,
+          })}
+          <FreeTruncatedText
+            className={styles.cardName}
+            disabled
+            ellipsis="end"
+            text={flight.entry.name}
+          />
+        </div>
+      ) : (
+        createElement(entryIcon(flight.entry), {
+          'aria-hidden': true,
+          className: styles.icon,
+          size: 32,
+          stroke: 1.2,
+        })
+      )}
     </div>
   );
 };

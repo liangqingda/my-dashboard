@@ -1,7 +1,8 @@
 /*
  * 待拖拽区：整块盖住左侧栏（顶栏之下），位置与尺寸由 `index.tsx` 实测侧栏那列后内联给出；
  * 这里的 184 / 44 只是量不到侧栏时的兜底，与 `BasicLayout` 的 AppShell 配置一致。
- * 顶部一行标题 + 清空；整条面板（**含 header**）都是收件热区，除 header 外还能拖起整批。
+ * 顶部一行标题（只有计数），底部一条三个按钮的底部条；整条面板（**含 header**）都是收件热区，
+ * 但面板本身不是拖拽源——整批搬走按底部那颗「拖拽全部」。
  */
 
 .tray {
@@ -63,7 +64,7 @@
   color: var(--app-accent);
 }
 
-/* 除 header 外整块：是「整批拖」的拖拽源（收件的落点整条面板都算） */
+/* 条目列（收件的落点整条面板都算；这里只负责排列与滚动，本身不是拖拽源） */
 .main {
   display: flex;
   flex: 1 1 auto;
@@ -72,8 +73,28 @@
   padding: 4px;
   border: 1px dashed transparent;
   border-radius: 10px;
-  cursor: grab;
   user-select: none;
+}
+
+/* 底部三颗：拖拽全部（主、更大）+ 选择全部 / 取消并排 */
+.foot {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 4px 4px;
+}
+
+.footRow {
+  display: flex;
+  gap: 6px;
+}
+
+/* 整批拖拽的入口，做成面板里最显眼的一颗，也让它足够好按、好拖 */
+.dragAll {
+  height: 40px;
+  font-size: 14px;
+  cursor: grab;
 }
 
 /*
