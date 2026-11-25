@@ -3,7 +3,7 @@
  * 行可拖拽（应用除外，移动 .app 会破坏系统登记），文件夹行是放置目标；
  * 重命名 / 删除走与瓦片同一组按钮，应用只有卸载一项。
  * 表格外观（边框、表头吸顶、行 hover）由 `FreeTable` 统一给，这里只管列宽与内容。
- * 分组模式下按「文件夹 → 应用 → 文件分类」切成纵向分段，段标题整行可点折叠、整行居中。
+ * 分组模式下按「文件夹 → 应用 → 文件分类」切成纵向分段，段标题整行可点折叠，行内垂直居中、水平靠左。
  */
 
 import type { DragEvent, MouseEvent } from 'react';
@@ -237,7 +237,6 @@ const FilesTable = memo(
                     >
                       <FreeTable.Td colSpan={2}>
                         <EntryGroupHeader
-                          align="center"
                           collapsed={collapsed}
                           label={ENTRY_GROUP_LABELS[group.key]}
                           onToggle={() => onToggleGroup(group.key)}

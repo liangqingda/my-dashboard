@@ -14,7 +14,6 @@ import type { EntryGroupHeaderProps } from './types';
 import styles from './index.scss';
 
 const EntryGroupHeader = ({
-  align = 'left',
   collapsed,
   label,
   onToggle,
@@ -26,11 +25,7 @@ const EntryGroupHeader = ({
   };
 
   return (
-    <UnstyledButton
-      className={cx(styles.header, align === 'center' && styles.headerCenter)}
-      onClick={handleClick}
-      type="button"
-    >
+    <UnstyledButton className={styles.header} onClick={handleClick} type="button">
       <IconChevronRight
         className={cx(styles.chevron, !collapsed && styles.chevronOpen)}
         size={14}

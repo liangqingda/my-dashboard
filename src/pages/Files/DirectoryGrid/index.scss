@@ -28,9 +28,10 @@
   gap: 10px;
 }
 
-/* 段与段之间用分割线隔开（访达风格），只作用在非表格视图 */
+/* 段与段之间用分割线隔开（访达风格），只作用在非表格视图；线上线下各留 12px */
 .group + .group {
   border-top: 1px solid var(--app-line);
+  margin-top: 12px;
   padding-top: 12px;
 }
 

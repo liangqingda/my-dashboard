@@ -16,11 +16,6 @@
   color: var(--app-accent);
 }
 
-/* 表格分组行：整行内容居中，箭头与标题作为一个整体居中 */
-.headerCenter {
-  justify-content: center;
-}
-
 .chevron {
   flex: 0 0 auto;
   transition: transform 120ms ease;
@@ -34,8 +29,4 @@
 .label {
   flex: 0 1 auto;
   text-align: left;
-}
-
-.headerCenter .label {
-  text-align: center;
 }

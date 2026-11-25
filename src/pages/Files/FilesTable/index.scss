@@ -53,9 +53,9 @@
   cursor: pointer;
 }
 
+/* 分组行：上下留白对称，标题与图标在行内垂直居中（水平靠左） */
 .groupRow td {
-  padding-top: 10px;
-  padding-bottom: 4px;
+  padding-block: 8px;
 }
 
 .groupRow:hover td {
