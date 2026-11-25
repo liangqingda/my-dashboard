@@ -10,14 +10,18 @@
   background: #000;
 }
 
-/* 抽帧探针：1px 透明、不接指针，只为给进度条悬停预览取帧，不参与布局 */
+/*
+ * 抽帧探针：1px、几乎透明、不接指针，只为给进度条悬停预览取帧，不参与布局。
+ * `opacity` 不能是 0：完全透明的视频不进入合成，`requestVideoFrameCallback` 会迟迟不回调，
+ * 抽帧就得等自己超时（表现为 hover 后转圈很久）。给一个极小的非零值，看起来与透明无异。
+ */
 .frameProbe {
   position: absolute;
   top: 0;
   left: 0;
   width: 1px;
   height: 1px;
-  opacity: 0;
+  opacity: 0.01;
   pointer-events: none;
 }
 

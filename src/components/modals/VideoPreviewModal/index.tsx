@@ -8,7 +8,8 @@
  *   `Enter` 截当前帧、`m` / `M` 静音、`s` / `S` 显隐目录列，
  *   `[` / `]` 翻篇，`←` / `→` 默认按设置里的步长快进 / 后退（可在设置面板改成翻篇），
  *   `Delete` 触发删除确认；设置面板打开或删除确认开着时整组收掉；
- * - 设置面板：按「播放 / 截图 / 快捷键」分组，可改步长、方向键去向、空格去向与截图存放目录
+ * - 设置面板：按「播放 / 截图 / 快捷键」分组，可改步长、方向键去向、空格去向、悬停预览帧大小
+ *   与截图存放目录
  *   （默认桌面），全部键位双列列一遍；
  * - 控制栏的两颗箭头在播放键左右两侧，去向跟着「方向键去向」设置：快进 / 后退，或翻篇；
  * - 全屏走浏览器 Fullscreen API：侧栏收起时 header 浮在画面上、鼠标静止 1s 收起，
@@ -70,8 +71,14 @@ const VideoPreviewModal = ({
   const { active: fullscreen, exit, toggle } = useBrowserFullscreen({
     autoEnter: opened && defaultFullscreen,
   });
-  const { setArrowMode, setCaptureDir, setSeekStep, setSpaceMode, settings } =
-    useVideoSettings(storageScope);
+  const {
+    setArrowMode,
+    setCaptureDir,
+    setPreviewScale,
+    setSeekStep,
+    setSpaceMode,
+    settings,
+  } = useVideoSettings(storageScope);
   const index = items.findIndex((item) => item.id === activeId);
   const activeItem = index >= 0 ? items[index] : null;
 
@@ -241,9 +248,11 @@ const VideoPreviewModal = ({
               onCaptureDirChange={setCaptureDir}
               onChangeOpened={setSettingsOpen}
               onPickDir={onPickDir}
+              onPreviewScaleChange={setPreviewScale}
               onSeekStepChange={setSeekStep}
               onSpaceModeChange={setSpaceMode}
               opened={settingsOpen}
+              previewScale={settings.previewScale}
               seekStep={settings.seekStep}
               spaceMode={settings.spaceMode}
             />
@@ -301,6 +310,7 @@ const VideoPreviewModal = ({
               onPrevious: stepBackward,
               previousLabel: stepPreviousLabel,
             }}
+            previewScale={settings.previewScale / 100}
             src={activeItem.src}
             videoRef={videoRef}
           />

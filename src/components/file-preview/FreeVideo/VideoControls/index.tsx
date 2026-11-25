@@ -9,7 +9,7 @@
  * 时长还没解出来时进度条禁用，避免 0 上限的滑块把当前时间压成 0。
  *
  * 进度条悬停预览：指针停在进度条上，上方浮出「那一秒的画面 + 时间」。
- * 帧按指针落下的时间现抽（见 `hooks/use-video-frames`），停下 120ms 才发请求，
+ * 帧按指针落下的时间现抽（见 `hooks/use-video-frames`），停下 80ms 才发请求，
  * 免得扫过去的过程中把探针一路 seek；移动中不换图，抽到后整块换一次——
  * 不会出现「先一张、再换一张」的闪动。停下换到没抽过的位置时先转圈，
  * 帧到了再一次性出现，避免「时间已经变了、画面还是上一处」的错配。
@@ -50,7 +50,16 @@ const STEP_TIP_DURATION = 1000;
 const VOLUME_SLIDER_HEIGHT = 56;
 
 /** 指针停下多久才去抽那一帧（毫秒）：扫过去的途中不抽，探针不用一路 seek */
-const HOVER_REQUEST_DELAY = 120;
+const HOVER_REQUEST_DELAY = 80;
+
+/**
+ * 与上次请求的时间差小于这个值就当作「还在同一处」，只更新浮层位置与时间、不重发抽帧。
+ *
+ * 单位是秒，但按像素换算：进度条 220px 摊在 60 秒上，1px ≈ 0.27 秒。鼠标停着不动也会有
+ * ±1px 的抖动，阈值小于 1px 就等于每次抖动都重新 seek 一次，正在解码的那一帧永远被打断
+ * ——表现就是「hover 之后一直转圈、frame 不出来」。0.6 秒 ≈ 2px，抖动被吃掉，真的挪动了照常换图。
+ */
+const SAME_SPOT_EPSILON = 0.6;
 
 const VideoControls = ({
   currentTime,
@@ -77,6 +86,8 @@ const VideoControls = ({
   const requestTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** 请求序号：抽好的图回来时指针已经移开，就不要它了，免得乱序覆盖 */
   const requestTokenRef = useRef(0);
+  /** 上一次真正发起抽帧的时间（秒）：用来判断「还停在同一处」 */
+  const lastAskedTimeRef = useRef<number | null>(null);
 
   /** 清掉待发的抽帧请求（指针离开 / 按下拖动 / 卸载都要清） */
   const clearRequestTimer = () => {
@@ -90,9 +101,10 @@ const VideoControls = ({
 
   useEffect(() => clearRequestTimer, []);
 
-  /** 指针横向位置 → 时间与浮层位置；停下 120ms 再抽这一秒的帧 */
+  /** 指针横向位置 → 时间与浮层位置；停下 80ms 再抽这一秒的帧 */
   const handlePreviewMove = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (!previewReady || duration <= 0) {
+    // 时长没解出来时位置摊不成时间；探针还没就绪只出浮层，等它好了下一次 hover 就能抽
+    if (duration <= 0) {
       return;
     }
 
@@ -107,22 +119,51 @@ const VideoControls = ({
       return;
     }
 
+    /**
+     * 时间要按滑杆轨道算：Mantine 的 root 左右各留半个拇指宽的内边距，
+     * 按容器算会与松手后实际跳到的位置差出一整段（长片上就是一两秒）。
+     */
+    const track = event.currentTarget.querySelector<HTMLElement>(
+      `.${styles.sliderTrack}`,
+    );
+    const trackRect = track?.getBoundingClientRect() ?? null;
+
     const next = seekPreviewAt({
       clientX: event.clientX,
       containerLeft: rect.left,
       containerWidth: rect.width,
       duration,
       previewWidth,
+      trackLeft: trackRect?.left ?? 0,
+      trackWidth: trackRect?.width ?? 0,
     });
 
     setPreview(next);
     clearRequestTimer();
 
-    const token = requestTokenRef.current + 1;
+    // 探针还没拿到元数据：先把浮层摆出来告诉用户「这一处在哪」，帧等它就绪再抽
+    if (!previewReady) {
+      return;
+    }
 
-    requestTokenRef.current = token;
     requestTimerRef.current = setTimeout(() => {
       requestTimerRef.current = null;
+
+      const previous = lastAskedTimeRef.current;
+      const sameSpot =
+        previous !== null && Math.abs(previous - next.time) < SAME_SPOT_EPSILON;
+
+      lastAskedTimeRef.current = next.time;
+
+      // 还在同一处：图继续用当前这张，只把浮层挪到新位置，不重抽
+      if (sameSpot) {
+        return;
+      }
+
+      /** 请求序号只在真的换位置时递增：抖动被上面挡掉，就不能把正在跑的那一帧作废 */
+      const token = requestTokenRef.current + 1;
+
+      requestTokenRef.current = token;
       // 换位置的这一帧还没到就先转圈：留着上一张会变成「时间变了、画面还是老位置」
       setShownFrame(null);
       requestFrame(next.time, (url) => {
@@ -138,6 +179,7 @@ const VideoControls = ({
   /** 离开进度条：收起浮层，取消还没发出的抽帧 */
   const handlePreviewLeave = () => {
     clearRequestTimer();
+    lastAskedTimeRef.current = null;
     setPreview(null);
     setShownFrame(null);
   };
@@ -145,6 +187,7 @@ const VideoControls = ({
   /** 按下拖动进度条：收起浮层（数字与画面都在时间那一栏看），拖动中不再抽帧 */
   const handlePreviewDown = () => {
     clearRequestTimer();
+    lastAskedTimeRef.current = null;
     setPreview(null);
     setShownFrame(null);
   };
@@ -194,6 +237,7 @@ const VideoControls = ({
         <Slider
           aria-label="播放进度"
           className={styles.progress}
+          classNames={{ track: styles.sliderTrack }}
           disabled={!enabled || duration <= 0}
           /* 预览可用时数字浮标让位给帧浮层，免两套浮层叠在一起 */
           label={previewReady ? null : formatProgressLabel}

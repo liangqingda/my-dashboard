@@ -2,7 +2,7 @@
  * 视频设置面板：一个图标按钮 + 就近弹出的一档设置。
  *
  * 设置项按主题分组（播放 / 导出 / 快捷键，每组一块浅底色），与文件页设置面板同一套分组外观。
- * 可改的是 ← / → 与空格键的去向、快进后退的步长、截图与音频存到哪；其余键位固定，
+ * 可改的是 ← / → 与空格键的去向、快进后退的步长、悬停预览帧图的大小、截图存到哪；其余键位固定，
  * 这里整份列出来当作速查表（方向键与空格那两行随设置变），双列排、一屏看完。
  *
  * 打开期间弹窗会把整组快捷键收掉（见弹窗的 `shortcutsEnabled`），
@@ -16,6 +16,7 @@ import {
   Kbd,
   NumberInput,
   SegmentedControl,
+  Slider,
   Text,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
@@ -28,8 +29,11 @@ import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
 import { getErrorMessage } from '@/utils/error';
 
 import {
+  MAX_PREVIEW_SCALE,
   MAX_SEEK_STEP,
+  MIN_PREVIEW_SCALE,
   MIN_SEEK_STEP,
+  PREVIEW_SCALE_STEP,
   SETTINGS_PANEL_WIDTH,
   type VideoArrowMode,
   type VideoSpaceMode,
@@ -65,9 +69,11 @@ const VideoSettingsPopover = ({
   onCaptureDirChange,
   onChangeOpened,
   onPickDir,
+  onPreviewScaleChange,
   onSeekStepChange,
   onSpaceModeChange,
   opened,
+  previewScale,
   seekStep,
   spaceMode,
 }: VideoSettingsPopoverProps) => {
@@ -186,6 +192,28 @@ const VideoSettingsPopover = ({
               suffix=" 秒"
               value={seekStep}
             />
+          </FreePanelField>
+
+          <FreePanelField label="悬停预览大小" wide>
+            <Group gap="sm" wrap="nowrap">
+              <Slider
+                aria-label="悬停预览大小"
+                flex={1}
+                label={(value) => `${value}%`}
+                marks={[
+                  { label: `${MIN_PREVIEW_SCALE}%`, value: MIN_PREVIEW_SCALE },
+                  { label: `${MAX_PREVIEW_SCALE}%`, value: MAX_PREVIEW_SCALE },
+                ]}
+                max={MAX_PREVIEW_SCALE}
+                min={MIN_PREVIEW_SCALE}
+                onChange={onPreviewScaleChange}
+                step={PREVIEW_SCALE_STEP}
+                value={previewScale}
+              />
+              <Text c="dimmed" className={styles.previewScaleValue} size="xs">
+                {previewScale}%
+              </Text>
+            </Group>
           </FreePanelField>
 
           <FreePanelField label="方向键">

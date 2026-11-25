@@ -10,7 +10,7 @@
  * 控制栏跟画面走：暂停恒显示，播放中指针一停就收起（1s），指针在控制栏上时始终显示。
  *
  * 进度条悬停预览：帧图按指针位置现抽（见 `hooks/use-video-frames`）。预览框宽度取
- * 视频**画面实际显示区域**的 60%（不是舞台宽度，竖屏视频两侧黑边不算在内），
+ * 视频**画面实际显示区域**的 `previewScale`（默认 60%，不是舞台宽度，竖屏视频两侧黑边不算在内），
  * 高度按画面比例算并受舞台高度约束；帧图分辨率跟着预览框 × 设备像素比走，窗口越大越清。
  *
  * 换片由调用方用 `key` 重挂（每个视频一个实例），不在这里监听 `src` 变化清状态。
@@ -26,6 +26,7 @@ import { cx } from '@/utils/cx';
 import {
   CONTROLS_HIDE_DELAY,
   SEEK_PREVIEW_DPR_CAP,
+  SEEK_PREVIEW_SCALE_DEFAULT,
   VIDEO_FALLBACK_ASPECT,
 } from './constants';
 import { useControlsVisibility } from './hooks/use-controls-visibility';
@@ -39,7 +40,13 @@ import styles from './index.scss';
 /** 播放状态：loading 还没解出画面，ready 可播，error 浏览器解不了 */
 type PlayerStatus = 'loading' | 'ready' | 'error';
 
-const FreeVideo = ({ className, nav, src, videoRef }: FreeVideoProps) => {
+const FreeVideo = ({
+  className,
+  nav,
+  previewScale = SEEK_PREVIEW_SCALE_DEFAULT,
+  src,
+  videoRef,
+}: FreeVideoProps) => {
   const ownRef = useRef<HTMLVideoElement | null>(null);
   /** 舞台引用：预览框尺寸按它和视频画面比例算 */
   const stageRef = useRef<HTMLDivElement | null>(null);
@@ -57,7 +64,12 @@ const FreeVideo = ({ className, nav, src, videoRef }: FreeVideoProps) => {
   const [videoAspect, setVideoAspect] = useState(VIDEO_FALLBACK_ASPECT);
   /** 预览框尺寸：跟着舞台与视频比例变化 */
   const [previewSize, setPreviewSize] = useState<SeekPreviewSize>(() =>
-    seekPreviewSize({ aspect: VIDEO_FALLBACK_ASPECT, stageHeight: 0, stageWidth: 0 }),
+    seekPreviewSize({
+      aspect: VIDEO_FALLBACK_ASPECT,
+      scale: previewScale,
+      stageHeight: 0,
+      stageWidth: 0,
+    }),
   );
   /** 控制栏显隐：暂停恒显示，播放中指针静止一会儿收起 */
   const {
@@ -92,6 +104,7 @@ const FreeVideo = ({ className, nav, src, videoRef }: FreeVideoProps) => {
       const rect = stage.getBoundingClientRect();
       const next = seekPreviewSize({
         aspect: videoAspect,
+        scale: previewScale,
         stageHeight: rect.height,
         stageWidth: rect.width,
       });
@@ -110,7 +123,7 @@ const FreeVideo = ({ className, nav, src, videoRef }: FreeVideoProps) => {
     observer.observe(stage);
 
     return () => observer.disconnect();
-  }, [videoAspect]);
+  }, [previewScale, videoAspect]);
 
   /** 暂停 / 播完：控制栏常驻，不再计时收起 */
   const showControlsForPaused = () => {

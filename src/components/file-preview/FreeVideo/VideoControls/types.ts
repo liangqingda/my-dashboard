@@ -16,7 +16,7 @@ export type SeekPreviewState = {
 export type SeekPreviewParams = {
   /** 指针横坐标（视口坐标） */
   clientX: number;
-  /** 进度条容器左沿（视口坐标） */
+  /** 进度条容器左沿（视口坐标）：浮层位置的坐标系 */
   containerLeft: number;
   /** 进度条容器宽度 */
   containerWidth: number;
@@ -24,6 +24,10 @@ export type SeekPreviewParams = {
   duration: number;
   /** 预览框宽度（CSS px）：贴边夹取要用 */
   previewWidth: number;
+  /** 滑杆轨道左沿（视口坐标）：时间按它算 */
+  trackLeft: number;
+  /** 滑杆轨道宽度；量不出来时传 0，退回容器 */
+  trackWidth: number;
 };
 
 /** 控制栏入参 */

@@ -15,25 +15,25 @@ export const FRAME_CACHE_LIMIT = 80;
 export const FRAME_JPEG_QUALITY = 0.88;
 
 /** 等 `seeked` 的上限：高码率大文件跳远位置要解码到关键帧，给足再判失败 */
-export const FRAME_SEEK_TIMEOUT = 5000;
+export const FRAME_SEEK_TIMEOUT = 10000;
 
 /** 等「当前帧数据真的可用」（`readyState >= 2`）的上限：`seeked` 之后仍可能只有元数据 */
-export const FRAME_DATA_TIMEOUT = 2000;
+export const FRAME_DATA_TIMEOUT = 3000;
 
 /** 等数据可用的轮询间隔（毫秒）：事件不一定齐，轮询兜住 */
 export const FRAME_DATA_POLL = 100;
 
-/** 等画面真正呈现的上限：从挂在 seek 之前算起，要盖住整个 seek 耗时；超时就丢掉这一帧 */
-export const FRAME_PRESENT_TIMEOUT = 8000;
+/**
+ * 等 `requestVideoFrameCallback` 回调的上限（毫秒）：正常环境 seeked 之后几十毫秒就来，
+ * 给到 2.5 秒足够；超时不再死等，退回「数据就绪 + 时间对得上」的判据接着取，避免整块转圈。
+ */
+export const FRAME_PRESENT_TIMEOUT = 2500;
 
 /** 呈现帧与目标时间的容差（秒）：`mediaTime` 落在这么近才算「就是这一帧」 */
 export const FRAME_PRESENT_TOLERANCE = 0.5;
 
 /** `readyState` 到「当前帧数据可用」的档位：低于它 `drawImage` 会画出空白 */
 export const FRAME_DRAW_READY_STATE = 2;
-
-/** 探针视频拿到元数据的上限：拿不到就整轮放弃，进度条回落到数字浮标 */
-export const PROBE_METADATA_TIMEOUT = 10000;
 
 /** `readyState` 到「已有元数据」的档位：到这一档才读得到时长与画面尺寸 */
 export const READY_STATE_METADATA = 1;

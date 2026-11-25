@@ -24,9 +24,31 @@ export const SETTINGS_CAPABILITY = 'video-preview';
 export const SETTINGS_FIELD = {
   arrowMode: 'arrowMode',
   captureDir: 'captureDir',
+  previewScale: 'previewScale',
   seekStep: 'seekStep',
   spaceMode: 'spaceMode',
 } as const;
+
+/** 进度条悬停预览的帧图大小：默认占视频画面宽度的百分比 */
+export const DEFAULT_PREVIEW_SCALE = 60;
+
+/** 预览帧大小的下限（%）：再小帧内容就认不出来了 */
+export const MIN_PREVIEW_SCALE = 30;
+
+/** 预览帧大小的上限（%）：留一圈画面，不把视频整块盖住 */
+export const MAX_PREVIEW_SCALE = 90;
+
+/** 预览帧大小每次调整的步长（%） */
+export const PREVIEW_SCALE_STEP = 5;
+
+/** 预览帧大小的编解码：非数字 / 越界都夹回 30–90，脏值不会让浮层大到糊住画面 */
+export const PREVIEW_SCALE_CODEC: StoredFieldCodec<number> = {
+  decode: (value) =>
+    typeof value === 'number' && Number.isFinite(value)
+      ? Math.min(MAX_PREVIEW_SCALE, Math.max(MIN_PREVIEW_SCALE, Math.round(value)))
+      : DEFAULT_PREVIEW_SCALE,
+  encode: (value) => value,
+};
 
 /** ← / → 的两种去向：快进 / 后退（默认）与翻篇 */
 export const ARROW_MODES = ['seek', 'nav'] as const;

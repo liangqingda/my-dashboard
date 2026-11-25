@@ -7,6 +7,15 @@
   gap: 10px;
 }
 
+/* 悬停预览大小的当前值：贴着滑杆右侧，等宽数字，拖动时宽度不跳 */
+.previewScaleValue {
+  flex: 0 0 auto;
+  min-width: 34px;
+  color: var(--app-ink-faint);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
 /* 目录路径：占满剩余宽度，放不下时省略、hover 看全 */
 .directoryPath {
   flex: 1 1 auto;

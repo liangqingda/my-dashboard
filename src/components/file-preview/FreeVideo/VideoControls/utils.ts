@@ -1,9 +1,9 @@
 /**
  * 进度条悬停预览的取值：把指针位置摊成「这一处的时间 + 浮层横向位置」。
  *
- * 只用容器矩形近似轨道范围：Mantine Slider 的轨道与 root 同宽，两端拇指占位会让比例
- * 差几个像素，肉眼看不到；时间按比例乘时长，指针停在 [aria-label="播放进度"] 上的
- * 45% 就是 45% 的时长——抽帧与时间标签都用这个值，和点过去实际看到的画面一致。
+ * 时间必须按**滑杆轨道**的矩形算，不能按外层容器：Mantine 的 root 左右各留了半个拇指宽的内边距
+ * （轨道比容器窄 8px），按容器算会和松手后实际跳到的位置差不到一整个拇指，片子上就是一两秒。
+ * 浮层位置仍以容器为坐标系（它以容器为定位祖先），只是中心点跟着轨道上的比例算。
  */
 
 import { SEEK_PREVIEW_EDGE_GAP } from '../constants';
@@ -28,18 +28,27 @@ const clampPreviewCenter = (
   );
 };
 
-/** 指针位置 → 浮层位置与这一处的时间 */
+/** 指针位置 → 浮层位置与这一处的时间（时间按滑杆轨道算，与松手后跳到的位置一致） */
 export const seekPreviewAt = ({
   clientX,
   containerLeft,
   containerWidth,
   duration,
   previewWidth,
+  trackLeft,
+  trackWidth,
 }: SeekPreviewParams): SeekPreviewState => {
-  const ratio = Math.min(Math.max((clientX - containerLeft) / containerWidth, 0), 1);
+  /** 轨道量不出来时退回容器：至少还在同一段上，不会算到片外 */
+  const left = trackWidth > 0 ? trackLeft : containerLeft;
+  const width = trackWidth > 0 ? trackWidth : containerWidth;
+  const ratio = Math.min(Math.max((clientX - left) / width, 0), 1);
 
   return {
-    left: clampPreviewCenter(ratio * containerWidth, containerWidth, previewWidth),
+    left: clampPreviewCenter(
+      left - containerLeft + ratio * width,
+      containerWidth,
+      previewWidth,
+    ),
     time: ratio * duration,
   };
 };

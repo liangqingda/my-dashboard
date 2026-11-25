@@ -15,6 +15,8 @@ export type VideoSettingsPopoverProps = {
   onArrowModeChange: (mode: VideoArrowMode) => void;
   /** 改截图目录；空串表示恢复默认 */
   onCaptureDirChange: (dir: string) => void;
+  /** 改悬停预览帧图大小（%） */
+  onPreviewScaleChange: (percent: number) => void;
   /** 弹层开合 */
   onChangeOpened: (opened: boolean) => void;
   /** 调系统目录选择框选截图存放目录；返回 null 表示取消；不传则路径没有「选择目录」 */
@@ -25,6 +27,8 @@ export type VideoSettingsPopoverProps = {
   onSeekStepChange: (seconds: number) => void;
   /** 是否展开 */
   opened: boolean;
+  /** 悬停预览帧图大小（占视频画面宽度的百分比，30–90） */
+  previewScale: number;
   /** 当前步长（秒） */
   seekStep: number;
   /** 空格键的去向 */

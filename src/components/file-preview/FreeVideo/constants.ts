@@ -11,8 +11,14 @@ export const CONTROLS_HIDE_DELAY = 1000;
 /** 控制栏区域的选择器：给「不想被这一块触发」的浮层判断用 */
 export const CONTROLS_SELECTOR = '[data-video-controls]';
 
-/** 预览框宽度占视频画面宽度的比例：窗口越大帧图越大，60% 看得清又不至于糊住画面 */
-export const SEEK_PREVIEW_WIDTH_RATIO = 0.6;
+/** 预览框宽度占视频画面宽度的比例（默认值）：窗口越大帧图越大，60% 看得清又不至于糊住画面 */
+export const SEEK_PREVIEW_SCALE_DEFAULT = 0.6;
+
+/** 预览框比例的合法区间：再小帧内容看不清，再大就糊住半个画面 */
+export const SEEK_PREVIEW_SCALE_MIN = 0.3;
+
+/** 预览框比例的上限：留一圈画面，不整块盖住视频 */
+export const SEEK_PREVIEW_SCALE_MAX = 0.9;
 
 /** 预览框的最小宽度（CSS px）：窗口很小时不至于缩成邮票 */
 export const SEEK_PREVIEW_MIN_WIDTH = 240;

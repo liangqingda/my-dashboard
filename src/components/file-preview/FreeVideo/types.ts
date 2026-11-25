@@ -28,6 +28,11 @@ export type FreeVideoProps = {
   videoRef?: RefObject<HTMLVideoElement | null>;
   /** 翻篇：给了就画在控制栏里、播放键两侧；不传则控制栏没有这两颗箭头 */
   nav?: FreeVideoNav;
+  /**
+   * 进度条悬停预览的帧图大小：占视频画面宽度的比例（0.3–0.9），不传用 60%。
+   * 越界值在这里夹回区间，调用方可以放心传。
+   */
+  previewScale?: number;
   /** 附加 class，只用来补外部布局 */
   className?: string;
 };

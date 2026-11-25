@@ -23,7 +23,9 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 
 import {
   FRAME_CACHE_LIMIT,
+  FRAME_DRAW_READY_STATE,
   FRAME_JPEG_QUALITY,
+  FRAME_PRESENT_TOLERANCE,
   FRAME_TAIL_GUARD,
 } from './constants';
 import {
@@ -92,16 +94,16 @@ export const useVideoFrames = ({
         return;
       }
 
-      latestRef.current += 1;
-
       const pending = pendingRef.current;
 
+      // 同一个桶再来一次只换回调：位置几乎没动，别把正在跑的 seek 打断重来
       if (pending?.bucket === bucket) {
         pending.onFrame = onFrame;
 
         return;
       }
 
+      latestRef.current += 1;
       pendingRef.current = { bucket, onFrame, time };
       pumpRef.current?.();
     },
@@ -136,7 +138,7 @@ export const useVideoFrames = ({
     const clampTime = (time: number): number =>
       Math.min(Math.max(time, 0), Math.max(duration - FRAME_TAIL_GUARD, 0));
 
-    /** 抽一帧：seek → 等数据 → 等这一帧真的呈现 → 画进离屏 canvas → 存成 JPEG data URL → 回调 */
+    /** 抽一帧：seek → 等这一帧真的呈现 → 画进离屏 canvas → 存成 JPEG data URL → 回调 */
     const capture = async (job: FrameJob): Promise<void> => {
       /** 这一趟开始时的代次：指针已经换到别处就不要再等这一帧了 */
       const generation = latestRef.current;
@@ -144,27 +146,45 @@ export const useVideoFrames = ({
       const giveUp = (): boolean => isCancelled() || latestRef.current !== generation;
 
       const target = clampTime(job.time);
+      const hasFrameCallback =
+        typeof element.requestVideoFrameCallback === 'function';
       /**
        * 呈现回调要在 seek 之前就挂上：探针是暂停的，帧一旦画出来就不会再触发
        * `requestVideoFrameCallback`，seeked 之后再注册会错过唯一那次回调，永远等不到。
+       *
+       * 有它就以它为准：`mediaTime` 命中目标时间即证明「数据到了 + 这一帧画出来了」，
+       * 不必再等 `seeked` / `readyState`（那两个信号有时来得晚，白等几秒）。
        */
-      const presentedPromise = waitPresented(element, target);
+      const presentedPromise = hasFrameCallback
+        ? waitPresented(element, target)
+        : null;
 
       element.currentTime = target;
 
-      const seeked = await waitSeeked(element);
+      /**
+       * 兜底：`requestVideoFrameCallback` 迟迟不回调时（部分环境里暂停的探针只在尺寸 / 可见性变化时
+       * 才推帧），退回「当前帧数据已就绪 + 时间对得上」这条老判据，避免整块永久转圈。
+       */
+      const fallbackReady = async (): Promise<boolean> => {
+        if (
+          element.readyState >= FRAME_DRAW_READY_STATE &&
+          Math.abs(element.currentTime - target) <= FRAME_PRESENT_TOLERANCE
+        ) {
+          return true;
+        }
 
-      if (giveUp() || !seeked) {
-        return;
+        return (await waitSeeked(element)) && (await waitData(element));
+      };
+
+      /** 没有 `requestVideoFrameCallback` 的浏览器退回老路：等 seeked + 数据可用 */
+      let presented =
+        presentedPromise !== null
+          ? await presentedPromise
+          : (await waitSeeked(element)) && (await waitData(element));
+
+      if (!presented) {
+        presented = await fallbackReady();
       }
-
-      const available = await waitData(element);
-
-      if (giveUp() || !available) {
-        return;
-      }
-
-      const presented = await presentedPromise;
 
       if (giveUp() || context === null || !presented) {
         return;

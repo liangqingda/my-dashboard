@@ -15,7 +15,6 @@ import {
   FRAME_PRESENT_TOLERANCE,
   FRAME_SEEK_TIMEOUT,
   FRAME_TIME_BUCKET,
-  PROBE_METADATA_TIMEOUT,
   READY_STATE_METADATA,
 } from './constants';
 
@@ -46,7 +45,12 @@ export const frameCanvasSize = (
   };
 };
 
-/** 等元数据：已经好了直接给时长，否则等 `loadedmetadata`（超时 / 出错都 reject） */
+/**
+ * 等元数据：已经好了直接给时长，否则等 `loadedmetadata`，出错才 reject。
+ *
+ * 不设超时：超时就放弃会让「第一次打开得慢一点」变成「这一整部片子永远没有悬停预览」，
+ * 而等下去最多只是晚几秒变可用，用户下次 hover 就正常。
+ */
 export const readDuration = (video: HTMLVideoElement): Promise<number> => {
   if (
     video.readyState >= READY_STATE_METADATA &&
@@ -57,34 +61,30 @@ export const readDuration = (video: HTMLVideoElement): Promise<number> => {
   }
 
   return new Promise<number>((resolve, reject) => {
-    const timerId = setTimeout(() => {
-      reject(new Error('探针视频元数据超时'));
-    }, PROBE_METADATA_TIMEOUT);
+    const cleanup = (): void => {
+      video.removeEventListener('loadedmetadata', onMetadata);
+      video.removeEventListener('error', onError);
+    };
 
-    video.addEventListener(
-      'error',
-      () => {
-        clearTimeout(timerId);
-        reject(new Error('探针视频加载失败'));
-      },
-      { once: true },
-    );
+    function onMetadata(): void {
+      cleanup();
 
-    video.addEventListener(
-      'loadedmetadata',
-      () => {
-        clearTimeout(timerId);
+      if (Number.isFinite(video.duration) && video.duration > 0) {
+        resolve(video.duration);
 
-        if (Number.isFinite(video.duration) && video.duration > 0) {
-          resolve(video.duration);
+        return;
+      }
 
-          return;
-        }
+      reject(new Error('探针视频时长不可用'));
+    }
 
-        reject(new Error('探针视频时长不可用'));
-      },
-      { once: true },
-    );
+    function onError(): void {
+      cleanup();
+      reject(new Error('探针视频加载失败'));
+    }
+
+    video.addEventListener('loadedmetadata', onMetadata);
+    video.addEventListener('error', onError);
   });
 };
 
