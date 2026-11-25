@@ -55,8 +55,9 @@
 2. `waitData`：等 `readyState >= 2`，否则 `drawImage` 会画出空白；
 3. `waitPresented`：用 `requestVideoFrameCallback` 给的 `mediaTime` 与目标时间比对，
    落在 `FRAME_PRESENT_TOLERANCE` 内才算这一帧真的画出来了；对不上就接着等下一帧回调。
-   等满 `FRAME_PRESENT_TIMEOUT` 仍没有回调时再退一步，用「`readyState >= 2` 且 `currentTime`
-   已经是目标」兜住——有些环境里暂停的探针迟迟不推帧，只认回调会让浮层永久转圈。
+   等满 `FRAME_PRESENT_TIMEOUT` 仍没有回调时先**重试一次**：把时间点微移 `FRAME_RETRY_OFFSET`
+   再 seek，解码器会重新落帧（暂停的探针常常只解到最近的关键帧，这也是「预览帧比点过去差几秒」
+   的来源）；重试仍不中才退回「`readyState >= 2` 且 `currentTime` 已经是目标」兜住，避免永久转圈。
 
 **这一步必须在设 `currentTime` 之前注册**：探针是暂停的，帧一旦画出来就不会再触发回调，
 `seeked` 之后再挂会永远等不到（表现为浮层一直转圈、一张图都不出）。

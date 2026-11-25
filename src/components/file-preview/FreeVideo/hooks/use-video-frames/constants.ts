@@ -29,6 +29,15 @@ export const FRAME_DATA_POLL = 100;
  */
 export const FRAME_PRESENT_TIMEOUT = 2500;
 
+/**
+ * 重试落帧的位移（秒）：暂停的探针 seek 后常常只解到最近的关键帧上，`mediaTime` 与目标差得多。
+ * 把指针位置挪这么一点点再 seek 一次，解码器会重新落帧，多数情况下这一次就对上了。
+ */
+export const FRAME_RETRY_OFFSET = 0.06;
+
+/** 重试那一次的等待上限（毫秒）：只在「第一次没对上」时用，比正常等待短，不把用户拖住 */
+export const FRAME_RETRY_TIMEOUT = 1500;
+
 /** 呈现帧与目标时间的容差（秒）：`mediaTime` 落在这么近才算「就是这一帧」 */
 export const FRAME_PRESENT_TOLERANCE = 0.5;
 

@@ -26,6 +26,8 @@ import {
   FRAME_DRAW_READY_STATE,
   FRAME_JPEG_QUALITY,
   FRAME_PRESENT_TOLERANCE,
+  FRAME_RETRY_OFFSET,
+  FRAME_RETRY_TIMEOUT,
   FRAME_TAIL_GUARD,
 } from './constants';
 import {
@@ -181,6 +183,25 @@ export const useVideoFrames = ({
         presentedPromise !== null
           ? await presentedPromise
           : (await waitSeeked(element)) && (await waitData(element));
+
+      /**
+       * 第一次没对上多半是「只解到最近的关键帧」：把指针位置挪一丁点再 seek 一次，
+       * 解码器重新落帧后通常就精确了。这一步比直接画关键帧强——画关键帧就是「差几秒」的来源。
+       */
+      if (!presented && hasFrameCallback && !giveUp()) {
+        const retryTime = clampTime(target + FRAME_RETRY_OFFSET);
+
+        if (Math.abs(retryTime - target) > Number.EPSILON) {
+          const retryPromise = waitPresented(
+            element,
+            retryTime,
+            FRAME_RETRY_TIMEOUT,
+          );
+
+          element.currentTime = retryTime;
+          presented = await retryPromise;
+        }
+      }
 
       if (!presented) {
         presented = await fallbackReady();

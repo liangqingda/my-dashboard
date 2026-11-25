@@ -9,6 +9,8 @@
   --preview-chrome: var(--app-surface-subtle);
   --preview-paper: var(--app-bg);
 
+  /* 浮层 header（`.headerOverlay` 绝对定位）要贴在这一层：没有定位祖先时它会爬到视口顶部 */
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 82dvh;

@@ -155,7 +155,11 @@ export const waitData = (video: HTMLVideoElement): Promise<boolean> =>
  * 有 `requestVideoFrameCallback` 时用它给的 `mediaTime` 校验，对不上就接着等下一帧；
  * 超时或校验一直不通过返回 false，调用方丢掉这一帧，宁可转圈也不画错时间。
  */
-export const waitPresented = (video: HTMLVideoElement, time: number): Promise<boolean> =>
+export const waitPresented = (
+  video: HTMLVideoElement,
+  time: number,
+  timeoutMs = FRAME_PRESENT_TIMEOUT,
+): Promise<boolean> =>
   new Promise<boolean>((resolve) => {
     let settled = false;
     let timerId: ReturnType<typeof setTimeout> | null = null;
@@ -177,7 +181,7 @@ export const waitPresented = (video: HTMLVideoElement, time: number): Promise<bo
     if (typeof video.requestVideoFrameCallback !== 'function') {
       requestAnimationFrame(() => settle(true));
 
-      timerId = setTimeout(() => settle(false), FRAME_PRESENT_TIMEOUT);
+      timerId = setTimeout(() => settle(false), timeoutMs);
 
       return;
     }
@@ -200,5 +204,5 @@ export const waitPresented = (video: HTMLVideoElement, time: number): Promise<bo
     };
 
     watch();
-    timerId = setTimeout(() => settle(false), FRAME_PRESENT_TIMEOUT);
+    timerId = setTimeout(() => settle(false), timeoutMs);
   });
