@@ -1,12 +1,24 @@
 /* 播放器：黑色舞台 + 底部控制栏；舞台内只放视频与几种状态浮层 */
 
 .player {
+  position: relative;
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
   min-width: 0;
   min-height: 0;
   background: #000;
+}
+
+/* 抽帧探针：1px 透明、不接指针，只为给进度条悬停预览取帧，不参与布局 */
+.frameProbe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* 舞台：视频铺满，浮层以它为定位祖先 */

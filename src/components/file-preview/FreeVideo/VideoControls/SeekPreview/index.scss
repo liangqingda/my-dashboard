@@ -1,0 +1,35 @@
+/* 进度条悬停预览：浮在进度条上方的黑底小屏，帧图与时间标签叠在一起 */
+
+.preview {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  z-index: 2;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 8px;
+  background: #000;
+  box-shadow: 0 10px 24px rgb(0 0 0 / 45%);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+/* 帧图按原比例完整显示：竖屏视频在框里居中留黑边，不裁画面 */
+.image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* 时间标签：压在画面右下角，深底浅字，播放中数字宽度不跳 */
+.time {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgb(0 0 0 / 64%);
+  color: rgb(255 255 255 / 88%);
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+}

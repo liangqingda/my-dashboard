@@ -20,6 +20,7 @@ import { useMergedRef } from '@mantine/hooks';
 import { cx } from '@/utils/cx';
 
 import { CONTROLS_HIDE_DELAY } from './constants';
+import { useVideoFrames } from './hooks/use-video-frames';
 import VideoControls from './VideoControls';
 import type { FreeVideoProps } from './types';
 
@@ -30,7 +31,10 @@ type PlayerStatus = 'loading' | 'ready' | 'error';
 
 const FreeVideo = ({ className, nav, src, videoRef }: FreeVideoProps) => {
   const ownRef = useRef<HTMLVideoElement | null>(null);
+  /** 抽帧探针：不进画面、不接指针，只给进度条悬停预览取帧 */
+  const probeRef = useRef<HTMLVideoElement | null>(null);
   const mergedRef = useMergedRef(ownRef, videoRef);
+  const { frameSpan, frames } = useVideoFrames({ probeRef, src });
   const [status, setStatus] = useState<PlayerStatus>('loading');
   const [buffering, setBuffering] = useState(false);
   const [playing, setPlaying] = useState(false);
@@ -241,6 +245,8 @@ const FreeVideo = ({ className, nav, src, videoRef }: FreeVideoProps) => {
           currentTime={currentTime}
           duration={duration}
           enabled={status === 'ready'}
+          frameSpan={frameSpan}
+          frames={frames}
           muted={muted}
           nav={nav}
           onSeek={seek}
@@ -251,6 +257,19 @@ const FreeVideo = ({ className, nav, src, videoRef }: FreeVideoProps) => {
           volume={volume}
         />
       </div>
+
+      {/*
+        抽帧探针：同源同地址的第二支 `<video>`，只拿元数据、按需 seek 取帧；
+        1px + 透明 + 不接指针，看不见也不参与布局。用正在播的那支会把它 seek 走。
+      */}
+      <video
+        aria-hidden="true"
+        className={styles.frameProbe}
+        preload="metadata"
+        ref={probeRef}
+        src={src}
+        tabIndex={-1}
+      />
     </div>
   );
 };

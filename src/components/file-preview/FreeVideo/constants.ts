@@ -10,3 +10,12 @@ export const CONTROLS_HIDE_DELAY = 1000;
 
 /** 控制栏区域的选择器：给「不想被这一块触发」的浮层判断用 */
 export const CONTROLS_SELECTOR = '[data-video-controls]';
+
+/** 进度条悬停预览框的宽（CSS px）：帧图按这个尺寸做大，缩窗后仍看得清画面 */
+export const SEEK_PREVIEW_WIDTH = 264;
+
+/** 预览框的高（CSS px）：横屏视频按 16:9 左右落满，竖屏视频居中留黑边 */
+export const SEEK_PREVIEW_HEIGHT = 160;
+
+/** 预览框贴边时让开的空隙（CSS px）：两端留一点，浮层不贴着进度条容器边沿 */
+export const SEEK_PREVIEW_EDGE_GAP = 4;

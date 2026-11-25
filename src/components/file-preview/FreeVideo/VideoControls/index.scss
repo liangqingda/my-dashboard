@@ -10,10 +10,16 @@
   background: var(--app-surface-subtle);
 }
 
-/* 进度条占满中间，时间与音量固定在右侧 */
-.progress {
+/* 进度条容器：吃掉中间剩余宽度，悬停预览浮层以它为定位祖先 */
+.progressWrap {
+  position: relative;
   flex: 1 1 auto;
   min-width: 0;
+}
+
+/* 进度条撑满容器，时间与音量固定在右侧 */
+.progress {
+  width: 100%;
 }
 
 /* 时间：等宽数字，播放中不会随数字跳动而左右晃 */
