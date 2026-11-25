@@ -1,16 +1,17 @@
 /*
- * 弹窗里的待拖拽区：一批条目平铺（每行一条，可单独拖），下面留一块空白（整批拖）。
+ * 弹窗里的待拖拽区：一批条目平铺成网格（一行能摆几条就摆几条，间距 12px），
+ * 整块占满这一行宽度；下面留一块空白当「整批拖」的抓手。
  * 实线 = 正拖着；虚线 + 呼吸光 = 已经放回手里。
  */
 
 .tray {
   display: flex;
-  flex: 0 1 auto;
+  flex: 1 1 100%;
   flex-direction: column;
-  gap: 6px;
-  max-width: min(520px, 56vw);
-  max-height: 168px;
-  padding: 8px;
+  gap: 12px;
+  min-width: 0;
+  max-height: 200px;
+  padding: 12px;
   border: 1px solid var(--app-line-strong);
   border-radius: 10px;
   background: var(--app-surface);
@@ -29,12 +30,12 @@
   animation: handPulse 1600ms ease-out infinite;
 }
 
-/* 条目列表：一条一行，竖着排，行数多了在框内滚 */
+/* 条目：按可用宽度折列，间距 12px；每条仍可单独拖起 */
 .chips {
-  display: flex;
+  display: grid;
   flex: 0 0 auto;
-  flex-direction: column;
-  gap: 4px;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 12px;
 }
 
 .chip {
@@ -42,9 +43,9 @@
   align-items: center;
   gap: 6px;
   min-width: 0;
-  padding: 4px 8px;
+  padding: 6px 8px;
   border: 1px solid var(--app-line);
-  border-radius: 7px;
+  border-radius: 8px;
   background: var(--app-surface-subtle);
   cursor: grab;
 }
@@ -87,7 +88,7 @@
 
 /* 空白处提示：这块下面没别的东西，拖这里就是整批拖 */
 .hint {
-  flex: 0 0 auto;
+  flex: 1 0 auto;
   padding-top: 2px;
   color: var(--app-ink-faint);
   line-height: 1.5;

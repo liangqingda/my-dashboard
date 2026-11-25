@@ -36,6 +36,7 @@ const MenuContentLayout = ({
   children,
   description,
   fill = false,
+  onEscape,
   onNavigateParent,
   onToggleFilter,
   onToggleFavorites,
@@ -57,6 +58,8 @@ const MenuContentLayout = ({
   /** 页面级快捷键：`R` 刷新、`F` 切换全屏；页面可选再挂筛选 / 收藏面板与上级目录 */
   usePageActionShortcuts({
     containerRef: pageRef,
+    // 全屏时 Esc 归「退出全屏」（下面那支监听），页面自己的 Esc 让位
+    onEscape: fullscreen ? undefined : onEscape,
     onNavigateParent,
     onRefresh: refresh,
     onToggleFilter,

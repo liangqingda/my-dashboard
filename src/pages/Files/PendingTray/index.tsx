@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Text } from '@mantine/core';
+import { Text, UnstyledButton } from '@mantine/core';
 import { IconStack2, IconX } from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
@@ -7,7 +7,7 @@ import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
 import { cx } from '@/utils/cx';
 
 import { entryIcon } from '../utils/entry-icon';
-import { writeDragPayload } from '../utils/drag-image';
+import { hasDragPaths, readDragPaths, writeDragPayload } from '../utils/drag-image';
 
 import type { PendingTrayProps } from './types';
 
@@ -22,24 +22,28 @@ type SidebarRect = { left: number; top: number; width: number; height: number };
 /**
  * 待拖拽区：整块盖住左侧栏（导航那一列，顶栏之下）的一条面板，攒好的一批条目竖着排在里面。
  *
- * - 拖**面板的空白处**（条目列表下面的区域）：整批一起进移动弹窗，一次搬完；
- * - 拖**某一条**：只搬它一个（会话收窄到这一条，其余继续留在面板里）；
- * - 每条 hover 才浮出叉号，点了就退出待拖拽区；顶部右侧还有一枚「清空」。
+ * - **除 header 外整块都是热区**：拖这块区域 = 整批进移动弹窗，不要求落在空白处；
+ * - **收：从列表拖过来的条目**在板上松手就收进来（拖拽进行中整块亮成落点）；
+ * - **点某一项**：当场移出待拖拽区（不挂 hover 叉号，也不支持单独拖它）；
+ * - 顶部右侧一枚「清空」。
  *
- * 攒下东西以后列表的点击语义会变（点条目＝加入 / 移除，不再打开），
- * 这条只负责展示与拖起，那份语义归 `useDragPending`。位置实测侧栏那列（`#main-navigation`），
- * 侧栏宽度 / 折叠状态变了也跟着走；量不到（比如窄屏侧栏收起）时退回 AppShell 的默认尺寸。
+ * 攒下东西以后列表的点击 / 拖拽语义会变（点条目＝加入 / 移出、拖条目先往这儿拖），
+ * 这条只负责展示、收件与整批拖起；那份语义归 `useDragPending`。位置实测侧栏那列
+ * （`#main-navigation`），侧栏宽度 / 折叠状态变了也跟着走；量不到时退回 AppShell 的默认尺寸。
  */
 const PendingTray = ({
   entries,
+  armed = false,
   hidden = false,
   onClear,
   onDragAll,
   onDragEnd,
-  onDragEntry,
+  onDropPaths,
   onRemove,
 }: PendingTrayProps) => {
   const [rect, setRect] = useState<SidebarRect | null>(null);
+  /** 正有东西拖在板上（拖拽经过），用于给整块加一圈落点边 */
+  const [over, setOver] = useState(false);
 
   useEffect(() => {
     const measure = () => {
@@ -60,11 +64,14 @@ const PendingTray = ({
     return () => window.removeEventListener('resize', measure);
   }, []);
 
+  /** 整块的落点态：列表正拖过来（`armed`）或指针正压在板上（`over`）都算 */
+  const dropActive = armed || over;
+
   return (
     <div
       aria-hidden={hidden}
       aria-label="待拖拽区"
-      className={cx(styles.tray, hidden && styles.hidden)}
+      className={cx(styles.tray, hidden && styles.hidden, dropActive && styles.armed)}
       role="region"
       style={rect ?? undefined}
     >
@@ -82,7 +89,24 @@ const PendingTray = ({
         className={styles.main}
         data-pending-drop="true"
         draggable
-        onDragEnd={onDragEnd}
+        onDragEnd={() => {
+          setOver(false);
+          onDragEnd();
+        }}
+        onDragEnter={() => setOver(true)}
+        onDragLeave={() => setOver(false)}
+        onDragOver={(event) => {
+          const { dataTransfer } = event;
+
+          // 只接「条目路径」这一种载荷：别的拖拽（外面拖进来的文件）不归这里管
+          if (!hasDragPaths(dataTransfer)) {
+            return;
+          }
+
+          event.preventDefault();
+          dataTransfer.dropEffect = 'move';
+          setOver(true);
+        }}
         onDragStart={(event) => {
           writeDragPayload(
             event.dataTransfer,
@@ -90,23 +114,27 @@ const PendingTray = ({
           );
           onDragAll();
         }}
+        onDrop={(event) => {
+          event.preventDefault();
+          setOver(false);
+
+          const paths = readDragPaths(event.dataTransfer);
+
+          if (paths.length > 0) {
+            onDropPaths(paths);
+          }
+        }}
       >
         <div className={styles.chips}>
           {entries.map((entry) => {
             const Icon = entryIcon(entry);
 
             return (
-              <div
+              <UnstyledButton
+                aria-label={`从待拖拽区移除 ${entry.name}`}
                 className={styles.chip}
-                draggable
                 key={entry.path}
-                onDragEnd={onDragEnd}
-                onDragStart={(event) => {
-                  // 这一条自己就是拖拽源：别让外层「整批拖」再拦一次
-                  event.stopPropagation();
-                  writeDragPayload(event.dataTransfer, [entry.path]);
-                  onDragEntry(entry);
-                }}
+                onClick={() => onRemove(entry.path)}
               >
                 <Icon aria-hidden="true" className={styles.chipIcon} size={15} stroke={1.2} />
                 <FreeTruncatedText
@@ -115,22 +143,10 @@ const PendingTray = ({
                   ellipsis="end"
                   text={entry.name}
                 />
-                <FreeIconAction
-                  className={styles.chipRemove}
-                  label={`从待拖拽区移除 ${entry.name}`}
-                  onClick={() => onRemove(entry.path)}
-                  size="xs"
-                >
-                  <IconX size={12} stroke={1.9} />
-                </FreeIconAction>
-              </div>
+              </UnstyledButton>
             );
           })}
         </div>
-
-        <Text c="dimmed" className={styles.hint} size="xs">
-          拖这块空白处搬全部，拖某一条只搬它
-        </Text>
       </div>
     </div>
   );

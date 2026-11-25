@@ -1,19 +1,23 @@
 import { useState } from 'react';
 import { Group, Loader, ScrollArea, Text, UnstyledButton } from '@mantine/core';
 import {
+  IconBookmark,
+  IconBookmarkFilled,
   IconFolderFilled,
   IconFolderOpen,
   IconFolderPlus,
-  IconStar,
-  IconStarFilled,
 } from '@tabler/icons-react';
+import { notifications } from '@mantine/notifications';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
+import IconPopoverButton from '@/components/buttons/IconPopoverButton';
 import FreeModal from '@/components/modals/FreeModal';
 import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
+import { getErrorMessage } from '@/utils/error';
 import { cx } from '@/utils/cx';
 
 import DirBreadcrumb from '../DirBreadcrumb';
+import FavoritesPanel from '../FilesActions/FavoritesPanel';
 import { SPRING_HOVER_MS } from '../hooks/use-drag-move/constants';
 import type { FolderEntry } from '../types';
 
@@ -32,6 +36,9 @@ const FULLSCREEN = { active: true, onToggle: () => undefined, showToggle: false 
 /** 条目还在飞（正被拖着）时的提示 */
 const HINT_DRAGGING = '拖到文件夹上松手即移入；停留 0.5 秒会进入该文件夹继续挑。';
 
+/** 弹窗里收藏弹层的层级：要盖在全屏弹窗的遮罩与框体之上 */
+const POPOVER_Z_INDEX = 600;
+
 /** 还没有子文件夹时共用一个空数组，免得每次渲染都造一个新的 */
 const NO_FOLDERS: FolderEntry[] = [];
 
@@ -46,11 +53,10 @@ const NO_FOLDERS: FolderEntry[] = [];
  */
 const DragMoveModal = ({
   dragMove,
-  isFavorite,
+  favorites,
   onCreateFolder,
   onPickDir,
   onPreview,
-  onToggleFavorite,
 }: DragMoveModalProps) => {
   const {
     beginDrag,
@@ -77,6 +83,10 @@ const DragMoveModal = ({
   const [blankHovered, setBlankHovered] = useState(false);
 
   const folders = view?.folders ?? NO_FOLDERS;
+  /** header 的收藏弹层；同时只开这一块 */
+  const [favoritesOpen, setFavoritesOpen] = useState(false);
+  /** 系统目录选择框开着：按钮转圈，避免连点弹两个框 */
+  const [picking, setPicking] = useState(false);
   /** 拖拽在飞时点不动任何东西：避免刚松手的那一下被当成点击 */
   const idle = !dragActive;
   /**
@@ -92,28 +102,74 @@ const DragMoveModal = ({
       closeOnClickOutside={false}
       closeOnEscape
       closeOnSpace
+      extraKeys={{ c: () => setFavoritesOpen((open) => !open) }}
       fullscreen={FULLSCREEN}
       headerActions={
         view === null ? null : (
-          <Group gap={2} wrap="nowrap">
-            <FreeIconAction
-              label={isFavorite(view.path) ? '取消收藏这个目录' : '收藏这个目录'}
-              onClick={() => onToggleFavorite(view.path)}
-              tone="accent"
+          <>
+            <IconPopoverButton
+              active={favorites.isFavorite(view.path)}
+              hint={
+                favorites.isFavorite(view.path)
+                  ? '取消收藏这个目录'
+                  : '收藏这个目录'
+              }
+              icon={
+                favorites.isFavorite(view.path) ? (
+                  <IconBookmarkFilled size={16} stroke={1.6} />
+                ) : (
+                  <IconBookmark size={16} stroke={1.6} />
+                )
+              }
+              label="收藏目录"
+              onChange={setFavoritesOpen}
+              opened={favoritesOpen}
+              shortcut="C"
+              zIndex={POPOVER_Z_INDEX}
             >
-              {isFavorite(view.path) ? (
-                <IconStarFilled size={16} stroke={1.6} />
-              ) : (
-                <IconStar size={16} stroke={1.6} />
-              )}
-            </FreeIconAction>
+              <FavoritesPanel
+                disabled={false}
+                favorites={favorites.entries}
+                isFavorite={favorites.isFavorite(view.path)}
+                onClose={() => setFavoritesOpen(false)}
+                onMove={favorites.onMove}
+                onOpen={(path) => {
+                  goTo(path);
+                  setFavoritesOpen(false);
+                }}
+                onRemove={favorites.onRemove}
+                onToggleFavorite={() => favorites.onToggleFavorite(view.path)}
+                onTogglePinned={favorites.onTogglePinned}
+              />
+            </IconPopoverButton>
             <FreeIconAction label="新建文件夹" onClick={() => onCreateFolder(view.path)}>
               <IconFolderPlus size={16} stroke={1.9} />
             </FreeIconAction>
-            <FreeIconAction label="选择本地目录" onClick={onPickDir}>
+            <FreeIconAction
+              label={picking ? '正在打开目录选择框' : '选择本地目录'}
+              loading={picking}
+              onClick={() => {
+                setPicking(true);
+                void onPickDir(view.path)
+                  .then((picked) => {
+                    if (picked !== null) {
+                      goTo(picked);
+                    }
+                  })
+                  .catch((error: unknown) => {
+                    notifications.show({
+                      autoClose: false,
+                      color: 'red',
+                      message: getErrorMessage(error, '选择目录失败，请稍后重试'),
+                      title: '选择目录失败',
+                    });
+                  })
+                  .finally(() => setPicking(false));
+              }}
+            >
               <IconFolderOpen size={16} stroke={1.9} />
             </FreeIconAction>
-          </Group>
+          </>
         )
       }
       onClose={close}
@@ -125,7 +181,7 @@ const DragMoveModal = ({
         <div className={styles.root}>
           <DirBreadcrumb currentDir={view.path} onNavigate={goTo} />
 
-          <Group align="center" className={styles.handRow} gap="sm" wrap="nowrap">
+          <div className={styles.handRow}>
             <HandCard
               entries={session.entries}
               handed={handed}
@@ -146,7 +202,7 @@ const DragMoveModal = ({
                 {HINT_DRAGGING}
               </Text>
             ) : null}
-          </Group>
+          </div>
 
           <div
             className={cx(

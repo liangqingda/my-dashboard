@@ -98,6 +98,19 @@ export const fetchFileDir = async (
  * 调起系统目录选择框；`defaultDir` 作为选择框默认定位目录；用户取消时返回 `cancelled`，
  * 不按失败处理。仅开发模式可用，与列表接口同一套中间件。
  */
+/**
+ * 选一个本地目录，只要路径：取消返回 null。
+ * 弹窗里那颗「选择本地目录」用它——选完只在弹窗里换层，不改变列表页当前目录。
+ */
+export const pickDirectory = async (
+  defaultDir: string | null,
+  signal?: AbortSignal,
+): Promise<string | null> => {
+  const picked = await pickPickedDir(defaultDir, signal);
+
+  return 'path' in picked ? picked.path : null;
+};
+
 export const pickPickedDir = async (
   defaultDir: string | null,
   signal?: AbortSignal,

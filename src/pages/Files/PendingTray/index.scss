@@ -1,7 +1,7 @@
 /*
  * 待拖拽区：整块盖住左侧栏（顶栏之下），位置与尺寸由 `index.tsx` 实测侧栏那列后内联给出；
  * 这里的 184 / 44 只是量不到侧栏时的兜底，与 `BasicLayout` 的 AppShell 配置一致。
- * 面板里竖着排条目：顶部一行标题 + 清空，下面整块是可以「整批拖」的空白与条目列表。
+ * 顶部一行标题 + 清空；下面整块（不含 header）都是热区：拖它＝整批搬，拖来的条目也落在这里。
  */
 
 .tray {
@@ -49,15 +49,25 @@
   color: var(--app-accent);
 }
 
-/* 整批拖的那块：条目列表 + 下方空白，整块都是拖拽源 */
+/* 除 header 外整块：既是「整批拖」的拖拽源，也是列表拖过来的落点 */
 .main {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  gap: 6px;
   min-height: 0;
+  padding: 2px;
+  border: 1px dashed transparent;
+  border-radius: 10px;
   cursor: grab;
   user-select: none;
+}
+
+/* 拖拽经过 / 列表正往这儿拖：整块亮成落点，看得出来「松手就收进来」 */
+.armed {
+  .main {
+    border-color: var(--app-accent);
+    background: var(--app-accent-soft);
+  }
 }
 
 .chips {
@@ -68,16 +78,22 @@
   overflow-y: auto;
 }
 
+/* 点一下就移出：不给单独的叉号，整行都是移除入口 */
 .chip {
   display: flex;
   align-items: center;
   gap: 6px;
   min-width: 0;
-  padding: 4px 3px 4px 7px;
+  padding: 5px 8px;
   border: 1px solid var(--app-line);
   border-radius: 8px;
   background: var(--app-surface-subtle);
-  cursor: grab;
+  text-align: start;
+}
+
+.chip:hover {
+  border-color: var(--app-line-strong);
+  background: var(--app-surface-hover);
 }
 
 .chipIcon {
@@ -90,31 +106,4 @@
   min-width: 0;
   color: var(--app-ink);
   font-size: 12px;
-}
-
-/* hover 才浮出的移除叉号：占位不变，免得整列随 hover 抖动 */
-.chipRemove {
-  flex: 0 0 auto;
-  opacity: 0;
-  transition: opacity 120ms ease;
-}
-
-.chip:hover .chipRemove,
-.chipRemove:focus-visible {
-  opacity: 1;
-}
-
-/* 空白区底部的提示：让「这里也能拖」看得出来 */
-.hint {
-  flex: 0 0 auto;
-  margin-top: auto;
-  padding: 4px 2px 0;
-  color: var(--app-ink-faint);
-  line-height: 1.5;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .chipRemove {
-    transition: none;
-  }
 }

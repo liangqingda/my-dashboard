@@ -85,3 +85,9 @@
   outline: 2px solid var(--app-accent);
   outline-offset: -2px;
 }
+
+/* 已在待拖拽区里：整行淡底 + 左侧一段强调色，和网格瓦片的选中态一致 */
+.pending {
+  background: var(--app-accent-soft);
+  box-shadow: inset 2px 0 0 var(--app-accent);
+}

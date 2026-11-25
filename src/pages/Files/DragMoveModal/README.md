@@ -12,10 +12,11 @@ header 是标题 + 右端三颗图标按钮（收藏当前层 / 新建文件夹 
 
 1. **当前路径**：复用目录页的面包屑 `DirBreadcrumb`（按家目录 / 外接卷 / 本机换根图标），
    每段可点，点了就换到那一层——换层只走这一条路。
-2. **待拖拽区**（`HandCard/`）：被拖的这批条目在本弹窗里的落脚处，**一条一行平铺**（不再叠成一张卡片）。
+2. **待拖拽区**（`HandCard/`）：被拖的这批条目在本弹窗里的落脚处，**网格平铺、整块占满一行宽度**
+   （一行能摆几条就摆几条，横竖间距都是 12px）。
    - 每行 = 抓手 + 按类型取的图标（`utils/entry-icon.ts`）+ 名字（hover 提示一律关掉）；
    - **拖某一行**只搬它（`focusEntry(path)` 把会话收窄到这一条，其余留在页面侧栏的待拖拽区）；
-   - **拖这块的空白处**（行下面留白）整批一起搬，`dataTransfer` 里写全部路径；
+   - **拖这块的空白处**（条目下面留白）整批一起搬，`dataTransfer` 里写全部路径；
    - **只有一条且是图片 / 视频时**那一行的图标可点，点开内置预览（`onPreview`，设置里选了「外部应用」也不影响这里）；
    - 整块 `draggable`，放回手里以后还能再拖起（`onDragStart` 里写 `dataTransfer` 并调 `beginDrag`）。
 3. **这一层的子文件夹**：大瓦片网格按宽度自动折列；加载中 / 读失败 / 没有子文件夹各有占位句。
@@ -27,11 +28,17 @@ header 是标题 + 右端三颗图标按钮（收藏当前层 / 新建文件夹 
 
 ## header 三颗按钮
 
-- **收藏当前层**（`IconStar` / `IconStarFilled`，已收藏时实心 + `tone="accent"`）→ `onToggleFavorite(view.path)`；
+右端三颗操作之间固定 8px 间距（这层间距由 `FreeModal` 的 `.actions` 给，业务侧不要再包一层窄 gap 的 Group）。
+
+- **收藏当前层**：与列表页**同一颗按钮**（`IconPopoverButton` + `IconBookmarkFilled` / `IconBookmark`，
+  生效时主色），点开是同一块 `FavoritesPanel`：弹层项点一下就换到那个目录并收起；
+  快捷键 `C` 与列表页一致，靠 `FreeModal` 的 `extraKeys` 挂进弹窗那一套监听（业务侧不自己监听 keydown）。
+  收藏 / 取消收藏当前层走 `favorites.onToggleFavorite(view.path)`。
 - **新建文件夹**走页面的 `createEntryIn(view.path)`：
 在**当前这一层**落一个默认名文件夹、刷新列表、随即弹改名弹窗（与标题栏那颗按钮同一套流程）。
 改名提交后 `useDragMove.refreshView()` 让这一层就地重读，不用退出重进。
-- **选择本地目录**（`IconFolderOpen`）→ `onPickDir()`，与列表页那颗按钮同一套流程。
+- **选择本地目录**（`IconFolderOpen`）→ `onPickDir(view.path)`：系统选择框选完**只在弹窗里换到那一层**
+（`goTo`），不改变列表页当前目录；选择框开着时按钮转圈，避免连点弹两个框。
 
 ## 放置判定
 
@@ -52,6 +59,9 @@ header 是标题 + 右端三颗图标按钮（收藏当前层 / 新建文件夹 
 - 同一会话里读过的目录按路径缓存，来回进出同一层不重复扫盘；最外层直接用页面已有的列表。
 - 一批条目里只要有一条移动失败就停在手持态（失败原因由 `moveEntry` 自己弹通知），
   已经移成功的几条不会回滚，列表由页面刷新。
+- **只看某一条又没搬成**：其余条目从 `rest` 还原回待拖拽区，不会因为收窄而消失。
+- 移动是**逐条顺序**提交的（外接盘上一条可能要几秒），期间由 `MoveProgressModal` 显示
+  「正在将『a』移到『b』」+ 进度条 + `已搬 x / y 项`，搬完才关窗。
 
 ## 落地细节
 
@@ -72,6 +82,5 @@ header 是标题 + 右端三颗图标按钮（收藏当前层 / 新建文件夹 
 | `dragMove` | `ReturnType<typeof useDragMove>`：开合、当前层、悬停 / 弹起态与各落点动作 |
 | `onCreateFolder(dir)` | 在给定目录新建文件夹（页面接到 `createEntryIn`） |
 | `onPreview(file)` | 用内置预览打开图片 / 视频（页面按分类分流到图片 / 视频预览） |
-| `isFavorite(path)` | 当前层是否已收藏（决定星标填不填实） |
-| `onToggleFavorite(path)` | 收藏 / 取消收藏当前层（页面接到 `toggleFavorite`） |
-| `onPickDir()` | 选择本地目录（页面接到 `handlePickDir`） |
+| `favorites` | 收藏那一组：`entries` / `isFavorite` / `onMove` / `onRemove` / `onToggleFavorite` / `onTogglePinned`（与列表页同一套） |
+| `onPickDir(defaultDir)` | 选一个本地目录，返回选中路径（取消 `null`）；选完只在弹窗里换层 |

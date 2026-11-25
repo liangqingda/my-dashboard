@@ -4,9 +4,15 @@ import type { DraggableEntry, FolderEntry } from '../../types';
 import { playMoveSound, primeMoveSound } from '../../utils/move-sound';
 
 import { SPRING_ENTER_MS, SPRING_HOVER_MS } from './constants';
-import type { DragMoveSession, DragMoveView, UseDragMoveArgs } from './types';
+import { runSequentialMove } from './run-move';
+import { clearTimer, focusSession, restoreSession, stripSelf } from './utils';
+import type {
+  DragMoveSession,
+  DragMoveView,
+  MoveProgress,
+  UseDragMoveArgs,
+} from './types';
 import { useViewFolders } from './use-view-folders';
-import { clearTimer, stripSelf } from './utils';
 
 /**
  * 拖拽移动会话的状态与动作（调用方式与判定见同目录 `README.md`）：
@@ -39,8 +45,10 @@ export const useDragMove = ({
   const [dragActive, setDragActive] = useState(false);
   /** 手持态：拖拽已经结束，条目放回手里等人再拖 */
   const [handed, setHanded] = useState(false);
-  /** 本会话已经移动成功的路径：会话结束时页面据此把它们从待拖拽区摘掉 */
+  /** 本会话已经移动成功的路径：页面据此把它们从待拖拽区摘掉 */
   const [movedPaths, setMovedPaths] = useState<string[]>([]);
+  /** 正在搬的进度：逐条提交时给界面看（搬到外接盘这类慢盘尤其需要） */
+  const [progress, setProgress] = useState<MoveProgress | null>(null);
 
   /** 状态镜像：事件回调里要读到「此刻」的值，不能依赖某一次渲染的闭包 */
   const sessionRef = useRef<DragMoveSession | null>(null);
@@ -73,6 +81,7 @@ export const useDragMove = ({
   /** 关掉弹窗并清空会话：条目留在原位，什么都没写 */
   const close = () => {
     resetHover();
+    setProgress(null);
     sessionRef.current = null;
     setSession(null);
     setView(null);
@@ -101,6 +110,7 @@ export const useDragMove = ({
     setError(null);
     setHanded(false);
     setMovedPaths([]);
+    setProgress(null);
     setDragActive(true);
 
     const active: DragMoveSession = { entries, origin: currentDir };
@@ -117,18 +127,16 @@ export const useDragMove = ({
   };
 
   /**
-   * 只搬手里的一条：弹窗里的待拖拽区平铺着一批，拖其中某一条时把会话收窄到它，
-   * 其余条目留在页面上的待拖拽区（会话结束后它们还在那儿）。
+   * 只搬手里的一条：弹窗里的待拖拽区平铺着一批，拖其中某一条时把会话收窄到它。
+   * 其余条目记在 `rest` 里——这一趟没搬成就还原回整批，别让它们从弹窗里消失。
    */
   const focusEntry = (path: string) => {
     const active = sessionRef.current;
-    const entry = active?.entries.find((item) => item.path === path);
+    const focused = active === null ? null : focusSession(active, path);
 
-    if (active === null || entry === undefined) {
+    if (focused === null) {
       return false;
     }
-
-    const focused: DragMoveSession = { entries: [entry], origin: active.origin };
 
     sessionRef.current = focused;
     setSession(focused);
@@ -145,8 +153,18 @@ export const useDragMove = ({
 
   /** 拖拽结束（松手 / Esc / 落在非落点区域）：条目回到手里，弹窗留着 */
   const endDrag = () => {
-    if (sessionRef.current === null) {
+    const active = sessionRef.current;
+
+    if (active === null) {
       return;
+    }
+
+    // 只拖了其中一条又没搬成：把其余条目还原回来，整批仍在弹窗里等着
+    if (active.rest !== undefined) {
+      const restored = restoreSession(active);
+
+      sessionRef.current = restored;
+      setSession(restored);
     }
 
     setDragActive(false);
@@ -218,8 +236,8 @@ export const useDragMove = ({
   };
 
   /**
-   * 逐个提交移动：全部成功才播落位音效并关窗；有一条失败就停在手持态，
-   * 失败原因由 `moveEntry` 自己弹通知，成功的几条已经落位、列表由页面刷新。
+   * 逐条提交移动（顺序与进度归 `run-move.ts`）：全部成功才播落位音效并关窗；
+   * 有一条失败就停在手持态，失败原因由 `moveEntry` 自己弹通知，成功的几条已经落位、列表由页面刷新。
    */
   const runMove = async (sources: string[], targetDir: string) => {
     // 这一步还在 drop 事件的任务里：先把音频解锁，移动成功后再出声
@@ -227,12 +245,20 @@ export const useDragMove = ({
     movingRef.current = true;
 
     try {
-      const results = await Promise.all(
-        sources.map((source) => moveEntry(source, targetDir)),
-      );
+      const succeeded = await runSequentialMove({
+        moveOne: (source, dir) => moveEntry(source, dir),
+        onProgress: setProgress,
+        sources,
+        targetDir,
+      });
 
-      if (results.every(Boolean)) {
-        setMovedPaths(sources);
+      if (succeeded.length > 0) {
+        setMovedPaths(succeeded);
+      }
+
+      setProgress(null);
+
+      if (succeeded.length === sources.length) {
         close();
         playMoveSound();
 
@@ -316,6 +342,7 @@ export const useDragMove = ({
     loading,
     movedPaths,
     open,
+    progress,
     refreshView,
     reset,
     session,

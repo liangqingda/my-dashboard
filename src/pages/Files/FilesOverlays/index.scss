@@ -1,0 +1,8 @@
+/*
+ * 三类浮层各自 fixed / 弹窗走 portal，这一层自己不占位、也不画任何东西：
+ * `display: contents` 让它的盒子不参与布局，只留一个把「拖拽层 / 弹窗 / 预览层」归在一起的位置。
+ */
+
+.layers {
+  display: contents;
+}

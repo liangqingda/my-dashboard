@@ -204,7 +204,12 @@ const APP_CATALOG_PATHS = new Set(['/Applications', '/System/Applications']);
 export const isAppCatalogPath = (dir: string | null): boolean =>
   dir !== null && APP_CATALOG_PATHS.has(dir);
 
-const holdsApps = (folder: FolderEntry): boolean =>
+/**
+ * 这个文件夹是不是「放应用的目录」（含 app 包，或本身就是系统应用目录）：
+ * 网格据此把它的图标钉成与应用同尺寸，不随窗口被拉大。
+ * 判据挂在文件夹自身上，比只看当前目录路径稳——应用目录换个入口进来也认得出。
+ */
+export const isAppFolder = (folder: FolderEntry): boolean =>
   folder.hasApps || APP_CATALOG_PATHS.has(folder.path);
 
 export const filterFoldersByCategory = (
@@ -221,12 +226,12 @@ export const filterFoldersByCategory = (
   const wantApps = selected.includes('app');
 
   if (relevant.length === 0) {
-    return folders.filter(holdsApps);
+    return folders.filter(isAppFolder);
   }
 
   return folders.filter(
     (folder) =>
-      (wantApps && holdsApps(folder)) ||
+      (wantApps && isAppFolder(folder)) ||
       folder.categories.some((category) => relevant.includes(category)),
   );
 };

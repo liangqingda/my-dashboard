@@ -20,6 +20,11 @@ export type MenuContentLayoutProps = {
   onNavigateParent?: () => void;
   /** `S` 开合页面自己的筛选面板；不传则该键不动作 */
   onToggleFilter?: () => void;
+  /**
+   * `Esc` 收掉页面自己的临时状态（文件页用来退出批量拖拽状态并清空待拖拽区）；
+   * 不传则该键不接管。全屏时 `Esc` 优先用于退出全屏，不再往下传。
+   */
+  onEscape?: () => void;
   /** `C` 开合页面自己的收藏面板；不传则该键不动作 */
   onToggleFavorites?: () => void;
 };

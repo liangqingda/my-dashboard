@@ -240,15 +240,6 @@ export const normalizeCaptureResponse = (payload: unknown): string | null => {
     : null;
 };
 
-/** 导出音频的回执：只认 `{ audio: { name } }`，拿不到就按格式不对处理 */
-export const normalizeAudioResponse = (payload: unknown): string | null => {
-  const audio = isObject(payload) ? payload.audio : null;
-
-  return isObject(audio) && typeof audio.name === 'string' && audio.name
-    ? audio.name
-    : null;
-};
-
 /** 进程号数组：只留正整数，其余丢掉 */
 const normalizePids = (raw: unknown): number[] =>
   Array.isArray(raw)

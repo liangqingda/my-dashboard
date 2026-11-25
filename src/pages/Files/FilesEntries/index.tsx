@@ -122,6 +122,9 @@ const FilesEntries = ({
           onOpenVideo={onOpenVideo}
           onRequestDeleteEntry={onRequestDeleteEntry}
           onRequestUninstallApp={onRequestUninstallApp}
+          onTogglePending={onTogglePending}
+          pendingActive={pendingActive}
+          pendingPaths={pendingPaths}
           rows={rows}
           tipsOff={tipsOff}
         />

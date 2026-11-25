@@ -14,11 +14,15 @@
 
 /* 待拖拽区这一行：条目列表在左（样式在 `HandCard/`），提示吃满剩下的宽度 */
 .handRow {
+  display: flex;
   flex: 0 0 auto;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
 }
 
 .handHint {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-width: 0;
 }
 

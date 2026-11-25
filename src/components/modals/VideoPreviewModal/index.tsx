@@ -1,17 +1,15 @@
 /**
  * 视频预览弹窗：`FreeModal`（外壳）+ `FreeVideo`（播放器）的组合，左侧列当前目录的视频。
  *
- * - header：翻篇 / 计数 / 文件名（外壳）+ 目录显隐、截图、导出音频、外部打开、设置、删除（本组件）；
+ * - header：翻篇 / 计数 / 文件名（外壳）+ 目录显隐、截图、外部打开、设置、删除（本组件）；
  *   「外部打开」把视频交给设置里选的应用（默认 IINA，回落系统默认），浏览器解不动的编码走它更划算；
  *   标题与右侧操作组之间恒留 20px，标题不换行、放不下才省略；
  * - 键盘：空格按设置切播放 / 暂停或关窗（`FreeModal` 的 `media` / `closeOnSpace`），
  *   `Enter` 截当前帧、`m` / `M` 静音、`s` / `S` 显隐目录列，
  *   `[` / `]` 翻篇，`←` / `→` 默认按设置里的步长快进 / 后退（可在设置面板改成翻篇），
  *   `Delete` 触发删除确认；设置面板打开或删除确认开着时整组收掉；
- * - 设置面板：按「播放 / 导出 / 快捷键」分组，可改步长、方向键去向、空格去向、
- *   截图与音频的存放目录（截图默认桌面，音频默认视频所在目录），全部键位双列列一遍；
- * - 导出音频：确认后把当前视频的音轨抽成 WebM（Opus），经调用方写进设置里的目录；
- *   解码 / 编码都在浏览器里做（`utils/extract-audio.ts`），不按实时录制，长片子也不用等播放完；
+ * - 设置面板：按「播放 / 截图 / 快捷键」分组，可改步长、方向键去向、空格去向与截图存放目录
+ *   （默认桌面），全部键位双列列一遍；
  * - 控制栏的两颗箭头在播放键左右两侧，去向跟着「方向键去向」设置：快进 / 后退，或翻篇；
  * - 全屏走浏览器 Fullscreen API：侧栏收起时 header 浮在画面上、鼠标静止 1s 收起，
  *   侧栏唤出后 header 回到普通流（否则会盖住侧栏）；设置里可让它「打开即全屏」；
@@ -29,9 +27,7 @@ import FreeModal, { MODAL_HEADER_SELECTOR } from '@/components/modals/FreeModal'
 import type { FreeModalSeekDirection } from '@/components/modals/FreeModal/types';
 import PreviewSidebar from '@/components/modals/PreviewSidebar';
 
-import AudioExportConfirm from './AudioExportConfirm';
 import { HEADER_HIDE_DELAY } from './constants';
-import { useAudioExport } from './hooks/useAudioExport';
 import { useAutoHideHeader } from './hooks/useAutoHideHeader';
 import { useFrameCapture } from './hooks/useFrameCapture';
 import { useVideoSettings } from './hooks/useVideoSettings';
@@ -57,7 +53,6 @@ const VideoPreviewModal = ({
   items,
   onCapture,
   onClose,
-  onExportAudio,
   onOpenExternal,
   onPickDir,
   onRequestDelete,
@@ -75,17 +70,10 @@ const VideoPreviewModal = ({
   const { active: fullscreen, exit, toggle } = useBrowserFullscreen({
     autoEnter: opened && defaultFullscreen,
   });
-  const {
-    setArrowMode,
-    setAudioDir,
-    setCaptureDir,
-    setSeekStep,
-    setSpaceMode,
-    settings,
-  } = useVideoSettings(storageScope);
+  const { setArrowMode, setCaptureDir, setSeekStep, setSpaceMode, settings } =
+    useVideoSettings(storageScope);
   const index = items.findIndex((item) => item.id === activeId);
   const activeItem = index >= 0 ? items[index] : null;
-  const audio = useAudioExport(activeItem, settings.audioDir, onExportAudio);
 
   const sidebarVisible = fullscreen ? sidebarOpenInFullscreen : sidebarOpen;
 
@@ -95,7 +83,7 @@ const VideoPreviewModal = ({
    */
   const headerOverlay = fullscreen && !sidebarVisible;
   const headerVisible = useAutoHideHeader(
-    headerOverlay && !settingsOpen && !audio.confirmOpen && !blocked,
+    headerOverlay && !settingsOpen && !blocked,
     HEADER_HIDE_DELAY,
     CONTROLS_SELECTOR,
     MODAL_HEADER_SELECTOR,
@@ -208,8 +196,7 @@ const VideoPreviewModal = ({
   }
 
   /** 二次确认层与上层的删除确认同一口径：任一层开着，底下整组键位与焦点都收掉 */
-  const interactionBlocked = blocked || audio.confirmOpen;
-  const audioTargetLabel = settings.audioDir || '视频所在目录';
+  const interactionBlocked = blocked;
 
   const previousItem = index > 0 ? items[index - 1] : null;
   const nextItem = index < items.length - 1 ? items[index + 1] : null;
@@ -230,8 +217,7 @@ const VideoPreviewModal = ({
     : '下一个视频（]）';
 
   return (
-    <>
-      <FreeModal
+    <FreeModal
         closeOnEscape={!fullscreen && !settingsOpen && !interactionBlocked}
         closeOnSpace={
           settings.spaceMode === 'close' && !settingsOpen && !interactionBlocked
@@ -241,21 +227,17 @@ const VideoPreviewModal = ({
           <>
             <VideoHeaderActions
               capturing={capturing}
-              exportingAudio={audio.exporting}
               onCapture={() => void capture(settings.captureDir)}
               onOpenExternal={
                 onOpenExternal ? () => onOpenExternal(activeItem.id) : undefined
               }
-              onRequestExportAudio={onExportAudio ? audio.openConfirm : undefined}
               onToggleSidebar={toggleSidebar}
               sidebarVisible={sidebarVisible}
             />
             <VideoSettingsPopover
               arrowMode={settings.arrowMode}
-              audioDir={settings.audioDir}
               captureDir={settings.captureDir}
               onArrowModeChange={setArrowMode}
-              onAudioDirChange={setAudioDir}
               onCaptureDirChange={setCaptureDir}
               onChangeOpened={setSettingsOpen}
               onPickDir={onPickDir}
@@ -300,7 +282,7 @@ const VideoPreviewModal = ({
         shortcutsEnabled={!interactionBlocked && !settingsOpen}
         title={activeItem.name}
         trapFocus={!interactionBlocked}
-      >
+    >
         <div className={styles.layout}>
           {sidebarVisible ? (
             <PreviewSidebar
@@ -323,16 +305,7 @@ const VideoPreviewModal = ({
             videoRef={videoRef}
           />
         </div>
-      </FreeModal>
-
-      <AudioExportConfirm
-        itemName={activeItem.name}
-        onCancel={audio.closeConfirm}
-        onConfirm={() => void audio.confirm()}
-        opened={audio.confirmOpen}
-        targetLabel={audioTargetLabel}
-      />
-    </>
+    </FreeModal>
   );
 };
 

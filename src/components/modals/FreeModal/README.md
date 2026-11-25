@@ -19,7 +19,9 @@
 - **header 里的按钮**：翻页与全屏走 `FreeIconAction`（`size="sm"`、语气恒为 `normal`、tip 与 `aria-label` 同句，
   键位提示走 `tooltipLabel`），**外壳不自维护图标按钮样式**；关闭按钮是组件库 `Modal` 内建的 `closeButton`。
 - **header 的顺序与间距**：翻页与计数 → 标题 → `headerActions` → 全屏 → `headerTail` →
-  `headerSecondary` → 竖线 → Mantine 关闭按钮。标题与右侧操作组之间恒留 20px（`.titleGap`），
+  `headerSecondary` → 竖线 → Mantine 关闭按钮。`headerActions` 里的按钮**彼此固定 8px 间距**
+  （`.actions` 的 `gap: 8px`）：这是全站弹窗 header 操作的统一口径，业务侧直接铺自己的图标按钮，
+  不要再包一层窄 gap 的 `Group` 去覆盖它。标题与右侧操作组之间恒留 20px（`.titleGap`），
   标题单行不换行、放不下才省略（hover 看全名），宽度再窄也压不到按钮上。
   竖线只有一条，画在**关闭按钮之前**（操作区与关闭的分界），组与组之间不再画线；
   没有关闭按钮（`closeButton={false}`）或右侧一个图标都没渲染时也不画，免得留一条孤线。
@@ -38,7 +40,9 @@
     由调用方自己判断，外壳只把按键转成一个回调；
   - **`C` 复制**：传了 `copy` 时把那段文本写进剪贴板，并给一条成功 / 失败提示（走固定通知 id）；
   - **`Delete` / `Backspace` 删除**：传了 `onRequestDelete` 时触发它（调用方只打开二次确认层，
-    不在这里直接删）。两个键都认：macOS 键盘上印着 delete 的那颗发出来的就是 `Backspace`。
+    不在这里直接删）。两个键都认：macOS 键盘上印着 delete 的那颗发出来的就是 `Backspace`；
+  - **业务自己的单键**：传 `extraKeys`（键名小写 → 动作）挂进这一套监听，只在本窗开着时生效；
+    业务弹窗要加一个快捷键就传它，不要自己 `addEventListener`（否则会和 Esc / 空格两套抢键）。
   放行口径：带 ⌘ / Ctrl / Alt 的组合键不拦、正在输入（输入框 / 可编辑区）不拦、按住连发不算；
   翻页、方向键、全屏、静音、面板显隐、截图、复制与删除可由 `shortcutsEnabled` 整组收掉（加载中、上层浮层开着时），
   收掉时**连空格一起收**——上层确认层开着，底下的播放器不该还在响应播放 / 暂停。
@@ -78,6 +82,7 @@
 | `fullscreen` | `{ active, onToggle, showToggle? }`；不传则没有全屏外观与按钮。`showToggle` 默认 `true`，传 `false` 时只保留 `active` 决定的铺满外观、不画按钮也不响应 `F`（进编辑这类不该换尺寸的场景） |
 | `copy` | `{ text, message }`；传了就有 `C` 复制键（`text` 进剪贴板，`message` 是成功提示），与 header 的复制按钮同一口径 |
 | `onRequestDelete` | 传了就有 `Delete` / `Backspace` 删除键；只应打开二次确认层，不直接删 |
+| `extraKeys` | 业务自己的单键动作（`{ c: 开合收藏面板 }` 这类，键名小写）；只在本窗开着时生效，业务侧不自己监听 keydown |
 | `closeButton` | 是否显示关闭按钮，默认显示（编辑态这类「关不掉」的场景传 `false`） |
 | `closeOnClickOutside` | 点遮罩是否关窗，默认 `true`。遮罩点击由外壳自己接管：窗口拿回焦点后 400ms 内的那一下只当「回焦」不关窗，避免从外部应用切回来时误关 |
 | `closeOnEscape` / `closeOnSpace` / `trapFocus` | Esc 与空格是否关窗（`closeOnSpace` 默认跟随 `closeOnEscape`）、上层浮层开着时由调用方关掉，避免一下全关 / 焦点被抢、是否锁焦点 |

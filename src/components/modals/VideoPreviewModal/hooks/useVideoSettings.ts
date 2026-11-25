@@ -1,7 +1,7 @@
 /**
- * 视频预览的五项界面偏好：方向键去向、快进 / 后退步长、空格键去向、截图存放目录、音频导出目录。
+ * 视频预览的四项界面偏好：方向键去向、快进 / 后退步长、空格键去向、截图存放目录。
  *
- * 五项同属一个 localStorage 命名空间（`<页面标识>:video-preview`），各写各的字段：
+ * 四项同属一个 localStorage 命名空间（`<页面标识>:video-preview`），各写各的字段：
  * 改步长不会把已选的截图目录冲掉。页面标识由调用方给（`storageScope`），
  * 同一个组件挂到第二页时不该共用第一页的偏好。
  */
@@ -30,8 +30,6 @@ export type VideoPreviewSettings = {
   arrowMode: VideoArrowMode;
   /** 截图存放目录；空串表示默认（用户桌面） */
   captureDir: string;
-  /** 导出音频的目录；空串表示默认（视频所在目录） */
-  audioDir: string;
   /** 快进 / 后退步长（秒） */
   seekStep: number;
   /** 空格键是播放 / 暂停还是关闭弹窗 */
@@ -46,8 +44,6 @@ export type UseVideoSettingsResult = {
   setArrowMode: (next: VideoArrowMode) => void;
   /** 改截图目录；传空串表示恢复默认（桌面） */
   setCaptureDir: (next: string) => void;
-  /** 改导出音频目录；传空串表示恢复默认（视频所在目录） */
-  setAudioDir: (next: string) => void;
   /** 改步长；越界值夹回合法区间 */
   setSeekStep: (next: number) => void;
   /** 改空格键去向 */
@@ -68,11 +64,6 @@ export const useVideoSettings = (
       storageKey,
       SETTINGS_FIELD.arrowMode,
       ARROW_MODE_CODEC,
-    ),
-    audioDir: readStoredField(
-      storageKey,
-      SETTINGS_FIELD.audioDir,
-      EXPORT_DIR_CODEC,
     ),
     captureDir: readStoredField(
       storageKey,
@@ -117,19 +108,6 @@ export const useVideoSettings = (
     [storageKey],
   );
 
-  const setAudioDir = useCallback(
-    (next: string) => {
-      writeStoredField(
-        storageKey,
-        SETTINGS_FIELD.audioDir,
-        EXPORT_DIR_CODEC,
-        next,
-      );
-      setSettings((prev) => ({ ...prev, audioDir: next }));
-    },
-    [storageKey],
-  );
-
   const setSeekStep = useCallback(
     (next: number) => {
       if (!Number.isFinite(next)) {
@@ -167,7 +145,6 @@ export const useVideoSettings = (
 
   return {
     setArrowMode,
-    setAudioDir,
     setCaptureDir,
     setSeekStep,
     setSpaceMode,

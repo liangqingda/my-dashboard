@@ -25,4 +25,9 @@ export type IconPopoverButtonProps = {
   width?: number | string;
   /** 弹层内容 */
   children: ReactNode;
+  /**
+   * 弹层层级：弹层走 portal、默认与普通下拉一致；放进更高的浮层里（如全屏弹窗的 header）时
+   * 由调用方往上抬，别被那层浮层的遮罩压住。
+   */
+  zIndex?: number;
 };

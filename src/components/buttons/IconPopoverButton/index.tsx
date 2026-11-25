@@ -30,6 +30,7 @@ const IconPopoverButton = ({
   opened,
   shortcut,
   width = DROPDOWN_WIDTH,
+  zIndex,
 }: IconPopoverButtonProps) => {
   const stateText = hint ?? (active ? `${label}（已生效）` : label);
   const tooltip = shortcut ? `${stateText}（${shortcut}）` : stateText;
@@ -44,6 +45,7 @@ const IconPopoverButton = ({
       width={width}
       withArrow
       withinPortal
+      zIndex={zIndex}
     >
       {/* 提示要拼「已生效」和键位，所以按钮只出本体（`tooltip="none"`），tip 在这里挂 */}
       <Popover.Target>

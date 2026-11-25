@@ -8,8 +8,8 @@
  * 表格外观（边框、表头吸顶、行 hover）由 `FreeTable` 统一给，这里只管列宽与内容。
  */
 
-import type { DragEvent } from 'react';
-import { memo } from 'react';
+import type { DragEvent, MouseEvent } from 'react';
+import { memo, useMemo } from 'react';
 import { Loader, UnstyledButton } from '@mantine/core';
 import { IconFolderFilled } from '@tabler/icons-react';
 
@@ -20,25 +20,14 @@ import { cx } from '@/utils/cx';
 import AppIcon from '../AppIcon';
 import EntryTileActions from '../EntryTileActions';
 import { CATEGORY_ICONS, ENTRY_KIND_LABELS, FILE_CATEGORY_LABELS } from '../constants';
-import type { AppEntry, FileEntry, FilesRow, FolderEntry } from '../types';
+import type { FileEntry, FilesRow, FolderEntry } from '../types';
 import { writeDragPayload } from '../utils/drag-image';
 import { prefetchVideoHead } from '../utils/video-prefetch';
 
 import type { FilesTableProps } from './types';
+import { entryOf } from './utils';
 
 import styles from './index.scss';
-
-/** 一行对应的条目：三种形态共用名称列与操作列 */
-const entryOf = (row: FilesRow): AppEntry | FileEntry | FolderEntry => {
-  switch (row.kind) {
-    case 'folder':
-      return row.folder;
-    case 'app':
-      return row.app;
-    case 'file':
-      return row.file;
-  }
-};
 
 /** 表格里的应用图标：与瓦片同一套「真实图标 → 通用图标」回落 */
 const FilesTable = memo(
@@ -60,9 +49,61 @@ const FilesTable = memo(
     onOpenVideo,
     onRequestDeleteEntry,
     onRequestUninstallApp,
+    onTogglePending,
+    pendingActive,
+    pendingPaths,
     rows,
     tipsOff,
   }: FilesTableProps) => {
+    /** 选中态按路径查：列表转 Set 一次，免得每行都 `includes` */
+    const pendingSet = useMemo(() => new Set(pendingPaths), [pendingPaths]);
+    /** 点行时按路径反查条目本体（应用不参与多选） */
+    const byPath = useMemo(() => {
+      const map = new Map<string, FileEntry | FolderEntry>();
+
+      for (const row of rows) {
+        if (row.kind === 'folder') {
+          map.set(row.folder.path, row.folder);
+        } else if (row.kind === 'file') {
+          map.set(row.file.path, row.file);
+        }
+      }
+
+      return map;
+    }, [rows]);
+
+    /**
+     * 待拖拽区非空（或带 ⌘ / Shift）时，点在行上就是加入 / 移出：
+     * 在容器捕获阶段拦下，行里那些「打开文件夹 / 预览」的按钮就不会跟着响应。
+     */
+    const handleClickCapture = (event: MouseEvent<HTMLDivElement>) => {
+      const { target } = event;
+
+      if (target instanceof HTMLElement && target.closest('[data-tile-actions]') !== null) {
+        return;
+      }
+
+      const row = target instanceof HTMLElement ? target.closest('[data-entry-path]') : null;
+
+      if (!(row instanceof HTMLElement) || row.dataset.entryPath === undefined) {
+        return;
+      }
+
+      const entry = byPath.get(row.dataset.entryPath);
+
+      if (entry === undefined) {
+        return;
+      }
+
+      if (!pendingActive && !event.metaKey && !event.shiftKey) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      onTogglePending(entry, row.getBoundingClientRect());
+    };
+
     /** 名称前的类型图标：应用走真实图标 + 通用图标回落，其余按分类换图标 */
     const renderIcon = (row: FilesRow) => {
       if (row.kind === 'app') {
@@ -183,7 +224,8 @@ const FilesTable = memo(
     };
 
     return (
-      <FreeTable className={styles.tableFrame} layout="fixed">
+      <div className={styles.tableFrame} onClickCapture={handleClickCapture}>
+      <FreeTable layout="fixed">
         <FreeTable.Thead>
           <FreeTable.Tr>
             <FreeTable.Th scope="col">名称</FreeTable.Th>
@@ -220,7 +262,9 @@ const FilesTable = memo(
                   isFolder && styles.clickable,
                   dragging && styles.dragging,
                   dropActive && styles.dropActive,
+                  pendingSet.has(entry.path) && styles.pending,
                 )}
+                data-entry-path={isApp ? undefined : entry.path}
                 draggable={!isApp}
                 key={entry.path}
                 onClick={isFolder ? () => onOpenFolder(entry.path) : undefined}
@@ -267,6 +311,7 @@ const FilesTable = memo(
           })}
         </FreeTable.Tbody>
       </FreeTable>
+      </div>
     );
   },
 );

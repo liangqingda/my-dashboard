@@ -18,6 +18,28 @@ export const hideNativeDragImage = (dataTransfer: DataTransfer) => {
   dataTransfer.setDragImage(transparentChip, 0, 0);
 };
 
+/**
+ * 这趟拖拽带的是不是「条目路径」载荷。
+ * 拖拽经过（`dragover`）阶段浏览器不让读 `getData` 的具体内容（安全限制，只有 `drop` 时能读），
+ * 所以只看 `types`：要 `preventDefault` 才能收到 `drop`，这一步不能等真去读内容。
+ */
+export const hasDragPaths = (dataTransfer: DataTransfer): boolean => {
+  if (dataTransfer.types.includes('text/plain')) {
+    return true;
+  }
+
+  // 部分浏览器把自定义类型也报成小写；统一按小写比一次，只认这一条口径
+  return dataTransfer.types.some((type) => type.toLowerCase() === 'text/plain');
+};
+
+/** 读回拖拽载荷里的路径：按换行拆开、去掉空行 */
+export const readDragPaths = (dataTransfer: DataTransfer): string[] =>
+  dataTransfer
+    .getData('text/plain')
+    .split('\n')
+    .map((path) => path.trim())
+    .filter(Boolean);
+
 /** 拖拽的载荷：路径用换行分隔，多个条目时下游按行拆开 */
 export const writeDragPayload = (dataTransfer: DataTransfer, paths: string[]) => {
   // 参数本身是浏览器的对象，只读它、不在参数上赋值：借一个本地名字落这三笔写

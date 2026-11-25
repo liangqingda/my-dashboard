@@ -57,6 +57,12 @@
   color: var(--mantine-color-blue-5);
 }
 
+/* 放应用的目录（`isAppFolder`）：图标钉成与应用图标同一尺寸的正方形，
+   不再随瓦片宽度自适应，也不再占 16:10 的图源位——和应用图标同等大小才算「一致」 */
+.iconFixed {
+  aspect-ratio: 1;
+}
+
 .body {
   position: relative;
   z-index: 2;

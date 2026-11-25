@@ -8,7 +8,6 @@ import { useMemo } from 'react';
 import { notifications } from '@mantine/notifications';
 
 import type {
-  VideoPreviewAudioReceipt,
   VideoPreviewCaptureReceipt,
   VideoPreviewItem,
 } from '@/components/modals/VideoPreviewModal/types';
@@ -20,7 +19,7 @@ import {
   pickPickedDir,
   videoContentUrl,
 } from '../utils/files-api';
-import { openFileExternally, saveAudioFile } from '../utils/video-api';
+import { openFileExternally } from '../utils/video-api';
 
 import { usePreviewList } from './usePreviewList';
 
@@ -41,14 +40,8 @@ export type UseVideoPreviewResult = {
     dataUrl: string,
     captureDir: string,
   ) => Promise<VideoPreviewCaptureReceipt>;
-  /** 导出音频并写盘，返回给弹窗用的提示文案；`dir` 空串表示落到视频所在目录 */
-  exportAudio: (
-    blob: Blob,
-    dir: string,
-    baseName: string,
-  ) => Promise<VideoPreviewAudioReceipt>;
-  /** 选导出目录（系统目录选择框，默认定位到当前目录；截图与音频共用）；取消返回 null */
-  pickExportDir: () => Promise<string | null>;
+  /** 选截图存放目录（系统目录选择框，默认定位到当前目录）；取消返回 null */
+  pickMediaDir: () => Promise<string | null>;
   /** 用外部播放器打开某条视频：给定应用优先，其次 IINA，再回落系统默认；结果给一条提示 */
   openExternal: (id: string, appName?: string) => void;
 };
@@ -128,25 +121,8 @@ export const useVideoPreview = (
     list.open(file);
   };
 
-  /**
-   * 导出音频：设置里没指定目录时落到当前目录（视频所在目录），
-   * 提示里带上目标目录与文件名，用户能直接去找。
-   */
-  const exportAudio = async (
-    blob: Blob,
-    dir: string,
-    baseName: string,
-  ): Promise<VideoPreviewAudioReceipt> => {
-    const currentDir = listing?.path ?? '';
-    const targetDir = dir.length > 0 ? dir : currentDir;
-    const name = await saveAudioFile(blob, targetDir, baseName);
-    const target = dir.length > 0 ? dir : currentDir || '桌面';
-
-    return { message: `已保存到${target}：${name}` };
-  };
-
-  /** 选导出目录：默认从当前目录弹起，用户取消不当作失败 */
-  const pickExportDir = async (): Promise<string | null> => {
+  /** 选截图目录：默认从当前目录弹起，用户取消不当作失败 */
+  const pickMediaDir = async (): Promise<string | null> => {
     const picked = await pickPickedDir(listing?.path ?? null);
 
     return 'path' in picked ? picked.path : null;
@@ -156,11 +132,10 @@ export const useVideoPreview = (
     activeId: list.activeId,
     captureFrame,
     closeVideo: list.close,
-    exportAudio,
     items,
     openExternal,
     openVideo,
-    pickExportDir,
+    pickMediaDir,
     selectVideo: list.select,
   };
 };

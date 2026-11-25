@@ -55,15 +55,13 @@ const SPACE_MODE_OPTIONS: { label: string; value: VideoSpaceMode }[] = [
   { label: '关闭弹窗', value: 'close' },
 ];
 
-/** 正在选哪个目录：同一时刻只弹一个系统选择框 */
-type PickingTarget = 'audio' | 'capture';
+/** 正在选截图目录：选择框开着时按钮转圈 */
+type PickingTarget = 'capture';
 
 const VideoSettingsPopover = ({
   arrowMode,
-  audioDir,
   captureDir,
   onArrowModeChange,
-  onAudioDirChange,
   onCaptureDirChange,
   onChangeOpened,
   onPickDir,
@@ -115,8 +113,7 @@ const VideoSettingsPopover = ({
   };
 
   /**
-   * 选目录：用户取消就什么都不改；失败给一条通知，别静默关掉选择框。
-   * 截图与音频共用同一个系统选择框，落点由 `target` 决定写回哪个偏好。
+   * 选截图目录：用户取消就什么都不改；失败给一条通知，别静默关掉选择框。
    */
   const handlePickDir = async (target: PickingTarget) => {
     if (onPickDir === undefined) {
@@ -129,11 +126,7 @@ const VideoSettingsPopover = ({
       const dir = await onPickDir();
 
       if (dir !== null) {
-        if (target === 'capture') {
-          onCaptureDirChange(dir);
-        } else {
-          onAudioDirChange(dir);
-        }
+        onCaptureDirChange(dir);
       }
     } catch (error) {
       notifications.show({
@@ -232,13 +225,9 @@ const VideoSettingsPopover = ({
           </FreePanelField>
         </FreePanelGroup>
 
-        <FreePanelGroup title="导出">
-          <FreePanelField label="截图存放位置" wide>
+        <FreePanelGroup title="截图">
+          <FreePanelField label="存放位置" wide>
             {renderPathRow('capture', captureDir || '桌面（默认）')}
-          </FreePanelField>
-
-          <FreePanelField label="音频存放位置" wide>
-            {renderPathRow('audio', audioDir || '视频所在目录（默认）')}
           </FreePanelField>
         </FreePanelGroup>
 

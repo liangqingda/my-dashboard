@@ -7,10 +7,8 @@ import { onPageRefresh } from '@/utils/page-refresh';
 import DirBreadcrumb from './DirBreadcrumb';
 import FilesActions from './FilesActions';
 import type { FilesActionsPanel } from './FilesActions/types';
-import FilesDragLayers from './FilesDragLayers';
 import FilesEntries from './FilesEntries';
-import FilesModals from './FilesModals';
-import FilesPreviewLayers from './FilesPreviewLayers';
+import FilesOverlays from './FilesOverlays';
 import FilesStates from './FilesStates';
 import { useAppLaunch } from './hooks/useAppLaunch';
 import { useAppUninstall } from './hooks/useAppUninstall';
@@ -24,16 +22,13 @@ import { useFilesFilterActions } from './hooks/useFilesFilterActions';
 import { useFilesViewMode } from './hooks/useFilesViewMode';
 import { useFilesNavigation } from './hooks/useFilesNavigation';
 import { useImagePreview } from './hooks/useImagePreview';
+import { usePendingDrag } from './hooks/usePendingDrag';
 import { useTypeFilter } from './hooks/useTypeFilter';
 import { useVideoPreview } from './hooks/useVideoPreview';
 import { useVolumeEject } from './hooks/useVolumeEject';
-import {
-  describeDirSpace,
-  emptyListingText,
-  favoriteTargetOf,
-  isAppCatalogPath,
-} from './utils/files';
+import { describeDirSpace, emptyListingText, isAppCatalogPath } from './utils/files';
 import { describeFilesList } from './utils/entries-view';
+import { pickDirectory } from './utils/files-api';
 
 import styles from './index.scss';
 
@@ -55,6 +50,8 @@ import styles from './index.scss';
  * 标题行右侧再显示本机剩余可用空间；当前目录在外接盘上时，连同那块盘的可用空间一起显示。
  */
 const Files = () => {
+  /** 收藏 hook 整个留着：拖拽弹窗里的收藏面板直接复用同一套动作 */
+  const favoritesHook = useFavorites();
   const {
     favorites,
     isFavorite,
@@ -62,7 +59,7 @@ const Files = () => {
     removeFavorite,
     toggleFavorite,
     togglePinnedFavorite,
-  } = useFavorites();
+  } = favoritesHook;
   /** 从没打开过目录时默认进收藏里的第一条（固定项在前）；推出外接盘也回到这里 */
   const defaultFavoriteDir = favorites[0]?.path ?? null;
   const {
@@ -94,37 +91,35 @@ const Files = () => {
   /** 应用卸载：点卸载先取残留清单，确认后删整包并清理残留 */
   const appUninstall = useAppUninstall(reload);
   const { launchApp, launchingPath } = useAppLaunch();
-  /** 视频预览：点视频打开弹窗，翻篇 / 侧栏 / 截图都按当前目录的视频列表走 */
-  const {
-    activeId: previewVideoId,
-    captureFrame,
-    closeVideo,
-    exportAudio: exportVideoAudio,
-    items: videoItems,
-    openExternal: openVideoExternal,
-    openVideo,
-    pickExportDir,
-    selectVideo,
-  } = useVideoPreview(listing, settings);
-  /** 图片预览：与视频预览同形，但没有播放 / 截图那一套 */
-  const {
-    activeId: previewImageId,
-    closeImage,
-    items: imageItems,
-    openImage,
-    selectImage,
-  } = useImagePreview(listing);
-  const {
-    cancelDelete,
-    confirmDelete,
-    deletingEntry,
-    deleteLoading,
-    requestDelete,
-    resetDelete,
-  } = useEntryDelete(folders, allFiles, reload);
+  /** 视频预览：点视频打开弹窗，翻篇 / 侧栏 / 截图都按当前目录的视频列表走；整个结果也给浮层层复用 */
+  const videoPreview = useVideoPreview(listing, settings);
+  const { closeVideo, openExternal: openVideoExternal, openVideo } = videoPreview;
+  /** 图片预览：与视频预览同形，但没有播放 / 截图那一套；整个结果也给浮层层复用 */
+  const imagePreview = useImagePreview(listing);
+  const { closeImage, openImage } = imagePreview;
+  /** 删除条目：整份结果也给浮层层复用（弹窗的 four 字段从它挑） */
+  const entryDelete = useEntryDelete(folders, allFiles, reload);
+  const { deletingEntry, requestDelete, resetDelete } = entryDelete;
 
   /** 待拖拽区：攒起来的一批条目，攒下以后列表的点击语义跟着变 */
   const pending = useDragPending();
+
+  /**
+   * 列表拖拽结束（松手 / Esc / 落在别处）：先把「正往待拖拽区拖」那一程收掉，
+   * 再交给移动会话的结束逻辑（没有会话时它是空操作）。
+   */
+  const handleDragEnd = () => {
+    pending.endTrayDrag();
+    entryActions.endDrag();
+  };
+
+  /** 批量状态下的起拖与收件：列表不再立即开弹窗，先把条目往侧栏待拖拽区拖 */
+  const { handleDragStartEntry, handleTrayDrop } = usePendingDrag({
+    pending,
+    entryActions,
+    folders,
+    files: allFiles,
+  });
 
   /** 同时只开一块弹层：收藏 / 筛选 */
   const [openPanel, setOpenPanel] = useState<FilesActionsPanel | null>(null);
@@ -232,12 +227,14 @@ const Files = () => {
       }
       description={describeDirSpace(listing?.space ?? null)}
       fill
+      onEscape={pending.active ? pending.clear : undefined}
       onNavigateParent={navigateParent}
       onToggleFavorites={() => togglePanel('favorites')}
       onToggleFilter={() => togglePanel('filter')}
       title="文件"
     >
       <Stack className={styles.shell} gap="sm">
+        {/* 批量状态（待拖拽区非空）下一旦起拖，松手落在其它任何地方都要收掉） */}
         <DirBreadcrumb currentDir={currentDir} onNavigate={goToDir} />
 
         <FilesStates
@@ -263,10 +260,10 @@ const Files = () => {
             launchingApp={launchingPath}
             loading={loading}
             loadingFolder={openingFolder}
-            onDragEnd={entryActions.endDrag}
+            onDragEnd={handleDragEnd}
             onDragLeaveFolder={entryActions.dragLeaveFolder}
             onDragOverFolder={entryActions.dragOverFolder}
-            onDragStartEntry={entryActions.dragStartEntry}
+            onDragStartEntry={handleDragStartEntry}
             onDropFolder={entryActions.dropFolder}
             onEditEntry={entryActions.editEntry}
             onOpenApp={launchApp}
@@ -289,42 +286,29 @@ const Files = () => {
         ) : null}
       </Stack>
 
-      <FilesDragLayers entryActions={entryActions} pending={pending} />
-
-      <FilesModals
-        appUninstall={appUninstall}
-        deleteState={{
-          cancelDelete,
-          confirmDelete,
-          deleteLoading,
-          deletingEntry,
+      <FilesOverlays
+        drag={{ entryActions, onDropPaths: handleTrayDrop, pending }}
+        modals={{
+          appUninstall,
+          deleteEntry: entryDelete,
+          entryActions,
+          favorites: favoritesHook,
+          onCreateFolder: (dir) => void entryActions.createEntryIn(dir),
+          onPickDir: pickDirectory,
+          onPreviewImage: openImage,
+          onPreviewVideo: openVideo,
+          volumeEject,
         }}
-        entryActions={entryActions}
-        isFavorite={isFavorite}
-        onCreateFolder={(dir) => void entryActions.createEntryIn(dir)}
-        onPickDir={handlePickDir}
-        onPreviewImage={openImage}
-        onPreviewVideo={openVideo}
-        onToggleFavorite={(path) => toggleFavorite(favoriteTargetOf(path))}
-        volumeEject={volumeEject}
-      />
-
-      <FilesPreviewLayers
-        blocked={deletingEntry !== null}
-        defaultFullscreen={{ image: settings.imageFullscreen, video: settings.videoFullscreen }}
-        imageActiveId={previewImageId}
-        imageItems={imageItems}
-        onCaptureVideo={captureFrame}
-        onCloseImage={closeImage}
-        onCloseVideo={closeVideo}
-        onExportVideoAudio={exportVideoAudio}
-        onOpenExternal={openVideoExternal}
-        onPickDir={pickExportDir}
-        onRequestDelete={requestDelete}
-        onSelectImage={selectImage}
-        onSelectVideo={selectVideo}
-        videoActiveId={previewVideoId}
-        videoItems={videoItems}
+        preview={{
+          blocked: deletingEntry !== null,
+          defaultFullscreen: {
+            image: settings.imageFullscreen,
+            video: settings.videoFullscreen,
+          },
+          image: imagePreview,
+          onRequestDelete: requestDelete,
+          video: videoPreview,
+        }}
       />
     </MenuContentLayout>
   );

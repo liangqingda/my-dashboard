@@ -1,24 +1,25 @@
 # useDragPending
 
-待拖拽区的状态：攒了哪些条目（`entries`，顺序即加入顺序），以及加入 / 移除 / 清空这类动作。
-展示在 `PendingTray`，接线在 `FilesDragLayers`。
+待拖拽区的状态：攒了哪些条目（`entries`，顺序即加入顺序）、有没有正在往这儿拖的一批
+（`trayDrag`），以及加入 / 移除 / 清空这类动作。展示在 `PendingTray`，接线在 `FilesDragLayers`。
 
-## 一条规矩
+## 两条规矩
 
-**列表的点击语义跟着它变**：待拖拽区非空（`active`）以后，点条目就是「加入 / 移除」，
-不再打开文件夹或弹预览；非空之前，`⌘` / `Shift` + 点击可以起选，之后普通点击也算加入。
+1. **列表的点击语义跟着它变**：`active` 以后点条目就是「加入 / 移除」，不再打开文件夹或弹预览；
+   非空之前，`⌘` / `Shift` + 点击可以起选，之后普通点击也算加入。
+2. **批量状态下列表的拖拽先不开弹窗**：拖起来只是把这一批往侧栏拖（`trayDrag`），
+   松手落在待拖拽区才收进来；要搬的时候从待拖拽区整块拖起，那一程才开移动弹窗。
+   列表这侧的开合判定在 `hooks/usePendingDrag`。
 
-> 说明：网页里收不到触控板的三指手势（被系统占用），所以这里用修饰键 + 点击代替。
-> 真的三指触摸要另接 `touchstart` 的多指判断，不在当前实现范围内。
-
-`has(path)` 给瓦片判「是否已选中」，`remove` 给 chip 上的叉号，`clear` 给顶部那颗「清空」。
+> 说明：网页里收不到触控板的三指手势（被系统占用），所以这里用修饰键 + 点击 / 拖拽代替。
 
 ## 动作
 
 | 动作 | 用途 |
 | --- | --- |
-| `toggle(entry, from?)` | 那一下点击的落点：已选中就移除；否则加入，并顺手把 `fly` 设成 `{ entry, from }`，让 `PendingFly` 从瓦片原位飞过去。`from` 只有点选路径（`DirectoryGrid` 量瓦片矩形）才给，拖拽起手不带 |
-| `removePaths(paths)` | 一次移动会话成功后，把这几条从面板里摘掉（`FilesDragLayers` 按 `movedPaths` 调） |
+| `toggle(entry, from?)` | 点一下的落点：已选中就移除；否则加入，并把 `fly` 设成 `{ entry, from }`，让 `PendingFly` 从瓦片原位飞过去。`from` 只有点选路径才给 |
+| `add(entry)` / `addMany(entries)` | 直接加入（`addMany` 已在里面的跳过）：从列表拖进待拖拽区时按路径认条目后走 `addMany` |
+| `has(path)` / `remove(path)` / `clear()` | 判选中 / 点条目移出 / 整体清空（Esc 也走 `clear`） |
+| `removePaths(paths)` | 移动会话成功后把移成功的几条摘掉；只搬了一条时其余留下 |
+| `beginTrayDrag(entries)` / `endTrayDrag()` | 「正从列表往待拖拽区拖」那一程的开合，`FilesDragLayers` 据此画拖拽影像与落点高亮 |
 | `clearFly()` | 飞入动画播完，动画层自己收掉 `fly` |
-
-`removePaths` 而不是 `clear`：批量里可能只搬了一条（弹窗里拖单条），其余还得留在面板里。

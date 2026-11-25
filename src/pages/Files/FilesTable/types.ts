@@ -46,4 +46,10 @@ export type FilesTableProps = {
   onRequestDeleteEntry: (path: string) => void;
   /** 拖拽进行中：名称一律不弹 hover 提示（提示会挡在拖拽物上） */
   tipsOff: boolean;
+  /** 待拖拽区非空：点条目变成加入 / 移除，不再打开 */
+  pendingActive: boolean;
+  /** 已在待拖拽区里的路径：行上给选中态 */
+  pendingPaths: string[];
+  /** 点条目加入 / 移出待拖拽区（起点矩形给飞入动画用） */
+  onTogglePending: (entry: FileEntry | FolderEntry, from: DOMRect) => void;
 };

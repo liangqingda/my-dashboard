@@ -11,10 +11,24 @@ import type { DraggableEntry, FolderEntry } from '../../types';
  * 条目是文件夹还是文件由它身上有没有 `category` 判——弹窗里待拖拽区的图标与「能不能预览」都看这个。
  */
 export type DragMoveSession = {
-  /** 要移动的条目；弹窗里的待拖拽区把它们平铺成一行一条，单条只搬它、空白处整批搬 */
+  /** 要移动的条目；弹窗里的待拖拽区把它们平铺成网格，单条只搬它、空白处整批搬 */
   entries: DraggableEntry[];
   /** 来源目录：判断「松手就在原地」用 */
   origin: string;
+  /** 从一整批里单独拖起某一条时，其余那些（没搬成就还原回整批） */
+  rest?: DraggableEntry[];
+};
+
+/** 逐条搬的进度：弹窗据此画「像 macOS 那样的移动进度」 */
+export type MoveProgress = {
+  /** 正在搬的这一条（源路径，弹窗只拿它算文案） */
+  current: string;
+  /** 已经搬完几条 */
+  done: number;
+  /** 一共几条 */
+  total: number;
+  /** 搬去哪个目录 */
+  targetDir: string;
 };
 
 /** 弹窗当前停在哪一层：路径 + 这一层的子文件夹（null ＝ 还没读到） */

@@ -8,7 +8,6 @@ import ImagePreviewModal from '@/components/modals/ImagePreviewModal';
 import type { ImagePreviewItem } from '@/components/modals/ImagePreviewModal/types';
 import VideoPreviewModal from '@/components/modals/VideoPreviewModal';
 import type {
-  VideoPreviewAudioReceipt,
   VideoPreviewCaptureReceipt,
   VideoPreviewItem,
 } from '@/components/modals/VideoPreviewModal/types';
@@ -32,13 +31,7 @@ export type FilesPreviewLayersProps = {
     dataUrl: string,
     dir: string,
   ) => Promise<VideoPreviewCaptureReceipt>;
-  /** 导出当前视频的音频并落盘 */
-  onExportVideoAudio: (
-    blob: Blob,
-    dir: string,
-    baseName: string,
-  ) => Promise<VideoPreviewAudioReceipt>;
-  /** 选导出目录（截图与音频共用）；取消返回 null */
+  /** 选截图存放目录；取消返回 null */
   onPickDir: () => Promise<string | null>;
   /** 用外部播放器打开某条视频 */
   onOpenExternal: (id: string) => void;
@@ -66,7 +59,6 @@ const FilesPreviewLayers = ({
   onCaptureVideo,
   onCloseImage,
   onCloseVideo,
-  onExportVideoAudio,
   onOpenExternal,
   onPickDir,
   onRequestDelete,
@@ -84,7 +76,6 @@ const FilesPreviewLayers = ({
       items={videoItems}
       onCapture={onCaptureVideo}
       onClose={onCloseVideo}
-      onExportAudio={onExportVideoAudio}
       onOpenExternal={onOpenExternal}
       onPickDir={onPickDir}
       onRequestDelete={

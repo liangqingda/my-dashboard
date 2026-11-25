@@ -21,12 +21,6 @@ export type VideoPreviewCaptureReceipt = {
   message: string;
 };
 
-/** 音频落盘成功后的回执：文案同样由调用方拼（只有它知道最终落在哪个目录） */
-export type VideoPreviewAudioReceipt = {
-  /** 成功提示的正文 */
-  message: string;
-};
-
 /** 视频预览弹窗的入参 */
 export type VideoPreviewModalProps = {
   /** 是否打开 */
@@ -47,20 +41,10 @@ export type VideoPreviewModalProps = {
     captureDir: string,
   ) => Promise<VideoPreviewCaptureReceipt>;
   /**
-   * 选一个新的导出目录（系统目录选择框由调用方实现）；返回 null 表示用户取消。
-   * 截图与音频共用这一个选择框，不传则设置面板里两条路径都没有「选择目录」。
+   * 选截图存放目录（系统目录选择框由调用方实现）；返回 null 表示用户取消。
+   * 不传则设置面板里的路径没有「选择目录」。
    */
   onPickDir?: () => Promise<string | null>;
-  /**
-   * 把抽好的音频（WebM / Opus）写进目标目录；空串表示默认（视频所在目录），
-   * 由调用方的落盘接口解释。`baseName` 是视频名（不带扩展名），用来拼文件名。
-   * 不传则 header 没有导出音频的按钮。
-   */
-  onExportAudio?: (
-    blob: Blob,
-    dir: string,
-    baseName: string,
-  ) => Promise<VideoPreviewAudioReceipt>;
   /**
    * 用外部播放器打开当前视频（页面实现：IINA 优先，回落系统默认）。
    * 不传则 header 没有那颗按钮——组件不认识「IINA」或「文件在哪」，只把条目 id 交回去。

@@ -93,6 +93,11 @@ type ModalShortcutsParams = {
   copyMessage?: string;
   /** 删除请求：不传表示没有删除按钮（有按钮才有这个键） */
   onRequestDelete?: (() => void) | null;
+  /**
+   * 业务自己的单键动作：键名小写，值是要做的事（如 `{ c: 开合收藏面板 }`）。
+   * 挂在弹窗这一套监听里、只在这扇窗开着时生效；业务侧不要再自己 `addEventListener`。
+   */
+  extraKeys?: Readonly<Record<string, () => void>>;
 };
 
 /** 监听空格、翻页、全屏、复制与删除键 */
@@ -102,6 +107,7 @@ export const useModalShortcuts = ({
   copyMessage = '已复制到剪贴板',
   disabled,
   enabled,
+  extraKeys,
   nav,
   onClose,
   onRequestDelete,
@@ -182,6 +188,15 @@ export const useModalShortcuts = ({
         return;
       }
 
+      const extra = extraKeys?.[event.key.toLowerCase()];
+
+      if (extra !== undefined) {
+        event.preventDefault();
+        extra();
+
+        return;
+      }
+
       if (event.key.toLowerCase() === 'f' && onToggleFullscreen) {
         event.preventDefault();
         onToggleFullscreen();
@@ -256,6 +271,7 @@ export const useModalShortcuts = ({
     copyMessage,
     disabled,
     enabled,
+    extraKeys,
     nav,
     onCapture,
     onClose,

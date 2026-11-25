@@ -1,0 +1,14 @@
+/*
+ * 移动进度：一句「正在将『a』移到『b』」，名字过长就折行；下面一条进度条与一行计数。
+ * 这是搬东西时的等待面，字号与行距都按「安静、不喧哗」来。
+ */
+
+.body {
+  padding-block: 4px 6px;
+}
+
+.line {
+  color: var(--app-ink);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}

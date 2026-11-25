@@ -1,5 +1,5 @@
 /**
- * 视频预览 header 的第一组操作：目录显隐、截图、导出音频、外部打开。
+ * 视频预览 header 的第一组操作：目录显隐、截图、外部打开。
  *
  * 设置那颗按钮留在弹窗里（它要连线一批设置值），这里只收「给一个动作就完事」的几颗；
  * 图标尺寸与线宽跟 header 那排保持一致，顺序也由这里定死。
@@ -11,7 +11,6 @@ import {
   IconExternalLink,
   IconLayoutSidebarLeftCollapse,
   IconLayoutSidebarLeftExpand,
-  IconMusic,
 } from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
@@ -24,10 +23,8 @@ const ICON_STROKE = 1.8;
 
 const VideoHeaderActions = ({
   capturing,
-  exportingAudio,
   onCapture,
   onOpenExternal,
-  onRequestExportAudio,
   onToggleSidebar,
   sidebarVisible,
 }: VideoHeaderActionsProps) => (
@@ -49,15 +46,6 @@ const VideoHeaderActions = ({
     >
       <IconCamera size={ICON_SIZE} stroke={ICON_STROKE} />
     </FreeIconAction>
-    {onRequestExportAudio ? (
-      <FreeIconAction
-        label="导出音频（WebM，存到设置的目录）"
-        loading={exportingAudio}
-        onClick={onRequestExportAudio}
-      >
-        <IconMusic size={ICON_SIZE} stroke={ICON_STROKE} />
-      </FreeIconAction>
-    ) : null}
     {onOpenExternal ? (
       <FreeIconAction
         label="用外部播放器打开（IINA 优先；浏览器解不动或想更快起播时用）"

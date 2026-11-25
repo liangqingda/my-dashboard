@@ -3,6 +3,7 @@
  * 状态与动作都由页面层的 hook 持有，这里只把弹窗按顺序摆好。
  */
 
+import type { DragMoveModalProps } from '../DragMoveModal/types';
 import type { useAppUninstall } from '../hooks/useAppUninstall';
 import type { useEntryActions } from '../hooks/useEntryActions';
 import type { useEntryDelete } from '../hooks/useEntryDelete';
@@ -28,10 +29,11 @@ export type FilesModalsProps = {
   onPreviewImage: (file: FileEntry) => void;
   /** 用内置预览打开一条视频：与点瓦片同一条路径，不看设置里的「外部应用」 */
   onPreviewVideo: (file: FileEntry) => void;
-  /** 某个目录是否已收藏（拖拽移动弹窗 header 的收藏按钮） */
-  isFavorite: (path: string) => boolean;
-  /** 收藏 / 取消收藏某个目录（名字由路径末段推出） */
-  onToggleFavorite: (path: string) => void;
-  /** 选择本地目录（与标题栏那颗按钮同一套流程） */
-  onPickDir: () => void;
+  /** 收藏：与列表页同一套（header 的收藏按钮、星标图标、快捷键与弹层都复用） */
+  favorites: DragMoveModalProps['favorites'];
+  /**
+   * 在弹窗里选一个本地目录：返回选中的路径（取消返回 null）。
+   * 只换弹窗那一层，不改列表页当前目录——与标题栏那颗按钮不是同一个动作。
+   */
+  onPickDir: DragMoveModalProps['onPickDir'];
 };

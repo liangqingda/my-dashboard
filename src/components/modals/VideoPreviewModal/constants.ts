@@ -17,19 +17,12 @@ export const CAPTURE_NOTICE_TITLE = '已保存截图';
 /** 截图失败通知的标题 */
 export const CAPTURE_FAILED_TITLE = '截图失败';
 
-/** 音频导出成功通知的标题 */
-export const AUDIO_NOTICE_TITLE = '已导出音频';
-
-/** 音频导出失败通知的标题 */
-export const AUDIO_FAILED_TITLE = '导出音频失败';
-
 /** 偏好在 localStorage 里的能力名：拼成 `<页面标识>:video-preview` */
 export const SETTINGS_CAPABILITY = 'video-preview';
 
 /** 设置对象的字段名：改字段等于让已存的偏好失效，别随手改名 */
 export const SETTINGS_FIELD = {
   arrowMode: 'arrowMode',
-  audioDir: 'audioDir',
   captureDir: 'captureDir',
   seekStep: 'seekStep',
   spaceMode: 'spaceMode',

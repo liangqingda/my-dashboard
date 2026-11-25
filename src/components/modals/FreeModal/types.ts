@@ -116,6 +116,11 @@ export type FreeModalProps = {
    * 只应打开二次确认层，不在这里直接删；确认层与真正的删除动作归调用方。
    */
   onRequestDelete?: (() => void) | null;
+  /**
+   * 业务自己的单键动作（键名小写 → 动作），跟着弹窗这一套监听走、只在本窗开着时生效：
+   * 业务弹窗要加一个快捷键就传这里，不要自己 `addEventListener`。
+   */
+  extraKeys?: Readonly<Record<string, () => void>>;
   /** 是否显示关闭按钮，默认显示 */
   closeButton?: boolean;
   /** Esc 是否关闭，默认是；上层浮层打开时由调用方关掉 */
