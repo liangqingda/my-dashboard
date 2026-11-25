@@ -8,7 +8,7 @@
  */
 
 import type { FormEvent } from 'react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button, Group, Text } from '@mantine/core';
 import { useNavigate } from 'react-router';
 
@@ -25,6 +25,8 @@ const WRONG_PASSWORD_HINT = '密码不对，再试一次';
 const FilesLockGate = ({ onUnlock }: FilesLockGateProps) => {
   const [value, setValue] = useState('');
   const [failed, setFailed] = useState(false);
+  /** 输入框本体：弹窗正文可能晚一拍挂载，聚焦自己来做（不靠 `autoFocus` 赌时机） */
+  const inputRef = useRef<HTMLInputElement | null>(null);
   /** 「返回」＝退出这一页：不给「关掉窗继续看列表」这条路 */
   const navigate = useNavigate();
   const cancel = () => navigate('/');
@@ -38,6 +40,17 @@ const FilesLockGate = ({ onUnlock }: FilesLockGateProps) => {
       setFailed(true);
     }
   };
+
+  /*
+   * 打开即聚焦：表单弹窗关掉焦点陷阱，免得外壳把焦点留在别处；正文走过渡层挂载，
+   * 所以挂载后下一拍再补一次聚焦。
+   */
+  useEffect(() => {
+    inputRef.current?.focus();
+    const timer = window.setTimeout(() => inputRef.current?.focus());
+
+    return () => window.clearTimeout(timer);
+  }, []);
 
   /** 回车与「进入」同一口径：确认窗里回车就是确定 */
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -57,6 +70,7 @@ const FilesLockGate = ({ onUnlock }: FilesLockGateProps) => {
       shortcutsEnabled={false}
       size={400}
       title="这个页面需要密码"
+      trapFocus={false}
     >
       <form className={styles.gate} onSubmit={handleSubmit}>
         <Text className={styles.hint}>
@@ -64,12 +78,13 @@ const FilesLockGate = ({ onUnlock }: FilesLockGateProps) => {
         </Text>
         <FreeInput
           ariaLabel="页面密码"
-          autoFocus
+          inputRef={inputRef}
           onChange={(next) => {
             setValue(next);
             setFailed(false);
           }}
           placeholder="输入密码"
+          type="password"
           value={value}
         />
         {failed ? <Text className={styles.error}>{WRONG_PASSWORD_HINT}</Text> : null}

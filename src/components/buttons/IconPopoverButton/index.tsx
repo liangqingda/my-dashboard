@@ -11,6 +11,7 @@
 import { Popover, Tooltip } from '@mantine/core';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
+import { cx } from '@/utils/cx';
 
 import type { IconPopoverButtonProps } from './types';
 
@@ -26,6 +27,7 @@ const IconPopoverButton = ({
   hint,
   icon,
   label,
+  maxHeight,
   onChange,
   opened,
   shortcut,
@@ -62,7 +64,12 @@ const IconPopoverButton = ({
           </FreeIconAction>
         </Tooltip>
       </Popover.Target>
-      <Popover.Dropdown className={styles.dropdown}>{children}</Popover.Dropdown>
+      <Popover.Dropdown
+        className={cx(styles.dropdown, maxHeight !== undefined && styles.scrollable)}
+        mah={maxHeight}
+      >
+        {children}
+      </Popover.Dropdown>
     </Popover>
   );
 };

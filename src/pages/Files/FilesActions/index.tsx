@@ -154,9 +154,11 @@ const FilesActions = ({
         active={settings.videoOpenMode === 'external'}
         icon={<IconSettings size={ICON_SIZE} stroke={ICON_STROKE} />}
         label="设置"
+        maxHeight="min(72vh, 620px)"
         onChange={(opened) => onPanelChange(opened ? 'settings' : null)}
         opened={openPanel === 'settings'}
-        width="min(380px, calc(100vw - 24px))"
+        /* 一行两组：宽到 560 时每个字段还有 250px 左右，滑块与分段控件都排得开 */
+        width="min(560px, calc(100vw - 24px))"
       >
         <SettingsPanel
           filterMode={typeFilterMode}

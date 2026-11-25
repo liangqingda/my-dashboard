@@ -6,6 +6,7 @@ import type {
   FocusEventHandler,
   KeyboardEventHandler,
   ReactNode,
+  Ref,
 } from 'react';
 import type { TextInputProps } from '@mantine/core';
 
@@ -35,6 +36,12 @@ export type FreeInputProps = {
   leftSection?: ReactNode;
   /** 面板内字段间距这类既有口径，不在这里写新样式 */
   styles?: TextInputProps['styles'];
+  /**
+   * 输入类型：默认明文；密码这类要遮起来时传 `'password'`（遮起来由浏览器画，不另做眼睛按钮）
+   */
+  type?: 'text' | 'password';
+  /** 外部拿输入框本体：弹窗这类「挂载后下一拍才在 DOM 里」的场景要自己聚焦 / 全选 */
+  inputRef?: Ref<HTMLInputElement>;
   /** 固定宽度（工具栏里按内容定宽时用） */
   width?: number | string;
 };

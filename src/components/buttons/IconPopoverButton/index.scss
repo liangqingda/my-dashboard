@@ -4,3 +4,9 @@
 .dropdown {
   padding: 12px;
 }
+
+/* 设了 `maxHeight` 的长面板：到顶就自己滚，滚动不把外层带着一起滚 */
+.scrollable {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}

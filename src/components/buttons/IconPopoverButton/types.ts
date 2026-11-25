@@ -23,6 +23,11 @@ export type IconPopoverButtonProps = {
   onChange: (opened: boolean) => void;
   /** 弹层宽度；内容里放日历这类宽控件时由调用方放宽 */
   width?: number | string;
+  /**
+   * 弹层最高到多少；设了就同时允许内部纵向滚动。
+   * 给设置这类「分组越加越多」的长面板用：小屏上一屏放不下时滚动，而不是顶出屏幕。
+   */
+  maxHeight?: number | string;
   /** 弹层内容 */
   children: ReactNode;
   /**

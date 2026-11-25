@@ -3,6 +3,8 @@
  * 视频封面、预览默认全屏、页面安全锁（密码 + 开关）。
  * 密码不做任何强度 / 格式限制：原样存进 localStorage，这里只保证「没密码时开关不可开」。
  * 设置项会越加越多，所以按主题分组（每组一块浅底色、不描边），组内字段横向排、放不下自动换行；
+ * 弹层宽度由 `FilesActions` 放宽到 560（一行两组，每个字段还剩 250px 左右），
+ * 高度上限交给 `IconPopoverButton` 的 `maxHeight`：超过一屏就在弹层内部滚动，不顶出屏幕。
  * 分组与字段的外观走 `FreePanelGroup` / `FreePanelField`，与视频预览的设置面板同一套。
  *
  * 「外部应用」下拉必须 `comboboxProps={{ withinPortal: false }}`：Mantine 默认把下拉渲染到
@@ -201,6 +203,7 @@ const SettingsPanel = ({
             onChange={onLockPasswordChange}
             placeholder="任意内容，不做限制"
             styles={PANEL_FIELD_STYLES}
+            type="password"
             value={lockPassword}
           />
         </FreePanelField>
