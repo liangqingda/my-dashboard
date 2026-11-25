@@ -109,12 +109,27 @@
   border: 1px solid var(--app-line);
   border-radius: 10px;
   background: var(--app-surface);
+  cursor: pointer;
   transition:
     background-color 120ms ease,
-    border-color 120ms ease;
+    border-color 120ms ease,
+    box-shadow 120ms ease,
+    transform 120ms ease;
 }
 
-/* 指针停在这个文件夹上：换成强调色底，同时挂出半秒倒计时条 */
+/* 平常的 hover：整格亮成强调色并微微抬起——只靠小手说不清「这一格能点 / 能放」 */
+.folder:hover {
+  border-color: var(--app-accent);
+  background: var(--app-accent-soft);
+  box-shadow: 0 2px 10px rgb(23 37 34 / 12%);
+  transform: translateY(-1px);
+}
+
+.folder:hover .folderIcon {
+  color: var(--app-accent);
+}
+
+/* 指针停在这个文件夹上（拖拽中）：换成强调色底，同时挂出半秒倒计时条 */
 .hovered {
   border-color: var(--app-accent);
   background: var(--app-accent-soft);
