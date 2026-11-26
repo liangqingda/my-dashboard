@@ -1,5 +1,6 @@
 /**
- * 播放器控制栏：翻篇 / 播放 / 进度 / 时间 / 静音与音量。
+ * 播放器控制栏：双层排布——上层独占进度条，下层左侧是前后 / 播放 / 时间，右侧是音量与
+ * 调用方塞进来的业务操作组（选集、截图、外部打开、设置、全屏这类）。
  *
  * 翻篇箭头排在播放键两侧（常见播放器的位置），是因为「上一条 / 下一条」在这里就是前后两格；
  * 这两颗箭头的 tip 只在指上去的 1.5s 内出现，之后自己收掉，免得压在进度条上。
@@ -62,6 +63,7 @@ const HOVER_REQUEST_DELAY = 80;
 const SAME_SPOT_EPSILON = 0.6;
 
 const VideoControls = ({
+  actions,
   currentTime,
   duration,
   enabled,
@@ -196,40 +198,7 @@ const VideoControls = ({
 
   return (
     <div className={styles.controls}>
-      {nav ? (
-        <FreeIconAction
-          disabled={nav.onPrevious === null}
-          label={nav.previousLabel ?? '上一个视频'}
-          onClick={nav.onPrevious ?? undefined}
-          tipDuration={STEP_TIP_DURATION}
-        >
-          <IconChevronLeft size={STEP_ICON_SIZE} stroke={ICON_STROKE} />
-        </FreeIconAction>
-      ) : null}
-
-      <FreeIconAction
-        disabled={!enabled}
-        label={playing ? '暂停（空格）' : '播放（空格）'}
-        onClick={onTogglePlay}
-      >
-        {playing ? (
-          <IconPlayerPauseFilled size={ICON_SIZE} />
-        ) : (
-          <IconPlayerPlayFilled size={ICON_SIZE} />
-        )}
-      </FreeIconAction>
-
-      {nav ? (
-        <FreeIconAction
-          disabled={nav.onNext === null}
-          label={nav.nextLabel ?? '下一个视频'}
-          onClick={nav.onNext ?? undefined}
-          tipDuration={STEP_TIP_DURATION}
-        >
-          <IconChevronRight size={STEP_ICON_SIZE} stroke={ICON_STROKE} />
-        </FreeIconAction>
-      ) : null}
-
+      {/* 上层：进度条独占一行，悬停预览浮层以它为定位祖先 */}
       <div
         className={styles.progressWrap}
         onPointerDown={handlePreviewDown}
@@ -261,46 +230,89 @@ const VideoControls = ({
         ) : null}
       </div>
 
-      <span className={styles.time}>
-        {formatDuration(currentTime)} / {formatDuration(duration)}
-      </span>
+      {/* 下层：左侧前后 / 播放 / 时间，右侧音量与业务操作组 */}
+      <div className={styles.row}>
+        <div className={styles.left}>
+          {nav ? (
+            <FreeIconAction
+              disabled={nav.onPrevious === null}
+              label={nav.previousLabel ?? '上一个视频'}
+              onClick={nav.onPrevious ?? undefined}
+              tipDuration={STEP_TIP_DURATION}
+            >
+              <IconChevronLeft size={STEP_ICON_SIZE} stroke={ICON_STROKE} />
+            </FreeIconAction>
+          ) : null}
 
-      {/*
-        音量：喇叭键 + 悬停浮出的竖向音量条。tip 关掉（`tooltip="none"`），
-        否则提示会正好落在浮出的音量条上，两套浮层互相挡。
-      */}
-      <div className={styles.volumeWrap}>
-        <FreeIconAction
-          disabled={!enabled}
-          label={muted ? '取消静音' : '静音'}
-          onClick={onToggleMute}
-          tooltip="none"
-        >
-          {muted ? (
-            <IconVolumeOff size={ICON_SIZE} stroke={ICON_STROKE} />
-          ) : (
-            <IconVolume size={ICON_SIZE} stroke={ICON_STROKE} />
-          )}
-        </FreeIconAction>
-        <div className={styles.volumePopover}>
-          <div className={styles.volumePanel}>
-            <Slider
-              aria-label="音量"
+          <FreeIconAction
+            disabled={!enabled}
+            label={playing ? '暂停（空格）' : '播放（空格）'}
+            onClick={onTogglePlay}
+          >
+            {playing ? (
+              <IconPlayerPauseFilled size={ICON_SIZE} />
+            ) : (
+              <IconPlayerPlayFilled size={ICON_SIZE} />
+            )}
+          </FreeIconAction>
+
+          {nav ? (
+            <FreeIconAction
+              disabled={nav.onNext === null}
+              label={nav.nextLabel ?? '下一个视频'}
+              onClick={nav.onNext ?? undefined}
+              tipDuration={STEP_TIP_DURATION}
+            >
+              <IconChevronRight size={STEP_ICON_SIZE} stroke={ICON_STROKE} />
+            </FreeIconAction>
+          ) : null}
+
+          <span className={styles.time}>
+            {formatDuration(currentTime)} / {formatDuration(duration)}
+          </span>
+        </div>
+
+        <div className={styles.right}>
+          {actions}
+
+          {/*
+            音量：喇叭键 + 悬停浮出的竖向音量条。tip 关掉（`tooltip="none"`），
+            否则提示会正好落在浮出的音量条上，两套浮层互相挡。
+          */}
+          <div className={styles.volumeWrap}>
+            <FreeIconAction
               disabled={!enabled}
-              /* 自带浮标贴着滑杆右侧，靠弹窗边缘会被裁掉：数字改由下面的 `volumeValue` 出 */
-              label={null}
-              max={1}
-              onChange={onVolumeChange}
-              orientation="vertical"
-              size="xs"
-              step={0.01}
-              /* 竖向滑杆的高度只能走 styles 覆盖：Mantine 自己给竖版写死 200px，模块类压不过它 */
-              styles={{ root: { height: VOLUME_SLIDER_HEIGHT } }}
-              value={muted ? 0 : volume}
-            />
-            <span className={styles.volumeValue}>
-              {Math.round((muted ? 0 : volume) * 100)}%
-            </span>
+              label={muted ? '取消静音' : '静音'}
+              onClick={onToggleMute}
+              tooltip="none"
+            >
+              {muted ? (
+                <IconVolumeOff size={ICON_SIZE} stroke={ICON_STROKE} />
+              ) : (
+                <IconVolume size={ICON_SIZE} stroke={ICON_STROKE} />
+              )}
+            </FreeIconAction>
+            <div className={styles.volumePopover}>
+              <div className={styles.volumePanel}>
+                <Slider
+                  aria-label="音量"
+                  disabled={!enabled}
+                  /* 自带浮标贴着滑杆右侧，靠弹窗边缘会被裁掉：数字改由下面的 `volumeValue` 出 */
+                  label={null}
+                  max={1}
+                  onChange={onVolumeChange}
+                  orientation="vertical"
+                  size="xs"
+                  step={0.01}
+                  /* 竖向滑杆的高度只能走 styles 覆盖：Mantine 自己给竖版写死 200px，模块类压不过它 */
+                  styles={{ root: { height: VOLUME_SLIDER_HEIGHT } }}
+                  value={muted ? 0 : volume}
+                />
+                <span className={styles.volumeValue}>
+                  {Math.round((muted ? 0 : volume) * 100)}%
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

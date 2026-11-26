@@ -1,30 +1,46 @@
-/* 播放器控制栏：一条与 header 同色系的底栏，进度条吃掉剩余宽度 */
+/* 播放器控制栏：上下两行——上层进度条独占，下层左侧播放区、右侧音量与业务操作组 */
 
 .controls {
   display: flex;
   flex: 0 0 auto;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 12px 8px;
   border-top: 1px solid var(--app-line);
   background: var(--app-surface-subtle);
 }
 
-/* 进度条容器：吃掉中间剩余宽度，悬停预览浮层以它为定位祖先 */
+/* 进度条容器：占满整行，悬停预览浮层以它为定位祖先 */
 .progressWrap {
   position: relative;
-  flex: 1 1 auto;
   min-width: 0;
 }
 
-/* 进度条撑满容器，时间与音量固定在右侧 */
+/* 进度条撑满容器，时间与音量固定在下一行右侧 */
 .progress {
   width: 100%;
 }
 
+/* 下层一行：左侧播放区不收缩，右侧操作组顶到最右 */
+.row {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.left,
+.right {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+}
+
 /* 时间：等宽数字，播放中不会随数字跳动而左右晃 */
 .time {
-  flex: 0 0 auto;
+  margin-left: 2px;
   color: var(--app-ink-faint);
   font-size: 0.72rem;
   font-variant-numeric: tabular-nums;

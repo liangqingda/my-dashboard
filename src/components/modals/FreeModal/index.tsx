@@ -73,7 +73,6 @@ const FreeModal = ({
   onRequestDelete,
   onCapture,
   onSeek,
-  onToggleSidebar,
   opened,
   shortcutsEnabled = true,
   size = 'min(980px, 92vw)',
@@ -109,7 +108,6 @@ const FreeModal = ({
     onToggleFullscreen,
     onToggleMute: media?.onToggleMute,
     onTogglePlay: media?.onTogglePlay,
-    onToggleSidebar,
   });
 
   /** 窗口刚拿回焦点的时间点：从外部应用切回来的第一下点击只当回焦，不关窗 */

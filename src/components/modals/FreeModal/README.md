@@ -35,8 +35,7 @@
   - **`←` / `→`**：默认同方括号翻篇；传了 `onSeek` 就整组交给它（视频快进 / 后退），
     翻篇只剩方括号 —— 方向键在两种归属里只能选一种；
   - **`F`**：切换全屏（有全屏按钮、即 `showToggle` 不为 `false` 时）；
-  - **`M` 静音**、**`S` 显隐面板**：传了 `media.onToggleMute` / `onToggleSidebar` 才生效
-    （视频预览里是静音、目录列的显隐）；
+  - **`M` 静音**：传了 `media.onToggleMute` 才生效（视频预览里是静音）；
   - **`Enter` 截图**：传了 `onCapture` 时触发（视频预览截当前帧）；还没解出画面等
     由调用方自己判断，外壳只把按键转成一个回调；
   - **`C` 复制**：传了 `copy` 时把那段文本写进剪贴板，并给一条成功 / 失败提示（走固定通知 id）；
@@ -76,7 +75,6 @@
 | `headerSecondary` | 第二组操作（如编辑流程），紧接在 `headerTail` 之后、关闭按钮的竖线之前 |
 | `headerOverlay` / `headerHidden` | header 是否浮在正文之上（绝对定位）、是否处于隐藏态（淡出上移、不接收指针事件）；只影响外观，不卸载按钮 |
 | `media` | `{ onTogglePlay, onToggleMute }`；传了 `onTogglePlay` 之后空格切播放 / 暂停、不再关窗，传了 `onToggleMute` 才有 `M` 静音 |
-| `onToggleSidebar` | `s` / `S` 的动作（视频预览用来收 / 放目录列）；不传则该键不动作。键位归外壳，面板状态归调用方 |
 | `zIndex` | 层级，默认走组件库的弹窗档；要压在另一扇已打开的弹窗之上时显式抬高（二次确认层由 `ConfirmModal` 默认给 `320`） |
 | `onCapture` | `Enter` 的动作（视频预览截当前帧）；不传则该键不动作 |
 | `onSeek` | `(direction: 'backward' \| 'forward') => void`；传了之后 `←` / `→` 交给它（视频快进 / 后退），翻篇只剩 `[` / `]` |

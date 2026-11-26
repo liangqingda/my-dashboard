@@ -2,6 +2,8 @@
  * 播放器控制栏的契约：只展示进度与声音状态，动作全部回调给播放器。
  */
 
+import type { ReactNode } from 'react';
+
 import type { FreeVideoNav } from '../types';
 
 /** 进度条悬停预览的落点：浮层横向位置与这一处的时间 */
@@ -63,4 +65,6 @@ export type VideoControlsProps = {
   onVolumeChange: (volume: number) => void;
   /** 当前音量（0–1） */
   volume: number;
+  /** 下层右侧的业务操作组：插槽归调用方，控制栏只负责排在最右 */
+  actions?: ReactNode;
 };

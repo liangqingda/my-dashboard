@@ -1,0 +1,55 @@
+/**
+ * 播放器控制栏右侧操作组的契约：选集、删除、截图、外部打开、设置、网页全屏、整屏全屏。
+ * 动作与弹层归属都在弹窗这一层，这里只把按钮按固定顺序排好。
+ */
+
+import type { VideoPreviewSettings } from '../hooks/useVideoSettings';
+import type { VideoSettingsPopoverProps } from '../VideoSettingsPopover/types';
+import type { VideoPreviewItem } from '../types';
+
+/** 传给设置弹层的取值与改法：弹窗把一整组设置绑好，操作组不再逐字段拆 */
+export type FooterSettingsBinding = {
+  arrowMode: VideoPreviewSettings['arrowMode'];
+  captureDir: string;
+  previewScale: number;
+  seekStep: number;
+  spaceMode: VideoPreviewSettings['spaceMode'];
+  onArrowModeChange: VideoSettingsPopoverProps['onArrowModeChange'];
+  onCaptureDirChange: VideoSettingsPopoverProps['onCaptureDirChange'];
+  onPickDir: VideoSettingsPopoverProps['onPickDir'];
+  onPreviewScaleChange: VideoSettingsPopoverProps['onPreviewScaleChange'];
+  onSeekStepChange: VideoSettingsPopoverProps['onSeekStepChange'];
+  onSpaceModeChange: VideoSettingsPopoverProps['onSpaceModeChange'];
+};
+
+/** 控制栏右侧操作组入参 */
+export type VideoFooterActionsProps = {
+  /** 当前目录里的视频（选集列表，顺序即翻篇顺序） */
+  items: readonly VideoPreviewItem[];
+  /** 正在播放的条目 id */
+  activeId: string;
+  /** 点选某一条（选集） */
+  onSelect: (id: string) => void;
+  /** 删除请求：只打开二次确认层；不传则没有删除按钮 */
+  onRequestDelete?: (() => void) | null;
+  /** 截图正在落盘：相机按钮转圈 */
+  capturing: boolean;
+  /** 截当前一帧（与 `Enter` 同一口径） */
+  onCapture: () => void;
+  /** 用外部播放器打开当前视频；不传则没有这颗按钮 */
+  onOpenExternal?: () => void;
+  /** 设置面板是否展开 */
+  settingsOpen: boolean;
+  /** 设置面板开合回调 */
+  onSettingsChangeOpened: (opened: boolean) => void;
+  /** 网页全屏（框体铺满视口）是否开启 */
+  viewportFullscreen: boolean;
+  /** 切网页全屏 */
+  onToggleViewportFullscreen: () => void;
+  /** 整屏全屏（浏览器 Fullscreen API）是否开启 */
+  browserFullscreen: boolean;
+  /** 切整屏全屏 */
+  onToggleBrowserFullscreen: () => void;
+  /** 设置弹层的取值与改法绑定 */
+  settings: FooterSettingsBinding;
+};

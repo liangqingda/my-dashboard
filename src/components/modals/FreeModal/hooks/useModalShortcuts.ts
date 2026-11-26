@@ -57,9 +57,6 @@ const MUTE_KEY = 'm';
 /** 截图键：回车 */
 const CAPTURE_KEY = 'Enter';
 
-/** 显隐面板键 */
-const SIDEBAR_KEY = 's';
-
 /** 复制失败时固定的提示文案 */
 const COPY_FAILED_MESSAGE = '复制失败，请手动复制';
 
@@ -81,8 +78,6 @@ type ModalShortcutsParams = {
   onTogglePlay?: () => void;
   /** 切换静音（`m` / `M`）；不传则该键不动作 */
   onToggleMute?: () => void;
-  /** 切换某块面板的显隐（`s` / `S`，视频预览用来收 / 放目录列）；不传则该键不动作 */
-  onToggleSidebar?: () => void;
   /** 截当前画面（`Enter`，视频预览用来存帧）；不传则该键不动作 */
   onCapture?: () => void;
   /** 方向键快进 / 后退：传了之后 ← / → 不再翻篇 */
@@ -116,7 +111,6 @@ export const useModalShortcuts = ({
   onCapture,
   onToggleMute,
   onTogglePlay,
-  onToggleSidebar,
 }: ModalShortcutsParams): void => {
   useEffect(() => {
     if (!enabled) {
@@ -211,13 +205,6 @@ export const useModalShortcuts = ({
         return;
       }
 
-      if (event.key.toLowerCase() === SIDEBAR_KEY && onToggleSidebar) {
-        event.preventDefault();
-        onToggleSidebar();
-
-        return;
-      }
-
       if (event.key === CAPTURE_KEY && onCapture) {
         event.preventDefault();
         onCapture();
@@ -280,6 +267,5 @@ export const useModalShortcuts = ({
     onToggleFullscreen,
     onToggleMute,
     onTogglePlay,
-    onToggleSidebar,
   ]);
 };

@@ -1,0 +1,47 @@
+/* 选集弹层：按钮本体与悬停过桥连成一块，指针从按钮移进弹层不会闪断 */
+
+.target {
+  display: flex;
+  align-items: center;
+}
+
+/* 弹层去掉公共下拉的内边距：列表条目自己留排布 */
+.dropdown {
+  padding: 6px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* 条目：整行可点，长文件名中间省略 */
+.item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: var(--app-nav-row-radius);
+  color: var(--app-ink-soft);
+  text-align: left;
+  transition: background var(--app-nav-row-transition);
+
+  &:hover {
+    background: var(--app-nav-row-hover);
+  }
+}
+
+/* 正在播放的一条：与侧栏菜单同一档选中底色 */
+.itemActive {
+  background: var(--app-nav-row-active);
+  color: var(--app-ink);
+}
+
+.name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.82rem;
+}

@@ -9,7 +9,11 @@
 
 import { useCallback, useState } from 'react';
 
-import { readStoredField, writeStoredField } from '@/utils/local-storage';
+import {
+  FLAG_FIELD_CODEC,
+  readStoredField,
+  writeStoredField,
+} from '@/utils/local-storage';
 import { scopedStorageKey } from '@/utils/page-storage';
 
 import {
@@ -40,6 +44,8 @@ export type VideoPreviewSettings = {
   seekStep: number;
   /** 空格键是播放 / 暂停还是关闭弹窗 */
   spaceMode: VideoSpaceMode;
+  /** 网页全屏（框体铺满视口）是否保持开启：当作「怎么看」的偏好记住 */
+  viewportFullscreen: boolean;
 };
 
 /** 设置 hook 的返回 */
@@ -56,6 +62,8 @@ export type UseVideoSettingsResult = {
   setSeekStep: (next: number) => void;
   /** 改空格键去向 */
   setSpaceMode: (next: VideoSpaceMode) => void;
+  /** 改网页全屏（框体铺满视口）偏好 */
+  setViewportFullscreen: (next: boolean) => void;
 };
 
 /**
@@ -92,6 +100,11 @@ export const useVideoSettings = (
       storageKey,
       SETTINGS_FIELD.spaceMode,
       SPACE_MODE_CODEC,
+    ),
+    viewportFullscreen: readStoredField(
+      storageKey,
+      SETTINGS_FIELD.viewportFullscreen,
+      FLAG_FIELD_CODEC,
     ),
   }));
 
@@ -178,12 +191,26 @@ export const useVideoSettings = (
     [storageKey],
   );
 
+  const setViewportFullscreen = useCallback(
+    (next: boolean) => {
+      writeStoredField(
+        storageKey,
+        SETTINGS_FIELD.viewportFullscreen,
+        FLAG_FIELD_CODEC,
+        next,
+      );
+      setSettings((prev) => ({ ...prev, viewportFullscreen: next }));
+    },
+    [storageKey],
+  );
+
   return {
     setArrowMode,
     setCaptureDir,
     setPreviewScale,
     setSeekStep,
     setSpaceMode,
+    setViewportFullscreen,
     settings,
   };
 };

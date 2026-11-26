@@ -42,6 +42,7 @@ import styles from './index.scss';
 type PlayerStatus = 'loading' | 'ready' | 'error';
 
 const FreeVideo = ({
+  actions,
   className,
   nav,
   onHoverFrameGrabberReady,
@@ -276,6 +277,7 @@ const FreeVideo = ({
         onPointerLeave={leaveControls}
       >
         <VideoControls
+          actions={actions}
           currentTime={currentTime}
           duration={duration}
           enabled={status === 'ready'}

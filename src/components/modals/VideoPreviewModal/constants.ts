@@ -27,6 +27,7 @@ export const SETTINGS_FIELD = {
   previewScale: 'previewScale',
   seekStep: 'seekStep',
   spaceMode: 'spaceMode',
+  viewportFullscreen: 'viewportFullscreen',
 } as const;
 
 /** 进度条悬停预览的帧图大小：默认占视频画面宽度的百分比 */

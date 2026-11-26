@@ -19,7 +19,7 @@
 | 二次确认（删除 / 覆盖等不可逆操作） | `ConfirmModal`（基于 `FreeModal` 的通用业务组件：说明块 + 可选额外内容 + 取消 / 确认） |
 | 任何 Markdown / 文档预览 | `MarkdownPreviewModal`，不自己接渲染器（行为见 `src/components/modals/MarkdownPreviewModal/README.md`） |
 | 视频播放 | `FreeVideo`（全站唯一的播放器，不自己拼 `<video>` 控制栏；行为见 `src/components/file-preview/FreeVideo/README.md`） |
-| 视频预览 | `VideoPreviewModal`（`FreeModal` + `FreeVideo` + 目录侧栏；行为见 `src/components/modals/VideoPreviewModal/README.md`） |
+| 视频预览 | `VideoPreviewModal`（`FreeModal` + `FreeVideo`，B 站式控制栏 + 选集弹层；行为见 `src/components/modals/VideoPreviewModal/README.md`） |
 | 图片预览 | `ImagePreviewModal`（`FreeModal` + 目录侧栏 + 整图舞台；行为见 `src/components/modals/ImagePreviewModal/README.md`） |
 | 单行输入（无搜索语义） | `FreeInput` |
 | 搜索框（左搜索图标 + 一键清空） | `FreeSearchInput` |

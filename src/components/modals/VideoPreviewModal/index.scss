@@ -1,7 +1,6 @@
-/* 视频预览弹窗：左侧目录 + 右侧舞台（舞台由播放器自己撑满），这里只排这两列的横向关系 */
+/* 视频预览弹窗：舞台由播放器自己撑满，这里只放计数浮标的定位基准 */
 
 /* 计数浮标的定位基准：贴在这一层（预览区）的左上角 */
-/* 播放器那一块：计数浮标贴着它左上角，不被左侧目录挤到列表上 */
 .stage {
   position: relative;
   display: flex;
@@ -10,10 +9,12 @@
   min-height: 0;
 }
 
-.layout {
-  position: relative;
-  display: flex;
-  flex: 1 1 auto;
-  min-width: 0;
-  min-height: 0;
+/* 网页全屏：框体铺满视口，去掉外边距、描边与圆角（与整屏全屏同一套外观，只是不进浏览器全屏） */
+.viewportFullscreen {
+  width: 100vw;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
 }
