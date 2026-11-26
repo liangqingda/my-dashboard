@@ -18,6 +18,10 @@ export type FilesDragLayersProps = {
   pending: ReturnType<typeof useDragPending>;
   /** 条目动作编排：起拖入口与移动会话（会话里有「正在拖哪一批」） */
   entryActions: ReturnType<typeof useEntryActions>;
+  /**
+   * 「拖拽全部」禁用：直接拖模式下当前这一层没有文件夹，整批拖出去没有落点。
+   */
+  dragAllDisabled: boolean;
   /** 从列表拖过来的条目在待拖拽区松手：按路径收进来（页面按当前列表把这些路径认成条目） */
   onDropPaths: (paths: string[]) => void;
   /** 待拖拽区底部的「选择全部」：页面把当前列表的所有条目收进来 */

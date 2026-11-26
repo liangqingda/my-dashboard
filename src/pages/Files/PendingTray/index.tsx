@@ -33,6 +33,7 @@ type SidebarRect = { left: number; top: number; width: number; height: number };
 const PendingTray = ({
   entries,
   armed = false,
+  dragAllDisabled = false,
   hidden = false,
   onClear,
   onDragAll,
@@ -153,7 +154,8 @@ const PendingTray = ({
       <div className={styles.foot}>
         <Button
           className={styles.dragAll}
-          draggable
+          disabled={dragAllDisabled}
+          draggable={!dragAllDisabled}
           fullWidth
           leftSection={<IconGripVertical size={16} stroke={1.6} />}
           onDragEnd={() => {

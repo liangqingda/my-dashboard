@@ -11,6 +11,7 @@ import styles from './index.scss';
  * 本次会话搬进**当前这一层**的条目：进到这个文件夹就能看见它们，
  * 呈现方式与目录页完全一致（视频帧 / 缩略图 / 文件名 / 体积都照搬 `FileTile` / `FolderTile`），
  * 只是多压了一层透明点击区：点一下就把这一条放回手卡（磁盘上不动，文件本来就留在这个文件夹里）。
+ * 点击区不给任何 hover 提示：这一格看起来就是一条本层条目，只在指针上表明「能点」。
  *
  * 为什么不直接给瓦片挂 onClick：两个瓦片内部各自已经有按钮（文件夹本体、播放器小图标），
  * 再包一层可点容器会变成按钮套按钮。所以用一块盖在瓦片上的透明按钮接住点击，
@@ -44,9 +45,7 @@ const LandedTiles = ({ items, onReturn }: LandedTilesProps) => (
             }
           }}
           type="button"
-        >
-          <span className={styles.hint}>点一下放回待拖拽区</span>
-        </UnstyledButton>
+        />
       </div>
       ))}
     </div>

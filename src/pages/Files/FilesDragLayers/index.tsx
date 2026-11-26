@@ -23,6 +23,7 @@ import styles from './index.scss';
  * 弹窗开着时待拖拽区只藏不卸：正在拖的条目就握在这条里，卸载等于取消整次拖拽。
  */
 const FilesDragLayers = ({
+  dragAllDisabled,
   dragEntries,
   entryActions,
   onDragAll,
@@ -65,6 +66,7 @@ const FilesDragLayers = ({
       <PendingTray
         armed={pending.trayDrag !== null}
         closed={!pending.active}
+        dragAllDisabled={dragAllDisabled}
         entries={pending.entries}
         hidden={session !== null}
         onClear={pending.clear}

@@ -19,6 +19,8 @@ import type { DraggableEntry, FileEntry } from '../types';
 export type FilesOverlaysProps = {
   /** 拖拽层：待拖拽区状态、条目动作编排、从列表拖进待拖拽区的收件回调 */
   drag: {
+    /** 「拖拽全部」禁用：直接拖模式下当前这一层没有文件夹可以放 */
+    dragAllDisabled: boolean;
     /** 直接拖模式正拖的那一批（弹窗模式为 null） */
     dragEntries: DraggableEntry[] | null;
     entryActions: ReturnType<typeof useEntryActions>;

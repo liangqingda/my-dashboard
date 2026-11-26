@@ -314,6 +314,7 @@ const Files = () => {
 
       <FilesOverlays
         drag={{
+          dragAllDisabled: drag.isDirect && list.visibleFolders.length === 0,
           dragEntries: drag.dragEntries,
           entryActions,
           onDragAll: drag.handleDragAll,
@@ -336,10 +337,7 @@ const Files = () => {
         }}
         preview={{
           blocked: deletingEntry !== null,
-          defaultFullscreen: {
-            image: settings.imageFullscreen,
-            video: settings.videoFullscreen,
-          },
+          defaultFullscreen: { image: settings.imageFullscreen, video: settings.videoFullscreen },
           image: imagePreview,
           onRequestDelete: requestDelete,
           video: videoPreview,
