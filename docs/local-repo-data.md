@@ -179,7 +179,7 @@
 | `scripts/vite/files-app-icons.ts` | 应用图标按需抽取：从包内 `Contents/Resources` 找 `.icns`，`sips` 转成 PNG，按「包路径 + 修改时间」缓存在临时目录 |
 | `scripts/vite/files-video-apps.ts` | 能播视频的应用清单：扫 `/Applications`、`/System/Applications` 与 `~/Applications` 顶层的 `.app`，读 `Info.plist` 的 `CFBundleDocumentTypes`，声明了视频统一类型标识（或视频扩展名）的才算，按应用名去重；再剔掉 `EXCLUDED_VIDEO_APPS` 里那批「顺带能放视频、但不是播放器」的应用（网盘 / 阅读 / 聊天 / 音乐 / 系统 QuickTime） |
 | `scripts/vite/files-thumbs.ts` | 列表缩略图：图片用 `sips` 缩成 JPEG、视频用 `qlmanage` 抽 QuickLook 一帧，按「路径 + 体积 + 修改时间」缓存在临时目录，转码并发上限 2；转不出来的返回 null，前端回落分类图标 |
-| `scripts/vite/files-wallpaper.ts` | 桌面墙纸：复用图片校验后跑 AppleScript（`System Events` 的 `picture of every desktop`，路径走 `argv` 不拼进脚本正文），自动化未授权（-1743）翻成「去哪儿勾选」，其余失败保留原始输出 |
+| `scripts/vite/files-wallpaper.ts` | 桌面墙纸：编译一次原生 Swift 助手（缓存在 `node_modules/.cache`），把 `Index.plist` 里所有桌面空间 / 屏幕的 `Desktop` 选项换成这张图（`Idle` 不动，写前备份成 `Index.plist.dashboard.bak`），再重启 `WallpaperAgent` 让桌面刷新（它只在启动时读配置）；编译器缺失时提示装 Xcode 命令行工具 |
 | `scripts/vite/files-open.ts` | 外部打开：按「指定应用 → IINA → 系统默认」逐级回落，`open -a <app>` 成功即返回实际用上的应用名 |
 | `scripts/vite/files-media.ts` | 媒体侧只读 / 写盘：视频路径校验与 MIME、`Range` 解析、读流，以及把 PNG 截图写进指定目录（缺省桌面；文件名取本地时间，重名追加序号） |
 | `scripts/vite/files-space.ts` | 卷空间只读侧：解析 `df -kP` 的挂载点与可用块数、按 `/Volumes/` 前缀判定外接卷、拼出 `DirSpace` |
@@ -222,8 +222,9 @@
   `content` / `image` / `capture` / `audio` 四个接口都只在开发模式存在。
 - **设为桌面墙纸**：列表里的图片条目（网格 hover 浮出 / 表格行常态）与图片预览 header 各有一颗按钮，
   都只打开二次确认层（`WallpaperConfirm`），确认后调 `POST /api/files/wallpaper`；中间件先按图片接口的规则校验路径，
-  再用 `System Events` 的 `picture of every desktop` 铺满当前所有屏幕与空间。成功 / 失败走通知，
-  系统没给自动化授权时把 -1743 翻成「去『系统设置 → 隐私与安全性 → 自动化』勾选」。
+  再用原生助手把 `Index.plist` 里所有桌面空间 / 屏幕的 `Desktop` 选项换成这张图，最后重启 `WallpaperAgent`——
+  macOS 26 起它只在启动时读一次配置，不重启就只写文件、桌面不动（旧实现漏了这一步，表现为「提示成功但没变」）。
+  写入前自动备份为 `Index.plist.dashboard.bak`；助手需要 Xcode 命令行工具，缺失时提示安装。
 - **外部打开**：`POST /api/files/open`（body `{ path, app? }`）用系统 `open` 调起播放器：
   给了 `app` 先试它，其次 `open -a IINA`，再回落 `open <path>`（系统默认播放器），
   返回 `{ app }` 为实际用上的应用名（`default` 表示系统默认播放器）；

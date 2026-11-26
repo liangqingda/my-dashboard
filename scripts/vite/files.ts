@@ -58,7 +58,7 @@ import {
 } from './files-store.js';
 import { readDirSpace } from './files-space.js';
 import { ejectVolume } from './files-volume.js';
-import { setDesktopWallpaper } from './files-wallpaper.js';
+import { setDesktopWallpaper, warmWallpaperHelper } from './files-wallpaper.js';
 
 /** 截图请求体上限：一帧 PNG 的 base64 通常几 MB，留出余量但拒绝超大载荷 */
 const CAPTURE_BODY_LIMIT = 40 * 1024 * 1024;
@@ -372,6 +372,8 @@ export const files = (): Plugin => ({
   configureServer(server) {
     /** 先把原生目录选择框编好，用户点按钮时不必再等编译 */
     warmNativePicker();
+    /** 换墙纸的原生助手同理：编译一次就缓存，第一次点按钮不卡 */
+    warmWallpaperHelper();
 
     server.middlewares.use('/api/files', async (req, res) => {
       const pathname = (req.url ?? '').split('?')[0];
