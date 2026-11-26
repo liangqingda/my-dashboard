@@ -18,4 +18,4 @@
 | 居中排列的 flex 行里混了图标 + 文案 | 文案 `flex: 1` 拉伸后，图标被顶到一侧，整体看起来没居中 | 居中单元里文案不要拉伸（`flex: 0 1 auto`），图标与文案作为整体交给容器 `justify-content: center` |
 | 表格自定义行改了上下 `padding` | 上下留白不对称，标题 / 图标视觉偏上、行底留白偏大 | 上下留白用对称的 `padding-block`；垂直居中沿用单元格默认 `vertical-align: middle`，别在业务里重复声明 |
 | 整行 / 整段 hover 高亮只挂在内部按钮上 | 悬停在行内边距、间隙处时高亮不触发；反过来选择器放宽又会带起段内其它按钮 | 高亮色挂在祖先行 / 段的 `:hover` 上向下传；选择器限定直接子级标题按钮（`> button`），别用后代选择器扫到瓦片操作按钮 |
-| 用 `grid-template-rows: 1fr → 0fr` 做折叠，外层壳又是 flex 列子项 | 收起后主体仍被内容撑住，瓦片只被裁掉一截、整排露出 | 折叠壳子项必须放开 `min-height: 0`；内层再 `min-height: 0` + `overflow` 裁切，两层都不能漏 |
+| 用 `grid-template-rows: 1fr → 0fr` 做折叠，外层壳又是 flex 列子项 | 收起后主体仍被内容撑住，瓦片只被裁掉一截、整排露出 | 0fr 在 auto 高度容器里不可靠：收起态外层再钉 `max-height: 0` + `overflow: hidden`；内层收起态换成 `overflow: hidden`。别写 `overflow-clip-margin: 0`，会被压缩器当成初始值删掉、规则变空 |

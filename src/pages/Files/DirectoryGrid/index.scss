@@ -66,6 +66,9 @@
 
 .bodyCollapsed {
   grid-template-rows: 0fr;
+  /* 外层再钉死高度并裁掉溢出，防止 0fr 行高在 auto 高度容器里没收成 0、内层还漏出一截 */
+  max-height: 0;
+  overflow: hidden;
 }
 
 .bodyInner {
@@ -80,9 +83,10 @@
   overflow-clip-margin: 16px;
 }
 
-/* 收起状态下不留那道边距，否则会漏出一条内容 */
+/* 收起状态下内层也裁成普通 hidden：clip 的 16px 边距会在零高度盒外漏出一条；
+   （`overflow-clip-margin: 0` 会被压缩器当成初始值删掉，所以直接换 overflow 档位） */
 .bodyCollapsed .bodyInner {
-  overflow-clip-margin: 0;
+  overflow: hidden;
 }
 
 /* 空目录 / 筛完什么都没有时的说明：占住这一块空白，顺带让那块空白仍是落点 */
