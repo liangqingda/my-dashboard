@@ -11,16 +11,8 @@ export type FolderGridProps = {
   dragActive: boolean;
   /** 不在拖拽时：点一下就能进去 */
   idle: boolean;
-  /** 指针正停在哪一格（倒计时条 / 高亮跟着它） */
-  hoverPath: string | null;
-  /** 正播弹起动画的那一格 */
-  springPath: string | null;
   /** 点某一格进去 */
   onOpen: (path: string) => void;
-  /** 指针停在某一格上：交给会话起「停留一秒＝进入」的计时 */
-  onEnter: (path: string) => void;
-  /** 指针离开某一格：只清它自己那份计时 */
-  onLeave: (path: string) => void;
   /** 在某一格松手：交给会话移进去（已在里面的那些由会话剔出来不搬） */
   onDrop: (path: string) => void;
   /**

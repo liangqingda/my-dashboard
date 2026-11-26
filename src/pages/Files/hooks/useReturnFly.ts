@@ -50,8 +50,15 @@ const cardFallbackRect = (): FlyRect | null => {
 
 /** 入参：取回这一条（`useDragMove.restoreLanded`，真的把它搬回原目录，成功返回搬回后的路径） */
 export const useReturnFly = (restore: (item: LandedItem) => Promise<string | null>) => {
-  /** 正在播的一趟回手卡；null 表示没有 */
-  const [flight, setFlight] = useState<ReturnFlyProps['flight'] | null>(null);
+  /**
+   * 正在播的一趟回手卡；`null` 表示没有。
+   * `path` 一拿到就先置位（手卡里那一格立刻变虚位），`flight` 等下一帧量完再补上：
+   * 两件事分开，条目才不会在「已经出现」和「动画起步」之间闪一下。
+   */
+  const [flying, setFlying] = useState<{
+    path: string;
+    flight: ReturnFlyProps['flight'] | null;
+  } | null>(null);
 
   /**
    * 点一条「搬进这个文件夹的」：先量下它这一格此刻的矩形、拷一份它的样子，
@@ -81,21 +88,33 @@ export const useReturnFly = (restore: (item: LandedItem) => Promise<string | nul
         return;
       }
 
+      // 先让那一格变虚位（与「条目回手卡」同一次渲染），飞行块下一帧才接手
+      setFlying({ flight: null, path: backPath });
+
       // 新那一格要等 React 把这一帧渲染完才量得到，所以推到下一帧再量
       window.requestAnimationFrame(() => {
         const to = chipRectOf(backPath) ?? cardFallbackRect();
 
         if (to === null) {
+          setFlying(null);
+
           return;
         }
 
-        setFlight({ from, node, to });
+        setFlying({ flight: { from, node, to }, path: backPath });
       });
     });
   };
 
   /** 播完了 */
-  const clear = () => setFlight(null);
+  const clear = () => setFlying(null);
 
-  return { clear, flight, start };
+  return {
+    clear,
+    /** 正在播的那一趟（`null` 时没有） */
+    flight: flying === null ? null : flying.flight,
+    /** 正飞进来的那一条路径：手卡里它那一格先留虚位，落定后才显形 */
+    path: flying === null ? null : flying.path,
+    start,
+  };
 };

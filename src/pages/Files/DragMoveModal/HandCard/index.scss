@@ -82,6 +82,37 @@
   opacity: 0.45;
 }
 
+/*
+ * 正飞进来的那一格：先摆成虚位（虚线框、透明底、不吃指针），空间立刻占住，
+ * 回流动画就落在这一格上；内容藏起来，落定后由 `.chipBody` 的过渡「由小到大」长出。
+ */
+.placeholder {
+  border-style: dashed;
+  border-color: var(--app-line-strong);
+  background: transparent;
+  pointer-events: none;
+  box-shadow: none;
+  cursor: default;
+}
+
+.placeholder .chipBody {
+  opacity: 0;
+  transform: scale(0.5);
+}
+
+/* 内容层：飞行期间可能被虚位藏起来，落定后自己由小到大长出来 */
+.chipBody {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  transform-origin: center;
+  transition:
+    opacity 200ms ease,
+    transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
 /* 抓手：说明这一条能单独拖 */
 .grip {
   flex: 0 0 auto;

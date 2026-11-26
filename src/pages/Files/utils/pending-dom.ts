@@ -24,6 +24,35 @@ export const pendingTileOf = (path: string): HTMLElement | null => {
   return null;
 };
 
+/**
+ * 条目所在目录在列表里的那一枚文件夹瓦片：条目被拖走前收在子文件夹里时，
+ * 当前这一层根本没有它的瓦片，回列表就飞不回去——退一步飞向它所在的那个文件夹。
+ * 按路径前缀逐层比对，取最深的那个（`reversed()` 让 `/a/b` 排在 `/a` 前面）；
+ * 收起的段高度为 0，量不出落点，跳过。
+ */
+export const containingFolderOf = (path: string): HTMLElement | null => {
+  let best: HTMLElement | null = null;
+  let bestLength = 0;
+
+  for (const node of document.querySelectorAll<HTMLElement>('[data-entry-path]')) {
+    const candidate = node.dataset.entryPath;
+
+    if (candidate === undefined || !path.startsWith(`${candidate}/`)) {
+      continue;
+    }
+
+    if (
+      candidate.length > bestLength &&
+      node.getBoundingClientRect().height > 0
+    ) {
+      best = node;
+      bestLength = candidate.length;
+    }
+  }
+
+  return best;
+};
+
 /** 待拖拽区里的那一格：移入时的落点 */
 export const pendingChipOf = (path: string): HTMLElement | null => {
   for (const node of document.querySelectorAll<HTMLElement>('[data-pending-chip]')) {

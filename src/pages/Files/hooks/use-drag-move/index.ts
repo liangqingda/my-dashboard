@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from 'react';
 import type { DraggableEntry, FolderEntry } from '../../types';
 import { baseNameOfPath, joinDirOf } from '../../utils/files';
 
-import { useHoverTargets } from './use-hover-targets';
 import { useLanded } from './use-landed';
 import { focusSession, restoreSession, sessionLayout, stripSelf } from './utils';
 import { useDrops } from './use-drops';
@@ -70,7 +69,6 @@ export const useDragMove = ({
 
   /** 关掉弹窗并清空会话：条目留在原位，什么都没写 */
   const close = () => {
-    resetHover();
     setProgress(null);
     sessionRef.current = null;
     setSession(null);
@@ -95,7 +93,6 @@ export const useDragMove = ({
       return;
     }
 
-    resetHover();
     landed.reset();
     cacheRef.current = new Map();
     setError(null);
@@ -138,7 +135,6 @@ export const useDragMove = ({
 
   /** 从弹窗里的待拖拽区再次拖起：会话还在，只把拖拽状态重新点亮 */
   const beginDrag = () => {
-    resetHover();
     setHanded(false);
     setDragActive(true);
   };
@@ -201,12 +197,6 @@ export const useDragMove = ({
       return;
     }
 
-    /*
-     * 松手先把悬停计时清掉：指针还压在某一行 / 某个文件夹上时，
-     * 500ms 的「停留＝进入」和之后的弹起还会接着跑，看起来像「松手了还要等一下才回去」。
-     */
-    resetHover();
-
     // 只拖了其中一条又没搬成：把其余条目还原回来，整批仍在弹窗里等着
     if (active.rest !== undefined) {
       const restored = restoreSession(active);
@@ -221,7 +211,6 @@ export const useDragMove = ({
 
   /** 换一层：命中缓存就不再读盘，没缓存的那一趟由 effect 发起 */
   const goTo = (path: string) => {
-    resetHover();
     setError(null);
     setView({ folders: cacheRef.current.get(path) ?? null, path });
   };
@@ -254,10 +243,6 @@ export const useDragMove = ({
     setView,
   });
 
-  const { hoverFolder, hoverPath, leaveFolder, resetHover, springPath } = useHoverTargets({
-    goTo,
-  });
-
   /** 松手搬这一批：逐条提交、最低一秒、搬完再判要不要关窗（都在 `use-move-runner`） */
   const runMove = useMoveRunner({
     close,
@@ -267,7 +252,6 @@ export const useDragMove = ({
     movingRef,
     onAllMoved,
     onLanded: landed.remember,
-    resetHover,
     sessionRef,
     setDragActive,
     setHanded,
@@ -279,7 +263,6 @@ export const useDragMove = ({
   const { dropOnBlank, dropOnFolder } = useDrops({
     endDrag,
     movingRef,
-    resetHover,
     runMove,
     sessionRef,
     viewRef,
@@ -296,10 +279,7 @@ export const useDragMove = ({
     focusEntry,
     goTo,
     handed,
-    hoverFolder,
-    hoverPath,
     landed: landed.items,
-    leaveFolder,
     loading,
     movedPaths,
     open,
@@ -308,7 +288,6 @@ export const useDragMove = ({
     reset,
     restoreLanded,
     session,
-    springPath,
     view,
   };
 };

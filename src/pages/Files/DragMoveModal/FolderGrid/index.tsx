@@ -5,7 +5,6 @@ import { IconFolderFilled } from '@tabler/icons-react';
 import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
 import { cx } from '@/utils/cx';
 
-import { SPRING_HOVER_MS } from '../../hooks/use-drag-move/constants';
 import { allInsideDir } from '../../hooks/use-drag-move/utils';
 import { acceptMove, leaveOutside } from '../utils';
 
@@ -20,24 +19,25 @@ const HINT_ALREADY_INSIDE = '本来就在这个文件夹里';
  * 弹窗里的文件夹落点网格：一格一个子文件夹。
  *
  * - **点一下**（不在拖拽时）＝进入这一层；
- * - **拖拽经过 1 秒**＝先弹一下再进入（前 0.5 秒不画进度，后 0.5 秒进度条才填）；
  * - **松手**＝移进这一格（由 `onDrop` 交给会话，那里再按父目录过滤一遍）；
  * - **手上的条目本来就全在这一格里**＝这一格是禁用落点：虚线边 + 压暗，指针压上来时
- *   在格子里补一句「本来就在这个文件夹里」，不起进入计时，也不画倒计时（放进去等于没动）。
+ *   在格子里补一句「本来就在这个文件夹里」，松手也不搬；
+ * - **正在搬进这一格**＝套上强调描边与底边进度条（与列表页 `FolderTile` 同一套）。
+ *
+ * 指针停在格子上**不会**自动进入（这个能力已经去掉）：换层只认点击，免得停在某个文件夹上
+ * 歇一下就被带进去。
  */
 const FolderGrid = ({
   dragActive,
   entries,
   folders,
-  hoverPath,
   idle,
   onDrop,
-  onEnter,
-  onLeave,
   onOpen,
   progress,
-  springPath,
 }: FolderGridProps) => {
+  /** 指针正停在哪个落点（拖拽中的高亮） */
+  const [hoverPath, setHoverPath] = useState<string | null>(null);
   /** 指针正压在一个禁用落点上：只有它需要额外说明（其余格子没有禁用的理由） */
   const [blockedPath, setBlockedPath] = useState<string | null>(null);
 
@@ -62,8 +62,7 @@ const FolderGrid = ({
           <UnstyledButton
             className={cx(
               styles.folder,
-              hoverPath === folder.path && styles.hovered,
-              springPath === folder.path && styles.springing,
+              dragActive && !blocked && hoverPath === folder.path && styles.hovered,
               blocked && styles.blocked,
               blockedHovered && styles.blockedOn,
               receiving !== null && styles.moving,
@@ -72,7 +71,7 @@ const FolderGrid = ({
             onClick={idle ? () => onOpen(folder.path) : undefined}
             onDragLeave={(event) =>
               leaveOutside(event, () => {
-                onLeave(folder.path);
+                setHoverPath((hovered) => (hovered === folder.path ? null : hovered));
                 setBlockedPath(null);
               })
             }
@@ -80,12 +79,12 @@ const FolderGrid = ({
               event.stopPropagation();
 
               if (blocked) {
-                // 禁用落点：不给进入计时、也不亮倒计时，只在格子里说明原因
+                // 禁用落点：松手也不搬，只在格子里说明原因
                 event.preventDefault();
                 const { dataTransfer } = event;
 
                 dataTransfer.dropEffect = 'none';
-                onLeave(folder.path);
+                setHoverPath(null);
                 setBlockedPath(folder.path);
 
                 return;
@@ -93,12 +92,13 @@ const FolderGrid = ({
 
               setBlockedPath(null);
               acceptMove(event);
-              onEnter(folder.path);
+              setHoverPath(folder.path);
             }}
             onDrop={(event) => {
               event.preventDefault();
               event.stopPropagation();
               setBlockedPath(null);
+              setHoverPath(null);
               onDrop(folder.path);
             }}
           >
@@ -121,13 +121,6 @@ const FolderGrid = ({
             )}
             {blockedHovered ? (
               <span className={styles.blockedTip}>{HINT_ALREADY_INSIDE}</span>
-            ) : null}
-            {!blocked && hoverPath === folder.path && receiving === null ? (
-              <span
-                aria-hidden="true"
-                className={styles.countdown}
-                style={{ animationDuration: `${SPRING_HOVER_MS}ms` }}
-              />
             ) : null}
             {receiving === null ? null : (
               <Progress

@@ -44,8 +44,9 @@ const dragMove = useDragMove({
 
 ## 目录按路径自由上下
 
-`goTo(path)` 是唯一的换层入口：面包屑每一段、点某个文件夹瓦片、悬停满 0.5 秒自动进入，都收敛到这里。
-每次换层先 `resetHover()` 再清 `error`，然后看 `cacheRef` 里有没有这一层的 `folders`，没有才交给读盘 effect。
+`goTo(path)` 是唯一的换层入口：面包屑每一段、点某个文件夹瓦片，都收敛到这里
+（悬停自动进入那套计时已去掉，停在格子上不会被带进别的目录）。
+每次换层先清 `error`，然后看 `cacheRef` 里有没有这一层的 `folders`，没有才交给读盘 effect。
 
 读盘单独收在 `use-view-folders.ts`：只有 `path !== null && folders === null` 才发请求，
 结果先写 `cacheRef` 再回填 `view`；切层即 `abort`，迟到的响应按路径挡在外面。
@@ -54,15 +55,10 @@ const dragMove = useDragMove({
 
 ## 两条互斥判定
 
-- **悬停计时**：`hoverFolder(path)` 只在「目标换了」时才起 `SPRING_HOVER_MS`（1 秒）计时，
-  同一目标的连续 `dragover` 不重启；满 1 秒置 `springPath` 播弹起动画，再等 `SPRING_ENTER_MS`
-  调 `goTo` 真正换层。这 1 秒里**前 0.5 秒不画进度**、后 0.5 秒倒计时条才填满（时间轴在
-  `DragMoveModal/FolderGrid/index.scss` 的 `hoverCountdown`）。`leaveFolder(path)` 只清自己那份计时，
-  别误清刚停上去的新目标。计时器整套收在 `use-hover-targets.ts`。
-- **松手先清计时**：`endDrag()` 一进来就 `resetHover()`。指针还可能压在某一行上，
-  不停掉那套 500ms 的「停留＝进入」，松手后它还会接着跑，看起来就是「松手了还要等一下才回去」。
-- **立刻松手**：`dropOnFolder(targetDir)` 直接移动（把 `session.entries` 逐个提交），不进入——
-  先清计时器再关窗提交，计时器不清的话松手后它还会把用户带进某个文件夹。
+- **松手即移入**：`dropOnFolder(targetDir)` 直接移动（把 `session.entries` 逐个提交）。
+  指针停在某个文件夹上**不会**自动进入（那套悬停计时已经整体去掉），换层只认点击。
+- **取回**：`restoreLanded` 把这条真的搬回原目录，再把手卡里那一格换成「虚位 + 落定后显形」，
+  由 `useReturnFly` 播一趟与「列表 → 待拖拽区」同帧的回流动画。
 
 所有落点动作都先 `resetHover()`。
 

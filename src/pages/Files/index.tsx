@@ -312,7 +312,7 @@ const Files = () => {
 
       <FilesOverlays
         drag={{
-          dragAllDisabled: drag.isDirect && list.visibleFolders.length === 0,
+          dragAllDisabled: drag.dragAllDisabled,
           dragEntries: drag.dragEntries,
           dragImage: drag.dragImage,
           entryActions,

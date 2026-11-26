@@ -10,6 +10,7 @@
 import type { DragEvent } from 'react';
 
 import type { FileEntry, FolderEntry, MoveMode } from '../types';
+import { parentDirOf } from '../utils/files';
 
 import { useDirectMove } from './useDirectMove';
 import type { useDragPending } from './use-drag-pending';
@@ -149,8 +150,17 @@ export const useFilesDrag = ({
   /** 那条瓦片的快照（起拖那一刻拷的）：影像按它原样画 */
   const dragImage = isDirect ? direct.image : null;
   const folderProgress = isDirect ? direct.progress : null;
+  /**
+   * 「拖拽全部」无处可去才禁用：当前这一层没有子文件夹，**且**手里这几条本来就都在这一层
+   * （拖到空白处＝移进当前目录，移过去等于没动）。只要有一条带自别处，这一层就能接。
+   */
+  const dragAllDisabled =
+    isDirect &&
+    folders.length === 0 &&
+    !pending.entries.some((entry) => parentDirOf(entry.path) !== currentDir);
 
   return {
+    dragAllDisabled,
     dragEntries,
     dragImage,
     dragPaths,

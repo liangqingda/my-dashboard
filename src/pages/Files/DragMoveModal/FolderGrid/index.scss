@@ -42,7 +42,7 @@
   color: var(--app-accent);
 }
 
-/* 指针停在这个文件夹上（拖拽中）：换成强调色底，同时挂出后半秒才出现的倒计时条 */
+/* 指针停在这个文件夹上（拖拽中）：换成强调色底，说明「这里可以放」 */
 .hovered {
   border-color: var(--app-accent);
   background: var(--app-accent-soft);
@@ -117,11 +117,6 @@
   text-align: center;
 }
 
-/* 弹起：进入前的最后一下——先浮起来再落下，和系统里弹簧文件夹的观感对齐 */
-.springing {
-  animation: springOpen 220ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
 /* 键盘聚焦：与落点高亮同一套色，不额外加一圈别的颜色 */
 .folder:focus-visible {
   outline: 2px solid var(--app-accent);
@@ -141,63 +136,9 @@
   text-align: center;
 }
 
-/*
- * 倒计时条：**只在后一半时间才出现**——整段悬停是 `SPRING_HOVER_MS`（1 秒），
- * 前 50%（0.5 秒）完全透明、宽度也是 0，后 50% 才从左往右填满，填满就进入这个文件夹。
- */
-.countdown {
-  position: absolute;
-  right: 10px;
-  bottom: 6px;
-  left: 10px;
-  height: 3px;
-  border-radius: 3px;
-  transform-origin: left center;
-  background: var(--app-accent);
-  animation-name: hoverCountdown;
-  animation-timing-function: linear;
-  animation-fill-mode: forwards;
-}
-
-@keyframes springOpen {
-  0% {
-    transform: scale(1);
-  }
-
-  45% {
-    transform: translateY(-3px) scale(1.06);
-  }
-
-  100% {
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes hoverCountdown {
-  0%,
-  50% {
-    opacity: 0;
-    transform: scaleX(0);
-  }
-
-  50.01% {
-    opacity: 1;
-    transform: scaleX(0);
-  }
-
-  100% {
-    opacity: 1;
-    transform: scaleX(1);
-  }
-}
-
-/* 系统开了「减少动态」：倒计时与弹起只留结果，不做动画 */
+/* 系统开了「减少动态」：hover 的过渡直接省掉 */
 @media (prefers-reduced-motion: reduce) {
   .folder {
     transition: none;
-  }
-
-  .springing {
-    animation: none;
   }
 }

@@ -39,8 +39,6 @@ export type MoveRunnerArgs = {
   close: () => void;
   /** 放回手里（有失败，或还有没搬的） */
   endDrag: () => void;
-  /** 清掉悬停态（搬完换手时别留倒计时条） */
-  resetHover: () => void;
   setSession: (session: DragMoveSession | null) => void;
   setDragActive: Dispatch<SetStateAction<boolean>>;
   setHanded: Dispatch<SetStateAction<boolean>>;
@@ -69,7 +67,6 @@ const settle = (args: MoveRunnerArgs, active: DragMoveSession, targetDir: string
   sessionRef.current = rest;
 
   args.setSession(rest);
-  args.resetHover();
   args.setDragActive(false);
   args.setHanded(true);
 };

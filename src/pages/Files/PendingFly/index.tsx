@@ -1,7 +1,13 @@
 import { createElement, useEffect, useRef } from 'react';
 
 import { entryIcon } from '../utils/entry-icon';
-import { cloneFlightBody, dressClone, pendingChipOf, pendingTileOf } from '../utils/pending-dom';
+import {
+  cloneFlightBody,
+  containingFolderOf,
+  dressClone,
+  pendingChipOf,
+  pendingTileOf,
+} from '../utils/pending-dom';
 import { framesFor } from '../utils/pending-frames';
 
 import type { PendingFlightLayerProps } from './types';
@@ -71,8 +77,12 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
 
     const tile = pendingTileOf(entry.path);
     const chip = direction === 'in' ? pendingChipOf(entry.path) : null;
-    /** 落点：移出回列表里那张瓦片，移入去待拖拽区那一格 */
-    const target = direction === 'in' ? chip : tile;
+    /**
+     * 落点：移出回列表里那张瓦片；它不在这一层（原先收在某个子文件夹里）时，
+     * 飞向它所在的那个文件夹——不能因为找不到瓦片就什么都不飞。
+     */
+    const target =
+      direction === 'in' ? chip : (tile ?? containingFolderOf(entry.path));
 
     if (target === null) {
       const fade = block.animate([{ opacity: 1 }, { opacity: 0 }], {
@@ -145,11 +155,38 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
     }
 
     const morph = window.setTimeout(
-      () => swap(direction !== 'in'),
+      () => {
+        if (direction === 'in') {
+          swap(false);
+
+          return;
+        }
+
+        // 没有真身可换（它原来收在子文件夹里，这一层量不到那张瓦片）：图标一路飞到文件夹
+        if (clone !== undefined) {
+          swap(true);
+        }
+      },
       FLY_MS * (direction === 'in' ? SHRINK_TO_ICON_AT : MORPH_AT),
     );
 
-    const frames = framesFor({ direction, dx, dy, endScale, landScale, midScale });
+    /**
+     * 没有真身的那一趟（飞去它所在的那个文件夹）：就一枚图标飞过去，
+     * 到文件夹跟前放大一点并淡掉——别让它到点后凭空消失。
+     */
+    const frames =
+      tile === null && direction === 'out'
+        ? [
+            { opacity: 1, transform: 'translate(0, 0) scale(1)' },
+            { offset: 0.16, opacity: 1, transform: 'translate(0, -6px) scale(1)' },
+            {
+              offset: 0.72,
+              opacity: 1,
+              transform: `translate(${dx * 0.82}px, ${dy * 0.82}px) scale(1.15)`,
+            },
+            { opacity: 0, transform: `translate(${dx}px, ${dy}px) scale(1.35)` },
+          ]
+        : framesFor({ direction, dx, dy, endScale, landScale, midScale });
 
     const move = block.animate(frames, {
       duration: FLY_MS,

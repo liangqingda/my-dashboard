@@ -38,7 +38,7 @@ import styles from './index.scss';
 const FULLSCREEN = { active: true, onToggle: () => undefined, showToggle: false };
 
 /** 条目还在飞（正被拖着）时的提示 */
-const HINT_DRAGGING = '拖到文件夹上松手即移入；停留 1 秒会进入该文件夹继续挑。';
+const HINT_DRAGGING = '拖到文件夹上松手即移入；停在落点区的空白处松手＝移入当前这一层。';
 
 /** 弹窗里收藏弹层的层级：要盖在全屏弹窗的遮罩与框体之上 */
 const POPOVER_Z_INDEX = 600;
@@ -52,7 +52,7 @@ const NO_LANDED: LandedItem[] = [];
  * 拖拽移动弹窗：拖起列表里的一条或一批条目后自动打开，占满整屏。正文三段——
  * 当前路径（可点的面包屑）、待拖拽区（条目平铺，能逐条或整批再拖起）、这一层的子文件夹。
  *
- * 松手在文件夹上＝移进去；停在同一个文件夹上 0.5 秒＝它先弹一下，然后进入它；
+ * 松手在文件夹上＝移进去（指针停在某个文件夹上**不会**自动进入，换层只认点击）；
  * 松手在落点区的空白处＝放进当前这一层（悬在空白处时整块落点区会亮起来提示）；
  * 其余区域什么都不做、条目放回手里。只有移动成功才关窗，
  * 此外只认关闭按钮、Esc 与空格。
@@ -74,13 +74,9 @@ const DragMoveModal = ({
     error,
     goTo,
     handed,
-    hoverFolder,
-    hoverPath,
-    leaveFolder,
     loading,
     progress,
     session,
-    springPath,
     view,
   } = dragMove;
   /**
@@ -224,6 +220,7 @@ const DragMoveModal = ({
               }}
               onDragStart={beginDrag}
               onPreview={onPreview}
+              placeholderPath={flyBack.path}
             />
             {dragActive ? (
               <Text c="dimmed" className={styles.handHint} size="xs">
@@ -297,14 +294,10 @@ const DragMoveModal = ({
                       dragActive={dragActive}
                       entries={session.entries}
                       folders={folders}
-                      hoverPath={hoverPath}
                       idle={idle}
                       onDrop={dropOnFolder}
-                      onEnter={hoverFolder}
-                      onLeave={leaveFolder}
                       onOpen={goTo}
                       progress={progress}
-                      springPath={springPath}
                     />
                   </section>
                 ) : null}

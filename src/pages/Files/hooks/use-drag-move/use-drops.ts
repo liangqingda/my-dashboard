@@ -13,7 +13,7 @@ import { notifyNoMove } from './notify';
 import { splitByParent } from './utils';
 import type { DragMoveSession, DragMoveView } from './types';
 
-/** 入参：会话镜像、当前层镜像，以及「搬」「放回手里」「清悬停」三个入口 */
+/** 入参：会话镜像、当前层镜像，以及「搬」「放回手里」两个入口 */
 export type DropsArgs = {
   /** 当前会话（搬的过程中不会换批） */
   sessionRef: RefObject<DragMoveSession | null>;
@@ -25,11 +25,9 @@ export type DropsArgs = {
   runMove: (sources: string[], targetDir: string, skipped: number) => Promise<void>;
   /** 放回手里（这一步不关窗） */
   endDrag: () => void;
-  /** 清掉悬停计时 / 高亮 */
-  resetHover: () => void;
 };
 
-export const useDrops = ({ endDrag, movingRef, resetHover, runMove, sessionRef, viewRef }: DropsArgs) => {
+export const useDrops = ({ endDrag, movingRef, runMove, sessionRef, viewRef }: DropsArgs) => {
   /** 这一批里谁要搬：已经在目标目录里的剔出来，剩下的按原顺序给路径 */
   const plan = (entries: DraggableEntry[], targetDir: string) => {
     const { movable, skipped } = splitByParent(entries, targetDir);
@@ -51,8 +49,6 @@ export const useDrops = ({ endDrag, movingRef, resetHover, runMove, sessionRef, 
     ) {
       return;
     }
-
-    resetHover();
 
     const { skipped, sources } = plan(active.entries, targetDir);
 

@@ -44,6 +44,7 @@ const HandCard = ({
   onDragEntry,
   onDragStart,
   onPreview,
+  placeholderPath = null,
 }: HandCardProps) => {
   /** 单项才谈得上「预览的是哪一个」；多项时图标只是列表里的一枚 */
   const previewFile =
@@ -83,10 +84,16 @@ const HandCard = ({
            */
           const locked = ghostAll;
           const ghost = ghostAll || focusPath === entry.path;
+          /** 这一格正被飞行块占着：先留虚位，内容等落定再显形 */
+          const arriving = placeholderPath === entry.path;
 
           return (
             <div
-              className={cx(styles.chip, ghost && styles.ghost)}
+              className={cx(
+                styles.chip,
+                ghost && styles.ghost,
+                arriving && styles.placeholder,
+              )}
               data-hand-chip={entry.path}
               draggable={!locked}
               key={entry.path}
@@ -102,7 +109,13 @@ const HandCard = ({
                     }
               }
             >
-              <IconGripVertical aria-hidden="true" className={styles.grip} size={13} stroke={1.6} />
+              <span className={styles.chipBody}>
+                <IconGripVertical
+                  aria-hidden="true"
+                  className={styles.grip}
+                  size={13}
+                  stroke={1.6}
+                />
               {previewable ? (
                 <Tooltip label={`预览${FILE_CATEGORY_LABELS[previewFile.category]}`} withArrow>
                   <UnstyledButton
@@ -122,12 +135,13 @@ const HandCard = ({
               ) : (
                 <Icon aria-hidden="true" className={styles.icon} size={18} stroke={1.2} />
               )}
-              <FreeTruncatedText
-                className={styles.name}
-                disabled
-                ellipsis="middle"
-                text={entry.name}
-              />
+                <FreeTruncatedText
+                  className={styles.name}
+                  disabled
+                  ellipsis="middle"
+                  text={entry.name}
+                />
+              </span>
             </div>
           );
         })}
