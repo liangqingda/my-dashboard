@@ -1,5 +1,6 @@
 /**
  * 内容区那一行的入参：拖拽总接线 + 待拖拽区状态 + 「选择全部」，列表作为 `children` 排在行里。
+ * 全屏状态不在这里传：本组件挂着时就在 `MenuContentLayout` 的 `children` 里，自己读外壳下发的那份。
  */
 
 import type { ReactNode } from 'react';
@@ -18,8 +19,6 @@ export type FilesWorkspaceProps = {
   pending: ReturnType<typeof useDragPending>;
   /** 条目动作编排：拖拽层要读移动会话与「正在拖哪一批」 */
   entryActions: ReturnType<typeof useEntryActions>;
-  /** 页面是否全屏：待拖拽区据此从「盖住侧栏」改成就地占一列 */
-  inline: boolean;
   /** 待拖拽区底部的「选择全部」：只收当前列表里看得见的那些 */
   onSelectAll: () => void;
 };

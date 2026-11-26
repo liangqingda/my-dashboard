@@ -1,9 +1,15 @@
-/* 菜单内容页统一外壳：内边距、标题行间距、纵向排列都在这里定死 */
+/*
+ * 菜单内容页统一外壳：内边距、标题行间距、纵向排列都在这里定死。
+ * 内边距的两个值同时留成自定义属性：页面里要贴到页面边缘的部分（如全屏时待拖拽区那一列）
+ * 用自己的负外边距抵掉它，别在页面里再抄一遍 14 / 12。
+ */
 .page {
+  --page-pad-x: 12px;
+  --page-pad-y: 14px;
   display: flex;
   flex-direction: column;
   gap: var(--app-space-md);
-  padding: 14px 12px;
+  padding: var(--page-pad-y) var(--page-pad-x);
 }
 
 /* 撑满视口高度：页面自身不滚动，滚动只发生在内部子区域 */

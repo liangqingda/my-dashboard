@@ -57,7 +57,6 @@ const Files = () => {
     favoritesHook,
     filterActions,
     fixedColumns,
-    fullscreen,
     goToDir,
     handlePickDir,
     handleSelectAll,
@@ -157,7 +156,6 @@ const Files = () => {
       <FilesWorkspace
         drag={drag}
         entryActions={entryActions}
-        inline={fullscreen}
         onSelectAll={handleSelectAll}
         pending={pending}
       >

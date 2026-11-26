@@ -7,7 +7,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { usePageFullscreen } from '@/layouts/MenuContentLayout';
 import { onPageRefresh } from '@/utils/page-refresh';
 
 import type { FilesActionsPanel } from '../FilesActions/types';
@@ -35,8 +34,6 @@ import { useVolumeEject } from './useVolumeEject';
 import { useWallpaper } from './useWallpaper';
 
 export const useFilesPageState = () => {
-  /** 页面是否全屏：全屏时页面上没有侧栏，待拖拽区改为就地占内容区左侧一列 */
-  const fullscreen = usePageFullscreen();
   /** 收藏 hook 整个留着：拖拽弹窗里的收藏面板直接复用同一套动作 */
   const favoritesHook = useFavorites();
   const {
@@ -216,7 +213,6 @@ export const useFilesPageState = () => {
     favoritesHook,
     filterActions: { changeFilterMode, changeSelectedCategories },
     fixedColumns,
-    fullscreen,
     goToDir,
     handlePickDir,
     handleSelectAll,

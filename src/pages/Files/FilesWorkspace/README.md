@@ -15,6 +15,12 @@
 这一行的 flex item；待拖拽区只有在最前面，才是左边那一列、把列表挤到右边。调到后面就成了「列表在左、
 拖拽区在右」。
 
+## 全屏状态在这里读
+
+`usePageFullscreen()` 的 Provider 包在 `MenuContentLayout` 的 `children` 外边，本组件正是作为
+`children` 挂进去的那一层，所以读得到真值；**别把这次读取挪回页面组件本体**——页面是 Provider 的
+父级，在那儿读恒为 `false`，全屏后会静默停在非全屏形态（待拖拽区仍浮在列表上）。
+
 ## 只做排布与接线
 
 拖拽状态（`useFilesDrag`）、待拖拽区状态（`useDragPending`）、条目动作（`useEntryActions`）与

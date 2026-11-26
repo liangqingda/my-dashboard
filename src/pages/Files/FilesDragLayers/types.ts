@@ -11,7 +11,7 @@ import type { useEntryActions } from '../hooks/useEntryActions';
 export type FilesDragLayersProps = {
   /**
    * 页面是否全屏：待拖拽区据此改形态——全屏时它就地占内容区左侧一列（参与排布、撑满高度），
-   * 不再浮在列表上。由页面读 `usePageFullscreen()` 递进来。
+   * 不再浮在列表上。由 `FilesWorkspace` 读外壳的 `usePageFullscreen()` 递进来。
    */
   inline: boolean;
   /**
