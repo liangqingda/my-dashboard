@@ -12,15 +12,15 @@
 | `seek` | 进度条拖动 | 写 `currentTime`，同步时间文本 |
 | `changeVolume` | 竖向音量条 | 写音量；调到非零时自动取消静音 |
 | `toggleMute` | 喇叭键、`M` 键 | 翻转静音位 |
-| `showControlsForPaused` | `pause` / `ended` | 记成未播放，控制栏常驻（`holdControls` 由调用方给） |
-| `handlePlaying` | `playing` | 记成在播、清掉缓冲转圈，控制栏重新计时收起 |
+| `handlePause` | `pause` / `ended` | 记成未播放（只管播放图标；控制栏的显隐另有自己的计时，不因暂停常驻） |
+| `handlePlaying` | `playing` | 记成在播、清掉缓冲转圈 |
 
 ## 事件处理
 
 `handleCanPlay` / `handleError` / `handleLoadedData` / `handleLoadedMetadata` /
-`handleTimeUpdate` / `handleVolumeChange` / `handleWaiting` 逐个对齐 `<video>` 同名事件，
-把元数据、当前时间、音量、缓冲状态写回调用方给的 setter；`loadedmetadata` 同时把
-画面宽高比交回 `onAspect`。
+`handlePause` / `handlePlaying` / `handleTimeUpdate` / `handleVolumeChange` / `handleWaiting`
+逐个对齐 `<video>` 同名事件，把元数据、当前时间、音量、播放 / 缓冲状态写回调用方给的 setter；
+`loadedmetadata` 同时把画面宽高比交回 `onAspect`。
 
 ## 边界
 

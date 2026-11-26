@@ -7,7 +7,8 @@
  * 不用浏览器自带 `controls`：原生控制栏样式跟着系统走，且自带一个「网页元素全屏」按钮，
  * 与整屏预览的交互不是同一件事。
  *
- * 控制栏跟画面走：暂停恒显示，播放中指针一停就收起（1s），指针在控制栏上时始终显示。
+ * 控制栏跟画面走：与浮层 header 同一套节奏——打开即收起态，指针一动浮出、静止 1s 收起，
+ * 指针停在控制栏上时始终显示；暂停 / 播完也照常收起，不再常驻挡画面。
  *
  * 进度条悬停预览：帧图按指针位置现抽（见 `hooks/use-video-frames`）。预览框宽度取
  * 视频**画面实际显示区域**的 `previewScale`（默认 60%，不是舞台宽度，竖屏视频两侧黑边不算在内），
@@ -106,16 +107,17 @@ const FreeVideo = ({
       stageWidth: 0,
     }),
   );
-  /** 控制栏显隐：暂停恒显示，播放中指针静止一会儿收起 */
+  /**
+   * 控制栏显隐：与浮层 header 同一节奏，指针静止一会儿收起（暂停 / 播完也一样）；
+   * 设置 / 选集面板开着时按住不收起——面板是 portal，指针移进去就离开了播放器。
+   */
   const {
     enterControls,
-    hold: holdControls,
     leaveControls,
     leavePlayer,
-    resume: resumeControls,
     reveal,
     visible: controlsVisible,
-  } = useControlsVisibility(CONTROLS_HIDE_DELAY);
+  } = useControlsVisibility(CONTROLS_HIDE_DELAY, { suspended: overlayOpen });
 
   /** 帧图最长边：预览框宽 × 设备像素比（封顶 2 倍），窗口越大帧图越清 */
   const frameLongestEdge = Math.round(
@@ -166,12 +168,6 @@ const FreeVideo = ({
     return () => observer.disconnect();
   }, [previewScale, videoAspect]);
 
-  /** 暂停 / 播完：控制栏常驻，不再计时收起 */
-  const showControlsForPaused = () => videoElement.showControlsForPaused(holdControls);
-
-  /** 开播：控制栏先留着，指针一停再收 */
-  const handlePlaying = () => videoElement.handlePlaying(resumeControls);
-
   /** 播放 / 暂停：用户手势里调用，失败（编码不支持）由 error 事件接管 */
   const togglePlay = () => videoElement.togglePlay();
 
@@ -219,12 +215,12 @@ const FreeVideo = ({
           disablePictureInPicture
           onCanPlay={videoElement.handleCanPlay}
           onClick={handleVideoClick}
-          onEnded={showControlsForPaused}
+          onEnded={videoElement.handlePause}
           onError={videoElement.handleError}
           onLoadedData={videoElement.handleLoadedData}
           onLoadedMetadata={videoElement.handleLoadedMetadata}
-          onPause={showControlsForPaused}
-          onPlaying={handlePlaying}
+          onPause={videoElement.handlePause}
+          onPlaying={videoElement.handlePlaying}
           onPointerDown={handleVideoPointerDown}
           onTimeUpdate={videoElement.handleTimeUpdate}
           onVolumeChange={videoElement.handleVolumeChange}

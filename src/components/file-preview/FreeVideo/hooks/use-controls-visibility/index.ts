@@ -1,9 +1,15 @@
 /**
- * 控制栏显隐：暂停 / 播完常驻，播放中指针静止一会儿收起（`delay`），
- * 指针停在控制栏上时始终显示；指针一动就立刻浮出并重新计时。
+ * 控制栏显隐：与外壳的浮层 header 同一套节奏——打开即收起态，指针一动就浮出，
+ * 静止 `delay` 收起；指针停在控制栏上时不收起（正要点按钮它却淡下去）。
  *
- * 「是否在播」与「指针是否停在控制栏上」放 ref：收起计时器的回调读不到渲染期的 state。
- * 计时器只在这里管，播放器不再自己 `setTimeout`，也别处不要再挂一份同样的计时。
+ * 播放状态不参与：暂停 / 播完也照常自动收起，让出画面——视频预览的 header 就是这个口径，
+ * 两层 chrome 跟着同一片指针活动一起浮出、一起收掉（见 `FreeModal` 的 `headerOverlay`）。
+ *
+ * 唯一按住不收起的是「上层业务弹层开着」（`suspended`）：设置 / 选集面板是从控制栏长出来的
+ * portal 浮层，指针移进去就离开了播放器，不能让它开着、按钮却先淡下去。
+ *
+ * 「指针是否停在控制栏上」放 ref：收起计时器的回调读不到渲染期的 state。
+ * 计时器只在这里管，播放器不再自己 `setTimeout`，别处也不要再挂一份同样的计时。
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -14,11 +20,7 @@ export type UseControlsVisibilityResult = {
   visible: boolean;
   /** 指针在播放器里动了一下：亮出来并重新计时 */
   reveal: () => void;
-  /** 暂停 / 播完：常驻，不再计时收起 */
-  hold: () => void;
-  /** 开播：先留着，指针一停再收 */
-  resume: () => void;
-  /** 指针离开播放器 */
+  /** 指针离开播放器：照常收起 */
   leavePlayer: () => void;
   /** 指针进入控制栏：始终显示，不计时 */
   enterControls: () => void;
@@ -26,13 +28,22 @@ export type UseControlsVisibilityResult = {
   leaveControls: () => void;
 };
 
+/** 入参：收起时长 + 是否被上层弹层压住 */
+export type UseControlsVisibilityOptions = {
+  /**
+   * 上层业务弹层（设置 / 选集这类，从控制栏长出来的）开着：控制栏恒为可见、不排收起——
+   * 面板是 portal，指针移进去就离开了播放器，不按住的话面板还开着、它的按钮先淡下去了。
+   */
+  suspended?: boolean;
+};
+
 export const useControlsVisibility = (
   delay: number,
+  { suspended = false }: UseControlsVisibilityOptions = {},
 ): UseControlsVisibilityResult => {
-  const [visible, setVisible] = useState(true);
+  /** 打开即收起态：先看画面，指针一动才浮出（与浮层 header 一致） */
+  const [visible, setVisible] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  /** 是否正在播放的即时副本 */
-  const playingRef = useRef(false);
   /** 指针是否停在控制栏上的即时副本 */
   const hoveringRef = useRef(false);
 
@@ -46,11 +57,11 @@ export const useControlsVisibility = (
     timerRef.current = null;
   };
 
-  /** 排一次收起：在播、且指针不在控制栏上才真的收 */
+  /** 排一次收起：指针停着不在控制栏上、也没有弹层压着才真的收 */
   const scheduleHide = () => {
     clearTimer();
 
-    if (!playingRef.current || hoveringRef.current) {
+    if (suspended || hoveringRef.current) {
       return;
     }
 
@@ -59,6 +70,20 @@ export const useControlsVisibility = (
       setVisible(false);
     }, delay);
   };
+
+  /**
+   * 被弹层压住期间常驻：清掉挂着的收起计时。
+   * 可见性由返回值的 `suspended` 直接兜住，不在 effect 里 `setState`（那会引发级联渲染，
+   * 而弹层都是从控制栏点开的，进入压住态时本来就是可见的）。
+   */
+  useEffect(() => {
+    if (!suspended || timerRef.current === null) {
+      return;
+    }
+
+    clearTimeout(timerRef.current);
+    timerRef.current = null;
+  }, [suspended]);
 
   /** 卸载时清掉挂着的计时器 */
   useEffect(
@@ -77,24 +102,16 @@ export const useControlsVisibility = (
       clearTimer();
       setVisible(true);
     },
-    hold: () => {
-      playingRef.current = false;
-      clearTimer();
-      setVisible(true);
-    },
     leaveControls: () => {
       hoveringRef.current = false;
       scheduleHide();
     },
     leavePlayer: () => scheduleHide(),
-    resume: () => {
-      playingRef.current = true;
-      scheduleHide();
-    },
     reveal: () => {
       setVisible(true);
       scheduleHide();
     },
-    visible,
+    /** 弹层压着时恒为可见，不看 state（压住期间不会有收起计时跑起来） */
+    visible: suspended || visible,
   };
 };

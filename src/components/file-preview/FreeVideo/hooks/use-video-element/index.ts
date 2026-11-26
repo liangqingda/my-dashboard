@@ -15,15 +15,15 @@ export type VideoElementApi = {
   changeVolume: (next: number) => void;
   /** 切静音位 */
   toggleMute: () => void;
-  /** 暂停 / 播完：控制栏常驻（回调 `holdControls` 由调用方给） */
-  showControlsForPaused: (holdControls: () => void) => void;
-  /** 开播：控制栏先留着（回调 `resumeControls` 由调用方给） */
-  handlePlaying: (resumeControls: () => void) => void;
   /** 元数据 / 加载 / 出错 / 缓冲等事件处理，逐个对齐 `<video>` 的同名事件 */
   handleCanPlay: ReactEventHandler<HTMLVideoElement>;
   handleError: ReactEventHandler<HTMLVideoElement>;
   handleLoadedData: ReactEventHandler<HTMLVideoElement>;
   handleLoadedMetadata: ReactEventHandler<HTMLVideoElement>;
+  /** 暂停 / 播完：只记成未播放，控制栏的显隐不跟着变（与浮层 header 同一套自动收起） */
+  handlePause: ReactEventHandler<HTMLVideoElement>;
+  /** 开播：记成在播、清掉缓冲转圈 */
+  handlePlaying: ReactEventHandler<HTMLVideoElement>;
   handleTimeUpdate: ReactEventHandler<HTMLVideoElement>;
   handleVolumeChange: ReactEventHandler<HTMLVideoElement>;
   handleWaiting: ReactEventHandler<HTMLVideoElement>;
@@ -109,15 +109,13 @@ export const useVideoElement = ({
     element.muted = !element.muted;
   };
 
-  const showControlsForPaused = (holdControls: () => void) => {
+  const handlePause: ReactEventHandler<HTMLVideoElement> = () => {
     onPlaying(false);
-    holdControls();
   };
 
-  const handlePlaying = (resumeControls: () => void) => {
+  const handlePlaying: ReactEventHandler<HTMLVideoElement> = () => {
     onPlaying(true);
     onBuffering(false);
-    resumeControls();
   };
 
   const handleCanPlay: ReactEventHandler<HTMLVideoElement> = () => {
@@ -166,12 +164,12 @@ export const useVideoElement = ({
     handleError,
     handleLoadedData,
     handleLoadedMetadata,
+    handlePause,
     handlePlaying,
     handleTimeUpdate,
     handleVolumeChange,
     handleWaiting,
     seek,
-    showControlsForPaused,
     toggleMute,
     togglePlay,
   };
