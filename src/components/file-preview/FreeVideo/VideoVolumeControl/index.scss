@@ -41,14 +41,22 @@
   box-shadow: 0 8px 20px rgb(23 37 34 / 18%);
 }
 
-/* 音量数值：贴在滑杆左下方，跟着浮出的音量条一起出现 */
+/* 音量数值：贴在喇叭左侧，跟着浮出的音量条一起出现，平时隐藏 */
 .value {
   position: absolute;
-  right: calc(50% + 20px);
-  bottom: 0;
+  right: calc(100% + 6px);
+  top: 50%;
   color: var(--app-ink-faint);
   font-size: 0.66rem;
   font-variant-numeric: tabular-nums;
   pointer-events: none;
   white-space: nowrap;
+  opacity: 0;
+  transform: translateY(-50%);
+  transition: opacity 140ms ease;
+}
+
+.wrap:hover .value,
+.wrap:focus-within .value {
+  opacity: 1;
 }

@@ -1,6 +1,6 @@
 /**
  * 喇叭按钮 + 悬停竖向音量条：B 站式——指针停在喇叭上，上方浮出竖向滑杆，松开收起。
- * 音量档由当前音量与静音位决定图标（off / low / high）；数字百分比贴在滑杆左下。
+ * 音量档由当前音量与静音位决定图标（off / low / high）；数字百分比贴在喇叭左侧，跟着浮出。
  */
 
 import { Slider } from '@mantine/core';
@@ -41,6 +41,9 @@ const VideoVolumeControl = ({
 
   return (
     <div className={styles.wrap}>
+      <span className={styles.value}>
+        {Math.round((muted ? 0 : volume) * 100)}%
+      </span>
       <FreeIconAction
         disabled={!enabled}
         label={muted ? '取消静音' : '静音'}
@@ -55,7 +58,7 @@ const VideoVolumeControl = ({
           <Slider
             aria-label="音量"
             disabled={!enabled}
-            /* 自带浮标贴着滑杆右侧，靠弹窗边缘会被裁掉：数字改由下面的百分比出 */
+            /* 自带浮标贴着滑杆右侧，靠弹窗边缘会被裁掉：数字改由喇叭左侧的百分比出 */
             label={null}
             max={1}
             onChange={onVolumeChange}
@@ -66,9 +69,6 @@ const VideoVolumeControl = ({
             styles={{ root: { height: SLIDER_HEIGHT } }}
             value={muted ? 0 : volume}
           />
-          <span className={styles.value}>
-            {Math.round((muted ? 0 : volume) * 100)}%
-          </span>
         </div>
       </div>
     </div>

@@ -31,6 +31,7 @@ import {
 } from './constants';
 import { useControlsVisibility } from './hooks/use-controls-visibility';
 import { useHoverFrameGrabber } from './hooks/use-hover-frame-grabber';
+import { useVideoElement } from './hooks/use-video-element';
 import { useVideoFrames } from './hooks/use-video-frames';
 import { seekPreviewSize, type SeekPreviewSize } from './utils/preview-size';
 import VideoControls from './VideoControls';
@@ -46,7 +47,9 @@ const FreeVideo = ({
   actions,
   className,
   nav,
+  onCloseOverlay,
   onHoverFrameGrabberReady,
+  overlayOpen = false,
   previewScale = SEEK_PREVIEW_SCALE_DEFAULT,
   src,
   videoRef,
@@ -66,6 +69,23 @@ const FreeVideo = ({
   const [muted, setMuted] = useState(false);
   /** 视频画面比例：竖屏 / 宽幅视频的预览框高矮靠它 */
   const [videoAspect, setVideoAspect] = useState(VIDEO_FALLBACK_ASPECT);
+  /** 视频元素上的播放 / seek / 音量动作与事件同步，收在 `use-video-element` */
+  const videoElement = useVideoElement({
+    elementRef: ownRef,
+    onAspect: setVideoAspect,
+    onBuffering: setBuffering,
+    onCurrentTime: setCurrentTime,
+    onDuration: setDuration,
+    onMuted: setMuted,
+    onPlaying: setPlaying,
+    onReady: () => {
+      setStatus('ready');
+      setBuffering(false);
+    },
+    onStatus: setStatus,
+    onVolume: setVolume,
+  });
+
   /** 预览框尺寸：跟着舞台与视频比例变化 */
   const [previewSize, setPreviewSize] = useState<SeekPreviewSize>(() =>
     seekPreviewSize({
@@ -136,72 +156,33 @@ const FreeVideo = ({
   }, [previewScale, videoAspect]);
 
   /** 暂停 / 播完：控制栏常驻，不再计时收起 */
-  const showControlsForPaused = () => {
-    setPlaying(false);
-    holdControls();
-  };
+  const showControlsForPaused = () => videoElement.showControlsForPaused(holdControls);
 
   /** 开播：控制栏先留着，指针一停再收 */
-  const handlePlaying = () => {
-    setPlaying(true);
-    setBuffering(false);
-    resumeControls();
-  };
+  const handlePlaying = () => videoElement.handlePlaying(resumeControls);
 
   /** 播放 / 暂停：用户手势里调用，失败（编码不支持）由 error 事件接管 */
-  const togglePlay = () => {
-    const element = ownRef.current;
+  const togglePlay = () => videoElement.togglePlay();
 
-    if (!element) {
-      return;
-    }
-
-    if (element.paused) {
-      void element.play().catch(() => undefined);
+  /** 点画面：有业务弹层开着时先收弹层、不切播放；否则才是播放 / 暂停 */
+  const handleVideoClick = () => {
+    if (overlayOpen) {
+      onCloseOverlay?.();
 
       return;
     }
 
-    element.pause();
+    togglePlay();
   };
 
   /** 拖进度条：连续 seek，时间文本跟着走，不等 `timeupdate` */
-  const seek = (seconds: number) => {
-    const element = ownRef.current;
-
-    if (!element) {
-      return;
-    }
-
-    element.currentTime = seconds;
-    setCurrentTime(seconds);
-  };
+  const seek = (seconds: number) => videoElement.seek(seconds);
 
   /** 音量：调到非零时自动取消静音（用户拉音量就是想听见） */
-  const changeVolume = (next: number) => {
-    const element = ownRef.current;
-
-    if (!element) {
-      return;
-    }
-
-    element.volume = next;
-
-    if (next > 0 && element.muted) {
-      element.muted = false;
-    }
-  };
+  const changeVolume = (next: number) => videoElement.changeVolume(next);
 
   /** 静音开关 */
-  const toggleMute = () => {
-    const element = ownRef.current;
-
-    if (!element) {
-      return;
-    }
-
-    element.muted = !element.muted;
-  };
+  const toggleMute = () => videoElement.toggleMute();
 
   return (
     <div
@@ -213,32 +194,17 @@ const FreeVideo = ({
         <video
           className={styles.video}
           disablePictureInPicture
-          onCanPlay={() => setStatus('ready')}
-          onClick={togglePlay}
+          onCanPlay={videoElement.handleCanPlay}
+          onClick={handleVideoClick}
           onEnded={showControlsForPaused}
-          onError={() => setStatus('error')}
-          onLoadedData={() => {
-            setStatus('ready');
-            setBuffering(false);
-          }}
-          onLoadedMetadata={(event) => {
-            const { duration: total, videoHeight, videoWidth } = event.currentTarget;
-
-            setDuration(total);
-            setStatus('ready');
-
-            if (videoWidth > 0 && videoHeight > 0) {
-              setVideoAspect(videoWidth / videoHeight);
-            }
-          }}
+          onError={videoElement.handleError}
+          onLoadedData={videoElement.handleLoadedData}
+          onLoadedMetadata={videoElement.handleLoadedMetadata}
           onPause={showControlsForPaused}
           onPlaying={handlePlaying}
-          onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
-          onVolumeChange={(event) => {
-            setMuted(event.currentTarget.muted);
-            setVolume(event.currentTarget.muted ? 0 : event.currentTarget.volume);
-          }}
-          onWaiting={() => setBuffering(true)}
+          onTimeUpdate={videoElement.handleTimeUpdate}
+          onVolumeChange={videoElement.handleVolumeChange}
+          onWaiting={videoElement.handleWaiting}
           playsInline
           preload="auto"
           ref={mergedRef}

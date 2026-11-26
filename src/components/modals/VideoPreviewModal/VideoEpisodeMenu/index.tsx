@@ -28,18 +28,25 @@ const MENU_WIDTH = 260;
 const VideoEpisodeMenu = ({
   activeId,
   items,
+  onChangeOpened,
   onSelect,
 }: VideoEpisodeMenuProps) => {
   /** 开合只由 hover 意图管：进入按钮 / 弹层即开，离开即收；点条目不依赖点击开合 */
   const [opened, setOpened] = useState(false);
 
-  const open = () => setOpened(true);
-  const close = () => setOpened(false);
+  /** 开合同时上报上层：上层据此判断「有没有弹层开着」，点画面只收弹层、不切播放 */
+  const applyOpened = (next: boolean) => {
+    setOpened(next);
+    onChangeOpened?.(next);
+  };
+
+  const open = () => applyOpened(true);
+  const close = () => applyOpened(false);
 
   return (
     <Popover
       offset={8}
-      onChange={setOpened}
+      onChange={applyOpened}
       opened={opened}
       position="bottom-end"
       shadow="md"

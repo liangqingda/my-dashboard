@@ -52,6 +52,8 @@ const VideoPreviewModal = ({
   const [switchTick, setSwitchTick] = useState(0);
   /** 设置面板是否展开：开着手动隐藏 header、并收掉整组快捷键 */
   const [settingsOpen, setSettingsOpen] = useState(false);
+  /** 选集弹层是否展开：与设置面板汇总成「有没有业务弹层开着」 */
+  const [episodeOpen, setEpisodeOpen] = useState(false);
   /** 整屏全屏：走浏览器 Fullscreen API，占整块屏幕 */
   const { active: fullscreen, exit, toggle: toggleBrowserFullscreen } =
     useBrowserFullscreen({
@@ -96,6 +98,15 @@ const VideoPreviewModal = ({
 
   const { capture, capturing, handleHoverFrameGrabberReady } =
     useFrameCapture(videoRef, onCapture);
+
+  /** 任一业务弹层开着：点画面只收弹层，不切播放 */
+  const overlayOpen = settingsOpen || episodeOpen;
+
+  /** 点画面收弹层：设置面板直接关；选集是 hover 弹层，收掉内部开合即可 */
+  const closeOverlay = () => {
+    setSettingsOpen(false);
+    setEpisodeOpen(false);
+  };
 
   /** 空格 / 按钮共用：视频还没解出画面时按了不动 */
   const togglePlay = useCallback(() => {
@@ -213,6 +224,7 @@ const VideoPreviewModal = ({
       }}
       headerHidden={!headerVisible}
       headerOverlay
+      innerClassName={viewportFullscreen ? styles.innerFullscreen : undefined}
       media={{
         onToggleMute: toggleMute,
         onTogglePlay: settings.spaceMode === 'play' ? togglePlay : undefined,
@@ -242,6 +254,7 @@ const VideoPreviewModal = ({
               capturing={capturing}
               items={items}
               onCapture={() => void capture(settings.captureDir)}
+              onEpisodeChangeOpened={setEpisodeOpen}
               onOpenExternal={
                 onOpenExternal ? () => onOpenExternal(activeItem.id) : undefined
               }
@@ -274,7 +287,9 @@ const VideoPreviewModal = ({
             onPrevious: stepBackward,
             previousLabel: stepPreviousLabel,
           }}
+          onCloseOverlay={closeOverlay}
           onHoverFrameGrabberReady={handleHoverFrameGrabberReady}
+          overlayOpen={overlayOpen}
           previewScale={settings.previewScale / 100}
           src={activeItem.src}
           videoRef={videoRef}

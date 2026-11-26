@@ -42,6 +42,8 @@ export type VideoFooterActionsProps = {
   settingsOpen: boolean;
   /** 设置面板开合回调 */
   onSettingsChangeOpened: (opened: boolean) => void;
+  /** 选集弹层开合回调：上层据此汇总「有没有弹层开着」，点画面只收弹层、不切播放 */
+  onEpisodeChangeOpened?: (opened: boolean) => void;
   /** 网页全屏（框体铺满视口）是否开启 */
   viewportFullscreen: boolean;
   /** 切网页全屏 */

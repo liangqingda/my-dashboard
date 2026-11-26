@@ -67,6 +67,7 @@ const FreeModal = ({
   headerSecondary,
   headerTail,
   height = 'reading',
+  innerClassName,
   media,
   nav,
   onClose,
@@ -155,6 +156,7 @@ const FreeModal = ({
           fullscreen?.active && styles.contentFullscreen,
           contentClassName,
         ),
+        inner: innerClassName,
         header: cx(
           styles.header,
           headerOverlay && styles.headerOverlay,

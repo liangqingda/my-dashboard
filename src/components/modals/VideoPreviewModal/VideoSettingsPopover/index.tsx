@@ -198,10 +198,6 @@ const VideoSettingsPopover = ({
                 aria-label="悬停预览大小"
                 flex={1}
                 label={(value) => `${value}%`}
-                marks={[
-                  { label: `${MIN_PREVIEW_SCALE}%`, value: MIN_PREVIEW_SCALE },
-                  { label: `${MAX_PREVIEW_SCALE}%`, value: MAX_PREVIEW_SCALE },
-                ]}
                 max={MAX_PREVIEW_SCALE}
                 min={MIN_PREVIEW_SCALE}
                 onChange={onPreviewScaleChange}

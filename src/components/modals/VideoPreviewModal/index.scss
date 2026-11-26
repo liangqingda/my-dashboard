@@ -9,10 +9,21 @@
   min-height: 0;
 }
 
-/* 网页全屏：框体铺满视口，去掉外边距、描边与圆角（与整屏全屏同一套外观，只是不进浏览器全屏） */
+/* 网页全屏时清掉 Mantine 内层容器两侧 5vw 内边距（与外壳的整屏全屏同口径） */
+.innerFullscreen {
+  padding-inline: 0;
+}
+
+/*
+ * 网页全屏：框体铺满视口，去掉外边距、描边与圆角（与整屏全屏同一套外观，只是不进浏览器全屏）。
+ * 内容层还要压掉 Mantine 自己的 `flex: 0 0 var(--modal-size)` 基准宽；
+ * 内层容器的 `padding-inline: 5vw` 由 `.innerFullscreen` 一并清零，否则宽度被两侧内边距挤掉。
+ */
 .viewportFullscreen {
+  flex: 0 0 auto;
   width: 100vw;
   height: 100dvh;
+  max-width: 100vw;
   max-height: 100dvh;
   margin: 0;
   border: 0;

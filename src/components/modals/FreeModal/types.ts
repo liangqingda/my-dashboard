@@ -145,6 +145,8 @@ export type FreeModalProps = {
   closeLabel?: string;
   /** 追加到框体上的类名（只加增量，不复制框体样式） */
   contentClassName?: string;
+  /** 追加到 Mantine 内层定位容器上的类名（全屏时清掉它两侧的 5vw 内边距） */
+  innerClassName?: string;
   /** 追加到正文容器上的类名 */
   bodyClassName?: string;
   /**

@@ -31,6 +31,7 @@ const VideoFooterActions = ({
   capturing,
   items,
   onCapture,
+  onEpisodeChangeOpened,
   onOpenExternal,
   onRequestDelete,
   onSelect,
@@ -42,7 +43,12 @@ const VideoFooterActions = ({
   viewportFullscreen,
 }: VideoFooterActionsProps) => (
   <>
-    <VideoEpisodeMenu activeId={activeId} items={items} onSelect={onSelect} />
+    <VideoEpisodeMenu
+      activeId={activeId}
+      items={items}
+      onChangeOpened={onEpisodeChangeOpened}
+      onSelect={onSelect}
+    />
 
     {onRequestDelete ? (
       <FreeIconAction

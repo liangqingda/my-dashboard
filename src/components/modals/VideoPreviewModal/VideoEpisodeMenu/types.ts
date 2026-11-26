@@ -13,4 +13,6 @@ export type VideoEpisodeMenuProps = {
   activeId: string;
   /** 点选某一条 */
   onSelect: (id: string) => void;
+  /** 弹层开合上报：上层据此判断「有没有弹层开着」，点画面时只收弹层、不切播放 */
+  onChangeOpened?: (opened: boolean) => void;
 };
