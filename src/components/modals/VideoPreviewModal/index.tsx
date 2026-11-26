@@ -10,6 +10,8 @@
  * - 设置面板：按「播放 / 截图 / 快捷键」分组，可改步长、方向键去向、空格去向、悬停预览帧大小
  *   与截图存放目录，全部键位双列列一遍；
  * - 控制栏的两颗箭头在播放键左右两侧，去向跟着「方向键去向」设置：快进 / 后退，或翻篇；
+ * - **双击画面切整屏**（与 `F` 同一档）：单击那一下切成播放 / 暂停要等一个双击窗口，
+ *   第二下到来就把这次播放 / 暂停作废，双击只换尺寸、播放态一点都不动；
  * - **header 与控制栏默认藏着**：打开就看到画面，鼠标一动浮出，静止 1s 收起（两层同一节奏，
  *   暂停也一样收起）；控制栏上挪指针只唤控制栏、不唤 header（操作播放不该顶出标题栏）；设置里可让它「打开即全屏」；
  * - 翻篇（按钮 / 选集 / `[` `]` 都算）后左上角浮出一下「3 / 12」，1 秒后自己收掉（`PreviewCounter`）；
@@ -312,6 +314,7 @@ const VideoPreviewModal = ({
           }}
           onAspectChange={setVideoAspect}
           onCloseOverlay={closeOverlay}
+          onDoubleClick={blocked ? undefined : toggleBrowserFullscreen}
           onHoverFrameGrabberReady={handleHoverFrameGrabberReady}
           overlayOpen={overlayOpen}
           previewScale={settings.previewScale / 100}

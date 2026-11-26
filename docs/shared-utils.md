@@ -28,6 +28,7 @@
 | Markdown 标题目录 | `@/utils/markdown-outline` 的 `extractMarkdownOutline` |
 | 单行 / 两行省略文本（默认中间省略，尾部省略传 `ellipsis="end"`）、截断才提示 | `@/components/texts/FreeTruncatedText` |
 | 悬停 / 聚焦意图 | `@/hooks/useHoverIntent` |
+| 单击 / 双击的区分（单击延后一个双击窗口，第二下到来就作废） | `@/hooks/useSingleOrDoubleClick` |
 | 界面状态的本地持久化（展开 / 收起、全屏、视图形态） | `@/hooks/useStoredState` + `@/utils/local-storage` 的 `FLAG_CODEC` / `STRING_CODEC` / `createChoiceCodec(choices, fallback)` / `createRangedNumberCodec(min, max, fallback)`（滑块这类固定档位，脏值与越界回落默认）；不在组件里直接读写 `localStorage`，也不自己 try/catch |
 | 一个弹窗的整组偏好（同一次阅读的全屏 / 字号 / 目录宽度…） | `@/hooks/useStoredField(key, field, codec)` + `FLAG_FIELD_CODEC` / `createChoiceFieldCodec(choices, fallback)` |
 | 存储键的拼法（不知道键该怎么起名） | `@/utils/page-storage` 的 `pageStorageScope` / `pageStorageKey` / `scopedStorageKey`；细则见下面「存储键的命名」，不要手拼字符串 |

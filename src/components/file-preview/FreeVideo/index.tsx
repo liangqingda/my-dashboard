@@ -10,6 +10,9 @@
  * 控制栏跟画面走：与浮层 header 同一套节奏——打开即收起态，指针一动浮出、静止 1s 收起，
  * 指针停在控制栏上时始终显示；暂停 / 播完也照常收起，不再常驻挡画面。
  *
+ * 点画面：单击切播放 / 暂停；传了 `onDoubleClick` 才接管双击——单击让位一个双击窗口，
+ * 第二下到来就把这次播放 / 暂停作废，双击只执行调用方的动作（视频预览里是切整屏）。
+ *
  * 进度条悬停预览：帧图按指针位置现抽（见 `hooks/use-video-frames`）。预览框宽度取
  * 视频**画面实际显示区域**的 `previewScale`（默认 60%，不是舞台宽度，竖屏视频两侧黑边不算在内），
  * 高度按画面比例算并受舞台高度约束；帧图分辨率跟着预览框 × 设备像素比走，窗口越大越清。
@@ -22,6 +25,7 @@ import { IconAlertTriangleFilled } from '@tabler/icons-react';
 import { Loader } from '@mantine/core';
 import { useMergedRef } from '@mantine/hooks';
 
+import { useSingleOrDoubleClick } from '@/hooks/useSingleOrDoubleClick';
 import { cx } from '@/utils/cx';
 
 import {
@@ -50,6 +54,7 @@ const FreeVideo = ({
   nav,
   onAspectChange,
   onCloseOverlay,
+  onDoubleClick,
   onHoverFrameGrabberReady,
   overlayOpen = false,
   previewScale = SEEK_PREVIEW_SCALE_DEFAULT,
@@ -172,6 +177,16 @@ const FreeVideo = ({
   const togglePlay = () => videoElement.togglePlay();
 
   /**
+   * 单击 / 双击的区分：给了双击动作（视频预览里是切整屏全屏）时，单击切播放要等一个双击窗口，
+   * 第二下到来就把这次播放 / 暂停作废——双击只换尺寸，不闪一下播放态。
+   * 没给双击动作就整组不启用，点画面立刻切播放。
+   */
+  const {
+    onClick: clickStage,
+    onDoubleClick: doubleClickStage,
+  } = useSingleOrDoubleClick(togglePlay, () => onDoubleClick?.());
+
+  /**
    * 点画面：有业务弹层开着时先收弹层、不切播放；否则才是播放 / 暂停。
    * 手势在指针按下那一刻记下：弹层可能在按下阶段先被点外判定关掉，
    * click 时再读 `overlayOpen` 已经是关着的状态，会误判成普通点击切播放。
@@ -191,7 +206,13 @@ const FreeVideo = ({
       return;
     }
 
-    togglePlay();
+    if (onDoubleClick === undefined) {
+      togglePlay();
+
+      return;
+    }
+
+    clickStage();
   };
 
   /** 拖进度条：连续 seek，时间文本跟着走，不等 `timeupdate` */
@@ -215,6 +236,7 @@ const FreeVideo = ({
           disablePictureInPicture
           onCanPlay={videoElement.handleCanPlay}
           onClick={handleVideoClick}
+          onDoubleClick={onDoubleClick === undefined ? undefined : doubleClickStage}
           onEnded={videoElement.handlePause}
           onError={videoElement.handleError}
           onLoadedData={videoElement.handleLoadedData}
