@@ -50,6 +50,11 @@
   gap: 0;
 }
 
+/* 整段 hover：段内边距与间隙处悬停也变色；只认段首直接子级的标题按钮，不带起瓦片操作按钮 */
+.group:hover > button {
+  color: var(--app-accent);
+}
+
 /* 收起动画：外层网格行高 1fr → 0fr，内层裁掉溢出内容 */
 .body {
   display: grid;

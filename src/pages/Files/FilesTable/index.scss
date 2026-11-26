@@ -120,3 +120,8 @@
 .groupRow:hover td {
   background: var(--app-surface-hover);
 }
+
+/* 整行 hover：行内边距处悬停也把标题与箭头变主色；只认单元格直接子级的标题按钮 */
+.groupRow:hover td > button {
+  color: var(--app-accent);
+}

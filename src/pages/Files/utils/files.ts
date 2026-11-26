@@ -209,6 +209,7 @@ export const filterAppsByCategory = (
  * （`hasApps`）——根目录下的 `/Applications` 这类应用目录要能点进去，系统应用目录即使
  * 这一层扫描没标出来也按应用目录处理；包里深层才有的 app
  * 不算，避免 `~/Library` 那种满屏文件夹又被筛出来。
+ * 空文件夹（直属条目数为 0）不含任何分类，不参与分类筛选，始终展示。
  */
 /** 系统应用目录：即使这一层扫描没拿到 `hasApps`，也只可能是放应用的目录，勾 App 时必须露出 */
 const APP_CATALOG_PATHS = new Set(['/Applications', '/System/Applications']);
@@ -247,6 +248,7 @@ export const filterFoldersByCategory = (
 
   return folders.filter(
     (folder) =>
+      folder.itemCount === 0 ||
       (wantApps && isAppFolder(folder)) ||
       folder.categories.some((category) => relevant.includes(category)),
   );
