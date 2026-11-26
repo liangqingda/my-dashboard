@@ -5,7 +5,7 @@ import { isTypingTarget } from '@/utils/typing-target';
 
 import type { MarkdownBlock } from '../types';
 import BlockEditor from '../BlockEditor';
-import { UNDO_DEPTH } from '../constants';
+import { UNDO_BYTES_LIMIT, UNDO_DEPTH } from '../constants';
 import { findBlockIndexForHeading } from '../utils/heading-block';
 import {
   blocksToMarkdown,
@@ -35,6 +35,35 @@ const focusBlock = (root: HTMLElement | null, blockIndex: number): boolean => {
 };
 
 /**
+ * 一份撤销快照：块数组 + 这份正文的字节数（按 Markdown 原文计，用来按总量裁剪）。
+ * 存字节数而不是每次裁剪时重新序列化：一份快照就是一份完整正文，量一次就够了。
+ */
+type UndoEntry = {
+  blocks: MarkdownBlock[];
+  bytes: number;
+};
+
+/**
+ * 把一份快照入栈：先按步数、再按总字节裁剪，至少留一步可撤。
+ * 只按步数封顶会让长笔记的撤销栈随篇幅线性吃内存，按字节封顶才能跟篇幅解耦。
+ */
+const pushUndo = (stack: UndoEntry[], entry: UndoEntry): UndoEntry[] => {
+  const next = [...stack, entry];
+  let bytes = next.reduce((total, item) => total + item.bytes, 0);
+  let drop = 0;
+
+  while (
+    next.length - drop > 1 &&
+    (next.length - drop > UNDO_DEPTH || bytes > UNDO_BYTES_LIMIT)
+  ) {
+    bytes -= next[drop].bytes;
+    drop += 1;
+  }
+
+  return drop > 0 ? next.slice(drop) : next;
+};
+
+/**
  * 学习笔记专用编辑器：进编辑时把正文切成块，表格走受控网格，其余块编辑源码片段。
  *
  * 这是「定制编辑」的参考实现——公共组件只提供插槽，笔记长什么样、怎么改回文本，
@@ -53,7 +82,9 @@ const NoteEditor = ({
   /** 原文件用 CRLF 时写回也用它，不把整个文件的换行都换掉 */
   const [usesCrlf] = useState(() => markdown.includes('\r\n'));
   /** 单元格 / 文本改动的撤销栈；文本框里的撤销仍走浏览器原生 */
-  const history = useRef<MarkdownBlock[][]>([]);
+  const history = useRef<UndoEntry[]>([]);
+  /** 当前草稿的字节数：入栈时给「上一份」记权重，裁剪时不必再序列化一遍 */
+  const draftBytes = useRef(markdown.length);
   const rootRef = useRef<HTMLDivElement | null>(null);
 
   // 进入编辑就把焦点放到第一个可编辑块，键盘用户不用自己找
@@ -88,9 +119,16 @@ const NoteEditor = ({
 
   /** 块列表变化：自己留一份，同时把拼好的 Markdown 交给弹窗当草稿 */
   const handleChange = (next: MarkdownBlock[]) => {
-    history.current = [...history.current.slice(-(UNDO_DEPTH - 1)), blocks];
+    const draft = blocksToMarkdown(next, usesCrlf);
+
+    history.current = pushUndo(history.current, {
+      blocks,
+      bytes: draftBytes.current,
+    });
+    draftBytes.current = draft.length;
+
     setBlocks(next);
-    onChange(blocksToMarkdown(next, usesCrlf));
+    onChange(draft);
   };
 
   /** 撤销上一步结构改动 */
@@ -102,8 +140,9 @@ const NoteEditor = ({
     }
 
     history.current = history.current.slice(0, -1);
-    setBlocks(previous);
-    onChange(blocksToMarkdown(previous, usesCrlf));
+    draftBytes.current = previous.bytes;
+    setBlocks(previous.blocks);
+    onChange(blocksToMarkdown(previous.blocks, usesCrlf));
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {

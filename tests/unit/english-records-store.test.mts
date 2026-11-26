@@ -13,6 +13,7 @@ import {
   readRecordDetail,
   recordCategory,
   recordDetailPath,
+  toRecordSummary,
 } from '../../scripts/vite/english-records-store.ts';
 
 /** 学习中的记录文件：根节点带 records 映射，ID 是映射键 */
@@ -159,6 +160,16 @@ describe('english-records-store', () => {
 
     assert.ok(mastered);
     assert.equal(mastered.masteredTenStreak, 2);
+  });
+
+  it('摘要与详情两条路推导出的字段完全一致', async () => {
+    const summaries = await collectRecordSummaries(repoDir);
+    const fromDetails = (await collectRecordDetails(repoDir)).map(
+      toRecordSummary,
+    );
+
+    // 摘要直出省掉的是「详情对象」，不是字段：两条路必须给出同一份列表数据
+    assert.deepEqual(summaries, fromDetails);
   });
 
   it('按 ID 取详情：先学习库，再已掌握库，取不到返回 null', async () => {

@@ -56,6 +56,9 @@ pnpm check:md   # scripts/md-roundtrip.mts，夹具在 scripts/fixtures/md/
 `NoteEditor` 实现 `onHandleReady`，用 `findBlockIndexForHeading` 把标题换算成块下标，再把该块滚进视野并
 聚焦——编辑态正文不渲染，目录只能由编辑器自己定位。
 
+撤销栈按「步数 + 总字节」双重封顶（`UNDO_DEPTH` / `UNDO_BYTES_LIMIT`）：一份快照就是一份完整块数组，
+只按固定步数裁剪会让长笔记的栈随篇幅线性吃内存。
+
 页面侧的数据拼装见 `src/pages/EnglishNotes/index.tsx`（五列看板 → 弹窗预览，上一篇 / 下一篇只在本列内循环，
 打开时 `GET /api/english/notes?name=…` 只取这一篇，保存时 `PUT /api/english/notes` 写回
 `learning-record-notes/*.md`）；读盘链路（列表只发摘要、正文按名取）见 `docs/local-repo-data.md`。

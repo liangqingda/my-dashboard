@@ -206,12 +206,24 @@ const asReviewHistory = (value: unknown): ReviewHistoryEntry[] => {
     .toSorted((a, b) => Date.parse(b.reviewedAt) - Date.parse(a.reviewedAt));
 };
 
-/** 把一条原始记录摊平成详情；ID / 分类 / 标题这些关键字段缺失时返回 null */
-const toRecordDetail = (
+/** 记录的关键字段：摘要与详情共用同一份推导，两条路不会各算一遍 */
+type RecordShape = {
+  /** 列表与详情都要的字段 */
+  summary: RecordSummary;
+  /** 首次学习时间（已掌握记录用掌握时间兜底） */
+  firstLearnedAt: string | null;
+  /** 最近学习时间（已掌握记录用掌握时间兜底） */
+  lastLearnedAt: string | null;
+  /** 掌握时间；学习中为 null */
+  masteredAt: string | null;
+};
+
+/** 从一条原始记录推出关键字段；ID / 分类 / 状态对不上时返回 null（这条记录丢弃） */
+const recordShapeOf = (
   raw: Record<string, unknown>,
   category: string,
   mastered: boolean,
-): RecordDetail | null => {
+): RecordShape | null => {
   const id = asText(raw.id);
 
   if (!isRecordId(id) || recordCategory(id) !== category) {
@@ -231,30 +243,60 @@ const toRecordDetail = (
   const nextReviewAt = mastered ? null : asIso(raw.next_review_at);
 
   return {
-    categoryKey: category,
+    firstLearnedAt,
+    lastLearnedAt,
+    masteredAt,
+    summary: {
+      categoryKey: category,
+      id,
+      masteredTenStreak: mastered ? asNumber(raw.mastered_ten_streak) : null,
+      masteryScore: mastered ? 10 : asNumberOrNull(raw.mastery_score),
+      nextReviewAt,
+      status,
+      title: asText(raw.title) || id,
+      updatedAt: latestTime([
+        lastReviewedAt,
+        lastLearnedAt,
+        masteredAt,
+        firstLearnedAt,
+      ]),
+    },
+  };
+};
+
+/** 列表摘要：只推导关键字段，讲解 / 例句 / 复习历史连临时对象都不进 */
+const toRecordSummaryOf = (
+  raw: Record<string, unknown>,
+  category: string,
+  mastered: boolean,
+): RecordSummary | null =>
+  recordShapeOf(raw, category, mastered)?.summary ?? null;
+
+/** 把一条原始记录摊平成详情；关键字段缺失 / 不合规时返回 null */
+const toRecordDetail = (
+  raw: Record<string, unknown>,
+  category: string,
+  mastered: boolean,
+): RecordDetail | null => {
+  const shape = recordShapeOf(raw, category, mastered);
+
+  if (shape === null) {
+    return null;
+  }
+
+  return {
+    ...shape.summary,
     example: asText(raw.example),
     explanation: asText(raw.explanation),
-    firstLearnedAt,
-    id,
-    lastLearnedAt,
+    firstLearnedAt: shape.firstLearnedAt,
+    lastLearnedAt: shape.lastLearnedAt,
     lapseCount: mastered ? 0 : asNumber(raw.lapse_count),
     learnedCount: mastered ? 1 : asNumber(raw.learned_count),
-    masteredAt,
-    masteredTenStreak: mastered ? asNumber(raw.mastered_ten_streak) : null,
-    masteryScore: mastered ? 10 : asNumberOrNull(raw.mastery_score),
-    nextReviewAt,
+    masteredAt: shape.masteredAt,
     reviewCount: mastered ? 0 : asNumber(raw.review_count),
     reviewHistory: mastered ? [] : asReviewHistory(raw.review_history),
     source: asText(raw.source),
-    status,
     tags: asTags(raw.tags),
-    title: asText(raw.title) || id,
-    updatedAt: latestTime([
-      lastReviewedAt,
-      lastLearnedAt,
-      masteredAt,
-      firstLearnedAt,
-    ]),
   };
 };
 
@@ -315,66 +357,99 @@ const recordsOf = (raw: unknown, mastered: boolean): unknown[] => {
   return isObject(raw) && isObject(raw.records) ? Object.values(raw.records) : [];
 };
 
-/** 一个目录下的全部记录详情；单文件坏掉只丢那一类，不影响整页 */
-const readDirRecords = async (
+/**
+ * 按分类逐个读一个目录并就地映射成结果。
+ * 同一时刻只有一个分类文件的解析结果在内存里：不为整个目录先攒一份原始记录数组。
+ */
+const mapDirRecords = async <R>(
   repoDir: string,
   directory: string,
   mastered: boolean,
-): Promise<RecordDetail[]> => {
+  map: (raw: Record<string, unknown>, category: string) => R | null,
+): Promise<R[]> => {
   const dir = path.resolve(repoDir, directory);
   const categories = await listCategories(dir);
-  const files = await Promise.all(
-    categories.map((category) =>
-      readJson(path.join(dir, `${category}${RECORD_EXTENSION}`)),
-    ),
-  );
+  const records: R[] = [];
 
-  return files.flatMap((raw, index) => {
-    const category = categories[index];
+  for (const category of categories) {
+    const file = await readJson(path.join(dir, `${category}${RECORD_EXTENSION}`));
 
-    return recordsOf(raw, mastered).flatMap((item) => {
+    for (const item of recordsOf(file, mastered)) {
       if (!isObject(item)) {
-        return [];
+        continue;
       }
 
-      const detail = toRecordDetail(item, category, mastered);
+      const mapped = map(item, category);
 
-      return detail === null ? [] : [detail];
-    });
-  });
+      if (mapped !== null) {
+        records[records.length] = mapped;
+      }
+    }
+  }
+
+  return records;
 };
 
-/** 已掌握记录目录里的一条：字段更精简，`mastered_ten_streak` 是连击计数 */
+/** 一个目录下的全部记录详情；单文件坏掉只丢那一类，不影响整页 */
+const readDirDetails = (
+  repoDir: string,
+  directory: string,
+  mastered: boolean,
+): Promise<RecordDetail[]> =>
+  mapDirRecords(repoDir, directory, mastered, (raw, category) =>
+    toRecordDetail(raw, category, mastered),
+  );
+
+/** 一个目录下的全部记录摘要：只推导关键字段，正文类字段不参与构造 */
+const readDirSummaries = (
+  repoDir: string,
+  directory: string,
+  mastered: boolean,
+): Promise<RecordSummary[]> =>
+  mapDirRecords(repoDir, directory, mastered, (raw, category) =>
+    toRecordSummaryOf(raw, category, mastered),
+  );
+
+/** 列表顺序：按更新时间倒序，未知时间排最后，同一时间按 ID 排稳定 */
+const compareByUpdatedDesc = (a: RecordSummary, b: RecordSummary): number => {
+  const timeA = Date.parse(a.updatedAt);
+  const timeB = Date.parse(b.updatedAt);
+
+  // 没有时间的记录排在最后：列表上是「新 → 旧」，未知时间不该插在中间
+  if (Number.isNaN(timeA) || Number.isNaN(timeB)) {
+    if (Number.isNaN(timeA) && Number.isNaN(timeB)) {
+      return a.id.localeCompare(b.id);
+    }
+
+    return Number.isNaN(timeA) ? 1 : -1;
+  }
+
+  return timeB - timeA || a.id.localeCompare(b.id);
+};
+
+/** 全部记录详情：构建期给每条记录落一份静态文件时用 */
 export const collectRecordDetails = async (
   repoDir: string,
 ): Promise<RecordDetail[]> => {
   const [learning, mastered] = await Promise.all([
-    readDirRecords(repoDir, RECORDS_DIR, false),
-    readDirRecords(repoDir, MASTERED_RECORDS_DIR, true),
+    readDirDetails(repoDir, RECORDS_DIR, false),
+    readDirDetails(repoDir, MASTERED_RECORDS_DIR, true),
   ]);
 
-  return [...learning, ...mastered].toSorted((a, b) => {
-    const timeA = Date.parse(a.updatedAt);
-    const timeB = Date.parse(b.updatedAt);
-
-    // 没有时间的记录排在最后：列表上是「新 → 旧」，未知时间不该插在中间
-    if (Number.isNaN(timeA) || Number.isNaN(timeB)) {
-      if (Number.isNaN(timeA) && Number.isNaN(timeB)) {
-        return a.id.localeCompare(b.id);
-      }
-
-      return Number.isNaN(timeA) ? 1 : -1;
-    }
-
-    return timeB - timeA || a.id.localeCompare(b.id);
-  });
+  return [...learning, ...mastered].toSorted(compareByUpdatedDesc);
 };
 
-/** 列表摘要：进页面只取这一份，详情按 ID 再取 */
+/** 列表摘要：进页面只取这一份，详情按 ID 再取；不为摘要组装详情对象 */
 export const collectRecordSummaries = async (
   repoDir: string,
-): Promise<RecordSummary[]> =>
-  (await collectRecordDetails(repoDir)).map(toRecordSummary);
+): Promise<RecordSummary[]> => {
+  const [learning, mastered] = await Promise.all([
+    readDirSummaries(repoDir, RECORDS_DIR, false),
+    readDirSummaries(repoDir, MASTERED_RECORDS_DIR, true),
+  ]);
+
+  return [...learning, ...mastered].toSorted(compareByUpdatedDesc);
+};
 
 /**
  * 按 ID 取一条详情；记录已经从任一边库里删掉时返回 null。

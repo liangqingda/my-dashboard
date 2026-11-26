@@ -2,7 +2,7 @@
  * learn-english 笔记目录的读写：只认 Markdown 文件，写操作必须留在笔记目录内。
  */
 
-import { readFile, readdir, stat } from 'node:fs/promises';
+import { open, readFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 
 import type { Dirent } from 'node:fs';
@@ -244,21 +244,148 @@ export const toNoteDetail = (note: NoteSnapshot): NoteDetail => ({
   content: note.content,
 });
 
+/** 摘要只读文件头时的字节上限：基础信息表在正文最前面，几 KB 就够 */
+const NOTE_HEAD_BYTES = 16 * 1024;
+
+/** 一次允许同时读进内存的笔记篇数：峰值不随笔记总数线性上涨 */
+const NOTE_READ_CONCURRENCY = 8;
+
+/** 读到的文件头：正文是否被截断（没截断时它就是整篇正文） */
+type NoteHead = {
+  text: string;
+  truncated: boolean;
+};
+
+/**
+ * 读一篇笔记的前若干字节；读不到返回 null。
+ * 超过上限时截到最后一个换行：宁可回落整读，也不把某一行读成半截。
+ */
+const readNoteHead = async (file: string): Promise<NoteHead | null> => {
+  const handle = await open(file, 'r').catch(() => null);
+
+  if (handle === null) {
+    return null;
+  }
+
+  try {
+    const { size } = await handle.stat();
+    const length = Math.min(size, NOTE_HEAD_BYTES);
+
+    if (length === 0) {
+      return { text: '', truncated: false };
+    }
+
+    const buffer = Buffer.alloc(length);
+    const { bytesRead } = await handle.read(buffer, 0, length, 0);
+    const text = buffer.subarray(0, bytesRead).toString('utf8');
+
+    if (size <= NOTE_HEAD_BYTES) {
+      return { text, truncated: false };
+    }
+
+    const cut = text.lastIndexOf('\n');
+
+    return { text: cut >= 0 ? text.slice(0, cut) : '', truncated: true };
+  } catch {
+    return null;
+  } finally {
+    await handle.close();
+  }
+};
+
+/** 三行基础信息表字段：都在才说明整张表落在截断的文件头里 */
+const HEAD_FIELD_PATTERNS = [
+  RECORD_ID_PATTERN,
+  NOTE_UPDATED_AT_PATTERN,
+  NOTE_TOPIC_PATTERN,
+];
+
+/**
+ * 读一篇笔记的摘要：正常笔记只读文件头，不把整篇正文摊进内存。
+ * 文件头被截断且信息表没完整落在里面时回落整读——截断的字段可能只读到半行，
+ * 拿它当摘要会静默改掉更新时间这类值。
+ */
+const readNoteSummary = async (
+  repoDir: string,
+  name: string,
+): Promise<NoteSummary | null> => {
+  let file: string;
+
+  try {
+    file = resolveNoteFile(repoDir, name);
+  } catch {
+    return null;
+  }
+
+  const [head, info] = await Promise.all([
+    readNoteHead(file),
+    stat(file).catch(() => null),
+  ]);
+
+  if (head === null || info === null) {
+    return null;
+  }
+
+  const headIsWholeTable =
+    !head.truncated ||
+    HEAD_FIELD_PATTERNS.every((pattern) => pattern.test(head.text));
+
+  if (!headIsWholeTable) {
+    const note = await readNote(repoDir, name);
+
+    return note === null ? null : toNoteSummary(note);
+  }
+
+  return {
+    categoryKey: noteCategoryKey(head.text, name),
+    name,
+    topic: noteTopic(head.text),
+    updatedAt: noteUpdatedAt(head.text, info.mtime.toISOString()),
+  };
+};
+
+/** 按并发上限跑一组读取，结果与输入同序 */
+const mapWithLimit = async <T, R>(
+  items: readonly T[],
+  limit: number,
+  run: (item: T) => Promise<R>,
+): Promise<R[]> => {
+  const results = new Array<R>(items.length);
+  let next = 0;
+
+  const worker = async (): Promise<void> => {
+    while (next < items.length) {
+      const index = next;
+
+      next += 1;
+      results[index] = await run(items[index]);
+    }
+  };
+
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, () => worker()),
+  );
+
+  return results;
+};
+
 /**
  * 汇总笔记目录下的全部笔记**摘要**，按笔记更新时间倒序。
  *
  * 列表只要摘要：正文留到打开某一篇时再按名取（见 docs/local-repo-data.md），
- * 页面进首屏不再陪着几百篇正文一起下载。
+ * 页面进首屏不再陪着几百篇正文一起下载；读盘也只取文件头、并限制并发，
+ * 摘要这份内存不随笔记总数线性增长。
  */
 export const collectNoteSummaries = async (
   repoDir: string,
 ): Promise<NoteSummary[]> => {
   const names = await listNoteNames(repoDir);
-  const notes = await Promise.all(names.map((name) => readNote(repoDir, name)));
+  const notes = await mapWithLimit(names, NOTE_READ_CONCURRENCY, (name) =>
+    readNoteSummary(repoDir, name),
+  );
 
   return notes
-    .filter((note): note is NoteSnapshot => note !== null)
-    .map((note) => toNoteSummary(note))
+    .filter((note): note is NoteSummary => note !== null)
     .toSorted(
       (a, b) =>
         b.updatedAt.localeCompare(a.updatedAt) || a.name.localeCompare(b.name),

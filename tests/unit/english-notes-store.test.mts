@@ -198,4 +198,68 @@ describe('列表摘要', () => {
       await rm(repo, { force: true, recursive: true });
     }
   });
+
+  it('基础信息表在文件头之外时回落整读，摘要照样正确', async () => {
+    const repo = await mkdtemp(path.join(tmpdir(), 'my-dashboard-notes-'));
+    const notesDir = path.join(repo, 'learning-record-notes');
+
+    await mkdir(path.join(notesDir, 'paper'), { recursive: true });
+    // 20KB 的单行前导把基础信息表顶到文件头之外：只读文件头会连一个字段都取不到
+    const padding = 'x'.repeat(20 * 1024);
+    await writeFile(
+      path.join(notesDir, 'paper', 'paper-cet6.md'),
+      `${padding}\n${noteText('paper:cet6', '套题复盘', '2026-11-09 08:00')}`,
+      'utf8',
+    );
+
+    try {
+      const summaries = await collectNoteSummaries(repo);
+
+      assert.equal(summaries.length, 1);
+
+      const [summary] = summaries;
+
+      assert.equal(summary.name, 'paper/paper-cet6.md');
+      assert.equal(summary.categoryKey, 'paper');
+      assert.equal(summary.topic, '套题复盘');
+      assert.equal(
+        summary.updatedAt,
+        new Date('2026-11-09T08:00:00').toISOString(),
+      );
+    } finally {
+      await rm(repo, { force: true, recursive: true });
+    }
+  });
+
+  it('文件头被截断但信息表完整落在里面时，直接用文件头解析', async () => {
+    const repo = await mkdtemp(path.join(tmpdir(), 'my-dashboard-notes-'));
+    const notesDir = path.join(repo, 'learning-record-notes');
+
+    await mkdir(path.join(notesDir, 'grammar'), { recursive: true });
+    // 信息表在最前面，正文主体把文件顶过 16KB：截断的是正文，不是摘要字段
+    await writeFile(
+      path.join(notesDir, 'grammar', 'grammar-long.md'),
+      `${noteText('grammar:long', '长笔记', '2026-11-10 10:00')}\n${'x'.repeat(
+        20 * 1024,
+      )}`,
+      'utf8',
+    );
+
+    try {
+      const summaries = await collectNoteSummaries(repo);
+
+      assert.equal(summaries.length, 1);
+
+      const [summary] = summaries;
+
+      assert.equal(summary.categoryKey, 'grammar');
+      assert.equal(summary.topic, '长笔记');
+      assert.equal(
+        summary.updatedAt,
+        new Date('2026-11-10T10:00:00').toISOString(),
+      );
+    } finally {
+      await rm(repo, { force: true, recursive: true });
+    }
+  });
 });

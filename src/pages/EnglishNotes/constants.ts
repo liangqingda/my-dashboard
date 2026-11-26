@@ -56,8 +56,15 @@ export const VIEW_MODE_CODEC = createChoiceCodec<NotesViewMode>(
   'board',
 );
 
-/** 笔记编辑器的撤销栈保留步数 */
+/**
+ * 笔记编辑器撤销栈的步数上限：小文档按步数兜底，长文档另受总字节上限约束。
+ * 一份快照就是一份完整块数组，只按固定步数封顶会让栈随篇幅线性吃内存，
+ * 所以再按 `UNDO_BYTES_LIMIT` 按字节裁剪。
+ */
 export const UNDO_DEPTH = 50;
+
+/** 撤销栈的总字节上限：超出就丢最旧的快照，至少保留一步可撤 */
+export const UNDO_BYTES_LIMIT = 2 * 1024 * 1024;
 
 /**
  * 信息表里由记录仓库 / 脚本同步的字段行：编辑器里整行只读。
