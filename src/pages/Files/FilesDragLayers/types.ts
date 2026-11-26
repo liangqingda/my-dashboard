@@ -3,11 +3,17 @@
  * 两套状态都由页面持有，这里只负责接线。
  */
 
+import type { DraggableEntry } from '../types';
 import type { useDragPending } from '../hooks/use-drag-pending';
 import type { useEntryActions } from '../hooks/useEntryActions';
 
 /** 拖拽层的入参 */
 export type FilesDragLayersProps = {
+  /**
+   * 直接拖模式正拖的那一批：这一刻没有移动会话，影像要靠它才画得出来。
+   * 不传（或 null）就仍按会话 / 「往待拖拽区拖」那一程取。
+   */
+  dragEntries: DraggableEntry[] | null;
   /** 待拖拽区状态：攒了哪些条目、正往这儿拖的那一程、移除 / 清空 */
   pending: ReturnType<typeof useDragPending>;
   /** 条目动作编排：起拖入口与移动会话（会话里有「正在拖哪一批」） */

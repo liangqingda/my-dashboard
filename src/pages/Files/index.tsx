@@ -274,7 +274,7 @@ const Files = () => {
           <FilesEntries
             apps={list.visibleApps}
             collapsedGroups={collapsedGroups}
-            dragSource={drag.dragSource}
+            dragPaths={drag.dragPaths}
             dropBlockedPath={drag.dropBlockedPath}
             dropTarget={drag.dropTarget}
             files={list.visibleFiles}
@@ -314,6 +314,7 @@ const Files = () => {
 
       <FilesOverlays
         drag={{
+          dragEntries: drag.dragEntries,
           entryActions,
           onDragAll: drag.handleDragAll,
           onDropPaths: drag.handleTrayDrop,

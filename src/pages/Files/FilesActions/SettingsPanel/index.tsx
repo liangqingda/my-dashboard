@@ -15,6 +15,7 @@
  */
 
 import {
+  Group,
   Loader,
   SegmentedControl,
   Select,
@@ -146,29 +147,32 @@ const SettingsPanel = ({
         </FreePanelField>
       </FreePanelGroup>
 
-      <FreePanelGroup title="拖拽移动">
-        <FreePanelField label="移动方式">
-          <SegmentedControl
-            data={MOVE_MODE_OPTIONS}
-            fullWidth
-            onChange={(value) => onMoveModeChange(value as MoveMode)}
-            size="xs"
-            value={moveMode}
-          />
-        </FreePanelField>
-      </FreePanelGroup>
+      {/* 两组各只有一个字段，并排一行：省下的竖向空间留给下面的视频 / 安全 */}
+      <Group align="stretch" gap="sm" grow wrap="nowrap">
+        <FreePanelGroup title="拖拽移动">
+          <FreePanelField label="移动方式">
+            <SegmentedControl
+              data={MOVE_MODE_OPTIONS}
+              fullWidth
+              onChange={(value) => onMoveModeChange(value as MoveMode)}
+              size="xs"
+              value={moveMode}
+            />
+          </FreePanelField>
+        </FreePanelGroup>
 
-      <FreePanelGroup title="筛选">
-        <FreePanelField label="筛选方式">
-          <SegmentedControl
-            data={FILTER_MODE_OPTIONS}
-            fullWidth
-            onChange={(value) => onFilterModeChange(value as TypeFilterMode)}
-            size="xs"
-            value={filterMode}
-          />
-        </FreePanelField>
-      </FreePanelGroup>
+        <FreePanelGroup title="筛选">
+          <FreePanelField label="筛选方式">
+            <SegmentedControl
+              data={FILTER_MODE_OPTIONS}
+              fullWidth
+              onChange={(value) => onFilterModeChange(value as TypeFilterMode)}
+              size="xs"
+              value={filterMode}
+            />
+          </FreePanelField>
+        </FreePanelGroup>
+      </Group>
 
       <FreePanelGroup title="视频">
         <FreePanelField label="视频点击后">

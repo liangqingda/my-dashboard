@@ -41,7 +41,7 @@ const categoryLabel = (row: FilesRow): string => {
 const FilesTable = memo(
   ({
     collapsedGroups,
-    dragSource,
+    dragPaths,
     dropTarget,
     grouped,
     launchingApp,
@@ -126,7 +126,7 @@ const FilesTable = memo(
       const entry = entryOf(row);
       const isFolder = row.kind === 'folder';
       const isApp = row.kind === 'app';
-      const dragging = !isApp && dragSource === entry.path;
+      const dragging = !isApp && dragPaths.includes(entry.path);
       const dropActive = isFolder && dropTarget === entry.path;
       let onEdit: (() => void) | undefined;
       let onRequestDelete: () => void;

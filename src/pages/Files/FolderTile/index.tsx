@@ -87,6 +87,7 @@ const FolderTile = memo(
       onDrop={onDrop}
     >
       <TileVeil opacity={veilOpacity} />
+      {dropActive ? <span className={styles.dropHint}>松开即移入</span> : null}
       <UnstyledButton
         aria-label={`打开文件夹 ${folder.name}`}
         className={styles.tile}

@@ -15,13 +15,15 @@ import styles from './index.scss';
  * 为什么单独一层：它们都是 `position: fixed` 的浮层，跟列表的布局无关，
  * 挂在页面最外层（弹窗之上都由这一层统一处理），页面只负责把状态递进来。
  *
- * 拖拽影像有两个来源：移动会话（弹窗开着，条目在手里）与「从列表往待拖拽区拖」那一程
- * （`pending.trayDrag`，不开弹窗，松手落在板上就收进来）。
+ * 拖拽影像有三个来源：移动会话（弹窗开着，条目在手里）、「从列表往待拖拽区拖」那一程
+ * （`pending.trayDrag`，不开弹窗，松手落在板上就收进来），以及直接拖模式下自己那批
+ * （`dragEntries`——那一刻没有会话，也只能由页面递进来）。
  *
  * 收尾只摘掉这次**真正移成功**的条目（`movedPaths`）：关窗、Esc 取消时攒下的那些要留着。
  * 弹窗开着时待拖拽区只藏不卸：正在拖的条目就握在这条里，卸载等于取消整次拖拽。
  */
 const FilesDragLayers = ({
+  dragEntries,
   entryActions,
   onDragAll,
   onDropPaths,
@@ -54,7 +56,8 @@ const FilesDragLayers = ({
   }, [movedPaths, pending, session]);
 
   /** 手上的那一批：正在拖的移动会话优先，其次「正往待拖拽区拖」的那一程 */
-  const ghostEntries = (dragActive ? session?.entries : pending.trayDrag) ?? null;
+  const ghostEntries =
+    dragEntries ?? (dragActive ? session?.entries : pending.trayDrag) ?? null;
 
   return (
     <div className={styles.layers}>

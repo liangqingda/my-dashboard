@@ -59,7 +59,7 @@ const previewHandler = (
 const DirectoryGrid = ({
   apps,
   collapsedGroups,
-  dragSource,
+  dragPaths,
   dropBlockedPath,
   dropTarget,
   files,
@@ -150,7 +150,7 @@ const DirectoryGrid = ({
   const renderFolders = () =>
     folders.map((folder) => (
       <FolderTile
-        dragging={dragSource === folder.path}
+        dragging={dragPaths.includes(folder.path)}
         dropActive={dropTarget === folder.path}
         dropBlocked={dropBlockedPath === folder.path}
         folder={folder}
@@ -189,7 +189,7 @@ const DirectoryGrid = ({
 
   const renderFileTile = (file: FileEntry) => (
     <FileTile
-      dragging={dragSource === file.path}
+      dragging={dragPaths.includes(file.path)}
       file={file}
       hideActions={pendingActive}
       key={file.path}

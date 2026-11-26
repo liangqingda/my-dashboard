@@ -26,8 +26,11 @@
 }
 
 /* 正在被拖拽的行 */
+/* 正在被拖走的那一行：压暗 + 一圈虚线（行里缩放会挤到相邻行，不动尺寸） */
 .dragging {
-  opacity: 0.4;
+  opacity: 0.5;
+  outline: 1px dashed var(--app-line-strong);
+  outline-offset: -1px;
 }
 
 /* 文件夹行整行可点（进下一层）：文件行没有打开行为，不给可点光标 */

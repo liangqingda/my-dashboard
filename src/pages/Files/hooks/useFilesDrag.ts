@@ -121,17 +121,28 @@ export const useFilesDrag = ({
     entryActions.dropFolder(path);
   };
 
-  /** 直接拖模式下的高亮与禁用提示走 direct，弹窗模式仍走会话 */
-  const dragSource = isDirect
-    ? (direct.dragging?.[0]?.path ?? null)
-    : entryActions.dragSource;
+  /**
+   * 正在被拖走的条目：直接拖模式拖的可能是一批，全都要弱化；
+   * 弹窗模式列表被弹窗盖住，只留会话那一条也够用
+   */
+  let dragPaths: string[] = [];
+
+  if (isDirect) {
+    dragPaths = (direct.dragging ?? []).map((entry) => entry.path);
+  } else if (entryActions.dragSource !== null) {
+    dragPaths = [entryActions.dragSource];
+  }
+
   const dropTarget = isDirect ? direct.hoverPath : entryActions.dropTarget;
   const dropBlockedPath = isDirect ? direct.blockedPath : null;
+  /** 直接拖模式正拖的那一批：交给拖拽影像跟着指针画，否则拖起来屏幕上看不出拖的是什么 */
+  const dragEntries = isDirect ? direct.dragging : null;
   /** 正在搬的进度：弹窗模式取会话那份，直接拖模式取自己的 */
   const moveProgress = isDirect ? direct.progress : entryActions.dragMove.progress;
 
   return {
-    dragSource,
+    dragEntries,
+    dragPaths,
     dropBlockedPath,
     dropTarget,
     handleDragAll,

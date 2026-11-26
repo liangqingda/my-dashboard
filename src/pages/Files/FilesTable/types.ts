@@ -23,7 +23,8 @@ export type FilesTableProps = {
   /** 切换某一组的展开 / 收起 */
   onToggleGroup: (key: EntryGroupKey) => void;
   /** 当前拖拽源条目路径；null 表示没在拖拽 */
-  dragSource: string | null;
+  /** 正在被拖走的条目路径（直接拖模式下可能是一批） */
+  dragPaths: string[];
   /** 当前悬停的放置目标文件夹路径；null 表示没有目标 */
   dropTarget: string | null;
   /** 列表正在取数：只有取数期间才给对应文件夹行挂进度 */

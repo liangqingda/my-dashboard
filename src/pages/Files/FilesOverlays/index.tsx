@@ -20,6 +20,7 @@ const FilesOverlays = ({ drag, modals, preview }: FilesOverlaysProps) => {
   return (
     <div className={styles.layers}>
       <FilesDragLayers
+        dragEntries={drag.dragEntries}
         entryActions={drag.entryActions}
         onDragAll={drag.onDragAll}
         onDropPaths={drag.onDropPaths}

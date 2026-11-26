@@ -32,7 +32,8 @@ export type DirectoryGridProps = {
   /** 正在打开的文件夹路径；null 表示没有打开请求在跑 */
   loadingFolder: string | null;
   /** 当前拖拽源条目路径；null 表示没在拖拽 */
-  dragSource: string | null;
+  /** 正在被拖走的条目路径（直接拖模式下可能是一批） */
+  dragPaths: string[];
   /** 当前悬停的放置目标文件夹路径；null 表示没有目标 */
   dropTarget: string | null;
   /** 直接拖模式下的禁用落点（该文件夹在待拖拽区里）；null 表示没有 */

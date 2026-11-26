@@ -19,7 +19,7 @@ import styles from './index.scss';
 const FilesEntries = ({
   apps,
   collapsedGroups,
-  dragSource,
+  dragPaths,
   dropBlockedPath,
   dropTarget,
   files,
@@ -78,7 +78,7 @@ const FilesEntries = ({
         <DirectoryGrid
           apps={apps}
           collapsedGroups={collapsedGroups}
-          dragSource={dragSource}
+          dragPaths={dragPaths}
           dropBlockedPath={dropBlockedPath}
           dropTarget={dropTarget}
           files={files}
@@ -114,7 +114,7 @@ const FilesEntries = ({
       ) : (
         <FilesTable
           collapsedGroups={collapsedGroups}
-          dragSource={dragSource}
+          dragPaths={dragPaths}
           dropTarget={dropTarget}
           grouped={grouped}
           launchingApp={launchingApp}

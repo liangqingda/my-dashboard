@@ -13,12 +13,14 @@ import type { useVideoPreview } from '../hooks/useVideoPreview';
 import type { useAppUninstall } from '../hooks/useAppUninstall';
 import type { useVolumeEject } from '../hooks/useVolumeEject';
 import type { MoveProgress } from '../hooks/use-drag-move/types';
-import type { FileEntry } from '../types';
+import type { DraggableEntry, FileEntry } from '../types';
 
 /** 三层浮层的入参 */
 export type FilesOverlaysProps = {
   /** 拖拽层：待拖拽区状态、条目动作编排、从列表拖进待拖拽区的收件回调 */
   drag: {
+    /** 直接拖模式正拖的那一批（弹窗模式为 null） */
+    dragEntries: DraggableEntry[] | null;
     entryActions: ReturnType<typeof useEntryActions>;
     pending: ReturnType<typeof useDragPending>;
     onDropPaths: (paths: string[]) => void;
