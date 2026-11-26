@@ -63,7 +63,8 @@ const VideoPreviewModal = ({
   const [episodeOpen, setEpisodeOpen] = useState(false);
   /**
    * 片源宽高比：普通窗里正文框按它收，画面正好填满、上下不再各留一截黑底。
-   * 元数据还没解出来先按兜底 16:9 排；换片时回到兜底，等新片子报自己的比例。
+   * 元数据还没解出来先按兜底 16:9 排；换片时**保留上一段的实际比例**，等新片子报自己的比例，
+   * 不先跳回 16:9 再跳一次——那两下尺寸重算就是切上 / 下一段时弹窗闪的原因。
    */
   const [videoAspect, setVideoAspect] = useState(VIDEO_FALLBACK_ASPECT);
   /** 整屏全屏：走浏览器 Fullscreen API，占整块屏幕 */
@@ -190,7 +191,6 @@ const VideoPreviewModal = ({
   /** 翻篇与选集点选共用一个入口：顺手让计数浮标闪一下，比例先回兜底等新片子报上来 */
   const selectItem = (id: string) => {
     setSwitchTick((prev) => prev + 1);
-    setVideoAspect(VIDEO_FALLBACK_ASPECT);
     onSelect(id);
   };
 
@@ -244,7 +244,6 @@ const VideoPreviewModal = ({
       headerOverlay={{
         ignoreSelector: VIDEO_CONTROLS_SELECTOR,
         suspended: settingsOpen || blocked,
-        trigger: 'hover',
       }}
       innerClassName={viewportFullscreen ? styles.innerFullscreen : undefined}
       media={{

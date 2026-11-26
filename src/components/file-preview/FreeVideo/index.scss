@@ -37,8 +37,12 @@
 
 /*
  * 控制栏浮层：绝对定位压在舞台底部，不占布局流——画面铺满整个播放器，
- * 控制栏只是盖在视频上的一层毛玻璃；收起时淡出下移、不接收指针。
+ * 控制栏只是盖在视频上的一层毛玻璃；收起时只做淡出、不接收指针。
  * 音量浮层要往上探出控制栏，这里不能裁切。
+ *
+ * 显隐不再顺手往下挪 12px：里面是 `backdrop-filter` 毛玻璃，位移会让虚化采样区每帧重算，
+ * 出现的那一下就会闪。`will-change` 提前把层留住，避免从 opacity: 0 起播时临时建层、
+ * 首帧来不及虚化。
  */
 .controlsLayer {
   position: absolute;
@@ -46,15 +50,13 @@
   bottom: 0;
   left: 0;
   z-index: 2;
-  transition:
-    opacity 180ms ease,
-    transform 180ms ease;
+  transition: opacity 180ms ease;
+  will-change: opacity;
 }
 
 .controlsLayerHidden {
   opacity: 0;
   pointer-events: none;
-  transform: translateY(12px);
 }
 
 /* 视频按比例完整显示，不留黑边裁切；整块可点，光标提示能切换播放 */

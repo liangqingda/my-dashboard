@@ -10,12 +10,6 @@
   flex: 1 1 auto;
   min-width: 0;
   min-height: 0;
-  cursor: pointer;
-}
-
-/* 裁剪中：画面只认选框拖拽，框外的空白不再提示「可点」 */
-.stageCropping {
-  cursor: default;
 }
 
 /*

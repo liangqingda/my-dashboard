@@ -17,6 +17,10 @@
     saturate(var(--app-glass-saturate));
   backdrop-filter: blur(var(--app-glass-blur-panel))
     saturate(var(--app-glass-saturate));
+  /* 玻璃层提前提升、钉住背面：Chrome 在虚化层刚显形时容易闪一帧未虚化的画面 */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  will-change: backdrop-filter;
 }
 
 /* 进度条容器：占满整行，悬停预览浮层以它为定位祖先。
@@ -53,14 +57,12 @@
     box-shadow 160ms ease;
 }
 
-/* 轨道底：整条都是玻璃，浓淡跟着 hover 走——没 hover 时近乎只剩一层薄玻璃，
-   指针进来才显形（稍厚一点的一层 + 1px 内描边），不再是实色灰条 */
+/* 轨道底：半透明色块，浓淡跟着 hover 走——没 hover 时近乎只剩一层薄玻璃，
+   指针进来才显形（稍厚一点的一层 + 1px 内描边），不再是实色灰条。
+   控制栏本身已经虚化了后面的视频，轨道再叠一层 `backdrop-filter` 只是重复采样，
+   还会和控制栏一起淡入时多抖一层，所以这里只留半透明底色。 */
 .progress .track::before {
   background-color: color-mix(in srgb, var(--app-surface) 20%, transparent);
-  -webkit-backdrop-filter: blur(var(--app-glass-blur-panel))
-    saturate(var(--app-glass-saturate));
-  backdrop-filter: blur(var(--app-glass-blur-panel))
-    saturate(var(--app-glass-saturate));
 }
 
 .progressWrap:hover .track::before {

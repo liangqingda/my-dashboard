@@ -94,26 +94,16 @@ const FreeModal = ({
 
   /**
    * header 浮层：只有媒体预览这类「打开先看画面」的弹窗会传 `headerOverlay`。
-   * 显隐分两种——`hover` 由外壳跟指针收放（暂停 / 设置面板开着时恒可见），
-   * `click` 只认业务侧传的开合状态，指针怎么动都不参与。
+   * 显隐由外壳跟指针收放，弹层 / 二次确认开着时 `suspended` 让它恒为可见。
    */
   const headerIsOverlay = headerOverlay !== undefined;
-  /** 只会对 hover 这一档挂自动隐藏；click 档不监听指针 */
-  const hoverOverlay = headerOverlay?.trigger === 'hover' ? headerOverlay : null;
   const autoHideVisible = useAutoHideHeader({
-    enabled: hoverOverlay !== null && hoverOverlay.suspended !== true,
+    enabled: headerOverlay !== undefined && headerOverlay.suspended !== true,
     holdSelector: MODAL_HEADER_SELECTOR,
-    ignoreSelector: hoverOverlay?.ignoreSelector,
+    ignoreSelector: headerOverlay?.ignoreSelector,
   });
   /** 收起态只对浮层 header 有意义：普通流 header 不参与显隐 */
-  let headerHidden = false;
-
-  if (headerOverlay !== undefined) {
-    headerHidden =
-      headerOverlay.trigger === 'click'
-        ? !(headerOverlay.visible || headerOverlay.suspended === true)
-        : !autoHideVisible;
-  }
+  const headerHidden = headerIsOverlay && !autoHideVisible;
 
   /**
    * 空格关窗与翻页 / 全屏 / 复制 / 删除快捷键：业务弹窗不用各自实现。

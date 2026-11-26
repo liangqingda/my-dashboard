@@ -21,7 +21,7 @@ import { useEffect, useState } from 'react';
 import { HEADER_HIDE_DELAY } from '../constants';
 
 type UseAutoHideHeaderOptions = {
-  /** 是否启用自动隐藏（没有面板压在上面时传 `true`；点开点关的弹窗整组不启用） */
+  /** 是否启用自动隐藏（没有浮层 header 时传 `false`，恒为可见） */
   enabled: boolean;
   /** 静止多久收起（毫秒） */
   delay?: number;

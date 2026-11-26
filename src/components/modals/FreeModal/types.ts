@@ -60,29 +60,18 @@ export type FreeModalMedia = {
 export type FreeModalSeekDirection = 'backward' | 'forward';
 
 /**
- * header 浮层的显隐契约：一条是「跟指针走」，一条是「只认业务侧开合」。
- * 两者的共同前提是 header 已经改成浮层（见 `FreeModalProps.headerOverlay`）。
+ * header 浮层的显隐契约：指针一动浮出、静止 1s 收起。
+ * 前提是 header 已经改成浮层（见 `FreeModalProps.headerOverlay`）。
  */
-export type FreeModalHeaderOverlay =
-  | {
-      /** 指针一动浮出、静止 1s 收起（视频预览用） */
-      trigger: 'hover';
-      /** 暂停唤出并恒为可见：设置面板 / 二次确认开着时传 */
-      suspended?: boolean;
-      /**
-       * 指针在这里面活动不算唤出，指针一进来 header 就收起、也不再排收起计时：
-       * 给播放器控制栏这类自带显隐节奏的 chrome 用——在上面操作不该把 header 顶出来。
-       */
-      ignoreSelector?: string;
-    }
-  | {
-      /** 只按 `visible` 点开点关，指针怎么动都不影响（图片预览用） */
-      trigger: 'click';
-      /** 当前是否显示 */
-      visible: boolean;
-      /** 恒为可见：列表弹层 / 二次确认开着时传（收起态下那些弹层要操作的标题就看不见了） */
-      suspended?: boolean;
-    };
+export type FreeModalHeaderOverlay = {
+  /** 暂停唤出并恒为可见：设置面板 / 二次确认开着时传 */
+  suspended?: boolean;
+  /**
+   * 指针在这里面活动不算唤出，指针一进来 header 就收起、也不再排收起计时：
+   * 给播放器控制栏这类自带显隐节奏的 chrome 用——在上面操作不该把 header 顶出来。
+   */
+  ignoreSelector?: string;
+};
 
 /** 基础弹窗外壳的入参 */
 export type FreeModalProps = {
@@ -103,7 +92,7 @@ export type FreeModalProps = {
    * header 浮层：只给媒体预览（图片 / 视频）这类「打开先看画面」的弹窗用。
    * 给了它，header 就不在正文上方占一行，而是绝对定位浮在正文顶部（相对 `.content`，否则会爬到
    * 视口顶部）、走毛玻璃底；隐藏时淡出上移且不接收指针事件（按钮不卸载）。
-   * 显隐由外壳接管，两种唤出方式二选一：`hover` 跟指针走，`click` 只认业务侧的开合状态。
+   * 显隐由外壳跟指针接管：鼠标一动浮出、静止 1s 收起；`suspended` 暂停唤出。
    */
   headerOverlay?: FreeModalHeaderOverlay;
   /** 媒体快捷键：传了 `media`，空格切播放 / 暂停而不是关窗，`m` / `M` 切静音 */

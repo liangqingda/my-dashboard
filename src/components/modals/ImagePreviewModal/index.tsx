@@ -3,17 +3,16 @@
  *
  * 与视频预览同形，但更朴素——没有播放器，也就没有播放 / 快进 / 截图那一套：
  *
- * - header 是毛玻璃浮层、**默认藏着**（先看整幅图）：点一下图片浮出，再点一下收起；
- *   指针怎么移动都不参与——header 只在点击时开合，不在 hover 时自己浮出 / 自己藏起来；
- * - **双击切全屏**：双击画面进出整屏（与 `F` 同一档）。header 的显隐只认单点——单点会等一个
- *   双击窗口再开合，第二下到来就把这次开合作废，所以双击只换尺寸、header 一动不动
- *   （单击 / 双击的区分走公共的 `useSingleOrDoubleClick`，视频预览双击全屏也是它）；
+ * - header 是毛玻璃浮层、**默认藏着**（先看整幅图）：鼠标一动浮出、静止 1s 收起，
+ *   指针停在 header 上不收起；弹层 / 删除确认 / 裁剪开着时恒可见；
+ * - **双击切全屏**：双击画面进出整屏（与 `F` 同一档）；单击不再开合 header，也不抢双击，
+ *   所以双击即刻换尺寸，不隔一个 300ms 的单击等待窗口；
  * - 图片列表不常驻：header 里的图标按钮点开一层（按钮正下方），列当前目录的全部图片，
- *   点一张切过去并收起；弹层开着时 header 恒可见，此时点图片只收弹层、不切 header 的显隐；
+ *   点一张切过去并收起；弹层开着时 header 恒可见，此时点图片只收弹层，不再切 header 的显隐；
  * - 翻篇（按钮 / 列表 / 键盘都算）后左上角浮出一下「3 / 12」，1 秒后自己收掉（`PreviewCounter`）；
  * - **可放大、可拖着看**：捏合（Safari 的 `gesture*` 与其余浏览器的 `ctrlKey` + `wheel` 都接）缩放到
  *   1–5 倍，放大后按住拖动（含 macOS「三指拖拽」）；手势口径在 `ImageStage/hooks/use-image-zoom-pan/`；
- *   拖完松手的那一次 click 被舞台吞掉，不会顺手把 header 开合一次；双击仍只切全屏，不兼做缩放开关；
+ *   拖完松手的那一次 click 被舞台吞掉；双击只切全屏，不兼做缩放开关；
  * - **裁剪**：header 的裁剪图标进入裁剪态——画面回 1 倍、叠一层可拖动的选框，header 只留「取消 / 保存」，
  *   翻篇 / 全屏 / 删除 / 空格 / 点遮罩全部让位；`Esc` 先退裁剪（由外壳 `onRequestEscape` 接管）、
  *   `Enter` 保存。真正写盘（覆盖源文件 / 另存到「- 裁剪」目录）归调用方 `onCrop`；
@@ -26,16 +25,13 @@
 
 import { useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
-import { UnstyledButton } from '@mantine/core';
 import { IconTrash } from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
 import PreviewCounter from '@/components/feedback/PreviewCounter';
 import FreeModal from '@/components/modals/FreeModal';
 import { useBrowserFullscreen } from '@/hooks/useBrowserFullscreen';
-import { useSingleOrDoubleClick } from '@/hooks/useSingleOrDoubleClick';
 import { useStoredField } from '@/hooks/useStoredField';
-import { cx } from '@/utils/cx';
 import { scopedStorageKey } from '@/utils/page-storage';
 
 import {
@@ -71,24 +67,16 @@ const ImagePreviewModal = ({
     autoEnter: opened && defaultFullscreen,
   });
 
-  /** header 是否显示：只由点画面开合，不打 hover 那套自动显隐 */
-  const [headerVisible, setHeaderVisible] = useState(false);
-  /** header 的弹层（图片列表 / 裁剪设置）是否开着：开着时 header 恒可见、点画面只收弹层 */
+  /** header 的弹层（图片列表 / 裁剪设置）是否开着：开着时 header 恒可见 */
   const [actionsOpen, setActionsOpen] = useState(false);
   /** 翻过几次：每切一张加一，左上角的计数浮标据此浮出再自动收掉 */
   const [switchTick, setSwitchTick] = useState(0);
   /**
-   * 图片固有比例（宽 / 高）与它属于哪一张图：普通窗按它收框，画面正好填满、上下左右不再留黑底。
-   * 绑在 `src` 上而不是清空重设，换图 / 覆盖裁剪后旧比例自动失效，等新图 `load` 再报一次。
+   * 最近一次量到的图片固有比例（宽 / 高）：普通窗按它收框，画面正好填满、上下左右不再留黑底。
+   * 换图时**保留上一张的比例**，等新图 `load` 再报一次——先回到默认大框再缩回来会闪一下；
+   * 比例对不上时最多多撑一张图的时间，比整窗跳一次小得多。
    */
-  const [imageFit, setImageFit] = useState<{ src: string; aspect: number } | null>(
-    null,
-  );
-  /**
-   * 按下画面那一刻弹层是否开着：点外部的收起在指针按下时就发生，`click` 读到的状态已经翻过，
-   * 只能按这次手势的起点判断「这一下是收弹层，还是切 header 显隐」。
-   */
-  const actionsOpenAtDown = useRef(false);
+  const [imageAspect, setImageAspect] = useState<number | null>(null);
   /** 裁剪编码要重新读这张图的原始像素：节点由弹窗持有，舞台只用它 */
   const imageRef = useRef<HTMLImageElement | null>(null);
 
@@ -110,32 +98,20 @@ const ImagePreviewModal = ({
   });
   const cropping = crop.active;
 
-  /**
-   * 点画面：单击等一个双击窗口再开合 header，第二下到来就把这次开合作废（双击只切全屏）。
-   * 走公共的 `useSingleOrDoubleClick`，计时器的清理与「最新动作」都在那一份里管。
-   */
-  const {
-    cancel: cancelStageClick,
-    onClick: clickStage,
-    onDoubleClick: doubleClickStage,
-  } = useSingleOrDoubleClick(
-    () => setHeaderVisible((prev) => !prev),
-    () => {
-      if (blocked || cropping) {
-        return;
-      }
+  /** 双击画面切全屏：单击不挂动作，也就没有「等第二下」的延迟 */
+  const handleStageDoubleClick = () => {
+    if (blocked || cropping) {
+      return;
+    }
 
-      toggle();
-    },
-  );
+    toggle();
+  };
 
   /**
    * 关窗：先退出整屏全屏，再真正关闭，避免弹窗没了页面还停在全屏；
-   * 顺手收起 header、弹层与还没生效的单点计时，下次打开先看整幅图。
+   * 顺手收起弹层，下次打开先看整幅图。
    */
   const requestClose = () => {
-    cancelStageClick();
-    setHeaderVisible(false);
     setActionsOpen(false);
 
     if (document.fullscreenElement === null) {
@@ -163,12 +139,9 @@ const ImagePreviewModal = ({
 
   /*
    * 普通窗按图片固有比例收框：宽度与高度都从同一个比例算，画面正好填满框体。
-   * 整屏全屏要的是铺满屏幕，不参与收框。比例只认当前 `src`：换图 / 覆盖后旧比例立即失效。
+   * 整屏全屏要的是铺满屏幕，不参与收框。比例沿用上一张量到的值，新图 `load` 后再更新，
+   * 换图时不会退回默认大框再缩回来（那一下就是弹窗闪的根源）。
    */
-  const imageAspect =
-    imageFit !== null && imageFit.src === activeItem.src
-      ? imageFit.aspect
-      : null;
   const aspectFrame = !fullscreen && imageAspect !== null;
 
   /** 翻篇与列表点选共用一个入口：随手让计数浮标闪一下 */
@@ -180,27 +153,6 @@ const ImagePreviewModal = ({
   const saveCrop = () => {
     void crop.save(imageRef.current);
   };
-
-  /**
-   * 点画面：裁剪中不切 header、弹层开着时只收弹层；
-   * 否则等一个双击窗口——没等到第二下才切 header 显隐，等到了就交给双击。
-   */
-  const handleStageClick = () => {
-    if (cropping || actionsOpenAtDown.current) {
-      return;
-    }
-
-    clickStage();
-  };
-
-  /** 画面这颗大按钮此刻在做什么：裁剪 / 弹层开着先处理它们，否则说开 / 合 header */
-  let stageLabel = headerVisible ? '收起标题栏' : '显示标题栏';
-
-  if (cropping) {
-    stageLabel = '裁剪中：拖动选框调整范围';
-  } else if (actionsOpen) {
-    stageLabel = '收起标题栏操作';
-  }
 
   return (
     <FreeModal
@@ -236,13 +188,11 @@ const ImagePreviewModal = ({
         />
       }
       /*
-       * header 是浮层：只认点画面开合，指针移动不参与；
+       * header 是浮层：鼠标一动浮出、静止 1s 收起，与视频预览同一套节奏；
        * 弹层、删除确认与裁剪开着时恒可见（那几种状态下要操作的就是 header 上的东西）。
        */
       headerOverlay={{
         suspended: actionsOpen || blocked || cropping,
-        trigger: 'click',
-        visible: headerVisible,
       }}
       headerTail={
         cropping || !onRequestDelete ? undefined : (
@@ -276,15 +226,9 @@ const ImagePreviewModal = ({
       title={activeItem.name}
       trapFocus={!blocked}
     >
-      <UnstyledButton
-        aria-label={stageLabel}
-        className={cx(styles.stage, cropping && styles.stageCropping)}
-        onClick={handleStageClick}
-        onDoubleClick={doubleClickStage}
-        onPointerDown={() => {
-          actionsOpenAtDown.current = actionsOpen;
-        }}
-        type="button"
+      <div
+        className={styles.stage}
+        onDoubleClick={handleStageDoubleClick}
       >
         <ImageStage
           cropRect={crop.rect}
@@ -294,7 +238,7 @@ const ImagePreviewModal = ({
           name={activeItem.name}
           onCropRectChange={crop.setRect}
           onIntrinsicSize={(width, height) =>
-            setImageFit({ aspect: width / height, src: activeItem.src })
+            setImageAspect(width / height)
           }
           src={activeItem.src}
         />
@@ -303,7 +247,7 @@ const ImagePreviewModal = ({
           tick={switchTick}
           total={items.length}
         />
-      </UnstyledButton>
+      </div>
     </FreeModal>
   );
 };
