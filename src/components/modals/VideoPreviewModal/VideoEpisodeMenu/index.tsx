@@ -48,7 +48,7 @@ const VideoEpisodeMenu = ({
       offset={4}
       onChange={applyOpened}
       opened={opened}
-      position="bottom-end"
+      position="top-end"
       shadow="md"
       width={MENU_WIDTH}
       withArrow
