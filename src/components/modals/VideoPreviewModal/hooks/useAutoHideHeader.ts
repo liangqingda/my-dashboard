@@ -75,7 +75,7 @@ export const useAutoHideHeader = (
       }
     };
 
-    /** 指针一有活动就亮出 header；不在「不收起」区域里才重新开始计时 */
+    /** 指针移动 / 滚轮时亮出 header；不在「不收起」区域里才重新开始计时 */
     const reveal = () => {
       show();
 
@@ -116,9 +116,11 @@ export const useAutoHideHeader = (
       restartTimer();
     };
 
-    // 不再在启用时先亮一下：打开预览要先看到画面，第一次动鼠标才浮出 header
+    /*
+     * 启用时先按收起态算，动鼠标才浮出 header。
+     * 只认指针移动 / 滚轮：点击（pointerdown）不唤出——静止时点画面切播放不该把 header 顶出来。
+     */
     window.addEventListener('pointermove', handleActivity);
-    window.addEventListener('pointerdown', handleActivity);
     window.addEventListener('wheel', handleActivity, { passive: true });
     document.addEventListener('pointerleave', handleLeaveWindow);
 
@@ -126,7 +128,6 @@ export const useAutoHideHeader = (
       clearTimer();
 
       window.removeEventListener('pointermove', handleActivity);
-      window.removeEventListener('pointerdown', handleActivity);
       window.removeEventListener('wheel', handleActivity);
       document.removeEventListener('pointerleave', handleLeaveWindow);
     };
