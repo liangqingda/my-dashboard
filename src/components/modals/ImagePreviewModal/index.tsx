@@ -5,6 +5,8 @@
  *
  * - header 是毛玻璃浮层、**默认藏着**（先看整幅图）：点一下图片浮出，再点一下收起；
  *   指针怎么移动都不参与——header 只在点击时开合，不在 hover 时自己浮出 / 自己藏起来；
+ * - **双击切全屏**：双击画面进出整屏（与 `F` 同一档）。header 的显隐只认单点——单点会等一个
+ *   双击窗口再开合，第二下到来就把这次开合作废，所以双击只换尺寸、header 一动不动；
  * - 图片列表不常驻：header 里的图标按钮点开一层（按钮正下方），列当前目录的全部图片，
  *   点一张切过去并收起；弹层开着时 header 恒可见，此时点图片只收弹层、不切 header 的显隐；
  * - 翻篇（按钮 / 列表 / 键盘都算）后左上角浮出一下「3 / 12」，1 秒后自己收掉（`PreviewCounter`）；
@@ -14,7 +16,7 @@
  * - 全屏走浏览器 Fullscreen API，与视频预览同一份 `useBrowserFullscreen`。
  */
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { UnstyledButton } from '@mantine/core';
 import { IconTrash, IconWallpaper } from '@tabler/icons-react';
 
@@ -32,6 +34,12 @@ import styles from './index.scss';
 /** header 图标的尺寸与线宽：与外壳那排图标同一档 */
 const ICON_SIZE = 15;
 const ICON_STROKE = 1.8;
+
+/**
+ * 双击窗口（毫秒）：点画面的单下要等这么久才开合 header，把这段时间留给「第二下」。
+ * 取系统双击间隔的常见上限——太短会把慢一点的连点当两次单点，双击就变成了「先翻一下 header 再全屏」。
+ */
+const DOUBLE_CLICK_WINDOW = 300;
 
 const ImagePreviewModal = ({
   activeId,
@@ -59,12 +67,36 @@ const ImagePreviewModal = ({
    * 只能按这次手势的起点判断「这一下是收弹层，还是切 header 显隐」。
    */
   const listOpenAtDown = useRef(false);
+  /** 单点画面的待办计时：双击的第二下到来时作废，于是双击只切全屏、header 不动 */
+  const stageClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /** 清掉挂着的单点计时（双击到来 / 关窗时用） */
+  const clearStageClickTimer = () => {
+    if (stageClickTimer.current === null) {
+      return;
+    }
+
+    clearTimeout(stageClickTimer.current);
+    stageClickTimer.current = null;
+  };
+
+  /** 卸载时清掉挂着的计时，别让它对着已经关掉的弹窗改状态 */
+  useEffect(
+    () => () => {
+      if (stageClickTimer.current !== null) {
+        clearTimeout(stageClickTimer.current);
+        stageClickTimer.current = null;
+      }
+    },
+    [],
+  );
 
   /**
    * 关窗：先退出整屏全屏，再真正关闭，避免弹窗没了页面还停在全屏；
-   * 顺手收起 header 与列表弹层，下次打开先看整幅图。
+   * 顺手收起 header、列表弹层与还没生效的单点计时，下次打开先看整幅图。
    */
   const requestClose = () => {
+    clearStageClickTimer();
     setHeaderVisible(false);
     setListOpen(false);
 
@@ -100,13 +132,31 @@ const ImagePreviewModal = ({
     onSelect(id);
   };
 
-  /** 点画面：列表弹层开着时只收弹层；否则切 header 的显隐 */
+  /**
+   * 点画面：列表弹层开着时只收弹层；否则等一个双击窗口——没等到第二下才切 header 显隐，
+   * 等到了就交给双击（只切全屏，header 一动不动）。
+   */
   const handleStageClick = () => {
     if (listOpenAtDown.current) {
       return;
     }
 
-    setHeaderVisible((prev) => !prev);
+    clearStageClickTimer();
+    stageClickTimer.current = setTimeout(() => {
+      stageClickTimer.current = null;
+      setHeaderVisible((prev) => !prev);
+    }, DOUBLE_CLICK_WINDOW);
+  };
+
+  /** 双击画面：切整屏全屏（与 `F` 同一档），并作废这一对的 header 开合 */
+  const handleStageDoubleClick = () => {
+    clearStageClickTimer();
+
+    if (blocked) {
+      return;
+    }
+
+    toggle();
   };
 
   /** 画面这颗大按钮此刻在做什么：列表开着先收列表，否则说开 / 合 header */
@@ -187,6 +237,7 @@ const ImagePreviewModal = ({
         aria-label={stageLabel}
         className={styles.stage}
         onClick={handleStageClick}
+        onDoubleClick={handleStageDoubleClick}
         onPointerDown={() => {
           listOpenAtDown.current = listOpen;
         }}
