@@ -15,13 +15,16 @@
  * - `Esc` 在全屏里交给浏览器退出全屏，非全屏才是关窗。
  */
 
+import type { CSSProperties } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import PreviewCounter from '@/components/feedback/PreviewCounter';
 import FreeVideo from '@/components/file-preview/FreeVideo';
+import { VIDEO_FALLBACK_ASPECT } from '@/components/file-preview/FreeVideo/constants';
 import { useBrowserFullscreen } from '@/hooks/useBrowserFullscreen';
 import FreeModal, { MODAL_HEADER_SELECTOR } from '@/components/modals/FreeModal';
 import type { FreeModalSeekDirection } from '@/components/modals/FreeModal/types';
+import { cx } from '@/utils/cx';
 
 import { HEADER_HIDE_DELAY } from './constants';
 import { useAutoHideHeader } from './hooks/useAutoHideHeader';
@@ -54,6 +57,11 @@ const VideoPreviewModal = ({
   const [settingsOpen, setSettingsOpen] = useState(false);
   /** 选集弹层是否展开：与设置面板汇总成「有没有业务弹层开着」 */
   const [episodeOpen, setEpisodeOpen] = useState(false);
+  /**
+   * 片源宽高比：普通窗里正文框按它收，画面正好填满、上下不再各留一截黑底。
+   * 元数据还没解出来先按兜底 16:9 排；换片时回到兜底，等新片子报自己的比例。
+   */
+  const [videoAspect, setVideoAspect] = useState(VIDEO_FALLBACK_ASPECT);
   /** 整屏全屏：走浏览器 Fullscreen API，占整块屏幕 */
   const { active: fullscreen, exit, toggle: toggleBrowserFullscreen } =
     useBrowserFullscreen({
@@ -186,9 +194,10 @@ const VideoPreviewModal = ({
   /** 二次确认层与上层的删除确认同一口径：任一层开着，底下整组键位与焦点都收掉 */
   const interactionBlocked = blocked;
 
-  /** 翻篇与选集点选共用一个入口：顺手让计数浮标闪一下 */
+  /** 翻篇与选集点选共用一个入口：顺手让计数浮标闪一下，比例先回兜底等新片子报上来 */
   const selectItem = (id: string) => {
     setSwitchTick((prev) => prev + 1);
+    setVideoAspect(VIDEO_FALLBACK_ASPECT);
     onSelect(id);
   };
 
@@ -209,6 +218,11 @@ const VideoPreviewModal = ({
   const stepNextLabel = stepSeek
     ? `前进 ${settings.seekStep} 秒（→）`
     : '下一个视频（]）';
+  /**
+   * 只有普通窗才按片源比例收框：网页全屏 / 整屏全屏要的就是铺满屏幕，
+   * 屏幕比例由设备定，收框反而在屏幕边上留一圈弹窗底。
+   */
+  const aspectFrame = !fullscreen && !viewportFullscreen;
 
   return (
     <FreeModal
@@ -216,7 +230,11 @@ const VideoPreviewModal = ({
       closeOnSpace={
         settings.spaceMode === 'close' && !settingsOpen && !interactionBlocked
       }
-      contentClassName={viewportFullscreen ? styles.viewportFullscreen : undefined}
+      contentClassName={cx(
+        viewportFullscreen && styles.viewportFullscreen,
+        aspectFrame && styles.contentAspect,
+      )}
+      contentStyle={{ '--video-aspect': String(videoAspect) } as CSSProperties}
       fullscreen={{
         active: fullscreen,
         onToggle: toggleBrowserFullscreen,
@@ -290,6 +308,7 @@ const VideoPreviewModal = ({
             onPrevious: stepBackward,
             previousLabel: stepPreviousLabel,
           }}
+          onAspectChange={setVideoAspect}
           onCloseOverlay={closeOverlay}
           onHoverFrameGrabberReady={handleHoverFrameGrabberReady}
           overlayOpen={overlayOpen}

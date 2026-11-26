@@ -47,6 +47,7 @@ const FreeVideo = ({
   actions,
   className,
   nav,
+  onAspectChange,
   onCloseOverlay,
   onHoverFrameGrabberReady,
   overlayOpen = false,
@@ -79,7 +80,10 @@ const FreeVideo = ({
   /** 视频元素上的播放 / seek / 音量动作与事件同步，收在 `use-video-element` */
   const videoElement = useVideoElement({
     elementRef: ownRef,
-    onAspect: setVideoAspect,
+    onAspect: (aspect) => {
+      setVideoAspect(aspect);
+      onAspectChange?.(aspect);
+    },
     onBuffering: setBuffering,
     onCurrentTime: setCurrentTime,
     onDuration: setDuration,

@@ -46,6 +46,12 @@ export type FreeVideoProps = {
    * 弹层归属在调用方，播放器只按这个信号决定点画面要不要动播放。
    */
   overlayOpen?: boolean;
+  /**
+   * 报告片源宽高比（宽 / 高）：解出元数据时回调一次。
+   * 播放器自己只用它算悬停预览帧的尺寸；预览容器还要按它决定「框做多大」——
+   * 视频预览弹窗据此把正文框收成同比例，画面正好填满、上下不再留黑底。
+   */
+  onAspectChange?: (aspect: number) => void;
   /** 关闭当前开着的业务弹层：点画面且 `overlayOpen` 时先收弹层，不再切播放 */
   onCloseOverlay?: () => void;
   /**
