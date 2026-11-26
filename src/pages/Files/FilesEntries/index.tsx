@@ -12,6 +12,7 @@ import { cx } from '@/utils/cx';
 import BlankMoveMask from '../BlankMoveMask';
 import DirectoryGrid from '../DirectoryGrid';
 import FilesTable from '../FilesTable';
+import { useBlankDrop } from '../hooks/useBlankDrop';
 
 import type { FilesEntriesProps } from './types';
 
@@ -70,8 +71,25 @@ const FilesEntries = ({
   /** 连选用的显示顺序（文件夹在前、文件在后）：网格与表格共用这一份 */
   const selectOrder = [...folders, ...files];
 
+  /**
+   * 空白处落手＝搬进当前这一层：挂在**外框**上而不是网格 / 表格上。
+   * 内容在 `ScrollArea` 里，网格只有内容那么高——目录空或条目少时，
+   * 下面那一大片在滚动视口里、不属于网格，挂网格上那块就永远是死区。
+   */
+  const blank = useBlankDrop(onDropBlank);
+
   return (
-    <div className={cx(styles.frame, isGridView && styles.gridFrame)}>
+    <div
+      className={cx(
+        styles.frame,
+        isGridView && styles.gridFrame,
+        blank.blankOver && styles.blankActive,
+      )}
+      {...blank.handlers}
+    >
+      {blank.blankOver ? (
+        <span className={styles.blankHint}>松开即移入当前目录</span>
+      ) : null}
       {movingCurrentDir ? (
         <BlankMoveMask done={folderProgress.done} total={folderProgress.total} />
       ) : null}
@@ -114,7 +132,6 @@ const FilesEntries = ({
             onDragLeaveFolder={onDragLeaveFolder}
             onDragOverFolder={onDragOverFolder}
             onDragStartEntry={onDragStartEntry}
-            onDropBlank={onDropBlank}
             onDropFolder={onDropFolder}
             onEditEntry={onEditEntry}
             onOpenApp={onOpenApp}
@@ -151,7 +168,6 @@ const FilesEntries = ({
             onDragLeaveFolder={onDragLeaveFolder}
             onDragOverFolder={onDragOverFolder}
             onDragStartEntry={onDragStartEntry}
-            onDropBlank={onDropBlank}
             onDropFolder={onDropFolder}
             onEditEntry={onEditEntry}
             onOpenApp={onOpenApp}
