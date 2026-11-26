@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { Portal } from '@mantine/core';
 
 import DragGhost from '../DragGhost';
 import DragTiles from '../DragTiles';
@@ -13,9 +14,10 @@ import styles from './index.scss';
  * 拖拽的三层浮层：待拖拽区 + 跟着指针走的拖拽影像 + 点选加入时的飞入动画，
  * 外加它们与移动会话的收尾联动。
  *
- * 为什么单独一层：影像与飞行动画都是 `position: fixed` 的浮层，跟列表的布局无关。
- * 但待拖拽区不是——全屏时它就地占内容区左侧一列（`inline`），所以这一层挂在页面内容区
- * 那一行里、排在列表**之前**，其余两层不占位置。
+ * 为什么单独一层：待拖拽区全屏时就地占内容区左侧一列（`inline`），所以这一层挂在页面内容区
+ * 那一行里、排在列表**之前**；影像与飞行动画不占位置，但**必须走 portal 挂到文档级**——
+ * 全屏时页面根是 `position: fixed; z-index: 150` 的层叠上下文，留在这里的浮层不管自己写多高的
+ * `z-index` 都被关在 150 这一层里，会被移动弹窗的遮罩（`z-index: 200`）整片盖住。
  *
  * 拖拽影像有三个来源：移动会话（弹窗开着，条目在手里）、「从列表往待拖拽区拖」那一程
  * （`pending.trayDrag`，不开弹窗，松手落在板上就收进来），以及直接拖模式下自己那批
@@ -83,17 +85,21 @@ const FilesDragLayers = ({
         placeholderPath={pending.flight?.entry.path ?? null}
       />
 
-      {/* 直接拖模式拎的是整条瓦片；其它两程仍是一叠小图标 */}
-      {dragEntries === null || dragImage === null ? null : (
-        <DragTiles image={dragImage} many={dragEntries.length > 1 ? dragEntries.length : null} />
-      )}
-      {dragEntries === null && ghostEntries !== null ? (
-        <DragGhost entries={ghostEntries} showCount={pending.trayDrag === null} />
-      ) : null}
+      {/* 影像是「压在一切之上」的那一层：portal 到文档级，才盖得住全屏里的弹窗遮罩 */}
+      <Portal>
+        {/* 直接拖模式拎的是整条瓦片；其它两程仍是一叠小图标 */}
+        {dragEntries === null || dragImage === null ? null : (
+          <DragTiles image={dragImage} many={dragEntries.length > 1 ? dragEntries.length : null} />
+        )}
+        {dragEntries === null && ghostEntries !== null ? (
+          <DragGhost entries={ghostEntries} showCount={pending.trayDrag === null} />
+        ) : null}
 
-      {pending.flight === null ? null : (
-        <PendingFlightLayer flight={pending.flight} onDone={pending.clearFlight} />
-      )}
+        {/* 飞行动画同理：全屏时它也在弹窗之上（收进待拖拽区的那一下正当着弹窗） */}
+        {pending.flight === null ? null : (
+          <PendingFlightLayer flight={pending.flight} onDone={pending.clearFlight} />
+        )}
+      </Portal>
     </div>
   );
 };

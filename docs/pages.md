@@ -81,7 +81,9 @@ library），定一个就一直用它，别两套并存。
    一列、把列表挤到右边），读外壳导出的 `usePageFullscreen()`；**不要自己去读那份存储**——它只在挂载时
    读一次，按按钮改了状态不会跟着变，页面会停在按下去之前的形态上。
    读它的组件必须是**作为 `children` 挂进外壳的那一层**（示例：`FilesWorkspace`）：Provider 包在
-   `children` 外边，页面组件本体是 Provider 的父级，在那里读只会拿到默认的 `false`（全屏后仍是非全屏形态）。刷新时的加载占位
+   `children` 外边，页面组件本体是 Provider 的父级，在那里读只会拿到默认的 `false`（全屏后仍是非全屏形态）。
+   全屏页面根是 `position: fixed` 且带 `z-index`，构成一个层叠上下文：页面内部要压在弹窗之上的浮层
+   （示例：文件页的拖拽影像、飞行动画）得用 `<Portal>` 挂到文档级，写再高的 `z-index` 留在页面里也不管用。刷新时的加载占位
    `src/components/feedback/PageLoading` 按同一份存储（`@/utils/page-fullscreen`）提前判断：目标页是全屏
    就先铺满视口盖住外壳，避免页面 chunk 尚未挂载时先闪一下非全屏界面。
 5. 页面自己的操作按钮通过 `actions` prop 传入，排在上述两个内置按钮之前；有页面按钮时，
