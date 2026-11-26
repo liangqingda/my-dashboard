@@ -1,12 +1,14 @@
 /*
  * 内容区一行：待拖拽区与列表并排。待拖拽区平时是 `position: fixed`（盖在侧栏上、不占这一行的位置）；
  * 全屏时它改成 `position: static`，就成了这一行的第一列——列表被挤到右边，宽度只占剩下那部分。
+ * 两列之间留 8px：待拖拽区平时不进这一行，这条间距只在全屏占列时才起作用。
  */
 
 .workspace {
   display: flex;
   flex: 1 1 auto;
   flex-direction: row;
+  gap: var(--app-space-sm);
   min-width: 0;
   min-height: 0;
 }

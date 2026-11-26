@@ -9,6 +9,9 @@
 `align-self: stretch`）——要「挤开列表」就必须和列表是同一个 flex 行里的兄弟，所以列表不能再直接
 挂在页面正文里，得由这一行包住。
 
+两列之间留 `--app-space-sm`（8px）的间隔（`.workspace` 的 `gap`）；待拖拽区平时不进这一行，
+这条间隔只在全屏占列时才看得见。
+
 ## DOM 顺序是硬要求
 
 拖拽层必须排在 `children` **之前**。`FilesDragLayers` 自己是 `display: contents`，它的子项直接成为
