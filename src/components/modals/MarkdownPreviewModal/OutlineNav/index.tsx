@@ -4,7 +4,8 @@
  * 目录自己占一列、自身滚动，不跟正文一起滚走，也不需要外部拿正文高度来封顶。
  * 有子标题的节点在标题右侧带折叠图标：常规只展开第一个节点和它下面的第一个子级，
  * 全屏预览时默认全部展开（列也放宽）；点标题只会「展开」不会「收起」，收起只能由右侧图标触发。
- * 列宽可以拖右边缘调整，拖到接近左边就收起成一条窄轨（见 `hooks/useOutlineWidth`）。
+ * 列宽可以拖右边缘调整；点一下边缘在展开 / 收起之间对切，拖到接近左边也收起成一条窄轨
+ * （见 `hooks/useOutlineWidth`）。
  */
 
 import { useMemo, useRef, useState } from 'react';
@@ -93,7 +94,10 @@ const OutlineNav = ({
 }: OutlineNavProps) => {
   const tree = useMemo(() => buildMarkdownOutlineTree(headings), [headings]);
   const navRef = useRef<HTMLDivElement | null>(null);
-  const { width, collapsed, handleProps } = useOutlineWidth(navRef, storageKey);
+  const { width, collapsed, dragging, handleProps } = useOutlineWidth(
+    navRef,
+    storageKey,
+  );
   /** 默认展开集合要在下面的派生里当基准，算一次缓存住：全屏全开，常规只开前两层 */
   const defaultExpanded = useMemo(
     () => (fullscreen ? allExpandedKeys(tree) : defaultExpandedKeys(tree)),
@@ -180,6 +184,7 @@ const OutlineNav = ({
         styles.nav,
         fullscreen && styles.navFullscreen,
         collapsed && styles.navCollapsed,
+        dragging && styles.navDragging,
         disabled && styles.disabled,
       )}
       ref={navRef}
@@ -203,7 +208,7 @@ const OutlineNav = ({
         />
       </div>
       <div
-        aria-label={collapsed ? '展开标题目录' : '拖拽调整目录宽度'}
+        aria-label={collapsed ? '展开标题目录' : '收起标题目录'}
         aria-orientation="vertical"
         className={cx(styles.handle, collapsed && styles.handleCollapsed)}
         role="separator"

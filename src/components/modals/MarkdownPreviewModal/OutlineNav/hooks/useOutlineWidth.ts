@@ -1,5 +1,6 @@
 /**
- * 标题目录 sidebar 的可拖拽宽度：拖右边缘改宽度，拖到接近左边就收起。
+ * 标题目录 sidebar 的可拖拽宽度：拖右边缘改宽度，拖到接近左边就收起；点一下边缘在
+ * 展开 / 收起之间对切。
  *
  * 收起不是「删掉这一列」：右边缘留一条贴住正文的窄轨，点它（或往右拖）能还原
  * 上次的宽度。宽度与收起状态和全屏一样记在 localStorage 的偏好对象里（命名空间由调用方给，
@@ -102,6 +103,8 @@ export const useOutlineWidth = (
   );
   /** 拖动中的临时宽度：松手才落存储，避免逐帧写盘 */
   const [dragWidth, setDragWidth] = useState<number | null>(null);
+  /** 是否正在拖拽：拖拽期间关掉宽度过渡，列宽直接跟指针实时走 */
+  const [dragging, setDragging] = useState(false);
   const dragWidthRef = useRef<number | null>(null);
   const originRef = useRef<DragOrigin | null>(null);
 
@@ -137,6 +140,25 @@ export const useOutlineWidth = (
     [preference.width, setPreference],
   );
 
+  /**
+   * 点一下边缘（没拖动）：展开态收起、收起态还原，两者对切。
+   * 收起时量一次当前列宽存下来，还原时回到这个宽度，而不是退回默认档。
+   */
+  const toggleCollapsed = useCallback(() => {
+    if (preference.collapsed) {
+      setPreference({ width: preference.width, collapsed: false });
+
+      return;
+    }
+
+    const current = Math.round(
+      navRef.current?.getBoundingClientRect().width ?? 0,
+    );
+    const restored = current >= OUTLINE_MIN_WIDTH ? current : preference.width;
+
+    setPreference({ width: restored, collapsed: true });
+  }, [navRef, preference, setPreference]);
+
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) {
       return;
@@ -155,6 +177,7 @@ export const useOutlineWidth = (
       maxWidth: clampMaxWidth(availableWidth()),
       moved: false,
     };
+    setDragging(true);
     event.currentTarget.setPointerCapture(event.pointerId);
     event.preventDefault();
     updateDrag(originRef.current.startWidth);
@@ -196,14 +219,15 @@ export const useOutlineWidth = (
     const next = dragWidthRef.current;
 
     updateDrag(null);
+    setDragging(false);
 
     if (next === null) {
       return;
     }
 
-    /* 收起状态下只点了一下窄轨（没有拖动）：还原上次的宽度 */
-    if (preference.collapsed && !origin.moved) {
-      setPreference({ width: preference.width, collapsed: false });
+    /* 没拖动就是点了一下边缘：展开 / 收起对切，不走拖拽落宽 */
+    if (!origin.moved) {
+      toggleCollapsed();
 
       return;
     }
@@ -245,13 +269,10 @@ export const useOutlineWidth = (
 
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
-        setPreference({
-          width: preference.width,
-          collapsed: !preference.collapsed,
-        });
+        toggleCollapsed();
       }
     },
-    [availableWidth, commitWidth, navRef, preference, setPreference],
+    [availableWidth, commitWidth, navRef, preference, setPreference, toggleCollapsed],
   );
 
   return {
@@ -259,6 +280,8 @@ export const useOutlineWidth = (
     width,
     /** 是否收起（只留右边缘那条窄轨） */
     collapsed,
+    /** 是否正在拖拽：期间关掉宽度过渡，列宽跟指针实时走 */
+    dragging,
     /** 拖动条（收起时承担「展开窄轨」）的事件属性 */
     handleProps: {
       onKeyDown: handleKeyDown,

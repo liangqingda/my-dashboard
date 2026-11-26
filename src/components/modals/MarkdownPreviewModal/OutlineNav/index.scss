@@ -22,15 +22,25 @@
   padding: 14px 4px 14px 14px;
   border-right: 1px solid var(--app-line);
   background: var(--preview-chrome, var(--app-surface-subtle));
+  /* 收起 / 展开平滑过渡；拖拽中由 .navDragging 关掉，宽度直接跟指针 */
+  transition:
+    flex-basis 220ms cubic-bezier(0.33, 0, 0.2, 1),
+    width 220ms cubic-bezier(0.33, 0, 0.2, 1),
+    padding 220ms cubic-bezier(0.33, 0, 0.2, 1);
 }
 
-/* 目录内容：收起时整块隐藏，只留拖动条那条窄轨 */
+/* 目录内容：收起时整块淡出隐藏；自身裁掉溢出，列宽收窄期间文字不戳到正文上 */
 .inner {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
   gap: 8px;
+  min-width: 0;
   min-height: 0;
+  overflow: hidden;
+  transition:
+    opacity 160ms ease,
+    visibility 160ms;
 }
 
 /* 全屏预览：目录全展开后层级更深，列跟着放宽、字号回到基准，标题不至于一进来就被省略 */
@@ -41,7 +51,7 @@
 }
 
 /*
- * 收起：宽度归零、内容整块隐藏，只剩右边缘那条 1px 分界线当窄轨的视觉提示。
+ * 收起：宽度归零、内容整块淡出隐藏，只剩右边缘那条 1px 分界线当窄轨的视觉提示。
  * 拖动条是绝对定位在列边缘外的，这里不能用 overflow: hidden 把它一起裁掉。
  */
 .navCollapsed {
@@ -51,7 +61,13 @@
 }
 
 .navCollapsed .inner {
-  display: none;
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* 拖拽中关掉过渡：列宽逐帧跟指针，动画会把宽度拖出一截滞后 */
+.navDragging {
+  transition: none;
 }
 
 /*
@@ -181,11 +197,21 @@
     padding: 10px 12px 8px;
   }
 
+  /* 横带不吃收起偏好：即便存过收起态，内容也照常显示 */
   .navCollapsed .inner {
-    display: flex;
+    opacity: 1;
+    visibility: visible;
   }
 
   .handle {
     display: none;
+  }
+}
+
+/* 减弱动效时收起 / 展开直接到位，不做宽度与淡入淡出过渡 */
+@media (prefers-reduced-motion: reduce) {
+  .nav,
+  .inner {
+    transition: none;
   }
 }
