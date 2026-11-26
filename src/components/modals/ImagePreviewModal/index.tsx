@@ -8,12 +8,13 @@
  * - 翻篇（按钮 / 侧栏 / 键盘都算）后左上角浮出一下「3 / 12」，1 秒后自己收掉（`PreviewCounter`）；
  * - 键盘：`[` / `]` 与 `←` / `→` 都翻篇，`F` 全屏，`Esc` 退出 / 关窗，`Delete` 触发删除确认，
  *   空格关窗（与其它弹窗一致，只有视频弹窗把空格让给了播放）；删除确认开着时整组快捷键收掉；
+ * - header 的「设为桌面墙纸」只打开二次确认层，真正改系统背景归页面的确认层；
  * - 全屏走浏览器 Fullscreen API，与视频预览同一份 `useBrowserFullscreen`。
  */
 
 import { useState } from 'react';
 import { UnstyledButton } from '@mantine/core';
-import { IconPhoto, IconTrash } from '@tabler/icons-react';
+import { IconPhoto, IconTrash, IconWallpaper } from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
 import PreviewCounter from '@/components/feedback/PreviewCounter';
@@ -41,6 +42,7 @@ const ImagePreviewModal = ({
   items,
   onClose,
   onRequestDelete,
+  onRequestWallpaper,
   onSelect,
   opened,
 }: ImagePreviewModalProps) => {
@@ -95,14 +97,23 @@ const ImagePreviewModal = ({
       headerHidden={!chromeVisible}
       headerOverlay={!chromeVisible}
       headerTail={
-        onRequestDelete ? (
-          <FreeIconAction
-            label="删除这张图片（Delete）"
-            onClick={onRequestDelete}
-            tone="danger"
-          >
-            <IconTrash size={ICON_SIZE} stroke={ICON_STROKE} />
-          </FreeIconAction>
+        onRequestDelete || onRequestWallpaper ? (
+          <>
+            {onRequestWallpaper ? (
+              <FreeIconAction label="设为桌面墙纸" onClick={onRequestWallpaper}>
+                <IconWallpaper size={ICON_SIZE} stroke={ICON_STROKE} />
+              </FreeIconAction>
+            ) : null}
+            {onRequestDelete ? (
+              <FreeIconAction
+                label="删除这张图片（Delete）"
+                onClick={onRequestDelete}
+                tone="danger"
+              >
+                <IconTrash size={ICON_SIZE} stroke={ICON_STROKE} />
+              </FreeIconAction>
+            ) : null}
+          </>
         ) : undefined
       }
       nav={{

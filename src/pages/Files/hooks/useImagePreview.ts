@@ -19,6 +19,8 @@ export type UseImagePreviewResult = {
   items: ImagePreviewItem[];
   /** 正在预览的图片路径；null 表示弹窗关闭 */
   activeId: string | null;
+  /** 正在预览的那一条；没在预览时为 null（弹窗 header 的操作要拿它的名字） */
+  activeItem: ImagePreviewItem | null;
   /** 打开某一张图片 */
   openImage: (file: FileEntry) => void;
   /** 切到另一张（翻篇与侧栏点选都走它） */
@@ -52,6 +54,7 @@ export const useImagePreview = (
 
   return {
     activeId: list.activeId,
+    activeItem: items.find((item) => item.id === list.activeId) ?? null,
     closeImage: list.close,
     items,
     openImage: list.open,

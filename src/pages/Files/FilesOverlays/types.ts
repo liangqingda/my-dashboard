@@ -12,6 +12,7 @@ import type { useImagePreview } from '../hooks/useImagePreview';
 import type { useVideoPreview } from '../hooks/useVideoPreview';
 import type { useAppUninstall } from '../hooks/useAppUninstall';
 import type { useVolumeEject } from '../hooks/useVolumeEject';
+import type { useWallpaper } from '../hooks/useWallpaper';
 import type { DraggableEntry, DragTileImage, FileEntry } from '../types';
 
 /** 三层浮层的入参 */
@@ -33,7 +34,7 @@ export type FilesOverlaysProps = {
     /** 这一程拖拽结束：页面统一收掉两套拖拽状态 */
     onTrayDragEnd: () => void;
   };
-  /** 业务弹窗：删除 / 改名 / 卸载 / 推出外接盘 / 拖拽移动 */
+  /** 业务弹窗：删除 / 改名 / 卸载 / 推出外接盘 / 设为桌面墙纸 / 拖拽移动 */
   modals: {
     appUninstall: ReturnType<typeof useAppUninstall>;
     /** 删除条目：弹窗只要其中四个字段，由本层挑 */
@@ -45,6 +46,8 @@ export type FilesOverlaysProps = {
     onPreviewImage: (file: FileEntry) => void;
     onPreviewVideo: (file: FileEntry) => void;
     volumeEject: ReturnType<typeof useVolumeEject>;
+    /** 设为桌面墙纸：待确认图片与请求状态 */
+    wallpaper: ReturnType<typeof useWallpaper>;
   };
   /** 预览层：两套预览 hook、删除请求（预览里也能删）与各预览默认是否全屏 */
   preview: {

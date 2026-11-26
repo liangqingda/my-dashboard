@@ -28,6 +28,8 @@ export type FileTileProps = {
   onEdit?: () => void;
   /** 请求删除这个文件（先弹二次确认） */
   onRequestDelete?: () => void;
+  /** 请求把这张图片设为桌面墙纸（先弹二次确认）；只有图片条目会传 */
+  onSetWallpaper?: () => void;
   /** hover 玻璃层透明度（0–100），页面设置里的滑块；缺省按 100 处理 */
   veilOpacity?: number;
   /** 设置里选的播放器应用名：视频改用外部应用打开时，图标随它变 */

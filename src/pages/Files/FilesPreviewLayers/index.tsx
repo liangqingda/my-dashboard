@@ -47,6 +47,8 @@ export type FilesPreviewLayersProps = {
   onCloseImage: () => void;
   /** 请求删除某个条目（按路径，两扇弹窗共用同一套二次确认） */
   onRequestDelete: (path: string) => void;
+  /** 请求把当前预览的图片设为桌面墙纸（只打开二次确认层，真正设置归确认层） */
+  onRequestWallpaper: () => void;
   /** 删除确认开着：两扇弹窗都收掉快捷键与焦点陷阱 */
   blocked: boolean;
 };
@@ -62,6 +64,7 @@ const FilesPreviewLayers = ({
   onOpenExternal,
   onPickDir,
   onRequestDelete,
+  onRequestWallpaper,
   onSelectImage,
   onSelectVideo,
   videoActiveId,
@@ -95,6 +98,7 @@ const FilesPreviewLayers = ({
       onRequestDelete={
         imageActiveId !== null ? () => onRequestDelete(imageActiveId) : null
       }
+      onRequestWallpaper={onRequestWallpaper}
       onSelect={onSelectImage}
       opened={imageActiveId !== null}
     />

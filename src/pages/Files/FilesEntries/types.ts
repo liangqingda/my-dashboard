@@ -100,6 +100,8 @@ export type FilesEntriesProps = {
   onOpenImage: (file: FileEntry) => void;
   /** 请求删除某个条目 */
   onRequestDeleteEntry: (path: string) => void;
+  /** 请求把某张图片设为桌面墙纸（先弹二次确认；列表与表格共用同一颗按钮） */
+  onSetWallpaper: (file: FileEntry) => void;
   /** 请求卸载某个应用 */
   onRequestUninstallApp: (app: AppEntry) => void;
 };

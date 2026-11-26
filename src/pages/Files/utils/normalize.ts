@@ -240,6 +240,14 @@ export const normalizeCaptureResponse = (payload: unknown): string | null => {
     : null;
 };
 
+/** 归一化 `{ wallpaper }` 换墙纸响应体：返回实际铺上的图片路径，格式不对返回 null */
+export const normalizeWallpaperResponse = (payload: unknown): string | null => {
+  const wallpaper = isObject(payload) ? payload.wallpaper : null;
+  const filePath = isObject(wallpaper) ? asString(wallpaper.path) : '';
+
+  return filePath.length > 0 ? filePath : null;
+};
+
 /** 进程号数组：只留正整数，其余丢掉 */
 const normalizePids = (raw: unknown): number[] =>
   Array.isArray(raw)

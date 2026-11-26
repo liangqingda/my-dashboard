@@ -14,7 +14,7 @@ import styles from './index.scss';
  * 把「扁平 props 一个个传下去」收在这一层，页面正文才只剩列表本身。
  */
 const FilesOverlays = ({ drag, modals, preview }: FilesOverlaysProps) => {
-  const { deleteEntry, favorites, entryActions, ...modalRest } = modals;
+  const { deleteEntry, favorites, entryActions, wallpaper, ...modalRest } = modals;
   const { image, video, ...previewRest } = preview;
 
   return (
@@ -53,10 +53,11 @@ const FilesOverlays = ({ drag, modals, preview }: FilesOverlaysProps) => {
         onPreviewImage={modalRest.onPreviewImage}
         onPreviewVideo={modalRest.onPreviewVideo}
         volumeEject={modalRest.volumeEject}
+        wallpaper={wallpaper}
       />
 
       <FilesPreviewLayers
-        blocked={previewRest.blocked}
+        blocked={previewRest.blocked || wallpaper.request !== null}
         defaultFullscreen={previewRest.defaultFullscreen}
         imageActiveId={image.activeId}
         imageItems={image.items}
@@ -66,6 +67,13 @@ const FilesOverlays = ({ drag, modals, preview }: FilesOverlaysProps) => {
         onOpenExternal={video.openExternal}
         onPickDir={video.pickMediaDir}
         onRequestDelete={previewRest.onRequestDelete}
+        onRequestWallpaper={() => {
+          const active = image.activeItem;
+
+          if (active !== null) {
+            wallpaper.requestWallpaper({ name: active.name, path: active.id });
+          }
+        }}
         onSelectImage={image.selectImage}
         onSelectVideo={video.selectVideo}
         videoActiveId={video.activeId}

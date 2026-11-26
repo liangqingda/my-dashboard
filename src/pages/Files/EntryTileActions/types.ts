@@ -13,6 +13,8 @@ export type EntryTileActionsProps = {
   onEdit?: () => void;
   /** 请求删除本条（先弹二次确认）；应用是「卸载」 */
   onRequestDelete: () => void;
+  /** 请求把这张图片设为桌面墙纸（先弹二次确认）；只有图片条目会传，不传就不画 */
+  onSetWallpaper?: () => void;
   /** 外壳追加的 class，用于挂瓦片自己的 hover 显隐规则 */
   className?: string;
 };

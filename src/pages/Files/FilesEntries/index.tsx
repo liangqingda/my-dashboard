@@ -49,6 +49,7 @@ const FilesEntries = ({
   onRequestDeleteEntry,
   onRequestUninstallApp,
   onSelectRange,
+  onSetWallpaper,
   onToggleGroup,
   onTogglePending,
   pendingActive,
@@ -142,6 +143,7 @@ const FilesEntries = ({
             onRequestDeleteEntry={onRequestDeleteEntry}
             onRequestUninstallApp={onRequestUninstallApp}
             onSelectRange={onSelectRange}
+            onSetWallpaper={onSetWallpaper}
             onToggleGroup={onToggleGroup}
             onTogglePending={onTogglePending}
             pendingActive={pendingActive}
@@ -177,6 +179,7 @@ const FilesEntries = ({
             onRequestDeleteEntry={onRequestDeleteEntry}
             onRequestUninstallApp={onRequestUninstallApp}
             onSelectRange={onSelectRange}
+            onSetWallpaper={onSetWallpaper}
             onToggleGroup={onToggleGroup}
             onTogglePending={onTogglePending}
             pendingActive={pendingActive}

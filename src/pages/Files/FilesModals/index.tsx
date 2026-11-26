@@ -4,12 +4,13 @@ import EjectVolumeConfirm from '../EjectVolumeConfirm';
 import RenameEntryModal from '../RenameEntryModal';
 import UninstallAppConfirm from '../UninstallAppConfirm';
 import VolumeBusyConfirm from '../VolumeBusyConfirm';
+import WallpaperConfirm from '../WallpaperConfirm';
 
 import type { FilesModalsProps } from './types';
 
 /**
- * 文件页的业务弹窗层：删除 / 推出外接盘（含被占用时的第二次确认）/ 卸载应用 / 改名 / 拖拽移动。
- * 只负责把页面层 hook 的状态接到对应弹窗上，顺序与互斥由页面（预览层会锁删除）保证；
+ * 文件页的业务弹窗层：删除 / 推出外接盘（含被占用时的第二次确认）/ 卸载应用 / 改名 / 设为桌面墙纸。
+ * 只负责把页面层 hook 的状态接到对应弹窗上，顺序与互斥由页面（预览层会锁删除与墙纸确认）保证；
  * 拖拽移动弹窗跟着拖拽开合，不是用户点出来的。
  */
 const FilesModals = ({
@@ -22,6 +23,7 @@ const FilesModals = ({
   onPreviewImage,
   onPreviewVideo,
   volumeEject,
+  wallpaper,
 }: FilesModalsProps) => (
   <>
     <DragMoveModal
@@ -77,6 +79,13 @@ const FilesModals = ({
           void entryActions.renameCommit(entryActions.renamingEntry.path, name);
         }
       }}
+    />
+
+    <WallpaperConfirm
+      loading={wallpaper.loading}
+      onCancel={wallpaper.cancel}
+      onConfirm={() => void wallpaper.confirm()}
+      request={wallpaper.request}
     />
   </>
 );

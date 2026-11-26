@@ -110,4 +110,6 @@ export type DirectoryGridProps = {
   onRequestUninstallApp: (app: AppEntry) => void;
   /** 请求删除某个条目（先弹二次确认） */
   onRequestDeleteEntry: (path: string) => void;
+  /** 请求把某张图片设为桌面墙纸（先弹二次确认；只有图片瓦片有这颗按钮） */
+  onSetWallpaper: (file: FileEntry) => void;
 };

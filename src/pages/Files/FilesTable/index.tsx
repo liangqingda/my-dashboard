@@ -69,6 +69,7 @@ const FilesTable = memo(
     onRequestDeleteEntry,
     onRequestUninstallApp,
     onSelectRange,
+    onSetWallpaper,
     selectOrder,
     onToggleGroup,
     onTogglePending,
@@ -246,6 +247,11 @@ const FilesTable = memo(
               kind={row.kind}
               onEdit={onEdit}
               onRequestDelete={onRequestDelete}
+              onSetWallpaper={
+                row.kind === 'file' && row.file.category === 'image'
+                  ? () => onSetWallpaper(row.file)
+                  : undefined
+              }
             />
           </FreeTable.Td>
         </FreeTable.Tr>

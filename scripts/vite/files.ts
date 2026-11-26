@@ -19,6 +19,7 @@
  * - `POST /api/files/uninstall-app`：body `{ path }` 卸载应用包并清理残留，权限不足时弹一次授权窗补删；
  * - `POST /api/files/eject`：body `{ dir }` 推出当前目录所在的外接盘（`diskutil eject`），返回挂载点；
  * - `POST /api/files/capture`：body `{ dataUrl, dir? }` 把一帧 PNG 截图写进 `dir`（缺省用户桌面），返回文件名与绝对路径；
+ * - `POST /api/files/wallpaper`：body `{ path }` 把一张本机图片设为桌面墙纸（所有屏幕与空间）；
  * - `GET /api/files/video-apps`：列出能播放视频的本机应用（`open -a` 用应用名），供设置里选外部播放器；
  * - `POST /api/files/open`：body `{ path, app? }` 用外部播放器打开（`app` 优先，其次 IINA，再回落系统默认），返回 `{ app }`。
  *
@@ -57,6 +58,7 @@ import {
 } from './files-store.js';
 import { readDirSpace } from './files-space.js';
 import { ejectVolume } from './files-volume.js';
+import { setDesktopWallpaper } from './files-wallpaper.js';
 
 /** 截图请求体上限：一帧 PNG 的 base64 通常几 MB，留出余量但拒绝超大载荷 */
 const CAPTURE_BODY_LIMIT = 40 * 1024 * 1024;
@@ -533,7 +535,8 @@ export const files = (): Plugin => ({
         pathname === '/open-app' ||
         pathname === '/uninstall-app' ||
         pathname === '/eject' ||
-        pathname === '/capture'
+        pathname === '/capture' ||
+        pathname === '/wallpaper'
       ) {
         if (req.method !== 'POST') {
           res.statusCode = 405;
@@ -595,6 +598,10 @@ export const files = (): Plugin => ({
             const launched = await launchAppBundle(bodyString(body, 'path'));
 
             res.end(JSON.stringify({ launched }));
+          } else if (pathname === '/wallpaper') {
+            const wallpaper = await setDesktopWallpaper(bodyString(body, 'path'));
+
+            res.end(JSON.stringify({ wallpaper }));
           } else {
             const result = await uninstallAppBundle(bodyString(body, 'path'));
 

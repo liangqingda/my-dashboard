@@ -6,7 +6,7 @@
 
 ## 它锁了什么
 
-- 结构：header（标题 + 张数 / 翻篇 + 全屏 + 删除）→ 正文两列：左侧图片列表、右侧黑底舞台；
+- 结构：header（标题 + 张数 / 翻篇 + 设为桌面墙纸 + 全屏 + 删除）→ 正文两列：左侧图片列表、右侧黑底舞台；
   点遮罩关窗（窗口刚拿回焦点的 400ms 内除外），关闭按钮与 `Esc` 同样有效；
 - `defaultFullscreen` 为真时打开就尝试进整屏（文件页设置里的「图片预览打开即全屏」），
   浏览器不给手势就静默停在这个尺寸；
@@ -17,6 +17,7 @@
   （`PreviewCounter`）：header 与侧栏默认藏着，用户只需要知道「现在第几个」，不必把整条 header 带出来；
   刚打开时（还没翻过）不出现；
 - 删除只开二次确认层（`onRequestDelete` → 页面的 `DeleteEntryConfirm`），不在弹窗里直接删；
+  设为桌面墙纸同理（`onRequestWallpaper` → 页面的 `WallpaperConfirm`），弹窗不碰系统设置；
 - 舞台：整图 `object-fit: contain` 居中装下，加载时压暗并转一个 loader；
   读不出来给「这张图片无法显示」，不留空白也不弹通知。
 
@@ -35,7 +36,7 @@
 ## props
 
 见 `types.ts`：`opened` / `items` / `activeId` / `blocked` / `onClose` / `onSelect` /
-`onRequestDelete`（不传则没有删除按钮与删除键）。
+`onRequestDelete`（不传则没有删除按钮与删除键）/ `onRequestWallpaper`（不传则 header 没有那颗按钮）。
 
 - `items` 的 `id` 用文件路径，与页面的删除、选中状态同一套标识；
 - `src` 由页面用 `imageContentUrl` 拼（`/api/files/image?path=`），弹窗只负责显示；

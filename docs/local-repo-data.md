@@ -171,7 +171,7 @@
 
 | 文件 | 职责 |
 | --- | --- |
-| `scripts/vite/files.ts` | 路由壳：`GET /api/files`（未带 `dir` 回落主目录）、`GET /api/files?dir=…`、`GET /api/files/content?path=…`（视频按 Range 流式读）、`GET /api/files/image?path=…`（图片字节）、`GET /api/files/thumb?path=…`（图片 / 视频缩略图，网格用）、`GET /api/files/video-apps`（能播视频的本机应用）、`GET /api/files/app-icon?path=…`（应用图标 PNG）、`GET /api/files/app-residue?path=…`（卸载残留清单）、`POST /api/files/open-app`（打开应用包）、`POST /api/files/pick-dir`（系统目录选择框）、`POST /api/files/new-folder`、`POST /api/files/rename`、`POST /api/files/move`、`POST /api/files/delete`、`POST /api/files/open`（交给外部播放器）、`POST /api/files/uninstall-app`、`POST /api/files/eject`（body `{ dir, killPids? }`：推出当前目录所在的外接盘，返回 `{ result }`）、`POST /api/files/capture`（视频帧截图写目录，缺省桌面），错误归类成 HTTP 状态码 |
+| `scripts/vite/files.ts` | 路由壳：`GET /api/files`（未带 `dir` 回落主目录）、`GET /api/files?dir=…`、`GET /api/files/content?path=…`（视频按 Range 流式读）、`GET /api/files/image?path=…`（图片字节）、`GET /api/files/thumb?path=…`（图片 / 视频缩略图，网格用）、`GET /api/files/video-apps`（能播视频的本机应用）、`GET /api/files/app-icon?path=…`（应用图标 PNG）、`GET /api/files/app-residue?path=…`（卸载残留清单）、`POST /api/files/open-app`（打开应用包）、`POST /api/files/pick-dir`（系统目录选择框）、`POST /api/files/new-folder`、`POST /api/files/rename`、`POST /api/files/move`、`POST /api/files/delete`、`POST /api/files/open`（交给外部播放器）、`POST /api/files/uninstall-app`、`POST /api/files/eject`（body `{ dir, killPids? }`：推出当前目录所在的外接盘，返回 `{ result }`）、`POST /api/files/capture`（视频帧截图写目录，缺省桌面）、`POST /api/files/wallpaper`（body `{ path }`：把一张本机图片设为桌面墙纸），错误归类成 HTTP 状态码 |
 | `scripts/vite/files-store.ts` | 路径校验、条目归类、应用包从文件夹里分出来单独成列、文件夹直属条目计数、内含分类摘要与「直属是否含应用包」，供类型筛选过滤文件夹、文件归类（视频 / PDF / Markdown / App / 其它）标记、选择器脚本拼装，以及新建 / 重命名 / 移动 / 删除的写盘与冲突拒绝、错误文案与错误码收口 |
 | `scripts/vite/files-handles.ts` | 本进程的读流登记表：`openTrackedStream` 打开即登记、`close` 自动销号，`releaseStreamsUnder` 在推出外接盘前把这一卷下的读流全部销毁并等它们真的关掉。读流生命周期只跟一次响应走，**不在模块里缓存句柄**——缓存一条流等于把整块盘的寿命绑在页面停留时长上 |
 | `scripts/vite/files-picker.ts` | 原生目录选择框：首次把一段 Swift `NSOpenPanel` 源码编进 `node_modules/.cache`，服务启动时后台预热，之后每次选择只起小二进制；编译 / 运行不可用时回落 `osascript` |
@@ -179,6 +179,7 @@
 | `scripts/vite/files-app-icons.ts` | 应用图标按需抽取：从包内 `Contents/Resources` 找 `.icns`，`sips` 转成 PNG，按「包路径 + 修改时间」缓存在临时目录 |
 | `scripts/vite/files-video-apps.ts` | 能播视频的应用清单：扫 `/Applications`、`/System/Applications` 与 `~/Applications` 顶层的 `.app`，读 `Info.plist` 的 `CFBundleDocumentTypes`，声明了视频统一类型标识（或视频扩展名）的才算，按应用名去重；再剔掉 `EXCLUDED_VIDEO_APPS` 里那批「顺带能放视频、但不是播放器」的应用（网盘 / 阅读 / 聊天 / 音乐 / 系统 QuickTime） |
 | `scripts/vite/files-thumbs.ts` | 列表缩略图：图片用 `sips` 缩成 JPEG、视频用 `qlmanage` 抽 QuickLook 一帧，按「路径 + 体积 + 修改时间」缓存在临时目录，转码并发上限 2；转不出来的返回 null，前端回落分类图标 |
+| `scripts/vite/files-wallpaper.ts` | 桌面墙纸：复用图片校验后跑 AppleScript（`System Events` 的 `picture of every desktop`，路径走 `argv` 不拼进脚本正文），自动化未授权（-1743）翻成「去哪儿勾选」，其余失败保留原始输出 |
 | `scripts/vite/files-open.ts` | 外部打开：按「指定应用 → IINA → 系统默认」逐级回落，`open -a <app>` 成功即返回实际用上的应用名 |
 | `scripts/vite/files-media.ts` | 媒体侧只读 / 写盘：视频路径校验与 MIME、`Range` 解析、读流，以及把 PNG 截图写进指定目录（缺省桌面；文件名取本地时间，重名追加序号） |
 | `scripts/vite/files-space.ts` | 卷空间只读侧：解析 `df -kP` 的挂载点与可用块数、按 `/Volumes/` 前缀判定外接卷、拼出 `DirSpace` |
@@ -219,6 +220,10 @@
   （分类表里 `image` 那一档，不收 `.svg`），`Cache-Control: no-store`、支持 `HEAD`；
   浏览器直接把它塞进 `<img src>`，前端通过 `ImagePreviewModal` 消费。
   `content` / `image` / `capture` / `audio` 四个接口都只在开发模式存在。
+- **设为桌面墙纸**：列表里的图片条目（网格 hover 浮出 / 表格行常态）与图片预览 header 各有一颗按钮，
+  都只打开二次确认层（`WallpaperConfirm`），确认后调 `POST /api/files/wallpaper`；中间件先按图片接口的规则校验路径，
+  再用 `System Events` 的 `picture of every desktop` 铺满当前所有屏幕与空间。成功 / 失败走通知，
+  系统没给自动化授权时把 -1743 翻成「去『系统设置 → 隐私与安全性 → 自动化』勾选」。
 - **外部打开**：`POST /api/files/open`（body `{ path, app? }`）用系统 `open` 调起播放器：
   给了 `app` 先试它，其次 `open -a IINA`，再回落 `open <path>`（系统默认播放器），
   返回 `{ app }` 为实际用上的应用名（`default` 表示系统默认播放器）；

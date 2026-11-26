@@ -28,6 +28,7 @@ import {
   normalizeListingResponse,
   normalizePickedResponse,
   normalizeRenamedEntry,
+  normalizeWallpaperResponse,
 } from './normalize';
 import type { PickedDir } from './normalize';
 
@@ -45,6 +46,7 @@ const APP_RESIDUE_ENDPOINT = '/api/files/app-residue';
 const OPEN_APP_ENDPOINT = '/api/files/open-app';
 const UNINSTALL_APP_ENDPOINT = '/api/files/uninstall-app';
 const EJECT_ENDPOINT = '/api/files/eject';
+const WALLPAPER_ENDPOINT = '/api/files/wallpaper';
 
 /** 取数请求的缓存策略：开发态必须实时，静态产物不读这个接口 */
 const REQUEST_INIT: RequestInit = import.meta.env.DEV
@@ -264,6 +266,18 @@ export const captureVideoFrame = async (
   }
 
   return name;
+};
+
+/**
+ * 把一张本机图片设为桌面墙纸：中间件校验图片后交给 System Events 铺满所有桌面。
+ * 失败抛错（如系统没给自动化授权），由调用方弹提示。
+ */
+export const setDesktopWallpaper = async (pathValue: string): Promise<void> => {
+  const payload = await postJson(WALLPAPER_ENDPOINT, { path: pathValue });
+
+  if (normalizeWallpaperResponse(payload) === null) {
+    throw new Error('换墙纸回执格式不符合预期');
+  }
 };
 
 /**

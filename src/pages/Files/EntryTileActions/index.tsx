@@ -1,5 +1,6 @@
 /**
- * 瓦片右上角浮出的操作按钮组：文件夹 / 文件是重命名 + 删除，应用只有卸载一项。
+ * 瓦片右上角浮出的操作按钮组：文件夹 / 文件是重命名 + 删除（图片另加一颗「设为桌面墙纸」），
+ * 应用只有卸载一项。
  * 用图标按钮（`sm` 档 + 16px 图标，与标题栏同档，压在缩略图上不必抢占视野），整组坐在一层玻璃底片上：
  * 缩略图有亮有暗，图标直接压上去会飘，垫一层随主题变的半透明底片才稳。
  * 按钮不挂悬停提示（`tooltip="none"`）：压在缩略图上，浮出的 tip 比按钮本身还抢眼，
@@ -8,7 +9,7 @@
  */
 
 import { memo } from 'react';
-import { IconPencil, IconTrash } from '@tabler/icons-react';
+import { IconPencil, IconTrash, IconWallpaper } from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
 import { cx } from '@/utils/cx';
@@ -23,11 +24,24 @@ import styles from './index.scss';
 const ACTION_ICON_SIZE = 16;
 
 const EntryTileActions = memo(
-  ({ kind, onEdit, onRequestDelete, className }: EntryTileActionsProps) => {
+  ({ kind, onEdit, onRequestDelete, onSetWallpaper, className }: EntryTileActionsProps) => {
     const label = ENTRY_KIND_LABELS[kind];
 
     return (
       <div className={cx(styles.actions, className)} data-tile-actions="true">
+        {onSetWallpaper ? (
+          <FreeIconAction
+            label="设为桌面墙纸"
+            onClick={(event) => {
+              event.stopPropagation();
+              onSetWallpaper();
+            }}
+            size="sm"
+            tooltip="none"
+          >
+            <IconWallpaper size={ACTION_ICON_SIZE} />
+          </FreeIconAction>
+        ) : null}
         {onEdit ? (
           <FreeIconAction
             label={`重命名${label}`}

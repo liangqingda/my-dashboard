@@ -70,6 +70,8 @@ export type FilesTableProps = {
   onRequestUninstallApp: (app: AppEntry) => void;
   /** 请求删除某个条目（先弹二次确认） */
   onRequestDeleteEntry: (path: string) => void;
+  /** 请求把某张图片设为桌面墙纸（先弹二次确认；只有图片行有这颗按钮） */
+  onSetWallpaper: (file: FileEntry) => void;
   /** 拖拽进行中：名称一律不弹 hover 提示（提示会挡在拖拽物上） */
   tipsOff: boolean;
   /** 待拖拽区非空：点条目变成加入 / 移除，不再打开 */

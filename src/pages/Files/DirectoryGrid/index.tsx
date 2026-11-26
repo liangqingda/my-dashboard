@@ -81,6 +81,7 @@ const DirectoryGrid = ({
   onRequestUninstallApp,
   onSelectRange,
   selectOrder,
+  onSetWallpaper,
   onToggleGroup,
   onTogglePending,
   pendingActive,
@@ -197,6 +198,9 @@ const DirectoryGrid = ({
       onOpen={previewHandler(file, onOpenVideo, onOpenImage)}
       onOpenExternal={onOpenExternalVideo}
       onRequestDelete={() => onRequestDeleteEntry(file.path)}
+      onSetWallpaper={
+        file.category === 'image' ? () => onSetWallpaper(file) : undefined
+      }
       pending={pendingSet.has(file.path)}
       tipOff={tipsOff}
       veilOpacity={veilOpacity}

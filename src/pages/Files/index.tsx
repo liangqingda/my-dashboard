@@ -29,6 +29,7 @@ import { useImagePreview } from './hooks/useImagePreview';
 import { useTypeFilter } from './hooks/useTypeFilter';
 import { useVideoPreview } from './hooks/useVideoPreview';
 import { useVolumeEject } from './hooks/useVolumeEject';
+import { useWallpaper } from './hooks/useWallpaper';
 import { describeFilesList } from './utils/entries-view';
 import { describeDirSpace, emptyListingText, isAppCatalogPath } from './utils/files';
 import { pickDirectory } from './utils/files-api';
@@ -109,6 +110,8 @@ const Files = () => {
   /** 图片预览：与视频预览同形，但没有播放 / 截图那一套；整个结果也给浮层层复用 */
   const imagePreview = useImagePreview(listing);
   const { closeImage, openImage } = imagePreview;
+  /** 设为桌面墙纸：列表瓦片的 hover 按钮与预览 header 共用这一套确认流程 */
+  const wallpaper = useWallpaper();
   /** 删除条目：整份结果也给浮层层复用（弹窗的 four 字段从它挑） */
   const entryDelete = useEntryDelete(folders, allFiles, reload, (path) => {
     // 删掉的正好是预览中的那一张：先切到下一条（没有了才关窗）
@@ -296,6 +299,7 @@ const Files = () => {
             onRequestDeleteEntry={requestDelete}
             onRequestUninstallApp={appUninstall.requestUninstall}
             onSelectRange={pending.selectRange}
+            onSetWallpaper={wallpaper.requestWallpaper}
             onToggleGroup={toggleGroup}
             onTogglePending={pending.toggle}
             pendingActive={pending.active}
@@ -332,6 +336,7 @@ const Files = () => {
           onPreviewImage: openImage,
           onPreviewVideo: openVideo,
           volumeEject,
+          wallpaper,
         }}
         preview={{
           blocked: deletingEntry !== null,
