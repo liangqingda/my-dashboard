@@ -295,6 +295,7 @@ const Files = () => {
             onOpenVideo={openVideo}
             onRequestDeleteEntry={requestDelete}
             onRequestUninstallApp={appUninstall.requestUninstall}
+            onSelectRange={pending.selectRange}
             onToggleGroup={toggleGroup}
             onTogglePending={pending.toggle}
             pendingActive={pending.active}

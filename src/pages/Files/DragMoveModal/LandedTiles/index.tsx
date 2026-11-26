@@ -19,7 +19,7 @@ import styles from './index.scss';
  */
 const LandedTiles = ({ items, onReturn }: LandedTilesProps) => (
   <section className={styles.section}>
-    <p className={styles.caption}>本次移入 {items.length} 项 · 点一下放回待拖拽区</p>
+    <p className={styles.caption}>本次移入 · {items.length} 项</p>
     <div className={styles.grid}>
     {items.map((item) => (
       <div className={styles.cell} key={item.id}>

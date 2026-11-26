@@ -16,6 +16,7 @@
 
 import {
   Group,
+  Kbd,
   Loader,
   SegmentedControl,
   Select,
@@ -30,6 +31,7 @@ import FreeInput from '@/components/fields/FreeInput';
 import FreePanelField from '@/components/panels/FreePanelField';
 import FreePanelGroup from '@/components/panels/FreePanelGroup';
 
+import { FILES_SHORTCUTS } from '../../constants';
 import { useVideoApps } from '../../hooks/useVideoApps';
 import type {
   FilesViewMode,
@@ -241,6 +243,31 @@ const SettingsPanel = ({
             size="xs"
           />
         </FreePanelField>
+      </FreePanelGroup>
+
+      <FreePanelGroup layout="stack" title="快捷键">
+        <div className={styles.shortcuts}>
+          {FILES_SHORTCUTS.map((row) => (
+            <Group
+              className={styles.shortcut}
+              gap="sm"
+              justify="space-between"
+              key={row.action}
+              wrap="nowrap"
+            >
+              <Text c="dimmed" className={styles.shortcutAction} size="xs" truncate>
+                {row.action}
+              </Text>
+              <Group gap={4} wrap="nowrap">
+                {row.keys.map((key) => (
+                  <Kbd key={key} size="xs">
+                    {key}
+                  </Kbd>
+                ))}
+              </Group>
+            </Group>
+          ))}
+        </div>
       </FreePanelGroup>
 
       <FreePanelGroup title="预览">

@@ -27,6 +27,17 @@ export type FileCategory = 'video' | 'image' | 'pdf' | 'markdown' | 'app' | 'oth
 export type TypeFilterMode = 'multi' | 'single';
 
 /**
+ * 一条快捷键：动作用一句话说清，键位按「先修饰键、后本体」排成一个个键帽。
+ * 列表页与拖拽弹窗里认的键位都收在 `constants.ts` 的 `FILES_SHORTCUTS`（设置面板直接读那一份）。
+ */
+export type FilesShortcut = {
+  /** 这一下做什么 */
+  action: string;
+  /** 键位：逐枚画成键帽，例如 `['⌘', '点击']` */
+  keys: readonly string[];
+};
+
+/**
  * 拖拽移动的走法：`modal` ＝拖起就开全屏弹窗逐层挑目标（默认）；
  * `direct` ＝不开弹窗，直接把条目拖到列表里的某个文件夹上松手。
  */

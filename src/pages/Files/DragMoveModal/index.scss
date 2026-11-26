@@ -78,6 +78,24 @@
   color: var(--app-ink-soft);
 }
 
+/* 分组段：与列表的分组标题同一套口径（段落之间留一口气） */
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+/* 分组标题：文件夹 / 本次移入各一段，说明这一段装的是什么 */
+.groupLabel {
+  margin: 0;
+  color: var(--app-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  user-select: none;
+}
+
 /* 加载 / 空 / 失败三种提示：换状态时都居中在落点区里，弹窗不跳 */
 .notice {
   margin: auto;

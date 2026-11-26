@@ -7,6 +7,7 @@ import type { DragEvent } from 'react';
 import type { MoveProgress } from '../hooks/use-drag-move/types';
 import type {
   AppEntry,
+  DraggableEntry,
   EntryGroupKey,
   FileEntry,
   FolderEntry,
@@ -55,6 +56,13 @@ export type DirectoryGridProps = {
    * `from` 是点选那一刻瓦片的屏幕矩形，加入时用来播「飞进待拖拽区」的动画。
    */
   onTogglePending: (entry: FolderEntry | FileEntry, from: DOMRect) => void;
+  /**
+   * `Shift` + 点击的连选：把锚点到这一条之间整段收进待拖拽区。
+   * `ordered` 是列表当前的显示顺序（文件夹在前、文件在后），锚点由 `useDragPending` 记着。
+   */
+  onSelectRange: (ordered: DraggableEntry[], path: string) => void;
+  /** 连选用的显示顺序（由列表层按当前可见条目拼好，两个视图共用同一份） */
+  selectOrder: DraggableEntry[];
   /** 拖拽进行中：文件名一律不弹 hover 提示 */
   tipsOff: boolean;
   /** 应用目录（`/Applications` 这类）用定宽列，文件夹与应用同尺寸、不随屏幕拉伸 */

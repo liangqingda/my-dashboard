@@ -1,0 +1,43 @@
+/*
+ * 搬进当前这一层时的全屏遮罩：压暗列表并吃掉点击，把注意力收到中间那张进度卡上。
+ * `position: fixed` 是故意的——它不跟着列表滚动条走，覆盖范围就是整块屏幕。
+ */
+
+.mask {
+  position: fixed;
+  inset: 0;
+  z-index: 645;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(23 37 34 / 16%);
+  backdrop-filter: blur(2px);
+}
+
+/* 进度卡：小、居中、有投影，不挡住「在搬什么」这件事本身 */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 200px;
+  padding: 14px 16px;
+  border-radius: var(--mantine-radius-md);
+  background: var(--app-surface);
+  box-shadow: 0 18px 40px -16px rgb(23 37 34 / 30%);
+}
+
+/* 一行：转圈 + 标题 */
+.head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.title {
+  font-weight: 600;
+}
+
+/* 进度条：卡片宽度铺满 */
+.bar {
+  width: 100%;
+}

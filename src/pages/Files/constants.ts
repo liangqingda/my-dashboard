@@ -18,6 +18,7 @@ import { scopedStorageKey } from '@/utils/page-storage';
 
 import type {
   EntryGroupKey,
+  FilesShortcut,
   FavoriteEntry,
   FileCategory,
   FilesViewMode,
@@ -109,6 +110,24 @@ export const ENTRY_KIND_LABELS = {
   app: '应用',
   file: '文件',
 } as const;
+
+/**
+ * 这一页认的快捷键：**唯一一份**，设置面板「快捷键」组直接读它。
+ *
+ * 加 / 改任何键位（列表的点选、待拖拽区的 Space / Esc、`⌘↑` 回上一级、弹窗里的 C 与 Esc）
+ * 都要同步改这里——否则设置面板上写的就是过期的说明。键位真正生效的地方：
+ * `MenuContentLayout` 的 `onSpace` / `onEscape` / `onNavigateParent`、`utils/entry-click.ts`
+ * 与 `FreeModal` 的 `extraKeys`。
+ */
+export const FILES_SHORTCUTS: readonly FilesShortcut[] = [
+  { action: '待拖拽区非空时，点条目＝加入 / 移出', keys: ['点击'] },
+  { action: '文件夹直接进入（批选到一半想换目录）', keys: ['⌘', '点击'] },
+  { action: '从上次点的那一条连选到这里', keys: ['Shift', '点击'] },
+  { action: '清空待拖拽区', keys: ['Space'] },
+  { action: '清空待拖拽区 / 关闭弹窗', keys: ['Esc'] },
+  { action: '回到上一级目录', keys: ['⌘', '↑'] },
+  { action: '移动弹窗里收藏 / 取消收藏当前目录', keys: ['C'] },
+];
 
 /** 分组键的固定顺序：文件夹 → 应用 → 文件分类，与平铺顺序一致 */
 export const ENTRY_GROUP_KEYS: readonly EntryGroupKey[] = [

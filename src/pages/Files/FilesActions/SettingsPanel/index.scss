@@ -1,5 +1,18 @@
 /* 文件页设置面板：分组与字段的版式走 Free 层，这里只留错误文案 */
 
+/* 快捷键清单：两列铺开，动作在左、键帽在右 */
+.shortcuts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 16px;
+}
+
+/* 单条快捷键：动作放不下时省略，不把键帽挤出去 */
+.shortcutAction {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
 /* 错误文案：只在读播放器列表失败时出现 */
 .hint {
   color: var(--app-ink-faint);

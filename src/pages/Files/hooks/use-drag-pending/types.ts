@@ -31,6 +31,11 @@ export type DragPendingState = {
   addMany: (entries: DraggableEntry[]) => void;
   /** 有就移除、没有就加入：列表里的点选走它；加进去时给个起点就播一记「飞过去」 */
   toggle: (entry: DraggableEntry, from?: DOMRect) => void;
+  /**
+   * 连选（`Shift` + 点击）：把锚点到这一条之间整段收进来，`ordered` 是列表当前的显示顺序。
+   * 锚点跟着最后一次点选走；还没有锚点时只收它自己。
+   */
+  selectRange: (ordered: DraggableEntry[], path: string) => void;
   /** 正在飞的这一条；null 表示没有动画在跑 */
   flight: PendingFlight | null;
   /** 动画播完（或没播成）时收掉它；飞回来的那一条就在这一刻才从 `entries` 里摘掉 */

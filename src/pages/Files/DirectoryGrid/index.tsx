@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { cx } from '@/utils/cx';
 
 import { useBlankDrop } from '../hooks/useBlankDrop';
+import { entryClickIntent } from '../utils/entry-click';
 import AppTile from '../AppTile';
 import EntryGroupHeader from '../EntryGroupHeader';
 import { ENTRY_GROUP_LABELS } from '../constants';
@@ -76,6 +77,8 @@ const DirectoryGrid = ({
   onOpenVideo,
   onRequestDeleteEntry,
   onRequestUninstallApp,
+  onSelectRange,
+  selectOrder,
   onToggleGroup,
   onTogglePending,
   pendingActive,
@@ -157,13 +160,25 @@ const DirectoryGrid = ({
       return;
     }
 
-    // ⌘ / Shift 单独就能起选；待拖拽区一旦非空，普通点击也按「加入 / 移除」算
-    if (!pendingActive && !event.metaKey && !event.shiftKey) {
+    /*
+     * ⌘ + 文件夹＝进入这一层；Shift＝连选；待拖拽区非空时普通点击＝加入 / 移除。
+     * `open` / `ignore` 都不拦事件，让瓦片自己那颗 onClick 照常打开。
+     */
+    const intent = entryClickIntent(event, !('category' in entry), pendingActive);
+
+    if (intent === 'ignore' || intent === 'open') {
       return;
     }
 
     event.preventDefault();
     event.stopPropagation();
+
+    if (intent === 'range') {
+      onSelectRange(selectOrder, entry.path);
+
+      return;
+    }
+
     // 瓦片的屏幕矩形交给页面：加入待拖拽区时用它当飞行动画的起点
     onTogglePending(entry, tile.getBoundingClientRect());
   };

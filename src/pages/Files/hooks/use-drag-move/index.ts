@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import type { DraggableEntry, FolderEntry } from '../../types';
+import { baseNameOfPath, joinDirOf } from '../../utils/files';
 
 import { useHoverTargets } from './use-hover-targets';
 import { useLanded } from './use-landed';
@@ -143,19 +144,31 @@ export const useDragMove = ({
   };
 
   /**
-   * 弹窗里点「本次搬进这个文件夹」的一条：把它从记录里取回、放回手卡
-   * （磁盘上不动，文件本来就留在这个文件夹里），下一次移动就从它的新路径搬走。
+   * 弹窗里点「本次搬进这个文件夹」的一条：把它**真的搬回原目录**再取回手卡。
+   *
+   * 为什么必须动磁盘：只把手卡还原不搬回去的话，这条记录的路径仍在目标文件夹里，
+   * 下一次往同一个文件夹拖会被判成「本来就在里面」而一动不动——看起来就是「再拖没反应」。
+   * 搬回成功才更新会话；失败（同名冲突、盘只读）就留在那里，由 `moveEntry` 自己弹提示。
    */
-  const restoreLanded = (item: LandedItem) => {
+  const restoreLanded = async (item: LandedItem): Promise<boolean> => {
     const active = sessionRef.current;
 
     if (active === null) {
-      return;
+      return false;
     }
 
+    const name = item.entry.name || baseNameOfPath(item.entry.path);
+    const backPath = joinDirOf(item.origin, name);
+    const moved = await moveEntry(item.entry.path, item.origin);
+
+    if (!moved) {
+      return false;
+    }
+
+    const restored: DraggableEntry = { ...item.entry, path: backPath };
     const next: DragMoveSession = {
       ...active,
-      entries: [...sessionLayout(active), item.entry],
+      entries: [...sessionLayout(active), restored],
     };
 
     /*
@@ -169,10 +182,14 @@ export const useDragMove = ({
     setSession(next);
     landed.forget(item.id);
 
-    // 它已经不在「这次搬走的」里了：关窗收尾时别把它从待拖拽区又摘掉一遍
-    movedRef.current = movedRef.current.filter((path) => path !== item.entry.path);
+    // 它已经回到原目录：关窗收尾时别把它从待拖拽区又摘掉（搬前的路径与搬回后的路径都要剔）
+    movedRef.current = movedRef.current.filter(
+      (path) => path !== backPath && path !== item.entry.path,
+    );
     setMovedPaths(movedRef.current);
-    onRestored?.(item.entry);
+    onRestored?.(restored);
+
+    return true;
   };
 
   /** 拖拽结束（松手 / Esc / 落在非落点区域）：条目回到手里，弹窗留着 */

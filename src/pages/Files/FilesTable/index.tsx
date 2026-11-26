@@ -22,6 +22,7 @@ import {
 } from '../constants';
 import type { FileEntry, FilesRow, FolderEntry } from '../types';
 import { useBlankDrop } from '../hooks/useBlankDrop';
+import { entryClickIntent } from '../utils/entry-click';
 import { writeDragPayload } from '../utils/drag-image';
 import { entryOf, groupFilesRows } from '../utils/entries-view';
 import { prefetchVideoHead } from '../utils/video-prefetch';
@@ -66,6 +67,8 @@ const FilesTable = memo(
     onOpenVideo,
     onRequestDeleteEntry,
     onRequestUninstallApp,
+    onSelectRange,
+    selectOrder,
     onToggleGroup,
     onTogglePending,
     pendingActive,
@@ -130,12 +133,25 @@ const FilesTable = memo(
         return;
       }
 
-      if (!pendingActive && !event.metaKey && !event.shiftKey) {
+      /*
+       * ⌘ + 文件夹＝进入这一层；Shift＝连选；待拖拽区非空时普通点击＝加入 / 移除。
+       * `open` / `ignore` 都不拦事件，交给行上的 onClick。
+       */
+      const intent = entryClickIntent(event, !('category' in entry), pendingActive);
+
+      if (intent === 'ignore' || intent === 'open') {
         return;
       }
 
       event.preventDefault();
       event.stopPropagation();
+
+      if (intent === 'range') {
+        onSelectRange(selectOrder, entry.path);
+
+        return;
+      }
+
       onTogglePending(entry, row.getBoundingClientRect());
     };
 

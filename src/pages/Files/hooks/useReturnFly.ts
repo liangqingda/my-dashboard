@@ -15,14 +15,16 @@ import type { LandedItem } from './use-drag-move/types';
 const HAND_TARGET_SIZE = 44;
 const HAND_TARGET_INSET = 16;
 
-/** 入参：取回这一条（`useDragMove.restoreLanded`） */
-export const useReturnFly = (restore: (item: LandedItem) => void) => {
+/** 入参：取回这一条（`useDragMove.restoreLanded`，真的把它搬回原目录，成功返回 true） */
+export const useReturnFly = (restore: (item: LandedItem) => Promise<boolean>) => {
   /** 正在播的一趟回手卡；null 表示没有 */
   const [flight, setFlight] = useState<ReturnFlyProps['flight'] | null>(null);
 
   /**
    * 点一条「搬进这个文件夹的」：先量下它这一格此刻的矩形、拷一份它的样子，
-   * 再把它放回手卡（磁盘上不动），最后让拷贝缩着飞进手卡。
+   * 再把它搬回原目录、放回手卡，最后让拷贝缩着飞进手卡。
+   *
+   * 搬回成功才播动画：搬失败（同名冲突这类）时那一格原样留着，不能先让动画把人骗过去。
    */
   const start = (item: LandedItem, cell: HTMLElement) => {
     const from = cell.getBoundingClientRect();
@@ -34,25 +36,30 @@ export const useReturnFly = (restore: (item: LandedItem) => void) => {
 
     // 拷贝里只留瓦片本体：把盖在上面的「点一下放回」那层摘掉
     node.querySelector('[data-return-hit="true"]')?.remove();
-    restore(item);
 
-    const card = document.querySelector('[data-hand-card="true"]');
+    void restore(item).then((done) => {
+      if (!done) {
+        return;
+      }
 
-    if (!(card instanceof HTMLElement)) {
-      return;
-    }
+      const card = document.querySelector('[data-hand-card="true"]');
 
-    const box = card.getBoundingClientRect();
+      if (!(card instanceof HTMLElement)) {
+        return;
+      }
 
-    setFlight({
-      from,
-      node,
-      to: {
-        height: HAND_TARGET_SIZE,
-        left: box.left + HAND_TARGET_INSET,
-        top: box.top + HAND_TARGET_INSET,
-        width: HAND_TARGET_SIZE,
-      },
+      const box = card.getBoundingClientRect();
+
+      setFlight({
+        from,
+        node,
+        to: {
+          height: HAND_TARGET_SIZE,
+          left: box.left + HAND_TARGET_INSET,
+          top: box.top + HAND_TARGET_INSET,
+          width: HAND_TARGET_SIZE,
+        },
+      });
     });
   };
 

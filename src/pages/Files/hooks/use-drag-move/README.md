@@ -90,9 +90,12 @@ const dragMove = useDragMove({
 原目录、落进的目录」；弹窗按 `targetDir === view.path` 筛出「这一层的」，交给 `LandedTiles`
 用列表里同款瓦片（视频帧 / 文件名 / 文件大小）平铺，位置在文件列表前面。
 
-点某一条＝`restoreLanded(item)`：**磁盘上不动**，只把它从 `landed` 里摘掉、追加进 `session.entries`
-（回到手卡），同时从 `movedPaths` 里剔掉它的新路径、并经 `onRestored` 把它加回页面待拖拽区
-——所以关窗以后它还留在待拖拽区里，而不是「既不在原处、也不在手上」。
+点某一条＝`restoreLanded(item)`：先把它**真的搬回原目录**（`moveEntry(新路径, origin)`，成功才算数），
+再把 `session.entries` 追加回它的原路径（回到手卡）、从 `landed` 里摘掉、从 `movedPaths` 里剔掉
+（搬前的新路径与搬回后的原路径都要剔），并经 `onRestored` 把它加回页面待拖拽区——关窗以后它还在
+待拖拽区里，而不是「既不在原处、也不在手上」。搬回失败时不改任何状态，`moveEntry` 自己弹提示。
+**为什么必须动磁盘**：只还原手卡不搬回的话，它的记录仍在目标文件夹里，下一次往同一个文件夹拖会被
+`splitByParent` 判成「本来就在里面」而一动不动——现象就是「放回去以后再也拖不进去」。
 回落那一趟的动画不在 hook 里：`hooks/useReturnFly.ts` 量那格与手卡、起 `ReturnFly`。
 
 ## 事件里的「此刻」

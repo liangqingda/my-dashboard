@@ -9,6 +9,7 @@ import { LoadingOverlay, ScrollArea } from '@mantine/core';
 
 import { cx } from '@/utils/cx';
 
+import BlankMoveMask from '../BlankMoveMask';
 import DirectoryGrid from '../DirectoryGrid';
 import FilesTable from '../FilesTable';
 
@@ -45,6 +46,7 @@ const FilesEntries = ({
   onOpenVideo,
   onRequestDeleteEntry,
   onRequestUninstallApp,
+  onSelectRange,
   onToggleGroup,
   onTogglePending,
   pendingActive,
@@ -64,12 +66,13 @@ const FilesEntries = ({
     folderProgress !== null &&
     folders.every((folder) => folder.path !== folderProgress.targetDir);
 
+  /** 连选用的显示顺序（文件夹在前、文件在后）：网格与表格共用这一份 */
+  const selectOrder = [...folders, ...files];
+
   return (
     <div className={cx(styles.frame, isGridView && styles.gridFrame)}>
       {movingCurrentDir ? (
-        <span className={styles.dirProgress}>
-          正在移入当前目录 {folderProgress.done} / {folderProgress.total}
-        </span>
+        <BlankMoveMask done={folderProgress.done} total={folderProgress.total} />
       ) : null}
       <ScrollArea
         className={styles.scroll}
@@ -119,10 +122,12 @@ const FilesEntries = ({
             onOpenVideo={onOpenVideo}
             onRequestDeleteEntry={onRequestDeleteEntry}
             onRequestUninstallApp={onRequestUninstallApp}
+            onSelectRange={onSelectRange}
             onToggleGroup={onToggleGroup}
             onTogglePending={onTogglePending}
             pendingActive={pendingActive}
             pendingPaths={pendingPaths}
+            selectOrder={selectOrder}
             tipsOff={tipsOff}
             veilOpacity={veilOpacity}
             videoApp={videoApp}
@@ -152,11 +157,13 @@ const FilesEntries = ({
             onOpenVideo={onOpenVideo}
             onRequestDeleteEntry={onRequestDeleteEntry}
             onRequestUninstallApp={onRequestUninstallApp}
+            onSelectRange={onSelectRange}
             onToggleGroup={onToggleGroup}
             onTogglePending={onTogglePending}
             pendingActive={pendingActive}
             pendingPaths={pendingPaths}
             rows={rows}
+            selectOrder={selectOrder}
             tipsOff={tipsOff}
           />
         )}

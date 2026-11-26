@@ -24,13 +24,20 @@ export const useDragPending = (): DragPendingState => {
    * 等飞行落定（`clearFlight`）才真正摘掉——否则动画还在半路，格子已经先没了。
    */
   const [leaving, setLeaving] = useState<string | null>(null);
+  /**
+   * 连选的锚点：上一次点选的那一条。`Shift` + 点第 N 条时，从这里到第 N 条整段收进来
+   * （macOS 访达的连选就是这个口径，锚点跟着「最后一次点」走）。
+   */
+  const [anchor, setAnchor] = useState<string | null>(null);
 
   const has = (path: string) => entries.some((entry) => entry.path === path);
 
-  const add = (entry: DraggableEntry) =>
+  /* 锚点只由「点选」与「连选」改：`add` 也走这里（弹窗取回、拖进待拖拽区都算），别动它 */
+  const add = (entry: DraggableEntry) => {
     setEntries((prev) =>
       prev.some((item) => item.path === entry.path) ? prev : [...prev, entry],
     );
+  };
 
   /** 一批里已存在的直接跳过，顺序仍按加入先后 */
   const addMany = (batch: DraggableEntry[]) =>
@@ -62,6 +69,8 @@ export const useDragPending = (): DragPendingState => {
   };
 
   const toggle = (entry: DraggableEntry, from?: DOMRect) => {
+    setAnchor(entry.path);
+
     if (has(entry.path)) {
       // 取消：从待拖拽区那一格起飞，飞回列表里被点的那张瓦片（量不到就不播）
       const chip = pendingChipRect(entry.path);
@@ -79,10 +88,30 @@ export const useDragPending = (): DragPendingState => {
     add(entry);
   };
 
+  /**
+   * 连选：把锚点到这一条之间（含两端）整段收进来，已在里面的跳过；顺序按列表顺序。
+   * 还没有锚点（第一下就是 Shift + 点）时只收它自己，顺便把锚点落在它身上。
+   */
+  const selectRange = (ordered: DraggableEntry[], path: string) => {
+    const targetAt = ordered.findIndex((entry) => entry.path === path);
+
+    if (targetAt === -1) {
+      return;
+    }
+
+    const anchorAt = ordered.findIndex((entry) => entry.path === anchor);
+    const from = anchorAt === -1 ? targetAt : Math.min(anchorAt, targetAt);
+    const to = anchorAt === -1 ? targetAt : Math.max(anchorAt, targetAt);
+
+    setAnchor(path);
+    addMany(ordered.slice(from, to + 1));
+  };
+
   const clear = () => {
     setEntries([]);
     setFlight(null);
     setLeaving(null);
+    setAnchor(null);
   };
 
   return {
@@ -109,6 +138,7 @@ export const useDragPending = (): DragPendingState => {
     leaving,
     remove,
     removePaths,
+    selectRange,
     toggle,
     trayDrag,
   };

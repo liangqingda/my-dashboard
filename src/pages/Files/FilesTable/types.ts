@@ -7,6 +7,7 @@ import type { DragEvent } from 'react';
 import type { MoveProgress } from '../hooks/use-drag-move/types';
 import type {
   AppEntry,
+  DraggableEntry,
   EntryGroupKey,
   FileEntry,
   FilesRow,
@@ -75,4 +76,8 @@ export type FilesTableProps = {
   pendingPaths: string[];
   /** 点条目加入 / 移出待拖拽区（起点矩形给飞入动画用） */
   onTogglePending: (entry: FileEntry | FolderEntry, from: DOMRect) => void;
+  /** `Shift` + 点击的连选：`ordered` 是列表当前顺序，锚点由 `useDragPending` 记着 */
+  onSelectRange: (ordered: DraggableEntry[], path: string) => void;
+  /** 连选用的显示顺序（由列表层拼好），直接回传给 `onSelectRange` */
+  selectOrder: DraggableEntry[];
 };

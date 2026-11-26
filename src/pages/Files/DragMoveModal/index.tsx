@@ -274,23 +274,29 @@ const DragMoveModal = ({
 
             {folders.length > 0 || landedInView.length > 0 ? (
               <ScrollArea h="100%" offsetScrollbars="y" scrollbarSize={8} type="auto">
-                {/* 本次搬进这一层的条目排在最上面：进到这个文件夹就能看见 */}
+                {/*
+                 * 按列表的分组口径排：先「文件夹」这一组（落点），再「本次移入」这一组。
+                 * 搬进来的条目跟在文件夹后面，进到这个文件夹就能看见自己刚搬了什么。
+                 */}
+                {folders.length > 0 ? (
+                  <section className={styles.group}>
+                    <p className={styles.groupLabel}>文件夹 · {folders.length}</p>
+                    <FolderGrid
+                      dragActive={dragActive}
+                      entries={session.entries}
+                      folders={folders}
+                      hoverPath={hoverPath}
+                      idle={idle}
+                      onDrop={dropOnFolder}
+                      onEnter={hoverFolder}
+                      onLeave={leaveFolder}
+                      onOpen={goTo}
+                      springPath={springPath}
+                    />
+                  </section>
+                ) : null}
                 {landedInView.length > 0 ? (
                   <LandedTiles items={landedInView} onReturn={flyBack.start} />
-                ) : null}
-                {folders.length > 0 ? (
-                  <FolderGrid
-                    dragActive={dragActive}
-                    entries={session.entries}
-                    folders={folders}
-                    hoverPath={hoverPath}
-                    idle={idle}
-                    onDrop={dropOnFolder}
-                    onEnter={hoverFolder}
-                    onLeave={leaveFolder}
-                    onOpen={goTo}
-                    springPath={springPath}
-                  />
                 ) : null}
               </ScrollArea>
             ) : null}
