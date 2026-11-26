@@ -266,16 +266,12 @@ const FreeVideo = ({
         ) : null}
       </div>
 
-      {/*
-        控制栏浮层：收起只是淡出下移、不接收指针（不移出流，画面尺寸不跟着跳）。
-        `data-video-controls` 让 header 的自动隐藏知道「指针在这块上」，悬停进度条看预览帧时 header 不收起。
-      */}
+      {/* 控制栏浮层：收起只是淡出下移、不接收指针（不移出流，画面尺寸不跟着跳）。 */}
       <div
         className={cx(
           styles.controlsLayer,
           !controlsVisible && styles.controlsLayerHidden,
         )}
-        data-video-controls=""
         onPointerEnter={enterControls}
         onPointerLeave={leaveControls}
       >

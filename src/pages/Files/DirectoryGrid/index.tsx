@@ -1,10 +1,11 @@
-import type { MouseEvent, ReactNode } from 'react';
+import type { ReactNode, TransitionEvent } from 'react';
 import { useMemo } from 'react';
 
 import { cx } from '@/utils/cx';
 
 import { useBlankDrop } from '../hooks/useBlankDrop';
-import { entryClickIntent } from '../utils/entry-click';
+import { useGridEntryClick } from '../hooks/useGridEntryClick';
+import { useGroupBodyAnimation } from '../hooks/useGroupBodyAnimation';
 import AppTile from '../AppTile';
 import EntryGroupHeader from '../EntryGroupHeader';
 import { ENTRY_GROUP_LABELS } from '../constants';
@@ -108,6 +109,9 @@ const DirectoryGrid = ({
     return map;
   }, [files, folders]);
 
+  /** 分组段高度过渡：收起 / 展开按实测高度跑平滑动画，表格视图不走这里 */
+  const groupBodyAnimation = useGroupBodyAnimation(collapsedGroups, onToggleGroup);
+
   /**
    * 这次搬家落在哪一格：只给命中的那一格递 `{ done, total }`，
    * 且对象按 `folderProgress` 缓存，免得每次渲染都把整网格的 `memo` 全部打穿。
@@ -131,58 +135,14 @@ const DirectoryGrid = ({
   /** 文件按分类归段：分组模式下每一段一种分类 */
   const fileGroups = useMemo(() => groupFilesByCategory(files), [files]);
 
-  const handleClickCapture = (event: MouseEvent<HTMLDivElement>) => {
-    const { target } = event;
-
-    // 瓦片右上角的重命名 / 删除自带 onClick，带 ⌘ 点它们不该被当成「选中条目」
-    /*
-     * 用 `Element` 而不是 `HTMLElement`：文件夹 / 文件图标是 SVG，
-     * 点图标时目标不是 HTML 元素，按 `HTMLElement` 判会漏掉「点图标选中」这一路。
-     */
-    if (
-      target instanceof Element &&
-      target.closest('[data-tile-actions]') !== null
-    ) {
-      return;
-    }
-
-    const tile =
-      target instanceof Element ? target.closest('[data-entry-path]') : null;
-
-    if (!(tile instanceof HTMLElement)) {
-      return;
-    }
-
-    const entry = tile.dataset.entryPath
-      ? byPath.get(tile.dataset.entryPath)
-      : undefined;
-
-    if (entry === undefined) {
-      return;
-    }
-
-    /*
-     * ⌘ + 文件夹＝进入这一层；Shift＝连选；待拖拽区非空时普通点击＝加入 / 移除。
-     * `open` / `ignore` 都不拦事件，让瓦片自己那颗 onClick 照常打开。
-     */
-    const intent = entryClickIntent(event, !('category' in entry), pendingActive);
-
-    if (intent === 'ignore' || intent === 'open') {
-      return;
-    }
-
-    event.preventDefault();
-    event.stopPropagation();
-
-    if (intent === 'range') {
-      onSelectRange(selectOrder, entry.path);
-
-      return;
-    }
-
-    // 瓦片的屏幕矩形交给页面：加入待拖拽区时用它当飞行动画的起点
-    onTogglePending(entry, tile.getBoundingClientRect());
-  };
+  /** 瓦片点击选中 / 连选 / 进出待拖拽区的捕获逻辑 */
+  const handleClickCapture = useGridEntryClick(
+    byPath,
+    pendingActive,
+    selectOrder,
+    onSelectRange,
+    onTogglePending,
+  );
 
   const renderFolders = () =>
     folders.map((folder) => (
@@ -246,6 +206,14 @@ const DirectoryGrid = ({
     />
   );
 
+  /** 只认高度过渡结束，避免层内其它属性的 transitionend 误触发提交 */
+  const handleBodyTransitionEnd =
+    (key: EntryGroupKey) => (event: TransitionEvent<HTMLDivElement>) => {
+      if (event.propertyName === 'max-height') {
+        groupBodyAnimation.onBodyTransitionEnd(key);
+      }
+    };
+
   /** 一个分组段：标题整行可折叠，段内瓦片走网格列宽规则 */
   const renderGroup = (key: EntryGroupKey, tiles: ReactNode, count: number) => {
     if (count === 0) {
@@ -255,13 +223,21 @@ const DirectoryGrid = ({
     const collapsed = collapsedGroups.has(key);
 
     return (
-      <section className={cx(styles.group, collapsed && styles.groupCollapsed)}>
+      <section
+        className={cx(styles.group, collapsed && styles.groupCollapsed)}
+        key={key}
+      >
         <EntryGroupHeader
           collapsed={collapsed}
           label={ENTRY_GROUP_LABELS[key]}
-          onToggle={() => onToggleGroup(key)}
+          onToggle={() => groupBodyAnimation.onToggleGroup(key)}
         />
-        <div className={cx(styles.body, collapsed && styles.bodyCollapsed)}>
+        <div
+          className={cx(styles.body, collapsed && styles.bodyCollapsed)}
+          onTransitionEnd={handleBodyTransitionEnd(key)}
+          ref={groupBodyAnimation.registerBody(key)}
+          style={groupBodyAnimation.bodyStyle(key)}
+        >
           <div className={styles.bodyInner}>
             <div className={cx(styles.grid, fixedColumns && styles.gridFixed)}>
               {tiles}

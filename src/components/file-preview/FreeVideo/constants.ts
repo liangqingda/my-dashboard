@@ -1,15 +1,9 @@
 /**
- * 播放器的常量：控制栏的自动收起时长、控制栏区域的选择器、进度条悬停预览的尺寸比例。
- *
- * 控制栏外层挂着 `data-video-controls`（见 `index.tsx`）；弹窗 header 的自动隐藏拿这个选择器
- * 判断「指针停在控制栏上」，指针在那上面时 header 不收起（悬停进度条看预览帧时 header 常亮）。
+ * 播放器的常量：控制栏的自动收起时长、进度条悬停预览的尺寸比例。
  */
 
 /** 播放中指针静止多久收起控制栏（毫秒） */
 export const CONTROLS_HIDE_DELAY = 1000;
-
-/** 控制栏区域的选择器：给「不想被这一块触发」的浮层判断用 */
-export const CONTROLS_SELECTOR = '[data-video-controls]';
 
 /** 预览框宽度占视频画面宽度的比例（默认值）：窗口越大帧图越大，60% 看得清又不至于糊住画面 */
 export const SEEK_PREVIEW_SCALE_DEFAULT = 0.6;

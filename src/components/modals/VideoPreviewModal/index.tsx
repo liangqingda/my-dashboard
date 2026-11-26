@@ -24,7 +24,6 @@ import { IconTrash, IconVideo } from '@tabler/icons-react';
 import FreeIconAction from '@/components/buttons/FreeIconAction';
 import PreviewCounter from '@/components/feedback/PreviewCounter';
 import FreeVideo from '@/components/file-preview/FreeVideo';
-import { CONTROLS_SELECTOR } from '@/components/file-preview/FreeVideo/constants';
 import { useBrowserFullscreen } from '@/hooks/useBrowserFullscreen';
 import FreeModal, { MODAL_HEADER_SELECTOR } from '@/components/modals/FreeModal';
 import type { FreeModalSeekDirection } from '@/components/modals/FreeModal/types';
@@ -94,15 +93,14 @@ const VideoPreviewModal = ({
    */
   const headerOverlay = !sidebarVisible;
   /**
-   * 指针停在 header 或播放器控制栏上时 header 不收起：控制栏里最常用的是进度条，
-   * 悬停看预览帧的这段时间 header 得一直在（全屏与常规尺寸同一套）。
+   * 指针停在 header 上时不收起（正要点某颗按钮它却淡下去）；控制栏不算 hold 区：
+   * 悬停进度条看预览帧不需要 header 在场，指针停在那儿照常按静止时长收起。
    */
-  const headerHoldSelector = `:is(${MODAL_HEADER_SELECTOR}, ${CONTROLS_SELECTOR})`;
   const headerVisible = useAutoHideHeader(
     headerOverlay && !settingsOpen && !blocked,
     HEADER_HIDE_DELAY,
     undefined,
-    headerHoldSelector,
+    MODAL_HEADER_SELECTOR,
   );
 
   /** `←` / `→`：按设置的步长快进 / 后退；方向键交给它之后翻篇只剩方括号 */
