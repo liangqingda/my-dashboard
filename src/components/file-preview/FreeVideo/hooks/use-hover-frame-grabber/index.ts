@@ -9,13 +9,9 @@
  * 只是没有原始分辨率。宁可小一点，不给错帧。
  */
 
-import { useCallback, useEffect, useRef, type RefObject } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import type { HoverFrameGrabber } from '../../types';
-import {
-  FRAME_DRAW_READY_STATE,
-  FRAME_PRESENT_TOLERANCE,
-} from '../use-video-frames/constants';
 
 /**
  * 把任意 data URL 的图重新编码成 PNG：落盘接口只认 PNG，
@@ -58,8 +54,8 @@ const toPngDataUrl = (source: string): Promise<string | null> => {
 
 /** 入参 */
 export type UseHoverFrameGrabberOptions = {
-  /** 抽帧探针：悬停时就停在目标那一秒上，直接按它的原始尺寸画 */
-  probeRef: RefObject<HTMLVideoElement | null>;
+  /** 按原始尺寸抓某一秒的一帧（会先让探针 seek 过去），抓不到给 `null` */
+  grabFrame: (time: number) => Promise<string | null>;
   /** 交出 / 收回抓取函数：悬停帧消失时给 `null`，调用方据此退回当前播放帧 */
   onReady?: (grabber: HoverFrameGrabber | null) => void;
 };
@@ -71,8 +67,8 @@ export type UseHoverFrameGrabberResult = {
 };
 
 export const useHoverFrameGrabber = ({
+  grabFrame,
   onReady,
-  probeRef,
 }: UseHoverFrameGrabberOptions): UseHoverFrameGrabberResult => {
   /** 浮层此刻显示的那一帧：时间用来核对探针位置，`url` 是没核准时的保底图 */
   const shownFrameRef = useRef<{ time: number; url: string } | null>(null);
@@ -96,40 +92,14 @@ export const useHoverFrameGrabber = ({
         return null;
       }
 
-      const probe = probeRef.current;
-      /** 探针没停在这一帧上（走缓存跳过了 seek）就别画它，用浮层那张缩略图 */
-      const probeOnFrame =
-        probe !== null &&
-        probe.readyState >= FRAME_DRAW_READY_STATE &&
-        probe.videoWidth > 0 &&
-        Math.abs(probe.currentTime - shown.time) <= FRAME_PRESENT_TOLERANCE;
+      /** 先按原始尺寸抓这一帧；抓不到（seek 超时等）再用浮层那张缩略图，至少内容是对的 */
+      const full = await grabFrame(shown.time).catch(() => null);
 
-      if (!probeOnFrame) {
-        return toPngDataUrl(shown.url);
-      }
-
-      const canvas = document.createElement('canvas');
-
-      canvas.width = probe.videoWidth;
-      canvas.height = probe.videoHeight;
-
-      const context = canvas.getContext('2d');
-
-      if (context === null) {
-        return null;
-      }
-
-      try {
-        context.drawImage(probe, 0, 0, canvas.width, canvas.height);
-
-        return canvas.toDataURL('image/png');
-      } catch {
-        return shown.url;
-      }
+      return full ?? (await toPngDataUrl(shown.url));
     });
 
     return () => onReady(null);
-  }, [onReady, probeRef]);
+  }, [grabFrame, onReady]);
 
   return { handlePreviewFrameChange };
 };

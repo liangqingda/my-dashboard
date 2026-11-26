@@ -43,7 +43,7 @@
 | `videoRef` | 可选。外部要取当前帧、从键盘驱动播放时传；组件与内部 ref 合并后挂到 `<video>` |
 | `nav` | 可选。`{ onPrevious, onNext, previousLabel?, nextLabel? }`，一端到头传 `null` 置灰；label 同时当 aria-label 与 tip；不传则控制栏没有这两颗箭头 |
 | `previewScale` | 可选。悬停预览框宽占视频画面宽度的比例，0.3–0.9，不传按 0.6；超出范围按边界夹住 |
-| `onHoverFrameGrabberReady` | 可选。浮层正显示某帧时回调一个「取这一帧」的函数（异步，给 PNG data URL），收起时回调 `null`；探针停在那一帧上就按视频原始尺寸重画，否则退回浮层里的缩略帧 |
+| `onHoverFrameGrabberReady` | 可选。浮层正显示某帧时回调一个「取这一帧」的函数（异步，给 PNG data URL），收起时回调 `null`；探针已在那一帧上就按视频原始尺寸重画，不在就补 seek 过去再画（此时调用方要等解码），seek 也失败才退回浮层里的缩略帧 |
 | `className` | 可选。只用来补外部布局（撑满父容器之类） |
 
 ## 边界

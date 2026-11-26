@@ -56,52 +56,53 @@ export const useFrameCapture = (
 
   const capture = useCallback(
     async (captureDir: string): Promise<void> => {
-      /** 悬停帧优先：用户此刻看的就是它 */
-      const hoverUrl = (await hoverFrameRef.current?.()) ?? null;
-      const element = video.current;
+      /** 从一开始就进 loading：悬停帧可能要现 seek 到那一秒，界面得先给个「在截」的反馈 */
+      setCapturing(true);
 
-      if (
-        hoverUrl === null &&
-        (!element || element.readyState < READY_STATE_WITH_FRAME)
-      ) {
-        notifications.show({
-          autoClose: false,
-          color: 'yellow',
-          message: '等视频解出画面后再截图',
-          title: '现在截不到画面',
-        });
+      try {
+        /** 悬停帧优先：用户此刻看的就是它 */
+        const hoverUrl = (await hoverFrameRef.current?.()) ?? null;
+        const element = video.current;
 
-        return;
-      }
-
-      let dataUrl = hoverUrl;
-
-      if (dataUrl === null && element !== null) {
-        const canvas = document.createElement('canvas');
-
-        canvas.width = element.videoWidth;
-        canvas.height = element.videoHeight;
-
-        const context = canvas.getContext('2d');
-
-        if (!context) {
+        if (
+          hoverUrl === null &&
+          (!element || element.readyState < READY_STATE_WITH_FRAME)
+        ) {
           notifications.show({
             autoClose: false,
-            color: 'red',
-            message: '当前浏览器不支持画布',
-            title: CAPTURE_FAILED_TITLE,
+            color: 'yellow',
+            message: '等视频解出画面后再截图',
+            title: '现在截不到画面',
           });
 
           return;
         }
 
-        context.drawImage(element, 0, 0, canvas.width, canvas.height);
-        dataUrl = canvas.toDataURL('image/png');
-      }
+        let dataUrl = hoverUrl;
 
-      setCapturing(true);
+        if (dataUrl === null && element !== null) {
+          const canvas = document.createElement('canvas');
 
-      try {
+          canvas.width = element.videoWidth;
+          canvas.height = element.videoHeight;
+
+          const context = canvas.getContext('2d');
+
+          if (!context) {
+            notifications.show({
+              autoClose: false,
+              color: 'red',
+              message: '当前浏览器不支持画布',
+              title: CAPTURE_FAILED_TITLE,
+            });
+
+            return;
+          }
+
+          context.drawImage(element, 0, 0, canvas.width, canvas.height);
+          dataUrl = canvas.toDataURL('image/png');
+        }
+
         if (dataUrl === null) {
           return;
         }

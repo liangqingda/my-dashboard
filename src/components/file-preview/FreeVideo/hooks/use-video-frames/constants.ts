@@ -49,3 +49,10 @@ export const READY_STATE_METADATA = 1;
 
 /** 抽帧时间离片尾留的余量（秒）：seek 到正片尾可能停在最后一帧，多留一点更稳 */
 export const FRAME_TAIL_GUARD = 0.05;
+
+/**
+ * 截图等「画面真的换过去」的上限（毫秒）：比预览短。
+ * 用户按下回车后界面一直在转圈，等太久不如早点用现有判据兜底；
+ * 兜底判据与预览一致，画面不会因此跳到别处。
+ */
+export const FRAME_CAPTURE_PRESENT_TIMEOUT = 1200;

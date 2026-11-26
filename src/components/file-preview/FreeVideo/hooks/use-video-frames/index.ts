@@ -23,20 +23,18 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 
 import {
   FRAME_CACHE_LIMIT,
+  FRAME_CAPTURE_PRESENT_TIMEOUT,
   FRAME_DRAW_READY_STATE,
   FRAME_JPEG_QUALITY,
-  FRAME_PRESENT_TOLERANCE,
   FRAME_RETRY_OFFSET,
-  FRAME_RETRY_TIMEOUT,
   FRAME_TAIL_GUARD,
 } from './constants';
 import {
   bucketOf,
+  drawFullSizePng,
   frameCanvasSize,
   readDuration,
-  waitData,
-  waitPresented,
-  waitSeeked,
+  seekAndPresent,
 } from './utils';
 
 /** 抽帧入参 */
@@ -56,6 +54,11 @@ export type FrameCallback = (url: string) => void;
 export type UseVideoFramesResult = {
   /** 请求某一时刻的帧：命中缓存同步回调，否则排队现抽 */
   requestFrame: (time: number, onFrame: FrameCallback) => void;
+  /**
+   * 按视频原始尺寸抓某一时刻的一帧（PNG），给截图用；抓不到给 `null`。
+   * 会借用探针 seek，但与预览不同：不写缓存、不回调，仅服务这一次调用。
+   */
+  grabFrame: (time: number) => Promise<string | null>;
   /** 探针是否已拿到元数据：false 时预览整块不可用 */
   ready: boolean;
 };
@@ -84,6 +87,8 @@ export const useVideoFrames = ({
   const pumpRef = useRef<(() => void) | null>(null);
   /** 请求代次：每来一个新位置的请求就加一，正在跑的旧请求看到代次变了就提前收手 */
   const latestRef = useRef(0);
+  /** 暴露给截图的全尺寸抓帧：实现挂在 effect 里（要读探针与片长），卸载即置空 */
+  const grabRef = useRef<((time: number) => Promise<string | null>) | null>(null);
 
   const requestFrame = useCallback(
     (time: number, onFrame: FrameCallback): void => {
@@ -148,64 +153,11 @@ export const useVideoFrames = ({
       const giveUp = (): boolean => isCancelled() || latestRef.current !== generation;
 
       const target = clampTime(job.time);
-      const hasFrameCallback =
-        typeof element.requestVideoFrameCallback === 'function';
-      /**
-       * 呈现回调要在 seek 之前就挂上：探针是暂停的，帧一旦画出来就不会再触发
-       * `requestVideoFrameCallback`，seeked 之后再注册会错过唯一那次回调，永远等不到。
-       *
-       * 有它就以它为准：`mediaTime` 命中目标时间即证明「数据到了 + 这一帧画出来了」，
-       * 不必再等 `seeked` / `readyState`（那两个信号有时来得晚，白等几秒）。
-       */
-      const presentedPromise = hasFrameCallback
-        ? waitPresented(element, target)
-        : null;
-
-      element.currentTime = target;
-
-      /**
-       * 兜底：`requestVideoFrameCallback` 迟迟不回调时（部分环境里暂停的探针只在尺寸 / 可见性变化时
-       * 才推帧），退回「当前帧数据已就绪 + 时间对得上」这条老判据，避免整块永久转圈。
-       */
-      const fallbackReady = async (): Promise<boolean> => {
-        if (
-          element.readyState >= FRAME_DRAW_READY_STATE &&
-          Math.abs(element.currentTime - target) <= FRAME_PRESENT_TOLERANCE
-        ) {
-          return true;
-        }
-
-        return (await waitSeeked(element)) && (await waitData(element));
-      };
-
-      /** 没有 `requestVideoFrameCallback` 的浏览器退回老路：等 seeked + 数据可用 */
-      let presented =
-        presentedPromise !== null
-          ? await presentedPromise
-          : (await waitSeeked(element)) && (await waitData(element));
-
-      /**
-       * 第一次没对上多半是「只解到最近的关键帧」：把指针位置挪一丁点再 seek 一次，
-       * 解码器重新落帧后通常就精确了。这一步比直接画关键帧强——画关键帧就是「差几秒」的来源。
-       */
-      if (!presented && hasFrameCallback && !giveUp()) {
-        const retryTime = clampTime(target + FRAME_RETRY_OFFSET);
-
-        if (Math.abs(retryTime - target) > Number.EPSILON) {
-          const retryPromise = waitPresented(
-            element,
-            retryTime,
-            FRAME_RETRY_TIMEOUT,
-          );
-
-          element.currentTime = retryTime;
-          presented = await retryPromise;
-        }
-      }
-
-      if (!presented) {
-        presented = await fallbackReady();
-      }
+      const presented = await seekAndPresent(element, target, {
+        maxTime: duration - FRAME_TAIL_GUARD,
+        retryOffset: FRAME_RETRY_OFFSET,
+        shouldStop: giveUp,
+      });
 
       if (giveUp() || context === null || !presented) {
         return;
@@ -228,6 +180,37 @@ export const useVideoFrames = ({
 
       job.onFrame(url);
     };
+
+    /**
+     * 抓一张原始尺寸的 PNG 给截图用。探针此刻未必停在那一秒上（帧图可能走了缓存），
+     * 所以必要时先 seek 过去、等这一帧真的呈现再画；不写缓存，也不动预览的排队。
+     *
+     * 截图与预览共用一支探针，进来先把进行中的预览请求作废：否则两处同时 seek，
+     * 谁拿到哪一帧都不确定。
+     */
+    const grabFullFrame = async (time: number): Promise<string | null> => {
+      if (isCancelled() || element.readyState < FRAME_DRAW_READY_STATE) {
+        return null;
+      }
+
+      latestRef.current += 1;
+      pendingRef.current = null;
+
+      const reached = await seekAndPresent(element, clampTime(time), {
+        maxTime: duration - FRAME_TAIL_GUARD,
+        retryOffset: FRAME_RETRY_OFFSET,
+        shouldStop: isCancelled,
+        timeoutMs: FRAME_CAPTURE_PRESENT_TIMEOUT,
+      });
+
+      if (!reached) {
+        return null;
+      }
+
+      return drawFullSizePng(element);
+    };
+
+    grabRef.current = grabFullFrame;
 
     /** 取下一个任务：只有悬停请求；同一时刻被覆盖的旧请求已在 `requestFrame` 里被顶掉 */
     const takeJob = (): FrameJob | null => {
@@ -295,11 +278,18 @@ export const useVideoFrames = ({
 
     return () => {
       controller.abort();
+      grabRef.current = null;
       pumpRef.current = null;
       pendingRef.current = null;
       cacheRef.current = new Map();
     };
   }, [frameLongestEdge, probeRef, src]);
 
-  return { ready, requestFrame };
+  const grabFrame = useCallback(
+    (time: number): Promise<string | null> =>
+      grabRef.current?.(time) ?? Promise.resolve(null),
+    [],
+  );
+
+  return { grabFrame, ready, requestFrame };
 };

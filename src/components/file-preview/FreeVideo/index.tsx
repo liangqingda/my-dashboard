@@ -88,7 +88,7 @@ const FreeVideo = ({
   const frameLongestEdge = Math.round(
     previewSize.width * Math.min(window.devicePixelRatio, SEEK_PREVIEW_DPR_CAP),
   );
-  const { ready: previewReady, requestFrame } = useVideoFrames({
+  const { grabFrame, ready: previewReady, requestFrame } = useVideoFrames({
     frameLongestEdge,
     probeRef,
     src,
@@ -96,8 +96,8 @@ const FreeVideo = ({
 
   /** 悬停帧快照：截图优先存它（全分辨率），悬停收起后交回 `null` */
   const { handlePreviewFrameChange } = useHoverFrameGrabber({
+    grabFrame,
     onReady: onHoverFrameGrabberReady,
-    probeRef,
   });
 
   /** 舞台尺寸或画面比例变化时重算预览框：窗口缩放、换屏、竖屏视频都靠这次计算 */

@@ -13,6 +13,7 @@ import {
   FRAME_DRAW_READY_STATE,
   FRAME_PRESENT_TIMEOUT,
   FRAME_PRESENT_TOLERANCE,
+  FRAME_RETRY_TIMEOUT,
   FRAME_SEEK_TIMEOUT,
   FRAME_TIME_BUCKET,
   READY_STATE_METADATA,
@@ -206,3 +207,118 @@ export const waitPresented = (
     watch();
     timerId = setTimeout(() => settle(false), timeoutMs);
   });
+
+/** `seekAndPresent` 的选项 */
+export type SeekAndPresentOptions = {
+  /** 等「画面真的换过去」的上限（毫秒） */
+  timeoutMs?: number;
+  /** 第一次没对上时把目标再挪这么多秒重试一次；0 表示不重试 */
+  retryOffset?: number;
+  /** 重试时间的上限：片尾留了余量，别 seek 到片尾之后 */
+  maxTime?: number;
+  /** 外部已经不需要这一帧了（指针换位置 / 卸载 / 截图被顶掉） */
+  shouldStop?: () => boolean;
+};
+
+/**
+ * 让播放器落到 `target` 这一秒，并确认画面真的换过去了。
+ *
+ * 顺序是「呈现回调优先」：有 `requestVideoFrameCallback` 时以它的 `mediaTime` 为准，
+ * 比 `seeked` / `readyState` 可靠——后两个会早到，画面却还停在旧位置。
+ * 第一次多半只解到最近的关键帧，挪一点再 seek 一次通常就精确了；都不成才退回
+ * 「数据已就绪 + 时间对得上」的老判据，避免永久等不到。
+ */
+export const seekAndPresent = async (
+  video: HTMLVideoElement,
+  target: number,
+  {
+    maxTime,
+    retryOffset = 0,
+    shouldStop = () => false,
+    timeoutMs = FRAME_PRESENT_TIMEOUT,
+  }: SeekAndPresentOptions = {},
+): Promise<boolean> => {
+  /** 参数变量只读：seek 要改 `currentTime`，先落一个本地引用 */
+  const element = video;
+
+  /** 本来就停在这一秒上（没在跳）：画面就是它，不用再跳一次 */
+  if (
+    !video.seeking &&
+    video.readyState >= FRAME_DRAW_READY_STATE &&
+    Math.abs(video.currentTime - target) <= FRAME_PRESENT_TOLERANCE
+  ) {
+    return true;
+  }
+
+  const hasFrameCallback = typeof video.requestVideoFrameCallback === 'function';
+  /** 呈现回调要在 seek 之前挂上：暂停的播放器画完这一帧不会再触发它 */
+  const presentedPromise = hasFrameCallback
+    ? waitPresented(video, target, timeoutMs)
+    : null;
+
+  element.currentTime = target;
+
+  /** 兜底：呈现回调迟迟不来时，用「数据就绪 + 时间对得上」确认 */
+  const fallbackReady = async (): Promise<boolean> => {
+    if (
+      video.readyState >= FRAME_DRAW_READY_STATE &&
+      Math.abs(video.currentTime - target) <= FRAME_PRESENT_TOLERANCE
+    ) {
+      return true;
+    }
+
+    return (await waitSeeked(video)) && (await waitData(video));
+  };
+
+  let presented =
+    presentedPromise !== null
+      ? await presentedPromise
+      : (await waitSeeked(video)) && (await waitData(video));
+
+  /** 挪一点再 seek：解码器重新落帧，通常就精确了 */
+  if (!presented && hasFrameCallback && retryOffset > 0 && !shouldStop()) {
+    const retryTime =
+      maxTime === undefined
+        ? target + retryOffset
+        : Math.min(target + retryOffset, Math.max(maxTime, 0));
+
+    if (Math.abs(retryTime - target) > Number.EPSILON) {
+      const retryPromise = waitPresented(video, retryTime, FRAME_RETRY_TIMEOUT);
+
+      element.currentTime = retryTime;
+      presented = await retryPromise;
+    }
+  }
+
+  if (!presented) {
+    presented = await fallbackReady();
+  }
+
+  return presented;
+};
+
+/** 按视频原始尺寸画一张 PNG：截图要的是原图，不跟着预览框缩放 */
+export const drawFullSizePng = (video: HTMLVideoElement): string | null => {
+  if (video.videoWidth <= 0 || video.videoHeight <= 0) {
+    return null;
+  }
+
+  const canvas = document.createElement('canvas');
+
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  const context = canvas.getContext('2d');
+
+  if (context === null) {
+    return null;
+  }
+
+  try {
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    return canvas.toDataURL('image/png');
+  } catch {
+    return null;
+  }
+};
