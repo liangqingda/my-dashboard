@@ -4,9 +4,8 @@
  * 目录列：宽度可拖（`--outline-width` 由组件按偏好写在行内，没拖过时用各模式的默认），
  * 高度跟着工作区走（父级 flex 给的），只用右侧一条细线与正文分开——
  * 目录是阅读辅助，不做成带阴影的浮层。
- * 底色与 header 同一档（`--preview-chrome` 由弹窗 `.content` 下发）：外壳（头部 + 侧栏）
- * 是一层软底，正文是另一档画布纸，与页面外壳同一条分色口径；
- * 不要用纯白把这一列抬起来——浅色主题下白底一侧比纸面亮一档，看着像另开的一块面板。
+ * 底色与 header 同一档毛玻璃（渐变 + 背景虚化，配方取 `--app-glass-*`）：外层边缘深一档、
+ * 靠正文一侧淡出，与正文的画布纸分成两层；不用纯白把这一列抬成另一块面板。
  * 字号基准按全屏写（Item 目录），非全屏用 --outline-shrink 整体减 2px，
  * 这样「界面里的目录」和「全屏的目录」始终差一档，只改这一个变量就能调。
  */
@@ -21,7 +20,15 @@
   min-height: 0;
   padding: 14px 4px 14px 14px;
   border-right: 1px solid var(--app-line);
-  background: var(--preview-chrome, var(--app-surface-subtle));
+  background: linear-gradient(
+    to right,
+    var(--app-glass-fade-strong),
+    var(--app-glass-fade-weak)
+  );
+  -webkit-backdrop-filter: blur(var(--app-glass-blur-panel))
+    saturate(var(--app-glass-saturate));
+  backdrop-filter: blur(var(--app-glass-blur-panel))
+    saturate(var(--app-glass-saturate));
   /* 收起 / 展开平滑过渡；拖拽中由 .navDragging 关掉，宽度直接跟指针 */
   transition:
     flex-basis 220ms cubic-bezier(0.33, 0, 0.2, 1),

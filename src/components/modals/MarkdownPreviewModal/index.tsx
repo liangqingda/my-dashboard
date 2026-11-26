@@ -36,6 +36,8 @@ import { useRemoveRequest } from './hooks/useRemoveRequest';
 import { useDocumentInteractions } from './hooks/useDocumentInteractions';
 import { withSideEffect } from './utils/with-side-effect';
 
+import styles from './index.scss';
+
 export type {
   MarkdownFilterNavigation,
   MarkdownPreviewFilter,
@@ -172,6 +174,7 @@ const MarkdownPreviewModal = ({
         closeButton={!editing.editing}
         closeLabel="关闭预览"
         closeOnEscape={panel === null && !interactions.subPreviewOpen && !removal.confirming}
+        contentClassName={styles.glassChrome}
         copy={
           documentActionsVisible && relativePath
             ? { message: '相对路径已复制', text: relativePath }
@@ -207,6 +210,7 @@ const MarkdownPreviewModal = ({
             />
           ) : undefined
         }
+        headerClassName={styles.glassHeader}
         headerSecondary={
           <PreviewHeaderActions
             askDiscard={editing.askDiscard}

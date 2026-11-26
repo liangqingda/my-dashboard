@@ -97,7 +97,7 @@
 | `closeOnEscape` / `closeOnSpace` / `trapFocus` | Esc 与空格是否关窗（`closeOnSpace` 默认跟随 `closeOnEscape`）、上层浮层开着时由调用方关掉，避免一下全关 / 焦点被抢、是否锁焦点 |
 | `shortcutsEnabled` | 默认 `true`；加载中、上层浮层开着时传 `false`，一次收掉翻页、方向键、`F` 全屏、`M` 静音、`S` 面板、`C` 复制与删除键（空格也一并收；只关窗的 `closeOnSpace` 另把关） |
 | `size` / `centered` / `closeLabel` | 宽度档（默认 `min(980px, 92vw)`）、是否垂直居中、关闭按钮的 `aria-label` |
-| `contentClassName` / `bodyClassName` / `innerClassName` | 只加增量类名，复制框体 / header 样式不算；`innerClassName` 加在 Mantine 内层定位容器上（全屏时清两侧 5vw 内边距用） |
+| `contentClassName` / `bodyClassName` / `innerClassName` / `headerClassName` | 只加增量类名，复制框体 / header 样式不算；`innerClassName` 加在 Mantine 内层定位容器上（全屏时清两侧 5vw 内边距用），`headerClassName` 加在 header 行上（不改排布与间距） |
 
 ## 全屏偏好：`hooks/useModalFullscreen`
 

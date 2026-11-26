@@ -200,6 +200,7 @@ const SectionPreview = ({
       closeLabel="关闭区块预览"
       /* 字号面板开着时 Esc 只收面板，不连这一层预览一起关（与主预览同一口径） */
       closeOnEscape={!fontOpened}
+      contentClassName={previewStyles.glassChrome}
       contentStyle={fullscreen ? FULLSCREEN_CONTENT_STYLE : CONTENT_STYLE}
       fullscreen={{ active: fullscreen, onToggle: toggle }}
       headerActions={
@@ -210,6 +211,7 @@ const SectionPreview = ({
           shortcut="A"
         />
       }
+      headerClassName={previewStyles.glassHeader}
       nav={
         cursor < 0
           ? undefined

@@ -19,6 +19,35 @@
   min-height: 0;
 }
 
+/*
+ * 毛玻璃 chrome：本弹窗框体底色留空（透出遮罩虚化后的页面），header 与目录列走
+ * 半透明玻璃（渐变底 + 背景虚化，配方只取 `--app-glass-*` 令牌）；正文 pane 仍铺
+ * 画布纸，保证长文阅读对比度。
+ * 外壳 `.content` / `.header` 的底色读 `--preview-paper` / `--preview-chrome` 两个
+ * 变量，这里只在本层覆写变量值、不复制外壳选择器；作用域不出本弹窗，主预览与子区域
+ * 预览复用同一套。
+ */
+.glassChrome {
+  --preview-paper: transparent;
+  --preview-chrome: linear-gradient(
+    to bottom,
+    var(--app-glass-fade-strong),
+    var(--app-glass-fade-weak)
+  );
+}
+
+.glassChrome .pane {
+  background: var(--app-bg);
+}
+
+/* header 背景随外壳变量取玻璃渐变；这里只补外壳没有的背景虚化 */
+.glassHeader {
+  -webkit-backdrop-filter: blur(var(--app-glass-blur-panel))
+    saturate(var(--app-glass-saturate));
+  backdrop-filter: blur(var(--app-glass-blur-panel))
+    saturate(var(--app-glass-saturate));
+}
+
 /* 编辑插槽：撑满正文区，编辑器自己的滚动仍在里面 */
 .editorSlot {
   display: flex;

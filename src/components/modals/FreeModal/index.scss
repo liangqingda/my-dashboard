@@ -22,9 +22,9 @@
 }
 
 /*
- * 配色与页面外壳（`BasicLayout`）同一条口径：header 与侧栏共用软底那一档
- * （`--preview-chrome`，业务侧的目录列读它），正文区是另一档画布纸（`--preview-paper`）。
- * 两层都从这里下发，业务弹窗不再各自挑底色。
+ * 配色与页面外壳（`BasicLayout`）同一条口径：header 取软底那一档（`--preview-chrome`），
+ * 正文区是另一档画布纸（`--preview-paper`）。两层都从这里下发，业务弹窗不再各自挑底色；
+ * 业务侧要换 chrome 质感时覆写这两个变量即可，不用复制框体 / header 选择器。
  */
 .content {
   --preview-chrome: var(--app-surface-subtle);

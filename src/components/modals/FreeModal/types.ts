@@ -178,6 +178,8 @@ export type FreeModalProps = {
   innerClassName?: string;
   /** 追加到正文容器上的类名 */
   bodyClassName?: string;
+  /** 追加到 header 行上的类名（只加增量，不改排布与间距） */
+  headerClassName?: string;
   /**
    * 追加到框体上的内联尺寸：只给「同一套外观、但尺寸档不同」的场景用
    * （如子区域预览比主预览矮一档、全屏时四周留缝），框体边框 / 圆角 / 底色仍归本组件。

@@ -60,6 +60,7 @@ const FreeModal = ({
   extraKeys,
   fullscreen,
   headerActions,
+  headerClassName,
   headerOverlay,
   headerSecondary,
   headerTail,
@@ -183,6 +184,7 @@ const FreeModal = ({
           styles.header,
           headerIsOverlay && styles.headerOverlay,
           headerHidden && styles.headerHidden,
+          headerClassName,
         ),
         title: styles.title,
       }}
