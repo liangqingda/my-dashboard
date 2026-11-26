@@ -27,11 +27,15 @@
   - **整屏全屏**：走浏览器 Fullscreen API（`document.documentElement.requestFullscreen()`），
     占的是**整块屏幕**。`fullscreenchange` 是唯一状态源：浏览器里按 `Esc` 退出全屏的状态也由它同步，
     组件不自己猜；`F` 键切的是这一档。
-- **header 自动隐藏**：走 `FreeModal` 的 `headerAutoHide`（与图片预览共用一套节奏，细则见
-  `FreeModal/README.md`）：打开即是收起态——先看画面，第一次动鼠标才浮出，鼠标静止 1s 收起
+- **header 自动隐藏**：走 `FreeModal` 的 `headerOverlay`（`trigger: 'hover'`，与图片预览共用同一套
+  浮层外观，细则见 `FreeModal/README.md`）：打开即是收起态——先看画面，第一次动鼠标才浮出，鼠标静止 1s 收起
   （淡出上移、不接收指针事件），一移动 / 滚轮就重新浮出并重置计时。
   **指针停在 header 上时不收起**（正要点某颗按钮它却淡下去），移到 header 以外就重新计时收起；
-  设置面板 / 删除确认开着时 `suspended` 暂停自动隐藏，免得面板跟着 header 一起藏起来。
+  设置面板 / 删除确认开着时 `suspended` 暂停唤出，免得面板跟着 header 一起藏起来。
+  **指针在控制栏（footer）上活动不唤出 header**：控制栏自带一套显隐节奏（暂停常显、播放中静止收起、
+  停在上面常显），在它上面挪指针只是想操作播放，不该顺带把标题栏顶出来；控制栏根节点带
+  `data-video-controls` 标记，弹窗用 `VIDEO_CONTROLS_SELECTOR` 传给 `ignoreSelector` 圈掉这块区域，
+  指针一进控制栏 header 就收起，回到画面才浮出。
 - **tip 配色**：弹窗内所有 hover 提示（标题截断、控制栏按钮、选集条目、设置滑杆浮标）固定深底浅字，
   不随主题反转——提示压在视频画面上，浅色 chip 在暗画面上跳不出来。
 - **选集**：控制栏右侧的「选集」按钮，点一下浮出当前目录的全部视频（顺序 = 翻篇顺序），

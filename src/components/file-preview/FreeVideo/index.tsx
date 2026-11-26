@@ -258,12 +258,17 @@ const FreeVideo = ({
         ) : null}
       </div>
 
-      {/* 控制栏浮层：收起只是淡出下移、不接收指针（不移出流，画面尺寸不跟着跳）。 */}
+      {/*
+        控制栏浮层：收起只是淡出下移、不接收指针（不移出流，画面尺寸不跟着跳）。
+        `data-video-controls` 是给调用方的位置标记（选择器见 `VIDEO_CONTROLS_SELECTOR`）：
+        外层浮层 header 据此不把「在控制栏上挪指针」当成想唤出它。
+      */}
       <div
         className={cx(
           styles.controlsLayer,
           !controlsVisible && styles.controlsLayerHidden,
         )}
+        data-video-controls=""
         onPointerEnter={enterControls}
         onPointerLeave={leaveControls}
       >

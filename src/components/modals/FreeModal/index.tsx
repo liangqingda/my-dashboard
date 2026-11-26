@@ -21,7 +21,6 @@ import FreeIconAction from '@/components/buttons/FreeIconAction';
 import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
 import { cx } from '@/utils/cx';
 
-import { HEADER_HIDE_DELAY } from './constants';
 import { useAutoHideHeader } from './hooks/useAutoHideHeader';
 import { useModalShortcuts } from './hooks/useModalShortcuts';
 import type { FreeModalProps } from './types';
@@ -61,7 +60,7 @@ const FreeModal = ({
   extraKeys,
   fullscreen,
   headerActions,
-  headerAutoHide,
+  headerOverlay,
   headerSecondary,
   headerTail,
   height = 'reading',
@@ -89,21 +88,27 @@ const FreeModal = ({
   const onToggleFullscreen = fullscreen?.onToggle;
 
   /**
-   * header 浮层 + 自动隐藏：只有媒体预览这类「打开先看画面」的弹窗会传 `headerAutoHide`。
-   * 显隐由外壳算——暂停（面板 / 弹层 / 确认层开着）与被点击固定时恒可见，其余时候
-   * 打开即收起、鼠标一动浮出、静止 1s 收起；业务侧不再自己管可见态。
+   * header 浮层：只有媒体预览这类「打开先看画面」的弹窗会传 `headerOverlay`。
+   * 显隐分两种——`hover` 由外壳跟指针收放（暂停 / 设置面板开着时恒可见），
+   * `click` 只认业务侧传的开合状态，指针怎么动都不参与。
    */
-  const headerIsOverlay = headerAutoHide !== undefined;
-  const autoHideVisible = useAutoHideHeader(
-    headerAutoHide !== undefined &&
-      !headerAutoHide.pinned &&
-      !headerAutoHide.suspended,
-    HEADER_HIDE_DELAY,
-    MODAL_HEADER_SELECTOR,
-    headerAutoHide?.resetToken,
-  );
+  const headerIsOverlay = headerOverlay !== undefined;
+  /** 只会对 hover 这一档挂自动隐藏；click 档不监听指针 */
+  const hoverOverlay = headerOverlay?.trigger === 'hover' ? headerOverlay : null;
+  const autoHideVisible = useAutoHideHeader({
+    enabled: hoverOverlay !== null && hoverOverlay.suspended !== true,
+    holdSelector: MODAL_HEADER_SELECTOR,
+    ignoreSelector: hoverOverlay?.ignoreSelector,
+  });
   /** 收起态只对浮层 header 有意义：普通流 header 不参与显隐 */
-  const headerHidden = headerIsOverlay && !autoHideVisible;
+  let headerHidden = false;
+
+  if (headerOverlay !== undefined) {
+    headerHidden =
+      headerOverlay.trigger === 'click'
+        ? !(headerOverlay.visible || headerOverlay.suspended === true)
+        : !autoHideVisible;
+  }
 
   /**
    * 空格关窗与翻页 / 全屏 / 复制 / 删除快捷键：业务弹窗不用各自实现。

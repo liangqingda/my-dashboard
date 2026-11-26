@@ -14,13 +14,16 @@
   业务弹窗不再各自挑底色。`height="auto"` 的普通弹窗同样成立（没有侧栏时就是「header 一档、正文一档」）。
 - **header**：紧凑版（上下内边距 6px，高度由行内最高按钮决定，约 41px），用 `.content .header`
   双类名压掉 Mantine 的 `min-height` —— 单类名会被它那套 padding / min-height 顶回来。
-- **header 浮层与自动隐藏**（`headerAutoHide`）：只给媒体预览（图片 / 视频）这类「打开先看画面」
+- **header 浮层与显隐**（`headerOverlay`）：只给媒体预览（图片 / 视频）这类「打开先看画面」
   的弹窗用——header 不再占正文上方一行，改为 absolute 浮在正文顶部（相对 `.content`，它同时充当
   定位祖先，否则浮层会爬到视口顶部、看着像全屏 header）；浮层走毛玻璃：半透明 chrome 渐变 +
-  背景虚化，与播放器控制栏同一口径；隐藏时淡出上移、不接收指针事件，160ms 过渡。
-  显隐由外壳算（`hooks/useAutoHideHeader`）：打开即收起态，鼠标一动浮出，静止 1s 收起，指针停在 header 上不收起；
-  业务侧只传三件事——`suspended`（设置面板 / 列表弹层 / 二次确认开着时暂停自动隐藏）、
-  `pinned`（点击固定）、`resetToken`（要让已经亮着的 header 当场收起时加一，典型是解除固定）。
+  背景虚化，与播放器控制栏同一口径；隐藏时淡出上移、不接收指针事件，160ms 过渡。显隐由外壳算，
+  两种唤出方式二选一：
+  1. `trigger: 'hover'`：打开即收起态，鼠标一动浮出、静止 1s 收起，指针停在 header 上不收起；
+     `suspended` 暂停唤出（设置面板 / 二次确认开着时恒为可见）；`ignoreSelector` 圈掉「指针在里面
+     活动不算唤出」的区域（如播放器控制栏）——指针一进去 header 当场收起、也不再排收起计时。
+  2. `trigger: 'click'`：只认业务侧传的 `visible`，指针怎么动都不参与（点画面开、再点一下关）；
+     `suspended` 同样让 header 恒为可见（列表弹层 / 二次确认开着时）。
   普通流 header 仍是实心 chrome 底。
 - **header 里的按钮**：翻页与全屏走 `FreeIconAction`（`size="sm"`、语气恒为 `normal`、tip 与 `aria-label` 同句，
   键位提示走 `tooltipLabel`），**外壳不自维护图标按钮样式**；关闭按钮是组件库 `Modal` 内建的 `closeButton`。
@@ -78,7 +81,7 @@
 | `headerActions` | 第一组操作（阅读类：复制、筛选、刷新…） |
 | `headerTail` | 排在全屏之后的末尾位，保证「删除」始终在最右 |
 | `headerSecondary` | 第二组操作（如编辑流程），紧接在 `headerTail` 之后、关闭按钮的竖线之前 |
-| `headerAutoHide` | `{ pinned?, suspended?, resetToken? }`；传了就把 header 改成毛玻璃浮层并接管显隐（打开即收起、鼠标一动浮出、静止 1s 收起、指针停在 header 上不收起、隐藏时不接收指针事件）；`suspended` 暂停自动隐藏并恒可见，`pinned` 点击固定，`resetToken` 加一让已亮着的 header 当场按收起态算。收起只影响外观，不卸载按钮 |
+| `headerOverlay` | `FreeModalHeaderOverlay`；传了就把 header 改成毛玻璃浮层并接管显隐（打开即收起、隐藏时不接收指针事件；收起只影响外观，不卸载按钮）。`trigger: 'hover'`：鼠标一动浮出、静止 1s 收起、指针停在 header 上不收起，`suspended` 暂停唤出并恒为可见，`ignoreSelector` 圈掉不算唤出的区域（如播放器控制栏，指针一进去就当场收起）；`trigger: 'click'`：只按 `visible` 开合，指针移动不参与，`suspended` 同样恒为可见 |
 | `overlayTone` | 遮罩色调：`light`（默认）给普通弹窗，`dark` 给图片 / 视频这类要靠深底看画面的预览；两档的虚化与饱和同一套，只换底色 |
 | `media` | `{ onTogglePlay, onToggleMute }`；传了 `onTogglePlay` 之后空格切播放 / 暂停、不再关窗，传了 `onToggleMute` 才有 `M` 静音 |
 | `tipDark` | 可选。header 内按钮与标题的 tip 固定深底浅字、不随主题反转；媒体预览压在画面上的提示用 |

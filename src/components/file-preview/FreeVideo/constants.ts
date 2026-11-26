@@ -28,3 +28,10 @@ export const SEEK_PREVIEW_DPR_CAP = 2;
 
 /** 视频画面比例的兜底（16:9）：元数据还没解出来时先按它排版 */
 export const VIDEO_FALLBACK_ASPECT = 16 / 9;
+
+/**
+ * 控制栏的选择器：控制栏是播放器自己的 chrome，自带一套显隐节奏，
+ * 指针在上面活动不该把外层的浮层 header 顶出来。弹窗按它过滤指针活动
+ * （见 `FreeModal` 的 `headerOverlay.ignoreSelector`），所以控制栏根节点带 `data-video-controls`。
+ */
+export const VIDEO_CONTROLS_SELECTOR = '[data-video-controls]';

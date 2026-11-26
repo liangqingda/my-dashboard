@@ -10,7 +10,8 @@
  * - 设置面板：按「播放 / 截图 / 快捷键」分组，可改步长、方向键去向、空格去向、悬停预览帧大小
  *   与截图存放目录，全部键位双列列一遍；
  * - 控制栏的两颗箭头在播放键左右两侧，去向跟着「方向键去向」设置：快进 / 后退，或翻篇；
- * - **header 与控制栏默认藏着**：打开就看到画面，鼠标一动浮出，静止 1s 收起；设置里可让它「打开即全屏」；
+ * - **header 与控制栏默认藏着**：打开就看到画面，鼠标一动浮出，静止 1s 收起；控制栏上挪指针只唤控制栏、
+ *   不唤 header（各有各的显隐节奏）；设置里可让它「打开即全屏」；
  * - 翻篇（按钮 / 选集 / `[` `]` 都算）后左上角浮出一下「3 / 12」，1 秒后自己收掉（`PreviewCounter`）；
  * - `Esc` 在全屏里交给浏览器退出全屏，非全屏才是关窗。
  */
@@ -20,7 +21,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import PreviewCounter from '@/components/feedback/PreviewCounter';
 import FreeVideo from '@/components/file-preview/FreeVideo';
-import { VIDEO_FALLBACK_ASPECT } from '@/components/file-preview/FreeVideo/constants';
+import {
+  VIDEO_CONTROLS_SELECTOR,
+  VIDEO_FALLBACK_ASPECT,
+} from '@/components/file-preview/FreeVideo/constants';
 import { useBrowserFullscreen } from '@/hooks/useBrowserFullscreen';
 import FreeModal from '@/components/modals/FreeModal';
 import type { FreeModalSeekDirection } from '@/components/modals/FreeModal/types';
@@ -212,8 +216,10 @@ const VideoPreviewModal = ({
   const aspectFrame = !fullscreen && !viewportFullscreen;
 
   /*
-   * header 是浮层：设置面板 / 删除确认开着时暂停自动隐藏，免得面板跟着 header 一起藏起来；
-   * 其余时候打开即收起、鼠标一动浮出、静止 1s 收起（`FreeModal` 的 `headerAutoHide`）。
+   * header 是浮层：设置面板 / 删除确认开着时暂停唤出，免得面板跟着 header 一起藏起来；
+   * 其余时候打开即收起、鼠标一动浮出、静止 1s 收起（`FreeModal` 的 `headerOverlay`）。
+   * 指针停在控制栏（footer）上不算「想唤出 header」：控制栏有自己的显隐节奏，
+   * 在上面挪指针不该把标题栏顶出来——由 `ignoreSelector` 圈掉，指针回到画面才浮出。
    */
   return (
     <FreeModal
@@ -231,7 +237,11 @@ const VideoPreviewModal = ({
         onToggle: toggleBrowserFullscreen,
         showToggle: false,
       }}
-      headerAutoHide={{ suspended: settingsOpen || blocked }}
+      headerOverlay={{
+        ignoreSelector: VIDEO_CONTROLS_SELECTOR,
+        suspended: settingsOpen || blocked,
+        trigger: 'hover',
+      }}
       innerClassName={viewportFullscreen ? styles.innerFullscreen : undefined}
       media={{
         onToggleMute: toggleMute,
