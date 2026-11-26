@@ -5,6 +5,7 @@
  * 切换目录取数期间给整块蒙一层轻量 loading（旧内容留在下面，不清空闪烁）。
  */
 
+import { useMemo } from 'react';
 import { LoadingOverlay, ScrollArea } from '@mantine/core';
 
 import { cx } from '@/utils/cx';
@@ -70,7 +71,7 @@ const FilesEntries = ({
     folders.every((folder) => folder.path !== folderProgress.targetDir);
 
   /** 连选用的显示顺序（文件夹在前、文件在后）：网格与表格共用这一份 */
-  const selectOrder = [...folders, ...files];
+  const selectOrder = useMemo(() => [...folders, ...files], [folders, files]);
 
   /**
    * 空白处落手＝搬进当前这一层：挂在**外框**上而不是网格 / 表格上。

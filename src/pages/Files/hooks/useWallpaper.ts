@@ -7,6 +7,7 @@
 import { useState } from 'react';
 import { notifications } from '@mantine/notifications';
 
+import { useMounted } from '@/hooks/useMounted';
 import { getErrorMessage } from '@/utils/error';
 
 import { setDesktopWallpaper } from '../utils/files-api';
@@ -40,6 +41,7 @@ export type UseWallpaperResult = {
 export const useWallpaper = (): UseWallpaperResult => {
   const [request, setRequest] = useState<WallpaperRequest | null>(null);
   const [loading, setLoading] = useState(false);
+  const mounted = useMounted();
 
   const requestWallpaper = (target: WallpaperRequest) => setRequest(target);
 
@@ -54,6 +56,11 @@ export const useWallpaper = (): UseWallpaperResult => {
 
     try {
       await setDesktopWallpaper(request.path);
+
+      if (!mounted.current) {
+        return;
+      }
+
       notifications.show({
         title: '已设为桌面墙纸',
         message: `「${request.name}」已铺到桌面`,
@@ -62,6 +69,10 @@ export const useWallpaper = (): UseWallpaperResult => {
       });
       setRequest(null);
     } catch (err) {
+      if (!mounted.current) {
+        return;
+      }
+
       notifications.show({
         title: '设置墙纸失败',
         message: getErrorMessage(err, '请稍后重试'),
@@ -69,7 +80,9 @@ export const useWallpaper = (): UseWallpaperResult => {
         autoClose: false,
       });
     } finally {
-      setLoading(false);
+      if (mounted.current) {
+        setLoading(false);
+      }
     }
   };
 

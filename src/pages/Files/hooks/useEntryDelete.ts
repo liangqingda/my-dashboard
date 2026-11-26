@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { notifications } from '@mantine/notifications';
 
+import { useMounted } from '@/hooks/useMounted';
 import { getErrorMessage } from '@/utils/error';
 
 import type { FileEntry, FolderEntry } from '../types';
@@ -29,6 +30,7 @@ export const useEntryDelete = (
 ) => {
   const [deletingPath, setDeletingPath] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const mounted = useMounted();
 
   /** 等待删除的条目；路径已不在列表里时按 null 收口，弹窗随之关闭 */
   const matchFolder = folders.find((folder) => folder.path === deletingPath);
@@ -69,6 +71,11 @@ export const useEntryDelete = (
       // 先按旧顺序把预览挪到下一条，再重读：那时列表里还有这一条，位置一定找得到
       onDeleted?.(deletingPath);
       await reload();
+
+      if (!mounted.current) {
+        return;
+      }
+
       setDeletingPath(null);
       notifications.show({
         title: '已删除',
@@ -77,6 +84,10 @@ export const useEntryDelete = (
         autoClose: 4000,
       });
     } catch (err) {
+      if (!mounted.current) {
+        return;
+      }
+
       notifications.show({
         title: '删除失败',
         message: getErrorMessage(err, '请稍后重试'),
@@ -84,7 +95,9 @@ export const useEntryDelete = (
         autoClose: false,
       });
     } finally {
-      setLoading(false);
+      if (mounted.current) {
+        setLoading(false);
+      }
     }
   };
 

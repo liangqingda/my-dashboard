@@ -11,6 +11,7 @@ import type {
   VideoPreviewCaptureReceipt,
   VideoPreviewItem,
 } from '@/components/modals/VideoPreviewModal/types';
+import { useMounted } from '@/hooks/useMounted';
 import { getErrorMessage } from '@/utils/error';
 
 import type { DirListing, FileEntry, VideoOpenMode } from '../types';
@@ -67,6 +68,7 @@ export const useVideoPreview = (
   { videoApp, videoOpenMode }: UseVideoPreviewOptions,
 ): UseVideoPreviewResult => {
   const list = usePreviewList(listing, 'video');
+  const mounted = useMounted();
 
   /** 条目只在视频列表变化时重算 */
   const items = useMemo(
@@ -97,6 +99,10 @@ export const useVideoPreview = (
   const openExternal = (id: string, appName?: string) => {
     void openFileExternally(id, appName)
       .then((app) => {
+        if (!mounted.current) {
+          return;
+        }
+
         notifications.show({
           message:
             app === 'default'
@@ -105,6 +111,10 @@ export const useVideoPreview = (
         });
       })
       .catch((error: unknown) => {
+        if (!mounted.current) {
+          return;
+        }
+
         notifications.show({
           color: 'red',
           message: getErrorMessage(error, '外部打开失败'),

@@ -1,4 +1,4 @@
-import { useState, type DragEvent } from 'react';
+import { useCallback, useState, type DragEvent } from 'react';
 import { notifications } from '@mantine/notifications';
 
 import { getErrorMessage } from '@/utils/error';
@@ -55,44 +55,44 @@ export const useEntryActions = ({
   const [dropTarget, setDropTarget] = useState<string | null>(null);
 
   /** 清掉拖拽临时状态 */
-  const clearDrag = () => {
+  const clearDrag = useCallback(() => {
     setDragSource(null);
     setDropTarget(null);
-  };
+  }, []);
 
   /** 拖拽移动：同名冲突 / 移入自身后代由后端拒绝，失败不改动原位置；成功返回 true */
-  const moveEntryTo = async (
-    source: string,
-    targetDir: string,
-  ): Promise<boolean> => {
-    if (!source || source === targetDir) {
-      clearDrag();
+  const moveEntryTo = useCallback(
+    async (source: string, targetDir: string): Promise<boolean> => {
+      if (!source || source === targetDir) {
+        clearDrag();
 
-      return false;
-    }
+        return false;
+      }
 
-    try {
-      await moveEntry(source, targetDir);
-      await reload();
+      try {
+        await moveEntry(source, targetDir);
+        await reload();
 
-      /*
-       * 这里不弹「已移动」通知：一批会调用好几次，逐条弹会糊一屏。
-       * 搬完的总结（搬走几个、有几个本来就在目标里）由 `use-move-runner` 在关窗之后统一弹一条。
-       */
-      return true;
-    } catch (err) {
-      notifications.show({
-        title: '移动失败',
-        message: getErrorMessage(err, '请稍后重试'),
-        color: 'red',
-        autoClose: false,
-      });
+        /*
+         * 这里不弹「已移动」通知：一批会调用好几次，逐条弹会糊一屏。
+         * 搬完的总结（搬走几个、有几个本来就在目标里）由 `use-move-runner` 在关窗之后统一弹一条。
+         */
+        return true;
+      } catch (err) {
+        notifications.show({
+          title: '移动失败',
+          message: getErrorMessage(err, '请稍后重试'),
+          color: 'red',
+          autoClose: false,
+        });
 
-      return false;
-    } finally {
-      clearDrag();
-    }
-  };
+        return false;
+      } finally {
+        clearDrag();
+      }
+    },
+    [clearDrag, reload],
+  );
 
   /** 拖拽移动弹窗：逐层找目标文件夹、取消区与落位音效都在这个会话里 */
   const dragMove = useDragMove({
@@ -104,115 +104,142 @@ export const useEntryActions = ({
   });
 
   /** 切目录前清掉改名与拖拽临时状态，不沿用到新目录 */
-  const resetTransient = () => {
+  const resetTransient = useCallback(() => {
     setRenamingEntry(null);
     clearDrag();
     dragMove.reset();
-  };
+  }, [clearDrag, dragMove]);
 
   /**
    * 在指定目录新建文件夹：后端落一个默认名条目，刷新后打开改名弹窗。
    * 目录页标题栏与拖拽移动弹窗的 header 共用这一条路径，交互完全一致。
    */
-  const createEntryIn = async (dir: string) => {
-    try {
-      const created = await createFolder(dir);
+  const createEntryIn = useCallback(
+    async (dir: string) => {
+      try {
+        const created = await createFolder(dir);
 
-      await reload();
-      dragMove.refreshView();
-      setRenamingEntry({ path: created.path, name: created.name, kind: 'folder' });
-    } catch (err) {
-      notifications.show({
-        title: '新建文件夹失败',
-        message: getErrorMessage(err, '请稍后重试'),
-        color: 'red',
-        autoClose: false,
-      });
-    }
-  };
+        await reload();
+        dragMove.refreshView();
+        setRenamingEntry({
+          path: created.path,
+          name: created.name,
+          kind: 'folder',
+        });
+      } catch (err) {
+        notifications.show({
+          title: '新建文件夹失败',
+          message: getErrorMessage(err, '请稍后重试'),
+          color: 'red',
+          autoClose: false,
+        });
+      }
+    },
+    [dragMove, reload],
+  );
 
   /** 新建文件夹：目录页标题栏那颗按钮，落在当前目录 */
-  const createEntry = async () => {
+  const createEntry = useCallback(async () => {
     if (!currentDir) {
       return;
     }
 
     await createEntryIn(currentDir);
-  };
+  }, [createEntryIn, currentDir]);
 
   /** 提交改名：成功后刷新列表；失败弹提示并退出改名态，条目保留原名 */
-  const renameCommit = async (path: string, name: string) => {
-    setRenameLoading(true);
+  const renameCommit = useCallback(
+    async (path: string, name: string) => {
+      setRenameLoading(true);
 
-    try {
-      await renameEntry(path, name);
-      await reload();
-      /* 新文件夹改名后就地反映到拖拽弹窗那一层，不用退出重进 */
-      dragMove.refreshView();
-      setRenamingEntry(null);
-    } catch (err) {
-      notifications.show({
-        title: '重命名失败',
-        message: getErrorMessage(err, '请稍后重试'),
-        color: 'red',
-        autoClose: false,
-      });
-    } finally {
-      setRenamingEntry(null);
-      setRenameLoading(false);
-    }
-  };
+      try {
+        await renameEntry(path, name);
+        await reload();
+        /* 新文件夹改名后就地反映到拖拽弹窗那一层，不用退出重进 */
+        dragMove.refreshView();
+        setRenamingEntry(null);
+      } catch (err) {
+        notifications.show({
+          title: '重命名失败',
+          message: getErrorMessage(err, '请稍后重试'),
+          color: 'red',
+          autoClose: false,
+        });
+      } finally {
+        setRenamingEntry(null);
+        setRenameLoading(false);
+      }
+    },
+    [dragMove, reload],
+  );
 
   /** 打开某条目的改名弹窗（瓦片上的编辑按钮） */
-  const editEntry = (entry: FolderEntry | FileEntry) =>
-    setRenamingEntry({
-      path: entry.path,
-      name: entry.name,
-      kind: 'category' in entry ? 'file' : 'folder',
-    });
+  const editEntry = useCallback(
+    (entry: FolderEntry | FileEntry) =>
+      setRenamingEntry({
+        path: entry.path,
+        name: entry.name,
+        kind: 'category' in entry ? 'file' : 'folder',
+      }),
+    [],
+  );
 
   /** 关掉改名弹窗，不提交 */
-  const closeRename = () => setRenamingEntry(null);
+  const closeRename = useCallback(() => setRenamingEntry(null), []);
 
   /**
    * 拖起一批条目：把移动弹窗打开在页面当前目录，条目本体一并交给会话。
    * 从瓦片 / 表格行拖起时只有一条；从待拖拽区整批拖起时是一整批。
    */
-  const dragStartEntries = (entries: DraggableEntry[]) => {
-    // 拖拽源高亮只认第一条：多个条目时弹窗已经盖住列表，没必要逐条画「正在拖」
-    setDragSource(entries[0]?.path ?? null);
-    dragMove.open(entries);
-  };
+  const dragStartEntries = useCallback(
+    (entries: DraggableEntry[]) => {
+      // 拖拽源高亮只认第一条：多个条目时弹窗已经盖住列表，没必要逐条画「正在拖」
+      setDragSource(entries[0]?.path ?? null);
+      dragMove.open(entries);
+    },
+    [dragMove],
+  );
 
   /** 拖起一条目：单条走的是同一个入口 */
-  const dragStartEntry = (entry: DraggableEntry) => dragStartEntries([entry]);
+  const dragStartEntry = useCallback(
+    (entry: DraggableEntry) => dragStartEntries([entry]),
+    [dragStartEntries],
+  );
 
   /** 拖拽结束：收起移动弹窗；没有落下的移动一律不执行 */
-  const endDrag = () => {
+  const endDrag = useCallback(() => {
     clearDrag();
     dragMove.endDrag();
-  };
+  }, [clearDrag, dragMove]);
 
-  const dragOverFolder = (path: string, event: DragEvent<HTMLElement>) => {
-    event.preventDefault();
-    const { dataTransfer } = event;
+  const dragOverFolder = useCallback(
+    (path: string, event: DragEvent<HTMLElement>) => {
+      event.preventDefault();
+      const { dataTransfer } = event;
 
-    dataTransfer.dropEffect = 'move';
-    setDropTarget(path);
-  };
+      dataTransfer.dropEffect = 'move';
+      setDropTarget(path);
+    },
+    [],
+  );
 
-  const dropFolder = (path: string) => {
-    if (dragSource) {
-      void moveEntryTo(dragSource, path);
-    }
-  };
+  const dropFolder = useCallback(
+    (path: string) => {
+      if (dragSource) {
+        void moveEntryTo(dragSource, path);
+      }
+    },
+    [dragSource, moveEntryTo],
+  );
+
+  const dragLeaveFolder = useCallback(() => setDropTarget(null), []);
 
   return {
     clearDrag,
     closeRename,
     createEntry,
     createEntryIn,
-    dragLeaveFolder: () => setDropTarget(null),
+    dragLeaveFolder,
     dragMove,
     dragOverFolder,
     dragSource,

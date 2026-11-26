@@ -9,6 +9,8 @@
 import { useState } from 'react';
 import { notifications } from '@mantine/notifications';
 
+import { useMounted } from '@/hooks/useMounted';
+
 import type { EjectVolumeResult, VolumeHolder, VolumeSpace } from '../types';
 import { ejectVolume } from '../utils/files-api';
 
@@ -64,6 +66,7 @@ export const useVolumeEject = ({
   /** 盘还占着时的第二次确认；null 表示没到这一步 */
   const [busy, setBusy] = useState<VolumeBusyState | null>(null);
   const [ejecting, setEjecting] = useState(false);
+  const mounted = useMounted();
 
   const canEject = currentDir !== null && external !== null;
 
@@ -122,6 +125,10 @@ export const useVolumeEject = ({
     try {
       const result = await ejectVolume(volume.dir, killPids);
 
+      if (!mounted.current) {
+        return;
+      }
+
       if (result.status === 'ejected') {
         finish(volume, result.released, result.killed);
 
@@ -130,12 +137,18 @@ export const useVolumeEject = ({
 
       setBusy(toBusyState(result));
     } catch (caught) {
+      if (!mounted.current) {
+        return;
+      }
+
       notifications.show({
         color: 'red',
         message: caught instanceof Error ? caught.message : '推出外接盘失败',
       });
     } finally {
-      setEjecting(false);
+      if (mounted.current) {
+        setEjecting(false);
+      }
     }
   };
 

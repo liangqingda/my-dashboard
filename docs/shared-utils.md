@@ -2,11 +2,17 @@
 
 ## 判据
 
-同一段逻辑出现**第二处**就必须抽出来再复用，不许各写一遍。抽取位置：
+先判这段能力是不是**跨页面通用的高频口径**，再决定落点；「出现第二处」只是兜底阈值，不是
+「第一处可以先写一份」的理由。
 
-- 纯函数、跨页面通用 → `src/utils/<kebab-case>.ts`；
-- 只在一个页面 / 组件里用 → 该目录自己的 `utils.ts`；
-- 组件形态的通用 UI → `src/components/<分类>/<PascalCase>/`（分类见 `docs/ui-components.md`）。
+- **通用高频能力**（体积 / 路径 / 时间 / 错误文案 / 剪贴板这类几乎每页都会用到的口径，或语义已经中性、
+  不绑某页业务）→ 直接上提 `src/utils/<kebab-case>.ts`（纯函数）或 `src/hooks/`（状态机），不要先在
+  页面里写一份等第二处；
+- **只在一个页面 / 组件里用、且看不出通用价值** → 该目录自己的 `utils.ts`；
+- **组件形态的通用 UI** → `src/components/<分类>/<PascalCase>/`（分类见 `docs/ui-components.md`）。
+
+判「通用」看三点：输入输出是否中性、口径是否跨页一致、是不是常见场景；只是两处长得像但语义不同的，
+不硬合并。**第二处就该提是兜底阈值**：拿不准通用价值时，出现第二处必须抽，不许各写一遍。
 
 **「逻辑提了、UI 提不提」「UI 提了、逻辑留不留」另有一份判据**：见 `docs/reuse-boundaries.md`
 （同一件事的 UI 与逻辑分开判，允许只提一半；公共件里不许出现页面语义）。
@@ -28,6 +34,7 @@
 | Markdown 标题目录 | `@/utils/markdown-outline` 的 `extractMarkdownOutline` |
 | 单行 / 两行省略文本（默认中间省略，尾部省略传 `ellipsis="end"`）、截断才提示 | `@/components/texts/FreeTruncatedText` |
 | 悬停 / 聚焦意图 | `@/hooks/useHoverIntent` |
+| 组件是否仍挂载（异步回调写状态前挡卸载后的迟到响应） | `@/hooks/useMounted` |
 | 单击 / 双击的区分（单击延后一个双击窗口，第二下到来就作废） | `@/hooks/useSingleOrDoubleClick` |
 | 界面状态的本地持久化（展开 / 收起、全屏、视图形态） | `@/hooks/useStoredState` + `@/utils/local-storage` 的 `FLAG_CODEC` / `STRING_CODEC` / `createChoiceCodec(choices, fallback)` / `createRangedNumberCodec(min, max, fallback)`（滑块这类固定档位，脏值与越界回落默认）；不在组件里直接读写 `localStorage`，也不自己 try/catch |
 | 一个弹窗的整组偏好（同一次阅读的全屏 / 字号 / 目录宽度…） | `@/hooks/useStoredField(key, field, codec)` + `FLAG_FIELD_CODEC` / `createChoiceFieldCodec(choices, fallback)` |

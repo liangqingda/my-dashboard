@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import type { DraggableEntry } from '../../types';
 import { pendingChipRect } from '../../utils/pending-dom';
@@ -30,29 +30,33 @@ export const useDragPending = (): DragPendingState => {
    */
   const [anchor, setAnchor] = useState<string | null>(null);
 
-  const has = (path: string) => entries.some((entry) => entry.path === path);
+  const has = useCallback(
+    (path: string) => entries.some((entry) => entry.path === path),
+    [entries],
+  );
 
   /* 锚点只由「点选」与「连选」改：`add` 也走这里（弹窗取回、拖进待拖拽区都算），别动它 */
-  const add = (entry: DraggableEntry) => {
+  const add = useCallback((entry: DraggableEntry) => {
     setEntries((prev) =>
       prev.some((item) => item.path === entry.path) ? prev : [...prev, entry],
     );
-  };
+  }, []);
 
   /** 一批里已存在的直接跳过，顺序仍按加入先后 */
-  const addMany = (batch: DraggableEntry[]) =>
+  const addMany = useCallback((batch: DraggableEntry[]) => {
     setEntries((prev) => {
       const known = new Set(prev.map((item) => item.path));
       const incoming = batch.filter((entry) => !known.has(entry.path));
 
       return incoming.length === 0 ? prev : [...prev, ...incoming];
     });
+  }, []);
 
   /**
    * 移出：给了待拖拽区那一格的矩形就播「飞回列表」——那一条先留在原处变成虚位，
    * 飞行落定后才摘掉；没给矩形（量不到那一格）就当场移除。
    */
-  const remove = (entry: DraggableEntry, from?: DOMRect) => {
+  const remove = useCallback((entry: DraggableEntry, from?: DOMRect) => {
     if (from === undefined) {
       setEntries((prev) => prev.filter((item) => item.path !== entry.path));
 
@@ -61,77 +65,91 @@ export const useDragPending = (): DragPendingState => {
 
     setFlight({ direction: 'out', entry, from });
     setLeaving(entry.path);
-  };
+  }, []);
 
-  const removePaths = (paths: string[]) => {
+  const removePaths = useCallback((paths: string[]) => {
     setLeaving(null);
     setEntries((prev) => prev.filter((entry) => !paths.includes(entry.path)));
-  };
+  }, []);
 
-  const toggle = (entry: DraggableEntry, from?: DOMRect) => {
-    setAnchor(entry.path);
+  const toggle = useCallback(
+    (entry: DraggableEntry, from?: DOMRect) => {
+      setAnchor(entry.path);
 
-    if (has(entry.path)) {
-      // 取消：从待拖拽区那一格起飞，飞回列表里被点的那张瓦片（量不到就不播）
-      const chip = pendingChipRect(entry.path);
+      if (has(entry.path)) {
+        // 取消：从待拖拽区那一格起飞，飞回列表里被点的那张瓦片（量不到就不播）
+        const chip = pendingChipRect(entry.path);
 
-      remove(entry, chip ?? undefined);
+        remove(entry, chip ?? undefined);
 
-      return;
-    }
+        return;
+      }
 
-    // 加进去才播「挪到待拖拽区」的动画；移除走 `remove` 那条（它自己带矩形）
-    if (from !== undefined) {
-      setFlight({ direction: 'in', entry, from });
-    }
+      // 加进去才播「挪到待拖拽区」的动画；移除走 `remove` 那条（它自己带矩形）
+      if (from !== undefined) {
+        setFlight({ direction: 'in', entry, from });
+      }
 
-    add(entry);
-  };
+      add(entry);
+    },
+    [add, has, remove],
+  );
 
   /**
    * 连选：把锚点到这一条之间（含两端）整段收进来，已在里面的跳过；顺序按列表顺序。
    * 还没有锚点（第一下就是 Shift + 点）时只收它自己，顺便把锚点落在它身上。
    */
-  const selectRange = (ordered: DraggableEntry[], path: string) => {
-    const targetAt = ordered.findIndex((entry) => entry.path === path);
+  const selectRange = useCallback(
+    (ordered: DraggableEntry[], path: string) => {
+      const targetAt = ordered.findIndex((entry) => entry.path === path);
 
-    if (targetAt === -1) {
-      return;
-    }
+      if (targetAt === -1) {
+        return;
+      }
 
-    const anchorAt = ordered.findIndex((entry) => entry.path === anchor);
-    const from = anchorAt === -1 ? targetAt : Math.min(anchorAt, targetAt);
-    const to = anchorAt === -1 ? targetAt : Math.max(anchorAt, targetAt);
+      const anchorAt = ordered.findIndex((entry) => entry.path === anchor);
+      const from = anchorAt === -1 ? targetAt : Math.min(anchorAt, targetAt);
+      const to = anchorAt === -1 ? targetAt : Math.max(anchorAt, targetAt);
 
-    setAnchor(path);
-    addMany(ordered.slice(from, to + 1));
-  };
+      setAnchor(path);
+      addMany(ordered.slice(from, to + 1));
+    },
+    [addMany, anchor],
+  );
 
-  const clear = () => {
+  const clear = useCallback(() => {
     setEntries([]);
     setFlight(null);
     setLeaving(null);
     setAnchor(null);
-  };
+  }, []);
+
+  const beginTrayDrag = useCallback((batch: DraggableEntry[]) => {
+    setTrayDrag(batch);
+  }, []);
+
+  const endTrayDrag = useCallback(() => setTrayDrag(null), []);
+
+  /** 飞行播完：进来的那条已经在 `entries` 里，出去的那条到这一刻才摘掉 */
+  const clearFlight = useCallback(() => {
+    if (leaving !== null) {
+      const path = leaving;
+
+      setEntries((prev) => prev.filter((item) => item.path !== path));
+      setLeaving(null);
+    }
+
+    setFlight(null);
+  }, [leaving]);
 
   return {
     active: entries.length > 0,
     add,
     addMany,
-    beginTrayDrag: (batch) => setTrayDrag(batch),
+    beginTrayDrag,
     clear,
-    /** 飞行播完：进来的那条已经在 `entries` 里，出去的那条到这一刻才摘掉 */
-    clearFlight: () => {
-      if (leaving !== null) {
-        const path = leaving;
-
-        setEntries((prev) => prev.filter((item) => item.path !== path));
-        setLeaving(null);
-      }
-
-      setFlight(null);
-    },
-    endTrayDrag: () => setTrayDrag(null),
+    clearFlight,
+    endTrayDrag,
     entries,
     flight,
     has,

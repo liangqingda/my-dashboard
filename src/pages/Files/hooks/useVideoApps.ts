@@ -8,6 +8,7 @@
 
 import { useEffect, useState } from 'react';
 
+import { useMounted } from '@/hooks/useMounted';
 import { getErrorMessage } from '@/utils/error';
 
 import type { VideoAppOption } from '../types';
@@ -31,18 +32,26 @@ export const useVideoApps = (): UseVideoAppsResult => {
     loading: true,
   });
 
+  const mounted = useMounted();
+
   useEffect(() => {
     fetchVideoApps().then(
-      (apps) => setState({ apps, error: null, loading: false }),
+      (apps) => {
+        if (mounted.current) {
+          setState({ apps, error: null, loading: false });
+        }
+      },
       (caught: unknown) => {
-        setState({
-          apps: [],
-          error: getErrorMessage(caught, '读取播放器列表失败'),
-          loading: false,
-        });
+        if (mounted.current) {
+          setState({
+            apps: [],
+            error: getErrorMessage(caught, '读取播放器列表失败'),
+            loading: false,
+          });
+        }
       },
     );
-  }, []);
+  }, [mounted]);
 
   return state;
 };

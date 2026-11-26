@@ -8,6 +8,8 @@
 
 import { useState } from 'react';
 
+import { useMounted } from '@/hooks/useMounted';
+
 import { cloneFlightBody, dressClone } from '../utils/pending-dom';
 import type { FlyRect, ReturnFlyProps } from '../DragMoveModal/ReturnFly/types';
 
@@ -59,6 +61,7 @@ export const useReturnFly = (restore: (item: LandedItem) => Promise<string | nul
     path: string;
     flight: ReturnFlyProps['flight'] | null;
   } | null>(null);
+  const mounted = useMounted();
 
   /**
    * 点一条「搬进这个文件夹的」：先量下它这一格此刻的矩形、拷一份它的样子，
@@ -84,7 +87,7 @@ export const useReturnFly = (restore: (item: LandedItem) => Promise<string | nul
     dressClone(node, from.width, from.height);
 
     void restore(item).then((backPath) => {
-      if (backPath === null) {
+      if (backPath === null || !mounted.current) {
         return;
       }
 
@@ -93,6 +96,10 @@ export const useReturnFly = (restore: (item: LandedItem) => Promise<string | nul
 
       // 新那一格要等 React 把这一帧渲染完才量得到，所以推到下一帧再量
       window.requestAnimationFrame(() => {
+        if (!mounted.current) {
+          return;
+        }
+
         const to = chipRectOf(backPath) ?? cardFallbackRect();
 
         if (to === null) {

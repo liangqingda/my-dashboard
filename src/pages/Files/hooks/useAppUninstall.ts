@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { notifications } from '@mantine/notifications';
 
+import { useMounted } from '@/hooks/useMounted';
 import { getErrorMessage } from '@/utils/error';
 
 import type { AppEntry, AppResidueReport } from '../types';
@@ -24,6 +25,7 @@ export const useAppUninstall = (reload: () => Promise<void>) => {
   const [uninstalling, setUninstalling] = useState(false);
 
   const reportAbort = useRef<AbortController | null>(null);
+  const mounted = useMounted();
 
   /** 关弹窗 / 切目录：中止取残留并清空全部临时状态 */
   const reset = useCallback(() => {
@@ -81,6 +83,11 @@ export const useAppUninstall = (reload: () => Promise<void>) => {
       const [firstFailure] = result.failed;
 
       await reload();
+
+      if (!mounted.current) {
+        return;
+      }
+
       reset();
 
       if (appFailed) {
@@ -110,6 +117,10 @@ export const useAppUninstall = (reload: () => Promise<void>) => {
             },
       );
     } catch (err) {
+      if (!mounted.current) {
+        return;
+      }
+
       notifications.show({
         autoClose: false,
         color: 'red',
@@ -117,7 +128,9 @@ export const useAppUninstall = (reload: () => Promise<void>) => {
         title: '卸载失败',
       });
     } finally {
-      setUninstalling(false);
+      if (mounted.current) {
+        setUninstalling(false);
+      }
     }
   };
 

@@ -7,6 +7,7 @@
  * - 经过 / 离开 / 松手落点：弹窗模式交给移动会话，直接拖模式交给 `useDirectMove`，自己搬。
  */
 
+import { useCallback, useMemo } from 'react';
 import type { DragEvent } from 'react';
 
 import type { FileEntry, FolderEntry, MoveMode } from '../types';
@@ -52,38 +53,41 @@ export const useFilesDrag = ({
   });
 
   /** 弹窗模式下的起拖与收件：列表不立即开弹窗，先把条目往侧栏待拖拽区拖 */
-  const { handleDragStartEntry, handleTrayDrop } = usePendingDrag({
+  const { handleDragStartEntry, handleTrayDrop } = usePendingDrag(
     pending,
     entryActions,
     folders,
     files,
-  });
+  );
 
   const isDirect = moveMode === 'direct';
 
   /** 拖拽结束（松手 / Esc / 落在别处）：两套拖拽状态的收尾一次做完 */
-  const handleDragEnd = () => {
+  const handleDragEnd = useCallback(() => {
     pending.endTrayDrag();
     entryActions.endDrag();
     direct.end();
-  };
+  }, [direct, entryActions, pending]);
 
   /**
    * 列表里起拖：走弹窗就交给待拖拽区那套；走直接拖就自己跟住这批条目
    * （拖的这条本来就在待拖拽区里 → 整批一起走，否则只走它自己）
    */
-  const handleListDragStart = (entry: FolderEntry | FileEntry) => {
-    if (isDirect) {
-      direct.begin(pending.has(entry.path) ? pending.entries : [entry]);
+  const handleListDragStart = useCallback(
+    (entry: FolderEntry | FileEntry) => {
+      if (isDirect) {
+        direct.begin(pending.has(entry.path) ? pending.entries : [entry]);
 
-      return;
-    }
+        return;
+      }
 
-    handleDragStartEntry(entry);
-  };
+      handleDragStartEntry(entry);
+    },
+    [direct, handleDragStartEntry, isDirect, pending],
+  );
 
   /** 「拖拽全部」起拖：弹窗模式开弹窗，直接拖模式只点亮拖拽态 */
-  const handleDragAll = () => {
+  const handleDragAll = useCallback(() => {
     if (isDirect) {
       direct.begin(pending.entries);
 
@@ -91,20 +95,23 @@ export const useFilesDrag = ({
     }
 
     entryActions.dragStartEntries(pending.entries);
-  };
+  }, [direct, entryActions, isDirect, pending.entries]);
 
   /** 拖拽经过文件夹：直接拖模式亮放置目标，待拖拽区里的那一格算禁用 */
-  const handleDragOverFolder = (path: string, event: DragEvent<HTMLElement>) => {
-    if (isDirect) {
-      direct.dragOver(path, event, pending.has(path));
+  const handleDragOverFolder = useCallback(
+    (path: string, event: DragEvent<HTMLElement>) => {
+      if (isDirect) {
+        direct.dragOver(path, event, pending.has(path));
 
-      return;
-    }
+        return;
+      }
 
-    entryActions.dragOverFolder(path, event);
-  };
+      entryActions.dragOverFolder(path, event);
+    },
+    [direct, entryActions, isDirect, pending],
+  );
 
-  const handleDragLeaveFolder = () => {
+  const handleDragLeaveFolder = useCallback(() => {
     if (isDirect) {
       direct.leave();
 
@@ -112,36 +119,42 @@ export const useFilesDrag = ({
     }
 
     entryActions.dragLeaveFolder();
-  };
+  }, [direct, entryActions, isDirect]);
 
   /**
    * 松手落在列表的空白处：直接拖模式下等于「搬进当前这一层」；
    * 弹窗模式没有这个语义（落点只有文件夹瓦片和弹窗里的当前层），给 undefined 让列表别接。
    */
-  const handleDropBlank = isDirect ? () => void direct.drop(currentDir) : undefined;
+  const handleDropBlank = useMemo(
+    () => (isDirect ? () => void direct.drop(currentDir) : undefined),
+    [currentDir, direct, isDirect],
+  );
 
   /** 松手放进文件夹：直接拖模式自己搬，弹窗那套走会话的落点 */
-  const handleDropFolder = (path: string) => {
-    if (isDirect) {
-      void direct.drop(path);
+  const handleDropFolder = useCallback(
+    (path: string) => {
+      if (isDirect) {
+        void direct.drop(path);
 
-      return;
-    }
+        return;
+      }
 
-    entryActions.dropFolder(path);
-  };
+      entryActions.dropFolder(path);
+    },
+    [direct, entryActions, isDirect],
+  );
 
   /**
    * 正在被拖走的条目：直接拖模式拖的可能是一批，全都要弱化；
    * 弹窗模式列表被弹窗盖住，只留会话那一条也够用
    */
-  let dragPaths: string[] = [];
+  const dragPaths = useMemo(() => {
+    if (isDirect) {
+      return (direct.dragging ?? []).map((entry) => entry.path);
+    }
 
-  if (isDirect) {
-    dragPaths = (direct.dragging ?? []).map((entry) => entry.path);
-  } else if (entryActions.dragSource !== null) {
-    dragPaths = [entryActions.dragSource];
-  }
+    return entryActions.dragSource !== null ? [entryActions.dragSource] : [];
+  }, [direct.dragging, entryActions.dragSource, isDirect]);
 
   const dropTarget = isDirect ? direct.hoverPath : entryActions.dropTarget;
   const dropBlockedPath = isDirect ? direct.blockedPath : null;

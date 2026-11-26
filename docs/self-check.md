@@ -41,7 +41,7 @@
 | 1 | 功能与数据流：错误态、空态、越界、并发 | skill《Review 时的判据顺序》第 1 条 |
 | 2 | O(n²)、重复计算、无谓重渲染 | skill 第 3 条 + `js-*` 系列规则 |
 | 3 | 分层归位（五维）、一文件一组件、组件目录不嵌套 `components/`、**这次的「例外」是否真的不属于这一类** | skill《分层拆分》；命名细则见 `docs/code-splitting.md`；判据见 `docs/ui-components.md` |
-| 4 | 副作用收口：监听 / 订阅 / 定时器清理、请求竞态、轮询纪律 | skill《副作用收口与异步竞态》 |
+| 4 | 副作用收口：监听 / 订阅 / 定时器清理、请求竞态、轮询纪律；异步回调卸载守卫（第 3 节） | skill《副作用收口与异步竞态》 + 本文件第 3 节 |
 | 5 | 注释与实现是否一致 | skill《注释 / JSDoc》 |
 | 6 | 共用能力有没有重复实现 | `docs/shared-utils.md` 的清单（项目特有） |
 | 7 | 残留：旧目录、`features/…`、已删页面、失效文档段落、**已下线能力的符号 / 接口 / 依赖** | skill 判据 + 本项目 grep 旧路径与旧标识符 |
@@ -49,7 +49,21 @@
 | 9 | 文档同步：改到的行为 / 契约写进对应 `docs/`；入口文件仍只有红线与索引，没有该拆未拆的段落 | `AGENTS.md`《维护本文件》 |
 | 10 | 架构层面：这次暴露的规则 / 逻辑 / 步骤该不该上提共享（package 或 skill）、该不该自动化、工具落点对不对口 | skill《架构层面：上提共享与自动化》 |
 
-## 3. 本项目容易返工的几条
+## 3. 异步回调的卸载 / 取消守卫
+
+通用竞态判据在 skill《副作用收口与异步竞态》，这里只写本项目的落点与现成工具：
+
+- **会被新请求顶替的读盘**（切目录、换目标、换层）→ `requestId` 序号或 `AbortController` 让旧请求
+  作废，迟到响应按序号 / `signal.aborted` 挡掉；被主动取消的 `AbortError` 不算失败。
+- **一次性写操作**（确认删除 / 卸载 / 设墙纸 / 推出盘 / 改名 / 移动）→ 没有下一次请求顶替，用
+  `@/hooks/useMounted` 的挂载标记：异步回调落状态、弹通知前先判 `mounted.current`，卸载后的迟到响应
+  不再 `setState`；`finally` 里复位 loading 同样先判挂载。
+- **effect 里发起的请求** → 清理函数里 `controller.abort()`，并让旧结果按序号 / 信号忽略。
+- 判完再写：`await` / `.then` 之后每一处 `setState`、`notifications.show`、回调外传，都要确认要么
+  有取消收口、要么有挂载守卫；新增异步 hook 时先查 `useFilesDir` / `useAppUninstall` 的先例，不另造
+  一套标记口径。
+
+## 4. 本项目容易返工的几条
 
 - 拆文件时手写样式容易丢声明：拆 `index.scss` 要从原文按块搬，只改选择器名。
 - 新加的图标按钮要有 `aria-label`。
@@ -66,12 +80,12 @@
   只删界面留后端、只删代码留注释都算没删。`check-imports.mjs` 能兜住没人 import 的 `dependencies`，
   其余几类只靠这里对。
 
-## 4. 前端 / 视觉改动
+## 5. 前端 / 视觉改动
 
 默认不做浏览器实测：不启 dev server、不截图，以 `pnpm typecheck` / `pnpm lint` 为准，
 除非用户明确要求浏览器验证。
 
-## 5. 提交前
+## 6. 提交前
 
 - `git status` + `git diff --stat`：只含本次改动，不夹带无关文件或整文件格式化。
 - 改了约定或行为：同一次提交里同步 `docs/` 与入口 `AGENTS.md`（只加速览 / 索引，细则进
@@ -79,7 +93,7 @@
 - 裸 `eslint-disable`、失效 disable、`@ts-ignore`、`console.log` 从
   `@liangqingda/eslint-config@1.6.0` 起都由 lint 拦下，不用人工再查一遍。
 
-## 6. 改共享包（eslint-config / tsconfig）
+## 7. 改共享包（eslint-config / tsconfig）
 
 本项目依赖的是**发布版本**（`^1.x`，registry 为 `npm.pkg.github.com`），改共享包源码对本地
 lint 无效。要让规则真的生效，按顺序做完这一组：

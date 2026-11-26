@@ -231,11 +231,11 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
    */
   const glyphSize = Math.round(Math.min(size.width, size.height) * 0.6);
 
+  /*
+   * 尺寸与位置由上面的 `useLayoutEffect` 按提交后的实测矩形落定，渲染里不再给：
+   * 否则重渲染会把动画半路的外壳摆回旧位。
+   */
   return (
-    /*
-     * 尺寸与位置由上面的 `useLayoutEffect` 按提交后的实测矩形落定，渲染里不再给：
-     * 否则重渲染会把动画半路的外壳摆回旧位。
-     */
     <div aria-hidden="true" className={styles.fly} ref={ref}>
       <span
         className={styles.icon}

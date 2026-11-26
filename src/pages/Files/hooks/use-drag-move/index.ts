@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { DraggableEntry, FolderEntry } from '../../types';
 import { baseNameOfPath, joinDirOf } from '../../utils/files';
@@ -68,7 +68,7 @@ export const useDragMove = ({
   }, [view]);
 
   /** 关掉弹窗并清空会话：条目留在原位，什么都没写 */
-  const close = () => {
+  const close = useCallback(() => {
     setProgress(null);
     sessionRef.current = null;
     setSession(null);
@@ -76,50 +76,53 @@ export const useDragMove = ({
     setError(null);
     setDragActive(false);
     setHanded(false);
-  };
+  }, []);
 
   /** 重置（切目录这类页面级清场），连同缓存一起丢掉 */
-  const reset = () => {
+  const reset = useCallback(() => {
     close();
     cacheRef.current = new Map();
-  };
+  }, [close]);
 
   /**
    * 拖起一批条目：弹窗从页面当前目录这一层打开，被拖的文件夹都不进落点列表。
    * 会话记下条目本体：弹窗里的待拖拽区按它们的类型换图标、平铺成一行一条。
    */
-  const open = (entries: DraggableEntry[]) => {
-    if (currentDir === null || entries.length === 0) {
-      return;
-    }
+  const open = useCallback(
+    (entries: DraggableEntry[]) => {
+      if (currentDir === null || entries.length === 0) {
+        return;
+      }
 
-    landed.reset();
-    cacheRef.current = new Map();
-    setError(null);
-    setHanded(false);
-    setMovedPaths([]);
-    movedRef.current = [];
-    setProgress(null);
-    setDragActive(true);
+      landed.reset();
+      cacheRef.current = new Map();
+      setError(null);
+      setHanded(false);
+      setMovedPaths([]);
+      movedRef.current = [];
+      setProgress(null);
+      setDragActive(true);
 
-    const active: DragMoveSession = { entries, origin: currentDir };
+      const active: DragMoveSession = { entries, origin: currentDir };
 
-    sessionRef.current = active;
-    setSession(active);
-    setView({
-      folders: stripSelf(
-        currentFolders,
-        entries.map((entry) => entry.path),
-      ),
-      path: currentDir,
-    });
-  };
+      sessionRef.current = active;
+      setSession(active);
+      setView({
+        folders: stripSelf(
+          currentFolders,
+          entries.map((entry) => entry.path),
+        ),
+        path: currentDir,
+      });
+    },
+    [currentDir, currentFolders, landed],
+  );
 
   /**
    * 只搬手里的一条：弹窗里的待拖拽区平铺着一批，拖其中某一条时把会话收窄到它。
    * 其余条目记在 `rest` 里——这一趟没搬成就还原回整批，别让它们从弹窗里消失。
    */
-  const focusEntry = (path: string) => {
+  const focusEntry = useCallback((path: string) => {
     const active = sessionRef.current;
     const focused = active === null ? null : focusSession(active, path);
 
@@ -131,13 +134,13 @@ export const useDragMove = ({
     setSession(focused);
 
     return true;
-  };
+  }, []);
 
   /** 从弹窗里的待拖拽区再次拖起：会话还在，只把拖拽状态重新点亮 */
-  const beginDrag = () => {
+  const beginDrag = useCallback(() => {
     setHanded(false);
     setDragActive(true);
-  };
+  }, []);
 
   /**
    * 弹窗里点「本次搬进这个文件夹」的一条：把它**真的搬回原目录**再取回手卡。
@@ -147,50 +150,53 @@ export const useDragMove = ({
    * 搬回成功才更新会话；失败（同名冲突、盘只读）就留在那里，由 `moveEntry` 自己弹提示。
    * 返回它搬回后的路径（调用方据此找到手卡里新落座的那一格）；失败返回 null。
    */
-  const restoreLanded = async (item: LandedItem): Promise<string | null> => {
-    const active = sessionRef.current;
+  const restoreLanded = useCallback(
+    async (item: LandedItem): Promise<string | null> => {
+      const active = sessionRef.current;
 
-    if (active === null) {
-      return null;
-    }
+      if (active === null) {
+        return null;
+      }
 
-    const name = item.entry.name || baseNameOfPath(item.entry.path);
-    const backPath = joinDirOf(item.origin, name);
-    const moved = await moveEntry(item.entry.path, item.origin);
+      const name = item.entry.name || baseNameOfPath(item.entry.path);
+      const backPath = joinDirOf(item.origin, name);
+      const moved = await moveEntry(item.entry.path, item.origin);
 
-    if (!moved) {
-      return null;
-    }
+      if (!moved) {
+        return null;
+      }
 
-    const restored: DraggableEntry = { ...item.entry, path: backPath };
-    const next: DragMoveSession = {
-      ...active,
-      entries: [...sessionLayout(active), restored],
-    };
+      const restored: DraggableEntry = { ...item.entry, path: backPath };
+      const next: DragMoveSession = {
+        ...active,
+        entries: [...sessionLayout(active), restored],
+      };
 
-    /*
-     * 取回这一条时手上没在拖任何一条：`rest` 那套「留虚位」的工作态可以撤了，
-     * 让它跟其余条目一样实着排在待拖拽区末尾
-     */
-    delete next.rest;
-    delete next.restAt;
+      /*
+       * 取回这一条时手上没在拖任何一条：`rest` 那套「留虚位」的工作态可以撤了，
+       * 让它跟其余条目一样实着排在待拖拽区末尾
+       */
+      delete next.rest;
+      delete next.restAt;
 
-    sessionRef.current = next;
-    setSession(next);
-    landed.forget(item.id);
+      sessionRef.current = next;
+      setSession(next);
+      landed.forget(item.id);
 
-    // 它已经回到原目录：关窗收尾时别把它从待拖拽区又摘掉（搬前的路径与搬回后的路径都要剔）
-    movedRef.current = movedRef.current.filter(
-      (path) => path !== backPath && path !== item.entry.path,
-    );
-    setMovedPaths(movedRef.current);
-    onRestored?.(restored);
+      // 它已经回到原目录：关窗收尾时别把它从待拖拽区又摘掉（搬前的路径与搬回后的路径都要剔）
+      movedRef.current = movedRef.current.filter(
+        (path) => path !== backPath && path !== item.entry.path,
+      );
+      setMovedPaths(movedRef.current);
+      onRestored?.(restored);
 
-    return backPath;
-  };
+      return backPath;
+    },
+    [landed, moveEntry, onRestored],
+  );
 
   /** 拖拽结束（松手 / Esc / 落在非落点区域）：条目回到手里，弹窗留着 */
-  const endDrag = () => {
+  const endDrag = useCallback(() => {
     const active = sessionRef.current;
 
     if (active === null) {
@@ -207,16 +213,16 @@ export const useDragMove = ({
 
     setDragActive(false);
     setHanded(true);
-  };
+  }, []);
 
   /** 换一层：命中缓存就不再读盘，没缓存的那一趟由 effect 发起 */
-  const goTo = (path: string) => {
+  const goTo = useCallback((path: string) => {
     setError(null);
     setView({ folders: cacheRef.current.get(path) ?? null, path });
-  };
+  }, []);
 
   /** 当前层被外部改过（新建文件夹、改名）：丢掉缓存、让读盘 effect 再走一趟 */
-  const refreshView = () => {
+  const refreshView = useCallback(() => {
     const dir = viewRef.current?.path;
 
     if (dir === undefined) {
@@ -226,7 +232,7 @@ export const useDragMove = ({
     cacheRef.current.delete(dir);
     setError(null);
     setView({ folders: null, path: dir });
-  };
+  }, []);
 
   const activePath = view?.path ?? null;
   const activeFolders = view?.folders ?? null;
