@@ -212,6 +212,7 @@ const FreeModal = ({
           <FreeTruncatedText
             className={styles.fileName}
             inline
+            position="bottom"
             text={title}
           />
           <span className={styles.titleGap} />
