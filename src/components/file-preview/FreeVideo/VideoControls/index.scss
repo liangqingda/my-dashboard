@@ -34,7 +34,7 @@
   width: 100%;
 }
 
-/* 轨道：平时比 Mantine 默认的 8px 细一档（4px）；指针进到这条热区就加粗到 10px（比原来还粗）。
+/* 轨道：平时比 Mantine 默认的 8px 细一档（4px）；指针进到这条热区就加粗到 12px（比原来还粗）。
    只改轨道高度，根节点仍是 2×--slider-size，加粗不会把控制栏顶高、滑块也不用跟着挪 */
 .progress .track {
   height: 4px;
@@ -42,7 +42,27 @@
 }
 
 .progressWrap:hover .track {
-  height: 10px;
+  height: 12px;
+}
+
+/* 轨道与已播放段的换色过渡：hover 时两段一起换底，不能一步硬切 */
+.progress .track::before,
+.bar {
+  transition: background-color 160ms ease;
+}
+
+/* hover：轨道换成全站那套毛玻璃底（半透明 + 虚化背后的画面），不再是实色灰条 */
+.progressWrap:hover .track::before {
+  background-color: var(--app-glass-panel);
+  -webkit-backdrop-filter: blur(var(--app-glass-blur-panel))
+    saturate(var(--app-glass-saturate));
+  backdrop-filter: blur(var(--app-glass-blur-panel))
+    saturate(var(--app-glass-saturate));
+}
+
+/* hover：已播放段（主题绿）弱化一档，透出底下的玻璃，不整条实色抢眼 */
+.progressWrap:hover .bar {
+  background-color: color-mix(in srgb, var(--slider-color) 46%, transparent);
 }
 
 /* 滑杆浮标：固定深底浅字，不跟着主题反转（口径同按钮 tip） */

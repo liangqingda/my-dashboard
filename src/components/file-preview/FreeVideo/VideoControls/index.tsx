@@ -123,6 +123,7 @@ const VideoControls = ({
           aria-label="播放进度"
           className={styles.progress}
           classNames={{
+            bar: styles.bar,
             label: cx(tipDark && styles.labelDark),
             track: styles.track,
           }}
