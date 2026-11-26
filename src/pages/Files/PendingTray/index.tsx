@@ -19,7 +19,8 @@ import styles from './index.scss';
 type SidebarRect = { left: number; top: number; width: number; height: number };
 
 /**
- * 待拖拽区：整块盖住左侧栏（导航那一列，顶栏之下）的一条面板，攒好的一批条目竖着排在里面。
+ * 待拖拽区：平时整块盖住左侧栏（导航那一列，顶栏之下）的一条面板，攒好的一批条目竖着排在里面；
+ * **全屏时（`inline`）改为内容区左侧的一列**——不再浮在列表上，而是把列表挤到右边、高度撑满内容区。
  *
  * - **除 header 外整块都是热区**：拖这块区域 = 整批进移动弹窗，不要求落在空白处；
  * - **收：从列表拖过来的条目**在板上松手就收进来（拖拽进行中整块亮成落点）；
@@ -29,12 +30,14 @@ type SidebarRect = { left: number; top: number; width: number; height: number };
  * 攒下东西以后列表的点击 / 拖拽语义会变（点条目＝加入 / 移出、拖条目先往这儿拖），
  * 这条只负责展示、收件与整批拖起；那份语义归 `useDragPending`。位置实测侧栏那列
  * （`#main-navigation`），侧栏宽度 / 折叠状态变了也跟着走；量不到时退回 AppShell 的默认尺寸。
+ * 全屏时那一列已经不在了（也不该再按侧栏量），位置与尺寸交给布局。
  */
 const PendingTray = ({
   entries,
   armed = false,
   dragAllDisabled = false,
   hidden = false,
+  inline = false,
   onClear,
   onDragAll,
   onDragEnd,
@@ -49,6 +52,11 @@ const PendingTray = ({
   const [over, setOver] = useState(false);
 
   useEffect(() => {
+    // 就地占一列时位置与高度由布局给（`.inline`）：侧栏被页面盖住了，量它没有意义
+    if (inline) {
+      return undefined;
+    }
+
     const measure = () => {
       const nav = document.getElementById('main-navigation');
 
@@ -65,7 +73,7 @@ const PendingTray = ({
     window.addEventListener('resize', measure);
 
     return () => window.removeEventListener('resize', measure);
-  }, []);
+  }, [inline]);
 
   /** 整块的落点态：列表正拖过来（`armed`）或指针正压在板上（`over`）都算 */
   const dropActive = armed || over;
@@ -76,6 +84,7 @@ const PendingTray = ({
       aria-label="待拖拽区"
       className={cx(
         styles.tray,
+        inline && styles.inline,
         hidden && styles.hidden,
         dropActive && styles.armed,
         closed && styles.closed,
@@ -111,7 +120,7 @@ const PendingTray = ({
         }
       }}
       role="region"
-      style={rect ?? undefined}
+      style={inline ? undefined : (rect ?? undefined)}
     >
       <div className={styles.head}>
         <Text className={styles.title} size="sm">

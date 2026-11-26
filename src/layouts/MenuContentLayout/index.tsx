@@ -11,6 +11,7 @@ import { FLAG_CODEC } from '@/utils/local-storage';
 import { pageFullscreenKey } from '@/utils/page-fullscreen';
 
 import { usePageActionShortcuts } from './hooks/usePageActionShortcuts';
+import { PageFullscreenContext } from './hooks/usePageFullscreen';
 import { usePageRefresh } from './hooks/usePageRefresh';
 import type { MenuContentLayoutProps } from './types';
 
@@ -24,12 +25,17 @@ import styles from './index.scss';
  * 标题右侧固定放「刷新当前页面」与「全屏 / 退出全屏」两个图标按钮：
  * 刷新通知当前页面重新取数，等取数结束再提示「已刷新 / 失败」，点了立刻转圈给出进行中的反馈；
  * 全屏状态按当前路由记在 localStorage（各菜单页互不影响），刷新页面重新进入后保持上次的状态，
- * 只把页面根元素铺满视口（覆盖顶栏与侧栏），页面内部结构、内容与正常状态完全一致，
+ * 只把页面根元素铺满视口（覆盖顶栏与侧栏），页面内部结构与内容不换一套
+ * （个别部分要跟着全屏改形态的，读 `usePageFullscreen()` 自己调），
  * 点了再点、按 `F` 或全屏时按 Esc 退出。刷新按 `R`、全屏按 `F` 有同一套快捷键。
  * 页面自己的按钮（如服务页「重启 agent」）通过 `actions` 传入，排在这两个按钮之前；
  * 有页面按钮时，它们与内置按钮之间用一条竖向分割线隔开。
  * 标题右侧还可以再带一句 `description`（页面的补充说明，如文件页的剩余可用空间）：
  * 弱色小字、放不下才省略并弹 tip，这段文本的样式与截断统一由本组件决定，页面只拼文案。
+ *
+ * 全屏状态同时经 `PageFullscreenContext` 递给内容区：页面里要在全屏时换形态的部分读
+ * `usePageFullscreen()`（见本文件末尾的导出），不要自己去读那份存储——它只在挂载时读一次，
+ * 按按钮改了状态不会跟着变。
  */
 const MenuContentLayout = ({
   actions,
@@ -136,9 +142,16 @@ const MenuContentLayout = ({
           </FreeIconAction>
         </div>
       </div>
-      <div className={styles.body}>{children}</div>
+      <div className={styles.body}>
+        <PageFullscreenContext.Provider value={fullscreen}>
+          {children}
+        </PageFullscreenContext.Provider>
+      </div>
     </div>
   );
 };
 
 export default MenuContentLayout;
+
+/** 页面内部要跟着全屏改形态（如文件页待拖拽区改成就地占一列）时读它 */
+export { usePageFullscreen } from './hooks/usePageFullscreen';

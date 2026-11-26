@@ -1,10 +1,15 @@
 # FilesDragLayers
 
-拖拽的三层浮层接线：覆盖侧栏的待拖拽区 `PendingTray`、跟随指针的拖拽影像 `DragGhost`、
+拖拽的三层浮层接线：待拖拽区 `PendingTray`、跟随指针的拖拽影像 `DragGhost`、
 点选加入 / 点条目移出时的飞行动画 `PendingFly`，外加它们与移动会话的收尾联动。
-都是 `position: fixed`，与列表布局无关，所以单独一层挂在页面最外层。
+
+这一层挂在页面**内容区那一行里、排在列表之前**：待拖拽区平时是 `position: fixed`（盖在侧栏上、
+不占位置），页面全屏时它改成就地占一列（`inline`），得先在内容区出现；影像与飞行动画仍是 `fixed`，
+排在哪儿都不影响排布。
 
 - `pending.active` 才画待拖拽区；移动会话开着时把它藏起来（只藏不卸，拖拽源不能没了）。
+- `inline` 由页面读 `usePageFullscreen()` 递进来：全屏时待拖拽区不浮在列表上，而是占内容区左侧一列、
+  撑满高度，把列表挤到右边（细节见 `PendingTray` 的 README）。
 - 拖拽影像是两组、按模式分工：
   - 直接拖模式：`dragEntries`（自己那批）非空、且页面递进来的 `dragImage`（起拖那刻拷下的整条瓦片快照）
     不为空时画 `DragTiles`——拎的是**整条瓦片**，`dragImage` 为空就什么都不画（不退回小图标）；

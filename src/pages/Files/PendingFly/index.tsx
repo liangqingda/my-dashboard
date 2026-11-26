@@ -1,4 +1,4 @@
-import { createElement, useEffect, useRef } from 'react';
+import { createElement, useEffect, useLayoutEffect, useRef } from 'react';
 
 import { entryIcon } from '../utils/entry-icon';
 import {
@@ -51,7 +51,14 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
     doneRef.current = onDone;
   }, [onDone]);
 
-  useEffect(() => {
+  /**
+   * 起飞前量基准、摆外壳、起动画。
+   *
+   * 用 `useLayoutEffect` 而不是 `useEffect`：这一趟的起点要按**提交之后**的实测矩形算——
+   * 全屏时待拖拽区一开（或一关），它会占走 / 让出内容区左侧一列，列表当场被挤动，
+   * 点下去那一刻量的矩形已经过期；改在提交后量、并在绘制前摆好位置，才不会先闪一下旧位置。
+   */
+  useLayoutEffect(() => {
     const block = ref.current;
 
     if (block === null) {
@@ -76,6 +83,21 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
     }
 
     const tile = pendingTileOf(entry.path);
+    const tileBox = tile?.getBoundingClientRect() ?? from;
+    /**
+     * 起飞基准：移入那一趟按瓦片**此刻**的矩形（见上一条：列表可能刚被挤动过），
+     * 移出那一趟用待拖拽区那一格当时量的矩形（这一趟列表不动，量到的就是它）。
+     */
+    const origin = direction === 'in' ? tileBox : from;
+
+    // 外壳的位置只在这里落定：渲染里只给尺寸，重渲染不会把它摆回旧位、动画也不会跳
+    Object.assign(block.style, {
+      height: `${tileBox.height}px`,
+      left: `${origin.left + origin.width / 2 - tileBox.width / 2}px`,
+      top: `${origin.top + origin.height / 2 - tileBox.height / 2}px`,
+      width: `${tileBox.width}px`,
+    });
+
     const chip = direction === 'in' ? pendingChipOf(entry.path) : null;
     /**
      * 落点：移出回列表里那张瓦片；它不在这一层（原先收在某个子文件夹里）时，
@@ -98,10 +120,9 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
 
     target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 
-    const tileBox = tile?.getBoundingClientRect() ?? from;
     const box = target.getBoundingClientRect();
-    const dx = box.left + box.width / 2 - (from.left + from.width / 2);
-    const dy = box.top + box.height / 2 - (from.top + from.height / 2);
+    const dx = box.left + box.width / 2 - (origin.left + origin.width / 2);
+    const dy = box.top + box.height / 2 - (origin.top + origin.height / 2);
     /** 收进待拖拽区时缩到那一格的大小：按小的那一维等比缩，别把卡片压歪 */
     const endScale =
       direction === 'in'
@@ -211,17 +232,11 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
   const glyphSize = Math.round(Math.min(size.width, size.height) * 0.6);
 
   return (
-    <div
-      aria-hidden="true"
-      className={styles.fly}
-      ref={ref}
-      style={{
-        height: size.height,
-        left: flight.from.left + flight.from.width / 2 - size.width / 2,
-        top: flight.from.top + flight.from.height / 2 - size.height / 2,
-        width: size.width,
-      }}
-    >
+    /*
+     * 尺寸与位置由上面的 `useLayoutEffect` 按提交后的实测矩形落定，渲染里不再给：
+     * 否则重渲染会把动画半路的外壳摆回旧位。
+     */
+    <div aria-hidden="true" className={styles.fly} ref={ref}>
       <span
         className={styles.icon}
         ref={iconRef}

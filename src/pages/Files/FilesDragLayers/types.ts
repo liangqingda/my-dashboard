@@ -10,6 +10,11 @@ import type { useEntryActions } from '../hooks/useEntryActions';
 /** 拖拽层的入参 */
 export type FilesDragLayersProps = {
   /**
+   * 页面是否全屏：待拖拽区据此改形态——全屏时它就地占内容区左侧一列（参与排布、撑满高度），
+   * 不再浮在列表上。由页面读 `usePageFullscreen()` 递进来。
+   */
+  inline: boolean;
+  /**
    * 直接拖模式正拖的那一批：这一刻没有移动会话，影像要靠它才画得出来。
    * 不传（或 null）就仍按会话 / 「往待拖拽区拖」那一程取。
    */

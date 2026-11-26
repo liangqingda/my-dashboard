@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Stack } from '@mantine/core';
 
-import MenuContentLayout from '@/layouts/MenuContentLayout';
+import MenuContentLayout, { usePageFullscreen } from '@/layouts/MenuContentLayout';
 import { onPageRefresh } from '@/utils/page-refresh';
 
 import DirBreadcrumb from './DirBreadcrumb';
@@ -11,6 +11,7 @@ import FilesEntries from './FilesEntries';
 import FilesLockGate from './FilesLockGate';
 import FilesOverlays from './FilesOverlays';
 import FilesStates from './FilesStates';
+import FilesWorkspace from './FilesWorkspace';
 import { useAppLaunch } from './hooks/useAppLaunch';
 import { useAppUninstall } from './hooks/useAppUninstall';
 import { useDragPending } from './hooks/use-drag-pending';
@@ -47,7 +48,9 @@ import styles from './index.scss';
  * 目标自己在待拖拽区时这一格是禁用落点）：全屏逐层挑目标文件夹，面包屑换层，松手没落成移动就把条目留在手里；
  * 弹窗 header 有收藏当前层 / 新建文件夹 / 选本地目录三颗按钮（都走页面同一套流程），
  * 弹窗里这批条目平铺成待拖拽区，图标按条目类型换、图 / 视频可点开预览。
- * 网格里用 ⌘ / Shift + 点击（或待拖拽区已经非空时直接点）把条目攒进覆盖侧栏的待拖拽区，
+ * 网格里用 ⌘ / Shift + 点击（或待拖拽区已经非空时直接点）把条目攒进待拖拽区，
+ * 平时它整块盖住侧栏那一列；页面全屏时没有侧栏了，它改成就地占内容区左侧一列，
+ * 把列表挤到右边、高度撑满内容区（不再浮在列表上）。
  * 攒下东西后点条目只做「加入 / 移除」，整批搬走归待拖拽区底部的「拖拽全部」按钮，
  * 「选择全部 / 取消」也在那条底部条上（面板本身不再是拖拽热区）。
  * 标题栏筛选面板支持按名称关键词过滤与按类型勾选，取消勾选的类型连同对应文件夹一起隐藏。
@@ -60,6 +63,8 @@ import styles from './index.scss';
  * 设置里可以给这一页加安全锁：设了密码并开启后，每次进入都先弹一扇关不掉的密码窗，对上才进。
  */
 const Files = () => {
+  /** 页面是否全屏：全屏时页面上没有侧栏，待拖拽区改为就地占内容区左侧一列 */
+  const fullscreen = usePageFullscreen();
   /** 收藏 hook 整个留着：拖拽弹窗里的收藏面板直接复用同一套动作 */
   const favoritesHook = useFavorites();
   const { favorites, isFavorite, moveFavorite, removeFavorite, toggleFavorite, togglePinnedFavorite } =
@@ -254,79 +259,76 @@ const Files = () => {
       onToggleFilter={() => togglePanel('filter')}
       title="文件"
     >
-      <Stack className={styles.shell} gap="sm">
-        {/* 批量状态（待拖拽区非空）下一旦起拖，松手落在其它任何地方都要收掉） */}
-        <DirBreadcrumb currentDir={currentDir} onNavigate={goToDir} />
+      <FilesWorkspace
+        drag={drag}
+        entryActions={entryActions}
+        inline={fullscreen}
+        onSelectAll={handleSelectAll}
+        pending={pending}
+      >
+        <Stack className={styles.shell} gap="sm">
+          {/* 批量状态（待拖拽区非空）下一旦起拖，松手落在其它任何地方都要收掉） */}
+          <DirBreadcrumb currentDir={currentDir} onNavigate={goToDir} />
 
-        <FilesStates
-          error={error}
-          gridSkeleton={list.showGridSkeleton}
-          onRetry={refresh}
-          prompt={list.showPrompt}
-          tableSkeleton={list.showTableSkeleton}
-        />
-
-        {/* 两种形态都自己滚：纵向滚动条浮在内容之上，右侧固定留出一段比
-            常规内边距更宽的空白（滚动条 6px + 呼吸空间），别让滚动条贴住列表内容 */}
-        {listing !== null && !list.showSkeleton ? (
-          <FilesEntries
-            apps={list.visibleApps}
-            collapsedGroups={collapsedGroups}
-            dragPaths={drag.dragPaths}
-            dropBlockedPath={drag.dropBlockedPath}
-            dropTarget={drag.dropTarget}
-            emptyText={emptyText}
-            files={list.visibleFiles}
-            fixedColumns={isAppCatalogPath(listing.path)}
-            folderProgress={drag.folderProgress}
-            folders={list.visibleFolders}
-            grouped={settings.grouped}
-            isGridView={isGridView}
-            launchingApp={launchingPath}
-            loading={loading}
-            loadingFolder={openingFolder}
-            onDragEnd={drag.handleDragEnd}
-            onDragLeaveFolder={drag.handleDragLeaveFolder}
-            onDragOverFolder={drag.handleDragOverFolder}
-            onDragStartEntry={drag.handleListDragStart}
-            onDropBlank={drag.handleDropBlank}
-            onDropFolder={drag.handleDropFolder}
-            onEditEntry={entryActions.editEntry}
-            onOpenApp={launchApp}
-            onOpenExternalVideo={openVideoExternal}
-            onOpenFolder={openFolder}
-            onOpenImage={openImage}
-            onOpenVideo={openVideo}
-            onRequestDeleteEntry={requestDelete}
-            onRequestUninstallApp={appUninstall.requestUninstall}
-            onSelectRange={pending.selectRange}
-            onSetWallpaper={wallpaper.requestWallpaper}
-            onToggleGroup={toggleGroup}
-            onTogglePending={pending.toggle}
-            pendingActive={pending.active}
-            pendingPaths={pending.entries.map((entry) => entry.path)}
-            rows={list.rows}
-            tipsOff={entryActions.dragMove.dragActive}
-            veilOpacity={settings.veilOpacity}
-            videoApp={settings.videoApp}
-            videoOpenMode={settings.videoOpenMode}
-            videoThumbStyle={settings.videoThumbStyle}
+          <FilesStates
+            error={error}
+            gridSkeleton={list.showGridSkeleton}
+            onRetry={refresh}
+            prompt={list.showPrompt}
+            tableSkeleton={list.showTableSkeleton}
           />
-        ) : null}
-      </Stack>
+
+          {/* 两种形态都自己滚：纵向滚动条浮在内容之上，右侧固定留出一段比
+              常规内边距更宽的空白（滚动条 6px + 呼吸空间），别让滚动条贴住列表内容 */}
+          {listing !== null && !list.showSkeleton ? (
+            <FilesEntries
+              apps={list.visibleApps}
+              collapsedGroups={collapsedGroups}
+              dragPaths={drag.dragPaths}
+              dropBlockedPath={drag.dropBlockedPath}
+              dropTarget={drag.dropTarget}
+              emptyText={emptyText}
+              files={list.visibleFiles}
+              fixedColumns={isAppCatalogPath(listing.path)}
+              folderProgress={drag.folderProgress}
+              folders={list.visibleFolders}
+              grouped={settings.grouped}
+              isGridView={isGridView}
+              launchingApp={launchingPath}
+              loading={loading}
+              loadingFolder={openingFolder}
+              onDragEnd={drag.handleDragEnd}
+              onDragLeaveFolder={drag.handleDragLeaveFolder}
+              onDragOverFolder={drag.handleDragOverFolder}
+              onDragStartEntry={drag.handleListDragStart}
+              onDropBlank={drag.handleDropBlank}
+              onDropFolder={drag.handleDropFolder}
+              onEditEntry={entryActions.editEntry}
+              onOpenApp={launchApp}
+              onOpenExternalVideo={openVideoExternal}
+              onOpenFolder={openFolder}
+              onOpenImage={openImage}
+              onOpenVideo={openVideo}
+              onRequestDeleteEntry={requestDelete}
+              onRequestUninstallApp={appUninstall.requestUninstall}
+              onSelectRange={pending.selectRange}
+              onSetWallpaper={wallpaper.requestWallpaper}
+              onToggleGroup={toggleGroup}
+              onTogglePending={pending.toggle}
+              pendingActive={pending.active}
+              pendingPaths={pending.entries.map((entry) => entry.path)}
+              rows={list.rows}
+              tipsOff={entryActions.dragMove.dragActive}
+              veilOpacity={settings.veilOpacity}
+              videoApp={settings.videoApp}
+              videoOpenMode={settings.videoOpenMode}
+              videoThumbStyle={settings.videoThumbStyle}
+            />
+          ) : null}
+        </Stack>
+      </FilesWorkspace>
 
       <FilesOverlays
-        drag={{
-          dragAllDisabled: drag.dragAllDisabled,
-          dragEntries: drag.dragEntries,
-          dragImage: drag.dragImage,
-          entryActions,
-          onDragAll: drag.handleDragAll,
-          onDropPaths: drag.handleTrayDrop,
-          onSelectAll: handleSelectAll,
-          onTrayDragEnd: drag.handleDragEnd,
-          pending,
-        }}
         modals={{
           appUninstall,
           deleteEntry: entryDelete,

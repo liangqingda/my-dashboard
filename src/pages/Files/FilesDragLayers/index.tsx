@@ -10,11 +10,12 @@ import type { FilesDragLayersProps } from './types';
 import styles from './index.scss';
 
 /**
- * 拖拽的三层浮层：覆盖侧栏的待拖拽区 + 跟着指针走的拖拽影像 + 点选加入时的飞入动画，
+ * 拖拽的三层浮层：待拖拽区 + 跟着指针走的拖拽影像 + 点选加入时的飞入动画，
  * 外加它们与移动会话的收尾联动。
  *
- * 为什么单独一层：它们都是 `position: fixed` 的浮层，跟列表的布局无关，
- * 挂在页面最外层（弹窗之上都由这一层统一处理），页面只负责把状态递进来。
+ * 为什么单独一层：影像与飞行动画都是 `position: fixed` 的浮层，跟列表的布局无关。
+ * 但待拖拽区不是——全屏时它就地占内容区左侧一列（`inline`），所以这一层挂在页面内容区
+ * 那一行里、排在列表**之前**，其余两层不占位置。
  *
  * 拖拽影像有三个来源：移动会话（弹窗开着，条目在手里）、「从列表往待拖拽区拖」那一程
  * （`pending.trayDrag`，不开弹窗，松手落在板上就收进来），以及直接拖模式下自己那批
@@ -28,6 +29,7 @@ const FilesDragLayers = ({
   dragEntries,
   dragImage,
   entryActions,
+  inline,
   onDragAll,
   onDropPaths,
   onSelectAll,
@@ -71,6 +73,7 @@ const FilesDragLayers = ({
         dragAllDisabled={dragAllDisabled}
         entries={pending.entries}
         hidden={session !== null}
+        inline={inline}
         onClear={pending.clear}
         onDragAll={onDragAll}
         onDragEnd={onTrayDragEnd}

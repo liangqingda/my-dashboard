@@ -1,7 +1,8 @@
 /* 文件浏览页布局：页面高度与内边距由 MenuContentLayout 负责，滚动只发生在列表区 */
 
-/* 撑满外壳内容区：工具栏固定，网格占剩余高度并自己滚 */
+/* 撑满内容区那一行剩下的宽度（那一行见 `FilesWorkspace`）：工具栏固定，网格占剩余高度并自己滚 */
 .shell {
   flex: 1 1 auto;
+  min-width: 0;
   min-height: 0;
 }

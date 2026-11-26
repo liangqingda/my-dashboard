@@ -38,6 +38,12 @@ export type PendingTrayProps = {
    */
   hidden?: boolean;
   /**
+   * 全屏：页面根铺满视口、侧栏不在眼前，这块改成**内容区左侧的一列**——参与排布、
+   * 把列表挤到右边、高度撑满内容区，不再浮在列表上。
+   * 由页面读 `usePageFullscreen()` 递进来（见 `MenuContentLayout` 的导出）。
+   */
+  inline?: boolean;
+  /**
    * 没有条目（整块收起）。面板常挂 DOM，靠这个类做过渡：
    * 清空 / 取消时就是「滑出 + 淡出」的退场动画，而不是瞬间消失。
    */
