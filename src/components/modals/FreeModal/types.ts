@@ -86,6 +86,8 @@ export type FreeModalProps = {
   headerHidden?: boolean;
   /** 媒体快捷键：传了 `media`，空格切播放 / 暂停而不是关窗，`m` / `M` 切静音 */
   media?: FreeModalMedia;
+  /** header 内所有 tip 固定深底浅字、不随主题反转：媒体预览压在画面上的提示用 */
+  tipDark?: boolean;
   /**
    * `Enter` 截当前画面（视频预览的存帧）。键位归外壳，动作与落盘归调用方；
    * 不传则该键不动作。

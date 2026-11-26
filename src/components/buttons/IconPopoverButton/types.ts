@@ -33,6 +33,8 @@ export type IconPopoverButtonProps = {
   maxHeight?: number | string;
   /** 弹层内容 */
   children: ReactNode;
+  /** tip 固定深底浅字、不随主题反转：压在媒体画面上的提示用 */
+  tipDark?: boolean;
   /**
    * 弹层层级：弹层走 portal、默认与普通下拉一致；放进更高的浮层里（如全屏弹窗的 header）时
    * 由调用方往上抬，别被那层浮层的遮罩压住。

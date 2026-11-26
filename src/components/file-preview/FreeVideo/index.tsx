@@ -52,6 +52,7 @@ const FreeVideo = ({
   overlayOpen = false,
   previewScale = SEEK_PREVIEW_SCALE_DEFAULT,
   src,
+  tipDark = false,
   videoRef,
 }: FreeVideoProps) => {
   const ownRef = useRef<HTMLVideoElement | null>(null);
@@ -287,6 +288,7 @@ const FreeVideo = ({
           previewReady={previewReady}
           previewWidth={previewSize.width}
           requestFrame={requestFrame}
+          tipDark={tipDark}
         />
       </div>
 

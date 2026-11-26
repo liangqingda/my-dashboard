@@ -24,6 +24,8 @@ export type FreeIconActionProps = {
   label: string;
   /** 状态会变时的 tooltip 文案（如复制成功后的「已复制」）；aria-label 仍用 label */
   tooltipLabel?: string;
+  /** tip 固定深底浅字、不随主题反转：压在媒体画面上的提示用（普通卡片上仍自适应配色） */
+  tipDark?: boolean;
   /**
    * tip 自动收起的时长（毫秒）：悬停到这么久之后自己消失，指针不动也不再挂着；
    * 下次重新进入再亮。不传则指着多久挂多久。

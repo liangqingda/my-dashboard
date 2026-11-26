@@ -58,6 +58,15 @@
   box-shadow: 0 10px 28px rgb(23 37 34 / 26%);
 }
 
+/* 固定深底浅字：压在媒体画面上的 tip，不跟着主题反转；其余排版沿用 `.tooltip` */
+.tooltipDark {
+  --tooltip-bg: var(--app-tip-dark-bg);
+  --tooltip-color: var(--app-tip-dark-color);
+
+  background: var(--app-tip-dark-bg);
+  color: var(--app-tip-dark-color);
+}
+
 /*
  * tip 里按原文折行：Mantine 的 `multiline` 只把 white-space 设成 normal，原文的换行会被并成空格。
  * 挂上属性选择器压过它那条规则；长串没有断点，允许在任意字符处折行，别撑出 320px。

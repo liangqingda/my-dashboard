@@ -26,6 +26,7 @@ import IconPopoverButton from '@/components/buttons/IconPopoverButton';
 import FreePanelField from '@/components/panels/FreePanelField';
 import FreePanelGroup from '@/components/panels/FreePanelGroup';
 import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
+import { cx } from '@/utils/cx';
 import { getErrorMessage } from '@/utils/error';
 
 import {
@@ -76,6 +77,7 @@ const VideoSettingsPopover = ({
   previewScale,
   seekStep,
   spaceMode,
+  tipDark = false,
 }: VideoSettingsPopoverProps) => {
   /** 目录选择框打开中：按钮转圈并禁用，避免连点弹出两个系统框 */
   const [picking, setPicking] = useState<PickingTarget | null>(null);
@@ -151,6 +153,7 @@ const VideoSettingsPopover = ({
         className={styles.directoryPath}
         inline
         text={dir}
+        tipDark={tipDark}
       />
       {onPickDir ? (
         <Button
@@ -176,6 +179,7 @@ const VideoSettingsPopover = ({
       offset={4}
       onChange={onChangeOpened}
       opened={opened}
+      tipDark={tipDark}
       width={SETTINGS_PANEL_WIDTH}
     >
       <div className={styles.panel}>
@@ -199,6 +203,7 @@ const VideoSettingsPopover = ({
             <Group gap="sm" wrap="nowrap">
               <Slider
                 aria-label="悬停预览大小"
+                classNames={{ label: cx(tipDark && styles.labelDark) }}
                 flex={1}
                 label={(value) => `${value}%`}
                 max={MAX_PREVIEW_SCALE}

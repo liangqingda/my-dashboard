@@ -24,6 +24,12 @@
   font-size: 0.72rem;
 }
 
+/* 滑杆浮标：固定深底浅字，不跟着主题反转（口径同按钮 tip） */
+.labelDark {
+  background-color: var(--app-tip-dark-bg);
+  color: var(--app-tip-dark-color);
+}
+
 /* 快捷键区：双列排，一屏看完；长文案在这一列里省略 */
 .shortcuts {
   display: grid;

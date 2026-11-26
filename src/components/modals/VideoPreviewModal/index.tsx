@@ -243,6 +243,7 @@ const VideoPreviewModal = ({
       opened={opened}
       overlayTone="dark"
       shortcutsEnabled={!interactionBlocked && !settingsOpen}
+      tipDark
       title={activeItem.name}
       trapFocus={!interactionBlocked}
     >
@@ -278,6 +279,7 @@ const VideoPreviewModal = ({
                 spaceMode: settings.spaceMode,
               }}
               settingsOpen={settingsOpen}
+              tipDark
               viewportFullscreen={viewportFullscreen}
             />
           }
@@ -293,6 +295,7 @@ const VideoPreviewModal = ({
           overlayOpen={overlayOpen}
           previewScale={settings.previewScale / 100}
           src={activeItem.src}
+          tipDark
           videoRef={videoRef}
         />
         <PreviewCounter index={index + 1} tick={switchTick} total={items.length} />

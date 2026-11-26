@@ -5,6 +5,15 @@
   padding: 12px;
 }
 
+/* 固定深底浅字 tip：口径同 FreeIconAction，压在媒体画面上不随主题反转 */
+.tipDark {
+  --tooltip-bg: var(--app-tip-dark-bg);
+  --tooltip-color: var(--app-tip-dark-color);
+
+  background: var(--app-tip-dark-bg);
+  color: var(--app-tip-dark-color);
+}
+
 /* 设了 `maxHeight` 的长面板：到顶就自己滚，滚动不把外层带着一起滚 */
 .scrollable {
   overflow-y: auto;

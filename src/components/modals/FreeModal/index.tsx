@@ -79,6 +79,7 @@ const FreeModal = ({
   shortcutsEnabled = true,
   size = 'min(980px, 92vw)',
   title,
+  tipDark = false,
   trapFocus = true,
   zIndex,
 }: FreeModalProps) => {
@@ -195,6 +196,7 @@ const FreeModal = ({
                 disabled={nav.disabled === true || nav.onPrevious === null}
                 label={nav.previousLabel ?? '上一个'}
                 onClick={nav.onPrevious ?? undefined}
+                tipDark={tipDark}
                 tooltipLabel={tip(nav.previousLabel ?? '上一个')}
               >
                 <IconChevronLeft size={STEP_ICON_SIZE} stroke={ICON_STROKE} />
@@ -203,6 +205,7 @@ const FreeModal = ({
                 disabled={nav.disabled === true || nav.onNext === null}
                 label={nav.nextLabel ?? '下一个'}
                 onClick={nav.onNext ?? undefined}
+                tipDark={tipDark}
                 tooltipLabel={tip(nav.nextLabel ?? '下一个')}
               >
                 <IconChevronRight size={STEP_ICON_SIZE} stroke={ICON_STROKE} />
@@ -217,6 +220,7 @@ const FreeModal = ({
             inline
             position="bottom"
             text={title}
+            tipDark={tipDark}
           />
           <span className={styles.titleGap} />
           {headerActions ? (
@@ -226,6 +230,7 @@ const FreeModal = ({
             <FreeIconAction
               label={fullscreen.active ? '退出全屏' : '全屏'}
               onClick={fullscreen.onToggle}
+              tipDark={tipDark}
               tooltipLabel={fullscreen.active ? '退出全屏（F）' : '全屏（F）'}
             >
               {fullscreen.active ? (

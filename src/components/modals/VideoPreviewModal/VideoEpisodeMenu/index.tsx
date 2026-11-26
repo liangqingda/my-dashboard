@@ -30,6 +30,7 @@ const VideoEpisodeMenu = ({
   items,
   onChangeOpened,
   onSelect,
+  tipDark = false,
 }: VideoEpisodeMenuProps) => {
   /** 开合只由 hover 意图管：进入按钮 / 弹层即开，离开即收；点条目不依赖点击开合 */
   const [opened, setOpened] = useState(false);
@@ -94,6 +95,7 @@ const VideoEpisodeMenu = ({
                   ellipsis="middle"
                   lines={1}
                   text={item.name}
+                  tipDark={tipDark}
                 />
               </UnstyledButton>
             );

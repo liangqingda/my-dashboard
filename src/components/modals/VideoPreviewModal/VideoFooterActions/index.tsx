@@ -40,6 +40,7 @@ const VideoFooterActions = ({
   onToggleViewportFullscreen,
   settings,
   settingsOpen,
+  tipDark = false,
   viewportFullscreen,
 }: VideoFooterActionsProps) => (
   <>
@@ -48,12 +49,14 @@ const VideoFooterActions = ({
       items={items}
       onChangeOpened={onEpisodeChangeOpened}
       onSelect={onSelect}
+      tipDark={tipDark}
     />
 
     {onRequestDelete ? (
       <FreeIconAction
         label="删除这个视频（Delete）"
         onClick={onRequestDelete}
+        tipDark={tipDark}
       >
         <IconTrash size={ICON_SIZE} stroke={ICON_STROKE} />
       </FreeIconAction>
@@ -63,6 +66,7 @@ const VideoFooterActions = ({
       label="截图当前画面（存到设置的目录）"
       loading={capturing}
       onClick={onCapture}
+      tipDark={tipDark}
     >
       <IconCamera size={ICON_SIZE} stroke={ICON_STROKE} />
     </FreeIconAction>
@@ -71,6 +75,7 @@ const VideoFooterActions = ({
       <FreeIconAction
         label="用外部播放器打开（IINA 优先；浏览器解不动或想更快起播时用）"
         onClick={onOpenExternal}
+        tipDark={tipDark}
       >
         <IconExternalLink size={ICON_SIZE} stroke={ICON_STROKE} />
       </FreeIconAction>
@@ -80,11 +85,13 @@ const VideoFooterActions = ({
       {...settings}
       onChangeOpened={onSettingsChangeOpened}
       opened={settingsOpen}
+      tipDark={tipDark}
     />
 
     <FreeIconAction
       label={viewportFullscreen ? '退出网页全屏' : '网页全屏'}
       onClick={onToggleViewportFullscreen}
+      tipDark={tipDark}
     >
       <ViewportFullscreenIcon
         active={viewportFullscreen}
@@ -96,6 +103,7 @@ const VideoFooterActions = ({
     <FreeIconAction
       label={browserFullscreen ? '退出整屏全屏（F）' : '整屏全屏（F）'}
       onClick={onToggleBrowserFullscreen}
+      tipDark={tipDark}
     >
       {browserFullscreen ? (
         <IconArrowsDiagonalMinimize size={ICON_SIZE} stroke={ICON_STROKE} />

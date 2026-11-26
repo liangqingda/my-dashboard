@@ -59,4 +59,6 @@ export type VideoControlsProps = {
   onSeek: (seconds: number) => void;
   /** 下层右侧的业务操作组（含喇叭、选集、截图、全屏这类）：插槽归调用方 */
   actions?: ReactNode;
+  /** 按钮 tip 固定深底浅字、不随主题反转：媒体画面上的提示用 */
+  tipDark?: boolean;
 };

@@ -27,4 +27,6 @@ export type FreeTruncatedTextProps = {
    * 宽度会在静止状态下变的位置（可拖列宽、hover 让列变宽）传 `end` 走尾部省略
    */
   ellipsis?: TruncationEllipsis;
+  /** tip 固定深底浅字、不随主题反转：压在媒体画面上的提示用 */
+  tipDark?: boolean;
 };

@@ -32,6 +32,7 @@ const IconPopoverButton = ({
   onChange,
   opened,
   shortcut,
+  tipDark = false,
   width = DROPDOWN_WIDTH,
   zIndex,
 }: IconPopoverButtonProps) => {
@@ -52,7 +53,11 @@ const IconPopoverButton = ({
     >
       {/* 提示要拼「已生效」和键位，所以按钮只出本体（`tooltip="none"`），tip 在这里挂 */}
       <Popover.Target>
-        <Tooltip label={tooltip} withArrow>
+        <Tooltip
+          classNames={{ tooltip: cx(tipDark && styles.tipDark) }}
+          label={tooltip}
+          withArrow
+        >
           <FreeIconAction
             disabled={disabled}
             label={label}

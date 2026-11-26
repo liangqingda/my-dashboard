@@ -79,6 +79,13 @@
   --app-status-muted: #64766e;
   --app-status-muted-soft: #dfe5e2;
 
+  /*
+   * tip：固定深底浅字的提示（媒体预览这类 tip 压在画面上，不跟着主题反转）。
+   * 普通卡片上的 tip 仍走 ink / surface 自适应反转；只有需要恒定深底时消费这组令牌。
+   */
+  --app-tip-dark-bg: rgb(17 24 22 / 88%);
+  --app-tip-dark-color: rgb(255 255 255 / 92%);
+
   /* code：Markdown 行内代码 / 代码块的底色与字色。
      底色与 header / 侧栏同一档 chrome（--app-surface-subtle），不取纯白卡片
      （纯白落在画布纸上像贴了一块白纸，也太晃眼）；字色取最重的标题墨色，比加粗更显眼；

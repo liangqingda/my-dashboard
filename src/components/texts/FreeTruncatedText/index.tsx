@@ -38,6 +38,7 @@ const FreeTruncatedText = ({
   onClick,
   position = 'right',
   text,
+  tipDark = false,
 }: FreeTruncatedTextProps) => {
   const { measure, ref, targetRef } = useIsTruncated();
   const isMiddle = ellipsis === 'middle';
@@ -169,7 +170,9 @@ const FreeTruncatedText = ({
       {showTip ? (
         <Tooltip
           arrowSize={5}
-          classNames={{ tooltip: styles.tooltip }}
+          classNames={{
+            tooltip: cx(styles.tooltip, tipDark && styles.tooltipDark),
+          }}
           label={text}
           multiline
           offset={10}

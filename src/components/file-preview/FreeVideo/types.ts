@@ -55,4 +55,6 @@ export type FreeVideoProps = {
   onHoverFrameGrabberReady?: (grabber: HoverFrameGrabber | null) => void;
   /** 附加 class，只用来补外部布局 */
   className?: string;
+  /** 控制栏内所有 tip 固定深底浅字、不随主题反转：媒体画面上的提示用 */
+  tipDark?: boolean;
 };

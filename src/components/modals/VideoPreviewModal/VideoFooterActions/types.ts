@@ -54,4 +54,6 @@ export type VideoFooterActionsProps = {
   onToggleBrowserFullscreen: () => void;
   /** 设置弹层的取值与改法绑定 */
   settings: FooterSettingsBinding;
+  /** 本组按钮与弹层内所有 tip 固定深底浅字、不随主题反转 */
+  tipDark?: boolean;
 };

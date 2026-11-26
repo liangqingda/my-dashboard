@@ -33,4 +33,6 @@ export type VideoSettingsPopoverProps = {
   seekStep: number;
   /** 空格键的去向 */
   spaceMode: VideoSpaceMode;
+  /** 按钮与省略 tip 固定深底浅字、不随主题反转 */
+  tipDark?: boolean;
 };

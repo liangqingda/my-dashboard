@@ -28,6 +28,7 @@
 | `position` | `FloatingPosition?` | tip 方向，默认 `right`；贴边 / 被遮挡时改 `top` 等 |
 | `lines` | `number?` | 最多保留行数，默认 `1`（正整数）；传 2 及以上按行截断并按高度判断截断 |
 | `ellipsis` | `'end' \| 'middle'?` | 省略位置，默认 `middle`（保留头尾、省略号落在最后一行的水平中间）；**宽度会在静止状态下变的位置**（可拖列宽、hover 让列变宽）传 `end` |
+| `tipDark` | `boolean?` | tip 固定深底浅字、不随主题反转；压在媒体画面上的提示用，普通卡片上仍自适应配色 |
 
 ## 边界
 

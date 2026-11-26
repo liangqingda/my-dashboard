@@ -19,6 +19,7 @@ import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } f
 import { Slider } from '@mantine/core';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
+import { cx } from '@/utils/cx';
 
 import PlayerPauseIcon from '../PlayerIcons/PlayerPauseIcon';
 import PlayerPlayIcon from '../PlayerIcons/PlayerPlayIcon';
@@ -68,6 +69,7 @@ const VideoControls = ({
   previewReady,
   previewWidth,
   requestFrame,
+  tipDark = false,
 }: VideoControlsProps) => {
   /** 指针落在进度条上时的预览落点：null 表示不显示 */
   const [preview, setPreview] = useState<SeekPreviewState | null>(null);
@@ -196,6 +198,7 @@ const VideoControls = ({
         <Slider
           aria-label="播放进度"
           className={styles.progress}
+          classNames={{ label: cx(tipDark && styles.labelDark) }}
           disabled={!enabled || duration <= 0}
           /* 预览可用时数字浮标让位给帧浮层，免两套浮层叠在一起 */
           label={previewReady ? null : formatProgressLabel}
@@ -227,6 +230,7 @@ const VideoControls = ({
               label={nav.previousLabel ?? '上一个视频'}
               onClick={nav.onPrevious ?? undefined}
               size={CONTROL_BUTTON_SIZE}
+              tipDark={tipDark}
               tipDuration={STEP_TIP_DURATION}
             >
               <PlayerStepBackwardIcon size={STEP_ICON_SIZE} />
@@ -238,6 +242,7 @@ const VideoControls = ({
             label={playing ? '暂停（空格）' : '播放（空格）'}
             onClick={onTogglePlay}
             size={CONTROL_BUTTON_SIZE}
+            tipDark={tipDark}
           >
             {playing ? (
               <PlayerPauseIcon size={PLAY_ICON_SIZE} />
@@ -252,6 +257,7 @@ const VideoControls = ({
               label={nav.nextLabel ?? '下一个视频'}
               onClick={nav.onNext ?? undefined}
               size={CONTROL_BUTTON_SIZE}
+              tipDark={tipDark}
               tipDuration={STEP_TIP_DURATION}
             >
               <PlayerStepForwardIcon size={STEP_ICON_SIZE} />

@@ -40,6 +40,7 @@ const FreeIconAction = ({
   onClick,
   ref,
   size = 'sm',
+  tipDark = false,
   tipDuration,
   tone = 'normal',
   tooltip,
@@ -118,6 +119,7 @@ const FreeIconAction = ({
       {button}
       {hovered && !tipExpired ? (
         <Tooltip
+          classNames={{ tooltip: cx(tipDark && styles.tipDark) }}
           label={tooltipLabel ?? label}
           opened
           target={buttonRef}

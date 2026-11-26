@@ -31,6 +31,19 @@
   opacity: 0.4;
 }
 
+/*
+ * 固定深底浅字 tip：压在媒体画面上的提示用，不跟着主题反转。
+ * --tooltip-bg / --tooltip-color 是 Mantine 取色读的两个变量，再显式写一遍背景与字色，
+ * 样式顺序变了也不会退回默认灰。
+ */
+.tipDark {
+  --tooltip-bg: var(--app-tip-dark-bg);
+  --tooltip-color: var(--app-tip-dark-color);
+
+  background: var(--app-tip-dark-bg);
+  color: var(--app-tip-dark-color);
+}
+
 /* 危险操作（删除）：只描红，不做实底 */
 .danger {
   color: var(--app-status-danger);
