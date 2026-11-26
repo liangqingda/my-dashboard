@@ -36,6 +36,9 @@ import styles from './index.scss';
 const PLAY_ICON_SIZE = 21;
 const STEP_ICON_SIZE = 19;
 
+/** 播放键与前后箭头的按钮边长（px）：比普通 sm 大一圈，但不撑成 lg 那种大容器 */
+const CONTROL_BUTTON_SIZE = 34;
+
 /** 翻篇箭头的 tip 只亮这么久就自己收掉：常挂在播放条上会挡住进度 */
 const STEP_TIP_DURATION = 1000;
 
@@ -223,7 +226,7 @@ const VideoControls = ({
               disabled={nav.onPrevious === null}
               label={nav.previousLabel ?? '上一个视频'}
               onClick={nav.onPrevious ?? undefined}
-              size="lg"
+              size={CONTROL_BUTTON_SIZE}
               tipDuration={STEP_TIP_DURATION}
             >
               <PlayerStepBackwardIcon size={STEP_ICON_SIZE} />
@@ -234,7 +237,7 @@ const VideoControls = ({
             disabled={!enabled}
             label={playing ? '暂停（空格）' : '播放（空格）'}
             onClick={onTogglePlay}
-            size="lg"
+            size={CONTROL_BUTTON_SIZE}
           >
             {playing ? (
               <PlayerPauseIcon size={PLAY_ICON_SIZE} />
@@ -248,7 +251,7 @@ const VideoControls = ({
               disabled={nav.onNext === null}
               label={nav.nextLabel ?? '下一个视频'}
               onClick={nav.onNext ?? undefined}
-              size="lg"
+              size={CONTROL_BUTTON_SIZE}
               tipDuration={STEP_TIP_DURATION}
             >
               <PlayerStepForwardIcon size={STEP_ICON_SIZE} />

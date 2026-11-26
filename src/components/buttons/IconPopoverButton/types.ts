@@ -26,6 +26,7 @@ export type IconPopoverButtonProps = {
   /**
    * 弹层最高到多少；设了就同时允许内部纵向滚动。
    * 给设置这类「分组越加越多」的长面板用：小屏上一屏放不下时滚动，而不是顶出屏幕。
+   * 弹层走 portal，百分比会对到视口而不是弹窗，需要按弹窗高度封顶时用 dvh / vh 单位。
    */
   maxHeight?: number | string;
   /** 弹层内容 */

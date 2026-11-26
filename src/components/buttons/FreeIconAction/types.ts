@@ -13,8 +13,8 @@ export type FreeIconActionTone = 'normal' | 'accent' | 'danger';
  */
 export type FreeIconActionTooltip = 'hover' | 'none';
 
-/** 尺寸档：字段旁 / 标题栏与表格操作列 / 编辑态那排主操作 */
-export type FreeIconActionSize = 'xs' | 'sm' | 'lg';
+/** 尺寸档：字段旁 / 标题栏与表格操作列 / 编辑态那排主操作；数字直接给按钮边长（px） */
+export type FreeIconActionSize = 'xs' | 'sm' | 'lg' | number;
 
 /** 图标按钮的入参 */
 export type FreeIconActionProps = {

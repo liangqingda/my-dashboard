@@ -3,8 +3,10 @@
  * 音量档由当前音量与静音位决定图标（off / low / high）；数字百分比贴在喇叭左侧，跟着浮出。
  */
 
+import { useEffect, useState } from 'react';
 import { Slider } from '@mantine/core';
 
+import { cx } from '@/utils/cx';
 import FreeIconAction from '@/components/buttons/FreeIconAction';
 
 import PlayerVolumeIcon from '../PlayerIcons/PlayerVolumeIcon';
@@ -38,10 +40,32 @@ const VideoVolumeControl = ({
   volume,
 }: VideoVolumeControlProps) => {
   const level = volumeLevel(muted, volume);
+  /**
+   * 拖动滑杆期间保持浮层：松手后指针离开才收起，避免拖一半被 hover 切走关掉。
+   * 松手可能落在面板外，所以收尾挂在 window 的 pointerup / pointercancel 上，
+   * 不依赖指针还停在面板里。
+   */
+  const [dragging, setDragging] = useState(false);
+
+  useEffect(() => {
+    if (!dragging) {
+      return;
+    }
+
+    const release = () => setDragging(false);
+
+    window.addEventListener('pointerup', release);
+    window.addEventListener('pointercancel', release);
+
+    return () => {
+      window.removeEventListener('pointerup', release);
+      window.removeEventListener('pointercancel', release);
+    };
+  }, [dragging]);
 
   return (
     <div className={styles.wrap}>
-      <span className={styles.value}>
+      <span className={cx(styles.value, dragging && styles.valueOpen)}>
         {Math.round((muted ? 0 : volume) * 100)}%
       </span>
       <FreeIconAction
@@ -53,7 +77,10 @@ const VideoVolumeControl = ({
         <PlayerVolumeIcon level={level} size={ICON_SIZE} stroke={ICON_STROKE} />
       </FreeIconAction>
 
-      <div className={styles.popover}>
+      <div
+        className={cx(styles.popover, dragging && styles.popoverOpen)}
+        onPointerDown={() => setDragging(true)}
+      >
         <div className={styles.panel}>
           <Slider
             aria-label="音量"

@@ -66,7 +66,8 @@ const IconPopoverButton = ({
       </Popover.Target>
       <Popover.Dropdown
         className={cx(styles.dropdown, maxHeight !== undefined && styles.scrollable)}
-        mah={maxHeight}
+        /* 百分比 / dvh 不是间距档：走 style 落 max-height，避免被 spacing 换算成 rem */
+        style={maxHeight !== undefined ? { maxHeight } : undefined}
       >
         {children}
       </Popover.Dropdown>

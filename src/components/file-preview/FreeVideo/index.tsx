@@ -59,6 +59,12 @@ const FreeVideo = ({
   const stageRef = useRef<HTMLDivElement | null>(null);
   /** 抽帧探针：不进画面、不接指针，只给进度条悬停预览取帧 */
   const probeRef = useRef<HTMLVideoElement | null>(null);
+  /**
+   * 弹层开着时在画面上按下的手势：外部弹层常在 `mousedown` 阶段先关掉（点外判定走
+   * mousedown），等 `click` 落到画面时 `overlayOpen` 已经翻成 false，再判状态就会误切播放。
+   * 所以在按下这一刻先记下「这次点击是来收弹层的」，click 时按这个手势判断。
+   */
+  const overlayDismissGestureRef = useRef(false);
   const mergedRef = useMergedRef(ownRef, videoRef);
   const [status, setStatus] = useState<PlayerStatus>('loading');
   const [buffering, setBuffering] = useState(false);
@@ -164,9 +170,21 @@ const FreeVideo = ({
   /** 播放 / 暂停：用户手势里调用，失败（编码不支持）由 error 事件接管 */
   const togglePlay = () => videoElement.togglePlay();
 
-  /** 点画面：有业务弹层开着时先收弹层、不切播放；否则才是播放 / 暂停 */
+  /**
+   * 点画面：有业务弹层开着时先收弹层、不切播放；否则才是播放 / 暂停。
+   * 手势在指针按下那一刻记下：弹层可能在按下阶段先被点外判定关掉，
+   * click 时再读 `overlayOpen` 已经是关着的状态，会误判成普通点击切播放。
+   */
+  const handleVideoPointerDown = () => {
+    overlayDismissGestureRef.current = overlayOpen;
+  };
+
   const handleVideoClick = () => {
-    if (overlayOpen) {
+    const dismissGesture = overlayDismissGestureRef.current;
+
+    overlayDismissGestureRef.current = false;
+
+    if (dismissGesture || overlayOpen) {
       onCloseOverlay?.();
 
       return;
@@ -202,6 +220,7 @@ const FreeVideo = ({
           onLoadedMetadata={videoElement.handleLoadedMetadata}
           onPause={showControlsForPaused}
           onPlaying={handlePlaying}
+          onPointerDown={handleVideoPointerDown}
           onTimeUpdate={videoElement.handleTimeUpdate}
           onVolumeChange={videoElement.handleVolumeChange}
           onWaiting={videoElement.handleWaiting}
