@@ -13,6 +13,10 @@
     var(--app-glass-fade-strong),
     var(--app-glass-fade-weak)
   );
+  /* hover 时垫回旧版控制栏那层实底：渐变和它同色，叠满后就是之前那档不透明度；
+     底色单独过渡，渐变本身不用动，进出 hover 都是渐变而不是硬切 */
+  background-color: transparent;
+  transition: background-color 160ms ease;
   -webkit-backdrop-filter: blur(var(--app-glass-blur-panel))
     saturate(var(--app-glass-saturate));
   backdrop-filter: blur(var(--app-glass-blur-panel))
@@ -21,6 +25,11 @@
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
   will-change: backdrop-filter;
+}
+
+/* 指针进到控制栏：垫底换成旧版那层实色，从透明渐变到满格，不硬切 */
+.controls:hover {
+  background-color: var(--app-surface-subtle);
 }
 
 /* 进度条容器：占满整行，悬停预览浮层以它为定位祖先。

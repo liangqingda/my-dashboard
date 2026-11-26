@@ -41,6 +41,8 @@
   不占布局流；收起时只做淡出 + `pointer-events: none`，**不再随透明度一起下移**——位移会让虚化采样区
   每帧重算，控制栏出现的那一下就会闪。玻璃层另挂 `will-change: backdrop-filter` 与
   `backface-visibility: hidden`，提前把合成层留住。
+  **指针进到控制栏**时，底色用 160ms 过渡垫回旧版那层实底（`--app-surface-subtle`），
+  操作时看得更清；移出去再渐变回现在的半透明毛玻璃。
   计时与「指针在不在控制栏上」都收在 `hooks/use-controls-visibility`，播放器不再自己挂 `setTimeout`。
   控制栏根节点带 `data-video-controls` 标记，对应 `constants.ts` 导出的 `VIDEO_CONTROLS_SELECTOR`：
   调用方判断「指针在这块区域里活动不算数」时用这个选择器（视频预览里就是不让浮层 header 跟着
