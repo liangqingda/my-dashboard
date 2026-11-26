@@ -8,6 +8,14 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
   gap: 12px;
+
+  /*
+   * 铺满整块滚动区：空白处要算「落进当前这一层」的落点，容器只长到内容高的话，
+   * 内容下方的空白就落在元素外面，`dragover` 根本不会来，热区只剩顶上一条。
+   * 行不能被 `min-height` 一起拉高，所以对齐方式钉在 start。
+   */
+  align-content: start;
+  min-height: 100%;
 }
 
 .gridFixed {
@@ -19,6 +27,8 @@
 .grouped {
   display: flex;
   flex-direction: column;
+  /* 同上：整块都要接住拖拽，内容少时也得铺满（空白自然留在下方，不参与排版） */
+  min-height: 100%;
 }
 
 /* 一个分组段：标题在上，瓦片网格在下 */

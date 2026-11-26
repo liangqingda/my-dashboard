@@ -74,7 +74,7 @@ const dragMove = useDragMove({
 ## 搬这一趟的节奏（`use-move-runner.ts`）
 
 松手到真正落位的那一程单独收在 `use-move-runner.ts`：逐条提交（进度由 `run-move.ts` 推）、
-**至少演 `MIN_MOVE_MS`＝0.5 秒**（本机搬一条是毫秒级的事，进度窗一闪而过反而像没做成），
+**至少演 `MIN_MOVE_MS`＝0.5 秒**（本机搬一条是毫秒级的事，进度一闪而过反而像没做成），
 等满半秒之后才判要不要关窗。中途有一条失败就停在手持态，失败原因由 `moveEntry` 自己弹通知。
 搬成功的几条先进 `movedRef`，再按「整批里还剩谁」决定：剩 0 条 → `close()` + 音效 + `onAllMoved(targetDir)`；
 还剩 → 会话换成剩下的那批、`handed = true`，弹窗不关。

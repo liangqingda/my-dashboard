@@ -1,7 +1,6 @@
 import DeleteEntryConfirm from '../DeleteEntryConfirm';
 import DragMoveModal from '../DragMoveModal';
 import EjectVolumeConfirm from '../EjectVolumeConfirm';
-import MoveProgressModal from '../MoveProgressModal';
 import RenameEntryModal from '../RenameEntryModal';
 import UninstallAppConfirm from '../UninstallAppConfirm';
 import VolumeBusyConfirm from '../VolumeBusyConfirm';
@@ -18,7 +17,6 @@ const FilesModals = ({
   deleteState,
   entryActions,
   favorites,
-  moveProgress,
   onCreateFolder,
   onPickDir,
   onPreviewImage,
@@ -35,8 +33,6 @@ const FilesModals = ({
         file.category === 'image' ? onPreviewImage(file) : onPreviewVideo(file)
       }
     />
-
-    <MoveProgressModal progress={moveProgress} />
 
     <DeleteEntryConfirm
       entry={deleteState.deletingEntry}

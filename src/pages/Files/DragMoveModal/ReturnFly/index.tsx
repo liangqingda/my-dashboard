@@ -1,22 +1,27 @@
 import { useEffect, useRef } from 'react';
 
+import { framesFor } from '../../utils/pending-frames';
+
 import type { ReturnFlyProps } from './types';
 
 import styles from './index.scss';
 
-/** 这一趟飞多久：比进列表那趟短一点，回手卡是很轻的一下 */
-const FLY_MS = 420;
+/**
+ * 这一趟与「列表里那一项收进待拖拽区」用同一套帧与时长（见 `PendingFly`）：
+ * 盖住原位 → 抬起 → 收到九成停一下 → 一路缩进落座那一格并淡出。
+ * 缩进去的那一格是**它真正落座的位置**（手卡末尾那一行），不是手卡左上角。
+ */
+const FLY_MS = 560;
 
 /** 系统开了「减少动态」就只留结果、不做位移 */
 const prefersReducedMotion = (): boolean =>
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
- * 「把这次搬进文件夹的条目放回手卡」那一下：拿被拿走的那格瓦片做整块拷贝，
- * 从它原来的位置缩着飞进手卡，落到时才收掉拷贝——看上去就是同一个东西被捡回去了。
+ * 「把这次搬进文件夹的条目放回手卡」那一下：拿那格瓦片做整块拷贝，
+ * 由大到小缩进手卡里它落座的那一格，落到时才收掉拷贝——看上去就是同一个东西被捡回去了。
  *
- * 飞的是**瓦片本人的深拷贝**，所以视频帧、文件名、体积、样式全都对得上，
- * 不是另画一块小卡片。
+ * 飞行块起步时正好盖住原位，之后只缩不放，所以和列表 → 待拖拽区那一趟是同一个观感。
  */
 const ReturnFly = ({ flight, onDone }: ReturnFlyProps) => {
   const ref = useRef<HTMLDivElement>(null);
@@ -45,24 +50,26 @@ const ReturnFly = ({ flight, onDone }: ReturnFlyProps) => {
       return undefined;
     }
 
-    const scale = Math.min(1, to.width / Math.max(from.width, 1));
+    /** 收进那一格时缩到多小：按小的那一维等比缩，别把卡片压歪 */
+    const endScale = Math.min(
+      to.width / Math.max(from.width, 1),
+      to.height / Math.max(from.height, 1),
+      1,
+    );
+    /** 飞在半路时比落点略大一圈，看得出「正在缩进去」 */
+    const midScale = Math.max(endScale * 1.6, 0.4);
+    /** 落进那一格时再收一点、同时淡出，把位置交还真实的那一格 */
+    const landScale = endScale * 0.85;
     const dx = to.left + to.width / 2 - (from.left + from.width / 2);
     const dy = to.top + to.height / 2 - (from.top + from.height / 2);
 
     const move = block.animate(
-      [
-        { opacity: 1, transform: 'translate(0, 0) scale(1)' },
-        {
-          offset: 0.55,
-          opacity: 0.95,
-          transform: `translate(${dx * 0.55}px, ${dy * 0.55}px) scale(${Math.max(scale * 1.4, 0.3)})`,
-        },
-        {
-          opacity: 0.7,
-          transform: `translate(${dx}px, ${dy}px) scale(${scale})`,
-        },
-      ],
-      { duration: FLY_MS, easing: 'cubic-bezier(.4, 0, .2, 1)', fill: 'forwards' },
+      framesFor({ direction: 'in', dx, dy, endScale, landScale, midScale }),
+      {
+        duration: FLY_MS,
+        easing: 'cubic-bezier(0.32, 0.72, 0.24, 1)',
+        fill: 'forwards',
+      },
     );
 
     move.finished.then(finish, () => undefined);

@@ -14,6 +14,7 @@ import FreeModal from '@/components/modals/FreeModal';
 import { getErrorMessage } from '@/utils/error';
 import { cx } from '@/utils/cx';
 
+import BlankMoveMask from '../BlankMoveMask';
 import DirBreadcrumb from '../DirBreadcrumb';
 import FavoritesPanel from '../FilesActions/FavoritesPanel';
 import { sessionLayout } from '../hooks/use-drag-move/utils';
@@ -77,6 +78,7 @@ const DragMoveModal = ({
     hoverPath,
     leaveFolder,
     loading,
+    progress,
     session,
     springPath,
     view,
@@ -92,8 +94,8 @@ const DragMoveModal = ({
   const [favoritesOpen, setFavoritesOpen] = useState(false);
   /** 系统目录选择框开着：按钮转圈，避免连点弹两个框 */
   const [picking, setPicking] = useState(false);
-  /** 拖拽在飞时点不动任何东西：避免刚松手的那一下被当成点击 */
-  const idle = !dragActive;
+  /** 拖拽在飞、或正在搬家时点不动任何东西：避免刚松手那一下被当成点击，也别在搬的途中换层 */
+  const idle = !dragActive && progress === null;
   /**
    * 空白落点的高亮再与 `dragActive` 相与：拖拽从页面瓦片发起、又落在关窗的位置时，
    * 这里记下的「正悬着」会留到下次打开，必须跟着拖拽状态一起失效。
@@ -109,6 +111,13 @@ const DragMoveModal = ({
     view === null
       ? NO_LANDED
       : dragMove.landed.filter((item) => item.targetDir === view.path);
+
+  /**
+   * 搬家的落点是「当前这一层」（松手在弹窗的空白处）时，网格里没有哪一格能画进度，
+   * 这时盖一层全屏遮罩——与列表页直接拖到空白处是同一块遮罩、同一套口径。
+   */
+  const movingBlank =
+    progress !== null && folders.every((folder) => folder.path !== progress.targetDir);
 
   /** 回手卡那一趟：取回条目 + 拿那格瓦片的拷贝从原地缩着飞进手卡 */
   const flyBack = useReturnFly(dragMove.restoreLanded);
@@ -195,6 +204,9 @@ const DragMoveModal = ({
     >
       {session === null || view === null ? null : (
         <div className={styles.root}>
+          {movingBlank ? (
+            <BlankMoveMask done={progress.done} total={progress.total} />
+          ) : null}
           <div className={styles.handRow}>
             <HandCard
               entries={handEntries}
@@ -291,6 +303,7 @@ const DragMoveModal = ({
                       onEnter={hoverFolder}
                       onLeave={leaveFolder}
                       onOpen={goTo}
+                      progress={progress}
                       springPath={springPath}
                     />
                   </section>

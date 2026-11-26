@@ -324,7 +324,6 @@ const Files = () => {
         }}
         modals={{
           appUninstall,
-          moveProgress: drag.moveProgress,
           deleteEntry: entryDelete,
           entryActions,
           favorites: favoritesHook,

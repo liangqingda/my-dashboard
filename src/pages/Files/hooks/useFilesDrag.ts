@@ -148,8 +148,6 @@ export const useFilesDrag = ({
   const dragEntries = isDirect ? direct.dragging : null;
   /** 那条瓦片的快照（起拖那一刻拷的）：影像按它原样画 */
   const dragImage = isDirect ? direct.image : null;
-  /** 搬家的进度：直接拖模式画在目标文件夹上，弹窗模式才进进度弹窗 */
-  const moveProgress = isDirect ? null : entryActions.dragMove.progress;
   const folderProgress = isDirect ? direct.progress : null;
 
   return {
@@ -168,6 +166,5 @@ export const useFilesDrag = ({
     handleDropFolder,
     handleTrayDrop,
     isDirect,
-    moveProgress,
   };
 };

@@ -75,6 +75,36 @@
   background: var(--app-surface-subtle);
 }
 
+/*
+ * 正在往这一格里搬：与列表页 `FolderTile` 同一套观感（强调描边、微抬起、底边一条进度条），
+ * 弹窗里不再另起一扇进度窗——落点在哪，进度就画在哪。
+ */
+.moving {
+  z-index: 3;
+  border-color: var(--app-accent);
+  background: var(--app-surface-hover);
+  outline: 2px solid var(--app-accent);
+  outline-offset: -2px;
+  box-shadow: 0 12px 26px -12px var(--app-accent);
+  transform: scale(1.045);
+}
+
+/* 瓦片底边那条进度：压在格子下沿，不参与排版 */
+.moveBar {
+  position: absolute;
+  right: 8px;
+  bottom: 0;
+  left: 8px;
+  pointer-events: none;
+}
+
+/* 计数位：搬的时候顶掉「本来就在里面」那类说明，只报搬到第几条 */
+.movingText {
+  color: var(--app-text-muted);
+  font-size: 10px;
+  line-height: 1.3;
+}
+
 /* 禁用落点上的那句说明：压在瓦片底部，替代平常那颗倒计时条的位置 */
 .blockedTip {
   position: absolute;

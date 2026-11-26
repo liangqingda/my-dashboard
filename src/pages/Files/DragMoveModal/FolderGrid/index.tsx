@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { UnstyledButton } from '@mantine/core';
+import { Progress, UnstyledButton } from '@mantine/core';
 import { IconFolderFilled } from '@tabler/icons-react';
 
 import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
@@ -35,6 +35,7 @@ const FolderGrid = ({
   onEnter,
   onLeave,
   onOpen,
+  progress,
   springPath,
 }: FolderGridProps) => {
   /** 指针正压在一个禁用落点上：只有它需要额外说明（其余格子没有禁用的理由） */
@@ -49,6 +50,13 @@ const FolderGrid = ({
       {folders.map((folder) => {
         const blocked = isBlocked(folder.path);
         const blockedHovered = blocked && blockedPath === folder.path;
+        /** 这一格就是本次搬家的落点：`done / total` 直接画在它身上 */
+        const receiving =
+          progress !== null && progress.targetDir === folder.path ? progress : null;
+        const percent =
+          receiving === null || receiving.total === 0
+            ? 0
+            : Math.round((receiving.done / receiving.total) * 100);
 
         return (
           <UnstyledButton
@@ -58,6 +66,7 @@ const FolderGrid = ({
               springPath === folder.path && styles.springing,
               blocked && styles.blocked,
               blockedHovered && styles.blockedOn,
+              receiving !== null && styles.moving,
             )}
             key={folder.path}
             onClick={idle ? () => onOpen(folder.path) : undefined}
@@ -105,16 +114,31 @@ const FolderGrid = ({
               lines={2}
               text={folder.name}
             />
+            {receiving === null ? null : (
+              <span className={styles.movingText}>
+                正在移动 {receiving.done} / {receiving.total}
+              </span>
+            )}
             {blockedHovered ? (
               <span className={styles.blockedTip}>{HINT_ALREADY_INSIDE}</span>
             ) : null}
-            {!blocked && hoverPath === folder.path ? (
+            {!blocked && hoverPath === folder.path && receiving === null ? (
               <span
                 aria-hidden="true"
                 className={styles.countdown}
                 style={{ animationDuration: `${SPRING_HOVER_MS}ms` }}
               />
             ) : null}
+            {receiving === null ? null : (
+              <Progress
+                aria-label="移动进度"
+                className={styles.moveBar}
+                radius="xl"
+                size={4}
+                striped
+                value={percent}
+              />
+            )}
           </UnstyledButton>
         );
       })}

@@ -8,7 +8,8 @@
 
 import { useState } from 'react';
 
-import type { FlyRect , ReturnFlyProps } from '../DragMoveModal/ReturnFly/types';
+import { cloneFlightBody, dressClone } from '../utils/pending-dom';
+import type { FlyRect, ReturnFlyProps } from '../DragMoveModal/ReturnFly/types';
 
 import type { LandedItem } from './use-drag-move/types';
 
@@ -60,14 +61,20 @@ export const useReturnFly = (restore: (item: LandedItem) => Promise<string | nul
    */
   const start = (item: LandedItem, cell: HTMLElement) => {
     const from = cell.getBoundingClientRect();
-    const node = cell.cloneNode(true);
+    /*
+     * 飞行真身与「列表 → 待拖拽区」那一趟同一套：整格原样深拷贝、尺寸写死，
+     * 只把盖在上面的「点一下放回」那层摘掉，别飞一块空白按钮出去。
+     */
+    const node = cloneFlightBody(cell, from.width, from.height, '');
 
-    if (!(node instanceof HTMLElement)) {
-      return;
+    node.querySelector('[data-return-hit="true"]')?.remove();
+
+    // 拷贝里的瓦片还带着路径：留着会被「找列表里那一项」扫到，冒充成原条目
+    for (const inner of node.querySelectorAll('[data-entry-path]')) {
+      inner.removeAttribute('data-entry-path');
     }
 
-    // 拷贝里只留瓦片本体：把盖在上面的「点一下放回」那层摘掉
-    node.querySelector('[data-return-hit="true"]')?.remove();
+    dressClone(node, from.width, from.height);
 
     void restore(item).then((backPath) => {
       if (backPath === null) {

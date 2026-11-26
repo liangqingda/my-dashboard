@@ -3,7 +3,6 @@
  * 状态与动作都由页面层的 hook 持有，这里只把弹窗按顺序摆好。
  */
 
-import type { MoveProgress } from '../hooks/use-drag-move/types';
 import type { DragMoveModalProps } from '../DragMoveModal/types';
 import type { useAppUninstall } from '../hooks/useAppUninstall';
 import type { useEntryActions } from '../hooks/useEntryActions';
@@ -13,8 +12,6 @@ import type { FileEntry } from '../types';
 
 /** 四扇弹窗的入参 */
 export type FilesModalsProps = {
-  /** 正在搬的进度（弹窗 / 直接拖两种模式各一份）；null 时进度窗收起 */
-  moveProgress: MoveProgress | null;
   /** 应用卸载：待卸载应用与残留报告 */
   appUninstall: ReturnType<typeof useAppUninstall>;
   /** 删除条目：待删除项与请求状态（页面只传弹窗要用的四个字段） */

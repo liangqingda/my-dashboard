@@ -40,7 +40,7 @@ createRoot(document.getElementById('root')!).render(
     <MantineProvider defaultColorScheme="light" theme={theme}>
       {/* 全站日历统一口径：中文、周一为每周第一天 */}
       <DatesProvider settings={{ firstDayOfWeek: 1, locale: 'zh-cn' }}>
-        {/* 层级压在全屏弹窗（700）与移动进度窗之上：搬完的提示要在关窗之后看得见 */}
+        {/* 层级压在全屏拖拽弹窗（700）、搬家全屏遮罩（645）与飞行块（720）之上：搬完的提示要在关窗之后看得见 */}
         <Notifications limit={5} position="bottom-right" zIndex={800} />
         <ServicesProvider>
           <App />

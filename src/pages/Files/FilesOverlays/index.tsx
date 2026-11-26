@@ -48,7 +48,6 @@ const FilesOverlays = ({ drag, modals, preview }: FilesOverlaysProps) => {
           onToggleFavorite: (path) => favorites.toggleFavorite(favoriteTargetOf(path)),
           onTogglePinned: favorites.togglePinnedFavorite,
         }}
-        moveProgress={modalRest.moveProgress}
         onCreateFolder={modalRest.onCreateFolder}
         onPickDir={modalRest.onPickDir}
         onPreviewImage={modalRest.onPreviewImage}

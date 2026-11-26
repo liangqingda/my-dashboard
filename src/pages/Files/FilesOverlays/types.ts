@@ -12,7 +12,6 @@ import type { useImagePreview } from '../hooks/useImagePreview';
 import type { useVideoPreview } from '../hooks/useVideoPreview';
 import type { useAppUninstall } from '../hooks/useAppUninstall';
 import type { useVolumeEject } from '../hooks/useVolumeEject';
-import type { MoveProgress } from '../hooks/use-drag-move/types';
 import type { DraggableEntry, DragTileImage, FileEntry } from '../types';
 
 /** 三层浮层的入参 */
@@ -36,8 +35,6 @@ export type FilesOverlaysProps = {
   };
   /** 业务弹窗：删除 / 改名 / 卸载 / 推出外接盘 / 拖拽移动 */
   modals: {
-    /** 正在搬的进度：弹窗模式与直接拖模式各给一份，null 时进度窗收起 */
-    moveProgress: MoveProgress | null;
     appUninstall: ReturnType<typeof useAppUninstall>;
     /** 删除条目：弹窗只要其中四个字段，由本层挑 */
     deleteEntry: ReturnType<typeof useEntryDelete>;
