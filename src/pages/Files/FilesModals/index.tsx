@@ -18,6 +18,7 @@ const FilesModals = ({
   deleteState,
   entryActions,
   favorites,
+  moveProgress,
   onCreateFolder,
   onPickDir,
   onPreviewImage,
@@ -35,7 +36,7 @@ const FilesModals = ({
       }
     />
 
-    <MoveProgressModal progress={entryActions.dragMove.progress} />
+    <MoveProgressModal progress={moveProgress} />
 
     <DeleteEntryConfirm
       entry={deleteState.deletingEntry}

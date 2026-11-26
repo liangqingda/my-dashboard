@@ -37,6 +37,21 @@
   outline-offset: -2px;
 }
 
+/*
+ * 禁用落点（直接拖模式下这一格自己在待拖拽区里）：虚线圈 + 压暗 + 禁止指针，
+ * 计数位置改成一句原因，让人知道「不是没放准，是不能放」。
+ */
+.dropBlocked {
+  opacity: 0.6;
+  outline: 2px dashed var(--app-line-strong);
+  outline-offset: -2px;
+  cursor: not-allowed;
+}
+
+.dropBlocked .tile {
+  cursor: not-allowed;
+}
+
 /* hover 时玻璃层一起浮出：玻璃层本体在 TileVeil，这里只挂显隐 */
 .wrapper:hover [data-tile-veil] {
   opacity: var(--veil-opacity, 1);

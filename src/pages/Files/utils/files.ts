@@ -115,6 +115,10 @@ export const parentDirOf = (path: string): string => {
   return trimmed.slice(0, cut);
 };
 
+/** 把名字接到目录后面：`/a/b` + `c.txt` → `/a/b/c.txt`，根目录不拼出双斜杠 */
+export const joinDirOf = (dir: string, name: string): string =>
+  dir.endsWith('/') ? `${dir}${name}` : `${dir}/${name}`;
+
 /** 收藏接口要的载荷：路径 + 末段名（弹窗里收藏当前层、页面里收藏选中项共用） */
 export const favoriteTargetOf = (dir: string): { name: string; path: string } => ({
   name: baseNameOfPath(dir),

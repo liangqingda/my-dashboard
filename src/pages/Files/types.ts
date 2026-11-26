@@ -26,6 +26,12 @@ export type FileCategory = 'video' | 'image' | 'pdf' | 'markdown' | 'app' | 'oth
 /** 类型筛选的操作方式：多选（可勾多类）/ 单选（一次一类），在设置面板里切 */
 export type TypeFilterMode = 'multi' | 'single';
 
+/**
+ * 拖拽移动的走法：`modal` ＝拖起就开全屏弹窗逐层挑目标（默认）；
+ * `direct` ＝不开弹窗，直接把条目拖到列表里的某个文件夹上松手。
+ */
+export type MoveMode = 'modal' | 'direct';
+
 /** 列表里的一条应用包（`.app`） */
 export type AppEntry = {
   /** 显示名：文件名的 `.app` 后缀已去掉 */
@@ -236,3 +242,11 @@ export type EjectVolumeResult =
       /** 系统给的失败原因 */
       message: string;
     };
+
+/** 直接拖拽移动 hook 的入参：搬一条、搬完把搬走的条目回给页面（页面据此清待拖拽区） */
+export type DirectMoveArgs = {
+  /** 执行移动；成功返回 true（失败原因由它自己弹通知） */
+  moveEntry: (source: string, targetDir: string) => Promise<boolean>;
+  /** 这批搬完了：把真搬走的条目与落点回给页面 */
+  onMoved: (entries: DraggableEntry[], targetDir: string) => void;
+};

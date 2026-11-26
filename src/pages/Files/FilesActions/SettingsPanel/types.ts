@@ -5,6 +5,7 @@
 
 import type {
   FilesViewMode,
+  MoveMode,
   TypeFilterMode,
   VideoOpenMode,
   VideoThumbStyle,
@@ -44,6 +45,10 @@ export type SettingsPanelProps = {
   grouped: boolean;
   /** 改分组展示开关 */
   onGroupedChange: (enabled: boolean) => void;
+  /** 拖拽移动走弹窗还是直接拖到列表里的文件夹 */
+  moveMode: MoveMode;
+  /** 改拖拽移动的走法 */
+  onMoveModeChange: (mode: MoveMode) => void;
   /** 页面安全锁是否开启 */
   lockEnabled: boolean;
   /** 安全锁密码：空串表示还没设，此时开关不可开 */

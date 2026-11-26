@@ -15,6 +15,7 @@ import { useAppLaunch } from './hooks/useAppLaunch';
 import { useAppUninstall } from './hooks/useAppUninstall';
 import { useDragPending } from './hooks/use-drag-pending';
 import { useEntryActions } from './hooks/useEntryActions';
+import { useFilesDrag } from './hooks/useFilesDrag';
 import { useEntryDelete } from './hooks/useEntryDelete';
 import { useFilesLock } from './hooks/useFilesLock';
 import { useFilesSettings } from './hooks/useFilesSettings';
@@ -25,12 +26,11 @@ import { useFilesViewMode } from './hooks/useFilesViewMode';
 import { useGroupCollapse } from './hooks/useGroupCollapse';
 import { useFilesNavigation } from './hooks/useFilesNavigation';
 import { useImagePreview } from './hooks/useImagePreview';
-import { usePendingDrag } from './hooks/usePendingDrag';
 import { useTypeFilter } from './hooks/useTypeFilter';
 import { useVideoPreview } from './hooks/useVideoPreview';
 import { useVolumeEject } from './hooks/useVolumeEject';
-import { describeDirSpace, emptyListingText, isAppCatalogPath } from './utils/files';
 import { describeFilesList } from './utils/entries-view';
+import { describeDirSpace, emptyListingText, isAppCatalogPath } from './utils/files';
 import { pickDirectory } from './utils/files-api';
 
 import styles from './index.scss';
@@ -42,7 +42,8 @@ import styles from './index.scss';
  * 设置面板可开启按类型分组成段（文件夹 / 应用 / 视频 / 图片 / PDF / Markdown / 其它，对齐 macOS 访达分组），
  * 段标题整行可点折叠收起；默认平铺，分组偏好持久化，折叠状态只留在会话内。
  * 点文件夹进入下一层，面包屑回退，`⌘↑` 回上一级；可收藏常用目录，在收藏面板里点选直达；
- * 拖起任一条目会打开移动弹窗：全屏逐层挑目标文件夹，面包屑换层，松手没落成移动就把条目留在手里；
+ * 拖起任一条目会打开移动弹窗（设置里可改成一直接拖：不开弹窗，拖到列表里的文件夹松手即移入；
+ * 目标自己在待拖拽区时这一格是禁用落点）：全屏逐层挑目标文件夹，面包屑换层，松手没落成移动就把条目留在手里；
  * 弹窗 header 有收藏当前层 / 新建文件夹 / 选本地目录三颗按钮（都走页面同一套流程），
  * 弹窗里这批条目平铺成待拖拽区，图标按条目类型换、图 / 视频可点开预览。
  * 网格里用 ⌘ / Shift + 点击（或待拖拽区已经非空时直接点）把条目攒进覆盖侧栏的待拖拽区，
@@ -94,12 +95,16 @@ const Files = () => {
 
   const folders = listing?.folders ?? [];
   const allFiles = listing?.files ?? [];
+  /** 待拖拽区：攒起来的一批条目，攒下以后列表的点击语义跟着变 */
+  const pending = useDragPending();
   const entryActions = useEntryActions({
     currentDir: listing?.path ?? null,
     currentFolders: folders,
     reload,
     // 整批搬完、弹窗自己关掉后，列表跟到最后落成的目录
     onAllMoved: openDir,
+    // 弹窗里点「刚搬进来的」把它撤回：条目直接回到待拖拽区
+    onReadd: pending.add,
   });
   /** 应用卸载：点卸载先取残留清单，确认后删整包并清理残留 */
   const appUninstall = useAppUninstall(reload);
@@ -118,24 +123,13 @@ const Files = () => {
   });
   const { deletingEntry, requestDelete, resetDelete } = entryDelete;
 
-  /** 待拖拽区：攒起来的一批条目，攒下以后列表的点击语义跟着变 */
-  const pending = useDragPending();
-
-  /**
-   * 列表拖拽结束（松手 / Esc / 落在别处）：先把「正往待拖拽区拖」那一程收掉，
-   * 再交给移动会话的结束逻辑（没有会话时它是空操作）。
-   */
-  const handleDragEnd = () => {
-    pending.endTrayDrag();
-    entryActions.endDrag();
-  };
-
-  /** 批量状态下的起拖与收件：列表不再立即开弹窗，先把条目往侧栏待拖拽区拖 */
-  const { handleDragStartEntry, handleTrayDrop } = usePendingDrag({
-    pending,
+  /** 列表拖拽的总接线：按设置分叉到「弹窗挑目标」与「直接拖到文件夹」两套 */
+  const drag = useFilesDrag({
     entryActions,
-    folders,
     files: allFiles,
+    folders,
+    moveMode: settings.moveMode,
+    pending,
   });
 
   /** 同时只开一块弹层：收藏 / 筛选 */
@@ -280,8 +274,9 @@ const Files = () => {
           <FilesEntries
             apps={list.visibleApps}
             collapsedGroups={collapsedGroups}
-            dragSource={entryActions.dragSource}
-            dropTarget={entryActions.dropTarget}
+            dragSource={drag.dragSource}
+            dropBlockedPath={drag.dropBlockedPath}
+            dropTarget={drag.dropTarget}
             files={list.visibleFiles}
             fixedColumns={isAppCatalogPath(listing.path)}
             folders={list.visibleFolders}
@@ -290,11 +285,11 @@ const Files = () => {
             launchingApp={launchingPath}
             loading={loading}
             loadingFolder={openingFolder}
-            onDragEnd={handleDragEnd}
-            onDragLeaveFolder={entryActions.dragLeaveFolder}
-            onDragOverFolder={entryActions.dragOverFolder}
-            onDragStartEntry={handleDragStartEntry}
-            onDropFolder={entryActions.dropFolder}
+            onDragEnd={drag.handleDragEnd}
+            onDragLeaveFolder={drag.handleDragLeaveFolder}
+            onDragOverFolder={drag.handleDragOverFolder}
+            onDragStartEntry={drag.handleListDragStart}
+            onDropFolder={drag.handleDropFolder}
             onEditEntry={entryActions.editEntry}
             onOpenApp={launchApp}
             onOpenExternalVideo={openVideoExternal}
@@ -320,12 +315,15 @@ const Files = () => {
       <FilesOverlays
         drag={{
           entryActions,
-          onDropPaths: handleTrayDrop,
+          onDragAll: drag.handleDragAll,
+          onDropPaths: drag.handleTrayDrop,
           onSelectAll: handleSelectAll,
+          onTrayDragEnd: drag.handleDragEnd,
           pending,
         }}
         modals={{
           appUninstall,
+          moveProgress: drag.moveProgress,
           deleteEntry: entryDelete,
           entryActions,
           favorites: favoritesHook,

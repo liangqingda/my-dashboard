@@ -2,7 +2,7 @@ import { createElement, useEffect, useRef } from 'react';
 
 import { entryIcon } from '../utils/entry-icon';
 import { cloneFlightBody, dressClone, pendingChipOf, pendingTileOf } from '../utils/pending-dom';
-import { framesFor, readFrame } from '../utils/pending-frames';
+import { framesFor } from '../utils/pending-frames';
 
 import type { PendingFlightLayerProps } from './types';
 
@@ -38,8 +38,6 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
   const ref = useRef<HTMLDivElement>(null);
   /** 图标那一层：换真身时直接隐藏，不再走一次重渲染 */
   const iconRef = useRef<HTMLSpanElement>(null);
-  /** 当前贴上来的是哪一份真身拷贝：折返时要先摘掉旧的，别叠成两份 */
-  const bodyRef = useRef<HTMLElement | null>(null);
   /** 回调放 ref：effect 只跟「飞哪一条」走，别因为父级每次渲染的新函数重启动画 */
   const doneRef = useRef(onDone);
 
@@ -54,18 +52,14 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
       return undefined;
     }
 
-    const { direction, entry, from, reversed = false } = flight;
+    const { direction, entry, from } = flight;
     const finish = () => doneRef.current();
-    /**
-     * 折返时先把这一刻的位移 / 缩放读下来，再把旧动画取消——
-     * 新动画从这一帧起手，看上去就是「飞到一半被推回去」，而不是跳回起点重播。
-     */
-    const frameNow = reversed ? readFrame(block) : null;
 
+    // 连点同一条时上一趟可能还没跑完：先取消旧动画，新的一趟从头播，别叠成两份
     block.getAnimations().forEach((running) => running.cancel());
 
     // 复用同一个外壳时要复位：移出先图标，移入首帧就是真身（图标先藏着，别闪一下巨大图标）
-    if (iconRef.current !== null && !reversed) {
+    if (iconRef.current !== null) {
       iconRef.current.style.visibility = direction === 'in' ? 'hidden' : '';
     }
 
@@ -124,10 +118,6 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
      *   一路缩到很小时把真身换回图标，再落进那一格。
      */
     const swap = (toClone: boolean) => {
-      // 折返时上一趟留下的真身可能还贴在上面：换班前先摘掉，免得叠两份
-      bodyRef.current?.remove();
-      bodyRef.current = null;
-
       if (toClone) {
         if (iconRef.current !== null) {
           iconRef.current.style.visibility = 'hidden';
@@ -135,7 +125,6 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
 
         if (clone !== undefined) {
           block.appendChild(clone);
-          bodyRef.current = clone;
         }
 
         return;
@@ -146,7 +135,7 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
       }
     };
 
-    if (direction === 'in' && !reversed) {
+    if (direction === 'in') {
       /*
        * 原件一直留在原位、不藏不换：飞行块本来就是它的整块拷贝，
        * 起步时正好盖住它，之后缩小着离开——原位那项从头到尾都看得见，不会闪。
@@ -160,10 +149,7 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
       FLY_MS * (direction === 'in' ? SHRINK_TO_ICON_AT : MORPH_AT),
     );
 
-    const frames = framesFor(
-      { direction, dx, dy, endScale, landScale, midScale, reversed },
-      frameNow,
-    );
+    const frames = framesFor({ direction, dx, dy, endScale, landScale, midScale });
 
     const move = block.animate(frames, {
       duration: FLY_MS,

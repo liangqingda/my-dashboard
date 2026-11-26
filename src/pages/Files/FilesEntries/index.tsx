@@ -20,6 +20,7 @@ const FilesEntries = ({
   apps,
   collapsedGroups,
   dragSource,
+  dropBlockedPath,
   dropTarget,
   files,
   fixedColumns,
@@ -78,6 +79,7 @@ const FilesEntries = ({
           apps={apps}
           collapsedGroups={collapsedGroups}
           dragSource={dragSource}
+          dropBlockedPath={dropBlockedPath}
           dropTarget={dropTarget}
           files={files}
           fixedColumns={fixedColumns}

@@ -267,10 +267,14 @@ const DragMoveModal = ({
                   folders={folders}
                   hoverPath={hoverPath}
                   idle={idle}
+                  landed={dragMove.landed}
                   onDrop={dropOnFolder}
                   onEnter={hoverFolder}
                   onLeave={leaveFolder}
                   onOpen={goTo}
+                  onRetract={(id) => {
+                    void dragMove.retract(id);
+                  }}
                   springPath={springPath}
                 />
               </ScrollArea>

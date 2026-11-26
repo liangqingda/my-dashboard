@@ -22,6 +22,11 @@ export type FilesEntriesProps = {
   dragSource: string | null;
   /** 当前悬停的放置目标文件夹路径；null 表示没有目标 */
   dropTarget: string | null;
+  /**
+   * 直接拖模式下的禁用落点：这一格文件夹在待拖拽区里，不能把东西拖进去；
+   * null 表示没有禁用中的格子（弹窗模式永远是 null）
+   */
+  dropBlockedPath: string | null;
   /** 筛完的文件 */
   files: FileEntry[];
   /** 筛完的子文件夹 */

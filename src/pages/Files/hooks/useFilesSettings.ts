@@ -20,6 +20,7 @@ import {
   IMAGE_PREVIEW_FULLSCREEN_STORAGE_KEY,
   LOCK_ENABLED_STORAGE_KEY,
   LOCK_PASSWORD_STORAGE_KEY,
+  MOVE_MODE_STORAGE_KEY,
   TYPE_FILTER_MODE_STORAGE_KEY,
   VIDEO_APP_STORAGE_KEY,
   VIDEO_OPEN_MODE_STORAGE_KEY,
@@ -27,7 +28,12 @@ import {
   VEIL_OPACITY_STORAGE_KEY,
   VIDEO_THUMB_STYLE_STORAGE_KEY,
 } from '../constants';
-import type { TypeFilterMode, VideoOpenMode, VideoThumbStyle } from '../types';
+import type {
+  MoveMode,
+  TypeFilterMode,
+  VideoOpenMode,
+  VideoThumbStyle,
+} from '../types';
 
 const FILTER_MODE_CODEC = createChoiceCodec<TypeFilterMode>(
   ['multi', 'single'],
@@ -45,6 +51,9 @@ const VIDEO_OPEN_MODE_CODEC = createChoiceCodec<VideoOpenMode>(
   ['preview', 'external'],
   'preview',
 );
+
+/** 拖拽移动的走法：只有「弹窗」「直接拖」两档，脏值回落弹窗 */
+const MOVE_MODE_CODEC = createChoiceCodec<MoveMode>(['modal', 'direct'], 'modal');
 
 /** hover 玻璃层透明度：0–100 的百分比，脏值回落 100（完全不透明） */
 const VEIL_OPACITY_CODEC = createRangedNumberCodec(0, 100, 100);
@@ -79,6 +88,10 @@ export type UseFilesSettingsResult = {
   filterMode: TypeFilterMode;
   /** 改类型筛选的操作方式 */
   setFilterMode: (mode: TypeFilterMode) => void;
+  /** 拖拽移动走弹窗还是直接拖到列表里的文件夹 */
+  moveMode: MoveMode;
+  /** 改拖拽移动的走法 */
+  setMoveMode: (mode: MoveMode) => void;
   /** 列表是否按类型分组成段展示 */
   grouped: boolean;
   /** 改分组展示开关 */
@@ -123,6 +136,10 @@ export const useFilesSettings = (): UseFilesSettingsResult => {
     TYPE_FILTER_MODE_STORAGE_KEY,
     FILTER_MODE_CODEC,
   );
+  const [moveMode, setMoveMode] = useStoredState(
+    MOVE_MODE_STORAGE_KEY,
+    MOVE_MODE_CODEC,
+  );
   const [grouped, setGrouped] = useStoredState(
     GROUPED_DISPLAY_STORAGE_KEY,
     FLAG_CODEC,
@@ -142,11 +159,13 @@ export const useFilesSettings = (): UseFilesSettingsResult => {
     imageFullscreen,
     lockEnabled,
     lockPassword,
+    moveMode,
     setFilterMode,
     setGrouped,
     setLockEnabled,
     setLockPassword,
     setImageFullscreen,
+    setMoveMode,
     setVideoApp,
     setVideoFullscreen,
     setVideoOpenMode,

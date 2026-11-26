@@ -60,6 +60,7 @@ const DirectoryGrid = ({
   apps,
   collapsedGroups,
   dragSource,
+  dropBlockedPath,
   dropTarget,
   files,
   fixedColumns,
@@ -151,6 +152,7 @@ const DirectoryGrid = ({
       <FolderTile
         dragging={dragSource === folder.path}
         dropActive={dropTarget === folder.path}
+        dropBlocked={dropBlockedPath === folder.path}
         folder={folder}
         hideActions={pendingActive}
         iconSize={

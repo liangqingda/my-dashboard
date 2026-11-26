@@ -3,9 +3,9 @@
  */
 
 import type { DraggableEntry, FolderEntry } from '../../types';
-import { parentDirOf } from '../../utils/files';
+import { baseNameOfPath, joinDirOf, parentDirOf } from '../../utils/files';
 
-import type { DragMoveSession } from './types';
+import type { DragMoveSession, LandedItem } from './types';
 
 /**
  * 清掉一个计时器句柄：`reset` 负责把持有它的 ref 置回 null——
@@ -111,3 +111,27 @@ export const sessionLayout = (session: DragMoveSession): DraggableEntry[] => {
     ...session.rest.slice(restAt),
   ];
 };
+
+/**
+ * 把「这一趟搬成功的」记成弹窗里可回流的一条条：条目沿用搬前那份（名字、类型都在），
+ * 只把路径换成新目录下的同名路径。
+ */
+export const buildLanded = (
+  entries: DraggableEntry[],
+  movedPaths: string[],
+  targetDir: string,
+  origin: string,
+): LandedItem[] =>
+  entries
+    .filter((entry) => movedPaths.includes(entry.path))
+    .map((entry) => {
+      const name = entry.name || baseNameOfPath(entry.path);
+
+      return {
+        entry: { ...entry, path: joinDirOf(targetDir, name) },
+        id: `${targetDir}#${entry.path}`,
+        origin,
+        retracted: false,
+        targetDir,
+      };
+    });

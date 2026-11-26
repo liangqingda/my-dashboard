@@ -23,13 +23,14 @@ import styles from './index.scss';
  */
 const FilesDragLayers = ({
   entryActions,
+  onDragAll,
   onDropPaths,
   onSelectAll,
+  onTrayDragEnd,
   pending,
 }: FilesDragLayersProps) => {
-  const { dragActive, endDrag, movedPaths, session } = entryActions.dragMove;
-  /** 起拖入口在条目动作编排上（它同时管拖拽源高亮），不在移动会话里 */
-  const { dragStartEntries } = entryActions;
+  const { dragActive, movedPaths, session } = entryActions.dragMove;
+
   /** 会话开过一次就置位：关掉时才收尾（刚攒条目时不应该被动过） */
   const wasOpen = useRef(false);
 
@@ -64,8 +65,8 @@ const FilesDragLayers = ({
         entries={pending.entries}
         hidden={session !== null}
         onClear={pending.clear}
-        onDragAll={() => dragStartEntries(pending.entries)}
-        onDragEnd={endDrag}
+        onDragAll={onDragAll}
+        onDragEnd={onTrayDragEnd}
         onDropPaths={onDropPaths}
         onRemove={pending.remove}
         onSelectAll={onSelectAll}

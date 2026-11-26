@@ -28,6 +28,13 @@ export type MoveRunnerArgs = {
   moveEntry: (source: string, targetDir: string) => Promise<boolean>;
   /** 整批都搬走了：把最后落成的目录回给页面 */
   onAllMoved?: (targetDir: string) => void;
+  /** 搬成功的记进「刚搬进这一格」的清单（弹窗里那一格据此把条目平铺出来） */
+  onLanded: (
+    entries: DraggableEntry[],
+    movedPaths: string[],
+    targetDir: string,
+    origin: string,
+  ) => void;
   /** 关窗（条目都搬走了） */
   close: () => void;
   /** 放回手里（有失败，或还有没搬的） */
@@ -107,6 +114,7 @@ export const useMoveRunner = (args: MoveRunnerArgs) => {
       if (succeeded.length > 0) {
         movedRef.current = [...movedRef.current, ...succeeded];
         args.setMovedPaths(movedRef.current);
+        args.onLanded(active.entries, succeeded, targetDir, active.origin);
       }
 
       setProgress(null);

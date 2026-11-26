@@ -35,6 +35,8 @@ export type DirectoryGridProps = {
   dragSource: string | null;
   /** 当前悬停的放置目标文件夹路径；null 表示没有目标 */
   dropTarget: string | null;
+  /** 直接拖模式下的禁用落点（该文件夹在待拖拽区里）；null 表示没有 */
+  dropBlockedPath: string | null;
   /**
    * 待拖拽区里已有的路径：这些瓦片画选中框，再点一下是移除。
    * 应用包不参与（不进待拖拽区、也不能拖）。

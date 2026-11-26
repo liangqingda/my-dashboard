@@ -1,5 +1,5 @@
 /**
- * 文件页设置面板：外观（视图形态、分组展示、悬浮玻璃透明度）、筛选方式、视频点击后与外部应用、
+ * 文件页设置面板：外观（视图形态、分组展示、悬浮玻璃透明度）、拖拽移动的走法（弹窗挑目标 / 直接拖）、筛选方式、视频点击后与外部应用、
  * 视频封面、预览默认全屏、页面安全锁（密码 + 开关）。
  * 密码不做任何强度 / 格式限制：原样存进 localStorage，这里只保证「没密码时开关不可开」。
  * 设置项会越加越多，所以按主题分组（每组一块浅底色、不描边），组内字段横向排、放不下自动换行；
@@ -32,6 +32,7 @@ import FreePanelGroup from '@/components/panels/FreePanelGroup';
 import { useVideoApps } from '../../hooks/useVideoApps';
 import type {
   FilesViewMode,
+  MoveMode,
   TypeFilterMode,
   VideoOpenMode,
   VideoThumbStyle,
@@ -51,6 +52,12 @@ const VIEW_MODE_OPTIONS = [
 const GROUPED_OPTIONS = [
   { label: '平铺', value: 'off' },
   { label: '分组', value: 'on' },
+];
+
+/** 拖拽移动的两档文案：默认走弹窗，关掉就直接拖到列表里的文件夹 */
+const MOVE_MODE_OPTIONS = [
+  { label: '弹窗挑目标', value: 'modal' },
+  { label: '直接拖到文件夹', value: 'direct' },
 ];
 
 /** 筛选方式的两档文案 */
@@ -77,11 +84,13 @@ const SettingsPanel = ({
   imageFullscreen,
   lockEnabled,
   lockPassword,
+  moveMode,
   onFilterModeChange,
   onGroupedChange,
   onImageFullscreenChange,
   onLockEnabledChange,
   onLockPasswordChange,
+  onMoveModeChange,
   onVeilOpacityChange,
   onVideoAppChange,
   onVideoFullscreenChange,
@@ -133,6 +142,18 @@ const SettingsPanel = ({
             size="xs"
             step={5}
             value={veilOpacity}
+          />
+        </FreePanelField>
+      </FreePanelGroup>
+
+      <FreePanelGroup title="拖拽移动">
+        <FreePanelField label="移动方式">
+          <SegmentedControl
+            data={MOVE_MODE_OPTIONS}
+            fullWidth
+            onChange={(value) => onMoveModeChange(value as MoveMode)}
+            size="xs"
+            value={moveMode}
           />
         </FreePanelField>
       </FreePanelGroup>

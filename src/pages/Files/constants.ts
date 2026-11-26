@@ -170,6 +170,15 @@ export const TYPE_FILTER_MODE_STORAGE_KEY = scopedStorageKey(
   'type-filter-mode',
 );
 
+/**
+ * 拖拽移动的走法：弹窗挑目标 / 直接拖到列表里的文件夹；
+ * 没写过时走弹窗（与旧行为一致）
+ */
+export const MOVE_MODE_STORAGE_KEY = scopedStorageKey(
+  FILES_STORAGE_SCOPE,
+  'move-mode',
+);
+
 /** 列表是否按类型分组成段展示（文件夹 / 应用 / 文件），在设置面板里切；没写过时平铺 */
 export const GROUPED_DISPLAY_STORAGE_KEY = scopedStorageKey(
   FILES_STORAGE_SCOPE,

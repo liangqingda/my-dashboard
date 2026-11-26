@@ -16,4 +16,8 @@ export type FilesDragLayersProps = {
   onDropPaths: (paths: string[]) => void;
   /** 待拖拽区底部的「选择全部」：页面把当前列表的所有条目收进来 */
   onSelectAll: () => void;
+  /** 从待拖拽区底部的「拖拽全部」起拖：弹窗模式开弹窗，直接拖模式只点亮拖拽态 */
+  onDragAll: () => void;
+  /** 那一程拖拽结束：页面统一收掉两套拖拽状态 */
+  onTrayDragEnd: () => void;
 };

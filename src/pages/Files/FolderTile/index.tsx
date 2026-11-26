@@ -20,6 +20,9 @@ import styles from './index.scss';
  */
 const FOLDER_ICON_VIEWBOX = '1.8 2.8 20.4 17.4';
 
+/** 禁用落点的说明：它自己在待拖拽区里，拖进去等于原地打转 */
+const HINT_BLOCKED = '在待拖拽区里，不能放';
+
 /** 计数位内容：取数期间换成进度，不显示条目数以免误导 */
 const renderFolderMeta = (folder: FolderTileProps['folder'], loading: boolean) => {
   if (loading) {
@@ -46,6 +49,7 @@ const renderFolderMeta = (folder: FolderTileProps['folder'], loading: boolean) =
 const FolderTile = memo(
   ({
     dropActive = false,
+    dropBlocked = false,
     dragging = false,
     folder,
     loading = false,
@@ -68,6 +72,7 @@ const FolderTile = memo(
         styles.wrapper,
         dragging && styles.dragging,
         dropActive && styles.dropActive,
+        dropBlocked && styles.dropBlocked,
         pending && styles.pending,
       )}
       data-entry-path={folder.path}
@@ -107,7 +112,7 @@ const FolderTile = memo(
             text={folder.name}
           />
           <span className={styles.count}>
-            {renderFolderMeta(folder, loading)}
+            {dropBlocked ? HINT_BLOCKED : renderFolderMeta(folder, loading)}
           </span>
         </span>
       </UnstyledButton>

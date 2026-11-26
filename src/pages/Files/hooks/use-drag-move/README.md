@@ -12,6 +12,7 @@ const dragMove = useDragMove({
   currentFolders,  // 页面已有的子文件夹列表：最外层不再多发一次请求
   moveEntry,       // (source, targetDir) => Promise<boolean>，成功才播音效
   onAllMoved,      // 可选：整批都搬走、弹窗自动关掉时回传最后落成的目录（页面据此切过去）
+  onReadd,         // 可选：弹窗里撤回「刚搬进来的」那一条时把它交回待拖拽区
 });
 ```
 
@@ -73,14 +74,23 @@ const dragMove = useDragMove({
 ## 搬这一趟的节奏（`use-move-runner.ts`）
 
 松手到真正落位的那一程单独收在 `use-move-runner.ts`：逐条提交（进度由 `run-move.ts` 推）、
-**至少演 `MIN_MOVE_MS`＝1 秒**（本机搬一条是毫秒级的事，进度窗一闪而过反而像没做成），
-等满一秒之后才判要不要关窗。中途有一条失败就停在手持态，失败原因由 `moveEntry` 自己弹通知。
+**至少演 `MIN_MOVE_MS`＝0.5 秒**（本机搬一条是毫秒级的事，进度窗一闪而过反而像没做成），
+等满半秒之后才判要不要关窗。中途有一条失败就停在手持态，失败原因由 `moveEntry` 自己弹通知。
 搬成功的几条先进 `movedRef`，再按「整批里还剩谁」决定：剩 0 条 → `close()` + 音效 + `onAllMoved(targetDir)`；
 还剩 → 会话换成剩下的那批、`handed = true`，弹窗不关。
 
 **提示只弹一条、且在关窗之后**：`moveEntry` 不再逐条弹「已移动」，搬完的总结交给
 `notify.ts` 的 `notifyMoveDone`（`已移动 N 个项目`，有被剔出来的就补一句），
 顺序固定为「进度走完 → 决定是否关窗 → 关了才提示」。通知层级压在全屏弹窗之上（`main.tsx` 里 `zIndex={800}`）。
+
+## 刚搬进这一格的那几条（`use-landed.ts`）
+
+弹窗没关（只搬走了其中几条）时，搬进的那个文件夹**要把本次搬进去的条目摆出来**：
+`use-landed.ts` 收一份 `LandedItem[]`（会话级，`open()` 时清空），每条记「搬完后的新路径、
+原目录、落进的目录、是否已撤回」，`FolderGrid` 在那一格名字下面平铺它们（缩略图 / 图标 + 文件名）。
+
+点某一条＝`retract(id)`：把它从新路径搬回原目录，成功后才把记录标成 `retracted`（那一格留成虚线虚位），
+并通过 `onReadd` 把条目交回待拖拽区——顺序固定为「搬回去 → 标虚位 → 交回」，失败就什么都不改。
 
 ## 事件里的「此刻」
 

@@ -31,6 +31,11 @@ export type FolderTileProps = {
   tipOff?: boolean;
   /** 是当前拖拽的放置目标 */
   dropActive?: boolean;
+  /**
+   * 是禁用落点：直接拖模式下这一格自己在待拖拽区里，不能再往里放东西。
+   * 画成虚线圈并把指针压暗，格子里补一句原因。
+   */
+  dropBlocked?: boolean;
   /** 开始拖拽本条 */
   onDragStartEntry?: () => void;
   /** 拖拽结束（松开 / 取消） */

@@ -28,6 +28,8 @@ export type UseEntryActionsArgs = {
   reload: () => Promise<void>;
   /** 整批都搬走、移动弹窗自动关掉：把最后落成的目录交回页面（页面据此切过去） */
   onAllMoved?: (targetDir: string) => void;
+  /** 弹窗里撤回「刚搬进来的」那一条：把条目交回待拖拽区 */
+  onReadd?: (entry: DraggableEntry) => void;
 };
 
 /**
@@ -42,6 +44,7 @@ export const useEntryActions = ({
   currentFolders,
   reload,
   onAllMoved,
+  onReadd,
 }: UseEntryActionsArgs) => {
   /** 正在弹窗改名的条目；null 表示改名弹窗关闭 */
   const [renamingEntry, setRenamingEntry] = useState<RenamingEntry | null>(null);
@@ -97,6 +100,7 @@ export const useEntryActions = ({
     currentFolders,
     moveEntry: moveEntryTo,
     onAllMoved,
+    onReadd,
   });
 
   /** 切目录前清掉改名与拖拽临时状态，不沿用到新目录 */
@@ -218,6 +222,7 @@ export const useEntryActions = ({
     dropTarget,
     editEntry,
     endDrag,
+    moveEntryTo,
     renameCommit,
     renameLoading,
     renamingEntry,

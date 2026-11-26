@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { DraggableEntry, FolderEntry } from '../../types';
 
 import { useHoverTargets } from './use-hover-targets';
+import { useLanded } from './use-landed';
 import { focusSession, restoreSession, stripSelf } from './utils';
 import { useDrops } from './use-drops';
 import type {
@@ -31,6 +32,7 @@ export const useDragMove = ({
   currentFolders,
   moveEntry,
   onAllMoved,
+  onReadd,
 }: UseDragMoveArgs) => {
   /** 当前会话；null 表示弹窗关闭 */
   const [session, setSession] = useState<DragMoveSession | null>(null);
@@ -46,6 +48,9 @@ export const useDragMove = ({
   const [movedPaths, setMovedPaths] = useState<string[]>([]);
   /** 正在搬的进度：逐条提交时给界面看（搬到外接盘这类慢盘尤其需要） */
   const [progress, setProgress] = useState<MoveProgress | null>(null);
+
+  /** 本次会话里搬进各文件夹的记录：弹窗里那一格据此把搬进去的条目平铺出来 */
+  const landed = useLanded({ moveEntry, onReadd });
 
   /** 状态镜像：事件回调里要读到「此刻」的值，不能依赖某一次渲染的闭包 */
   const sessionRef = useRef<DragMoveSession | null>(null);
@@ -89,6 +94,7 @@ export const useDragMove = ({
     }
 
     resetHover();
+    landed.reset();
     cacheRef.current = new Map();
     setError(null);
     setHanded(false);
@@ -208,6 +214,7 @@ export const useDragMove = ({
     movedRef,
     movingRef,
     onAllMoved,
+    onLanded: landed.remember,
     resetHover,
     sessionRef,
     setDragActive,
@@ -239,6 +246,7 @@ export const useDragMove = ({
     handed,
     hoverFolder,
     hoverPath,
+    landed: landed.items,
     leaveFolder,
     loading,
     movedPaths,
@@ -246,6 +254,7 @@ export const useDragMove = ({
     progress,
     refreshView,
     reset,
+    retract: landed.retract,
     session,
     springPath,
     view,
