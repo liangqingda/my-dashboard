@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { Group, Loader, ScrollArea, Text, UnstyledButton } from '@mantine/core';
+import { Group, Loader, ScrollArea, Text } from '@mantine/core';
 import {
   IconBookmark,
   IconBookmarkFilled,
-  IconFolderFilled,
   IconFolderOpen,
   IconFolderPlus,
 } from '@tabler/icons-react';
@@ -12,16 +11,15 @@ import { notifications } from '@mantine/notifications';
 import FreeIconAction from '@/components/buttons/FreeIconAction';
 import IconPopoverButton from '@/components/buttons/IconPopoverButton';
 import FreeModal from '@/components/modals/FreeModal';
-import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
 import { getErrorMessage } from '@/utils/error';
 import { cx } from '@/utils/cx';
 
 import DirBreadcrumb from '../DirBreadcrumb';
 import FavoritesPanel from '../FilesActions/FavoritesPanel';
-import { SPRING_HOVER_MS } from '../hooks/use-drag-move/constants';
 import { sessionLayout } from '../hooks/use-drag-move/utils';
 import type { DraggableEntry, FolderEntry } from '../types';
 
+import FolderGrid from './FolderGrid';
 import HandCard from './HandCard';
 import type { DragMoveModalProps } from './types';
 import { acceptMove, leaveOutside, modalTitle } from './utils';
@@ -35,7 +33,7 @@ import styles from './index.scss';
 const FULLSCREEN = { active: true, onToggle: () => undefined, showToggle: false };
 
 /** 条目还在飞（正被拖着）时的提示 */
-const HINT_DRAGGING = '拖到文件夹上松手即移入；停留 0.5 秒会进入该文件夹继续挑。';
+const HINT_DRAGGING = '拖到文件夹上松手即移入；停留 1 秒会进入该文件夹继续挑。';
 
 /** 弹窗里收藏弹层的层级：要盖在全屏弹窗的遮罩与框体之上 */
 const POPOVER_Z_INDEX = 600;
@@ -263,53 +261,18 @@ const DragMoveModal = ({
 
             {folders.length > 0 ? (
               <ScrollArea h="100%" offsetScrollbars="y" scrollbarSize={8} type="auto">
-                <div className={styles.grid}>
-                  {folders.map((folder) => (
-                    <UnstyledButton
-                      className={cx(
-                        styles.folder,
-                        hoverPath === folder.path && styles.hovered,
-                        springPath === folder.path && styles.springing,
-                      )}
-                      key={folder.path}
-                      onClick={idle ? () => goTo(folder.path) : undefined}
-                      onDragLeave={(event) =>
-                        leaveOutside(event, () => leaveFolder(folder.path))
-                      }
-                      onDragOver={(event) => {
-                        event.stopPropagation();
-                        acceptMove(event);
-                        setBlankHovered(false);
-                        hoverFolder(folder.path);
-                      }}
-                      onDrop={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        dropOnFolder(folder.path);
-                      }}
-                    >
-                      <IconFolderFilled
-                        aria-hidden="true"
-                        className={styles.folderIcon}
-                        size={40}
-                        stroke={1.2}
-                      />
-                      <FreeTruncatedText
-                        className={styles.folderName}
-                        ellipsis="middle"
-                        lines={2}
-                        text={folder.name}
-                      />
-                      {hoverPath === folder.path ? (
-                        <span
-                          aria-hidden="true"
-                          className={styles.countdown}
-                          style={{ animationDuration: `${SPRING_HOVER_MS}ms` }}
-                        />
-                      ) : null}
-                    </UnstyledButton>
-                  ))}
-                </div>
+                <FolderGrid
+                  dragActive={dragActive}
+                  entries={session.entries}
+                  folders={folders}
+                  hoverPath={hoverPath}
+                  idle={idle}
+                  onDrop={dropOnFolder}
+                  onEnter={hoverFolder}
+                  onLeave={leaveFolder}
+                  onOpen={goTo}
+                  springPath={springPath}
+                />
               </ScrollArea>
             ) : null}
           </div>

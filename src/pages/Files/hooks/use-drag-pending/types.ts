@@ -15,6 +15,11 @@ export type PendingFlight = {
   entry: DraggableEntry;
   /** 起点矩形：进去时是瓦片位置，出来时是待拖拽区里那一格的位置 */
   from: DOMRect;
+  /**
+   * 折返：这一趟是从上一趟飞行的**当前位置**接着往回推（连点同一个条目触发），
+   * 起点沿用上一趟的 `from`，动画层从当前那一帧继续，不会跳回起点重播。
+   */
+  reversed?: boolean;
 };
 
 /** 待拖拽区的状态与动作 */

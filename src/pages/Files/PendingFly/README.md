@@ -28,6 +28,13 @@
     不会动画刚起手格子就没了。
   缓动 `cubic-bezier(0.32, 0.72, 0.24, 1)`、`fill: 'forwards'`，`onfinish` 回调 `clearFlight` 收掉这一层。
 
+## 折返（连点同一个条目）
+
+飞行还没落地时再点同一个条目（`flight.reversed`），动画层**不重播**：先把当前这一帧的位移 / 缩放
+从 `getComputedStyle` 读下来、再取消旧动画，新动画从这一帧起手，直接推到对面终点——
+看上去就是「飞到一半被推回去」。帧序列在 `utils/pending-frames.ts` 的 `reversedFrames`，
+真身与图标的换班照旧按比例走（`swap` 换班前先摘掉上一趟贴着的真身，不会叠两份）。
+
 ## 兜底
 
 - 系统开了「减少动态」（`prefers-reduced-motion`）→ 不做位移，直接 `onDone`；

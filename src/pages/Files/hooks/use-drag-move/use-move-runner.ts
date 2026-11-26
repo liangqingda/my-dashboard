@@ -11,6 +11,7 @@ import type { DraggableEntry } from '../../types';
 import { playMoveSound, primeMoveSound } from '../../utils/move-sound';
 
 import { MIN_MOVE_MS } from './constants';
+import { notifyMoveDone } from './notify';
 import { runSequentialMove } from './run-move';
 import { sessionLayout } from './utils';
 import type { DragMoveSession, MoveProgress } from './types';
@@ -80,7 +81,8 @@ const waitForMinimum = async (startedAt: number): Promise<void> => {
 export const useMoveRunner = (args: MoveRunnerArgs) => {
   const { moveEntry, movedRef, movingRef, sessionRef, setProgress } = args;
 
-  return async (sources: string[], targetDir: string): Promise<void> => {
+  /** `skipped`：这一批里本来就在目标目录、被剔出来没搬的条数（只用于提示文案） */
+  return async (sources: string[], targetDir: string, skipped = 0): Promise<void> => {
     const active = sessionRef.current;
 
     if (active === null) {
@@ -112,11 +114,13 @@ export const useMoveRunner = (args: MoveRunnerArgs) => {
       // 有一条没搬成：停在手持态，失败原因由 `moveEntry` 自己弹通知
       if (succeeded.length !== sources.length) {
         args.endDrag();
+        notifyMoveDone(succeeded.length, skipped, targetDir);
 
         return;
       }
 
       settle(args, active, targetDir);
+      notifyMoveDone(succeeded.length, skipped, targetDir);
     } finally {
       movingRef.current = false;
     }

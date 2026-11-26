@@ -1,6 +1,8 @@
 import { createElement, useEffect, useRef } from 'react';
 
 import { entryIcon } from '../utils/entry-icon';
+import { cloneFlightBody, dressClone, pendingChipOf, pendingTileOf } from '../utils/pending-dom';
+import { framesFor, readFrame } from '../utils/pending-frames';
 
 import type { PendingFlightLayerProps } from './types';
 
@@ -19,95 +21,6 @@ const SHRINK_TO_ICON_AT = 0.62;
 const prefersReducedMotion = (): boolean =>
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/** 列表里的那一枚瓦片 / 表格行：路径带 `/`、空格，塞不进选择器，逐个比 */
-const tileOf = (path: string): HTMLElement | null => {
-  for (const node of document.querySelectorAll<HTMLElement>('[data-entry-path]')) {
-    if (node.dataset.entryPath === path) {
-      return node;
-    }
-  }
-
-  return null;
-};
-
-/** 待拖拽区里的那一格：移入时的落点 */
-const chipOf = (path: string): HTMLElement | null => {
-  for (const node of document.querySelectorAll<HTMLElement>('[data-pending-chip]')) {
-    if (node.dataset.pendingChip === path) {
-      return node;
-    }
-  }
-
-  return null;
-};
-
-/**
- * 飞行块的「真身」：网格里直接拷那张瓦片；表格行不能照抄——`position: absolute`
- * 对 `<tr>` 不生效，拷进固定定位的浮层会散架。所以把名称那一格的内容装进一个普通块，
- * 尺寸与整行一致，飞起来看上去仍是「整行被拎起来」。
- */
-const cloneFlightBody = (
-  tile: HTMLElement,
-  width: number,
-  height: number,
-): HTMLElement => {
-  if (!(tile instanceof HTMLTableRowElement)) {
-    return tile.cloneNode(true) as HTMLElement;
-  }
-
-  const shell = document.createElement('div');
-
-  shell.className = styles.rowBody;
-
-  const cell = tile.querySelector('td');
-
-  if (cell !== null) {
-    const copy = cell.cloneNode(true) as HTMLElement;
-
-    // 行里的操作按钮跟着拷过来只会变成浮在半空的图标：飞行块只留名称那一列
-    for (const node of copy.querySelectorAll('[data-tile-actions]')) {
-      node.remove();
-    }
-
-    for (const node of copy.querySelectorAll('[tabindex]')) {
-      node.removeAttribute('tabindex');
-    }
-
-    shell.append(...[...copy.childNodes]);
-  }
-
-  Object.assign(shell.style, {
-    height: `${height}px`,
-    width: `${width}px`,
-  });
-
-  return shell;
-};
-
-/**
- * 让拷贝保持「列表里那一项的原样」，只改会影响它自己跑起来的部分：
- * 去掉 `id`（重复 id 会让样式 / 查询串味），不响应指针，也不要再被当成点选目标。
- */
-const dressClone = (clone: HTMLElement, width: number, height: number) => {
-  clone.removeAttribute('id');
-  clone.removeAttribute('tabindex');
-  // 飞行块本身也会被 `[data-entry-path]` 扫到：拷贝不能冒充「列表里的那一项」
-  clone.removeAttribute('data-entry-path');
-
-  for (const node of clone.querySelectorAll('[id]')) {
-    node.removeAttribute('id');
-  }
-
-  Object.assign(clone.style, {
-    position: 'absolute',
-    inset: '0',
-    width: `${width}px`,
-    height: `${height}px`,
-    margin: '0',
-    pointerEvents: 'none',
-  });
-};
-
 /**
  * 「条目在列表与待拖拽区之间挪动」的那一下动画。
  *
@@ -125,6 +38,8 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
   const ref = useRef<HTMLDivElement>(null);
   /** 图标那一层：换真身时直接隐藏，不再走一次重渲染 */
   const iconRef = useRef<HTMLSpanElement>(null);
+  /** 当前贴上来的是哪一份真身拷贝：折返时要先摘掉旧的，别叠成两份 */
+  const bodyRef = useRef<HTMLElement | null>(null);
   /** 回调放 ref：effect 只跟「飞哪一条」走，别因为父级每次渲染的新函数重启动画 */
   const doneRef = useRef(onDone);
 
@@ -139,11 +54,18 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
       return undefined;
     }
 
-    const { direction, entry, from } = flight;
+    const { direction, entry, from, reversed = false } = flight;
     const finish = () => doneRef.current();
+    /**
+     * 折返时先把这一刻的位移 / 缩放读下来，再把旧动画取消——
+     * 新动画从这一帧起手，看上去就是「飞到一半被推回去」，而不是跳回起点重播。
+     */
+    const frameNow = reversed ? readFrame(block) : null;
+
+    block.getAnimations().forEach((running) => running.cancel());
 
     // 复用同一个外壳时要复位：移出先图标，移入首帧就是真身（图标先藏着，别闪一下巨大图标）
-    if (iconRef.current !== null) {
+    if (iconRef.current !== null && !reversed) {
       iconRef.current.style.visibility = direction === 'in' ? 'hidden' : '';
     }
 
@@ -153,8 +75,8 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
       return undefined;
     }
 
-    const tile = tileOf(entry.path);
-    const chip = direction === 'in' ? chipOf(entry.path) : null;
+    const tile = pendingTileOf(entry.path);
+    const chip = direction === 'in' ? pendingChipOf(entry.path) : null;
     /** 落点：移出回列表里那张瓦片，移入去待拖拽区那一格 */
     const target = direction === 'in' ? chip : tile;
 
@@ -189,7 +111,7 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
     const clone =
       tile === null
         ? undefined
-        : cloneFlightBody(tile, tileBox.width, tileBox.height);
+        : cloneFlightBody(tile, tileBox.width, tileBox.height, styles.rowBody);
 
     if (clone !== undefined) {
       dressClone(clone, tileBox.width, tileBox.height);
@@ -202,6 +124,10 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
      *   一路缩到很小时把真身换回图标，再落进那一格。
      */
     const swap = (toClone: boolean) => {
+      // 折返时上一趟留下的真身可能还贴在上面：换班前先摘掉，免得叠两份
+      bodyRef.current?.remove();
+      bodyRef.current = null;
+
       if (toClone) {
         if (iconRef.current !== null) {
           iconRef.current.style.visibility = 'hidden';
@@ -209,22 +135,22 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
 
         if (clone !== undefined) {
           block.appendChild(clone);
+          bodyRef.current = clone;
         }
 
         return;
       }
-
-      clone?.remove();
 
       if (iconRef.current !== null) {
         iconRef.current.style.visibility = '';
       }
     };
 
-    if (direction === 'in') {
+    if (direction === 'in' && !reversed) {
       /*
        * 原件一直留在原位、不藏不换：飞行块本来就是它的整块拷贝，
        * 起步时正好盖住它，之后缩小着离开——原位那项从头到尾都看得见，不会闪。
+       * 折返那一趟从半路接着走，手里是什么就接着用什么，不在起手时换班。
        */
       swap(true);
     }
@@ -234,34 +160,10 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
       FLY_MS * (direction === 'in' ? SHRINK_TO_ICON_AT : MORPH_AT),
     );
 
-    const frames =
-      direction === 'in'
-        ? [
-            { opacity: 1, transform: 'translate(0, 0) scale(1)' },
-            { opacity: 1, offset: 0.08, transform: 'translate(0, -6px) scale(1)' },
-            { opacity: 1, offset: 0.2, transform: 'translate(0, -8px) scale(0.9)' },
-            { opacity: 1, offset: 0.32, transform: 'translate(0, -8px) scale(0.9)' },
-            {
-              opacity: 1,
-              offset: 0.62,
-              transform: `translate(${dx * 0.86}px, ${dy * 0.86}px) scale(${midScale})`,
-            },
-            { opacity: 1, offset: 0.84, transform: `translate(${dx}px, ${dy}px) scale(${endScale})` },
-            { opacity: 1, offset: 0.92, transform: `translate(${dx}px, ${dy}px) scale(${endScale})` },
-            { opacity: 0, transform: `translate(${dx}px, ${dy}px) scale(${landScale})` },
-          ]
-        : [
-            { opacity: 1, transform: 'translate(0, 0) scale(0.3)' },
-            { opacity: 1, offset: 0.16, transform: 'translate(0, -6px) scale(0.3)' },
-            {
-              opacity: 1,
-              offset: 0.62,
-              transform: `translate(${dx * 0.86}px, ${dy * 0.86}px) scale(${midScale})`,
-            },
-            { opacity: 1, offset: 0.84, transform: `translate(${dx}px, ${dy}px) scale(0.9)` },
-            { opacity: 1, offset: 0.93, transform: `translate(${dx}px, ${dy}px) scale(0.9)` },
-            { opacity: 1, transform: `translate(${dx}px, ${dy + 3}px) scale(1)` },
-          ];
+    const frames = framesFor(
+      { direction, dx, dy, endScale, landScale, midScale, reversed },
+      frameNow,
+    );
 
     const move = block.animate(frames, {
       duration: FLY_MS,
@@ -277,7 +179,7 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
     };
   }, [flight]);
 
-  const tile = tileOf(flight.entry.path);
+  const tile = pendingTileOf(flight.entry.path);
   const size = tile?.getBoundingClientRect() ?? flight.from;
   /*
    * 图标按瓦片的六成画：换班那一刻飞行块已经缩到四成上下，

@@ -53,9 +53,11 @@ const dragMove = useDragMove({
 
 ## 两条互斥判定
 
-- **悬停计时**：`hoverFolder(path)` 只在「目标换了」时才起 `SPRING_HOVER_MS`（0.5 秒）计时，
-  同一目标的连续 `dragover` 不重启；满 0.5 秒置 `springPath` 播弹起动画，再等 `SPRING_ENTER_MS`
-  调 `goTo` 真正换层。`leaveFolder(path)` 只清自己那份计时，别误清刚停上去的新目标。
+- **悬停计时**：`hoverFolder(path)` 只在「目标换了」时才起 `SPRING_HOVER_MS`（1 秒）计时，
+  同一目标的连续 `dragover` 不重启；满 1 秒置 `springPath` 播弹起动画，再等 `SPRING_ENTER_MS`
+  调 `goTo` 真正换层。这 1 秒里**前 0.5 秒不画进度**、后 0.5 秒倒计时条才填满（时间轴在
+  `DragMoveModal/FolderGrid/index.scss` 的 `hoverCountdown`）。`leaveFolder(path)` 只清自己那份计时，
+  别误清刚停上去的新目标。计时器整套收在 `use-hover-targets.ts`。
 - **松手先清计时**：`endDrag()` 一进来就 `resetHover()`。指针还可能压在某一行上，
   不停掉那套 500ms 的「停留＝进入」，松手后它还会接着跑，看起来就是「松手了还要等一下才回去」。
 - **立刻松手**：`dropOnFolder(targetDir)` 直接移动（把 `session.entries` 逐个提交），不进入——
@@ -75,6 +77,10 @@ const dragMove = useDragMove({
 等满一秒之后才判要不要关窗。中途有一条失败就停在手持态，失败原因由 `moveEntry` 自己弹通知。
 搬成功的几条先进 `movedRef`，再按「整批里还剩谁」决定：剩 0 条 → `close()` + 音效 + `onAllMoved(targetDir)`；
 还剩 → 会话换成剩下的那批、`handed = true`，弹窗不关。
+
+**提示只弹一条、且在关窗之后**：`moveEntry` 不再逐条弹「已移动」，搬完的总结交给
+`notify.ts` 的 `notifyMoveDone`（`已移动 N 个项目`，有被剔出来的就补一句），
+顺序固定为「进度走完 → 决定是否关窗 → 关了才提示」。通知层级压在全屏弹窗之上（`main.tsx` 里 `zIndex={800}`）。
 
 ## 事件里的「此刻」
 

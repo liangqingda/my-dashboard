@@ -71,13 +71,11 @@ export const useEntryActions = ({
     try {
       await moveEntry(source, targetDir);
       await reload();
-      notifications.show({
-        title: '已移动',
-        message: '条目已移入目标文件夹',
-        color: 'teal',
-        autoClose: 4000,
-      });
 
+      /*
+       * 这里不弹「已移动」通知：一批会调用好几次，逐条弹会糊一屏。
+       * 搬完的总结（搬走几个、有几个本来就在目标里）由 `use-move-runner` 在关窗之后统一弹一条。
+       */
       return true;
     } catch (err) {
       notifications.show({

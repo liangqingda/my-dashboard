@@ -2,8 +2,12 @@
  * 拖拽移动会话的时间档位：两种判定（立刻松手＝移进去 / 停留＝进入）靠这两个值区分。
  */
 
-/** 悬停在某个文件夹上多久算「要进去」（毫秒）：与松手同一档手感，都是半秒 */
-export const SPRING_HOVER_MS = 500;
+/**
+ * 悬停在某个文件夹上多久算「要进去」（毫秒）：满一秒才进。
+ * 前 500ms 不显示进度（只亮起落点，算「停下来想想」），后 500ms 进度条才从 0 填到满
+ * （时间轴在 `DragMoveModal/index.scss` 的 `hoverCountdown` 里按 50% 切）。
+ */
+export const SPRING_HOVER_MS = 1000;
 
 /** 弹起动画播多久再真正换层，让用户看清「进的是哪一个」 */
 export const SPRING_ENTER_MS = 220;

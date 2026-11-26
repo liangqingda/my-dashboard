@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 
 import type { DraggableEntry, FolderEntry } from '../../types';
 
-import { SPRING_ENTER_MS, SPRING_HOVER_MS } from './constants';
-import { clearTimer, focusSession, restoreSession, stripSelf } from './utils';
+import { useHoverTargets } from './use-hover-targets';
+import { focusSession, restoreSession, stripSelf } from './utils';
+import { useDrops } from './use-drops';
 import type {
   DragMoveSession,
   DragMoveView,
@@ -37,10 +38,6 @@ export const useDragMove = ({
   const [view, setView] = useState<DragMoveView | null>(null);
   /** 读取当前层失败的原因 */
   const [error, setError] = useState<string | null>(null);
-  /** 指针正停在哪个文件夹上（决定倒计时条与进入计时） */
-  const [hoverPath, setHoverPath] = useState<string | null>(null);
-  /** 正在播弹起动画的文件夹路径 */
-  const [springPath, setSpringPath] = useState<string | null>(null);
   /** 拖拽在飞（页面瓦片或弹窗里的待拖拽区拖起来的都算） */
   const [dragActive, setDragActive] = useState(false);
   /** 手持态：拖拽已经结束，条目放回手里等人再拖 */
@@ -53,9 +50,6 @@ export const useDragMove = ({
   /** 状态镜像：事件回调里要读到「此刻」的值，不能依赖某一次渲染的闭包 */
   const sessionRef = useRef<DragMoveSession | null>(null);
   const viewRef = useRef<DragMoveView | null>(null);
-  const hoverRef = useRef<string | null>(null);
-  const hoverTimerRef = useRef<number | null>(null);
-  const enterTimerRef = useRef<number | null>(null);
   /** 本会话读过盘的目录：来回进出同一层不必再扫一遍 */
   const cacheRef = useRef<Map<string, FolderEntry[]>>(new Map());
   /** 移动请求在飞：挡住重复松手带来的第二次提交 */
@@ -66,19 +60,6 @@ export const useDragMove = ({
   useEffect(() => {
     viewRef.current = view;
   }, [view]);
-
-  /** 文件夹悬停态归零：两级计时、目标、弹起动画一起清（不清计时器，松手后还会被带进文件夹） */
-  const resetHover = () => {
-    clearTimer(hoverTimerRef.current, () => {
-      hoverTimerRef.current = null;
-    });
-    clearTimer(enterTimerRef.current, () => {
-      enterTimerRef.current = null;
-    });
-    hoverRef.current = null;
-    setHoverPath(null);
-    setSpringPath(null);
-  };
 
   /** 关掉弹窗并清空会话：条目留在原位，什么都没写 */
   const close = () => {
@@ -215,39 +196,10 @@ export const useDragMove = ({
     setView,
   });
 
-  /** 指针停到某个文件夹上：同一个目标不重启计时，换目标才从头数半秒 */
-  const hoverFolder = (path: string) => {
-    if (hoverRef.current === path) {
-      return;
-    }
+  const { hoverFolder, hoverPath, leaveFolder, resetHover, springPath } = useHoverTargets({
+    goTo,
+  });
 
-    resetHover();
-    hoverRef.current = path;
-    setHoverPath(path);
-
-    hoverTimerRef.current = window.setTimeout(() => {
-      hoverTimerRef.current = null;
-      setSpringPath(path);
-      enterTimerRef.current = window.setTimeout(() => {
-        enterTimerRef.current = null;
-        goTo(path);
-      }, SPRING_ENTER_MS);
-    }, SPRING_HOVER_MS);
-  };
-
-  /** 指针离开某个文件夹：只清它自己的计时，别误清刚停上去的新目标 */
-  const leaveFolder = (path: string) => {
-    if (hoverRef.current !== path) {
-      return;
-    }
-
-    resetHover();
-  };
-
-  /**
-   * 逐条提交移动（顺序与进度归 `run-move.ts`）：全部成功才播落位音效并关窗；
-   * 有一条失败就停在手持态，失败原因由 `moveEntry` 自己弹通知，成功的几条已经落位、列表由页面刷新。
-   */
   /** 松手搬这一批：逐条提交、最低一秒、搬完再判要不要关窗（都在 `use-move-runner`） */
   const runMove = useMoveRunner({
     close,
@@ -265,59 +217,14 @@ export const useDragMove = ({
     setSession,
   });
 
-  /** 松手 / 点在某文件夹上：立刻移进去（停留到半秒那条路径是「进入」，不是「移入」） */
-  const dropOnFolder = (targetDir: string) => {
-    const active = sessionRef.current;
-
-    if (
-      active === null ||
-      movingRef.current ||
-      active.entries.some((entry) => entry.path === targetDir)
-    ) {
-      return;
-    }
-
-    void runMove(
-      active.entries.map((entry) => entry.path),
-      targetDir,
-    );
-  };
-
-  /**
-   * 松手在文件夹列表的空白处：等于放进当前这一层。
-   * 当前层就是条目原本所在的目录时，移了也没变化，只把条目放回手里、弹窗别关。
-   */
-  const dropOnBlank = () => {
-    const active = sessionRef.current;
-    const { current } = viewRef;
-
-    if (active === null || current === null || movingRef.current) {
-      return;
-    }
-
-    if (current.path === active.origin) {
-      endDrag();
-
-      return;
-    }
-
-    void runMove(
-      active.entries.map((entry) => entry.path),
-      current.path,
-    );
-  };
-
-  useEffect(
-    () => () => {
-      clearTimer(hoverTimerRef.current, () => {
-        hoverTimerRef.current = null;
-      });
-      clearTimer(enterTimerRef.current, () => {
-        enterTimerRef.current = null;
-      });
-    },
-    [],
-  );
+  const { dropOnBlank, dropOnFolder } = useDrops({
+    endDrag,
+    movingRef,
+    resetHover,
+    runMove,
+    sessionRef,
+    viewRef,
+  });
 
   return {
     beginDrag,

@@ -61,8 +61,35 @@ export const useDragPending = (): DragPendingState => {
     setEntries((prev) => prev.filter((entry) => !paths.includes(entry.path)));
   };
 
+  /**
+   * 点一下：已经在里面就移出、不在就加入。连点时**折返**而不是重播——
+   * 飞行还没落地时再点同一个条目，就从它当前所在的那一帧往回推（来回推的那种手感）。
+   */
   const toggle = (entry: DraggableEntry, from?: DOMRect) => {
+    const flying = flight !== null && flight.entry.path === entry.path ? flight : null;
+
+    // 正飞回列表（它在 `entries` 里只剩一格虚位）：这一下等于反悔，推回待拖拽区
+    if (leaving === entry.path) {
+      const back = flying?.from ?? pendingChipRect(entry.path) ?? from;
+
+      setLeaving(null);
+
+      if (back !== undefined) {
+        setFlight({ direction: 'in', entry, from: back, reversed: true });
+      }
+
+      return;
+    }
+
     if (has(entry.path)) {
+      // 正飞进来：折返回列表；虚位占住，原件一直是原位那一项，所以不会闪
+      if (flying?.direction === 'in') {
+        setLeaving(entry.path);
+        setFlight({ direction: 'out', entry, from: flying.from, reversed: true });
+
+        return;
+      }
+
       // 取消：从待拖拽区那一格起飞，飞回列表里被点的那张瓦片（量不到就不播）
       const chip = pendingChipRect(entry.path);
 

@@ -3,6 +3,7 @@
  */
 
 import type { DraggableEntry, FolderEntry } from '../../types';
+import { parentDirOf } from '../../utils/files';
 
 import type { DragMoveSession } from './types';
 
@@ -26,6 +27,26 @@ export const stripSelf = (
   folders: FolderEntry[],
   sources: string[],
 ): FolderEntry[] => folders.filter((folder) => !sources.includes(folder.path));
+
+/** 目标目录的规范写法（末尾斜杠抹掉）：与 `parentDirOf` 出来的父目录同口径比较 */
+const normalizeDir = (dir: string): string =>
+  dir.length > 1 ? dir.replace(/\/+$/, '') : dir;
+
+/** 这一批里谁已经在目标目录里：移进去也等于没动，要剔出来不算「要搬的」 */
+export const splitByParent = (
+  entries: DraggableEntry[],
+  targetDir: string,
+): { movable: DraggableEntry[]; skipped: number } => {
+  const dir = normalizeDir(targetDir);
+  const movable = entries.filter((entry) => parentDirOf(entry.path) !== dir);
+
+  return { movable, skipped: entries.length - movable.length };
+};
+
+/** 这一批是不是**全部**都住在 `dir` 里：落点瓦片据此显示成禁用态 */
+export const allInsideDir = (entries: DraggableEntry[], dir: string): boolean =>
+  entries.length > 0 &&
+  entries.every((entry) => parentDirOf(entry.path) === normalizeDir(dir));
 
 /**
  * 把会话收窄到手上这一条：其余条目记进 `rest`，这一趟没搬成时再还原回整批。

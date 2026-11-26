@@ -103,6 +103,18 @@ export const baseNameOfPath = (dir: string): string => {
   return parts.length === 0 ? dir : parts[parts.length - 1];
 };
 
+/** 上一级目录：`/a/b/c` → `/a/b`，`/a` 与 `/` 都回到 `/`；末尾斜杠先抹掉再取 */
+export const parentDirOf = (path: string): string => {
+  const trimmed = path.length > 1 ? path.replace(/\/+$/, '') : path;
+  const cut = trimmed.lastIndexOf('/');
+
+  if (cut <= 0) {
+    return '/';
+  }
+
+  return trimmed.slice(0, cut);
+};
+
 /** 收藏接口要的载荷：路径 + 末段名（弹窗里收藏当前层、页面里收藏选中项共用） */
 export const favoriteTargetOf = (dir: string): { name: string; path: string } => ({
   name: baseNameOfPath(dir),
