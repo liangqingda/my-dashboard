@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { PopoverProps } from '@mantine/core';
 
 /**
  * 带弹层的图标按钮的入参：开合由调用方控制，弹层内容由调用方给，
@@ -25,6 +26,16 @@ export type IconPopoverButtonProps = {
   width?: number | string;
   /** 弹层与触发按钮的间距（px），默认 8；想贴得更近的面板传 4 */
   offset?: number;
+  /**
+   * 弹层相对按钮的位置，默认 `bottom-end`（下方靠右）。
+   * 触发按钮贴着屏幕下沿（如视频控制栏）时传 `top`，弹层改开在按钮上方。
+   */
+  position?: PopoverProps['position'];
+  /**
+   * 弹层内边距（px），默认 12。
+   * 内容自带行内留白的面板（如整列可点的菜单）收紧到 6，避免留白叠成一大圈。
+   */
+  padding?: number;
   /**
    * 弹层最高到多少；设了就同时允许内部纵向滚动。
    * 给设置这类「分组越加越多」的长面板用：小屏上一屏放不下时滚动，而不是顶出屏幕。

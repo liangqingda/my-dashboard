@@ -5,10 +5,10 @@
 
 | 项 | 约定 |
 | --- | --- |
-| 位置 | 图标下方就近弹出：`position="bottom-end"`、`offset={8}`、带箭头、`withinPortal` |
+| 位置 | 默认在图标下方就近弹出：`position="bottom-end"`、`offset={8}`、带箭头、`withinPortal`；`position` 可覆盖（按钮贴着屏幕下沿时传 `top`，弹层改开在上方） |
 | 按钮本体 | 走 `FreeIconAction`（`size="sm"`、`variant="subtle"` 由它给；`active` 时传 `tone="accent"`），本目录**不再定义任何按钮样式**（连 `flex: 0 0 auto` 也在它里面）；图标尺寸由调用方给 |
 | 为什么用 `tooltip="none"` | 提示文案要拼「（已生效）」与「（键位）」，所以 tip 挂在这一层；按钮只出本体，才塞得进 `Popover.Target`（要单个能接 `ref` 的元素） |
-| props | `icon`（图标节点）、`label`（`aria-label` 与默认 tooltip 文案）、`hint`（覆盖 tooltip，需要写进当前状态时传）、`active`（生效时常态用主色，且没传 `hint` 时 tooltip 追加「（已生效）」）、`shortcut`（触发该按钮的快捷键，tooltip 末尾追加「（键位）」；没有快捷键就不传）、`disabled`（禁用触发按钮）、`opened` / `onChange`、`width`（默认 272）、`offset`（弹层与按钮间距 px，默认 8）、`maxHeight`（设了就允许弹层内部纵向滚动，长面板用；弹层走 portal，百分比对到视口而不是弹窗，按弹窗高度封顶时用 dvh / vh 单位）、`tipDark`（可选，tip 固定深底浅字、不随主题反转，媒体画面上的提示用）、`children`（弹层内容，内边距 12px） |
+| props | `icon`（图标节点）、`label`（`aria-label` 与默认 tooltip 文案）、`hint`（覆盖 tooltip，需要写进当前状态时传）、`active`（生效时常态用主色，且没传 `hint` 时 tooltip 追加「（已生效）」）、`shortcut`（触发该按钮的快捷键，tooltip 末尾追加「（键位）」；没有快捷键就不传）、`disabled`（禁用触发按钮）、`opened` / `onChange`、`width`（默认 272）、`offset`（弹层与按钮间距 px，默认 8）、`position`（弹层相对按钮的位置，默认 `bottom-end`）、`padding`（弹层内边距 px，默认 12；条目自带留白的菜单传 6）、`maxHeight`（设了就允许弹层内部纵向滚动，长面板用；弹层走 portal，百分比对到视口而不是弹窗，按弹窗高度封顶时用 dvh / vh 单位）、`tipDark`（可选，tip 固定深底浅字、不随主题反转，媒体画面上的提示用）、`children`（弹层内容） |
 | 不负责 | 开合时机（换篇、切视图、关弹窗时收起由调用方管）、Esc 归属、持久化 |
 
 ## 字段间距（`constants.ts`）

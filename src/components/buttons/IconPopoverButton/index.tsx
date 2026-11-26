@@ -1,7 +1,8 @@
 /**
  * 带就近弹层的图标按钮：点一下在图标下方弹出调用方给的一块面板。
  *
- * 只做三件事：把按钮摆到 `Popover.Target` 的锚点上、管弹层的开合与定位、给一处「生效」高亮。
+ * 只做三件事：把按钮摆到 `Popover.Target` 的锚点上、管弹层的开合与落点（位置 / 间距 / 内边距）、
+ * 给一处「生效」高亮。
  * 按钮本体（形状 / 尺寸档 / 语气 / 不随文字收缩）全部来自 `FreeIconAction`，这里只传 `tone`，
  * 不再定义任何按钮样式。
  *
@@ -20,6 +21,9 @@ import styles from './index.scss';
 /** 默认弹层宽度：一档范围 + 关键词这类内容正好排得开 */
 const DROPDOWN_WIDTH = 272;
 
+/** 默认弹层内边距：与组件库弹层的一档内边距持平 */
+const DROPDOWN_PADDING = 12;
+
 const IconPopoverButton = ({
   active = false,
   children,
@@ -31,6 +35,8 @@ const IconPopoverButton = ({
   offset = 8,
   onChange,
   opened,
+  padding = DROPDOWN_PADDING,
+  position = 'bottom-end',
   shortcut,
   tipDark = false,
   width = DROPDOWN_WIDTH,
@@ -44,7 +50,7 @@ const IconPopoverButton = ({
       offset={offset}
       onChange={onChange}
       opened={opened}
-      position="bottom-end"
+      position={position}
       shadow="md"
       width={width}
       withArrow
@@ -71,9 +77,9 @@ const IconPopoverButton = ({
         </Tooltip>
       </Popover.Target>
       <Popover.Dropdown
-        className={cx(styles.dropdown, maxHeight !== undefined && styles.scrollable)}
+        className={cx(maxHeight !== undefined && styles.scrollable)}
         /* 百分比 / dvh 不是间距档：走 style 落 max-height，避免被 spacing 换算成 rem */
-        style={maxHeight !== undefined ? { maxHeight } : undefined}
+        style={{ maxHeight, padding }}
       >
         {children}
       </Popover.Dropdown>
