@@ -6,7 +6,7 @@ header），但去掉播放器那一套：没有播放 / 快进 / 静音 / 截�
 
 ## 它锁了什么
 
-- 结构：header（标题 + 张数 / 翻篇 + 图片列表 + 裁剪 + 设置 + 设为桌面墙纸 + 全屏 + 删除）浮在整图之上，
+- 结构：header（标题 + 张数 / 翻篇 + 图片列表 + 设为桌面墙纸 + 裁剪 + 设置 + 全屏 + 删除）浮在整图之上，
   正文只有一张黑底舞台；点遮罩关窗（窗口刚拿回焦点的 400ms 内除外），关闭按钮与 `Esc` 同样有效；
 - `defaultFullscreen` 为真时打开就尝试进整屏（文件页设置里的「图片预览打开即全屏」），
   浏览器不给手势就静默停在这个尺寸；
@@ -32,8 +32,8 @@ header），但去掉播放器那一套：没有播放 / 快进 / 静音 / 截�
   （文件名为 `<文件名> - N.<扩展名>`，N 递增）；偏好按 `storageScope` 记在 `<scope>:image-preview`
   的 `cropSaveMode`，下次打开沿用。设置弹层与图片列表弹层互斥，任一层开着 header 都恒可见；
 - **只裁 PNG / JPEG / WebP**：编码保持源扩展名（选框按图片显示区域的比例记录，保存时按
-  `naturalWidth / naturalHeight` 换算像素）；GIF / HEIC 等进裁剪只提示「不支持」——换格式会让
-  扩展名与内容对不上，GIF 还会丢动画；
+  `naturalWidth / naturalHeight` 换算像素）；其它格式的图，裁剪按钮直接置灰，指针停上去的 tip
+  说明「只支持 PNG / JPEG / WebP」——换格式会让扩展名与内容对不上，GIF 还会丢动画；
 - 翻篇（按钮 / 列表 / 键盘都算）后左上角浮出一下「3 / 12」，1 秒后自己收掉（`PreviewCounter`）：
   header 默认藏着，用户只需要知道「现在第几个」，不必把整条 header 带出来；刚打开时（还没翻过）不出现；
 - 删除只开二次确认层（`onRequestDelete` → 页面的 `DeleteEntryConfirm`），不在弹窗里直接删；
@@ -41,6 +41,10 @@ header），但去掉播放器那一套：没有播放 / 快进 / 静音 / 截�
   删除确认开着时 header 也恒可见（与列表弹层同一档：`suspended` 强制显示）；
 - 舞台：整图 `object-fit: contain` 居中装下，加载时压暗并转一个 loader；
   读不出来给「这张图片无法显示」，不留空白也不弹通知；
+- **普通窗按图片比例收框**：图片 `load` 报 `naturalWidth / naturalHeight` 后，框体宽高都按这个比例
+  从同一组上限算（宽度 ≤ 外壳宽度档与内边距后的 90vw、高度 ≤ 88dvh，竖图按高度反算宽度），
+  舞台正好等于图片，`contain` 不再留黑边；框体用 `content-box`，1px 描边不占画面尺寸。
+  换图先回默认框、等新图报比例；整屏全屏不参与收框；
 - 放大 / 拖拽：捏合缩放（1–5 倍）、放大后按住拖动（见下面「放大与拖拽」一节，实现与通道在
   `ImageStage/hooks/use-image-zoom-pan/README.md`）；
 - 提示配色：header 里的 tooltip 与图片列表的省略提示固定深底浅字（`tipDark`），
@@ -109,14 +113,15 @@ header），但去掉播放器那一套：没有播放 / 快进 / 静音 / 截�
   `hooks/use-image-zoom-pan/`，私有件，规格就写在它那份 README 里。
 - `ImageListMenu/`：header 的「图片列表」按钮 + 点击弹层，开合状态由弹窗持有（弹层开着时
   header 要恒可见），条目排布走公共的 [`PreviewItemList`](../PreviewItemList/README.md)。
-- `ImageHeaderActions/`：header 右侧那组图标（列表 / 裁剪 / 设置 / 墙纸），同时持有两层弹层的开合
+- `ImageHeaderActions/`：header 右侧那组图标（列表 / 墙纸 / 裁剪 / 设置），同时持有两层弹层的开合
   与互斥、裁剪入口、裁剪态的「取消 / 保存」。抽出来是为了让弹窗本体只编排舞台与键位，不因按钮与
-  弹层开关撑破行数上限。
+  弹层开关撑破行数上限。墙纸排在裁剪左边；格式不支持的图，裁剪按钮禁用、tip 说明原因。
 - `ImageCropOverlay/`：裁剪层（遮罩 + 选框 + 8 个手柄），Pointer Events + 指针捕获；
   几何纯函数（移动 / 改尺寸 / 最小尺寸）在同目录 `utils.ts`，按 `offsetLeft / offsetTop /
   offsetWidth / offsetHeight` 量图，避免 `transform` 把 `getBoundingClientRect` 算歪。
 - `ImageCropSettings/`：保存口径弹层（`IconPopoverButton` + `FreePanelGroup` + 分段选择：
-  替换源文件 / 另存新目录），只出 `mode`，落盘口径与风险说明交给调用方。
+  替换源文件 / 另存新目录），只出 `mode`；两种落点的规则写在本 README 与
+  `docs/local-repo-data.md`，面板里不再铺说明文字。
 - `hooks/use-image-crop/`：裁剪会话状态（`active` / `rect` / `saving` / `supported` 与
   `start` / `cancel` / `setRect` / `save`），失败提示与「保存后通知页面」也在这里，规格见目录内 README。
 - `utils.ts` / `constants.ts`：裁剪纯函数（比例 → 像素、canvas 重编码、扩展名 → MIME）与偏好键

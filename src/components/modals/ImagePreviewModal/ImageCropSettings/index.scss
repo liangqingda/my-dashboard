@@ -1,14 +1,1 @@
-/* 裁剪设置弹层：分段控件下面两行说明，第一行随选项变、第二行是固定的格式口径 */
-
-.hint {
-  margin-top: 6px;
-  color: var(--mantine-color-dimmed);
-  line-height: 1.5;
-}
-
-.note {
-  margin-top: 2px;
-  color: var(--mantine-color-dimmed);
-  line-height: 1.5;
-  opacity: 0.8;
-}
+/* 裁剪设置弹层：只有标题、字段名与两档分段控件，说明文字已去掉，不再需要额外排版 */

@@ -17,3 +17,23 @@
 .stageCropping {
   cursor: default;
 }
+
+/*
+ * 普通窗按图片固有比例收框：宽度与高度从同一个比例算，舞台正好等于图片，
+ * `object-fit: contain` 不再留黑边。三个上限——外壳的宽度档、内层两侧各 5vw 内边距后的
+ * 可用宽度（90vw），以及阅读窗的 88dvh 高度上限（按比例反算宽度，竖图不会先撑宽再被高度截断）。
+ * 用 content-box：框体那 1px 描边不算进宽高，否则舞台会比图片比例各窄 / 矮 2px，仍留一条黑线。
+ * 整屏全屏不挂这个类。
+ */
+$frame-width: min(
+  var(--modal-size),
+  90vw,
+  calc(88dvh * var(--image-aspect))
+);
+
+.contentAspect.contentAspect {
+  flex: 0 0 auto;
+  width: $frame-width;
+  height: calc(#{$frame-width} / var(--image-aspect));
+  box-sizing: content-box;
+}

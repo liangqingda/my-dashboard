@@ -12,18 +12,22 @@
 /*
  * 画面框跟随片源：普通窗里正文框按片源宽高比在可用区域内取最大矩形，
  * 视频正好填满它——`object-fit: contain` 留在框里的那条黑边就此消失，画面本身不裁不变形。
- * 可用区域的两个上限：宽度跟外壳的宽度档（`--modal-size`），高度跟阅读窗的 `82dvh`
- * （与 `FreeModal` 的 `.content` 同一档）。全屏两档不走这里：屏幕比例由设备定，框就该铺满屏幕。
+ * 三个上限：外壳的宽度档（`--modal-size`）、内层两侧各 5vw 内边距后的可用宽度（90vw）、
+ * 阅读窗的 `88dvh` 高度上限（按比例反算宽度，竖屏片源不会先撑宽再被高度截断而留左右黑边）。
+ * 全屏两档不走这里：屏幕比例由设备定，框就该铺满屏幕。
  */
-$frame-width: max(
-  min(480px, var(--modal-size)),
-  min(var(--modal-size), calc(82dvh * var(--video-aspect)))
+$frame-width: min(
+  var(--modal-size),
+  90vw,
+  calc(88dvh * var(--video-aspect))
 );
 
-.contentAspect {
+.contentAspect.contentAspect {
   flex: 0 0 auto;
   width: $frame-width;
-  height: min(82dvh, calc(#{$frame-width} / var(--video-aspect)));
+  height: calc(#{$frame-width} / var(--video-aspect));
+  /* 描边那 1px 不算进宽高：舞台正好等于片源比例，四周不留细黑线 */
+  box-sizing: content-box;
 }
 
 /*

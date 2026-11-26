@@ -39,6 +39,8 @@ export type ImageStageProps = {
   cropRect?: CropRect;
   /** 拖动选框后回传（不传则不显示裁剪层） */
   onCropRectChange?: (rect: CropRect) => void;
+  /** 图片解出固有尺寸时回传（普通窗按它收框，画面填满不留黑边） */
+  onIntrinsicSize?: (width: number, height: number) => void;
 };
 
 const IMAGE_ICON_SIZE = 28;
@@ -49,6 +51,7 @@ const ImageStage = ({
   imageRef: externalImageRef,
   name,
   onCropRectChange,
+  onIntrinsicSize,
   src,
 }: ImageStageProps) => {
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
@@ -99,7 +102,15 @@ const ImageStage = ({
         className={cx(styles.image, status !== 'ready' && styles.imagePending)}
         draggable={false}
         onError={() => setStatus('error')}
-        onLoad={() => setStatus('ready')}
+        onLoad={(event) => {
+          const { naturalHeight, naturalWidth } = event.currentTarget;
+
+          setStatus('ready');
+
+          if (naturalWidth > 0 && naturalHeight > 0) {
+            onIntrinsicSize?.(naturalWidth, naturalHeight);
+          }
+        }}
         ref={imageRef}
         src={src}
         style={imageStyle}

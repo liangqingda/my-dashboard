@@ -1,5 +1,6 @@
 /**
- * 图片预览 header 的操作组：图片列表、裁剪、裁剪设置；进入裁剪后只剩取消 / 保存。
+ * 图片预览 header 的操作组：图片列表、设为桌面墙纸、裁剪、裁剪设置；
+ * 进入裁剪后只剩取消 / 保存。
  *
  * 两层弹层的开合归这里持有（列表与设置互斥，开一层就收另一层），再向上报一个
  * 「有没有弹层开着」——弹窗据此让 header 恒可见、并决定遮罩点击的语义。
@@ -7,8 +8,7 @@
  */
 
 import { useState } from 'react';
-import { notifications } from '@mantine/notifications';
-import { IconCheck, IconCrop, IconX } from '@tabler/icons-react';
+import { IconCheck, IconCrop, IconWallpaper, IconX } from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
 
@@ -42,6 +42,8 @@ export type ImageHeaderActionsProps = {
   onCropModeChange: (mode: ImageCropMode) => void;
   /** 保存裁剪（真正编码与写盘在弹窗） */
   onSaveCrop: () => void;
+  /** 设为桌面墙纸：排在裁剪左边，不传则没有这颗按钮 */
+  onRequestWallpaper?: () => void;
   /** 任一弹层开合：弹窗据此让 header 恒可见 */
   onOverlayChange: (open: boolean) => void;
   /** tip 固定深底浅字 */
@@ -56,6 +58,7 @@ export const ImageHeaderActions = ({
   items,
   onCropModeChange,
   onOverlayChange,
+  onRequestWallpaper,
   onSaveCrop,
   onSelect,
   tipDark = false,
@@ -84,18 +87,8 @@ export const ImageHeaderActions = ({
     onOverlayChange(next || listOpen);
   };
 
-  /** 进裁剪：格式不支持时只提示；支持则收掉弹层，header 换成取消 / 保存 */
+  /** 进裁剪：能不能裁由入口的禁用态表达，这里只负责收掉弹层、开始会话 */
   const startCrop = () => {
-    if (!crop.supported) {
-      notifications.show({
-        color: 'yellow',
-        message: '只支持 PNG / JPEG / WebP，这张图不改格式就存不回去',
-        title: '这张图片不能裁剪',
-      });
-
-      return;
-    }
-
     setListOpen(false);
     setSettingsOpen(false);
     onOverlayChange(false);
@@ -136,12 +129,27 @@ export const ImageHeaderActions = ({
         opened={listOpen}
         tipDark={tipDark}
       />
+      {onRequestWallpaper ? (
+        <FreeIconAction
+          label="设为桌面墙纸"
+          onClick={onRequestWallpaper}
+          tipDark={tipDark}
+        >
+          <IconWallpaper size={ICON_SIZE} stroke={ICON_STROKE} />
+        </FreeIconAction>
+      ) : null}
       {canCrop ? (
         <>
           <FreeIconAction
+            disabled={!crop.supported}
             label="裁剪这张图片"
             onClick={startCrop}
             tipDark={tipDark}
+            tooltipLabel={
+              crop.supported
+                ? undefined
+                : '只支持 PNG / JPEG / WebP，这张图片不能裁剪'
+            }
           >
             <IconCrop size={ICON_SIZE} stroke={ICON_STROKE} />
           </FreeIconAction>

@@ -2,10 +2,10 @@
  * 裁剪设置：header 上的一颗设置图标，点开只有一件事——裁剪后是覆盖源文件还是另存到新目录。
  *
  * 选择存进页面命名空间（`<标识>:image-preview`）的 `cropSaveMode`，下次打开沿用它；
- * 面板里把两种落点的实际位置写清楚（目录后缀与递增编号），不然「另存」看不出存到了哪。
+ * 两种落点的具体规则写在 `docs/local-repo-data.md` 与弹窗 README 里，面板不再重复解释。
  */
 
-import { SegmentedControl, Text } from '@mantine/core';
+import { SegmentedControl } from '@mantine/core';
 import { IconSettings } from '@tabler/icons-react';
 
 import IconPopoverButton from '@/components/buttons/IconPopoverButton';
@@ -14,16 +14,11 @@ import FreePanelGroup from '@/components/panels/FreePanelGroup';
 
 import type { ImageCropMode } from '../types';
 
-import styles from './index.scss';
-
 /** 与 header 那排图标同一档 */
 const ICON_SIZE = 15;
 const ICON_STROKE = 1.8;
 
-/** 弹层宽度：两档选项 + 两行说明，再窄说明会挤成三行 */
-const PANEL_WIDTH = 280;
-
-/** 两档保存方式：标签短到能并排，落点由下面的说明写清楚 */
+/** 两档保存方式：标签本身就说清落点，面板里不再铺说明文字 */
 const MODE_OPTIONS = [
   { label: '替换源文件', value: 'replace' },
   { label: '另存新目录', value: 'copy' },
@@ -61,7 +56,7 @@ const ImageCropSettings = ({
     padding={8}
     position="bottom"
     tipDark={tipDark}
-    width={PANEL_WIDTH}
+    width={232}
   >
     <FreePanelGroup title="裁剪后">
       <FreePanelField label="保存方式" wide>
@@ -74,14 +69,6 @@ const ImageCropSettings = ({
           size="xs"
           value={mode}
         />
-        <Text className={styles.hint} size="xs">
-          {mode === 'replace'
-            ? '直接写回源文件：先写临时文件再原子覆盖，文件名与位置都不变。'
-            : '放到源文件同级的「文件名 - 裁剪」目录，图片按「- 1」「- 2」递增命名。'}
-        </Text>
-        <Text className={styles.note} size="xs">
-          只支持 PNG / JPEG / WebP；其它图片格式不会进入裁剪。
-        </Text>
       </FreePanelField>
     </FreePanelGroup>
   </IconPopoverButton>

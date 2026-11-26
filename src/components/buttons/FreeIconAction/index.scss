@@ -32,6 +32,17 @@
 }
 
 /*
+ * 禁用态仍要挂 tooltip：事件与定位目标挪到外面这层壳上（禁用按钮本身不保证收到指针事件）。
+ * 只包住一颗按钮，行内尺寸保持不变。
+ */
+.disabled {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: not-allowed;
+}
+
+/*
  * 固定深底浅字 tip：压在媒体画面上的提示用，不跟着主题反转。
  * --tooltip-bg / --tooltip-color 是 Mantine 取色读的两个变量，再显式写一遍背景与字色，
  * 样式顺序变了也不会退回默认灰。

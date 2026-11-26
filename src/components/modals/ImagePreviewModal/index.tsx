@@ -25,8 +25,9 @@
  */
 
 import { useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { UnstyledButton } from '@mantine/core';
-import { IconTrash, IconWallpaper } from '@tabler/icons-react';
+import { IconTrash } from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
 import PreviewCounter from '@/components/feedback/PreviewCounter';
@@ -76,6 +77,13 @@ const ImagePreviewModal = ({
   const [actionsOpen, setActionsOpen] = useState(false);
   /** 翻过几次：每切一张加一，左上角的计数浮标据此浮出再自动收掉 */
   const [switchTick, setSwitchTick] = useState(0);
+  /**
+   * 图片固有比例（宽 / 高）与它属于哪一张图：普通窗按它收框，画面正好填满、上下左右不再留黑底。
+   * 绑在 `src` 上而不是清空重设，换图 / 覆盖裁剪后旧比例自动失效，等新图 `load` 再报一次。
+   */
+  const [imageFit, setImageFit] = useState<{ src: string; aspect: number } | null>(
+    null,
+  );
   /**
    * 按下画面那一刻弹层是否开着：点外部的收起在指针按下时就发生，`click` 读到的状态已经翻过，
    * 只能按这次手势的起点判断「这一下是收弹层，还是切 header 显隐」。
@@ -153,6 +161,16 @@ const ImagePreviewModal = ({
     : null;
   const nextItem = canCycle ? items[(index + 1) % items.length] : null;
 
+  /*
+   * 普通窗按图片固有比例收框：宽度与高度都从同一个比例算，画面正好填满框体。
+   * 整屏全屏要的是铺满屏幕，不参与收框。比例只认当前 `src`：换图 / 覆盖后旧比例立即失效。
+   */
+  const imageAspect =
+    imageFit !== null && imageFit.src === activeItem.src
+      ? imageFit.aspect
+      : null;
+  const aspectFrame = !fullscreen && imageAspect !== null;
+
   /** 翻篇与列表点选共用一个入口：随手让计数浮标闪一下 */
   const selectItem = (id: string) => {
     setSwitchTick((prev) => prev + 1);
@@ -190,6 +208,12 @@ const ImagePreviewModal = ({
       closeOnClickOutside={!cropping}
       closeOnEscape={!fullscreen && !blocked && !cropping}
       closeOnSpace={!blocked && !cropping}
+      contentClassName={aspectFrame ? styles.contentAspect : undefined}
+      contentStyle={
+        imageAspect === null
+          ? undefined
+          : ({ '--image-aspect': String(imageAspect) } as CSSProperties)
+      }
       extraKeys={cropping ? { enter: saveCrop } : undefined}
       fullscreen={{
         active: fullscreen,
@@ -205,6 +229,7 @@ const ImagePreviewModal = ({
           items={items}
           onCropModeChange={setCropMode}
           onOverlayChange={setActionsOpen}
+          onRequestWallpaper={onRequestWallpaper ?? undefined}
           onSaveCrop={saveCrop}
           onSelect={selectItem}
           tipDark
@@ -220,28 +245,15 @@ const ImagePreviewModal = ({
         visible: headerVisible,
       }}
       headerTail={
-        cropping || (!onRequestDelete && !onRequestWallpaper) ? undefined : (
-          <>
-            {onRequestWallpaper ? (
-              <FreeIconAction
-                label="设为桌面墙纸"
-                onClick={onRequestWallpaper}
-                tipDark
-              >
-                <IconWallpaper size={ICON_SIZE} stroke={ICON_STROKE} />
-              </FreeIconAction>
-            ) : null}
-            {onRequestDelete ? (
-              <FreeIconAction
-                label="删除这张图片（Delete）"
-                onClick={onRequestDelete}
-                tipDark
-                tone="danger"
-              >
-                <IconTrash size={ICON_SIZE} stroke={ICON_STROKE} />
-              </FreeIconAction>
-            ) : null}
-          </>
+        cropping || !onRequestDelete ? undefined : (
+          <FreeIconAction
+            label="删除这张图片（Delete）"
+            onClick={() => onRequestDelete()}
+            tipDark
+            tone="danger"
+          >
+            <IconTrash size={ICON_SIZE} stroke={ICON_STROKE} />
+          </FreeIconAction>
         )
       }
       nav={{
@@ -281,6 +293,9 @@ const ImagePreviewModal = ({
           key={activeItem.src}
           name={activeItem.name}
           onCropRectChange={crop.setRect}
+          onIntrinsicSize={(width, height) =>
+            setImageFit({ aspect: width / height, src: activeItem.src })
+          }
           src={activeItem.src}
         />
         <PreviewCounter

@@ -85,9 +85,12 @@ const FreeIconAction = ({
   };
   /** 没设时长就沿用原来的「指着就一直挂」 */
   const activeHandlers = tipDuration === undefined ? hoverHandlers : timedHandlers;
-  /** tip 的定位目标：就是下面这个按钮自己 */
+  /** tip 的定位目标：就是下面这个按钮自己；禁用时换成包在外面的壳（禁用按钮不一定收得到指针事件） */
   const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const disabledWrapRef = useRef<HTMLSpanElement | null>(null);
   const mergedRef = useMergedRef(buttonRef, ref);
+  /** 禁用且要出提示：事件铺在外层 span 上，按钮本体不接 hover */
+  const disabledTip = disabled && tooltip !== 'none';
 
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
     onClick?.(event);
@@ -104,7 +107,7 @@ const FreeIconAction = ({
       ref={mergedRef}
       size={size}
       variant="subtle"
-      {...(tooltip === 'none' ? {} : activeHandlers)}
+      {...(tooltip === 'none' || disabledTip ? {} : activeHandlers)}
     >
       {children}
     </ActionIcon>
@@ -114,18 +117,32 @@ const FreeIconAction = ({
     return button;
   }
 
+  const tip =
+    hovered && !tipExpired ? (
+      <Tooltip
+        classNames={{ tooltip: cx(tipDark && styles.tipDark) }}
+        label={tooltipLabel ?? label}
+        opened
+        target={disabledTip ? disabledWrapRef : buttonRef}
+        withArrow
+      />
+    ) : null;
+
+  if (disabledTip) {
+    return (
+      <>
+        <span className={styles.disabled} ref={disabledWrapRef} {...activeHandlers}>
+          {button}
+        </span>
+        {tip}
+      </>
+    );
+  }
+
   return (
     <>
       {button}
-      {hovered && !tipExpired ? (
-        <Tooltip
-          classNames={{ tooltip: cx(tipDark && styles.tipDark) }}
-          label={tooltipLabel ?? label}
-          opened
-          target={buttonRef}
-          withArrow
-        />
-      ) : null}
+      {tip}
     </>
   );
 };
