@@ -30,6 +30,7 @@ import { PANEL_FIELD_STYLES } from '@/components/buttons/IconPopoverButton/const
 import FreeInput from '@/components/fields/FreeInput';
 import FreePanelField from '@/components/panels/FreePanelField';
 import FreePanelGroup from '@/components/panels/FreePanelGroup';
+import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
 
 import { FILES_SHORTCUTS } from '../../constants';
 import { useVideoApps } from '../../hooks/useVideoApps';
@@ -245,31 +246,6 @@ const SettingsPanel = ({
         </FreePanelField>
       </FreePanelGroup>
 
-      <FreePanelGroup layout="stack" title="快捷键">
-        <div className={styles.shortcuts}>
-          {FILES_SHORTCUTS.map((row) => (
-            <Group
-              className={styles.shortcut}
-              gap="sm"
-              justify="space-between"
-              key={row.action}
-              wrap="nowrap"
-            >
-              <Text c="dimmed" className={styles.shortcutAction} size="xs" truncate>
-                {row.action}
-              </Text>
-              <Group gap={4} wrap="nowrap">
-                {row.keys.map((key) => (
-                  <Kbd key={key} size="xs">
-                    {key}
-                  </Kbd>
-                ))}
-              </Group>
-            </Group>
-          ))}
-        </div>
-      </FreePanelGroup>
-
       <FreePanelGroup title="预览">
         <FreePanelField label="图片">
           <Switch
@@ -292,6 +268,35 @@ const SettingsPanel = ({
           />
         </FreePanelField>
       </FreePanelGroup>
+
+      <FreePanelGroup layout="stack" title="快捷键">
+        <div className={styles.shortcuts}>
+          {FILES_SHORTCUTS.map((row) => (
+            <Group
+              className={styles.shortcut}
+              gap="sm"
+              justify="space-between"
+              key={row.action}
+              wrap="nowrap"
+            >
+              <FreeTruncatedText
+                className={styles.shortcutAction}
+                ellipsis="end"
+                position="top"
+                text={row.action}
+              />
+              <Group className={styles.keys} gap={4} wrap="nowrap">
+                {row.keys.map((key) => (
+                  <Kbd className={styles.key} key={key} size="xs">
+                    {key}
+                  </Kbd>
+                ))}
+              </Group>
+            </Group>
+          ))}
+        </div>
+      </FreePanelGroup>
+
     </Stack>
   );
 };

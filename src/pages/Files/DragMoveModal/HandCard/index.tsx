@@ -87,6 +87,7 @@ const HandCard = ({
           return (
             <div
               className={cx(styles.chip, ghost && styles.ghost)}
+              data-hand-chip={entry.path}
               draggable={!locked}
               key={entry.path}
               onDragEnd={locked ? undefined : onDragEnd}

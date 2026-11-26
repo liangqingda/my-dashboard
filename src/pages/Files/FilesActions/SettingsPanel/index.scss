@@ -7,10 +7,23 @@
   gap: 6px 16px;
 }
 
-/* 单条快捷键：动作放不下时省略，不把键帽挤出去 */
+/* 动作文案：放不下时尾部省略，hover 弹 tip 看全文（不挤走右边的键帽） */
 .shortcutAction {
   min-width: 0;
   flex: 1 1 auto;
+  color: var(--app-ink-faint);
+  font-size: var(--mantine-font-size-xs);
+}
+
+/* 键帽那一组：宽度按内容，宁可挤左边文案也不缩自己（缩了「点击」会折成两行） */
+.keys {
+  flex: 0 0 auto;
+}
+
+/* 单枚键帽：一字不换行 */
+.key {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 /* 错误文案：只在读播放器列表失败时出现 */

@@ -149,12 +149,13 @@ export const useDragMove = ({
    * 为什么必须动磁盘：只把手卡还原不搬回去的话，这条记录的路径仍在目标文件夹里，
    * 下一次往同一个文件夹拖会被判成「本来就在里面」而一动不动——看起来就是「再拖没反应」。
    * 搬回成功才更新会话；失败（同名冲突、盘只读）就留在那里，由 `moveEntry` 自己弹提示。
+   * 返回它搬回后的路径（调用方据此找到手卡里新落座的那一格）；失败返回 null。
    */
-  const restoreLanded = async (item: LandedItem): Promise<boolean> => {
+  const restoreLanded = async (item: LandedItem): Promise<string | null> => {
     const active = sessionRef.current;
 
     if (active === null) {
-      return false;
+      return null;
     }
 
     const name = item.entry.name || baseNameOfPath(item.entry.path);
@@ -162,7 +163,7 @@ export const useDragMove = ({
     const moved = await moveEntry(item.entry.path, item.origin);
 
     if (!moved) {
-      return false;
+      return null;
     }
 
     const restored: DraggableEntry = { ...item.entry, path: backPath };
@@ -189,7 +190,7 @@ export const useDragMove = ({
     setMovedPaths(movedRef.current);
     onRestored?.(restored);
 
-    return true;
+    return backPath;
   };
 
   /** 拖拽结束（松手 / Esc / 落在非落点区域）：条目回到手里，弹窗留着 */
