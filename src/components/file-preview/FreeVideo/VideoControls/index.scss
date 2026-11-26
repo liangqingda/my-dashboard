@@ -45,24 +45,37 @@
   height: 12px;
 }
 
-/* 轨道与已播放段的换色过渡：hover 时两段一起换底，不能一步硬切 */
+/* 轨道与已播放段换底都走同一个时长：进出 hover 是渐变，不硬切 */
 .progress .track::before,
-.bar {
-  transition: background-color 160ms ease;
+.progress .bar {
+  transition:
+    background-color 160ms ease,
+    box-shadow 160ms ease;
 }
 
-/* hover：轨道换成全站那套毛玻璃底（半透明 + 虚化背后的画面），不再是实色灰条 */
-.progressWrap:hover .track::before {
-  background-color: var(--app-glass-panel);
+/* 轨道底：整条都是玻璃，浓淡跟着 hover 走——没 hover 时近乎只剩一层薄玻璃，
+   指针进来才显形（稍厚一点的一层 + 1px 内描边），不再是实色灰条 */
+.progress .track::before {
+  background-color: color-mix(in srgb, var(--app-surface) 20%, transparent);
   -webkit-backdrop-filter: blur(var(--app-glass-blur-panel))
     saturate(var(--app-glass-saturate));
   backdrop-filter: blur(var(--app-glass-blur-panel))
     saturate(var(--app-glass-saturate));
 }
 
-/* hover：已播放段（主题绿）弱化一档，透出底下的玻璃，不整条实色抢眼 */
+.progressWrap:hover .track::before {
+  background-color: color-mix(in srgb, var(--app-surface) 42%, transparent);
+  /* 玻璃再透明也要看得出边界：1px 内描边把这条框出来 */
+  box-shadow: inset 0 0 0 1px var(--app-glass-edge);
+}
+
+/* 已播放段：没 hover 时压一档，指针进来才透出更实的主题绿（仍是半透明，不整条实色抢眼） */
+.progress .bar {
+  background-color: color-mix(in srgb, var(--slider-color) 52%, transparent);
+}
+
 .progressWrap:hover .bar {
-  background-color: color-mix(in srgb, var(--slider-color) 46%, transparent);
+  background-color: color-mix(in srgb, var(--slider-color) 78%, transparent);
 }
 
 /* 滑杆浮标：固定深底浅字，不跟着主题反转（口径同按钮 tip） */

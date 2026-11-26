@@ -52,6 +52,11 @@ export type FreeVideoProps = {
    * 视频预览弹窗据此把正文框收成同比例，画面正好填满、上下不再留黑底。
    */
   onAspectChange?: (aspect: number) => void;
+  /**
+   * 画面是否已经铺开（整屏全屏 / 网页全屏）：只用来把播放键与前后箭头的**图标**放大一档，
+   * 按钮盒子与间距都不动（大屏上图标不跟着放大就显得太小）。默认 `false`。
+   */
+  expanded?: boolean;
   /** 关闭当前开着的业务弹层：点画面且 `overlayOpen` 时先收弹层，不再切播放 */
   onCloseOverlay?: () => void;
   /**

@@ -36,6 +36,11 @@ export type VideoControlsProps = {
   duration: number;
   /** 视频是否已解析完成（loading / error 时控制栏禁用） */
   enabled: boolean;
+  /**
+   * 画面是否已经铺开（整屏全屏 / 网页全屏）：只放大播放键与前后箭头的图标，
+   * 按钮盒子与间距不动。不传按 `false`。
+   */
+  expanded?: boolean;
   /** 是否正在播放 */
   playing: boolean;
   /** 翻篇：给了就画在播放键两侧，到头的一侧置灰；不传则没有这两颗箭头 */

@@ -37,6 +37,10 @@ import styles from './index.scss';
 const PLAY_ICON_SIZE = 21;
 const STEP_ICON_SIZE = 19;
 
+/** 铺成全屏后图标放大一档：大屏上同样的图标会显小，但按钮盒子与间距不变 */
+const PLAY_ICON_SIZE_EXPANDED = 26;
+const STEP_ICON_SIZE_EXPANDED = 23;
+
 /** 播放键与前后箭头的按钮边长（px）：比普通 sm 大一圈，但不撑成 lg 那种大容器 */
 const CONTROL_BUTTON_SIZE = 34;
 
@@ -48,6 +52,7 @@ const VideoControls = ({
   currentTime,
   duration,
   enabled,
+  expanded = false,
   nav,
   onPreviewFrameChange,
   onSeek,
@@ -59,6 +64,10 @@ const VideoControls = ({
   requestFrame,
   tipDark = false,
 }: VideoControlsProps) => {
+  /** 铺成全屏（整屏 / 网页全屏）时图标放大一档：盒子仍是 CONTROL_BUTTON_SIZE，只有图形变大 */
+  const playIconSize = expanded ? PLAY_ICON_SIZE_EXPANDED : PLAY_ICON_SIZE;
+  const stepIconSize = expanded ? STEP_ICON_SIZE_EXPANDED : STEP_ICON_SIZE;
+
   /** 悬停预览的时序与状态交给 hook：浮出门槛、停稳换帧、手抖容差都在那边 */
   const {
     down: handlePreviewDown,
@@ -161,7 +170,7 @@ const VideoControls = ({
               tipDark={tipDark}
               tipDuration={STEP_TIP_DURATION}
             >
-              <PlayerStepBackwardIcon size={STEP_ICON_SIZE} />
+              <PlayerStepBackwardIcon size={stepIconSize} />
             </FreeIconAction>
           ) : null}
 
@@ -173,9 +182,9 @@ const VideoControls = ({
             tipDark={tipDark}
           >
             {playing ? (
-              <PlayerPauseIcon size={PLAY_ICON_SIZE} />
+              <PlayerPauseIcon size={playIconSize} />
             ) : (
-              <PlayerPlayIcon size={PLAY_ICON_SIZE} />
+              <PlayerPlayIcon size={playIconSize} />
             )}
           </FreeIconAction>
 
@@ -188,7 +197,7 @@ const VideoControls = ({
               tipDark={tipDark}
               tipDuration={STEP_TIP_DURATION}
             >
-              <PlayerStepForwardIcon size={STEP_ICON_SIZE} />
+              <PlayerStepForwardIcon size={stepIconSize} />
             </FreeIconAction>
           ) : null}
 

@@ -51,6 +51,7 @@ type PlayerStatus = 'loading' | 'ready' | 'error';
 const FreeVideo = ({
   actions,
   className,
+  expanded = false,
   nav,
   onAspectChange,
   onCloseOverlay,
@@ -306,6 +307,7 @@ const FreeVideo = ({
           currentTime={currentTime}
           duration={duration}
           enabled={status === 'ready'}
+          expanded={expanded}
           nav={nav}
           onPreviewFrameChange={handlePreviewFrameChange}
           onSeek={seek}

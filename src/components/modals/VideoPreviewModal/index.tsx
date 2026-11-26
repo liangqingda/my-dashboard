@@ -305,6 +305,7 @@ const VideoPreviewModal = ({
               viewportFullscreen={viewportFullscreen}
             />
           }
+          expanded={fullscreen || viewportFullscreen}
           key={activeItem.id}
           nav={{
             nextLabel: stepNextLabel,
