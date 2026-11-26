@@ -19,15 +19,30 @@
     saturate(var(--app-glass-saturate));
 }
 
-/* 进度条容器：占满整行，悬停预览浮层以它为定位祖先 */
+/* 进度条容器：占满整行，悬停预览浮层以它为定位祖先。
+   上下各留 4px 透明热区（用负外边距抵消，不把控制栏顶高）：轨道看着细，
+   指针擦到边界也能算「在进度条上」，加粗与预览都不必精确压线 */
 .progressWrap {
   position: relative;
   min-width: 0;
+  margin-block: -4px;
+  padding-block: 4px;
 }
 
 /* 进度条撑满容器，时间与操作组固定在下一行右侧 */
 .progress {
   width: 100%;
+}
+
+/* 轨道：平时比 Mantine 默认的 8px 细一档（4px）；指针进到这条热区就加粗到 10px（比原来还粗）。
+   只改轨道高度，根节点仍是 2×--slider-size，加粗不会把控制栏顶高、滑块也不用跟着挪 */
+.progress .track {
+  height: 4px;
+  transition: height 120ms ease;
+}
+
+.progressWrap:hover .track {
+  height: 10px;
 }
 
 /* 滑杆浮标：固定深底浅字，不跟着主题反转（口径同按钮 tip） */
