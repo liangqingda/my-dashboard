@@ -1,8 +1,10 @@
-/* 选集弹层：按钮本体与悬停过桥连成一块，指针从按钮移进弹层不会闪断 */
+/* 固定深底浅字 tip：口径同按钮壳，压在媒体画面上不随主题反转 */
+.tipDark {
+  --tooltip-bg: var(--app-tip-dark-bg);
+  --tooltip-color: var(--app-tip-dark-color);
 
-.target {
-  display: flex;
-  align-items: center;
+  background: var(--app-tip-dark-bg);
+  color: var(--app-tip-dark-color);
 }
 
 /*

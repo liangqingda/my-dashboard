@@ -1,13 +1,13 @@
 /**
- * 选集按钮 + hover 弹层：控制栏右侧的一颗「选集」，指针停在按钮或弹层上时浮出当前目录
- * 的视频列表，离开后收起；点某一条切到那一条，当前播放的一条高亮。
+ * 选集按钮 + 点击弹层：控制栏右侧的一颗「选集」，点一下浮出当前目录的视频列表，
+ * 再点按钮 / 点外部 / Esc 收起；点某一条切到那一条并合上弹层，当前播放的一条高亮。
  *
  * 不做常驻列表：B 站式播放器把目录收进这一层，舞台始终只留画面；列表长短由调用方给，
  * 弹层内部到顶自己滚。
  */
 
 import { useState } from 'react';
-import { Popover, UnstyledButton } from '@mantine/core';
+import { Popover, Tooltip, UnstyledButton } from '@mantine/core';
 import { IconPlaylist } from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
@@ -32,7 +32,7 @@ const VideoEpisodeMenu = ({
   onSelect,
   tipDark = false,
 }: VideoEpisodeMenuProps) => {
-  /** 开合只由 hover 意图管：进入按钮 / 弹层即开，离开即收；点条目不依赖点击开合 */
+  /** 开合由按钮点击切换；点外部 / Esc 由 Popover 收回并回写这里 */
   const [opened, setOpened] = useState(false);
 
   /** 开合同时上报上层：上层据此判断「有没有弹层开着」，点画面只收弹层、不切播放 */
@@ -41,8 +41,8 @@ const VideoEpisodeMenu = ({
     onChangeOpened?.(next);
   };
 
-  const open = () => applyOpened(true);
   const close = () => applyOpened(false);
+  const toggle = () => applyOpened(!opened);
 
   return (
     <Popover
@@ -57,27 +57,21 @@ const VideoEpisodeMenu = ({
       withinPortal
     >
       <Popover.Target>
-        <div
-          className={styles.target}
-          onBlur={close}
-          onFocus={open}
-          onMouseEnter={open}
-          onMouseLeave={close}
+        <Tooltip
+          classNames={{ tooltip: cx(tipDark && styles.tipDark) }}
+          label={`选集（共 ${items.length} 条）`}
+          withArrow
         >
           <FreeIconAction
             label={`选集（共 ${items.length} 条）`}
+            onClick={toggle}
             tooltip="none"
-            tooltipLabel={`选集（共 ${items.length} 条）`}
           >
             <IconPlaylist size={ICON_SIZE} stroke={ICON_STROKE} />
           </FreeIconAction>
-        </div>
+        </Tooltip>
       </Popover.Target>
-      <Popover.Dropdown
-        className={styles.dropdown}
-        onMouseEnter={open}
-        onMouseLeave={close}
-      >
+      <Popover.Dropdown className={styles.dropdown}>
         <div className={styles.list}>
           {items.map((item) => {
             const active = item.id === activeId;
@@ -87,7 +81,10 @@ const VideoEpisodeMenu = ({
                 aria-current={active}
                 className={cx(styles.item, active && styles.itemActive)}
                 key={item.id}
-                onClick={() => onSelect(item.id)}
+                onClick={() => {
+                  onSelect(item.id);
+                  close();
+                }}
                 type="button"
               >
                 <FreeTruncatedText

@@ -1,7 +1,7 @@
 /**
  * 视频预览弹窗：`FreeModal`（外壳）+ `FreeVideo`（播放器）的组合，B 站式布局——
  * 画面占满舞台，操作全部收进播放器底部控制栏：进度条独占上层，下层左侧前后 / 播放 / 时间，
- * 右侧选集（hover 弹层）、删除、截图、外部打开、设置、网页全屏、整屏全屏。
+ * 右侧选集（点击弹层）、删除、截图、外部打开、设置、网页全屏、整屏全屏。
  *
  * - header 只留标题与外壳关闭按钮，不再放业务操作；翻篇计数浮在舞台左上角；
  * - 键盘：空格按设置切播放 / 暂停或关窗（`FreeModal` 的 `media` / `closeOnSpace`），
@@ -102,7 +102,7 @@ const VideoPreviewModal = ({
   /** 任一业务弹层开着：点画面只收弹层，不切播放 */
   const overlayOpen = settingsOpen || episodeOpen;
 
-  /** 点画面收弹层：设置面板直接关；选集是 hover 弹层，收掉内部开合即可 */
+  /** 点画面收弹层：设置面板直接关；选集是点击弹层，收掉内部开合即可 */
   const closeOverlay = () => {
     setSettingsOpen(false);
     setEpisodeOpen(false);
