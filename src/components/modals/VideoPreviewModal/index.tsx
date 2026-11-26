@@ -241,6 +241,7 @@ const VideoPreviewModal = ({
       onRequestDelete={onRequestDelete ? requestDelete : null}
       onSeek={settings.arrowMode === 'seek' ? seekBy : undefined}
       opened={opened}
+      overlayTone="dark"
       shortcutsEnabled={!interactionBlocked && !settingsOpen}
       title={activeItem.name}
       trapFocus={!interactionBlocked}

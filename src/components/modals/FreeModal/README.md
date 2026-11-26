@@ -5,7 +5,8 @@
 
 ## 它锁了什么
 
-- **框体**：`radius="md"`、`padding={0}`、遮罩 `backgroundOpacity 0.5 + blur 2`、140ms fade；
+- **框体**：`radius="md"`、`padding={0}`、遮罩走全站毛玻璃（`--app-glass-*` 令牌，
+  `overlayTone` 分浅 / 深两档）、140ms fade；
   正文高度 `82dvh`（上限 `88dvh`），全屏时铺满 `100vw / 100dvh`。
 - **配色分两层**（与页面外壳 `BasicLayout` 同一条口径，两个变量都在 `.content` 上打包下发）：
   header 与侧栏（业务侧的目录列）共用软底 `--preview-chrome`（`--app-surface-subtle`），
@@ -75,6 +76,7 @@
 | `headerTail` | 排在全屏之后的末尾位，保证「删除」始终在最右 |
 | `headerSecondary` | 第二组操作（如编辑流程），紧接在 `headerTail` 之后、关闭按钮的竖线之前 |
 | `headerOverlay` / `headerHidden` | header 是否浮在正文之上（绝对定位）、是否处于隐藏态（淡出上移、不接收指针事件）；只影响外观，不卸载按钮 |
+| `overlayTone` | 遮罩色调：`light`（默认）给普通弹窗，`dark` 给图片 / 视频这类要靠深底看画面的预览；两档的虚化与饱和同一套，只换底色 |
 | `media` | `{ onTogglePlay, onToggleMute }`；传了 `onTogglePlay` 之后空格切播放 / 暂停、不再关窗，传了 `onToggleMute` 才有 `M` 静音 |
 | `zIndex` | 层级，默认走组件库的弹窗档；要压在另一扇已打开的弹窗之上时显式抬高（二次确认层由 `ConfirmModal` 默认给 `320`） |
 | `onCapture` | `Enter` 的动作（视频预览截当前帧）；不传则该键不动作 |

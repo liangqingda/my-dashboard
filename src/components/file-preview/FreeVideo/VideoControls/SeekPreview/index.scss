@@ -9,14 +9,17 @@
   justify-content: center;
   overflow: hidden;
   padding: 5px;
-  border: 1px solid rgb(255 255 255 / 22%);
+  border: 1px solid var(--app-glass-edge);
   border-radius: 14px;
-  background: rgb(255 255 255 / 8%);
+  background: var(--app-glass-float);
   box-shadow:
     0 16px 40px rgb(0 0 0 / 50%),
     inset 0 1px 0 rgb(255 255 255 / 18%);
   transform: translateX(-50%);
-  backdrop-filter: blur(20px) saturate(1.35);
+  -webkit-backdrop-filter: blur(var(--app-glass-blur-panel))
+    saturate(var(--app-glass-saturate));
+  backdrop-filter: blur(var(--app-glass-blur-panel))
+    saturate(var(--app-glass-saturate));
   pointer-events: none;
 }
 
@@ -41,17 +44,21 @@
   background: rgb(0 0 0 / 60%);
 }
 
-/* 时间标签：压在画面右下角，深底浅字，播放中数字宽度不跳 */
+/*
+ * 时间标签：压在画面右下角，深底浅字，播放中数字宽度不跳。
+ * 只有一行字高，虚化档比面板小一档——按面板的 16px 糊，字边会被吃掉。
+ */
 .time {
   position: absolute;
   right: 10px;
   bottom: 10px;
   padding: 1px 6px;
-  border: 1px solid rgb(255 255 255 / 12%);
+  border: 1px solid var(--app-glass-edge);
   border-radius: 6px;
   background: rgb(0 0 0 / 55%);
   color: rgb(255 255 255 / 92%);
   font-size: 0.72rem;
   font-variant-numeric: tabular-nums;
+  -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
 }

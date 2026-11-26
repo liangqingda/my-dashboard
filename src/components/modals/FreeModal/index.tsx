@@ -75,6 +75,7 @@ const FreeModal = ({
   onCapture,
   onSeek,
   opened,
+  overlayTone = 'light',
   shortcutsEnabled = true,
   size = 'min(980px, 92vw)',
   title,
@@ -171,8 +172,10 @@ const FreeModal = ({
       onClose={onClose}
       opened={opened}
       overlayProps={{
-        backgroundOpacity: 0.5,
-        blur: 2,
+        className: cx(
+          styles.overlay,
+          overlayTone === 'dark' && styles.overlayMedia,
+        ),
         onClick: handleOverlayClick,
       }}
       padding={0}

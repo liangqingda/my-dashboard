@@ -1,5 +1,6 @@
 /*
- * 搬进当前这一层时的全屏遮罩：压暗列表并吃掉点击，把注意力收到中间那张进度卡上。
+ * 搬进当前这一层时的全屏遮罩：虚化并压住列表、吃掉点击，把注意力收到中间那张进度卡上。
+ * 与弹窗遮罩同一套毛玻璃令牌（`--app-glass-overlay`），不再压一层墨绿。
  * `position: fixed` 是故意的——它不跟着列表滚动条走，覆盖范围就是整块屏幕。
  */
 
@@ -10,8 +11,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgb(23 37 34 / 16%);
-  backdrop-filter: blur(2px);
+  background: var(--app-glass-overlay);
+  -webkit-backdrop-filter: blur(var(--app-glass-blur))
+    saturate(var(--app-glass-saturate));
+  backdrop-filter: blur(var(--app-glass-blur))
+    saturate(var(--app-glass-saturate));
 }
 
 /* 进度卡：小、居中、有投影，不挡住「在搬什么」这件事本身 */

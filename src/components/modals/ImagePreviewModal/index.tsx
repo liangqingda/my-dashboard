@@ -117,6 +117,7 @@ const ImagePreviewModal = ({
       onClose={requestClose}
       onRequestDelete={onRequestDelete ?? null}
       opened={opened}
+      overlayTone="dark"
       shortcutsEnabled={!blocked}
       title={activeItem.name}
       trapFocus={!blocked}

@@ -9,8 +9,12 @@
   gap: 2px;
   padding: 2px;
   border-radius: 8px;
-  background: color-mix(in srgb, var(--app-surface) 70%, transparent);
-  backdrop-filter: blur(10px);
+  /* 浮在瓦片缩略图上的玻璃条：底色取 `--app-glass-panel`（跟着 surface 走），与全站浮层同一套 */
+  background: var(--app-glass-panel);
+  -webkit-backdrop-filter: blur(var(--app-glass-blur-panel))
+    saturate(var(--app-glass-saturate));
+  backdrop-filter: blur(var(--app-glass-blur-panel))
+    saturate(var(--app-glass-saturate));
   opacity: 0;
   transition: opacity 120ms ease;
 }

@@ -45,6 +45,27 @@
   --app-nav-row-marker: inset 2px 0 0 var(--app-accent);
   --app-nav-row-transition: 120ms ease;
 
+  /*
+   * glass：全站浮层毛玻璃的唯一配方。
+   * 遮罩（弹窗 / 列表加载 / 搬家）与浮层（浮动 header / 播放器控制栏 / 瓦片 veil /
+   * 操作组 / 进度预览）都只消费这一组，各自文件里不再写 blur / saturate / 半透明底色。
+   * 遮罩按「背后是什么」分三档：普通弹窗要压住画布但留出轮廓，列表加载淡一档，
+   * 图片 / 视频要靠深底才看得准——媒体那档两种主题都用深色，不跟主题反转。
+   */
+  --app-glass-blur: 24px;
+  --app-glass-blur-soft: 18px;
+  --app-glass-blur-panel: 16px;
+  --app-glass-saturate: 180%;
+  --app-glass-overlay: rgb(233 237 235 / 42%);
+  --app-glass-overlay-soft: rgb(240 243 241 / 28%);
+  --app-glass-overlay-media: rgb(12 16 15 / 62%);
+  --app-glass-panel: color-mix(in srgb, var(--app-surface) 62%, transparent);
+  --app-glass-float: rgb(255 255 255 / 7%);
+  --app-glass-edge: rgb(255 255 255 / 14%);
+  /* 上下收边的 chrome 渐变（浮动 header / 播放器控制栏共用）：跟着 chrome 档走，不另挑颜色 */
+  --app-glass-fade-strong: color-mix(in srgb, var(--app-surface-subtle) 72%, transparent);
+  --app-glass-fade-weak: color-mix(in srgb, var(--app-surface-subtle) 28%, transparent);
+
   /* status */
   --app-status-ok: #0e7a3d;
   --app-status-ok-soft: #e2f2e7;
@@ -115,6 +136,17 @@ html[data-mantine-color-scheme='dark'] {
   --app-status-danger-fill-hover: #9c342d;
   --app-status-muted: #9aa9a3;
   --app-status-muted-soft: #1e2825;
+
+  /*
+   * 暗色玻璃：提饱和收一档，免得彩色内容溢出；遮罩底色跟着翻成深色。
+   * `panel` 与两档渐变的底都是 `--app-surface*` 派生出来的，跟着暗色自动换，不在这里重写。
+   */
+  --app-glass-saturate: 150%;
+  --app-glass-overlay: rgb(9 13 12 / 56%);
+  --app-glass-overlay-soft: rgb(9 13 12 / 40%);
+  --app-glass-overlay-media: rgb(3 5 5 / 68%);
+  --app-glass-float: rgb(255 255 255 / 9%);
+  --app-glass-edge: rgb(255 255 255 / 10%);
 
   /* 暗色下代码仍取 chrome 档底色、ink 档字色（与浅色同一份口径，见浅色块那份说明）；
      代码靠等宽字体 + 芯片底色与标题区分，不会被读成小标题 */

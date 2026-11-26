@@ -190,7 +190,16 @@ const FilesEntries = ({
 
       <LoadingOverlay
         loaderProps={{ size: 'sm', type: 'oval' }}
-        overlayProps={{ backgroundOpacity: 0.2, blur: 2 }}
+        /*
+         * 遮罩走全站毛玻璃的「加载」档：组件库按 color + backgroundOpacity 拼底色，
+         * 这里把底色清掉、只留类名，底色与虚化都在 `index.scss` 的 `.loadingGlass` 里，
+         * 与弹窗遮罩同一套令牌。
+         */
+        overlayProps={{
+          backgroundOpacity: 0,
+          blur: 0,
+          className: styles.loadingGlass,
+        }}
         visible={loading}
         zIndex={2}
       />

@@ -43,6 +43,18 @@
 一律 `@/components/modals/FreeModal`（二次确认再基于它封 `ConfirmModal`），不 import Mantine `Modal`、
 也不 import `Modal.Root` 自己拼 header。`scripts/check-structure.mjs` 会扫这一条，命中即 lint 失败。
 
+## 遮罩与浮层玻璃
+
+全站只有一套毛玻璃配方，令牌在 `src/styles/global.scss` 的 `--app-glass-*`：
+
+- 遮罩按背后的内容分三档：普通弹窗 `--app-glass-overlay`、列表加载 `--app-glass-overlay-soft`、
+  媒体预览 `--app-glass-overlay-media`（图片 / 视频的 `FreeModal` 传 `overlayTone="dark"`）；
+- 浮层（浮动 header、播放器控制栏、瓦片 veil、操作组、进度预览）用 `--app-glass-panel` 或
+  `--app-glass-float`，虚化与饱和都取 `--app-glass-blur-*` / `--app-glass-saturate`；
+- 业务侧不写裸的 `blur(12px)` / `saturate(1.3)` 这类数值，一律取 `--app-glass-*`；现有档位不够时
+  在令牌里加一档，不在页面 / 业务组件里另起一套配方。
+- 叠层遮罩（二次确认压在预览上）两层材料会自然叠加、更浓更糊；业务侧不要再手动补一层虚化或加深底色。
+
 ## 三层：组件库 → Free 层 → 业务组件
 
 | 层 | 判据（一遍问下来只落一层） | 落点 |

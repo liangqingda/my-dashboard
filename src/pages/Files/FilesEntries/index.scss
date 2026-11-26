@@ -24,6 +24,18 @@
 }
 
 /*
+ * 列表加载遮罩：毛玻璃的「加载」档——比弹窗遮罩再淡一档，旧内容留在下面还要看得出轮廓。
+ * 双类名压过组件库 Overlay 的单类规则（加载遮罩会渲染白 / 黑两份，只按主题显示一份）。
+ */
+.loadingGlass.loadingGlass {
+  background: var(--app-glass-overlay-soft);
+  -webkit-backdrop-filter: blur(var(--app-glass-blur-soft))
+    saturate(var(--app-glass-saturate));
+  backdrop-filter: blur(var(--app-glass-blur-soft))
+    saturate(var(--app-glass-saturate));
+}
+
+/*
  * 指针压在列表空白处（直接拖模式）：落手＝搬进当前这一层。
  * 热区挂在**外框**上——网格 / 表格只有内容那么高，空白在滚动视口里，挂它们身上就够不着。
  */
