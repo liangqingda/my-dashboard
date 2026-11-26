@@ -27,7 +27,7 @@ import LandedTiles from './LandedTiles';
 import ReturnFly from './ReturnFly';
 import HandCard from './HandCard';
 import type { DragMoveModalProps } from './types';
-import { acceptMove, leaveOutside, modalTitle } from './utils';
+import { acceptMove, leaveOutside, modalTitle, overDropFolder } from './utils';
 
 import styles from './index.scss';
 
@@ -238,6 +238,13 @@ const DragMoveModal = ({
             )}
             onDragLeave={(event) => leaveOutside(event, () => setBlankHovered(false))}
             onDragOver={(event) => {
+              // 压在某格文件夹上：那一格自己就是落点，这一层不算「空白」
+              if (overDropFolder(event)) {
+                setBlankHovered(false);
+
+                return;
+              }
+
               acceptMove(event);
               setBlankHovered(true);
             }}

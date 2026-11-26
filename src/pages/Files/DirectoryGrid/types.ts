@@ -37,6 +37,8 @@ export type DirectoryGridProps = {
   dragPaths: string[];
   /** 当前悬停的放置目标文件夹路径；null 表示没有目标 */
   dropTarget: string | null;
+  /** 目录里一条都没有时的说明文案；null 表示有内容（文案要占住空白落点，别让它变成死区） */
+  emptyText: string | null;
   /** 直接拖模式下的禁用落点（该文件夹在待拖拽区里）；null 表示没有 */
   dropBlockedPath: string | null;
   /**

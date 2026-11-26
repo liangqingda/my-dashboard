@@ -23,6 +23,7 @@ const FilesEntries = ({
   dragPaths,
   dropBlockedPath,
   dropTarget,
+  emptyText,
   files,
   fixedColumns,
   folderProgress,
@@ -100,6 +101,7 @@ const FilesEntries = ({
             dragPaths={dragPaths}
             dropBlockedPath={dropBlockedPath}
             dropTarget={dropTarget}
+            emptyText={emptyText}
             files={files}
             fixedColumns={fixedColumns}
             folderProgress={folderProgress}
@@ -139,6 +141,7 @@ const FilesEntries = ({
             collapsedGroups={collapsedGroups}
             dragPaths={dragPaths}
             dropTarget={dropTarget}
+            emptyText={emptyText}
             folderProgress={folderProgress}
             grouped={grouped}
             launchingApp={launchingApp}

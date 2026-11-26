@@ -67,6 +67,7 @@ const FolderGrid = ({
               blockedHovered && styles.blockedOn,
               receiving !== null && styles.moving,
             )}
+            data-drop-folder="true"
             key={folder.path}
             onClick={idle ? () => onOpen(folder.path) : undefined}
             onDragLeave={(event) =>
@@ -76,8 +77,10 @@ const FolderGrid = ({
               })
             }
             onDragOver={(event) => {
-              event.stopPropagation();
-
+              /*
+               * 气泡照旧往上冒（外层靠它判断「压在空白处」时自己跳过文件夹格），
+               * 这里只负责点亮这一格——不 stopPropagation，否则拖拽影像的坐标会冻住
+               */
               if (blocked) {
                 // 禁用落点：松手也不搬，只在格子里说明原因
                 event.preventDefault();

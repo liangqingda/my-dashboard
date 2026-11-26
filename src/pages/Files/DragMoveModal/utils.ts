@@ -10,6 +10,11 @@ export const acceptMove = (event: DragEvent<HTMLElement>) => {
   dataTransfer.dropEffect = 'move';
 };
 
+/** 这次事件是不是压在某一格文件夹落点上（`FolderGrid` 的每一格带 `data-drop-folder`） */
+export const overDropFolder = (event: DragEvent<HTMLElement>): boolean =>
+  event.target instanceof Element &&
+  event.target.closest('[data-drop-folder]') !== null;
+
 /** 指针在父子元素之间移动也会触发 dragleave：只认真离开整块的那一次 */
 const isInsideSelf = (event: DragEvent<HTMLElement>): boolean => {
   const next = event.relatedTarget;

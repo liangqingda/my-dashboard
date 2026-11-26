@@ -28,6 +28,8 @@ export type FilesTableProps = {
   dragPaths: string[];
   /** 当前悬停的放置目标文件夹路径；null 表示没有目标 */
   dropTarget: string | null;
+  /** 这个目录一条都没有时的说明文案；null 表示有内容（文案要占住空白落点，别让它变成死区） */
+  emptyText: string | null;
   /**
    * 直接拖模式下正在搬家：落在哪个目录、搬到第几条。命中某一行时那一行接着画进度，
    * 不再走中间那层进度弹窗。

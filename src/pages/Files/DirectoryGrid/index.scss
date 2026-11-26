@@ -85,6 +85,15 @@
   overflow-clip-margin: 0;
 }
 
+/* 空目录 / 筛完什么都没有时的说明：占住这一块空白，顺带让那块空白仍是落点 */
+.emptyNote {
+  /* 整行占满：网格是 auto-fill 多列，不占满会被挤成一列宽的一条 */
+  grid-column: 1 / -1;
+  color: var(--app-ink-faint);
+  font-size: var(--mantine-font-size-sm);
+  line-height: 1.6;
+}
+
 /*
  * 指针压在瓦片之间的空白处：直接拖模式下这里落手＝搬进当前这一层，
  * 整块套一圈虚线强调边，再从顶上浮一枚说明。

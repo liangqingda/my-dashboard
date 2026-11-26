@@ -56,6 +56,7 @@ const DirectoryGrid = ({
   dragPaths,
   dropBlockedPath,
   dropTarget,
+  emptyText,
   folderProgress,
   files,
   fixedColumns,
@@ -296,6 +297,9 @@ const DirectoryGrid = ({
       onClickCapture={handleClickCapture}
       {...blank.handlers}
     >
+      {emptyText === null ? null : (
+        <span className={styles.emptyNote}>{emptyText}</span>
+      )}
       {blank.blankOver ? (
         <span className={styles.blankHint}>松开即移入当前目录</span>
       ) : null}

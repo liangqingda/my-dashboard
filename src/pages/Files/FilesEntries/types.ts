@@ -23,6 +23,8 @@ export type FilesEntriesProps = {
   /** 当前拖拽源条目路径；null 表示没在拖拽 */
   /** 正在被拖走的条目路径（直接拖模式下可能是一批） */
   dragPaths: string[];
+  /** 这个目录一条都没有时的说明文案；null 表示有内容 */
+  emptyText: string | null;
   /** 直接拖模式下正在搬家：落在哪个文件夹、搬到第几条（画在目标文件夹上，不进进度弹窗） */
   folderProgress: MoveProgress | null;
   /** 当前悬停的放置目标文件夹路径；null 表示没有目标 */

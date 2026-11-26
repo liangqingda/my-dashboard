@@ -18,9 +18,13 @@ export const useDragPoint = (): DragPoint => {
       setPoint({ x: event.clientX, y: event.clientY });
     };
 
-    window.addEventListener('dragover', handleOver);
+    /*
+     * 必须走捕获阶段：落点组件常常 `stopPropagation()`（不让外层去点亮空白热区），
+     * 冒泡收不到事件的话影像就会在指针进入那一格的一刻冻住，看起来像被拦在落点外面。
+     */
+    window.addEventListener('dragover', handleOver, true);
 
-    return () => window.removeEventListener('dragover', handleOver);
+    return () => window.removeEventListener('dragover', handleOver, true);
   }, []);
 
   return point;

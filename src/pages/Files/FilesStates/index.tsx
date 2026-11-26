@@ -19,14 +19,11 @@ export type FilesStatesProps = {
   tableSkeleton: boolean;
   /** 还没选过目录：引导先填路径 */
   prompt: boolean;
-  /** 筛完什么都没有时的文案；null 表示不是空态 */
-  emptyText: string | null;
   /** 失败后重试 */
   onRetry: () => void;
 };
 
 const FilesStates = ({
-  emptyText,
   error,
   gridSkeleton,
   onRetry,
@@ -58,12 +55,6 @@ const FilesStates = ({
     {prompt ? (
       <Text className={styles.empty} size="sm">
         点「打开」选择要浏览的本地目录，或从收藏目录进入
-      </Text>
-    ) : null}
-
-    {emptyText !== null ? (
-      <Text className={styles.empty} size="sm">
-        {emptyText}
       </Text>
     ) : null}
   </>

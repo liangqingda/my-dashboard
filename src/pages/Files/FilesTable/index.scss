@@ -14,6 +14,13 @@
   min-height: 100%;
 }
 
+/* 空目录 / 筛完什么都没有时的说明：占住这一块空白，顺带让那块空白仍是落点 */
+.emptyNote {
+  color: var(--app-ink-faint);
+  font-size: var(--mantine-font-size-sm);
+  line-height: 1.6;
+}
+
 /* 类别列只放分类文案（分组模式下整列隐藏），固定窄宽 */
 .kindWidth {
   width: 6rem;

@@ -255,7 +255,6 @@ const Files = () => {
         <DirBreadcrumb currentDir={currentDir} onNavigate={goToDir} />
 
         <FilesStates
-          emptyText={emptyText}
           error={error}
           gridSkeleton={list.showGridSkeleton}
           onRetry={refresh}
@@ -265,13 +264,14 @@ const Files = () => {
 
         {/* 两种形态都自己滚：纵向滚动条浮在内容之上，右侧固定留出一段比
             常规内边距更宽的空白（滚动条 6px + 呼吸空间），别让滚动条贴住列表内容 */}
-        {listing !== null && !list.showSkeleton && !list.showEmpty ? (
+        {listing !== null && !list.showSkeleton ? (
           <FilesEntries
             apps={list.visibleApps}
             collapsedGroups={collapsedGroups}
             dragPaths={drag.dragPaths}
             dropBlockedPath={drag.dropBlockedPath}
             dropTarget={drag.dropTarget}
+            emptyText={emptyText}
             files={list.visibleFiles}
             fixedColumns={isAppCatalogPath(listing.path)}
             folderProgress={drag.folderProgress}
