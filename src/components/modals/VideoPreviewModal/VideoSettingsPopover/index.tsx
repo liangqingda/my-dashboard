@@ -173,6 +173,7 @@ const VideoSettingsPopover = ({
       label="视频设置"
       /* 弹层走 portal，拿不到弹窗高度：标准弹窗高 82dvh，封顶它的 80% ≈ 66dvh，超出在面板内部滚动 */
       maxHeight="min(66dvh, 620px)"
+      offset={4}
       onChange={onChangeOpened}
       opened={opened}
       width={SETTINGS_PANEL_WIDTH}

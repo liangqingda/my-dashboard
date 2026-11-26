@@ -16,7 +16,8 @@
 - **header 的两种排布**：默认在正文上方占一行（普通流）；传 `headerOverlay` 后改为浮层
   （absolute，相对 `.content`——它同时充当定位祖先，否则浮层会爬到视口顶部、看着像全屏 header）
   压住正文顶部，配合 `headerHidden` 淡出上移——视频这类「平时藏起来、
-  动鼠标才浮出」的弹窗用它，收起时正文能占满整块高度。隐藏只改外观，按钮仍由调用方决定是否可用。
+  动鼠标才浮出」的弹窗用它，收起时正文能占满整块高度。浮层 header 走毛玻璃：半透明 chrome
+  渐变 + 背景虚化，与播放器控制栏同一口径；普通流 header 仍是实心 chrome 底。隐藏只改外观，按钮仍由调用方决定是否可用。
 - **header 里的按钮**：翻页与全屏走 `FreeIconAction`（`size="sm"`、语气恒为 `normal`、tip 与 `aria-label` 同句，
   键位提示走 `tooltipLabel`），**外壳不自维护图标按钮样式**；关闭按钮是组件库 `Modal` 内建的 `closeButton`。
 - **header 的顺序与间距**：翻页与计数 → 标题 → `headerActions` → 全屏 → `headerTail` →

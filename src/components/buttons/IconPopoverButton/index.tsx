@@ -28,6 +28,7 @@ const IconPopoverButton = ({
   icon,
   label,
   maxHeight,
+  offset = 8,
   onChange,
   opened,
   shortcut,
@@ -39,7 +40,7 @@ const IconPopoverButton = ({
 
   return (
     <Popover
-      offset={8}
+      offset={offset}
       onChange={onChange}
       opened={opened}
       position="bottom-end"

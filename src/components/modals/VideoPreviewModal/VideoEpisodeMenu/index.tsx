@@ -45,7 +45,7 @@ const VideoEpisodeMenu = ({
 
   return (
     <Popover
-      offset={8}
+      offset={4}
       onChange={applyOpened}
       opened={opened}
       position="bottom-end"
