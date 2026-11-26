@@ -81,13 +81,11 @@ const FreeModal = ({
   zIndex,
 }: FreeModalProps) => {
   /**
-   * 全屏切换入口：`showToggle: false` 时只保留铺满外观、不画按钮、也不吃 `F`。
-   * 尺寸由 `active` 单独决定，两件事分开，进编辑不会突然缩回常规。
+   * 全屏切换入口：`showToggle: false` 时不画按钮（业务把全屏入口放在自己的控制栏里），
+   * 但只要给了 `onToggle`，`F` 快捷键照常生效；尺寸由 `active` 单独决定，两件事分开。
    */
   const fullscreenToggleVisible = fullscreen?.showToggle !== false;
-  const onToggleFullscreen = fullscreenToggleVisible
-    ? fullscreen?.onToggle
-    : undefined;
+  const onToggleFullscreen = fullscreen?.onToggle;
 
   /**
    * 空格关窗与翻页 / 全屏 / 复制 / 删除快捷键：业务弹窗不用各自实现。

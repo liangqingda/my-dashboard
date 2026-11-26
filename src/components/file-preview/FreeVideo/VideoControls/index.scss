@@ -1,4 +1,4 @@
-/* 播放器控制栏：上下两行——上层进度条独占，下层左侧播放区、右侧音量与业务操作组 */
+/* 播放器控制栏：上下两行——上层进度条独占，下层左侧播放区、右侧业务操作组 */
 
 .controls {
   display: flex;
@@ -16,7 +16,7 @@
   min-width: 0;
 }
 
-/* 进度条撑满容器，时间与音量固定在下一行右侧 */
+/* 进度条撑满容器，时间与操作组固定在下一行右侧 */
 .progress {
   width: 100%;
 }
@@ -44,63 +44,4 @@
   color: var(--app-ink-faint);
   font-size: 0.72rem;
   font-variant-numeric: tabular-nums;
-}
-
-/*
- * 音量数值：贴在滑杆左下方，跟着浮出的音量条一起出现（自带浮标靠右会被弹窗边缘裁掉）。
- * `50%` 是滑杆中心，再让开拇指半径（6px）与 12px 的间距，数字不贴着滑杆。
- */
-.volumeValue {
-  position: absolute;
-  right: calc(50% + 20px);
-  bottom: 0;
-  color: var(--app-ink-faint);
-  font-size: 0.66rem;
-  font-variant-numeric: tabular-nums;
-  pointer-events: none;
-  white-space: nowrap;
-}
-
-/* 音量：喇叭键是浮层的定位与悬停范围 */
-.volumeWrap {
-  position: relative;
-  flex: 0 0 auto;
-}
-
-/*
- * 音量条平时不占横向空间，指针停在喇叭上才往上浮出，竖着排（下 0 上 100）。
- * 左右两侧撑满 wrap 并居中：音量条正对着喇叭的中心线，看起来才是一条而不是偏在一侧。
- * 容器留一段透明内边距当「过桥」：指针从喇叭往上移进音量条时不会经过空白掉出悬停范围。
- */
-.volumePopover {
-  position: absolute;
-  right: 0;
-  bottom: 100%;
-  left: 0;
-  z-index: 1;
-  display: flex;
-  justify-content: center;
-  padding-bottom: 8px;
-  visibility: hidden;
-  opacity: 0;
-  pointer-events: none;
-  transition:
-    opacity 140ms ease,
-    visibility 140ms ease;
-}
-
-.volumeWrap:hover .volumePopover,
-.volumeWrap:focus-within .volumePopover {
-  visibility: visible;
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.volumePanel {
-  position: relative;
-  padding: 8px 12px;
-  border: 1px solid var(--app-line);
-  border-radius: 10px;
-  background: var(--app-surface);
-  box-shadow: 0 8px 20px rgb(23 37 34 / 18%);
 }

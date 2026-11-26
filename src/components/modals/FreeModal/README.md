@@ -34,7 +34,7 @@
   - **`[` / `【` 上一个；`]` / `】` 下一个**：有 `nav` 且未禁用时；
   - **`←` / `→`**：默认同方括号翻篇；传了 `onSeek` 就整组交给它（视频快进 / 后退），
     翻篇只剩方括号 —— 方向键在两种归属里只能选一种；
-  - **`F`**：切换全屏（有全屏按钮、即 `showToggle` 不为 `false` 时）；
+  - **`F`**：切换全屏（给了 `fullscreen.onToggle` 就生效；`showToggle: false` 只是不在外壳画按钮，快捷键仍保留）；
   - **`M` 静音**：传了 `media.onToggleMute` 才生效（视频预览里是静音）；
   - **`Enter` 截图**：传了 `onCapture` 时触发（视频预览截当前帧）；还没解出画面等
     由调用方自己判断，外壳只把按键转成一个回调；
@@ -78,7 +78,7 @@
 | `zIndex` | 层级，默认走组件库的弹窗档；要压在另一扇已打开的弹窗之上时显式抬高（二次确认层由 `ConfirmModal` 默认给 `320`） |
 | `onCapture` | `Enter` 的动作（视频预览截当前帧）；不传则该键不动作 |
 | `onSeek` | `(direction: 'backward' \| 'forward') => void`；传了之后 `←` / `→` 交给它（视频快进 / 后退），翻篇只剩 `[` / `]` |
-| `fullscreen` | `{ active, onToggle, showToggle? }`；不传则没有全屏外观与按钮。`showToggle` 默认 `true`，传 `false` 时只保留 `active` 决定的铺满外观、不画按钮也不响应 `F`（进编辑这类不该换尺寸的场景） |
+| `fullscreen` | `{ active, onToggle?, showToggle? }`；不传则没有全屏外观与按钮。`showToggle` 默认 `true`，传 `false` 只收掉 header 按钮；`onToggle` 给了的话 `F` 键照常生效（进编辑这类不该换尺寸的场景，回调与按钮都不给） |
 | `copy` | `{ text, message }`；传了就有 `C` 复制键（`text` 进剪贴板，`message` 是成功提示），与 header 的复制按钮同一口径 |
 | `onRequestDelete` | 传了就有 `Delete` / `Backspace` 删除键；只应打开二次确认层，不直接删 |
 | `extraKeys` | 业务自己的单键动作（`{ c: 开合收藏面板 }` 这类，键名小写）；只在本窗开着时生效，业务侧不自己监听 keydown |

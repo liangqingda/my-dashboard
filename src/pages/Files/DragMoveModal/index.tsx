@@ -35,7 +35,7 @@ import styles from './index.scss';
  * 全屏常驻：落点要铺满整块屏幕才够展开多级目录，
  * header 按约定只留标题与关闭按钮，所以不给全屏切换入口。
  */
-const FULLSCREEN = { active: true, onToggle: () => undefined, showToggle: false };
+const FULLSCREEN = { active: true, showToggle: false };
 
 /** 条目还在飞（正被拖着）时的提示 */
 const HINT_DRAGGING = '拖到文件夹上松手即移入；停在落点区的空白处松手＝移入当前这一层。';

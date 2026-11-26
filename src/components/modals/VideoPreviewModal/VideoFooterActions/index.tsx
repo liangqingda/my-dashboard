@@ -8,14 +8,13 @@
 import {
   IconArrowsDiagonal,
   IconArrowsDiagonalMinimize,
-  IconBrowserMaximize,
   IconCamera,
   IconExternalLink,
   IconTrash,
-  IconWindowMinimize,
 } from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
+import ViewportFullscreenIcon from '@/components/file-preview/FreeVideo/PlayerIcons/ViewportFullscreenIcon';
 
 import VideoEpisodeMenu from '../VideoEpisodeMenu';
 import VideoSettingsPopover from '../VideoSettingsPopover';
@@ -81,11 +80,11 @@ const VideoFooterActions = ({
       label={viewportFullscreen ? '退出网页全屏' : '网页全屏'}
       onClick={onToggleViewportFullscreen}
     >
-      {viewportFullscreen ? (
-        <IconWindowMinimize size={ICON_SIZE} stroke={ICON_STROKE} />
-      ) : (
-        <IconBrowserMaximize size={ICON_SIZE} stroke={ICON_STROKE} />
-      )}
+      <ViewportFullscreenIcon
+        active={viewportFullscreen}
+        size={ICON_SIZE}
+        stroke={ICON_STROKE}
+      />
     </FreeIconAction>
 
     <FreeIconAction

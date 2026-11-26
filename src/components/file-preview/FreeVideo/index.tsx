@@ -34,6 +34,7 @@ import { useHoverFrameGrabber } from './hooks/use-hover-frame-grabber';
 import { useVideoFrames } from './hooks/use-video-frames';
 import { seekPreviewSize, type SeekPreviewSize } from './utils/preview-size';
 import VideoControls from './VideoControls';
+import VideoVolumeControl from './VideoVolumeControl';
 import type { FreeVideoProps } from './types';
 
 import styles from './index.scss';
@@ -277,23 +278,30 @@ const FreeVideo = ({
         onPointerLeave={leaveControls}
       >
         <VideoControls
-          actions={actions}
+          actions={
+            <>
+              <VideoVolumeControl
+                enabled={status === 'ready'}
+                muted={muted}
+                onToggleMute={toggleMute}
+                onVolumeChange={changeVolume}
+                volume={volume}
+              />
+              {actions}
+            </>
+          }
           currentTime={currentTime}
           duration={duration}
           enabled={status === 'ready'}
-          muted={muted}
           nav={nav}
           onPreviewFrameChange={handlePreviewFrameChange}
           onSeek={seek}
-          onToggleMute={toggleMute}
           onTogglePlay={togglePlay}
-          onVolumeChange={changeVolume}
           playing={playing}
           previewHeight={previewSize.height}
           previewReady={previewReady}
           previewWidth={previewSize.width}
           requestFrame={requestFrame}
-          volume={volume}
         />
       </div>
 

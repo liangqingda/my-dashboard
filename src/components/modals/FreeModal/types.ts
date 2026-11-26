@@ -23,12 +23,12 @@ export type FreeModalNav = {
 export type FreeModalFullscreen = {
   /** 当前是否铺满视口 */
   active: boolean;
-  /** 切换全屏 */
-  onToggle: () => void;
+  /** 切换全屏；不传则 `F` 键不动作 */
+  onToggle?: () => void;
   /**
-   * 是否给切换入口（header 按钮与 `F` 键），默认 `true`。
-   * 传 `false` 时只保留「当前是否铺满」这一层外观：进编辑这类不该换阅读尺寸的场景，
-   * 收掉入口而不是把框体缩回常规。
+   * 是否在 header 画切换按钮，默认 `true`。
+   * 传 `false` 只收掉按钮：`onToggle` 给了的话 `F` 键照常生效；进编辑这类不该换阅读尺寸的场景，
+   * 按钮与回调都不给，只保留「当前是否铺满」这一层外观。
    */
   showToggle?: boolean;
 };

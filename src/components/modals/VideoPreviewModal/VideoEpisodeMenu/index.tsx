@@ -22,9 +22,6 @@ import styles from './index.scss';
 const ICON_SIZE = 15;
 const ICON_STROKE = 1.8;
 
-/** 弹层最高到多少：条目再多也在弹层里滚，不顶出播放器底部 */
-const MENU_MAX_HEIGHT = 320;
-
 /** 弹层宽度：长文件名在条目内省略，hover 看全 */
 const MENU_WIDTH = 260;
 
@@ -69,7 +66,6 @@ const VideoEpisodeMenu = ({
       </Popover.Target>
       <Popover.Dropdown
         className={styles.dropdown}
-        mah={MENU_MAX_HEIGHT}
         onMouseEnter={open}
         onMouseLeave={close}
       >

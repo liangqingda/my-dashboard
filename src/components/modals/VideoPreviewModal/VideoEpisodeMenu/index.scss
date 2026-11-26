@@ -5,15 +5,22 @@
   align-items: center;
 }
 
-/* 弹层去掉公共下拉的内边距：列表条目自己留排布 */
+/*
+ * 弹层：到顶就自己滚，不把条目顶出弹窗底部。
+ * 用视口高度兜底（不是写死的像素值），小屏 / 整屏全屏下都留得出余量；
+ * 弹层自身是 portal 定位，内部滚动要落在 `.list` 上，外层只给高度上限。
+ */
 .dropdown {
   padding: 6px;
+  max-height: min(320px, 60dvh);
+  overflow: hidden;
 }
 
 .list {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  max-height: inherit;
   overflow-y: auto;
   overscroll-behavior: contain;
 }

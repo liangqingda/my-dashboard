@@ -36,8 +36,6 @@ export type VideoControlsProps = {
   duration: number;
   /** 视频是否已解析完成（loading / error 时控制栏禁用） */
   enabled: boolean;
-  /** 是否静音 */
-  muted: boolean;
   /** 是否正在播放 */
   playing: boolean;
   /** 翻篇：给了就画在播放键两侧，到头的一侧置灰；不传则没有这两颗箭头 */
@@ -57,14 +55,8 @@ export type VideoControlsProps = {
   previewHeight: number;
   /** 播放 / 暂停 */
   onTogglePlay: () => void;
-  /** 静音 / 取消静音 */
-  onToggleMute: () => void;
   /** 拖到某一秒 */
   onSeek: (seconds: number) => void;
-  /** 调整音量（0–1） */
-  onVolumeChange: (volume: number) => void;
-  /** 当前音量（0–1） */
-  volume: number;
-  /** 下层右侧的业务操作组：插槽归调用方，控制栏只负责排在最右 */
+  /** 下层右侧的业务操作组（含喇叭、选集、截图、全屏这类）：插槽归调用方 */
   actions?: ReactNode;
 };

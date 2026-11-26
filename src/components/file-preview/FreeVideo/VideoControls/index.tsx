@@ -1,10 +1,9 @@
 /**
- * 播放器控制栏：双层排布——上层独占进度条，下层左侧是前后 / 播放 / 时间，右侧是音量与
- * 调用方塞进来的业务操作组（选集、截图、外部打开、设置、全屏这类）。
+ * 播放器控制栏：双层排布——上层独占进度条，下层左侧是前后 / 播放 / 时间，右侧是调用方
+ * 塞进来的操作组（喇叭、选集、截图、外部打开、设置、全屏这类；B 站式排布）。
  *
  * 翻篇箭头排在播放键两侧（常见播放器的位置），是因为「上一条 / 下一条」在这里就是前后两格；
  * 这两颗箭头的 tip 只在指上去的 1.5s 内出现，之后自己收掉，免得压在进度条上。
- * 音量条平时不占地方，指针停在喇叭上才在它上方浮出——方向朝上走，竖着排，横向宽度留给进度条。
  *
  * 进度条拖到哪就 seek 到哪（拖动过程连续 seek，松手不额外跳一次）；
  * 时长还没解出来时进度条禁用，避免 0 上限的滑块把当前时间压成 0。
@@ -18,17 +17,13 @@
 
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { Slider } from '@mantine/core';
-import {
-  IconChevronLeft,
-  IconChevronRight,
-  IconPlayerPauseFilled,
-  IconPlayerPlayFilled,
-  IconVolume,
-  IconVolumeOff,
-} from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
 
+import PlayerPauseIcon from '../PlayerIcons/PlayerPauseIcon';
+import PlayerPlayIcon from '../PlayerIcons/PlayerPlayIcon';
+import PlayerStepBackwardIcon from '../PlayerIcons/PlayerStepBackwardIcon';
+import PlayerStepForwardIcon from '../PlayerIcons/PlayerStepForwardIcon';
 import { formatDuration, formatProgressLabel } from '../utils/format-duration';
 
 import SeekPreview from './SeekPreview';
@@ -37,18 +32,12 @@ import { seekPreviewAt } from './utils';
 
 import styles from './index.scss';
 
-/** 控制栏图标的尺寸与线宽：与弹窗 header 同一档 */
-const ICON_SIZE = 16;
-const ICON_STROKE = 1.8;
-
-/** 翻篇箭头比播放键略大一圈：一左一右夹着播放键，要看得出是「前后两格」 */
-const STEP_ICON_SIZE = 18;
+/** 播放键图标尺寸；前后箭头同档 */
+const PLAY_ICON_SIZE = 17;
+const STEP_ICON_SIZE = 15;
 
 /** 翻篇箭头的 tip 只亮这么久就自己收掉：常挂在播放条上会挡住进度 */
 const STEP_TIP_DURATION = 1000;
-
-/** 竖向音量条的高度：只够看刻度与拖动，不像进度条那样占半个画面 */
-const VOLUME_SLIDER_HEIGHT = 56;
 
 /** 指针停下多久才去抽那一帧（毫秒）：扫过去的途中不抽，探针不用一路 seek */
 const HOVER_REQUEST_DELAY = 80;
@@ -67,19 +56,15 @@ const VideoControls = ({
   currentTime,
   duration,
   enabled,
-  muted,
   nav,
   onPreviewFrameChange,
   onSeek,
-  onToggleMute,
   onTogglePlay,
-  onVolumeChange,
   playing,
   previewHeight,
   previewReady,
   previewWidth,
   requestFrame,
-  volume,
 }: VideoControlsProps) => {
   /** 指针落在进度条上时的预览落点：null 表示不显示 */
   const [preview, setPreview] = useState<SeekPreviewState | null>(null);
@@ -230,7 +215,7 @@ const VideoControls = ({
         ) : null}
       </div>
 
-      {/* 下层：左侧前后 / 播放 / 时间，右侧音量与业务操作组 */}
+      {/* 下层：左侧前后 / 播放 / 时间，右侧调用方操作组 */}
       <div className={styles.row}>
         <div className={styles.left}>
           {nav ? (
@@ -240,7 +225,7 @@ const VideoControls = ({
               onClick={nav.onPrevious ?? undefined}
               tipDuration={STEP_TIP_DURATION}
             >
-              <IconChevronLeft size={STEP_ICON_SIZE} stroke={ICON_STROKE} />
+              <PlayerStepBackwardIcon size={STEP_ICON_SIZE} />
             </FreeIconAction>
           ) : null}
 
@@ -250,9 +235,9 @@ const VideoControls = ({
             onClick={onTogglePlay}
           >
             {playing ? (
-              <IconPlayerPauseFilled size={ICON_SIZE} />
+              <PlayerPauseIcon size={PLAY_ICON_SIZE} />
             ) : (
-              <IconPlayerPlayFilled size={ICON_SIZE} />
+              <PlayerPlayIcon size={PLAY_ICON_SIZE} />
             )}
           </FreeIconAction>
 
@@ -263,7 +248,7 @@ const VideoControls = ({
               onClick={nav.onNext ?? undefined}
               tipDuration={STEP_TIP_DURATION}
             >
-              <IconChevronRight size={STEP_ICON_SIZE} stroke={ICON_STROKE} />
+              <PlayerStepForwardIcon size={STEP_ICON_SIZE} />
             </FreeIconAction>
           ) : null}
 
@@ -272,49 +257,7 @@ const VideoControls = ({
           </span>
         </div>
 
-        <div className={styles.right}>
-          {actions}
-
-          {/*
-            音量：喇叭键 + 悬停浮出的竖向音量条。tip 关掉（`tooltip="none"`），
-            否则提示会正好落在浮出的音量条上，两套浮层互相挡。
-          */}
-          <div className={styles.volumeWrap}>
-            <FreeIconAction
-              disabled={!enabled}
-              label={muted ? '取消静音' : '静音'}
-              onClick={onToggleMute}
-              tooltip="none"
-            >
-              {muted ? (
-                <IconVolumeOff size={ICON_SIZE} stroke={ICON_STROKE} />
-              ) : (
-                <IconVolume size={ICON_SIZE} stroke={ICON_STROKE} />
-              )}
-            </FreeIconAction>
-            <div className={styles.volumePopover}>
-              <div className={styles.volumePanel}>
-                <Slider
-                  aria-label="音量"
-                  disabled={!enabled}
-                  /* 自带浮标贴着滑杆右侧，靠弹窗边缘会被裁掉：数字改由下面的 `volumeValue` 出 */
-                  label={null}
-                  max={1}
-                  onChange={onVolumeChange}
-                  orientation="vertical"
-                  size="xs"
-                  step={0.01}
-                  /* 竖向滑杆的高度只能走 styles 覆盖：Mantine 自己给竖版写死 200px，模块类压不过它 */
-                  styles={{ root: { height: VOLUME_SLIDER_HEIGHT } }}
-                  value={muted ? 0 : volume}
-                />
-                <span className={styles.volumeValue}>
-                  {Math.round((muted ? 0 : volume) * 100)}%
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <div className={styles.right}>{actions}</div>
       </div>
     </div>
   );
