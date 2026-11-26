@@ -48,7 +48,8 @@ const VideoEpisodeMenu = ({
       offset={4}
       onChange={applyOpened}
       opened={opened}
-      position="top-end"
+      /* 正上方居中：按钮落在弹层底边中点，而不是贴着弹层右角 */
+      position="top"
       shadow="md"
       width={MENU_WIDTH}
       withArrow
