@@ -55,9 +55,11 @@
   color: var(--app-accent);
 }
 
-/* 收起动画：外层网格行高 1fr → 0fr，内层裁掉溢出内容 */
+/* 收起动画：外层网格行高 1fr → 0fr，内层裁掉溢出内容；
+   外层本身是分组段（flex 列）的子项，min-height 必须放开，否则内容把它撑住、0fr 收不下去 */
 .body {
   display: grid;
+  min-height: 0;
   grid-template-rows: 1fr;
   transition: grid-template-rows 160ms ease;
 }
