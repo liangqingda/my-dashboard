@@ -53,7 +53,19 @@
 
 .bodyInner {
   min-height: 0;
-  overflow: hidden;
+
+  /*
+   * 收起时靠这里裁掉溢出的内容；但「接住」的瓦片会放大一档、还带一圈投影，
+   * 用 `hidden` 会把它贴在段边界的那一侧直接切掉（描边看起来断了一截）。
+   * 换成 `clip` + 留一段边距：只放行这一档放大需要的十几个像素，远处照旧裁掉。
+   */
+  overflow: clip;
+  overflow-clip-margin: 16px;
+}
+
+/* 收起状态下不留那道边距，否则会漏出一条内容 */
+.bodyCollapsed .bodyInner {
+  overflow-clip-margin: 0;
 }
 
 /*
