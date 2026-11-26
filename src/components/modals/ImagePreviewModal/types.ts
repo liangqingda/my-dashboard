@@ -1,11 +1,11 @@
 /**
- * 图片预览弹窗的契约：与视频预览同形——左侧列当前目录的图片，右侧看当前一张。
+ * 图片预览弹窗的契约：与视频预览同形——当前目录的图片列表 + 当前一张的整图。
  */
 
-import type { PreviewSidebarItem } from '@/components/modals/PreviewSidebar/types';
+import type { PreviewItem } from '@/components/modals/PreviewItemList/types';
 
 /** 一条可预览的图片 */
-export type ImagePreviewItem = PreviewSidebarItem & {
+export type ImagePreviewItem = PreviewItem & {
   /** 图片地址（中间件整份返回字节） */
   src: string;
 };
@@ -18,11 +18,11 @@ export type ImagePreviewModalProps = {
   items: readonly ImagePreviewItem[];
   /** 当前条目 id；不在 `items` 里时组件不渲染内容 */
   activeId: string | null;
-  /** 上层浮层（删除确认）开着：整组快捷键与焦点陷阱交给那一层 */
+  /** 上层浮层（删除确认）开着：整组快捷键与焦点陷阱交给那一层，header 也恒可见 */
   blocked?: boolean;
   /** 关闭（内部会先退出整屏） */
   onClose: () => void;
-  /** 切到某一张（翻篇与侧栏点选共用） */
+  /** 切到某一张（翻篇与列表点选共用） */
   onSelect: (id: string) => void;
   /** 请求删除当前图片：只应打开二次确认层；不传则没有删除按钮与删除键 */
   onRequestDelete?: (() => void) | null;

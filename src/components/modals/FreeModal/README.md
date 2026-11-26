@@ -14,11 +14,14 @@
   业务弹窗不再各自挑底色。`height="auto"` 的普通弹窗同样成立（没有侧栏时就是「header 一档、正文一档」）。
 - **header**：紧凑版（上下内边距 6px，高度由行内最高按钮决定，约 41px），用 `.content .header`
   双类名压掉 Mantine 的 `min-height` —— 单类名会被它那套 padding / min-height 顶回来。
-- **header 的两种排布**：默认在正文上方占一行（普通流）；传 `headerOverlay` 后改为浮层
-  （absolute，相对 `.content`——它同时充当定位祖先，否则浮层会爬到视口顶部、看着像全屏 header）
-  压住正文顶部，配合 `headerHidden` 淡出上移——视频这类「平时藏起来、
-  动鼠标才浮出」的弹窗用它，收起时正文能占满整块高度。浮层 header 走毛玻璃：半透明 chrome
-  渐变 + 背景虚化，与播放器控制栏同一口径；普通流 header 仍是实心 chrome 底。隐藏只改外观，按钮仍由调用方决定是否可用。
+- **header 浮层与自动隐藏**（`headerAutoHide`）：只给媒体预览（图片 / 视频）这类「打开先看画面」
+  的弹窗用——header 不再占正文上方一行，改为 absolute 浮在正文顶部（相对 `.content`，它同时充当
+  定位祖先，否则浮层会爬到视口顶部、看着像全屏 header）；浮层走毛玻璃：半透明 chrome 渐变 +
+  背景虚化，与播放器控制栏同一口径；隐藏时淡出上移、不接收指针事件，160ms 过渡。
+  显隐由外壳算（`hooks/useAutoHideHeader`）：打开即收起态，鼠标一动浮出，静止 1s 收起，指针停在 header 上不收起；
+  业务侧只传三件事——`suspended`（设置面板 / 列表弹层 / 二次确认开着时暂停自动隐藏）、
+  `pinned`（点击固定）、`resetToken`（要让已经亮着的 header 当场收起时加一，典型是解除固定）。
+  普通流 header 仍是实心 chrome 底。
 - **header 里的按钮**：翻页与全屏走 `FreeIconAction`（`size="sm"`、语气恒为 `normal`、tip 与 `aria-label` 同句，
   键位提示走 `tooltipLabel`），**外壳不自维护图标按钮样式**；关闭按钮是组件库 `Modal` 内建的 `closeButton`。
 - **header 的顺序与间距**：翻页与计数 → 标题 → `headerActions` → 全屏 → `headerTail` →
@@ -75,7 +78,7 @@
 | `headerActions` | 第一组操作（阅读类：复制、筛选、刷新…） |
 | `headerTail` | 排在全屏之后的末尾位，保证「删除」始终在最右 |
 | `headerSecondary` | 第二组操作（如编辑流程），紧接在 `headerTail` 之后、关闭按钮的竖线之前 |
-| `headerOverlay` / `headerHidden` | header 是否浮在正文之上（绝对定位）、是否处于隐藏态（淡出上移、不接收指针事件）；只影响外观，不卸载按钮 |
+| `headerAutoHide` | `{ pinned?, suspended?, resetToken? }`；传了就把 header 改成毛玻璃浮层并接管显隐（打开即收起、鼠标一动浮出、静止 1s 收起、指针停在 header 上不收起、隐藏时不接收指针事件）；`suspended` 暂停自动隐藏并恒可见，`pinned` 点击固定，`resetToken` 加一让已亮着的 header 当场按收起态算。收起只影响外观，不卸载按钮 |
 | `overlayTone` | 遮罩色调：`light`（默认）给普通弹窗，`dark` 给图片 / 视频这类要靠深底看画面的预览；两档的虚化与饱和同一套，只换底色 |
 | `media` | `{ onTogglePlay, onToggleMute }`；传了 `onTogglePlay` 之后空格切播放 / 暂停、不再关窗，传了 `onToggleMute` 才有 `M` 静音 |
 | `tipDark` | 可选。header 内按钮与标题的 tip 固定深底浅字、不随主题反转；媒体预览压在画面上的提示用 |

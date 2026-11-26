@@ -22,12 +22,10 @@ import PreviewCounter from '@/components/feedback/PreviewCounter';
 import FreeVideo from '@/components/file-preview/FreeVideo';
 import { VIDEO_FALLBACK_ASPECT } from '@/components/file-preview/FreeVideo/constants';
 import { useBrowserFullscreen } from '@/hooks/useBrowserFullscreen';
-import FreeModal, { MODAL_HEADER_SELECTOR } from '@/components/modals/FreeModal';
+import FreeModal from '@/components/modals/FreeModal';
 import type { FreeModalSeekDirection } from '@/components/modals/FreeModal/types';
 import { cx } from '@/utils/cx';
 
-import { HEADER_HIDE_DELAY } from './constants';
-import { useAutoHideHeader } from './hooks/useAutoHideHeader';
 import { useFrameCapture } from './hooks/useFrameCapture';
 import { useVideoSettings } from './hooks/useVideoSettings';
 import type { VideoPreviewModalProps } from './types';
@@ -83,17 +81,6 @@ const VideoPreviewModal = ({
   const { viewportFullscreen } = settings;
   const toggleViewportFullscreen = () =>
     setViewportFullscreen(!viewportFullscreen);
-
-  /**
-   * header 是浮层：平时盖住画面顶部，指针静止一会儿就收起；
-   * 设置面板 / 删除确认开着时恒可见，免得面板跟着 header 一起藏起来。
-   */
-  const headerVisible = useAutoHideHeader(
-    !settingsOpen && !blocked,
-    HEADER_HIDE_DELAY,
-    undefined,
-    MODAL_HEADER_SELECTOR,
-  );
 
   /** `←` / `→`：按设置的步长快进 / 后退；方向键交给它之后翻篇只剩方括号 */
   const seekBy = (direction: FreeModalSeekDirection) => {
@@ -224,6 +211,10 @@ const VideoPreviewModal = ({
    */
   const aspectFrame = !fullscreen && !viewportFullscreen;
 
+  /*
+   * header 是浮层：设置面板 / 删除确认开着时暂停自动隐藏，免得面板跟着 header 一起藏起来；
+   * 其余时候打开即收起、鼠标一动浮出、静止 1s 收起（`FreeModal` 的 `headerAutoHide`）。
+   */
   return (
     <FreeModal
       closeOnEscape={!fullscreen && !settingsOpen && !interactionBlocked}
@@ -240,8 +231,7 @@ const VideoPreviewModal = ({
         onToggle: toggleBrowserFullscreen,
         showToggle: false,
       }}
-      headerHidden={!headerVisible}
-      headerOverlay
+      headerAutoHide={{ suspended: settingsOpen || blocked }}
       innerClassName={viewportFullscreen ? styles.innerFullscreen : undefined}
       media={{
         onToggleMute: toggleMute,

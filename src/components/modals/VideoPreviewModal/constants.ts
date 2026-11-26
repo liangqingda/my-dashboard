@@ -1,5 +1,5 @@
 /**
- * 视频预览弹窗的常量：自动隐藏时长、截图提示、设置项字段与默认值、快捷键清单。
+ * 视频预览弹窗的常量：截图提示、设置项字段与默认值、快捷键清单。
  *
  * 偏好按「一个命名空间一个对象」存在 localStorage，字段名与编解码都在这里定一次；
  * 命名空间的页面标识由调用方传入（`storageScope`），本组件不写死是哪一页。
@@ -7,9 +7,6 @@
 
 import type { StoredFieldCodec } from '@/utils/local-storage';
 import { createChoiceFieldCodec } from '@/utils/local-storage';
-
-/** 全屏后鼠标静止多久收起 header（毫秒）：与播放器控制栏同一个节奏 */
-export const HEADER_HIDE_DELAY = 1000;
 
 /** 截图成功通知的标题 */
 export const CAPTURE_NOTICE_TITLE = '已保存截图';

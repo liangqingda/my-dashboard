@@ -1,17 +1,10 @@
-/* 图片预览弹窗：左侧图片列表 + 右侧整图（舞台自己撑满），这里只排这两列的横向关系 */
+/* 图片预览弹窗：整图铺满正文（header 是浮在上面的毛玻璃条，显隐归 FreeModal） */
 
-/* 计数浮标的定位基准：贴在这一层（预览区）的左上角 */
-.layout {
-  position: relative;
-  display: flex;
-  flex: 1 1 auto;
-  min-width: 0;
-  min-height: 0;
-}
-
-/* 图片整块可点：点一下收起 / 展开 header 与列表，指针给「能点」的提示；
-   也是计数浮标的定位基准——贴着画面左上角，不被左侧列表挤到列表上面去 */
-.stageButton {
+/*
+ * 图片整块可点：点一下固定 / 解除固定 header，指针给「能点」的提示；
+ * 同时是计数浮标的定位基准——贴着画面左上角。
+ */
+.stage {
   position: relative;
   display: flex;
   flex: 1 1 auto;

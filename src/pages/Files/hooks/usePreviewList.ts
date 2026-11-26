@@ -14,13 +14,13 @@ import type { DirListing, FileCategory, FileEntry } from '../types';
 
 /** 预览列表 hook 的返回 */
 export type PreviewListResult = {
-  /** 当前目录里的这一类文件（按文件名顺序，翻篇与侧栏都用它） */
+  /** 当前目录里的这一类文件（按文件名顺序，翻篇与列表点选都用它） */
   items: FileEntry[];
   /** 正在预览的路径；null 表示弹层关着（或选中项已不在列表里） */
   activeId: string | null;
   /** 打开某一条 */
   open: (file: FileEntry) => void;
-  /** 切到另一条（翻篇与侧栏点选都走它） */
+  /** 切到另一条（翻篇与列表点选都走它） */
   select: (id: string) => void;
   /** 关闭预览 */
   close: () => void;

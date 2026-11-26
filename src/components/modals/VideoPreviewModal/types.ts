@@ -5,12 +5,10 @@
  * - 界面偏好存在 localStorage，命名空间由调用方给（`storageScope`）。
  */
 
+import type { PreviewItem } from '@/components/modals/PreviewItemList/types';
+
 /** 弹窗里可切换的一条视频 */
-export type VideoPreviewItem = {
-  /** 条目唯一标识（页面用文件路径） */
-  id: string;
-  /** 展示名（文件名） */
-  name: string;
+export type VideoPreviewItem = PreviewItem & {
   /** 视频地址（浏览器可直接播放的 URL） */
   src: string;
 };

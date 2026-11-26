@@ -15,7 +15,7 @@ import { usePreviewList } from './usePreviewList';
 
 /** 图片预览 hook 的返回 */
 export type UseImagePreviewResult = {
-  /** 弹窗条目：当前目录里的图片，顺序即翻篇与侧栏顺序；`src` 整份返回 */
+  /** 弹窗条目：当前目录里的图片，顺序即翻篇与列表顺序；`src` 整份返回 */
   items: ImagePreviewItem[];
   /** 正在预览的图片路径；null 表示弹窗关闭 */
   activeId: string | null;
@@ -23,7 +23,7 @@ export type UseImagePreviewResult = {
   activeItem: ImagePreviewItem | null;
   /** 打开某一张图片 */
   openImage: (file: FileEntry) => void;
-  /** 切到另一张（翻篇与侧栏点选都走它） */
+  /** 切到另一张（翻篇与列表点选都走它） */
   selectImage: (id: string) => void;
   /** 关闭预览 */
   closeImage: () => void;

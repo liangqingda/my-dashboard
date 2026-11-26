@@ -5,21 +5,17 @@
  * 按钮与弹层都走公共的 `IconPopoverButton`：弹层开着时按钮像设置那颗一样保持主色（`active`），
  * 一眼看得出这一层是它开出来的；弹层开在按钮正上方（控制栏贴着画面下沿，向下会顶出屏幕）。
  *
- * 不做常驻列表：B 站式播放器把目录收进这一层，舞台始终只留画面；列表长短由调用方给，
- * 弹层内部到顶自己滚。
+ * 不做常驻列表：B 站式播放器把目录收进这一层，舞台始终只留画面；条目怎么排、怎么滚归
+ * `PreviewItemList`（与图片预览的图片列表同一份），这里只管按钮、落点与开合。
  */
 
 import { useState } from 'react';
-import { UnstyledButton } from '@mantine/core';
 import { IconPlaylist } from '@tabler/icons-react';
 
 import IconPopoverButton from '@/components/buttons/IconPopoverButton';
-import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
-import { cx } from '@/utils/cx';
+import PreviewItemList from '@/components/modals/PreviewItemList';
 
 import type { VideoEpisodeMenuProps } from './types';
-
-import styles from './index.scss';
 
 /** 与控制栏其它图标同一档 */
 const ICON_SIZE = 15;
@@ -62,32 +58,15 @@ const VideoEpisodeMenu = ({
       tipDark={tipDark}
       width={MENU_WIDTH}
     >
-      <div className={styles.list}>
-        {items.map((item) => {
-          const active = item.id === activeId;
-
-          return (
-            <UnstyledButton
-              aria-current={active}
-              className={cx(styles.item, active && styles.itemActive)}
-              key={item.id}
-              onClick={() => {
-                onSelect(item.id);
-                applyOpened(false);
-              }}
-              type="button"
-            >
-              <FreeTruncatedText
-                className={styles.name}
-                ellipsis="middle"
-                lines={1}
-                text={item.name}
-                tipDark={tipDark}
-              />
-            </UnstyledButton>
-          );
-        })}
-      </div>
+      <PreviewItemList
+        activeId={activeId}
+        items={items}
+        onSelect={(id) => {
+          onSelect(id);
+          applyOpened(false);
+        }}
+        tipDark={tipDark}
+      />
     </IconPopoverButton>
   );
 };

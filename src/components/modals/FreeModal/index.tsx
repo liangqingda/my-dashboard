@@ -21,6 +21,8 @@ import FreeIconAction from '@/components/buttons/FreeIconAction';
 import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
 import { cx } from '@/utils/cx';
 
+import { HEADER_HIDE_DELAY } from './constants';
+import { useAutoHideHeader } from './hooks/useAutoHideHeader';
 import { useModalShortcuts } from './hooks/useModalShortcuts';
 import type { FreeModalProps } from './types';
 
@@ -37,11 +39,8 @@ const OVERLAY_FOCUS_GUARD_MS = 400;
 /** 翻页的默认快捷键提示，只进 tooltip */
 const NAV_SHORTCUT_HINT = '[ / ← · ] / →';
 
-/**
- * header 那一行的选择器：给「指针停在 header 上就别自动收起」这类调用方用。
- * 由本组件的样式模块算出——外壳的 class 是哈希后的，写死字符串必失效。
- */
-export const MODAL_HEADER_SELECTOR = `.${styles.header}`;
+/** header 那一行的选择器：给「指针停在 header 上就别自动收起」用（class 是哈希后的，只能由本组件算） */
+const MODAL_HEADER_SELECTOR = `.${styles.header}`;
 
 /**
  * 基础弹窗外壳。业务侧只管「标题是什么、右侧放哪些操作、正文是什么」，
@@ -62,8 +61,7 @@ const FreeModal = ({
   extraKeys,
   fullscreen,
   headerActions,
-  headerHidden = false,
-  headerOverlay = false,
+  headerAutoHide,
   headerSecondary,
   headerTail,
   height = 'reading',
@@ -89,6 +87,23 @@ const FreeModal = ({
    */
   const fullscreenToggleVisible = fullscreen?.showToggle !== false;
   const onToggleFullscreen = fullscreen?.onToggle;
+
+  /**
+   * header 浮层 + 自动隐藏：只有媒体预览这类「打开先看画面」的弹窗会传 `headerAutoHide`。
+   * 显隐由外壳算——暂停（面板 / 弹层 / 确认层开着）与被点击固定时恒可见，其余时候
+   * 打开即收起、鼠标一动浮出、静止 1s 收起；业务侧不再自己管可见态。
+   */
+  const headerIsOverlay = headerAutoHide !== undefined;
+  const autoHideVisible = useAutoHideHeader(
+    headerAutoHide !== undefined &&
+      !headerAutoHide.pinned &&
+      !headerAutoHide.suspended,
+    HEADER_HIDE_DELAY,
+    MODAL_HEADER_SELECTOR,
+    headerAutoHide?.resetToken,
+  );
+  /** 收起态只对浮层 header 有意义：普通流 header 不参与显隐 */
+  const headerHidden = headerIsOverlay && !autoHideVisible;
 
   /**
    * 空格关窗与翻页 / 全屏 / 复制 / 删除快捷键：业务弹窗不用各自实现。
@@ -161,7 +176,7 @@ const FreeModal = ({
         inner: innerClassName,
         header: cx(
           styles.header,
-          headerOverlay && styles.headerOverlay,
+          headerIsOverlay && styles.headerOverlay,
           headerHidden && styles.headerHidden,
         ),
         title: styles.title,

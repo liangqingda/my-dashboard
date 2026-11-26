@@ -25,13 +25,13 @@ import { usePreviewList } from './usePreviewList';
 
 /** 视频预览 hook 的返回 */
 export type UseVideoPreviewResult = {
-  /** 弹窗条目：当前目录里的视频，顺序即翻篇与侧栏顺序；`src` 走 Range 流 */
+  /** 弹窗条目：当前目录里的视频，顺序即翻篇与选集顺序；`src` 走 Range 流 */
   items: VideoPreviewItem[];
   /** 正在预览的视频路径；null 表示弹窗关闭 */
   activeId: string | null;
   /** 打开某一条视频 */
   openVideo: (file: FileEntry) => void;
-  /** 切到另一条（遮罩层里的翻篇与侧栏点选都走它） */
+  /** 切到另一条（遮罩层里的翻篇与选集点选都走它） */
   selectVideo: (id: string) => void;
   /** 关闭预览 */
   closeVideo: () => void;
