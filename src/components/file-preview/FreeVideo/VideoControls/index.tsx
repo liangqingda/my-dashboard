@@ -134,6 +134,7 @@ const VideoControls = ({
           classNames={{
             bar: styles.bar,
             label: cx(tipDark && styles.labelDark),
+            thumb: styles.thumb,
             track: styles.track,
           }}
           disabled={!enabled || duration <= 0}

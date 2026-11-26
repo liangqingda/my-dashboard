@@ -78,6 +78,53 @@
   background-color: color-mix(in srgb, var(--slider-color) 78%, transparent);
 }
 
+/*
+ * 滑块：圆点画在 `::before` 上，盒子本身不再上色——
+ * 盒子仍是 16px（`--slider-thumb-size`），命中区、`--slider-thumb-offset` 几何、挂在盒子里的
+ * 数字浮标都不受影响；没 hover 时 `::before` 只有 9px（4px 细轨道配 16px 大圆点不合理），
+ * 指针进到进度条才长回 16px，拖动时再撑一档。
+ */
+.progress .thumb {
+  border: 0;
+  background-color: transparent;
+  box-shadow: none;
+}
+
+.progress .thumb::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 9px;
+  height: 9px;
+  margin: auto;
+  border: 2px solid var(--slider-color);
+  border-radius: 50%;
+  background-color: var(--mantine-color-white);
+  transition:
+    width 120ms ease,
+    height 120ms ease,
+    border-width 120ms ease;
+}
+
+/* 深色主题下主色圆点配白环（口径同 Mantine 自己的滑块） */
+:where([data-mantine-color-scheme='dark']) .progress .thumb::before {
+  border-color: var(--mantine-color-white);
+  background-color: var(--slider-color);
+}
+
+.progressWrap:hover .thumb::before {
+  width: 16px;
+  height: 16px;
+  border-width: 4px;
+}
+
+/* 拖动中：触屏没有 hover，靠这一档把小圆点撑开，按住时才看得清抓的是什么 */
+.progress .thumb[data-dragging]::before {
+  width: 16px;
+  height: 16px;
+  border-width: 4px;
+}
+
 /* 滑杆浮标：固定深底浅字，不跟着主题反转（口径同按钮 tip） */
 .labelDark {
   background-color: var(--app-tip-dark-bg);
