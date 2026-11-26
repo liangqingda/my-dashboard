@@ -32,6 +32,11 @@ export type FolderTileProps = {
   /** 是当前拖拽的放置目标 */
   dropActive?: boolean;
   /**
+   * 直接拖模式下正往这一格里搬：`done / total` 让瓦片接着当进度条，
+   * 不再弹一个盖住全屏的进度窗。
+   */
+  progress?: { done: number; total: number } | null;
+  /**
    * 是禁用落点：直接拖模式下这一格自己在待拖拽区里，不能再往里放东西。
    * 画成虚线圈并把指针压暗，格子里补一句原因。
    */

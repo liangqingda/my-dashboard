@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 
 import DragGhost from '../DragGhost';
+import DragTiles from '../DragTiles';
 import PendingFlightLayer from '../PendingFly';
 import PendingTray from '../PendingTray';
 
@@ -25,6 +26,7 @@ import styles from './index.scss';
 const FilesDragLayers = ({
   dragAllDisabled,
   dragEntries,
+  dragImage,
   entryActions,
   onDragAll,
   onDropPaths,
@@ -78,12 +80,13 @@ const FilesDragLayers = ({
         placeholderPath={pending.flight?.entry.path ?? null}
       />
 
-      {ghostEntries === null ? null : (
-        <DragGhost
-          entries={ghostEntries}
-          showCount={pending.trayDrag === null}
-        />
+      {/* 直接拖模式拎的是整条瓦片；其它两程仍是一叠小图标 */}
+      {dragEntries === null || dragImage === null ? null : (
+        <DragTiles image={dragImage} many={dragEntries.length > 1 ? dragEntries.length : null} />
       )}
+      {dragEntries === null && ghostEntries !== null ? (
+        <DragGhost entries={ghostEntries} showCount={pending.trayDrag === null} />
+      ) : null}
 
       {pending.flight === null ? null : (
         <PendingFlightLayer flight={pending.flight} onDone={pending.clearFlight} />

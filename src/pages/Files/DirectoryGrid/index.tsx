@@ -1,8 +1,9 @@
-import type { DragEvent, MouseEvent, ReactNode } from 'react';
+import type { MouseEvent, ReactNode } from 'react';
 import { useMemo } from 'react';
 
 import { cx } from '@/utils/cx';
 
+import { useBlankDrop } from '../hooks/useBlankDrop';
 import AppTile from '../AppTile';
 import EntryGroupHeader from '../EntryGroupHeader';
 import { ENTRY_GROUP_LABELS } from '../constants';
@@ -16,14 +17,6 @@ import { tileIconSize } from '../utils/tile-metrics';
 import type { DirectoryGridProps } from './types';
 
 import styles from './index.scss';
-
-/** 网格空白处也吞掉 dragover，免得掠过瓦片间隙时浏览器把光标打回「禁止放置」 */
-const allowMoveOverGrid = (event: DragEvent<HTMLDivElement>) => {
-  const { dataTransfer } = event;
-
-  event.preventDefault();
-  dataTransfer.dropEffect = 'move';
-};
 
 /**
  * 目录网格：子文件夹排在前、应用其次、文件排在后，自适应列宽铺满内容区。
@@ -62,6 +55,7 @@ const DirectoryGrid = ({
   dragPaths,
   dropBlockedPath,
   dropTarget,
+  folderProgress,
   files,
   fixedColumns,
   folders,
@@ -72,6 +66,7 @@ const DirectoryGrid = ({
   onDragLeaveFolder,
   onDragOverFolder,
   onDragStartEntry,
+  onDropBlank,
   onDropFolder,
   onEditEntry,
   onOpenApp,
@@ -109,6 +104,26 @@ const DirectoryGrid = ({
     return map;
   }, [files, folders]);
 
+  /**
+   * 这次搬家落在哪一格：只给命中的那一格递 `{ done, total }`，
+   * 且对象按 `folderProgress` 缓存，免得每次渲染都把整网格的 `memo` 全部打穿。
+   */
+  const moveProgressByDir = useMemo(() => {
+    if (folderProgress === null) {
+      return new Map<string, { done: number; total: number }>();
+    }
+
+    return new Map([
+      [
+        folderProgress.targetDir,
+        { done: folderProgress.done, total: folderProgress.total },
+      ],
+    ]);
+  }, [folderProgress]);
+
+  /** 空白处落手＝搬进当前这一层（与表格共用一套判定） */
+  const blank = useBlankDrop(onDropBlank);
+
   /** 文件按分类归段：分组模式下每一段一种分类 */
   const fileGroups = useMemo(() => groupFilesByCategory(files), [files]);
 
@@ -120,17 +135,23 @@ const DirectoryGrid = ({
      * 用 `Element` 而不是 `HTMLElement`：文件夹 / 文件图标是 SVG，
      * 点图标时目标不是 HTML 元素，按 `HTMLElement` 判会漏掉「点图标选中」这一路。
      */
-    if (target instanceof Element && target.closest('[data-tile-actions]') !== null) {
+    if (
+      target instanceof Element &&
+      target.closest('[data-tile-actions]') !== null
+    ) {
       return;
     }
 
-    const tile = target instanceof Element ? target.closest('[data-entry-path]') : null;
+    const tile =
+      target instanceof Element ? target.closest('[data-entry-path]') : null;
 
     if (!(tile instanceof HTMLElement)) {
       return;
     }
 
-    const entry = tile.dataset.entryPath ? byPath.get(tile.dataset.entryPath) : undefined;
+    const entry = tile.dataset.entryPath
+      ? byPath.get(tile.dataset.entryPath)
+      : undefined;
 
     if (entry === undefined) {
       return;
@@ -169,6 +190,7 @@ const DirectoryGrid = ({
         onOpen={onOpenFolder}
         onRequestDelete={() => onRequestDeleteEntry(folder.path)}
         pending={pendingSet.has(folder.path)}
+        progress={moveProgressByDir.get(folder.path) ?? null}
         tipOff={tipsOff}
         veilOpacity={veilOpacity}
       />
@@ -250,14 +272,18 @@ const DirectoryGrid = ({
 
   return (
     <div
-      className={
+      className={cx(
         grouped
           ? styles.grouped
-          : cx(styles.grid, fixedColumns && styles.gridFixed)
-      }
+          : cx(styles.grid, fixedColumns && styles.gridFixed),
+        blank.blankOver && styles.blankActive,
+      )}
       onClickCapture={handleClickCapture}
-      onDragOver={allowMoveOverGrid}
+      {...blank.handlers}
     >
+      {blank.blankOver ? (
+        <span className={styles.blankHint}>松开即移入当前目录</span>
+      ) : null}
       {grouped ? (
         renderGrouped()
       ) : (

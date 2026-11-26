@@ -11,7 +11,8 @@
 import { useRef, useState } from 'react';
 import type { DragEvent } from 'react';
 
-import type { DirectMoveArgs, DraggableEntry } from '../types';
+import type { DirectMoveArgs, DraggableEntry, DragTileImage } from '../types';
+import { captureTileImage } from '../utils/drag-tile-image';
 
 import type { MoveProgress } from './use-drag-move/types';
 import { MIN_MOVE_MS } from './use-drag-move/constants';
@@ -40,12 +41,15 @@ export const useDirectMove = ({ moveEntry, onMoved }: DirectMoveArgs) => {
   const [blockedPath, setBlockedPath] = useState<string | null>(null);
   /** 正在搬的进度；null 表示没在搬 */
   const [progress, setProgress] = useState<MoveProgress | null>(null);
+  /** 起拖那一刻拷下的那条瓦片：拖拽影像按它原样画，拖动期间不再变 */
+  const [image, setImage] = useState<DragTileImage | null>(null);
   /** 移动请求在飞：挡住重复松手带来的第二次提交 */
   const busyRef = useRef(false);
 
   /** 拖起这一批：不清进度窗，搬家过程中也不该再有拖拽 */
   const begin = (entries: DraggableEntry[]) => {
     setDragging(entries);
+    setImage(captureTileImage(entries[0]?.path));
     setHoverPath(null);
     setBlockedPath(null);
   };
@@ -53,6 +57,7 @@ export const useDirectMove = ({ moveEntry, onMoved }: DirectMoveArgs) => {
   /** 拖拽结束（松手 / Esc / 落在别处）：把高亮与禁用提示一起收掉 */
   const end = () => {
     setDragging(null);
+    setImage(null);
     setHoverPath(null);
     setBlockedPath(null);
   };
@@ -125,6 +130,7 @@ export const useDirectMove = ({ moveEntry, onMoved }: DirectMoveArgs) => {
     begin,
     blockedPath,
     dragging,
+    image,
     dragOver,
     drop,
     end,

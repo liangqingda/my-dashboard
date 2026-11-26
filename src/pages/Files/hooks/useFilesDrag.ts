@@ -27,6 +27,8 @@ export type UseFilesDragArgs = {
   files: FileEntry[];
   /** 设置里的拖拽走法 */
   moveMode: MoveMode;
+  /** 当前目录：直接拖模式下拖到空白处＝搬进这一层 */
+  currentDir: string;
 };
 
 /** 列表拖拽的统一入口 */
@@ -36,6 +38,7 @@ export const useFilesDrag = ({
   folders,
   files,
   moveMode,
+  currentDir,
 }: UseFilesDragArgs) => {
   /**
    * 直接拖拽移动：列表里拖起条目不开弹窗，目标就是列表里的文件夹瓦片；
@@ -110,6 +113,12 @@ export const useFilesDrag = ({
     entryActions.dragLeaveFolder();
   };
 
+  /**
+   * 松手落在列表的空白处：直接拖模式下等于「搬进当前这一层」；
+   * 弹窗模式没有这个语义（落点只有文件夹瓦片和弹窗里的当前层），给 undefined 让列表别接。
+   */
+  const handleDropBlank = isDirect ? () => void direct.drop(currentDir) : undefined;
+
   /** 松手放进文件夹：直接拖模式自己搬，弹窗那套走会话的落点 */
   const handleDropFolder = (path: string) => {
     if (isDirect) {
@@ -137,17 +146,23 @@ export const useFilesDrag = ({
   const dropBlockedPath = isDirect ? direct.blockedPath : null;
   /** 直接拖模式正拖的那一批：交给拖拽影像跟着指针画，否则拖起来屏幕上看不出拖的是什么 */
   const dragEntries = isDirect ? direct.dragging : null;
-  /** 正在搬的进度：弹窗模式取会话那份，直接拖模式取自己的 */
-  const moveProgress = isDirect ? direct.progress : entryActions.dragMove.progress;
+  /** 那条瓦片的快照（起拖那一刻拷的）：影像按它原样画 */
+  const dragImage = isDirect ? direct.image : null;
+  /** 搬家的进度：直接拖模式画在目标文件夹上，弹窗模式才进进度弹窗 */
+  const moveProgress = isDirect ? null : entryActions.dragMove.progress;
+  const folderProgress = isDirect ? direct.progress : null;
 
   return {
     dragEntries,
+    dragImage,
     dragPaths,
     dropBlockedPath,
     dropTarget,
     handleDragAll,
+    folderProgress,
     handleDragEnd,
     handleDragLeaveFolder,
+    handleDropBlank,
     handleDragOverFolder,
     handleListDragStart,
     handleDropFolder,

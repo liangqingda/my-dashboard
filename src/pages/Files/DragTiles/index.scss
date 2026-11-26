@@ -1,0 +1,67 @@
+/*
+ * 整条瓦片的拖拽影像：位置由内联坐标给，这里只管「浮起来」的观感。
+ * `pointer-events: none` 是关键——它压在指针下面，不能吃掉下方瓦片的 dragover。
+ */
+
+.ghost {
+  position: fixed;
+  z-index: 720;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0.94);
+  animation: tile-ghost-in 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  &[data-placed='false'] {
+    opacity: 0;
+    animation: none;
+  }
+}
+
+/* 拷来的瓦片：压一层投影、半透明，看得出是「拎在手上的那一份」而不是原位那个 */
+.tile {
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: 0 18px 32px -12px rgb(23 37 34 / 32%);
+  opacity: 0.92;
+
+  & > * {
+    pointer-events: none;
+  }
+}
+
+/* 数量：右上角的红点，多条时才出现 */
+.count {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding-inline: 5px;
+  border-radius: 999px;
+  background: var(--app-status-danger-fill);
+  box-shadow: 0 2px 6px rgb(23 37 34 / 24%);
+  color: var(--mantine-color-white);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+@keyframes tile-ghost-in {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.94);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ghost {
+    animation: none;
+  }
+}

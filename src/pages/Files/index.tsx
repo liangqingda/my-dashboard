@@ -60,14 +60,8 @@ import styles from './index.scss';
 const Files = () => {
   /** 收藏 hook 整个留着：拖拽弹窗里的收藏面板直接复用同一套动作 */
   const favoritesHook = useFavorites();
-  const {
-    favorites,
-    isFavorite,
-    moveFavorite,
-    removeFavorite,
-    toggleFavorite,
-    togglePinnedFavorite,
-  } = favoritesHook;
+  const { favorites, isFavorite, moveFavorite, removeFavorite, toggleFavorite, togglePinnedFavorite } =
+    favoritesHook;
   /** 从没打开过目录时默认进收藏里的第一条（固定项在前）；推出外接盘也回到这里 */
   const defaultFavoriteDir = favorites[0]?.path ?? null;
   const {
@@ -128,6 +122,7 @@ const Files = () => {
     entryActions,
     files: allFiles,
     folders,
+    currentDir: listing?.path ?? '',
     moveMode: settings.moveMode,
     pending,
   });
@@ -279,6 +274,7 @@ const Files = () => {
             dropTarget={drag.dropTarget}
             files={list.visibleFiles}
             fixedColumns={isAppCatalogPath(listing.path)}
+            folderProgress={drag.folderProgress}
             folders={list.visibleFolders}
             grouped={settings.grouped}
             isGridView={isGridView}
@@ -289,6 +285,7 @@ const Files = () => {
             onDragLeaveFolder={drag.handleDragLeaveFolder}
             onDragOverFolder={drag.handleDragOverFolder}
             onDragStartEntry={drag.handleListDragStart}
+            onDropBlank={drag.handleDropBlank}
             onDropFolder={drag.handleDropFolder}
             onEditEntry={entryActions.editEntry}
             onOpenApp={launchApp}
@@ -316,6 +313,7 @@ const Files = () => {
         drag={{
           dragAllDisabled: drag.isDirect && list.visibleFolders.length === 0,
           dragEntries: drag.dragEntries,
+          dragImage: drag.dragImage,
           entryActions,
           onDragAll: drag.handleDragAll,
           onDropPaths: drag.handleTrayDrop,

@@ -4,6 +4,7 @@
 
 import type { DragEvent } from 'react';
 
+import type { MoveProgress } from '../hooks/use-drag-move/types';
 import type {
   AppEntry,
   EntryGroupKey,
@@ -21,6 +22,8 @@ export type FilesEntriesProps = {
   /** 当前拖拽源条目路径；null 表示没在拖拽 */
   /** 正在被拖走的条目路径（直接拖模式下可能是一批） */
   dragPaths: string[];
+  /** 直接拖模式下正在搬家：落在哪个文件夹、搬到第几条（画在目标文件夹上，不进进度弹窗） */
+  folderProgress: MoveProgress | null;
   /** 当前悬停的放置目标文件夹路径；null 表示没有目标 */
   dropTarget: string | null;
   /**
@@ -73,6 +76,8 @@ export type FilesEntriesProps = {
   /** 开始拖拽一条目：路径用于移动，名字用于移动弹窗标题 */
   onDragStartEntry: (entry: FolderEntry | FileEntry) => void;
   /** 松手放入某文件夹 */
+  /** 松手落在列表空白处（直接拖模式＝搬进当前这一层）；undefined 表示这一模式不接 */
+  onDropBlank?: () => void;
   onDropFolder: (path: string) => void;
   /** 重命名某个条目 */
   onEditEntry: (entry: FolderEntry | FileEntry) => void;

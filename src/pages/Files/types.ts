@@ -243,6 +243,9 @@ export type EjectVolumeResult =
       message: string;
     };
 
+/** 一条瓦片的快照：拷下来的 HTML 本体 + 当时量到的尺寸（拖拽影像按它画） */
+export type DragTileImage = { height: number; html: string; width: number };
+
 /** 直接拖拽移动 hook 的入参：搬一条、搬完把搬走的条目回给页面（页面据此清待拖拽区） */
 export type DirectMoveArgs = {
   /** 执行移动；成功返回 true（失败原因由它自己弹通知） */

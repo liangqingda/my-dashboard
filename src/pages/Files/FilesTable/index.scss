@@ -33,6 +33,54 @@
   outline-offset: -1px;
 }
 
+/*
+ * 正往这一行对应的文件夹里搬：整行压成强调底色、左侧补一条强调边，
+ * 类别列改写成「正在移动 x/y」——直接拖模式不再弹那块盖住全屏的进度窗。
+ */
+.receiving {
+  background: var(--app-surface-hover);
+  box-shadow: inset 2px 0 0 var(--app-accent);
+}
+
+/*
+ * 指针压在行与行之间的空白处：直接拖模式下这里落手＝搬进当前这一层。
+ */
+.blankActive {
+  position: relative;
+  border-radius: 10px;
+  outline: 2px dashed var(--app-accent);
+  outline-offset: 4px;
+}
+
+.blankHint {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  z-index: 3;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--app-accent);
+  color: #fff;
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translateX(-50%);
+  animation: blank-hint-in 160ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes blank-hint-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
 /* 文件夹行整行可点（进下一层）：文件行没有打开行为，不给可点光标 */
 .clickable {
   cursor: pointer;

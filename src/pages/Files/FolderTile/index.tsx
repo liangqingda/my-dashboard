@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Loader, UnstyledButton } from '@mantine/core';
+import { Loader, Progress, UnstyledButton } from '@mantine/core';
 import { IconFolderFilled } from '@tabler/icons-react';
 
 import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
@@ -23,8 +23,23 @@ const FOLDER_ICON_VIEWBOX = '1.8 2.8 20.4 17.4';
 /** 禁用落点的说明：它自己在待拖拽区里，拖进去等于原地打转 */
 const HINT_BLOCKED = '在待拖拽区里，不能放';
 
-/** 计数位内容：取数期间换成进度，不显示条目数以免误导 */
-const renderFolderMeta = (folder: FolderTileProps['folder'], loading: boolean) => {
+/**
+ * 计数位内容：搬家时先说搬到第几条，取数期间换成进度，其余时候是条目数。
+ */
+const renderFolderMeta = (
+  folder: FolderTileProps['folder'],
+  loading: boolean,
+  progress: FolderTileProps['progress'],
+) => {
+  if (progress !== undefined && progress !== null) {
+    return (
+      <>
+        <Loader className={styles.spinner} size={10} />
+        正在移动 {progress.done} / {progress.total}
+      </>
+    );
+  }
+
   if (loading) {
     return (
       <>
@@ -53,6 +68,7 @@ const FolderTile = memo(
     dragging = false,
     folder,
     loading = false,
+    progress = null,
     onDragEnd,
     onDragLeave,
     onDragOver,
@@ -74,6 +90,7 @@ const FolderTile = memo(
         dropActive && styles.dropActive,
         dropBlocked && styles.dropBlocked,
         pending && styles.pending,
+        progress !== null && styles.moving,
       )}
       data-entry-path={folder.path}
       draggable
@@ -113,10 +130,25 @@ const FolderTile = memo(
             text={folder.name}
           />
           <span className={styles.count}>
-            {dropBlocked ? HINT_BLOCKED : renderFolderMeta(folder, loading)}
+            {dropBlocked ? HINT_BLOCKED : renderFolderMeta(folder, loading, progress)}
           </span>
         </span>
       </UnstyledButton>
+
+      {progress === null ? null : (
+        <Progress
+          aria-label="移动进度"
+          className={styles.moveBar}
+          radius="xl"
+          size={4}
+          striped
+          value={
+            progress.total === 0
+              ? 0
+              : Math.round((progress.done / progress.total) * 100)
+          }
+        />
+      )}
 
       {hideActions ? null : (
         <EntryTileActions

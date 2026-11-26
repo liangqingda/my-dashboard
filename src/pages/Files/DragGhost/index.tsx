@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-
+import { useDragPoint } from '../hooks/useDragPoint';
 import { entryIcon } from '../utils/entry-icon';
 
 import type { DragGhostProps } from './types';
@@ -15,21 +14,10 @@ const MAX_LAYERS = 3;
  * 浏览器自带的那张半透明快照已经在 `dragstart` 里换成了透明像素
  * （见 `utils/drag-image.ts`），所以拖拽期间屏幕上只由这里画：
  * 图标比瓦片小一圈、进场时缩放一下，拖动时能一眼看出「拖的是哪几项、几项」。
- * 位置只认 `dragover` 的坐标——拖拽事件每秒几十次，这里只存一份坐标、不碰其它状态。
+ * 位置只认 `dragover` 的坐标（共用的 `hooks/useDragPoint`）。
  */
 const DragGhost = ({ entries, showCount = true }: DragGhostProps) => {
-  const [point, setPoint] = useState<{ x: number; y: number } | null>(null);
-
-  useEffect(() => {
-    const handleOver = (event: DragEvent) => {
-      setPoint({ x: event.clientX, y: event.clientY });
-    };
-
-    window.addEventListener('dragover', handleOver);
-
-    return () => window.removeEventListener('dragover', handleOver);
-  }, []);
-
+  const point = useDragPoint();
   const layers = entries.slice(0, MAX_LAYERS);
 
   return (

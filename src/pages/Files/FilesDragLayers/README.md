@@ -5,11 +5,14 @@
 都是 `position: fixed`，与列表布局无关，所以单独一层挂在页面最外层。
 
 - `pending.active` 才画待拖拽区；移动会话开着时把它藏起来（只藏不卸，拖拽源不能没了）。
-- 拖拽影像有三个来源，按优先级：页面递进来的 `dragEntries`（直接拖模式自己那批，那一刻没有会话）、
-  `dragActive` 时的移动会话 `session.entries`、`pending.trayDrag`（批量状态下从列表往待拖拽区拖的一程，
-  **不开弹窗**）。都没有就不画。
+- 拖拽影像是两组、按模式分工：
+  - 直接拖模式：`dragEntries`（自己那批）非空、且页面递进来的 `dragImage`（起拖那刻拷下的整条瓦片快照）
+    不为空时画 `DragTiles`——拎的是**整条瓦片**，`dragImage` 为空就什么都不画（不退回小图标）；
+  - 弹窗模式：`dragActive` 时画 `DragGhost`（一叠小图标 + 数量），`pending.trayDrag`
+    （批量状态下从列表往待拖拽区拖的一程，**不开弹窗**）也走这一条。
+  两者互斥，同一时刻只有一条在屏幕上。
 - `pending.flight` 非空时画飞行动画（进 / 出两个方向飞向真正的落脚格），`onDone` 走 `pending.clearFlight`；
-  拖拽影像的数量红点只在移动会话里出现，往待拖拽区拖的那一程不标。
+  `DragGhost` 的数量红点只在移动会话里出现，往待拖拽区拖的那一程不标。
 - 会话结束只摘掉**真正移成功**的那几条：读 `useDragMove` 的 `movedPaths` 调 `pending.removePaths`（幂等）。
   关窗、Esc 取消时 `movedPaths` 是空的，攒着的条目原样留着。
   用 `wasOpen` 记住「开过」再收，避免刚往待拖拽区里加条目就被当成一次会话收掉。

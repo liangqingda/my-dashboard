@@ -4,6 +4,7 @@
 
 import type { DragEvent } from 'react';
 
+import type { MoveProgress } from '../hooks/use-drag-move/types';
 import type {
   AppEntry,
   EntryGroupKey,
@@ -31,13 +32,17 @@ export type DirectoryGridProps = {
   loading: boolean;
   /** 正在打开的文件夹路径；null 表示没有打开请求在跑 */
   loadingFolder: string | null;
-  /** 当前拖拽源条目路径；null 表示没在拖拽 */
-  /** 正在被拖走的条目路径（直接拖模式下可能是一批） */
+  /** 正在被拖走的条目路径（直接拖模式下可能是一批，全都要弱化） */
   dragPaths: string[];
   /** 当前悬停的放置目标文件夹路径；null 表示没有目标 */
   dropTarget: string | null;
   /** 直接拖模式下的禁用落点（该文件夹在待拖拽区里）；null 表示没有 */
   dropBlockedPath: string | null;
+  /**
+   * 直接拖模式下正在搬家：落在哪个目录、搬到第几条。命中某一格时那一格接着画进度，
+   * 不再走中间那层进度弹窗。
+   */
+  folderProgress: MoveProgress | null;
   /**
    * 待拖拽区里已有的路径：这些瓦片画选中框，再点一下是移除。
    * 应用包不参与（不进待拖拽区、也不能拖）。
@@ -78,6 +83,11 @@ export type DirectoryGridProps = {
   onDragOverFolder: (path: string, event: DragEvent<HTMLElement>) => void;
   /** 拖拽离开某文件夹 */
   onDragLeaveFolder: (path: string) => void;
+  /**
+   * 松手落在网格空白处：直接拖模式下等于「搬进当前这一层」；
+   * 不给就还是老语义（落空即取消）。
+   */
+  onDropBlank?: () => void;
   /** 松手放入某文件夹 */
   onDropFolder: (path: string) => void;
   /** 重命名某个条目（弹窗改名） */

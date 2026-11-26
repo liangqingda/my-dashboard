@@ -15,10 +15,15 @@ import { cx } from '@/utils/cx';
 import EntryGroupHeader from '../EntryGroupHeader';
 import EntryTileActions from '../EntryTileActions';
 import TableNameCell from '../TableNameCell';
-import { ENTRY_GROUP_LABELS, ENTRY_KIND_LABELS, FILE_CATEGORY_LABELS } from '../constants';
+import {
+  ENTRY_GROUP_LABELS,
+  ENTRY_KIND_LABELS,
+  FILE_CATEGORY_LABELS,
+} from '../constants';
 import type { FileEntry, FilesRow, FolderEntry } from '../types';
-import { entryOf, groupFilesRows } from '../utils/entries-view';
+import { useBlankDrop } from '../hooks/useBlankDrop';
 import { writeDragPayload } from '../utils/drag-image';
+import { entryOf, groupFilesRows } from '../utils/entries-view';
 import { prefetchVideoHead } from '../utils/video-prefetch';
 
 import type { FilesTableProps } from './types';
@@ -43,6 +48,7 @@ const FilesTable = memo(
     collapsedGroups,
     dragPaths,
     dropTarget,
+    folderProgress,
     grouped,
     launchingApp,
     listLoading,
@@ -51,6 +57,7 @@ const FilesTable = memo(
     onDragLeaveFolder,
     onDragOverFolder,
     onDragStartEntry,
+    onDropBlank,
     onDropFolder,
     onEditEntry,
     onOpenApp,
@@ -66,6 +73,9 @@ const FilesTable = memo(
     rows,
     tipsOff,
   }: FilesTableProps) => {
+    /** 空白处落手＝搬进当前这一层（与网格共用一套判定） */
+    const blank = useBlankDrop(onDropBlank);
+
     /** 选中态按路径查：列表转 Set 一次，免得每行都 `includes` */
     const pendingSet = useMemo(() => new Set(pendingPaths), [pendingPaths]);
     /** 点行时按路径反查条目本体（应用不参与多选） */
@@ -97,13 +107,20 @@ const FilesTable = memo(
       const { target } = event;
 
       // 用 `Element`：行里的类型图标是 SVG，点图标时目标不是 HTML 元素
-      if (target instanceof Element && target.closest('[data-tile-actions]') !== null) {
+      if (
+        target instanceof Element &&
+        target.closest('[data-tile-actions]') !== null
+      ) {
         return;
       }
 
-      const row = target instanceof Element ? target.closest('[data-entry-path]') : null;
+      const row =
+        target instanceof Element ? target.closest('[data-entry-path]') : null;
 
-      if (!(row instanceof HTMLElement) || row.dataset.entryPath === undefined) {
+      if (
+        !(row instanceof HTMLElement) ||
+        row.dataset.entryPath === undefined
+      ) {
         return;
       }
 
@@ -128,6 +145,13 @@ const FilesTable = memo(
       const isApp = row.kind === 'app';
       const dragging = !isApp && dragPaths.includes(entry.path);
       const dropActive = isFolder && dropTarget === entry.path;
+      /** 这一行就是这次搬家的落点：`done / total` 直接画在行里 */
+      const receivingProgress =
+        isFolder &&
+        folderProgress !== null &&
+        folderProgress.targetDir === entry.path
+          ? folderProgress
+          : null;
       let onEdit: (() => void) | undefined;
       let onRequestDelete: () => void;
 
@@ -146,6 +170,7 @@ const FilesTable = memo(
             isFolder && styles.clickable,
             dragging && styles.dragging,
             dropActive && styles.dropActive,
+            receivingProgress !== null && styles.receiving,
             pendingSet.has(entry.path) && styles.pending,
           )}
           data-entry-path={isApp ? undefined : entry.path}
@@ -193,7 +218,9 @@ const FilesTable = memo(
           </FreeTable.Td>
           {!grouped && (
             <FreeTable.Td className={styles.kindWidth}>
-              {categoryLabel(row)}
+              {receivingProgress === null
+                ? categoryLabel(row)
+                : `正在移动 ${receivingProgress.done}/${receivingProgress.total}`}
             </FreeTable.Td>
           )}
           <FreeTable.Td className={styles.actionWidth}>
@@ -209,7 +236,14 @@ const FilesTable = memo(
     };
 
     return (
-      <div className={styles.tableFrame} onClickCapture={handleClickCapture}>
+      <div
+        className={cx(styles.tableFrame, blank.blankOver && styles.blankActive)}
+        onClickCapture={handleClickCapture}
+        {...blank.handlers}
+      >
+        {blank.blankOver ? (
+          <span className={styles.blankHint}>松开即移入当前目录</span>
+        ) : null}
         <FreeTable layout="fixed">
           <FreeTable.Thead>
             <FreeTable.Tr>

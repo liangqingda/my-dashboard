@@ -24,6 +24,7 @@ const FilesEntries = ({
   dropTarget,
   files,
   fixedColumns,
+  folderProgress,
   folders,
   grouped,
   isGridView,
@@ -34,6 +35,7 @@ const FilesEntries = ({
   onDragLeaveFolder,
   onDragOverFolder,
   onDragStartEntry,
+  onDropBlank,
   onDropFolder,
   onEditEntry,
   onOpenApp,
@@ -53,102 +55,121 @@ const FilesEntries = ({
   videoApp,
   videoOpenMode,
   videoThumbStyle,
-}: FilesEntriesProps) => (
-  <div className={cx(styles.frame, isGridView && styles.gridFrame)}>
-    <ScrollArea
-      className={styles.scroll}
-      offsetScrollbars="y"
-      scrollbarSize={6}
-      scrollbars="y"
-      styles={{
-        viewport: isGridView
-          ? {
-              paddingBottom: 12,
-              paddingInlineEnd: 16,
-              paddingInlineStart: 12,
-              paddingTop: 12,
-            }
-          : {
-              paddingInlineEnd: 16,
-            },
-      }}
-      type="auto"
-    >
-      {isGridView ? (
-        <DirectoryGrid
-          apps={apps}
-          collapsedGroups={collapsedGroups}
-          dragPaths={dragPaths}
-          dropBlockedPath={dropBlockedPath}
-          dropTarget={dropTarget}
-          files={files}
-          fixedColumns={fixedColumns}
-          folders={folders}
-          grouped={grouped}
-          launchingApp={launchingApp}
-          loading={loading}
-          loadingFolder={loadingFolder}
-          onDragEnd={onDragEnd}
-          onDragLeaveFolder={onDragLeaveFolder}
-          onDragOverFolder={onDragOverFolder}
-          onDragStartEntry={onDragStartEntry}
-          onDropFolder={onDropFolder}
-          onEditEntry={onEditEntry}
-          onOpenApp={onOpenApp}
-          onOpenExternalVideo={onOpenExternalVideo}
-          onOpenFolder={onOpenFolder}
-          onOpenImage={onOpenImage}
-          onOpenVideo={onOpenVideo}
-          onRequestDeleteEntry={onRequestDeleteEntry}
-          onRequestUninstallApp={onRequestUninstallApp}
-          onToggleGroup={onToggleGroup}
-          onTogglePending={onTogglePending}
-          pendingActive={pendingActive}
-          pendingPaths={pendingPaths}
-          tipsOff={tipsOff}
-          veilOpacity={veilOpacity}
-          videoApp={videoApp}
-          videoOpenMode={videoOpenMode}
-          videoThumbStyle={videoThumbStyle}
-        />
-      ) : (
-        <FilesTable
-          collapsedGroups={collapsedGroups}
-          dragPaths={dragPaths}
-          dropTarget={dropTarget}
-          grouped={grouped}
-          launchingApp={launchingApp}
-          listLoading={loading}
-          loadingFolder={loadingFolder}
-          onDragEnd={onDragEnd}
-          onDragLeaveFolder={onDragLeaveFolder}
-          onDragOverFolder={onDragOverFolder}
-          onDragStartEntry={onDragStartEntry}
-          onDropFolder={onDropFolder}
-          onEditEntry={onEditEntry}
-          onOpenApp={onOpenApp}
-          onOpenFolder={onOpenFolder}
-          onOpenImage={onOpenImage}
-          onOpenVideo={onOpenVideo}
-          onRequestDeleteEntry={onRequestDeleteEntry}
-          onRequestUninstallApp={onRequestUninstallApp}
-          onToggleGroup={onToggleGroup}
-          onTogglePending={onTogglePending}
-          pendingActive={pendingActive}
-          pendingPaths={pendingPaths}
-          rows={rows}
-          tipsOff={tipsOff}
-        />
-      )}
-    </ScrollArea>
+}: FilesEntriesProps) => {
+  /**
+   * 搬进的目标是「当前这一层」（直接拖时拖到空白处）时，没有任何一格能画进度，
+   * 就把「正在移入当前目录 x/y」挂在这块的上沿——落点在哪，进度就画在哪。
+   */
+  const movingCurrentDir =
+    folderProgress !== null &&
+    folders.every((folder) => folder.path !== folderProgress.targetDir);
 
-    <LoadingOverlay
-      loaderProps={{ size: 'sm', type: 'oval' }}
-      overlayProps={{ backgroundOpacity: 0.2, blur: 2 }}
-      visible={loading}
-      zIndex={2}
-    />
-  </div>
-);
+  return (
+    <div className={cx(styles.frame, isGridView && styles.gridFrame)}>
+      {movingCurrentDir ? (
+        <span className={styles.dirProgress}>
+          正在移入当前目录 {folderProgress.done} / {folderProgress.total}
+        </span>
+      ) : null}
+      <ScrollArea
+        className={styles.scroll}
+        offsetScrollbars="y"
+        scrollbarSize={6}
+        scrollbars="y"
+        styles={{
+          viewport: isGridView
+            ? {
+                paddingBottom: 12,
+                paddingInlineEnd: 16,
+                paddingInlineStart: 12,
+                paddingTop: 12,
+              }
+            : {
+                paddingInlineEnd: 16,
+              },
+        }}
+        type="auto"
+      >
+        {isGridView ? (
+          <DirectoryGrid
+            apps={apps}
+            collapsedGroups={collapsedGroups}
+            dragPaths={dragPaths}
+            dropBlockedPath={dropBlockedPath}
+            dropTarget={dropTarget}
+            files={files}
+            fixedColumns={fixedColumns}
+            folderProgress={folderProgress}
+            folders={folders}
+            grouped={grouped}
+            launchingApp={launchingApp}
+            loading={loading}
+            loadingFolder={loadingFolder}
+            onDragEnd={onDragEnd}
+            onDragLeaveFolder={onDragLeaveFolder}
+            onDragOverFolder={onDragOverFolder}
+            onDragStartEntry={onDragStartEntry}
+            onDropBlank={onDropBlank}
+            onDropFolder={onDropFolder}
+            onEditEntry={onEditEntry}
+            onOpenApp={onOpenApp}
+            onOpenExternalVideo={onOpenExternalVideo}
+            onOpenFolder={onOpenFolder}
+            onOpenImage={onOpenImage}
+            onOpenVideo={onOpenVideo}
+            onRequestDeleteEntry={onRequestDeleteEntry}
+            onRequestUninstallApp={onRequestUninstallApp}
+            onToggleGroup={onToggleGroup}
+            onTogglePending={onTogglePending}
+            pendingActive={pendingActive}
+            pendingPaths={pendingPaths}
+            tipsOff={tipsOff}
+            veilOpacity={veilOpacity}
+            videoApp={videoApp}
+            videoOpenMode={videoOpenMode}
+            videoThumbStyle={videoThumbStyle}
+          />
+        ) : (
+          <FilesTable
+            collapsedGroups={collapsedGroups}
+            dragPaths={dragPaths}
+            dropTarget={dropTarget}
+            folderProgress={folderProgress}
+            grouped={grouped}
+            launchingApp={launchingApp}
+            listLoading={loading}
+            loadingFolder={loadingFolder}
+            onDragEnd={onDragEnd}
+            onDragLeaveFolder={onDragLeaveFolder}
+            onDragOverFolder={onDragOverFolder}
+            onDragStartEntry={onDragStartEntry}
+            onDropBlank={onDropBlank}
+            onDropFolder={onDropFolder}
+            onEditEntry={onEditEntry}
+            onOpenApp={onOpenApp}
+            onOpenFolder={onOpenFolder}
+            onOpenImage={onOpenImage}
+            onOpenVideo={onOpenVideo}
+            onRequestDeleteEntry={onRequestDeleteEntry}
+            onRequestUninstallApp={onRequestUninstallApp}
+            onToggleGroup={onToggleGroup}
+            onTogglePending={onTogglePending}
+            pendingActive={pendingActive}
+            pendingPaths={pendingPaths}
+            rows={rows}
+            tipsOff={tipsOff}
+          />
+        )}
+      </ScrollArea>
+
+      <LoadingOverlay
+        loaderProps={{ size: 'sm', type: 'oval' }}
+        overlayProps={{ backgroundOpacity: 0.2, blur: 2 }}
+        visible={loading}
+        zIndex={2}
+      />
+    </div>
+  );
+};
 
 export default FilesEntries;

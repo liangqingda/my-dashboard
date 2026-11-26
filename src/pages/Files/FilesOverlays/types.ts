@@ -13,7 +13,7 @@ import type { useVideoPreview } from '../hooks/useVideoPreview';
 import type { useAppUninstall } from '../hooks/useAppUninstall';
 import type { useVolumeEject } from '../hooks/useVolumeEject';
 import type { MoveProgress } from '../hooks/use-drag-move/types';
-import type { DraggableEntry, FileEntry } from '../types';
+import type { DraggableEntry, DragTileImage, FileEntry } from '../types';
 
 /** 三层浮层的入参 */
 export type FilesOverlaysProps = {
@@ -23,6 +23,8 @@ export type FilesOverlaysProps = {
     dragAllDisabled: boolean;
     /** 直接拖模式正拖的那一批（弹窗模式为 null） */
     dragEntries: DraggableEntry[] | null;
+    /** 那条瓦片的快照（直接拖模式下起拖时拷的） */
+    dragImage: DragTileImage | null;
     entryActions: ReturnType<typeof useEntryActions>;
     pending: ReturnType<typeof useDragPending>;
     onDropPaths: (paths: string[]) => void;
