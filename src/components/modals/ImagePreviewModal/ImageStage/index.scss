@@ -7,10 +7,23 @@
   align-items: center;
   justify-content: center;
   min-width: 0;
+  /* 放大后超出的那部分裁在舞台里，不爬到 header 上 */
+  overflow: hidden;
   background: #000;
 }
 
-/* 按比例完整显示，不超过舞台；拖不动、选不中，双击不会误选文字 */
+/* 放大过：可以拖着看；触屏上关掉整页手势，免得拖动被当成滚动带走 */
+.stageZoomed {
+  cursor: grab;
+  touch-action: none;
+}
+
+/* 正在拖：光标换成「抓着」 */
+.stageDragging {
+  cursor: grabbing;
+}
+
+/* 按比例完整显示，不超过舞台；选不中，双击不会误选文字（位移与缩放走行内 transform） */
 .image {
   display: block;
   max-width: 100%;
