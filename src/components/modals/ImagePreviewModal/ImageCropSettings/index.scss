@@ -1,0 +1,14 @@
+/* 裁剪设置弹层：分段控件下面两行说明，第一行随选项变、第二行是固定的格式口径 */
+
+.hint {
+  margin-top: 6px;
+  color: var(--mantine-color-dimmed);
+  line-height: 1.5;
+}
+
+.note {
+  margin-top: 2px;
+  color: var(--mantine-color-dimmed);
+  line-height: 1.5;
+  opacity: 0.8;
+}

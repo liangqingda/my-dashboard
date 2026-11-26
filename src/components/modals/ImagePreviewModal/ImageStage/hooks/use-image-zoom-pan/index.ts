@@ -1,13 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type CSSProperties,
-  type MouseEvent as ReactMouseEvent,
-  type PointerEvent as ReactPointerEvent,
-  type RefObject,
-} from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   DRAG_CLICK_SLOP,
@@ -17,11 +8,14 @@ import {
   WHEEL_ZOOM_STEP_MAX,
   WHEEL_ZOOM_STEP_MIN,
 } from './constants';
-import type { StageView } from './types';
+import type {
+  StageClickEvent,
+  StagePointerEvent,
+  StageView,
+  UseImageZoomPanOptions,
+  UseImageZoomPanResult,
+} from './types';
 import { anchorView, clamp, limitView } from './utils';
-
-type StagePointerEvent = ReactPointerEvent<HTMLDivElement>;
-type StageClickEvent = ReactMouseEvent<HTMLDivElement>;
 
 /** 一次拖拽：按下那一刻的位置与位移；`moved` 一旦置真，这一次的 `click` 就不再算「点了一下」 */
 type DragSession = {
@@ -36,35 +30,6 @@ type DragSession = {
 /** Safari 的捏合事件（非标准，TS 没有对应类型）：`scale` 是相对本次手势起点的倍率 */
 type SafariGestureEvent = Event & { scale: number; clientX: number; clientY: number };
 
-/** 图片舞台的放大 / 缩小与拖拽移动入参 */
-export type UseImageZoomPanOptions = {
-  /** 图片能不能改倍率：加载中、读不出来时传 false（捏合仍会拦掉整页缩放，只是不动画面） */
-  enabled: boolean;
-};
-
-/** 图片舞台的放大 / 缩小与拖拽移动结果 */
-export type UseImageZoomPanResult = {
-  /** 舞台根节点：滚轮 / 捏合监听挂在它身上 */
-  stageRef: RefObject<HTMLDivElement | null>;
-  /** 图片节点：量未缩放的布局尺寸，并承接位移与缩放 */
-  imageRef: RefObject<HTMLImageElement | null>;
-  /** 图片的 transform：缩放原点固定在图片中心，与舞台中心重合 */
-  imageStyle: CSSProperties;
-  /** 是否已经放大过 1 倍：光标、`touch-action` 与「按下算不算拖」都看它 */
-  zoomed: boolean;
-  /** 是否正在拖：光标切成「抓着」 */
-  dragging: boolean;
-  /** 铺在舞台根节点上的指针与点击事件 */
-  stageProps: {
-    onClickCapture: (event: StageClickEvent) => void;
-    onLostPointerCapture: (event: StagePointerEvent) => void;
-    onPointerCancel: (event: StagePointerEvent) => void;
-    onPointerDown: (event: StagePointerEvent) => void;
-    onPointerMove: (event: StagePointerEvent) => void;
-    onPointerUp: (event: StagePointerEvent) => void;
-  };
-};
-
 const INITIAL_VIEW: StageView = { scale: MIN_IMAGE_SCALE, x: 0, y: 0 };
 
 /**
@@ -72,24 +37,23 @@ const INITIAL_VIEW: StageView = { scale: MIN_IMAGE_SCALE, x: 0, y: 0 };
  *
  * 三种输入各走各的通道，最终落到同一份「倍率 + 位移」：
  *
- * - **捏合**：Chromium / Firefox 把触控板捏合报成带 `ctrlKey` 的 `wheel`（Ctrl + 滚轮同一条路径），
- *   Safari 报的是非标准的 `gesturestart` / `gesturechange`，两条都接；两条都要
- *   `preventDefault`，否则浏览器放大的是整页而不是画面；
- * - **拖拽移动**：走 Pointer Events。macOS 的「三指拖拽」在系统辅助功能里打开后，系统会把它
- *   翻译成普通鼠标拖拽（`pointerdown` / `pointermove` / `pointerup`），所以这里不需要、也无法
- *   单独识别三根手指——浏览器拿不到触控板的原始触点数；没开那个设置时三指滑动不产生任何事件；
+ * - **捏合**：Chromium / Firefox 报带 `ctrlKey` 的 `wheel`，Safari 报 `gesturestart` /
+ *   `gesturechange`，两条都接并 `preventDefault`，否则浏览器放大的是整页而不是画面；
+ * - **拖拽移动**：走 Pointer Events。macOS「三指拖拽」被系统翻译成普通鼠标拖拽，浏览器拿不到
+ *   原始触点数；没开那个设置时三指滑动不产生任何事件；
  * - **触屏**：同一套 Pointer Events，`touch-action` 只在放大后关掉，避免整页被当成滚动。
  *
  * 缩放以指针位置为锚点，位移夹在「放大后多出来的区域」里（公式见同目录 `utils.ts`）。
- *
- * 状态不去弹窗里持有：`ImageStage` 由弹窗用 `key={activeId}` 换实例，换图即重置倍率，
- * 不必为「换图要复位」再写一个 effect。
+ * 换图时由弹窗用 `key` 换实例重置倍率；裁剪前由舞台调 `reset` 回 1 倍。
  */
 export const useImageZoomPan = ({
   enabled,
+  imageRef: externalImageRef,
 }: UseImageZoomPanOptions): UseImageZoomPanResult => {
   const stageRef = useRef<HTMLDivElement | null>(null);
-  const imageRef = useRef<HTMLImageElement | null>(null);
+  const ownImageRef = useRef<HTMLImageElement | null>(null);
+  /** 裁剪要拿同一张图去编码：调用方给了节点就用它，两个 ref 指向同一元素 */
+  const imageRef = externalImageRef ?? ownImageRef;
 
   const [view, setView] = useState<StageView>(INITIAL_VIEW);
   /** 倍率与位移的镜像：事件回调里要读到「此刻」的值，不能依赖某一次渲染的闭包 */
@@ -124,7 +88,7 @@ export const useImageZoomPan = ({
       { width: image.offsetWidth, height: image.offsetHeight },
       { width: stage.clientWidth, height: stage.clientHeight },
     );
-  }, []);
+  }, [imageRef]);
 
   /** 落到状态与镜像：同一手势里连着触发时以镜像为准 */
   const applyView = useCallback((next: StageView) => {
@@ -327,12 +291,19 @@ export const useImageZoomPan = ({
     };
   }, [zoomTo]);
 
+  const reset = useCallback(() => {
+    dragRef.current = null;
+    setDragging(false);
+    applyView(INITIAL_VIEW);
+  }, [applyView]);
+
   return {
     dragging,
     imageRef,
     imageStyle: {
       transform: `translate3d(${view.x}px, ${view.y}px, 0) scale(${view.scale})`,
     },
+    reset,
     stageProps: {
       onClickCapture,
       // 指针被系统 / 浏览器收走（切窗口、触控板手势被打断）也要结束这一手，别让光标卡在「抓着」

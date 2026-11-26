@@ -6,13 +6,20 @@
  *
  * 手势口径见同目录 `hooks/use-image-zoom-pan/README.md`：捏合与拖拽都收在那份 hook 里，
  * 舞台只负责把节点接上；拖拽后的那一次 `click` 由它在捕获阶段吞掉，外层不会误开合 header。
+ *
+ * 裁剪把同一块画面切成「只拖选框」：缩放 / 平移先让位并复位到 1 倍，选框按未缩放的布局尺寸叠上去。
  */
 
-import { useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
+import type { RefObject } from 'react';
 import { Loader } from '@mantine/core';
 import { IconPhotoOff } from '@tabler/icons-react';
 
 import { cx } from '@/utils/cx';
+
+import ImageCropOverlay from '../ImageCropOverlay';
+import { DEFAULT_CROP_RECT } from '../utils';
+import type { CropRect } from '../utils';
 
 import { useImageZoomPan } from './hooks/use-image-zoom-pan';
 
@@ -24,20 +31,52 @@ export type ImageStageProps = {
   name: string;
   /** 图片地址 */
   src: string;
+  /** 外部要拿这张图去裁剪时传进来；不传则舞台自己持有图片节点 */
+  imageRef?: RefObject<HTMLImageElement | null>;
+  /** 正在裁剪：缩放 / 拖拽让位，选框叠在图上 */
+  cropping?: boolean;
+  /** 当前选框（比例）；裁剪态必传，缺省用居中默认框 */
+  cropRect?: CropRect;
+  /** 拖动选框后回传（不传则不显示裁剪层） */
+  onCropRectChange?: (rect: CropRect) => void;
 };
 
 const IMAGE_ICON_SIZE = 28;
 
-const ImageStage = ({ name, src }: ImageStageProps) => {
+const ImageStage = ({
+  cropping = false,
+  cropRect,
+  imageRef: externalImageRef,
+  name,
+  onCropRectChange,
+  src,
+}: ImageStageProps) => {
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
-  const { dragging, imageRef, imageStyle, stageProps, stageRef, zoomed } =
-    useImageZoomPan({ enabled: status === 'ready' });
+  const {
+    dragging,
+    imageRef,
+    imageStyle,
+    reset,
+    stageProps,
+    stageRef,
+    zoomed,
+  } = useImageZoomPan({
+    enabled: status === 'ready' && !cropping,
+    imageRef: externalImageRef,
+  });
+
+  /** 进裁剪前先回 1 倍：选框按布局尺寸量，放大后的画面会让选框对不上 */
+  useLayoutEffect(() => {
+    if (cropping) {
+      reset();
+    }
+  }, [cropping, reset]);
 
   return (
     <div
       className={cx(
         styles.stage,
-        zoomed && styles.stageZoomed,
+        zoomed && !cropping && styles.stageZoomed,
         dragging && styles.stageDragging,
       )}
       ref={stageRef}
@@ -65,6 +104,14 @@ const ImageStage = ({ name, src }: ImageStageProps) => {
         src={src}
         style={imageStyle}
       />
+      {cropping && status === 'ready' && onCropRectChange !== undefined ? (
+        <ImageCropOverlay
+          imageRef={imageRef}
+          onChange={onCropRectChange}
+          rect={cropRect ?? DEFAULT_CROP_RECT}
+          stageRef={stageRef}
+        />
+      ) : null}
     </div>
   );
 };

@@ -1,5 +1,8 @@
 /**
- * 图片预览弹窗的契约：与视频预览同形——当前目录的图片列表 + 当前一张的整图。
+ * 图片预览弹窗的契约：与视频预览同形——当前目录的图片列表 + 当前一张的整图，另加裁剪。
+ *
+ * 弹窗只负责「裁哪一块、怎么编码」；把结果写到哪（替换源文件 / 另存到新目录）由调用方实现，
+ * 本组件不知道文件系统长什么样。
  */
 
 import type { PreviewItem } from '@/components/modals/PreviewItemList/types';
@@ -8,6 +11,31 @@ import type { PreviewItem } from '@/components/modals/PreviewItemList/types';
 export type ImagePreviewItem = PreviewItem & {
   /** 图片地址（中间件整份返回字节） */
   src: string;
+};
+
+/** 裁剪的保存方式：覆盖源文件 / 另存到同级的「- 裁剪」目录 */
+export type ImageCropMode = 'replace' | 'copy';
+
+/** 保存一张裁剪结果：路径、编码后的图与保存方式 */
+export type ImageCropRequest = {
+  /** 源文件绝对路径（`items` 里的 id） */
+  path: string;
+  /** 裁剪结果的 data URL（PNG / JPEG / WebP，与源扩展名一致） */
+  dataUrl: string;
+  /** 保存方式 */
+  mode: ImageCropMode;
+};
+
+/** 裁剪落盘后的回执：调用方按它拼提示，弹窗不碰存储细节 */
+export type ImageCropResult = {
+  /** 落盘后的绝对路径 */
+  path: string;
+  /** 文件名（含扩展名） */
+  name: string;
+  /** 所在目录；另存时是新建的「- 裁剪」目录 */
+  dir: string;
+  /** 实际使用的保存方式 */
+  mode: ImageCropMode;
 };
 
 /** 图片预览弹窗的入参 */
@@ -24,10 +52,17 @@ export type ImagePreviewModalProps = {
   onClose: () => void;
   /** 切到某一张（翻篇与列表点选共用） */
   onSelect: (id: string) => void;
+  /**
+   * 保存裁剪结果；不传则 header 没有裁剪与裁剪设置入口。
+   * 真正写盘归调用方，抛错由弹窗提示「保存失败」。
+   */
+  onCrop?: (request: ImageCropRequest) => Promise<ImageCropResult>;
   /** 请求删除当前图片：只应打开二次确认层；不传则没有删除按钮与删除键 */
   onRequestDelete?: (() => void) | null;
   /** 请求把当前图片设为桌面墙纸：只应打开二次确认层；不传则 header 没有这颗按钮 */
   onRequestWallpaper?: (() => void) | null;
   /** 打开时直接进整屏全屏（文件页设置项）；拿不到用户手势时静默停在这个尺寸 */
   defaultFullscreen?: boolean;
+  /** 页面标识（对应路由）：裁剪保存方式存在 `<标识>:image-preview` 里，组件不写死是哪一页 */
+  storageScope: string;
 };

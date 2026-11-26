@@ -1,7 +1,8 @@
 /**
  * 阅读类弹窗的整套键盘口径，只在这里定义一次：业务弹窗不各自补快捷键。
  *
- * - `Esc`：关窗（由 Mantine `Modal` 的 `closeOnEscape` 负责，不在这里）；
+ * - `Esc`：默认关窗（由 Mantine `Modal` 的 `closeOnEscape` 负责）；业务接管时
+ *   （`onRequestEscape`，如裁剪先退模式）改在这里执行、这一下不关窗；
  * - **空格**：关窗（给了媒体能力时改为播放 / 暂停），并 `preventDefault` 掉浏览器
  *   「空格 = 点击当前焦点按钮」的默认行为——焦点常留在 header 图标上，不拦的话按空格会莫名
  *   翻到下一条 / 切了全屏；
@@ -88,6 +89,8 @@ type ModalShortcutsParams = {
   copyMessage?: string;
   /** 删除请求：不传表示没有删除按钮（有按钮才有这个键） */
   onRequestDelete?: (() => void) | null;
+  /** Esc 的接管：给了它，Esc 只执行这个动作、不关窗 */
+  onRequestEscape?: (() => void) | null;
   /**
    * 业务自己的单键动作：键名小写，值是要做的事（如 `{ c: 开合收藏面板 }`）。
    * 挂在弹窗这一套监听里、只在这扇窗开着时生效；业务侧不要再自己 `addEventListener`。
@@ -106,6 +109,7 @@ export const useModalShortcuts = ({
   nav,
   onClose,
   onRequestDelete,
+  onRequestEscape,
   onSeek,
   onToggleFullscreen,
   onCapture,
@@ -148,6 +152,13 @@ export const useModalShortcuts = ({
        * 底下的播放器不该还在响应「播放 / 暂停」
        */
       if (disabled) {
+        return;
+      }
+
+      if (event.key === 'Escape' && onRequestEscape) {
+        event.preventDefault();
+        onRequestEscape();
+
         return;
       }
 
@@ -263,6 +274,7 @@ export const useModalShortcuts = ({
     onCapture,
     onClose,
     onRequestDelete,
+    onRequestEscape,
     onSeek,
     onToggleFullscreen,
     onToggleMute,

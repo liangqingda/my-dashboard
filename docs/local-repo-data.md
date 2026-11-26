@@ -171,7 +171,7 @@
 
 | 文件 | 职责 |
 | --- | --- |
-| `scripts/vite/files.ts` | 路由壳：`GET /api/files`（未带 `dir` 回落主目录）、`GET /api/files?dir=…`、`GET /api/files/content?path=…`（视频按 Range 流式读）、`GET /api/files/image?path=…`（图片字节）、`GET /api/files/thumb?path=…`（图片 / 视频缩略图，网格用）、`GET /api/files/video-apps`（能播视频的本机应用）、`GET /api/files/app-icon?path=…`（应用图标 PNG）、`GET /api/files/app-residue?path=…`（卸载残留清单）、`POST /api/files/open-app`（打开应用包）、`POST /api/files/pick-dir`（系统目录选择框）、`POST /api/files/new-folder`、`POST /api/files/rename`、`POST /api/files/move`、`POST /api/files/delete`、`POST /api/files/open`（交给外部播放器）、`POST /api/files/uninstall-app`、`POST /api/files/eject`（body `{ dir, killPids? }`：推出当前目录所在的外接盘，返回 `{ result }`）、`POST /api/files/capture`（视频帧截图写目录，缺省桌面）、`POST /api/files/wallpaper`（body `{ path }`：把一张本机图片设为桌面墙纸），错误归类成 HTTP 状态码 |
+| `scripts/vite/files.ts` | 路由壳：`GET /api/files`（未带 `dir` 回落主目录）、`GET /api/files?dir=…`、`GET /api/files/content?path=…`（视频按 Range 流式读）、`GET /api/files/image?path=…`（图片字节）、`GET /api/files/thumb?path=…`（图片 / 视频缩略图，网格用）、`GET /api/files/video-apps`（能播视频的本机应用）、`GET /api/files/app-icon?path=…`（应用图标 PNG）、`GET /api/files/app-residue?path=…`（卸载残留清单）、`POST /api/files/open-app`（打开应用包）、`POST /api/files/pick-dir`（系统目录选择框）、`POST /api/files/new-folder`、`POST /api/files/rename`、`POST /api/files/move`、`POST /api/files/delete`、`POST /api/files/open`（交给外部播放器）、`POST /api/files/uninstall-app`、`POST /api/files/eject`（body `{ dir, killPids? }`：推出当前目录所在的外接盘，返回 `{ result }`）、`POST /api/files/capture`（视频帧截图写目录，缺省桌面）、`POST /api/files/crop`（body `{ path, dataUrl, mode }`：保存图片裁剪结果）、`POST /api/files/wallpaper`（body `{ path }`：把一张本机图片设为桌面墙纸），错误归类成 HTTP 状态码 |
 | `scripts/vite/files-store.ts` | 路径校验、条目归类、应用包从文件夹里分出来单独成列、文件夹直属条目计数、内含分类摘要与「直属是否含应用包」，供类型筛选过滤文件夹、文件归类（视频 / PDF / Markdown / App / 其它）标记、选择器脚本拼装，以及新建 / 重命名 / 移动 / 删除的写盘与冲突拒绝、错误文案与错误码收口 |
 | `scripts/vite/files-handles.ts` | 本进程的读流登记表：`openTrackedStream` 打开即登记、`close` 自动销号，`releaseStreamsUnder` 在推出外接盘前把这一卷下的读流全部销毁并等它们真的关掉。读流生命周期只跟一次响应走，**不在模块里缓存句柄**——缓存一条流等于把整块盘的寿命绑在页面停留时长上 |
 | `scripts/vite/files-picker.ts` | 原生目录选择框：首次把一段 Swift `NSOpenPanel` 源码编进 `node_modules/.cache`，服务启动时后台预热，之后每次选择只起小二进制；编译 / 运行不可用时回落 `osascript` |
@@ -219,7 +219,15 @@
 - **图片预览**：`GET /api/files/image?path=` 整份返回图片字节（不做 Range），只认图片扩展名
   （分类表里 `image` 那一档，不收 `.svg`），`Cache-Control: no-store`、支持 `HEAD`；
   浏览器直接把它塞进 `<img src>`，前端通过 `ImagePreviewModal` 消费。
-  `content` / `image` / `capture` / `audio` 四个接口都只在开发模式存在。
+  `content` / `image` / `capture` / `audio` / `crop` 五个接口都只在开发模式存在。
+- **图片裁剪**：图片预览 header 的裁剪图标进入裁剪态，前端按选框从已加载的 `<img>` 重新编码成
+  PNG / JPEG / WebP（与源扩展名一致），再调 `POST /api/files/crop`（body `{ path, dataUrl, mode }`，
+  上限 80MB）。`mode: 'replace'` 先写同目录临时文件再 `rename` 原子覆盖源文件（不是先删再写，
+  失败时源文件仍是原样）；`mode: 'copy'` 写到同级的 `<文件名> - 裁剪/` 目录，文件名
+  `<文件名> - N.<扩展名>`，N 取该目录已有编号的 max + 1（删过旧文件也不复用编号），写入带 `wx`
+  不覆盖。只收 PNG / JPEG / WebP——换成别的格式会让扩展名与内容对不上（GIF 还会丢动画）；
+  接口返回 `{ crop: { mode, path, name, dir } }`，前端按 `mode` 决定「换地址版本重取图」还是
+  「重读目录露出新文件夹」。
 - **设为桌面墙纸**：列表里的图片条目（网格 hover 浮出 / 表格行常态）与图片预览 header 各有一颗按钮，
   都只打开二次确认层（`WallpaperConfirm`），确认后调 `POST /api/files/wallpaper`；中间件先按图片接口的规则校验路径，
   再用原生助手把 `Index.plist` 里所有桌面空间 / 屏幕的 `Desktop` 选项换成这张图，最后重启 `WallpaperAgent`——

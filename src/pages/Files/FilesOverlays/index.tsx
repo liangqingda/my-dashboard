@@ -54,6 +54,7 @@ const FilesOverlays = ({ modals, preview }: FilesOverlaysProps) => {
         onCaptureVideo={video.captureFrame}
         onCloseImage={image.closeImage}
         onCloseVideo={video.closeVideo}
+        onCropImage={image.cropImage}
         onOpenExternal={video.openExternal}
         onPickDir={video.pickMediaDir}
         onRequestDelete={previewRest.onRequestDelete}

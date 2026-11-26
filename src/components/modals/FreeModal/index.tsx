@@ -70,6 +70,7 @@ const FreeModal = ({
   nav,
   onClose,
   onRequestDelete,
+  onRequestEscape,
   onCapture,
   onSeek,
   opened,
@@ -87,6 +88,9 @@ const FreeModal = ({
    */
   const fullscreenToggleVisible = fullscreen?.showToggle !== false;
   const onToggleFullscreen = fullscreen?.onToggle;
+
+  /** Esc 被业务接管（退出窗内模式）时不再交给 Mantine 关窗，键的处理挪到快捷键那一套里 */
+  const escapeOverridden = Boolean(onRequestEscape);
 
   /**
    * header 浮层：只有媒体预览这类「打开先看画面」的弹窗会传 `headerOverlay`。
@@ -126,6 +130,7 @@ const FreeModal = ({
     onCapture,
     onClose,
     onRequestDelete,
+    onRequestEscape,
     onSeek,
     onToggleFullscreen,
     onToggleMute: media?.onToggleMute,
@@ -190,7 +195,7 @@ const FreeModal = ({
       }}
       closeButtonProps={{ 'aria-label': closeLabel }}
       closeOnClickOutside={false}
-      closeOnEscape={closeOnEscape}
+      closeOnEscape={closeOnEscape && !escapeOverridden}
       fullScreen={fullscreen?.active ?? false}
       onClose={onClose}
       opened={opened}

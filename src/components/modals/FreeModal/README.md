@@ -35,7 +35,8 @@
   竖线只有一条，画在**关闭按钮之前**（操作区与关闭的分界），组与组之间不再画线；
   没有关闭按钮（`closeButton={false}`）或右侧一个图标都没渲染时也不画，免得留一条孤线。
 - **键盘口径统一在这里**（`hooks/useModalShortcuts`），业务弹窗不各自补快捷键：
-  - `Esc`：关窗（Mantine 的 `closeOnEscape`）；
+  - `Esc`：关窗（Mantine 的 `closeOnEscape`）；传了 `onRequestEscape` 就改走这一套监听——先执行它、
+    这一下不关窗（窗内还有一层模式时先退模式，如图片预览的裁剪态）；
   - **空格**：关窗（传了 `media.onTogglePlay` 时改为播放 / 暂停，不关窗），并 `preventDefault`
     掉浏览器「空格 = 点击当前焦点按钮」——焦点常留在 header 图标上，不拦的话按空格会莫名翻到
     下一条 / 切了全屏；`closeOnSpace` 默认跟随 `closeOnEscape`；
@@ -91,6 +92,7 @@
 | `fullscreen` | `{ active, onToggle?, showToggle? }`；不传则没有全屏外观与按钮。`showToggle` 默认 `true`，传 `false` 只收掉 header 按钮；`onToggle` 给了的话 `F` 键照常生效（进编辑这类不该换尺寸的场景，回调与按钮都不给） |
 | `copy` | `{ text, message }`；传了就有 `C` 复制键（`text` 进剪贴板，`message` 是成功提示），与 header 的复制按钮同一口径 |
 | `onRequestDelete` | 传了就有 `Delete` / `Backspace` 删除键；只应打开二次确认层，不直接删 |
+| `onRequestEscape` | 传了就把 `Esc` 交给它（只执行动作、这一下不关窗）：窗内还有一层模式时用，如图片预览先退裁剪 |
 | `extraKeys` | 业务自己的单键动作（`{ c: 开合收藏面板 }` 这类，键名小写）；只在本窗开着时生效，业务侧不自己监听 keydown |
 | `closeButton` | 是否显示关闭按钮，默认显示（编辑态这类「关不掉」的场景传 `false`） |
 | `closeOnClickOutside` | 点遮罩是否关窗，默认 `true`。遮罩点击由外壳自己接管：窗口拿回焦点后 400ms 内的那一下只当「回焦」不关窗，避免从外部应用切回来时误关 |

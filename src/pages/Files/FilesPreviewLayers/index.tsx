@@ -5,7 +5,11 @@
  */
 
 import ImagePreviewModal from '@/components/modals/ImagePreviewModal';
-import type { ImagePreviewItem } from '@/components/modals/ImagePreviewModal/types';
+import type {
+  ImageCropRequest,
+  ImageCropResult,
+  ImagePreviewItem,
+} from '@/components/modals/ImagePreviewModal/types';
 import VideoPreviewModal from '@/components/modals/VideoPreviewModal';
 import type {
   VideoPreviewCaptureReceipt,
@@ -45,6 +49,8 @@ export type FilesPreviewLayersProps = {
   onSelectImage: (id: string) => void;
   /** 关图片弹窗 */
   onCloseImage: () => void;
+  /** 保存图片裁剪结果（覆盖源文件 / 另存到「- 裁剪」目录） */
+  onCropImage: (request: ImageCropRequest) => Promise<ImageCropResult>;
   /** 请求删除某个条目（按路径，两扇弹窗共用同一套二次确认） */
   onRequestDelete: (path: string) => void;
   /** 请求把当前预览的图片设为桌面墙纸（只打开二次确认层，真正设置归确认层） */
@@ -61,6 +67,7 @@ const FilesPreviewLayers = ({
   onCaptureVideo,
   onCloseImage,
   onCloseVideo,
+  onCropImage,
   onOpenExternal,
   onPickDir,
   onRequestDelete,
@@ -95,12 +102,14 @@ const FilesPreviewLayers = ({
       defaultFullscreen={defaultFullscreen.image}
       items={imageItems}
       onClose={onCloseImage}
+      onCrop={onCropImage}
       onRequestDelete={
         imageActiveId !== null ? () => onRequestDelete(imageActiveId) : null
       }
       onRequestWallpaper={onRequestWallpaper}
       onSelect={onSelectImage}
       opened={imageActiveId !== null}
+      storageScope={FILES_STORAGE_SCOPE}
     />
   </div>
 );

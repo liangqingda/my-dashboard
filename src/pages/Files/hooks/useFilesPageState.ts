@@ -88,8 +88,8 @@ export const useFilesPageState = () => {
   /** 视频预览：点视频打开弹窗，翻篇 / 选集 / 截图都按当前目录的视频列表走；整个结果也给浮层层复用 */
   const videoPreview = useVideoPreview(listing, settings);
   const { closeVideo, openExternal: openVideoExternal, openVideo } = videoPreview;
-  /** 图片预览：与视频预览同形，但没有播放 / 截图那一套；整个结果也给浮层层复用 */
-  const imagePreview = useImagePreview(listing);
+  /** 图片预览：与视频预览同形，但没有播放 / 截图那一套；裁剪另存后重读目录以露出新文件夹 */
+  const imagePreview = useImagePreview(listing, { onSaved: reload });
   const { closeImage, openImage } = imagePreview;
   /** 设为桌面墙纸：列表瓦片的 hover 按钮与预览 header 共用这一套确认流程 */
   const wallpaper = useWallpaper();

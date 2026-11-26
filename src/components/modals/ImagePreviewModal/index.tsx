@@ -1,5 +1,5 @@
 /**
- * 图片预览弹窗：`FreeModal`（外壳）+ `ImageStage`（整图）+ `ImageListMenu`（header 里的图片列表）。
+ * 图片预览弹窗：`FreeModal`（外壳）+ `ImageStage`（整图）+ `ImageHeaderActions`（header 操作组）+ 裁剪。
  *
  * 与视频预览同形，但更朴素——没有播放器，也就没有播放 / 快进 / 截图那一套：
  *
@@ -14,6 +14,10 @@
  * - **可放大、可拖着看**：捏合（Safari 的 `gesture*` 与其余浏览器的 `ctrlKey` + `wheel` 都接）缩放到
  *   1–5 倍，放大后按住拖动（含 macOS「三指拖拽」）；手势口径在 `ImageStage/hooks/use-image-zoom-pan/`；
  *   拖完松手的那一次 click 被舞台吞掉，不会顺手把 header 开合一次；双击仍只切全屏，不兼做缩放开关；
+ * - **裁剪**：header 的裁剪图标进入裁剪态——画面回 1 倍、叠一层可拖动的选框，header 只留「取消 / 保存」，
+ *   翻篇 / 全屏 / 删除 / 空格 / 点遮罩全部让位；`Esc` 先退裁剪（由外壳 `onRequestEscape` 接管）、
+ *   `Enter` 保存。真正写盘（覆盖源文件 / 另存到「- 裁剪」目录）归调用方 `onCrop`；
+ * - 裁剪设置：header 的设置图标开一层，只有一档选择「保存方式」，偏好按页面存进 localStorage；
  * - 键盘：`[` / `]` 与 `←` / `→` 都翻篇，`F` 全屏，`Esc` 退出 / 关窗，`Delete` 触发删除确认，
  *   空格关窗（与其它弹窗一致，只有视频弹窗把空格让给了播放）；删除确认开着时整组快捷键收掉；
  * - header 的「设为桌面墙纸」只打开二次确认层，真正改系统背景归页面的确认层；
@@ -26,11 +30,20 @@ import { IconTrash, IconWallpaper } from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
 import PreviewCounter from '@/components/feedback/PreviewCounter';
+import FreeModal from '@/components/modals/FreeModal';
 import { useBrowserFullscreen } from '@/hooks/useBrowserFullscreen';
 import { useSingleOrDoubleClick } from '@/hooks/useSingleOrDoubleClick';
-import FreeModal from '@/components/modals/FreeModal';
+import { useStoredField } from '@/hooks/useStoredField';
+import { cx } from '@/utils/cx';
+import { scopedStorageKey } from '@/utils/page-storage';
 
-import ImageListMenu from './ImageListMenu';
+import {
+  CROP_MODE_CODEC,
+  CROP_MODE_FIELD,
+  IMAGE_PREVIEW_CAPABILITY,
+} from './constants';
+import { useImageCrop } from './hooks/use-image-crop';
+import { ImageHeaderActions } from './ImageHeaderActions';
 import ImageStage from './ImageStage';
 import type { ImagePreviewModalProps } from './types';
 
@@ -46,10 +59,12 @@ const ImagePreviewModal = ({
   defaultFullscreen = false,
   items,
   onClose,
+  onCrop,
   onRequestDelete,
   onRequestWallpaper,
   onSelect,
   opened,
+  storageScope,
 }: ImagePreviewModalProps) => {
   const { active: fullscreen, exit, toggle } = useBrowserFullscreen({
     autoEnter: opened && defaultFullscreen,
@@ -57,15 +72,35 @@ const ImagePreviewModal = ({
 
   /** header 是否显示：只由点画面开合，不打 hover 那套自动显隐 */
   const [headerVisible, setHeaderVisible] = useState(false);
-  /** 图片列表弹层是否展开：开着时 header 恒可见 */
-  const [listOpen, setListOpen] = useState(false);
+  /** header 的弹层（图片列表 / 裁剪设置）是否开着：开着时 header 恒可见、点画面只收弹层 */
+  const [actionsOpen, setActionsOpen] = useState(false);
   /** 翻过几次：每切一张加一，左上角的计数浮标据此浮出再自动收掉 */
   const [switchTick, setSwitchTick] = useState(0);
   /**
-   * 按下画面那一刻列表弹层是否开着：点外部的收起在指针按下时就发生，`click` 读到的状态已经翻过，
+   * 按下画面那一刻弹层是否开着：点外部的收起在指针按下时就发生，`click` 读到的状态已经翻过，
    * 只能按这次手势的起点判断「这一下是收弹层，还是切 header 显隐」。
    */
-  const listOpenAtDown = useRef(false);
+  const actionsOpenAtDown = useRef(false);
+  /** 裁剪编码要重新读这张图的原始像素：节点由弹窗持有，舞台只用它 */
+  const imageRef = useRef<HTMLImageElement | null>(null);
+
+  /** 裁剪保存方式：按页面持久化，默认替换源文件 */
+  const [cropMode, setCropMode] = useStoredField(
+    scopedStorageKey(storageScope, IMAGE_PREVIEW_CAPABILITY),
+    CROP_MODE_FIELD,
+    CROP_MODE_CODEC,
+  );
+
+  const index = items.findIndex((item) => item.id === activeId);
+  const activeItem = index >= 0 ? items[index] : null;
+
+  const crop = useImageCrop({
+    mode: cropMode,
+    name: activeItem?.name ?? '',
+    onCrop,
+    path: activeItem?.id ?? '',
+  });
+  const cropping = crop.active;
 
   /**
    * 点画面：单击等一个双击窗口再开合 header，第二下到来就把这次开合作废（双击只切全屏）。
@@ -78,7 +113,7 @@ const ImagePreviewModal = ({
   } = useSingleOrDoubleClick(
     () => setHeaderVisible((prev) => !prev),
     () => {
-      if (blocked) {
+      if (blocked || cropping) {
         return;
       }
 
@@ -88,12 +123,12 @@ const ImagePreviewModal = ({
 
   /**
    * 关窗：先退出整屏全屏，再真正关闭，避免弹窗没了页面还停在全屏；
-   * 顺手收起 header、列表弹层与还没生效的单点计时，下次打开先看整幅图。
+   * 顺手收起 header、弹层与还没生效的单点计时，下次打开先看整幅图。
    */
   const requestClose = () => {
     cancelStageClick();
     setHeaderVisible(false);
-    setListOpen(false);
+    setActionsOpen(false);
 
     if (document.fullscreenElement === null) {
       onClose();
@@ -103,9 +138,6 @@ const ImagePreviewModal = ({
 
     void exit().then(onClose);
   };
-
-  const index = items.findIndex((item) => item.id === activeId);
-  const activeItem = index >= 0 ? items[index] : null;
 
   if (activeItem === null) {
     return null;
@@ -121,57 +153,74 @@ const ImagePreviewModal = ({
     : null;
   const nextItem = canCycle ? items[(index + 1) % items.length] : null;
 
-  /** 翻篇与列表点选共用一个入口：顺手让计数浮标闪一下 */
+  /** 翻篇与列表点选共用一个入口：随手让计数浮标闪一下 */
   const selectItem = (id: string) => {
     setSwitchTick((prev) => prev + 1);
     onSelect(id);
   };
 
+  const saveCrop = () => {
+    void crop.save(imageRef.current);
+  };
+
   /**
-   * 点画面：列表弹层开着时只收弹层；否则等一个双击窗口——没等到第二下才切 header 显隐，
-   * 等到了就交给双击（只切全屏，header 一动不动）。
+   * 点画面：裁剪中不切 header、弹层开着时只收弹层；
+   * 否则等一个双击窗口——没等到第二下才切 header 显隐，等到了就交给双击。
    */
   const handleStageClick = () => {
-    if (listOpenAtDown.current) {
+    if (cropping || actionsOpenAtDown.current) {
       return;
     }
 
     clickStage();
   };
 
-  /** 画面这颗大按钮此刻在做什么：列表开着先收列表，否则说开 / 合 header */
+  /** 画面这颗大按钮此刻在做什么：裁剪 / 弹层开着先处理它们，否则说开 / 合 header */
   let stageLabel = headerVisible ? '收起标题栏' : '显示标题栏';
 
-  if (listOpen) {
-    stageLabel = '收起图片列表';
+  if (cropping) {
+    stageLabel = '裁剪中：拖动选框调整范围';
+  } else if (actionsOpen) {
+    stageLabel = '收起标题栏操作';
   }
 
   return (
     <FreeModal
-      closeOnEscape={!fullscreen && !blocked}
-      closeOnSpace={!blocked}
-      fullscreen={{ active: fullscreen, onToggle: toggle }}
+      closeButton={!cropping}
+      closeOnClickOutside={!cropping}
+      closeOnEscape={!fullscreen && !blocked && !cropping}
+      closeOnSpace={!blocked && !cropping}
+      extraKeys={cropping ? { enter: saveCrop } : undefined}
+      fullscreen={{
+        active: fullscreen,
+        onToggle: cropping ? undefined : toggle,
+        showToggle: !cropping,
+      }}
       headerActions={
-        <ImageListMenu
+        <ImageHeaderActions
           activeId={activeItem.id}
+          canCrop={onCrop !== undefined}
+          crop={crop}
+          cropMode={cropMode}
           items={items}
-          onChangeOpened={setListOpen}
+          onCropModeChange={setCropMode}
+          onOverlayChange={setActionsOpen}
+          onSaveCrop={saveCrop}
           onSelect={selectItem}
-          opened={listOpen}
           tipDark
         />
       }
       /*
        * header 是浮层：只认点画面开合，指针移动不参与；
-       * 列表弹层与删除确认开着时恒可见（那两种状态下要操作的就是 header 上的东西）。
+       * 弹层、删除确认与裁剪开着时恒可见（那几种状态下要操作的就是 header 上的东西）。
        */
       headerOverlay={{
-        suspended: listOpen || blocked,
+        suspended: actionsOpen || blocked || cropping,
         trigger: 'click',
         visible: headerVisible,
       }}
       headerTail={
-        onRequestDelete || onRequestWallpaper ? (
+        cropping || (!onRequestDelete && !onRequestWallpaper) ? undefined : (
           <>
             {onRequestWallpaper ? (
               <FreeIconAction
@@ -193,9 +242,10 @@ const ImagePreviewModal = ({
               </FreeIconAction>
             ) : null}
           </>
-        ) : undefined
+        )
       }
       nav={{
+        disabled: cropping,
         index: index + 1,
         nextLabel: '下一张图片（]）',
         onNext: nextItem ? () => selectItem(nextItem.id) : null,
@@ -205,7 +255,8 @@ const ImagePreviewModal = ({
         total: items.length,
       }}
       onClose={requestClose}
-      onRequestDelete={onRequestDelete ?? null}
+      onRequestDelete={cropping ? null : (onRequestDelete ?? null)}
+      onRequestEscape={cropping ? crop.cancel : undefined}
       opened={opened}
       overlayTone="dark"
       shortcutsEnabled={!blocked}
@@ -215,16 +266,28 @@ const ImagePreviewModal = ({
     >
       <UnstyledButton
         aria-label={stageLabel}
-        className={styles.stage}
+        className={cx(styles.stage, cropping && styles.stageCropping)}
         onClick={handleStageClick}
         onDoubleClick={doubleClickStage}
         onPointerDown={() => {
-          listOpenAtDown.current = listOpen;
+          actionsOpenAtDown.current = actionsOpen;
         }}
         type="button"
       >
-        <ImageStage key={activeItem.id} name={activeItem.name} src={activeItem.src} />
-        <PreviewCounter index={index + 1} tick={switchTick} total={items.length} />
+        <ImageStage
+          cropRect={crop.rect}
+          cropping={cropping}
+          imageRef={imageRef}
+          key={activeItem.src}
+          name={activeItem.name}
+          onCropRectChange={crop.setRect}
+          src={activeItem.src}
+        />
+        <PreviewCounter
+          index={index + 1}
+          tick={switchTick}
+          total={items.length}
+        />
       </UnstyledButton>
     </FreeModal>
   );

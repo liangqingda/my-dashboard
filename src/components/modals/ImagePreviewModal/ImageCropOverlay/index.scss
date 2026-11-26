@@ -1,0 +1,48 @@
+/* 裁剪层：选框外的画面压暗，选框四角与四边各一颗手柄 */
+
+/* 铺满舞台但不吃指针：只有选框与手柄可操作，选框外的点击仍归画面 */
+.layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* 选框：一条浅色描边 + 大范围外阴影当遮罩，选框外整块压暗（舞台本身已 overflow: hidden） */
+.selection {
+  position: absolute;
+  border: 1px solid rgb(255 255 255 / 88%);
+  box-shadow:
+    0 0 0 100vmax rgb(0 0 0 / 55%),
+    0 0 0 1px rgb(0 0 0 / 35%);
+  cursor: move;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+/* 手柄：白色小块 + 深色描边，压在选框边线上（translate 让它居中对齐边线） */
+.handle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border: 1px solid rgb(0 0 0 / 45%);
+  border-radius: 2px;
+  transform: translate(-50%, -50%);
+  touch-action: none;
+}
+
+/* 操作提示：贴着画面底部，随选框一起出现 */
+.hint {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  padding: 4px 10px;
+  color: rgb(255 255 255 / 78%);
+  font-size: 0.76rem;
+  white-space: nowrap;
+  background: rgb(0 0 0 / 45%);
+  border-radius: 999px;
+  pointer-events: none;
+  transform: translateX(-50%);
+}

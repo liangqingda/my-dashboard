@@ -7,6 +7,10 @@
  * 响应归一化是纯函数，住在 `normalize.ts`，这里只管请求与错误文案。
  */
 
+import type {
+  ImageCropRequest,
+  ImageCropResult,
+} from '@/components/modals/ImagePreviewModal/types';
 import { readHttpErrorMessage } from '@/utils/error';
 
 import type {
@@ -21,6 +25,7 @@ import {
   normalizeAppResidueResponse,
   normalizeAppUninstallResponse,
 } from './normalize-app';
+import { normalizeCropResponse } from './normalize-crop';
 import {
   normalizeCaptureResponse,
   normalizeEjectPayload,
@@ -41,6 +46,7 @@ const DELETE_ENDPOINT = '/api/files/delete';
 const CONTENT_ENDPOINT = '/api/files/content';
 const IMAGE_ENDPOINT = '/api/files/image';
 const CAPTURE_ENDPOINT = '/api/files/capture';
+const CROP_ENDPOINT = '/api/files/crop';
 const APP_ICON_ENDPOINT = '/api/files/app-icon';
 const APP_RESIDUE_ENDPOINT = '/api/files/app-residue';
 const OPEN_APP_ENDPOINT = '/api/files/open-app';
@@ -266,6 +272,19 @@ export const captureVideoFrame = async (
   }
 
   return name;
+};
+
+/** 保存一张图片的裁剪结果（`replace` 覆盖源文件 / `copy` 另存到「- 裁剪」目录），返回落盘位置与文件名 */
+export const cropImage = async (
+  request: ImageCropRequest,
+): Promise<ImageCropResult> => {
+  const result = normalizeCropResponse(await postJson(CROP_ENDPOINT, request));
+
+  if (result === null) {
+    throw new Error('裁剪回执格式不符合预期');
+  }
+
+  return result;
 };
 
 /**
