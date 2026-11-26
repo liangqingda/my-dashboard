@@ -13,10 +13,6 @@
     var(--app-glass-fade-strong),
     var(--app-glass-fade-weak)
   );
-  /* hover 时垫回旧版控制栏那层实底：渐变和它同色，叠满后就是之前那档不透明度；
-     底色单独过渡，渐变本身不用动，进出 hover 都是渐变而不是硬切 */
-  background-color: transparent;
-  transition: background-color 160ms ease;
   -webkit-backdrop-filter: blur(var(--app-glass-blur-panel))
     saturate(var(--app-glass-saturate));
   backdrop-filter: blur(var(--app-glass-blur-panel))
@@ -25,11 +21,6 @@
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
   will-change: backdrop-filter;
-}
-
-/* 指针进到控制栏：垫底换成旧版那层实色，从透明渐变到满格，不硬切 */
-.controls:hover {
-  background-color: var(--app-surface-subtle);
 }
 
 /* 进度条容器：占满整行，悬停预览浮层以它为定位祖先。
@@ -66,17 +57,21 @@
     box-shadow 160ms ease;
 }
 
-/* 轨道底：半透明色块，浓淡跟着 hover 走——没 hover 时近乎只剩一层薄玻璃，
-   指针进来才显形（稍厚一点的一层 + 1px 内描边），不再是实色灰条。
-   控制栏本身已经虚化了后面的视频，轨道再叠一层 `backdrop-filter` 只是重复采样，
-   还会和控制栏一起淡入时多抖一层，所以这里只留半透明底色。 */
+/* 轨道底：默认只铺一层 20% 的半透明色块，不叠 `backdrop-filter`——控制栏本身已经虚化了视频，
+   轨道再常年叠一层只是重复采样，控制栏淡入时还容易多抖一层。
+   指针进到控制栏后再把玻璃挂回来（见下一条），默认薄、hover 厚。 */
 .progress .track::before {
   background-color: color-mix(in srgb, var(--app-surface) 20%, transparent);
 }
 
-.progressWrap:hover .track::before {
+/* 指针进到控制栏：轨道恢复之前那层玻璃——42% 底 + 虚化 + 1px 内描边，
+   底色仍走上面那档 160ms 过渡；不垫实色，视频与控制栏的毛玻璃都还在 */
+.controls:hover .progress .track::before {
   background-color: color-mix(in srgb, var(--app-surface) 42%, transparent);
-  /* 玻璃再透明也要看得出边界：1px 内描边把这条框出来 */
+  -webkit-backdrop-filter: blur(var(--app-glass-blur-panel))
+    saturate(var(--app-glass-saturate));
+  backdrop-filter: blur(var(--app-glass-blur-panel))
+    saturate(var(--app-glass-saturate));
   box-shadow: inset 0 0 0 1px var(--app-glass-edge);
 }
 
