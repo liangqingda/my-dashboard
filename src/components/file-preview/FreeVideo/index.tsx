@@ -18,6 +18,9 @@
  * 高度按画面比例算并受舞台高度约束；帧图分辨率跟着预览框 × 设备像素比走，窗口越大越清。
  *
  * 换片由调用方用 `key` 重挂（每个视频一个实例），不在这里监听 `src` 变化清状态。
+ *
+ * 读盘只跑一条主线：打开视频的那一刻不挂抽帧探针（等主画面就绪 + 一档延迟），
+ * 卸载时两路流都主动断掉——连翻几条时既不会成倍占盘，也不会留下在途 Range 请求排队。
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -35,6 +38,7 @@ import {
   VIDEO_FALLBACK_ASPECT,
 } from './constants';
 import { useControlsVisibility } from './hooks/use-controls-visibility';
+import { useFrameProbe } from './hooks/use-frame-probe';
 import { useHoverFrameGrabber } from './hooks/use-hover-frame-grabber';
 import { useVideoElement } from './hooks/use-video-element';
 import { useVideoFrames } from './hooks/use-video-frames';
@@ -129,10 +133,20 @@ const FreeVideo = ({
   const frameLongestEdge = Math.round(
     previewSize.width * Math.min(window.devicePixelRatio, SEEK_PREVIEW_DPR_CAP),
   );
+  /*
+   * 抽帧探针的地址晚一步才挂（主画面就绪 + `PROBE_ARM_DELAY`），卸载时两路流一起断：
+   * 打开视频的那一刻只有主视频一路读盘，连翻几条也不会有第二条整份流抢盘。
+   */
+  const { probeSrc } = useFrameProbe({
+    probeRef,
+    ready: status === 'ready',
+    src,
+    videoRef: ownRef,
+  });
   const { grabFrame, ready: previewReady, requestFrame } = useVideoFrames({
     frameLongestEdge,
     probeRef,
-    src,
+    src: probeSrc,
   });
 
   /** 悬停帧快照：截图优先存它（全分辨率），悬停收起后交回 `null` */
@@ -324,15 +338,16 @@ const FreeVideo = ({
       {/*
         抽帧探针：同源同地址的第二支 `<video>`，只按需 seek 取帧；
         1px + 透明 + 不接指针，看不见也不参与布局。用正在播的那支会把它 seek 走。
-        `preload="auto"`：按需抽帧要的就是「seek 后立刻有画面」，先拉点数据比事后临时请求快；
-        探针本身不播、不出声，多下的数据不影响主视频（同一地址走同一份缓存）。
+        地址**晚一步才挂**（主画面就绪后 `PROBE_ARM_DELAY`）：打开视频的那一刻只有主视频一路读盘，
+        连翻几条也不会有第二条整份流抢盘；挂上后 `preload="metadata"` 只取元数据，
+        真正要哪一帧时再按位置拉那一段——本地 Range 取一次只要几十毫秒，慢的是解码不是传输。
       */}
       <video
         aria-hidden="true"
         className={styles.frameProbe}
-        preload="auto"
+        preload="metadata"
         ref={probeRef}
-        src={src}
+        src={probeSrc === '' ? undefined : probeSrc}
         tabIndex={-1}
       />
     </div>

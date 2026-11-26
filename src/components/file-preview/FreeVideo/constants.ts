@@ -30,6 +30,13 @@ export const SEEK_PREVIEW_DPR_CAP = 2;
 export const VIDEO_FALLBACK_ASPECT = 16 / 9;
 
 /**
+ * 抽帧探针挂地址的延迟（毫秒）：主画面就绪后再等这么久，才把地址交给那支隐藏探针。
+ * 打开 / 连翻视频时只有主视频一条流在读盘，被翻过去的片子一条数据都不会抽；
+ * 探针本身只取元数据（`preload="metadata"`），真正要帧时再按位置拉那一段。
+ */
+export const PROBE_ARM_DELAY = 600;
+
+/**
  * 控制栏的选择器：控制栏是播放器自己的 chrome，自带一套显隐节奏，
  * 指针在上面活动不该把外层的浮层 header 顶出来。弹窗按它过滤指针活动
  * （见 `FreeModal` 的 `headerOverlay.ignoreSelector`），所以控制栏根节点带 `data-video-controls`。

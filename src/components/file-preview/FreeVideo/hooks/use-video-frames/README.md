@@ -74,8 +74,9 @@
 
 - `no-unnecessary-condition` 下不能直接 `if (controller.signal.aborted)`：`aborted` 是 readonly，
   TS 会在闭包里把它窄化成恒假。代码里包了一层 `isCancelled()` 来读。
-- 探针 `preload="auto"`：按需抽帧要的就是「seek 后立刻有画面」，先拉点数据比每次临时请求快；
-  探针不播、不出声，同一地址与主视频共用一份媒体缓存。
+- 探针地址由 `FreeVideo` **晚一步**才交过来（主画面就绪 + `PROBE_ARM_DELAY`），没交之前 `src` 是空串，
+  这里的 effect 直接不启动、`ready` 保持 false；挂上后 `preload="metadata"`，只取元数据，
+  要哪一帧再按位置拉那一段。这样打开 / 连翻视频时不会多出一条整份流跟主视频抢盘。
 - 首次 hover 的等待就是这个文件一次 seek 的耗时：本地 1080p H.264 通常几百毫秒，
   4K HEVC 这类要重新解码关键帧的能到数秒（实测 4096×2160 长 GOP 素材冷位置 2–5 秒、
   已访问过的位置 200–1200ms，同一位置的 `Range` 请求只要 10ms，慢在解码不在传输）。
