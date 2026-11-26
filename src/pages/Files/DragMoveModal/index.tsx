@@ -18,8 +18,12 @@ import DirBreadcrumb from '../DirBreadcrumb';
 import FavoritesPanel from '../FilesActions/FavoritesPanel';
 import { sessionLayout } from '../hooks/use-drag-move/utils';
 import type { DraggableEntry, FolderEntry } from '../types';
+import { useReturnFly } from '../hooks/useReturnFly';
+import type { LandedItem } from '../hooks/use-drag-move/types';
 
 import FolderGrid from './FolderGrid';
+import LandedTiles from './LandedTiles';
+import ReturnFly from './ReturnFly';
 import HandCard from './HandCard';
 import type { DragMoveModalProps } from './types';
 import { acceptMove, leaveOutside, modalTitle } from './utils';
@@ -41,6 +45,7 @@ const POPOVER_Z_INDEX = 600;
 /** 还没有子文件夹 / 条目时共用一个空数组，免得每次渲染都造一个新的 */
 const NO_FOLDERS: FolderEntry[] = [];
 const NO_ENTRIES: DraggableEntry[] = [];
+const NO_LANDED: LandedItem[] = [];
 
 /**
  * 拖拽移动弹窗：拖起列表里的一条或一批条目后自动打开，占满整屏。正文三段——
@@ -99,6 +104,14 @@ const DragMoveModal = ({
   /** 待拖拽区按整批的原位平铺；单独拖起某一条时，那一条的位置留成虚位 */
   const handEntries = session === null ? NO_ENTRIES : sessionLayout(session);
   const focusPath = session?.rest === undefined ? null : (session.entries[0]?.path ?? null);
+  /** 本次会话搬进**当前这一层**的条目：进到这个文件夹就能看见它们 */
+  const landedInView =
+    view === null
+      ? NO_LANDED
+      : dragMove.landed.filter((item) => item.targetDir === view.path);
+
+  /** 回手卡那一趟：取回条目 + 拿那格瓦片的拷贝从原地缩着飞进手卡 */
+  const flyBack = useReturnFly(dragMove.restoreLanded);
 
   return (
     <FreeModal
@@ -253,34 +266,40 @@ const DragMoveModal = ({
               </Text>
             ) : null}
 
-            {!loading && error === null && folders.length === 0 ? (
+            {!loading && error === null && folders.length === 0 && landedInView.length === 0 ? (
               <Text c="dimmed" className={styles.notice} size="sm">
                 这个目录里没有子文件夹：点面包屑换一层，或按 Esc 关窗。
               </Text>
             ) : null}
 
-            {folders.length > 0 ? (
+            {folders.length > 0 || landedInView.length > 0 ? (
               <ScrollArea h="100%" offsetScrollbars="y" scrollbarSize={8} type="auto">
-                <FolderGrid
-                  dragActive={dragActive}
-                  entries={session.entries}
-                  folders={folders}
-                  hoverPath={hoverPath}
-                  idle={idle}
-                  landed={dragMove.landed}
-                  onDrop={dropOnFolder}
-                  onEnter={hoverFolder}
-                  onLeave={leaveFolder}
-                  onOpen={goTo}
-                  onRetract={(id) => {
-                    void dragMove.retract(id);
-                  }}
-                  springPath={springPath}
-                />
+                {/* 本次搬进这一层的条目排在最上面：进到这个文件夹就能看见 */}
+                {landedInView.length > 0 ? (
+                  <LandedTiles items={landedInView} onReturn={flyBack.start} />
+                ) : null}
+                {folders.length > 0 ? (
+                  <FolderGrid
+                    dragActive={dragActive}
+                    entries={session.entries}
+                    folders={folders}
+                    hoverPath={hoverPath}
+                    idle={idle}
+                    onDrop={dropOnFolder}
+                    onEnter={hoverFolder}
+                    onLeave={leaveFolder}
+                    onOpen={goTo}
+                    springPath={springPath}
+                  />
+                ) : null}
               </ScrollArea>
             ) : null}
           </div>
         </div>
+      )}
+
+      {flyBack.flight === null ? null : (
+        <ReturnFly flight={flyBack.flight} onDone={flyBack.clear} />
       )}
     </FreeModal>
   );

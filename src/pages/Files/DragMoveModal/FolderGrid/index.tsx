@@ -5,12 +5,9 @@ import { IconFolderFilled } from '@tabler/icons-react';
 import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
 import { cx } from '@/utils/cx';
 
-import { CATEGORY_ICONS } from '../../constants';
 import { SPRING_HOVER_MS } from '../../hooks/use-drag-move/constants';
-import { fileThumbUrl } from '../../utils/media-thumbs';
 import { allInsideDir } from '../../hooks/use-drag-move/utils';
 import { acceptMove, leaveOutside } from '../utils';
-import type { LandedItem } from '../../hooks/use-drag-move/types';
 
 import type { FolderGridProps } from './types';
 
@@ -18,30 +15,6 @@ import styles from './index.scss';
 
 /** 拖过来的东西本来就全在那一格里：瓦片显示成禁用态，并在格子里说明原因 */
 const HINT_ALREADY_INSIDE = '本来就在这个文件夹里';
-
-/** 一格底下「刚搬进来的」那一条：图片 / 视频摆缩略图，其它摆分类图标，文件夹摆文件夹图标 */
-const landedThumbOf = (item: LandedItem) => {
-  const { entry } = item;
-
-  if ('category' in entry) {
-    if (entry.category === 'video' || entry.category === 'image') {
-      return (
-        <img
-          alt=""
-          className={styles.landedThumb}
-          draggable={false}
-          src={fileThumbUrl(entry.path)}
-        />
-      );
-    }
-
-    const Icon = CATEGORY_ICONS[entry.category];
-
-    return <Icon aria-hidden="true" className={styles.landedGlyph} size={14} />;
-  }
-
-  return <IconFolderFilled aria-hidden="true" className={styles.landedGlyph} size={14} />;
-};
 
 /**
  * 弹窗里的文件夹落点网格：一格一个子文件夹。
@@ -61,9 +34,7 @@ const FolderGrid = ({
   onDrop,
   onEnter,
   onLeave,
-  landed,
   onOpen,
-  onRetract,
   springPath,
 }: FolderGridProps) => {
   /** 指针正压在一个禁用落点上：只有它需要额外说明（其余格子没有禁用的理由） */
@@ -73,10 +44,6 @@ const FolderGrid = ({
   const isBlocked = (path: string): boolean =>
     dragActive && allInsideDir(entries, path);
 
-  /** 本次会话搬进某一格的条目；没搬过的格子返回空集 */
-  const receivedOf = (path: string): LandedItem[] =>
-    landed.filter((item) => item.targetDir === path);
-
   return (
     <div className={styles.grid}>
       {folders.map((folder) => {
@@ -84,7 +51,7 @@ const FolderGrid = ({
         const blockedHovered = blocked && blockedPath === folder.path;
 
         return (
-          <div
+          <UnstyledButton
             className={cx(
               styles.folder,
               hoverPath === folder.path && styles.hovered,
@@ -93,6 +60,7 @@ const FolderGrid = ({
               blockedHovered && styles.blockedOn,
             )}
             key={folder.path}
+            onClick={idle ? () => onOpen(folder.path) : undefined}
             onDragLeave={(event) =>
               leaveOutside(event, () => {
                 onLeave(folder.path);
@@ -125,65 +93,29 @@ const FolderGrid = ({
               onDrop(folder.path);
             }}
           >
-            <UnstyledButton
-              className={styles.tile}
-              onClick={idle ? () => onOpen(folder.path) : undefined}
-              type="button"
-            >
-              <IconFolderFilled
-                aria-hidden="true"
-                className={styles.folderIcon}
-                size={40}
-                stroke={1.2}
-              />
-              <FreeTruncatedText
-                className={styles.folderName}
-                ellipsis="middle"
-                lines={2}
-                text={folder.name}
-              />
-              {blockedHovered ? (
-                <span className={styles.blockedTip}>{HINT_ALREADY_INSIDE}</span>
-              ) : null}
-              {!blocked && hoverPath === folder.path ? (
-                <span
-                  aria-hidden="true"
-                  className={styles.countdown}
-                  style={{ animationDuration: `${SPRING_HOVER_MS}ms` }}
-                />
-              ) : null}
-            </UnstyledButton>
-
-            {/* 本次搬进来的那几条：平铺在名字下面，点一下搬回待拖拽区 */}
-            {receivedOf(folder.path).length > 0 ? (
-              <span className={styles.received}>
-                {receivedOf(folder.path).map((item) =>
-                  item.retracted ? (
-                    <span
-                      aria-hidden="true"
-                      className={styles.landedSlot}
-                      key={item.id}
-                    />
-                  ) : (
-                    <UnstyledButton
-                      className={styles.landed}
-                      key={item.id}
-                      onClick={() => onRetract(item.id)}
-                      type="button"
-                    >
-                      {landedThumbOf(item)}
-                      <FreeTruncatedText
-                        className={styles.landedName}
-                        ellipsis="middle"
-                        lines={1}
-                        text={item.entry.name}
-                      />
-                    </UnstyledButton>
-                  ),
-                )}
-              </span>
+            <IconFolderFilled
+              aria-hidden="true"
+              className={styles.folderIcon}
+              size={40}
+              stroke={1.2}
+            />
+            <FreeTruncatedText
+              className={styles.folderName}
+              ellipsis="middle"
+              lines={2}
+              text={folder.name}
+            />
+            {blockedHovered ? (
+              <span className={styles.blockedTip}>{HINT_ALREADY_INSIDE}</span>
             ) : null}
-          </div>
+            {!blocked && hoverPath === folder.path ? (
+              <span
+                aria-hidden="true"
+                className={styles.countdown}
+                style={{ animationDuration: `${SPRING_HOVER_MS}ms` }}
+              />
+            ) : null}
+          </UnstyledButton>
         );
       })}
     </div>

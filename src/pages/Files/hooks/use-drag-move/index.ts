@@ -4,11 +4,12 @@ import type { DraggableEntry, FolderEntry } from '../../types';
 
 import { useHoverTargets } from './use-hover-targets';
 import { useLanded } from './use-landed';
-import { focusSession, restoreSession, stripSelf } from './utils';
+import { focusSession, restoreSession, sessionLayout, stripSelf } from './utils';
 import { useDrops } from './use-drops';
 import type {
   DragMoveSession,
   DragMoveView,
+  LandedItem,
   MoveProgress,
   UseDragMoveArgs,
 } from './types';
@@ -32,7 +33,7 @@ export const useDragMove = ({
   currentFolders,
   moveEntry,
   onAllMoved,
-  onReadd,
+  onRestored,
 }: UseDragMoveArgs) => {
   /** 当前会话；null 表示弹窗关闭 */
   const [session, setSession] = useState<DragMoveSession | null>(null);
@@ -50,7 +51,7 @@ export const useDragMove = ({
   const [progress, setProgress] = useState<MoveProgress | null>(null);
 
   /** 本次会话里搬进各文件夹的记录：弹窗里那一格据此把搬进去的条目平铺出来 */
-  const landed = useLanded({ moveEntry, onReadd });
+  const landed = useLanded();
 
   /** 状态镜像：事件回调里要读到「此刻」的值，不能依赖某一次渲染的闭包 */
   const sessionRef = useRef<DragMoveSession | null>(null);
@@ -139,6 +140,39 @@ export const useDragMove = ({
     resetHover();
     setHanded(false);
     setDragActive(true);
+  };
+
+  /**
+   * 弹窗里点「本次搬进这个文件夹」的一条：把它从记录里取回、放回手卡
+   * （磁盘上不动，文件本来就留在这个文件夹里），下一次移动就从它的新路径搬走。
+   */
+  const restoreLanded = (item: LandedItem) => {
+    const active = sessionRef.current;
+
+    if (active === null) {
+      return;
+    }
+
+    const next: DragMoveSession = {
+      ...active,
+      entries: [...sessionLayout(active), item.entry],
+    };
+
+    /*
+     * 取回这一条时手上没在拖任何一条：`rest` 那套「留虚位」的工作态可以撤了，
+     * 让它跟其余条目一样实着排在待拖拽区末尾
+     */
+    delete next.rest;
+    delete next.restAt;
+
+    sessionRef.current = next;
+    setSession(next);
+    landed.forget(item.id);
+
+    // 它已经不在「这次搬走的」里了：关窗收尾时别把它从待拖拽区又摘掉一遍
+    movedRef.current = movedRef.current.filter((path) => path !== item.entry.path);
+    setMovedPaths(movedRef.current);
+    onRestored?.(item.entry);
   };
 
   /** 拖拽结束（松手 / Esc / 落在非落点区域）：条目回到手里，弹窗留着 */
@@ -254,7 +288,7 @@ export const useDragMove = ({
     progress,
     refreshView,
     reset,
-    retract: landed.retract,
+    restoreLanded,
     session,
     springPath,
     view,

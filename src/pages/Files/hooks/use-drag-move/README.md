@@ -12,7 +12,7 @@ const dragMove = useDragMove({
   currentFolders,  // 页面已有的子文件夹列表：最外层不再多发一次请求
   moveEntry,       // (source, targetDir) => Promise<boolean>，成功才播音效
   onAllMoved,      // 可选：整批都搬走、弹窗自动关掉时回传最后落成的目录（页面据此切过去）
-  onReadd,         // 可选：弹窗里撤回「刚搬进来的」那一条时把它交回待拖拽区
+  onRestored,      // 可选：弹窗里把「刚搬进来的」某一条取回手卡时，页面同时把它加回待拖拽区
 });
 ```
 
@@ -83,14 +83,17 @@ const dragMove = useDragMove({
 `notify.ts` 的 `notifyMoveDone`（`已移动 N 个项目`，有被剔出来的就补一句），
 顺序固定为「进度走完 → 决定是否关窗 → 关了才提示」。通知层级压在全屏弹窗之上（`main.tsx` 里 `zIndex={800}`）。
 
-## 刚搬进这一格的那几条（`use-landed.ts`）
+## 刚搬进这个文件夹的那几条（`use-landed.ts`）
 
-弹窗没关（只搬走了其中几条）时，搬进的那个文件夹**要把本次搬进去的条目摆出来**：
+弹窗没关（只搬走了其中几条）时，**进入那个文件夹就能看到本次搬进去的条目**：
 `use-landed.ts` 收一份 `LandedItem[]`（会话级，`open()` 时清空），每条记「搬完后的新路径、
-原目录、落进的目录、是否已撤回」，`FolderGrid` 在那一格名字下面平铺它们（缩略图 / 图标 + 文件名）。
+原目录、落进的目录」；弹窗按 `targetDir === view.path` 筛出「这一层的」，交给 `LandedTiles`
+用列表里同款瓦片（视频帧 / 文件名 / 文件大小）平铺，位置在文件列表前面。
 
-点某一条＝`retract(id)`：把它从新路径搬回原目录，成功后才把记录标成 `retracted`（那一格留成虚线虚位），
-并通过 `onReadd` 把条目交回待拖拽区——顺序固定为「搬回去 → 标虚位 → 交回」，失败就什么都不改。
+点某一条＝`restoreLanded(item)`：**磁盘上不动**，只把它从 `landed` 里摘掉、追加进 `session.entries`
+（回到手卡），同时从 `movedPaths` 里剔掉它的新路径、并经 `onRestored` 把它加回页面待拖拽区
+——所以关窗以后它还留在待拖拽区里，而不是「既不在原处、也不在手上」。
+回落那一趟的动画不在 hook 里：`hooks/useReturnFly.ts` 量那格与手卡、起 `ReturnFly`。
 
 ## 事件里的「此刻」
 

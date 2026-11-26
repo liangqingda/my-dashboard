@@ -1,0 +1,63 @@
+/*
+ * 搬进当前这一层的条目：与弹窗里的文件夹落点同一档列宽，一眼看得出它们是「这一层的东西」。
+ */
+
+/* 与上面「当前路径」、下面文件夹网格之间各留一口气 */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 一句说明：让人知道这一排是刚搬进来的、点一下是拿回去 */
+.caption {
+  margin: 0;
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+  user-select: none;
+}
+
+/* 列宽与 `FolderGrid` 对齐，间距同一档 */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
+  gap: 10px;
+}
+
+/* 一格：瓦片本体 + 盖在上面那块透明点击按钮 */
+.cell {
+  position: relative;
+  min-width: 0;
+}
+
+/*
+ * 透明点击区：盖满整格，指针变手形；hover 时在格子底部浮出一句说明，
+ * 让人知道这一格点下去不是打开、而是放回待拖拽区。
+ */
+.hit {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 6px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.hint {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--app-accent);
+  color: #fff;
+  font-size: 11px;
+  line-height: 1.5;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.hit:hover .hint {
+  opacity: 1;
+}

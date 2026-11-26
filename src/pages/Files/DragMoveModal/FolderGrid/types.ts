@@ -1,5 +1,4 @@
 import type { DraggableEntry, FolderEntry } from '../../types';
-import type { LandedItem } from '../../hooks/use-drag-move/types';
 
 /** 弹窗文件夹落点网格的入参：这一层有哪些子文件夹、谁在悬停 / 弹起，以及三个落点动作 */
 export type FolderGridProps = {
@@ -23,8 +22,4 @@ export type FolderGridProps = {
   onLeave: (path: string) => void;
   /** 在某一格松手：交给会话移进去（已在里面的那些由会话剔出来不搬） */
   onDrop: (path: string) => void;
-  /** 本次会话已经搬进各文件夹的条目：那一格据此把它们平铺在名字下面 */
-  landed: LandedItem[];
-  /** 点「刚搬进来的」那一条：搬回原目录并回到待拖拽区（那一格留成虚位） */
-  onRetract: (id: string) => void;
 };

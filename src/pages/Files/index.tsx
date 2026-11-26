@@ -103,8 +103,8 @@ const Files = () => {
     reload,
     // 整批搬完、弹窗自己关掉后，列表跟到最后落成的目录
     onAllMoved: openDir,
-    // 弹窗里点「刚搬进来的」把它撤回：条目直接回到待拖拽区
-    onReadd: pending.add,
+    // 弹窗里把一条「搬进文件夹」的取回手卡：同时加回待拖拽区，关窗后它还在
+    onRestored: pending.add,
   });
   /** 应用卸载：点卸载先取残留清单，确认后删整包并清理残留 */
   const appUninstall = useAppUninstall(reload);

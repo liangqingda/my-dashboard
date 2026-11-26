@@ -23,7 +23,7 @@ export type DragMoveSession = {
 
 /**
  * 本次会话里搬进某个文件夹的一条（搬成功的才记）。
- * 弹窗里那一格据此把「刚搬进来的」平铺出来；点一下＝搬回原来的目录并回到待拖拽区。
+ * 弹窗里进到那个文件夹后，它们按列表里的样子摆出来；点一下＝取回、放回手卡。
  */
 export type LandedItem = {
   /** 单条标识：路径 + 目标目录（同一条搬进不同目录各算一条） */
@@ -34,8 +34,6 @@ export type LandedItem = {
   origin: string;
   /** 搬进的那个文件夹 */
   targetDir: string;
-  /** 已经点过撤回（搬回待拖拽区）：那一格留成虚位，不再显示真身 */
-  retracted: boolean;
 };
 
 /** 逐条搬的进度：弹窗据此画「像 macOS 那样的移动进度」 */
@@ -68,16 +66,11 @@ export type UseDragMoveArgs = {
   moveEntry: (source: string, targetDir: string) => Promise<boolean>;
   /** 整批都搬走了、弹窗自动关掉：把最后落成的目录回给别人（页面据此跟过去） */
   onAllMoved?: (targetDir: string) => void;
-  /** 点「刚搬进来的」那一条把它撤回：交回待拖拽区（页面把条目加回去） */
-  onReadd?: (entry: DraggableEntry) => void;
-};
-
-/** 「刚搬进这一格」清单 hook 的入参 */
-export type UseLandedArgs = {
-  /** 执行移动；成功返回 true */
-  moveEntry: (source: string, targetDir: string) => Promise<boolean>;
-  /** 撤回时把条目交回待拖拽区 */
-  onReadd?: (entry: DraggableEntry) => void;
+  /**
+   * 弹窗里把「本次搬进文件夹」的一条取回手卡：页面同时把它加回待拖拽区，
+   * 这样关窗以后它还在（否则它既不在磁盘上的原处、也不在待拖拽区里）。
+   */
+  onRestored?: (entry: DraggableEntry) => void;
 };
 
 /** 读盘 hook 的入参：路径与结果由会话给，缓存与回填也还回到会话里 */

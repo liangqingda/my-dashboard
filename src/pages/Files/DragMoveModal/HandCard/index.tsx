@@ -57,6 +57,7 @@ const HandCard = ({
     <div
       className={cx(styles.tray, handed ? styles.idle : styles.live)}
       data-hand-blank="true"
+      data-hand-card="true"
       draggable
       onDragEnd={onDragEnd}
       onDragStart={(event) => {

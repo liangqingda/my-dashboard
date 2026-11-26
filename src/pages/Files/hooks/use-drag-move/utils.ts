@@ -131,7 +131,6 @@ export const buildLanded = (
         entry: { ...entry, path: joinDirOf(targetDir, name) },
         id: `${targetDir}#${entry.path}`,
         origin,
-        retracted: false,
         targetDir,
       };
     });

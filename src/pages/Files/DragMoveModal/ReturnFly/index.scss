@@ -1,0 +1,13 @@
+/*
+ * 回流动画的那一块：盖在弹窗之上的一层（不含遮罩），位置与尺寸按起点矩形定，
+ * 里面贴的是被拿走那格瓦片的深拷贝，动画只改它的位移与缩放。
+ */
+
+/* 飞行块：左 / 上 / 宽 / 高由组件按起点矩形写死，这里只定层级与裁切 */
+.block {
+  position: fixed;
+  z-index: 720;
+  overflow: hidden;
+  transform-origin: center center;
+  pointer-events: none;
+}
