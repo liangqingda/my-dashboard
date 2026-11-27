@@ -38,7 +38,7 @@
   width: 100%;
 }
 
-/* 轨道：平时比 Mantine 默认的 8px 细一档（4px）；指针在热区里停住 100ms 才加粗到 12px，
+/* 轨道：平时比 Mantine 默认的 8px 细一档（4px）；指针在热区里停住 250ms 才加粗到 12px，
    只是从画面上划过去不会闪一下。只改轨道高度，根节点仍是 2×--slider-size，
    加粗不会把控制栏顶高、滑块也不用跟着挪 */
 .progress .track {
@@ -49,7 +49,7 @@
 .progressWrap:hover .track {
   height: 12px;
   /* 延迟只挂在 hover 态：离开时按基础态的 0 延迟立刻收回去，不拖着 */
-  transition-delay: 100ms;
+  transition-delay: 250ms;
 }
 
 /* 轨道与已播放段换底都走同一个时长：进出 hover 是渐变，不硬切 */
@@ -85,6 +85,7 @@
 
 .progressWrap:hover .bar {
   background-color: color-mix(in srgb, var(--slider-color) 78%, transparent);
+  transition-delay: 250ms;
 }
 
 /*
@@ -125,6 +126,7 @@
   width: 16px;
   height: 16px;
   border-width: 4px;
+  transition-delay: 250ms;
 }
 
 /* 拖动中：触屏没有 hover，靠这一档把小圆点撑开，按住时才看得清抓的是什么 */
