@@ -1,5 +1,5 @@
 /**
- * 图片预览 header 的操作组：图片列表、设为桌面墙纸、加入待拖拽区、裁剪、裁剪设置；
+ * 图片预览 header 的操作组：图片列表、设为桌面墙纸、加入 / 移出待拖拽区、裁剪、裁剪设置；
  * 进入裁剪后只剩取消 / 保存。
  *
  * 两层弹层的开合归这里持有（列表与设置互斥，开一层就收另一层），再向上报一个
@@ -44,9 +44,9 @@ export type ImageHeaderActionsProps = {
   onSaveCrop: () => void;
   /** 设为桌面墙纸：排在裁剪左边，不传则没有这颗按钮 */
   onRequestWallpaper?: () => void;
-  /** 加入待拖拽区：紧挨墙纸右边，不传则没有这颗按钮 */
-  onRequestBatch?: () => void;
-  /** 当前这张已经在待拖拽区：按钮禁用并改成「已在待拖拽区」 */
+  /** 加入 / 移出待拖拽区：紧挨墙纸右边，再点一次就是移出；不传则没有这颗按钮 */
+  onToggleBatch?: () => void;
+  /** 当前这张已经在待拖拽区：按钮亮成强调色，提示改成「从待拖拽区移出」 */
   batched?: boolean;
   /** 任一弹层开合：弹窗据此让 header 恒可见 */
   onOverlayChange: (open: boolean) => void;
@@ -63,10 +63,10 @@ export const ImageHeaderActions = ({
   items,
   onCropModeChange,
   onOverlayChange,
-  onRequestBatch,
   onRequestWallpaper,
   onSaveCrop,
   onSelect,
+  onToggleBatch,
   tipDark = false,
 }: ImageHeaderActionsProps) => {
   const [listOpen, setListOpen] = useState(false);
@@ -144,12 +144,12 @@ export const ImageHeaderActions = ({
           <IconWallpaper size={ICON_SIZE} stroke={ICON_STROKE} />
         </FreeIconAction>
       ) : null}
-      {onRequestBatch ? (
+      {onToggleBatch ? (
         <FreeIconAction
-          disabled={batched}
-          label={batched ? '已在待拖拽区' : '加入待拖拽区（随后可整批拖走）'}
-          onClick={onRequestBatch}
+          label={batched ? '从待拖拽区移出' : '加入待拖拽区（随后可整批拖走）'}
+          onClick={onToggleBatch}
           tipDark={tipDark}
+          tone={batched ? 'accent' : 'normal'}
         >
           <IconDragDrop size={ICON_SIZE} stroke={ICON_STROKE} />
         </FreeIconAction>

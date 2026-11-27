@@ -153,17 +153,17 @@ export const useFilesPageState = () => {
     imagePreview.activeItem !== null && pending.has(imagePreview.activeItem.id);
 
   /**
-   * 图片预览 header 的「加入待拖拽区」：这里只把当前这张的路径交出去，
-   * 认条目、加进去与那条提示都在 `usePendingDrag.handleStageImage`。
+   * 图片预览 header 的「加入 / 移出待拖拽区」：这里只把当前这张的路径交出去，
+   * 认条目、加成还是移出、那条提示都在 `usePendingDrag.handleTogglePendingImage`。
    */
-  const { handleStageImage } = drag;
-  const stageImage = useCallback(() => {
+  const { handleTogglePendingImage } = drag;
+  const toggleImage = useCallback(() => {
     const active = imagePreview.activeItem;
 
     if (active !== null) {
-      handleStageImage(active.id);
+      handleTogglePendingImage(active.id);
     }
-  }, [handleStageImage, imagePreview.activeItem]);
+  }, [handleTogglePendingImage, imagePreview.activeItem]);
 
   /** 切换某块弹层：再点一次同一块则收起 */
   const togglePanel = useCallback(
@@ -265,9 +265,9 @@ export const useFilesPageState = () => {
     setKeyword,
     setOpenPanel,
     setView,
-    stageImage,
     toggleFavorite,
     toggleGroup,
+    toggleImage,
     togglePinnedFavorite,
     togglePanel,
     entryActions,

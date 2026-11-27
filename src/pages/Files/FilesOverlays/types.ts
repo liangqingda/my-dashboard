@@ -39,8 +39,8 @@ export type FilesOverlaysProps = {
     image: ReturnType<typeof useImagePreview>;
     /** 预览中的这张图是否已在待拖拽区（header 那颗按钮的「已加入」态） */
     imageStaged: boolean;
-    /** 把预览中的这张图收进待拖拽区 */
-    onStageImage: () => void;
+    /** 把预览中的这张图加入 / 移出待拖拽区（方向由 `imageStaged` 说） */
+    onToggleImage: () => void;
     video: ReturnType<typeof useVideoPreview>;
     onRequestDelete: (path: string) => void;
   };

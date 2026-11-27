@@ -68,7 +68,7 @@ const FilesOverlays = ({ modals, preview }: FilesOverlaysProps) => {
         }}
         onSelectImage={image.selectImage}
         onSelectVideo={video.selectVideo}
-        onStageImage={previewRest.onStageImage}
+        onToggleImage={previewRest.onToggleImage}
         videoActiveId={video.activeId}
         videoItems={video.items}
       />

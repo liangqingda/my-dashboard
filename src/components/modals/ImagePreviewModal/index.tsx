@@ -58,10 +58,10 @@ const ImagePreviewModal = ({
   items,
   onClose,
   onCrop,
-  onRequestBatch,
   onRequestDelete,
   onRequestWallpaper,
   onSelect,
+  onToggleBatch,
   opened,
   storageScope,
 }: ImagePreviewModalProps) => {
@@ -184,10 +184,10 @@ const ImagePreviewModal = ({
           items={items}
           onCropModeChange={setCropMode}
           onOverlayChange={setActionsOpen}
-          onRequestBatch={onRequestBatch ?? undefined}
           onRequestWallpaper={onRequestWallpaper ?? undefined}
           onSaveCrop={saveCrop}
           onSelect={selectItem}
+          onToggleBatch={onToggleBatch ?? undefined}
           tipDark
         />
       }

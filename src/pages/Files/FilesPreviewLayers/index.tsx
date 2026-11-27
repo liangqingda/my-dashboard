@@ -57,8 +57,8 @@ export type FilesPreviewLayersProps = {
   onRequestDelete: (path: string) => void;
   /** 请求把当前预览的图片设为桌面墙纸（只打开二次确认层，真正设置归确认层） */
   onRequestWallpaper: () => void;
-  /** 把预览中的这张图收进待拖拽区（批量拖走用） */
-  onStageImage: () => void;
+  /** 把预览中的这张图加入 / 移出待拖拽区（方向由 `imageStaged` 说） */
+  onToggleImage: () => void;
   /** 删除确认开着：两扇弹窗都收掉快捷键与焦点陷阱 */
   blocked: boolean;
 };
@@ -79,7 +79,7 @@ const FilesPreviewLayers = ({
   onRequestWallpaper,
   onSelectImage,
   onSelectVideo,
-  onStageImage,
+  onToggleImage,
   videoActiveId,
   videoItems,
 }: FilesPreviewLayersProps) => (
@@ -110,12 +110,12 @@ const FilesPreviewLayers = ({
       items={imageItems}
       onClose={onCloseImage}
       onCrop={onCropImage}
-      onRequestBatch={onStageImage}
       onRequestDelete={
         imageActiveId !== null ? () => onRequestDelete(imageActiveId) : null
       }
       onRequestWallpaper={onRequestWallpaper}
       onSelect={onSelectImage}
+      onToggleBatch={onToggleImage}
       opened={imageActiveId !== null}
       storageScope={FILES_STORAGE_SCOPE}
     />

@@ -62,11 +62,11 @@ export type ImagePreviewModalProps = {
   /** 请求把当前图片设为桌面墙纸：只应打开二次确认层；不传则 header 没有这颗按钮 */
   onRequestWallpaper?: (() => void) | null;
   /**
-   * 请求把当前图片加进调用方的待拖拽区（批量拖走用）；不传则 header 没有这颗按钮。
-   * 弹窗只报「要加这一张」，攒起来的那批归调用方，翻篇与关闭都不动它。
+   * 请求把当前图片加入 / 移出调用方的待拖拽区（批量拖走用），进入哪个方向由 `batched` 说；
+   * 不传则 header 没有这颗按钮。弹窗只报「动这一张」，攒起来的那批归调用方，翻篇与关闭都不动它。
    */
-  onRequestBatch?: (() => void) | null;
-  /** 当前这张已经在待拖拽区里：那颗按钮显示「已在待拖拽区」并禁用，避免看不出加没加上 */
+  onToggleBatch?: (() => void) | null;
+  /** 当前这张已经在待拖拽区里：那颗按钮亮成强调色，再点一次就是移出 */
   batched?: boolean;
   /** 打开时直接进整屏全屏（文件页设置项）；拿不到用户手势时静默停在这个尺寸 */
   defaultFullscreen?: boolean;

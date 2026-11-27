@@ -19,7 +19,7 @@
 | --- | --- |
 | `toggle(entry, from?)` | 点一下的落点：已选中就移除；否则加入，并把 `flight` 设成 `{ direction: 'in', entry, from }`，让 `PendingFly` 从瓦片原位飞到它落座的那一格。`from` 只有点选路径才给。同时把连选锚点落在这条上 |
 | `selectRange(ordered, path)` | `Shift` + 点击的连选：把锚点到这一条之间（含两端）整段收进来，已在里面的跳过；锚点跟着这一条走。还没有锚点（第一下就是 `Shift` + 点）时只收它自己。`ordered` 由列表层按当前显示顺序拼（`[...folders, ...files]`），网格与表格共用同一份 |
-| `add(entry)` / `addMany(entries)` | 直接加入（`addMany` 已在里面的跳过）：从列表拖进待拖拽区走 `addMany`；图片预览 header 的「加入待拖拽区」走 `usePendingDrag` 的 `handleStageImage`（认条目 + 弹提示） |
+| `add(entry)` / `addMany(entries)` | 直接加入（`addMany` 已在里面的跳过）：从列表拖进待拖拽区走 `addMany`；图片预览 header 的「加入 / 移出」走 `usePendingDrag` 的 `handleTogglePendingImage`（认条目 + 加或移 + 弹提示） |
 | `has(path)` / `remove(entry, from?)` / `clear()` | 判选中 / 点条目移出（给了那一格的矩形就播「飞回列表」，那一条先留在 `entries` 里、那一格收成虚位，落定后才摘）/ 整体清空（Esc 也走 `clear`，不逐条飞） |
 | `removePaths(paths)` | 移动会话成功后把移成功的几条摘掉；只搬了一条时其余留下 |
 | `beginTrayDrag(entries)` / `endTrayDrag()` | 「正从列表往待拖拽区拖」那一程的开合，`FilesDragLayers` 据此画拖拽影像与落点高亮 |

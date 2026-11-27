@@ -53,7 +53,7 @@ export const useFilesDrag = ({
   });
 
   /** 弹窗模式下的起拖与收件：列表不立即开弹窗，先把条目往侧栏待拖拽区拖 */
-  const { handleDragStartEntry, handleStageImage, handleTrayDrop } =
+  const { handleDragStartEntry, handleTogglePendingImage, handleTrayDrop } =
     usePendingDrag(pending, entryActions, folders, files);
 
   const isDirect = moveMode === 'direct';
@@ -183,7 +183,7 @@ export const useFilesDrag = ({
     handleDragOverFolder,
     handleListDragStart,
     handleDropFolder,
-    handleStageImage,
+    handleTogglePendingImage,
     handleTrayDrop,
     isDirect,
   };
