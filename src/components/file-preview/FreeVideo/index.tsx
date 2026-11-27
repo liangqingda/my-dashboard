@@ -62,6 +62,7 @@ const FreeVideo = ({
   onDoubleClick,
   onHoverFrameGrabberReady,
   overlayOpen = false,
+  poster,
   previewScale = SEEK_PREVIEW_SCALE_DEFAULT,
   src,
   tipDark = false,
@@ -263,13 +264,19 @@ const FreeVideo = ({
           onVolumeChange={videoElement.handleVolumeChange}
           onWaiting={videoElement.handleWaiting}
           playsInline
+          poster={poster}
           preload="auto"
           ref={mergedRef}
           src={src}
         />
 
         {status === 'loading' ? (
-          <div className={styles.overlay}>
+          <div
+            className={cx(
+              styles.overlay,
+              poster !== undefined && styles.overlayCovered,
+            )}
+          >
             <Loader color="gray" size="sm" />
             <span className={styles.overlayText}>正在读取视频…</span>
           </div>

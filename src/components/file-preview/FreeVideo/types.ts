@@ -27,6 +27,11 @@ export type HoverFrameGrabber = () => Promise<string | null>;
 export type FreeVideoProps = {
   /** 视频地址 */
   src: string;
+  /**
+   * 封面图：解出首帧之前由 `<video>` 摆着的那张（调用方通常给网格的缩略图）。
+   * 给了就不会先黑底转圈——画面位置一直有东西，加载提示只是压在它上面。
+   */
+  poster?: string;
   /** 视频元素引用：外部要取当前帧、从键盘驱动播放时传；与组件内部 ref 合并 */
   videoRef?: RefObject<HTMLVideoElement | null>;
   /** 翻篇：给了就画在控制栏里、播放键两侧；不传则控制栏没有这两颗箭头 */

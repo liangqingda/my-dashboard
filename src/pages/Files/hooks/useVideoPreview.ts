@@ -20,6 +20,7 @@ import {
   pickPickedDir,
   videoContentUrl,
 } from '../utils/files-api';
+import { fileThumbUrl } from '../utils/media-thumbs';
 import { openFileExternally } from '../utils/video-api';
 
 import { usePreviewList } from './usePreviewList';
@@ -76,6 +77,7 @@ export const useVideoPreview = (
       list.items.map((file) => ({
         id: file.path,
         name: file.name,
+        poster: fileThumbUrl(file.path),
         src: videoContentUrl(file.path),
       })),
     [list.items],

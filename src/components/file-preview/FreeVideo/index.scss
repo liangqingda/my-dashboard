@@ -83,6 +83,14 @@
   pointer-events: none;
 }
 
+/*
+ * 有封面（`poster`）时的加载浮层：垫一层很淡的暗角，浅色文字压在缩略图上才看得清。
+ * 只给加载这一档——缓冲态只有转圈，加暗角每次起播都会闪一下。
+ */
+.overlayCovered {
+  background-color: rgb(0 0 0 / 22%);
+}
+
 /* 报错图标用暖色，和「正在读取」的灰字分开 */
 .errorIcon {
   flex: 0 0 auto;

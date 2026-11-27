@@ -11,6 +11,11 @@ import type { PreviewItem } from '@/components/modals/PreviewItemList/types';
 export type VideoPreviewItem = PreviewItem & {
   /** 视频地址（浏览器可直接播放的 URL） */
   src: string;
+  /**
+   * 封面：网格用的那张缩略图，挂成 `<video poster>`。
+   * 打开时先把这张图摆出来，而不是黑底转圈；同一地址网格已经取过，走缓存几乎不额外发请求。
+   */
+  poster: string;
 };
 
 /** 截图落盘成功后的回执：文案由调用方拼（它才知道存到了哪里） */

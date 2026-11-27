@@ -317,6 +317,7 @@ const VideoPreviewModal = ({
           onDoubleClick={blocked ? undefined : toggleBrowserFullscreen}
           onHoverFrameGrabberReady={handleHoverFrameGrabberReady}
           overlayOpen={overlayOpen}
+          poster={activeItem.poster}
           previewScale={settings.previewScale / 100}
           src={activeItem.src}
           tipDark

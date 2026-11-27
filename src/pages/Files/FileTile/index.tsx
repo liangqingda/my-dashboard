@@ -1,5 +1,6 @@
 import { memo, useState } from 'react';
 import { Tooltip, UnstyledButton } from '@mantine/core';
+import { useInViewport } from '@mantine/hooks';
 
 import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
 import { cx } from '@/utils/cx';
@@ -10,6 +11,7 @@ import {
   CATEGORY_ICONS,
   FILE_CATEGORY_LABELS,
 } from '../constants';
+import { useThumbImage } from '../hooks/useThumbImage';
 import { formatFileSize } from '../utils/files';
 import { writeDragPayload } from '../utils/drag-image';
 import { fileThumbUrl, videoAppIconUrl } from '../utils/media-thumbs';
@@ -33,6 +35,8 @@ import styles from './index.scss';
  * 体积旁的播放器小图标可单独点（`onOpenExternal`），绕开弹窗直接交给外部应用。
  * 名称最多两行，超出做中间省略保留尾部，hover 时给全量。
  * 指针停到视频瓦片上时先悄悄预取文件头，点开时首帧不必再等一次往返。
+ * 缩略图请求按 `hooks/useThumbImage` 的限流排队（同时最多 2 条在途，且只排进了视口的瓦片），
+ * 把其余连接留给视频这类大文件请求，别让一屏瓦片把本机接口的队列占满。
  */
 const FileTile = memo(
   ({
@@ -78,6 +82,23 @@ const FileTile = memo(
     }
 
     /**
+     * 图源走限流闸门：拿到槽位才真正发请求。缩略图是后端现转的（视频近一秒），
+     * 十几片瓦片一起发会把 6 条连接占满，这时点开视频就得排队。
+     * 只有进了视口的瓦片才去排队——网格不虚拟滚动，离屏瓦片不少，让它们先占住两格
+     * 就没瓦片可轮转了（`<img loading="lazy">` 还会让那些瓦片一直不落地、槽位一直不放）。
+     */
+    const { inViewport, ref: thumbRef } = useInViewport<HTMLImageElement>();
+    const {
+      onError: thumbOnError,
+      onLoad: thumbOnLoad,
+      src: thumbImageSrc,
+    } = useThumbImage({
+      enabled: inViewport,
+      onFail: () => setThumbFailed(true),
+      url: thumbSrc,
+    });
+
+    /**
      * 图片瓦片摆的是缩略图：体积旁补一枚图片图标，与表格模式同一枚分类图标。
      * 缩略图取不到时主图标本身就是它，不必再来一枚。
      */
@@ -98,9 +119,10 @@ const FileTile = memo(
             className={cx(styles.thumb, usesAppIcon && styles.appIcon)}
             decoding="async"
             draggable={false}
-            loading="lazy"
-            onError={() => setThumbFailed(true)}
-            src={thumbSrc}
+            onError={thumbOnError}
+            onLoad={thumbOnLoad}
+            ref={thumbRef}
+            src={thumbImageSrc}
           />
         )}
         <span className={styles.body}>

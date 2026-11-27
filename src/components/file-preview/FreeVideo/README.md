@@ -63,14 +63,16 @@
 - **状态**：`loading`（还没解出画面）给「正在读取视频…」、`error`（编码不支持）给一句人话、
   `buffering`（播放中卡住）给转圈；可播但暂停时**不在画面中央放大播放键**——点画面或按空格
   就能继续播，中央图标只会挡画面。
-- **视频元素**：`disablePictureInPicture`、`playsInline`、`preload="auto"`；暂停 / 播完只改内部
-  状态，不向外发事件。
+- **视频元素**：`disablePictureInPicture`、`playsInline`、`preload="auto"`、可选的 `poster` 封面
+  （首帧解出来之前画面位置就有东西，不是黑底干等；加载提示压在这张图上，另盖一层很淡的暗角
+  把文字垫出来）；暂停 / 播完只改内部状态，不向外发事件。
 
 ## props
 
 | prop | 说明 |
 | --- | --- |
 | `src` | 视频地址（通常是按 Range 提供流的接口 URL） |
+| `poster` | 可选。封面图：解出首帧之前由 `<video>` 摆着，通常给网格那张缩略图；不传就是黑底等加载 |
 | `videoRef` | 可选。外部要取当前帧、从键盘驱动播放时传；组件与内部 ref 合并后挂到 `<video>` |
 | `nav` | 可选。`{ onPrevious, onNext, previousLabel?, nextLabel? }`，一端到头传 `null` 置灰；label 同时当 aria-label 与 tip；不传则控制栏没有这两颗箭头 |
 | `actions` | 可选。控制栏下层右侧、喇叭之后的业务操作组（选集、截图、设置、全屏这类按钮与弹层）；播放器只负责排在最右，按钮归属全在调用方 |
