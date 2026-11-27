@@ -21,4 +21,9 @@ export type FilesWorkspaceProps = {
   entryActions: ReturnType<typeof useEntryActions>;
   /** 待拖拽区底部的「选择全部」：只收当前列表里看得见的那些 */
   onSelectAll: () => void;
+  /**
+   * 预览弹窗（图片 / 视频）开着：待拖拽区只藏不展示——它的 `z-index` 比弹窗高，
+   * 露出来会压在画面上。
+   */
+  previewOpen: boolean;
 };

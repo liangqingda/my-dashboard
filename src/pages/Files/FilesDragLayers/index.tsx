@@ -24,7 +24,8 @@ import styles from './index.scss';
  * （`dragEntries`——那一刻没有会话，也只能由页面递进来）。
  *
  * 收尾只摘掉这次**真正移成功**的条目（`movedPaths`）：关窗、Esc 取消时攒下的那些要留着。
- * 弹窗开着时待拖拽区只藏不卸：正在拖的条目就握在这条里，卸载等于取消整次拖拽。
+ * 移动弹窗或预览弹窗开着时待拖拽区只藏不卸：前者是因为正在拖的条目就握在这条里，卸载等于取消
+ * 整次拖拽；后者是因为它的 `z-index` 比预览弹窗高，露出来会压在画面上。
  */
 const FilesDragLayers = ({
   dragAllDisabled,
@@ -37,6 +38,7 @@ const FilesDragLayers = ({
   onSelectAll,
   onTrayDragEnd,
   pending,
+  previewOpen,
 }: FilesDragLayersProps) => {
   const { dragActive, movedPaths, session } = entryActions.dragMove;
 
@@ -74,7 +76,7 @@ const FilesDragLayers = ({
         closed={!pending.active}
         dragAllDisabled={dragAllDisabled}
         entries={pending.entries}
-        hidden={session !== null}
+        hidden={session !== null || previewOpen}
         inline={inline}
         onClear={pending.clear}
         onDragAll={onDragAll}

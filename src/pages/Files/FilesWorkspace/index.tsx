@@ -25,6 +25,7 @@ const FilesWorkspace = ({
   entryActions,
   onSelectAll,
   pending,
+  previewOpen,
 }: FilesWorkspaceProps) => {
   const inline = usePageFullscreen();
 
@@ -41,6 +42,7 @@ const FilesWorkspace = ({
         onSelectAll={onSelectAll}
         onTrayDragEnd={drag.handleDragEnd}
         pending={pending}
+        previewOpen={previewOpen}
       />
 
       {children}

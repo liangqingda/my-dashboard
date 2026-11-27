@@ -153,17 +153,17 @@ export const useFilesPageState = () => {
     imagePreview.activeItem !== null && pending.has(imagePreview.activeItem.id);
 
   /**
-   * 图片预览 header 的「加入待拖拽区」：弹窗只报「要加当前这一张」，
-   * 路径从预览的当前条目取，条目对象仍交给 `handleTrayDrop` 按路径认（认不出就忽略）。
+   * 图片预览 header 的「加入待拖拽区」：这里只把当前这张的路径交出去，
+   * 认条目、加进去与那条提示都在 `usePendingDrag.handleStageImage`。
    */
-  const { handleTrayDrop } = drag;
+  const { handleStageImage } = drag;
   const stageImage = useCallback(() => {
-    const id = imagePreview.activeItem?.id;
+    const active = imagePreview.activeItem;
 
-    if (id !== undefined) {
-      handleTrayDrop([id]);
+    if (active !== null) {
+      handleStageImage(active.id);
     }
-  }, [handleTrayDrop, imagePreview.activeItem]);
+  }, [handleStageImage, imagePreview.activeItem]);
 
   /** 切换某块弹层：再点一次同一块则收起 */
   const togglePanel = useCallback(

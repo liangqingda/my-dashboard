@@ -37,4 +37,9 @@ export type FilesDragLayersProps = {
   onDragAll: () => void;
   /** 那一程拖拽结束：页面统一收掉两套拖拽状态 */
   onTrayDragEnd: () => void;
+  /**
+   * 预览弹窗（图片 / 视频）开着：待拖拽区只藏不展示——它的 `z-index` 比弹窗高，
+   * 露出来会压在画面上。
+   */
+  previewOpen: boolean;
 };
