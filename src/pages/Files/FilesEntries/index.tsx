@@ -56,6 +56,7 @@ const FilesEntries = ({
   pendingActive,
   pendingPaths,
   rows,
+  tileMinWidth,
   tipsOff,
   veilOpacity,
   videoApp,
@@ -150,6 +151,7 @@ const FilesEntries = ({
             pendingActive={pendingActive}
             pendingPaths={pendingPaths}
             selectOrder={selectOrder}
+            tileMinWidth={tileMinWidth}
             tipsOff={tipsOff}
             veilOpacity={veilOpacity}
             videoApp={videoApp}

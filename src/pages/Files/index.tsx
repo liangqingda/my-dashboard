@@ -221,6 +221,7 @@ const Files = () => {
               pendingActive={pending.active}
               pendingPaths={pendingPaths}
               rows={list.rows}
+              tileMinWidth={settings.tileMinWidth}
               tipsOff={entryActions.dragMove.dragActive}
               veilOpacity={settings.veilOpacity}
               videoApp={videoApp}

@@ -64,6 +64,8 @@ export type FilesEntriesProps = {
   tipsOff: boolean;
   /** 应用目录用定宽列：文件夹与应用同尺寸、不随屏幕拉伸 */
   fixedColumns: boolean;
+  /** 网格列宽下限（px）：设置面板里调，瓦片列不会被压得比它更窄 */
+  tileMinWidth: number;
   /** hover 玻璃层透明度（0–100） */
   veilOpacity: number;
   /** 设置里的播放器应用名：网格在外部模式下用它的图标 */

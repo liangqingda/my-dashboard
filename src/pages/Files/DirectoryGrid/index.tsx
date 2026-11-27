@@ -1,4 +1,4 @@
-import type { ReactNode, TransitionEvent } from 'react';
+import type { CSSProperties, ReactNode, TransitionEvent } from 'react';
 import { useMemo } from 'react';
 
 import { cx } from '@/utils/cx';
@@ -87,6 +87,7 @@ const DirectoryGrid = ({
   pendingActive,
   pendingPaths,
   launchingApp,
+  tileMinWidth,
   tipsOff,
   veilOpacity,
   videoApp,
@@ -266,6 +267,13 @@ const DirectoryGrid = ({
     </>
   );
 
+  /**
+   * 列宽下限交给 CSS 变量：分组模式下根容器不是网格，内层每段网格靠继承拿到同一个值。
+   */
+  const gridStyle = {
+    '--tile-min-width': `${tileMinWidth}px`,
+  } as CSSProperties;
+
   return (
     <div
       className={cx(
@@ -276,6 +284,7 @@ const DirectoryGrid = ({
       )}
       onClickCapture={handleClickCapture}
       {...blank.handlers}
+      style={gridStyle}
     >
       {emptyText === null ? null : (
         <span className={styles.emptyNote}>{emptyText}</span>

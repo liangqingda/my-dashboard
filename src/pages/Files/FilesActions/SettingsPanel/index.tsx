@@ -1,8 +1,9 @@
 /**
- * 文件页设置面板：外观（视图形态、分组展示、悬浮玻璃透明度）、拖拽移动的走法（弹窗挑目标 / 直接拖）、筛选方式、视频点击后与外部应用、
+ * 文件页设置面板：外观（视图形态、分组展示、瓦片最小宽度、悬浮玻璃透明度）、拖拽移动的走法（弹窗挑目标 / 直接拖）、筛选方式、视频点击后与外部应用、
  * 视频封面、预览默认全屏、页面安全锁（密码 + 开关）。
  * 密码不做任何强度 / 格式限制：原样存进 localStorage，这里只保证「没密码时开关不可开」。
  * 设置项会越加越多，所以按主题分组（每组一块浅底色、不描边），组内字段横向排、放不下自动换行；
+ * 外观组单独拆在 `AppearanceGroup`，本文件只排其余主题。
  * 弹层宽度由 `FilesActions` 放宽到 560（一行两组，每个字段还剩 250px 左右），
  * 高度上限交给 `IconPopoverButton` 的 `maxHeight`：超过一屏就在弹层内部滚动，不顶出屏幕。
  * 分组与字段的外观走 `FreePanelGroup` / `FreePanelField`，与视频预览的设置面板同一套。
@@ -20,7 +21,6 @@ import {
   Loader,
   SegmentedControl,
   Select,
-  Slider,
   Stack,
   Switch,
   Text,
@@ -35,28 +35,16 @@ import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
 import { FILES_SHORTCUTS } from '../../constants';
 import { useVideoApps } from '../../hooks/useVideoApps';
 import type {
-  FilesViewMode,
   MoveMode,
   TypeFilterMode,
   VideoOpenMode,
   VideoThumbStyle,
 } from '../../types';
 
+import AppearanceGroup from './AppearanceGroup';
 import type { SettingsPanelProps } from './types';
 
 import styles from './index.scss';
-
-/** 展示形态的两档文案 */
-const VIEW_MODE_OPTIONS = [
-  { label: '网格', value: 'grid' },
-  { label: '表格', value: 'table' },
-];
-
-/** 分组展示的两档文案：平铺为默认，分组按类型切段 */
-const GROUPED_OPTIONS = [
-  { label: '平铺', value: 'off' },
-  { label: '分组', value: 'on' },
-];
 
 /** 拖拽移动的两档文案：默认走弹窗，关掉就直接拖到列表里的文件夹 */
 const MOVE_MODE_OPTIONS = [
@@ -95,12 +83,14 @@ const SettingsPanel = ({
   onLockEnabledChange,
   onLockPasswordChange,
   onMoveModeChange,
+  onTileMinWidthChange,
   onVeilOpacityChange,
   onVideoAppChange,
   onVideoFullscreenChange,
   onVideoOpenModeChange,
   onVideoThumbStyleChange,
   onViewModeChange,
+  tileMinWidth,
   veilOpacity,
   videoApp,
   videoFullscreen,
@@ -117,38 +107,16 @@ const SettingsPanel = ({
 
   return (
     <Stack gap="sm">
-      <FreePanelGroup title="外观">
-        <FreePanelField label="视图形态">
-          <SegmentedControl
-            data={VIEW_MODE_OPTIONS}
-            fullWidth
-            onChange={(value) => onViewModeChange(value as FilesViewMode)}
-            size="xs"
-            value={view}
-          />
-        </FreePanelField>
-        <FreePanelField label="分组展示">
-          <SegmentedControl
-            data={GROUPED_OPTIONS}
-            fullWidth
-            onChange={(value) => onGroupedChange(value === 'on')}
-            size="xs"
-            value={grouped ? 'on' : 'off'}
-          />
-        </FreePanelField>
-        <FreePanelField label="悬浮玻璃透明度" value={`${veilOpacity}%`} wide>
-          {/* 数值只在标题行里给：气泡一拖就浮出来会挡手，这里彻底关掉（传 null 后 hover / 拖拽 / 聚焦都不渲染） */}
-          <Slider
-            label={null}
-            max={100}
-            min={0}
-            onChange={onVeilOpacityChange}
-            size="xs"
-            step={5}
-            value={veilOpacity}
-          />
-        </FreePanelField>
-      </FreePanelGroup>
+      <AppearanceGroup
+        grouped={grouped}
+        onGroupedChange={onGroupedChange}
+        onTileMinWidthChange={onTileMinWidthChange}
+        onVeilOpacityChange={onVeilOpacityChange}
+        onViewModeChange={onViewModeChange}
+        tileMinWidth={tileMinWidth}
+        veilOpacity={veilOpacity}
+        view={view}
+      />
 
       {/* 两组各只有一个字段，并排一行：省下的竖向空间留给下面的视频 / 安全 */}
       <Group align="stretch" gap="sm" grow wrap="nowrap">

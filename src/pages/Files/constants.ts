@@ -78,6 +78,29 @@ export const VEIL_OPACITY_STORAGE_KEY = scopedStorageKey(
   'veil-opacity',
 );
 
+/** 网格列宽下限：设置里用滑块调，刷新后保持上次拖动到的那一格 */
+export const TILE_MIN_WIDTH_STORAGE_KEY = scopedStorageKey(
+  FILES_STORAGE_SCOPE,
+  'tile-min-width',
+);
+
+/**
+ * 网格列宽下限（px）：瓦片列不会被压得比它更窄，设置面板「瓦片最小宽度」调的就是这一项。
+ * 列宽仍走 `1fr`，窗口变宽时单块瓦片会随之变大。
+ * 可调区间见下方 `TILE_MIN_WIDTH_*`：再窄图源与名称会挤成一条，再宽一屏只剩一两列；
+ * 默认值 168 落在区间内且是步长的整数倍，滑块才能正好停在默认档。
+ */
+export const DEFAULT_TILE_MIN_WIDTH = 168;
+
+/** 可调下限（px） */
+export const TILE_MIN_WIDTH_MIN = 120;
+
+/** 可调上限（px） */
+export const TILE_MIN_WIDTH_MAX = 240;
+
+/** 滑块步长（px） */
+export const TILE_MIN_WIDTH_STEP = 8;
+
 /**
  * 网格图源基准边长（px）：分类图标、应用图标固定按这个基准换算；缩略图与文件夹图源自适应瓦片宽度。
  */
