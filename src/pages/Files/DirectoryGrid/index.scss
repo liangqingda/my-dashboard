@@ -1,16 +1,14 @@
 /*
- * 目录网格：按瓦片宽度自动折列，文件夹与文件混排；横纵都用 12px 的等距留白。
- * 列宽下限由设置面板给（`--tile-min-width`），窗口变窄时只减列数，不把瓦片压到下限以下。
+ * 目录网格：按瓦片宽度固定折列，文件夹与文件混排；横纵都用 12px 的等距留白。
+ * 瓦片宽度由设置面板给（`--tile-width`）：窗口只会改变列数，不会把单块瓦片拉大，
+ * 每一档调下去都直接看得见瓦片变大 / 变小。
  * 应用目录走定宽列：那里的瓦片是应用包与它自带的文件夹，`1fr` 会把它们随窗口越拉越大，
  * 与右上角「应用程序」图标给出的固定尺寸不是一回事。
  */
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(
-    auto-fill,
-    minmax(var(--tile-min-width, 168px), 1fr)
-  );
+  grid-template-columns: repeat(auto-fill, var(--tile-width, 168px));
   gap: 12px;
 
   /*

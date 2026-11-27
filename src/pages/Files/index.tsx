@@ -179,6 +179,7 @@ const Files = () => {
             onRetry={refresh}
             prompt={list.showPrompt}
             tableSkeleton={list.showTableSkeleton}
+            tileWidth={settings.tileWidth}
           />
 
           {/* 两种形态都自己滚：纵向滚动条浮在内容之上，右侧固定留出一段比
@@ -221,7 +222,7 @@ const Files = () => {
               pendingActive={pending.active}
               pendingPaths={pendingPaths}
               rows={list.rows}
-              tileMinWidth={settings.tileMinWidth}
+              tileWidth={settings.tileWidth}
               tipsOff={entryActions.dragMove.dragActive}
               veilOpacity={settings.veilOpacity}
               videoApp={videoApp}

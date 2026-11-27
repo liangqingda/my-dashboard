@@ -1,9 +1,9 @@
 /* 列表区的骨架网格与空态文案 */
 
-/* 骨架网格：与真实网格同列宽口径 */
+/* 骨架网格：与真实网格同一列宽口径（`--tile-width` 由页面按设置传进来） */
 .gridSkeleton {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fill, var(--tile-width, 168px));
   gap: 8px 12px;
 }
 

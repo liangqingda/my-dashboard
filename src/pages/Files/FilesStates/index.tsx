@@ -3,6 +3,7 @@
  * 只负责按状态挑一档渲染，取数与判定都在页面里。
  */
 
+import type { CSSProperties } from 'react';
 import { Alert, Button, Group, Skeleton, Text } from '@mantine/core';
 
 import { SKELETON_TILES } from '../constants';
@@ -19,6 +20,8 @@ export type FilesStatesProps = {
   tableSkeleton: boolean;
   /** 还没选过目录：引导先填路径 */
   prompt: boolean;
+  /** 网格瓦片宽度（px）：骨架列宽与真实网格同一档 */
+  tileWidth: number;
   /** 失败后重试 */
   onRetry: () => void;
 };
@@ -29,6 +32,7 @@ const FilesStates = ({
   onRetry,
   prompt,
   tableSkeleton,
+  tileWidth,
 }: FilesStatesProps) => (
   <>
     {error !== null ? (
@@ -43,7 +47,10 @@ const FilesStates = ({
     ) : null}
 
     {gridSkeleton ? (
-      <div className={styles.gridSkeleton}>
+      <div
+        className={styles.gridSkeleton}
+        style={{ '--tile-width': `${tileWidth}px` } as CSSProperties}
+      >
         {SKELETON_TILES.map((tile) => (
           <Skeleton height={112} key={tile} />
         ))}

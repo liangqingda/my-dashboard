@@ -18,6 +18,8 @@ import styles from './index.scss';
  * 点瓦片本体交给系统 `open` 启动应用；启动请求进行中再点不重复拉起。
  * 应用不可拖拽、也不给改名——移动 .app 会让 Launchpad 与系统登记失效。
  * 系统自带应用（符号链接指向 `/System`）只展示与打开、不给卸载入口。
+ * 名称最多两行，超出做尾部省略：瓦片宽度会在静止状态下变（设置面板调），尾部省略按当下宽度现量，
+ * 宽度调小后不会涨成三、四行。
  */
 const describeMeta = (launching: boolean, system: boolean): string => {
   if (launching) {
@@ -49,7 +51,7 @@ const AppTile = memo(
         <FreeTruncatedText
           className={styles.name}
           disabled={tipOff}
-          ellipsis="middle"
+          ellipsis="end"
           lines={2}
           position="top"
           text={app.name}

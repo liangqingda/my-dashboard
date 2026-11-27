@@ -69,8 +69,8 @@ export type DirectoryGridProps = {
   tipsOff: boolean;
   /** 应用目录（`/Applications` 这类）用定宽列，文件夹与应用同尺寸、不随屏幕拉伸 */
   fixedColumns: boolean;
-  /** 网格列宽下限（px）：设置面板里调，瓦片列不会被压得比它更窄 */
-  tileMinWidth: number;
+  /** 网格瓦片宽度（px）：设置面板里调，网格按它固定折列 */
+  tileWidth: number;
   /** hover 玻璃层透明度（0–100） */
   veilOpacity: number;
   /** 设置里的播放器应用名：视频瓦片在外部模式下摆它的图标 */

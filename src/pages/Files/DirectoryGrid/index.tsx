@@ -87,7 +87,7 @@ const DirectoryGrid = ({
   pendingActive,
   pendingPaths,
   launchingApp,
-  tileMinWidth,
+  tileWidth,
   tipsOff,
   veilOpacity,
   videoApp,
@@ -268,10 +268,10 @@ const DirectoryGrid = ({
   );
 
   /**
-   * 列宽下限交给 CSS 变量：分组模式下根容器不是网格，内层每段网格靠继承拿到同一个值。
+   * 瓦片宽度交给 CSS 变量：分组模式下根容器不是网格，内层每段网格靠继承拿到同一个值。
    */
   const gridStyle = {
-    '--tile-min-width': `${tileMinWidth}px`,
+    '--tile-width': `${tileWidth}px`,
   } as CSSProperties;
 
   return (

@@ -20,6 +20,7 @@
 
 ## 坑
 
-- 名称最多两行，超出中间省略保留尾部、hover 给全量（走 `FreeTruncatedText`，不自己写 `text-overflow`）。
+- 名称最多两行，超出**尾部省略**、hover 给全量（走 `FreeTruncatedText` 的 `ellipsis="end"`，不自己写 `text-overflow`）。瓦片宽度会在静止状态下变（设置面板「瓦片宽度」），尾部省略按当下宽度现量，宽度调小后不会涨成三、四行。
+- hover 时图源（缩略图 / 播放器图标 / 分类图标）放大 6%，过渡 180ms；拖拽态与待拖拽态不放大。
 - 指针停到视频瓦片上先预取文件头（`prefetchVideoHead`），点开首帧不必再等一次往返；预取失败不影响渲染。
 - 组件已 `memo` 包裹：传入的回调必须是稳定引用（hook 层 `useCallback`），数组 / 对象派生值要 `useMemo`，否则 memo 会被新引用击穿。

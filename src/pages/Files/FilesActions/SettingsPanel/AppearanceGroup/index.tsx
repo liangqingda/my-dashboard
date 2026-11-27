@@ -1,8 +1,8 @@
 /**
- * 设置面板的外观组：视图形态、分组展示、瓦片最小宽度（仅网格）、悬浮玻璃透明度。
+ * 设置面板的外观组：视图形态、分组展示、瓦片宽度（仅网格）、悬浮玻璃透明度。
  * 字段外观走 `FreePanelGroup` / `FreePanelField`，本组件只排字段与取值范围。
  *
- * 「瓦片最小宽度」只在网格形态下露出：表格视图没有瓦片，改了当场看不到效果。
+ * 「瓦片宽度」只在网格形态下露出：表格视图没有瓦片，改了当场看不到效果。
  * 滑块的当前值只放在字段标题行（`label={null}`），拖动气泡不挡手。
  */
 
@@ -12,9 +12,9 @@ import FreePanelField from '@/components/panels/FreePanelField';
 import FreePanelGroup from '@/components/panels/FreePanelGroup';
 
 import {
-  TILE_MIN_WIDTH_MAX,
-  TILE_MIN_WIDTH_MIN,
-  TILE_MIN_WIDTH_STEP,
+  TILE_WIDTH_MAX,
+  TILE_WIDTH_MIN,
+  TILE_WIDTH_STEP,
 } from '../../../constants';
 import type { FilesViewMode } from '../../../types';
 
@@ -35,10 +35,10 @@ const GROUPED_OPTIONS = [
 const AppearanceGroup = ({
   grouped,
   onGroupedChange,
-  onTileMinWidthChange,
+  onTileWidthChange,
   onVeilOpacityChange,
   onViewModeChange,
-  tileMinWidth,
+  tileWidth,
   veilOpacity,
   view,
 }: AppearanceGroupProps) => (
@@ -62,15 +62,15 @@ const AppearanceGroup = ({
       />
     </FreePanelField>
     {view === 'grid' ? (
-      <FreePanelField label="瓦片最小宽度" value={`${tileMinWidth}px`} wide>
+      <FreePanelField label="瓦片宽度" value={`${tileWidth}px`} wide>
         <Slider
           label={null}
-          max={TILE_MIN_WIDTH_MAX}
-          min={TILE_MIN_WIDTH_MIN}
-          onChange={onTileMinWidthChange}
+          max={TILE_WIDTH_MAX}
+          min={TILE_WIDTH_MIN}
+          onChange={onTileWidthChange}
           size="xs"
-          step={TILE_MIN_WIDTH_STEP}
-          value={tileMinWidth}
+          step={TILE_WIDTH_STEP}
+          value={tileWidth}
         />
       </FreePanelField>
     ) : null}

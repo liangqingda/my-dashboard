@@ -15,16 +15,16 @@ import {
 } from '@/utils/local-storage';
 
 import {
-  DEFAULT_TILE_MIN_WIDTH,
+  DEFAULT_TILE_WIDTH,
   DEFAULT_VIDEO_APP,
   GROUPED_DISPLAY_STORAGE_KEY,
   IMAGE_PREVIEW_FULLSCREEN_STORAGE_KEY,
   LOCK_ENABLED_STORAGE_KEY,
   LOCK_PASSWORD_STORAGE_KEY,
   MOVE_MODE_STORAGE_KEY,
-  TILE_MIN_WIDTH_MAX,
-  TILE_MIN_WIDTH_MIN,
-  TILE_MIN_WIDTH_STORAGE_KEY,
+  TILE_WIDTH_MAX,
+  TILE_WIDTH_MIN,
+  TILE_WIDTH_STORAGE_KEY,
   TYPE_FILTER_MODE_STORAGE_KEY,
   VIDEO_APP_STORAGE_KEY,
   VIDEO_OPEN_MODE_STORAGE_KEY,
@@ -62,11 +62,11 @@ const MOVE_MODE_CODEC = createChoiceCodec<MoveMode>(['modal', 'direct'], 'modal'
 /** hover 玻璃层透明度：0–100 的百分比，脏值回落 100（完全不透明） */
 const VEIL_OPACITY_CODEC = createRangedNumberCodec(0, 100, 100);
 
-/** 网格列宽下限：120–240 的像素值，脏值回落 168（默认列宽） */
-const TILE_MIN_WIDTH_CODEC = createRangedNumberCodec(
-  TILE_MIN_WIDTH_MIN,
-  TILE_MIN_WIDTH_MAX,
-  DEFAULT_TILE_MIN_WIDTH,
+/** 网格瓦片宽度：120–360 的像素值，脏值回落 168（默认瓦片宽度） */
+const TILE_WIDTH_CODEC = createRangedNumberCodec(
+  TILE_WIDTH_MIN,
+  TILE_WIDTH_MAX,
+  DEFAULT_TILE_WIDTH,
 );
 
 /** 文件页设置的返回 */
@@ -91,10 +91,10 @@ export type UseFilesSettingsResult = {
   setImageFullscreen: (enabled: boolean) => void;
   /** 改视频预览的默认全屏 */
   setVideoFullscreen: (enabled: boolean) => void;
-  /** 网格列宽下限（px）：瓦片列不会比它更窄 */
-  tileMinWidth: number;
-  /** 改网格列宽下限 */
-  setTileMinWidth: (width: number) => void;
+  /** 网格瓦片宽度（px）：网格按它固定折列 */
+  tileWidth: number;
+  /** 改网格瓦片宽度 */
+  setTileWidth: (width: number) => void;
   /** hover 玻璃层的透明度（0–100） */
   veilOpacity: number;
   /** 改 hover 玻璃层的透明度 */
@@ -147,9 +147,9 @@ export const useFilesSettings = (): UseFilesSettingsResult => {
     VEIL_OPACITY_STORAGE_KEY,
     VEIL_OPACITY_CODEC,
   );
-  const [tileMinWidth, setTileMinWidth] = useStoredState(
-    TILE_MIN_WIDTH_STORAGE_KEY,
-    TILE_MIN_WIDTH_CODEC,
+  const [tileWidth, setTileWidth] = useStoredState(
+    TILE_WIDTH_STORAGE_KEY,
+    TILE_WIDTH_CODEC,
   );
   const [filterMode, setFilterMode] = useStoredState(
     TYPE_FILTER_MODE_STORAGE_KEY,
@@ -185,13 +185,13 @@ export const useFilesSettings = (): UseFilesSettingsResult => {
     setLockPassword,
     setImageFullscreen,
     setMoveMode,
-    setTileMinWidth,
+    setTileWidth,
     setVideoApp,
     setVideoFullscreen,
     setVideoOpenMode,
     setVeilOpacity,
     setVideoThumbStyle,
-    tileMinWidth,
+    tileWidth,
     veilOpacity,
     videoApp: storedApp.trim() || DEFAULT_VIDEO_APP,
     videoFullscreen,

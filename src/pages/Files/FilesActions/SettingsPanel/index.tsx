@@ -1,5 +1,5 @@
 /**
- * 文件页设置面板：外观（视图形态、分组展示、瓦片最小宽度、悬浮玻璃透明度）、拖拽移动的走法（弹窗挑目标 / 直接拖）、筛选方式、视频点击后与外部应用、
+ * 文件页设置面板：外观（视图形态、分组展示、瓦片宽度、悬浮玻璃透明度）、拖拽移动的走法（弹窗挑目标 / 直接拖）、筛选方式、视频点击后与外部应用、
  * 视频封面、预览默认全屏、页面安全锁（密码 + 开关）。
  * 密码不做任何强度 / 格式限制：原样存进 localStorage，这里只保证「没密码时开关不可开」。
  * 设置项会越加越多，所以按主题分组（每组一块浅底色、不描边），组内字段横向排、放不下自动换行；
@@ -83,14 +83,14 @@ const SettingsPanel = ({
   onLockEnabledChange,
   onLockPasswordChange,
   onMoveModeChange,
-  onTileMinWidthChange,
+  onTileWidthChange,
   onVeilOpacityChange,
   onVideoAppChange,
   onVideoFullscreenChange,
   onVideoOpenModeChange,
   onVideoThumbStyleChange,
   onViewModeChange,
-  tileMinWidth,
+  tileWidth,
   veilOpacity,
   videoApp,
   videoFullscreen,
@@ -110,10 +110,10 @@ const SettingsPanel = ({
       <AppearanceGroup
         grouped={grouped}
         onGroupedChange={onGroupedChange}
-        onTileMinWidthChange={onTileMinWidthChange}
+        onTileWidthChange={onTileWidthChange}
         onVeilOpacityChange={onVeilOpacityChange}
         onViewModeChange={onViewModeChange}
-        tileMinWidth={tileMinWidth}
+        tileWidth={tileWidth}
         veilOpacity={veilOpacity}
         view={view}
       />

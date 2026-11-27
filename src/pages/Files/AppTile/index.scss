@@ -43,6 +43,12 @@
 .icon {
   flex: 0 0 auto;
   color: var(--app-ink-faint);
+  transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* hover 时应用图标与文件 / 文件夹瓦片的图源同一档放大 */
+.wrapper:hover .icon {
+  transform: scale(1.06);
 }
 
 .body {

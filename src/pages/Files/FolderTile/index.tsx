@@ -59,7 +59,8 @@ const renderFolderMeta = (
  * 同时可作为拖拽源，也可作为其它条目拖入的目标。
  * 点开后到新目录回来之前本条目不可再点，计数位置显示「正在打开…」；
  * 计数只数直属条目，不递归子文件夹（与中间件口径一致）；
- * 名称最多两行，超出做中间省略保留尾部，hover 时给全量。
+ * 名称最多两行，超出做尾部省略：瓦片宽度会在静止状态下变（设置面板调），尾部省略按当下宽度现量，
+ * 宽度调小后不会涨成三、四行；hover 时给全量。
  */
 const FolderTile = memo(
   ({
@@ -124,7 +125,7 @@ const FolderTile = memo(
           <FreeTruncatedText
             className={styles.name}
             disabled={tipOff}
-            ellipsis="middle"
+            ellipsis="end"
             lines={2}
             position="top"
             text={folder.name}

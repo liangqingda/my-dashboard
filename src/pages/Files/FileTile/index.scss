@@ -54,6 +54,22 @@
   color: var(--app-ink-faint);
 }
 
+/*
+ * hover 时图源放大一档：缩略图 / 播放器图标 / 分类图标共用同一条过渡，
+ * 像访达里指针压上去那一格图源浮起来；拖拽态与落点态不受影响（放大只挂在 hover 上）。
+ */
+.thumb,
+.appIcon,
+.icon {
+  transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.wrapper:hover .thumb,
+.wrapper:hover .appIcon,
+.wrapper:hover .icon {
+  transform: scale(1.06);
+}
+
 .iconMedia {
   color: var(--mantine-color-blue-5);
 }

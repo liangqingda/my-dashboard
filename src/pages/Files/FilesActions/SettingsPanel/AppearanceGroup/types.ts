@@ -10,14 +10,14 @@ export type AppearanceGroupProps = {
   grouped: boolean;
   /** 改分组展示开关 */
   onGroupedChange: (enabled: boolean) => void;
-  /** 改网格列宽下限 */
-  onTileMinWidthChange: (width: number) => void;
+  /** 改网格瓦片宽度 */
+  onTileWidthChange: (width: number) => void;
   /** 改 hover 玻璃层透明度 */
   onVeilOpacityChange: (opacity: number) => void;
   /** 改展示形态 */
   onViewModeChange: (view: FilesViewMode) => void;
-  /** 网格列宽下限（px） */
-  tileMinWidth: number;
+  /** 网格瓦片宽度（px） */
+  tileWidth: number;
   /** hover 玻璃层透明度（0–100） */
   veilOpacity: number;
   /** 当前展示形态：网格 / 表格 */

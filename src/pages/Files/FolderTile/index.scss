@@ -139,6 +139,12 @@
   height: auto;
   aspect-ratio: 16 / 10;
   color: var(--mantine-color-blue-5);
+  transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* hover 时图标与文件瓦片的图源同一档放大，指针压上去那一格「浮起来」 */
+.wrapper:hover .icon {
+  transform: scale(1.06);
 }
 
 /* 放应用的目录（`isAppFolder`）：图标钉成与应用图标同一尺寸的正方形，

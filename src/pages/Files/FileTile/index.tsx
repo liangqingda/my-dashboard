@@ -33,7 +33,8 @@ import styles from './index.scss';
  * 不压一层按钮和文字都看不清。遮罩盖住图源、文字与按钮浮在它上面。
  * 视频 / 图片（调用方传了 `onOpen`）整块可点，交给对应的预览弹窗；其它文件仍只是展示。
  * 体积旁的播放器小图标可单独点（`onOpenExternal`），绕开弹窗直接交给外部应用。
- * 名称最多两行，超出做中间省略保留尾部，hover 时给全量。
+ * 名称最多两行，超出做尾部省略：瓦片宽度会在静止状态下变（设置面板调），尾部省略按当下宽度现量，
+ * 宽度调小后不会涨成三、四行；hover 时给全量。
  * 指针停到视频瓦片上时先悄悄预取文件头，点开时首帧不必再等一次往返。
  * 缩略图请求按 `hooks/useThumbImage` 的限流排队（同时最多 2 条在途，且只排进了视口的瓦片），
  * 把其余连接留给视频这类大文件请求，别让一屏瓦片把本机接口的队列占满。
@@ -129,7 +130,7 @@ const FileTile = memo(
           <FreeTruncatedText
             className={styles.name}
             disabled={tipOff}
-            ellipsis="middle"
+            ellipsis="end"
             lines={2}
             position="top"
             text={file.name}
