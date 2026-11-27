@@ -29,7 +29,7 @@ import {
   VIDEO_FALLBACK_ASPECT,
 } from '@/components/file-preview/FreeVideo/constants';
 import { useBrowserFullscreen } from '@/hooks/useBrowserFullscreen';
-import FreeModal from '@/components/modals/FreeModal';
+import FreeModal, { MODAL_HEADER_SELECTOR } from '@/components/modals/FreeModal';
 import type { FreeModalSeekDirection } from '@/components/modals/FreeModal/types';
 import { cx } from '@/utils/cx';
 
@@ -305,6 +305,7 @@ const VideoPreviewModal = ({
             />
           }
           expanded={fullscreen || viewportFullscreen}
+          hideControlsOnSelector={MODAL_HEADER_SELECTOR}
           key={activeItem.id}
           nav={{
             nextLabel: stepNextLabel,

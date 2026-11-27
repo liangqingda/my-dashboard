@@ -5,7 +5,12 @@
   color: var(--app-ink-faint);
 }
 
-.button:hover:not(:disabled) {
+/*
+ * hover 底色由这里定死，不吃组件库那档「主色实底」：亮色主题下按钮一悬停就整块压上饱和青绿，
+ * 一排图标里突然亮一块，太扎眼。常规档只铺一层最浅的主色，图标同时换成主色。
+ */
+.button:hover:not(:disabled):not([data-loading]) {
+  background-color: var(--app-accent-soft);
   color: var(--app-accent);
 }
 
@@ -14,7 +19,8 @@
   color: var(--app-accent);
 }
 
-.accent:hover:not(:disabled) {
+.accent:hover:not(:disabled):not([data-loading]) {
+  background-color: var(--app-accent-soft-strong);
   color: var(--app-accent-strong);
 }
 
@@ -22,12 +28,15 @@
  * 媒体浮层档：按钮压在图片 / 视频画面上的毛玻璃 chrome 里（预览 header、播放器控制栏），
  * 两种主题都固定浅字，不跟主题反转——亮色下主题深色图标压在浅玻璃上看不清。
  * 三档语气各自取浮层专用色标，禁用态只收透明度、不另挑灰。
+ * hover 只垫一层很淡的浮层白（`--app-glass-float`），不落组件库的实色主色底：
+ * 亮色主题下那颗播放键一悬停就变成一整块饱和青绿，比画面本身还抢眼。
  */
 .button.onMedia {
   color: var(--app-glass-on-ink-soft);
 }
 
-.button.onMedia:hover:not(:disabled) {
+.button.onMedia:hover:not(:disabled):not([data-loading]) {
+  background-color: var(--app-glass-float);
   color: var(--app-glass-on-ink);
 }
 
@@ -35,7 +44,8 @@
   color: var(--app-glass-on-accent);
 }
 
-.button.onMedia.accent:hover:not(:disabled) {
+.button.onMedia.accent:hover:not(:disabled):not([data-loading]) {
+  background-color: var(--app-glass-float);
   color: var(--app-glass-on-ink);
 }
 
@@ -43,8 +53,8 @@
   color: var(--app-glass-on-danger);
 }
 
-.button.onMedia.danger:hover:not(:disabled) {
-  background: var(--app-glass-float);
+.button.onMedia.danger:hover:not(:disabled):not([data-loading]) {
+  background-color: var(--app-glass-float);
   color: var(--app-glass-on-danger);
 }
 

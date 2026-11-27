@@ -62,7 +62,7 @@ const MOVE_MODE_CODEC = createChoiceCodec<MoveMode>(['modal', 'direct'], 'modal'
 /** hover 玻璃层透明度：0–100 的百分比，脏值回落 100（完全不透明） */
 const VEIL_OPACITY_CODEC = createRangedNumberCodec(0, 100, 100);
 
-/** 网格瓦片宽度：120–360 的像素值，脏值回落 168（默认瓦片宽度） */
+/** 网格瓦片宽度：120–248 的像素值，脏值回落 168（默认瓦片宽度） */
 const TILE_WIDTH_CODEC = createRangedNumberCodec(
   TILE_WIDTH_MIN,
   TILE_WIDTH_MAX,

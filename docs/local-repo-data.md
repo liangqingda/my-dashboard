@@ -178,7 +178,7 @@
 | `scripts/vite/files-apps.ts` | 应用包识别（`.app` 目录与指向它的符号链接）、Info.plist 解析（`plutil`）、残留推导（用户级与系统级）、打开（校验 `.app` 后交给系统 `open`）、卸载（先退应用再删整包与残留，权限不足时弹一次授权窗补删） |
 | `scripts/vite/files-app-icons.ts` | 应用图标按需抽取：从包内 `Contents/Resources` 找 `.icns`，`sips` 转成 PNG，按「包路径 + 修改时间」缓存在临时目录 |
 | `scripts/vite/files-video-apps.ts` | 能播视频的应用清单：扫 `/Applications`、`/System/Applications` 与 `~/Applications` 顶层的 `.app`，读 `Info.plist` 的 `CFBundleDocumentTypes`，声明了视频统一类型标识（或视频扩展名）的才算，按应用名去重；再剔掉 `EXCLUDED_VIDEO_APPS` 里那批「顺带能放视频、但不是播放器」的应用（网盘 / 阅读 / 聊天 / 音乐 / 系统 QuickTime） |
-| `scripts/vite/files-thumbs.ts` | 列表缩略图：图片用 `sips` 缩成 JPEG、视频用 `qlmanage` 抽 QuickLook 一帧，按「路径 + 体积 + 修改时间」缓存在临时目录，转码并发上限 2；转不出来的返回 null，前端回落分类图标 |
+| `scripts/vite/files-thumbs.ts` | 列表缩略图：图片用 `sips` 缩成长边 512 的 JPEG、视频用 `qlmanage` 抽 QuickLook 一帧再转 JPEG，按「路径 + 体积 + 修改时间 + 尺寸」缓存在临时目录，转码并发上限 2；转不出来的返回 null，前端回落分类图标 |
 | `scripts/vite/files-wallpaper.ts` | 桌面墙纸：编译一次原生 Swift 助手（缓存在 `node_modules/.cache`），把 `Index.plist` 里所有桌面空间 / 屏幕的 `Desktop` 选项换成这张图（`Idle` 不动，写前备份成 `Index.plist.dashboard.bak`），再重启 `WallpaperAgent` 让桌面刷新（它只在启动时读配置）；编译器缺失时提示装 Xcode 命令行工具 |
 | `scripts/vite/files-open.ts` | 外部打开：按「指定应用 → IINA → 系统默认」逐级回落，`open -a <app>` 成功即返回实际用上的应用名 |
 | `scripts/vite/files-media.ts` | 媒体侧只读 / 写盘：视频路径校验与 MIME、`Range` 解析、读流，以及把 PNG 截图写进指定目录（缺省桌面；文件名取本地时间，重名追加序号） |
@@ -246,9 +246,11 @@
   以及把设置改成「外部应用」后点视频直接交给播放器（`useVideoPreview` 的分流，不开弹窗）；
   由页面的 `useVideoPreview` 接成提示；列表里指针停在视频条目上时还会用 `Range` 预取前 512KB 文件头
   （`src/pages/Files/utils/video-prefetch.ts`，同路径一分钟内只拉一次），点开时首帧不必再等一次往返。
-- **列表缩略图**：`GET /api/files/thumb?path=` 给网格瓦片出图——图片走 `sips` 缩到长边 256 的 JPEG，
-  视频走 `qlmanage -t` 让 QuickLook 抽一帧 PNG（用系统解码，前端的 `video + canvas` 拿不下的编码它也出得来）。
-  按「路径 + 体积 + 修改时间」缓存在临时目录，`Cache-Control: private, max-age=600`；转不出来返回 404，
+- **列表缩略图**：`GET /api/files/thumb?path=` 给网格瓦片出图——图片走 `sips` 缩到长边 512 的 JPEG，
+  视频走 `qlmanage -t` 让 QuickLook 抽一帧、再用 `sips` 转成同尺寸 JPEG（用系统解码，前端的 `video + canvas` 拿不下的编码它也出得来；
+  QuickLook 只出 PNG，不转一道缓存盘会被帧图堆起来）。
+  512 是按「瓦片最宽 248px × 2 倍图」定的：缩略图比这再小，瓦片放大后就会糊。
+  按「路径 + 体积 + 修改时间 + 尺寸」缓存在临时目录，`Cache-Control: private, max-age=600`；转不出来返回 404，
   前端（`utils/media-thumbs.ts` 拼 URL、`FileTile` 的 `onError`）回落分类图标。
   网格里视频在「外部应用」模式下由设置 `video-thumb-style` 决定大图：默认摆所选播放器的图标
   （`GET /api/files/app-icon?app=<应用名>`，应用名由 `files-video-apps.ts` 的

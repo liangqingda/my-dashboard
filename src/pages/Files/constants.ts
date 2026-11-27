@@ -88,8 +88,9 @@ export const TILE_WIDTH_STORAGE_KEY = scopedStorageKey(
 );
 
 /**
- * 网格瓦片宽度（px）：设置面板「瓦片宽度」调的就是它，网格按这个宽度固定折列。
- * 窗口变宽只增加列数，不再把单块瓦片拉大——每一档调下去都直接看得见瓦片变大 / 变小。
+ * 网格瓦片宽度（px）：设置面板「瓦片宽度」调的就是它，决定网格**一列至少多宽**。
+ * 实际列数按内容区宽度算、列宽由剩余空间均分铺满（口径见 `DirectoryGrid/README.md`），
+ * 所以列数不变时相邻档位看不出外框变化——这是「铺满整行」的必然结果。
  * 可调区间见下方 `TILE_WIDTH_*`：再窄图源与名称会挤成一条，再宽一屏只剩一两列；
  * 默认值 168 落在区间内且是步长的整数倍，滑块才能正好停在默认档。
  */
@@ -98,8 +99,8 @@ export const DEFAULT_TILE_WIDTH = 168;
 /** 可调下限（px） */
 export const TILE_WIDTH_MIN = 120;
 
-/** 可调上限（px） */
-export const TILE_WIDTH_MAX = 360;
+/** 可调上限（px）：248 时一屏还能排五六列，再宽就只剩三四列、列宽也被铺满拉得很开 */
+export const TILE_WIDTH_MAX = 248;
 
 /** 滑块步长（px） */
 export const TILE_WIDTH_STEP = 8;

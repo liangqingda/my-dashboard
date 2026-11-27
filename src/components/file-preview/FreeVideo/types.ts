@@ -75,6 +75,11 @@ export type FreeVideoProps = {
    * 不是浮层里那张缩小过的缩略帧。悬停帧收起时回调 `null`，调用方自己退回当前播放帧。
    */
   onHoverFrameGrabberReady?: (grabber: HoverFrameGrabber | null) => void;
+  /**
+   * 另一层 chrome（预览弹窗的浮层 header 这类）的选择器：指针落到它上面时控制栏**立即**收起。
+   * 与「指针进控制栏时 header 立即收起」对成一组——指针只在其中一层时，另一层不该还挂在画面上。
+   */
+  hideControlsOnSelector?: string;
   /** 附加 class，只用来补外部布局 */
   className?: string;
   /** 控制栏内所有 tip 固定深底浅字、不随主题反转：媒体画面上的提示用 */

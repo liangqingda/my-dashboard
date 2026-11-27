@@ -113,14 +113,18 @@ const FolderTile = memo(
         onClick={() => onOpen(folder.path)}
         type="button"
       >
-        <IconFolderFilled
-          aria-hidden="true"
-          className={cx(styles.icon, iconSize !== undefined && styles.iconFixed)}
-          size={DEFAULT_TILE_MEDIA_SIZE}
-          stroke={1.2}
-          style={iconSize === undefined ? undefined : { height: iconSize, width: iconSize }}
-          viewBox={FOLDER_ICON_VIEWBOX}
-        />
+        <span
+          className={cx(styles.media, iconSize !== undefined && styles.mediaFixed)}
+        >
+          <IconFolderFilled
+            aria-hidden="true"
+            className={styles.icon}
+            size={DEFAULT_TILE_MEDIA_SIZE}
+            stroke={1.2}
+            style={iconSize === undefined ? undefined : { height: iconSize, width: iconSize }}
+            viewBox={FOLDER_ICON_VIEWBOX}
+          />
+        </span>
         <span className={styles.body}>
           <FreeTruncatedText
             className={styles.name}

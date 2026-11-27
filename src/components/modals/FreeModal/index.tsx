@@ -39,8 +39,11 @@ const OVERLAY_FOCUS_GUARD_MS = 400;
 /** 翻页的默认快捷键提示，只进 tooltip */
 const NAV_SHORTCUT_HINT = '[ / ← · ] / →';
 
-/** header 那一行的选择器：给「指针停在 header 上就别自动收起」用（class 是哈希后的，只能由本组件算） */
-const MODAL_HEADER_SELECTOR = `.${styles.header}`;
+/**
+ * header 那一行的选择器：给「指针停在 header 上就别自动收起」用（class 是哈希后的，只能由本组件算）。
+ * 业务侧反向用得上——指针跑到 header 上时，把播放器控制栏这类同层 chrome 当场收掉。
+ */
+export const MODAL_HEADER_SELECTOR = `.${styles.header}`;
 
 /**
  * 基础弹窗外壳。业务侧只管「标题是什么、右侧放哪些操作、正文是什么」，

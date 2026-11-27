@@ -42,6 +42,9 @@
   只有「操作控制栏时不唤出 header」这一条各自为政：控制栏根节点带 `data-video-controls` 标记，
   弹窗用 `VIDEO_CONTROLS_SELECTOR` 传给 `ignoreSelector` 圈掉这块区域——在上面挪指针是想操作播放，
   不该顺带把标题栏顶出来；指针一进控制栏 header 就收起，回到画面才浮出。
+  **反过来也对称**：指针落到 header 上时，控制栏由 `hideControlsOnSelector`（弹窗传 `FreeModal`
+  导出的 `MODAL_HEADER_SELECTOR`）当场收起、不重新计时。两边各管各的显隐，指针只在其中一层时，
+  另一层不会还挂在画面上。
 - **tip 与控件配色**：弹窗内所有 hover 提示（标题截断、控制栏按钮、选集条目、设置滑杆浮标）固定深底浅字，
   header 与控制栏的标题、图标、时间同步取媒体浮层浅字档，都不随主题反转——控件压在视频画面上，
   浅色 chip 在暗画面上跳不出来。

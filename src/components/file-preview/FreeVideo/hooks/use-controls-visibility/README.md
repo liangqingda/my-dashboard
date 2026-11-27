@@ -4,9 +4,13 @@
 指针一动就浮出，静止 `delay` 就淡出下移；指针停在控制栏上时始终显示，离开后才重新计时。
 **播放状态不参与**：暂停 / 播完也照常自动收起（不再常驻），视频预览里 header 与它一起浮出、一起收掉。
 
-`useControlsVisibility(delay, { suspended })`：`suspended` 为真时（设置 / 选集这类从控制栏
+`useControlsVisibility(delay, { hideOnSelector, suspended })`：`suspended` 为真时（设置 / 选集这类从控制栏
 长出来的弹层开着）控制栏恒为可见、不排收起——面板是 portal，指针移进去就离开了播放器，
 不按住的话就会「面板还开着、它的按钮先淡下去了」。
+
+`hideOnSelector` 是反向的一半：指针落到另一层 chrome（预览弹窗的浮层 header）上时，控制栏**当场收起**、
+不重新计时。header 那边的 `headerOverlay.ignoreSelector` 是同一关系的另一头——指针进控制栏时 header
+当场收起。两层各自管自己的显隐，指针只在其中一层时另一层不该还挂在画面上。
 
 ## 为什么单独一个 hook
 

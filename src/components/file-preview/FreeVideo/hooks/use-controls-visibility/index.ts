@@ -35,11 +35,17 @@ export type UseControlsVisibilityOptions = {
    * 面板是 portal，指针移进去就离开了播放器，不按住的话面板还开着、它的按钮先淡下去了。
    */
   suspended?: boolean;
+  /**
+   * 另一层 chrome（预览弹窗的浮层 header）的选择器：指针落到它上面时，控制栏**立即**收起。
+   * header 与 footer 是同一片画面上下的两层 chrome，指针去了 header 就说明这一眼不是在操作播放，
+   * 控制栏不该还挂在画面底部（反向关系由 `headerOverlay.ignoreSelector` 保证：去控制栏时 header 也当场收起）。
+   */
+  hideOnSelector?: string;
 };
 
 export const useControlsVisibility = (
   delay: number,
-  { suspended = false }: UseControlsVisibilityOptions = {},
+  { hideOnSelector, suspended = false }: UseControlsVisibilityOptions = {},
 ): UseControlsVisibilityResult => {
   /** 打开即收起态：先看画面，指针一动才浮出（与浮层 header 一致） */
   const [visible, setVisible] = useState(false);
@@ -95,6 +101,37 @@ export const useControlsVisibility = (
     },
     [],
   );
+
+  /**
+   * 指针落到另一层 chrome（浮层 header）上：当场收起，不排计时——
+   * 两边各自管自己的显隐，指针只在其中一层时另一层不该还亮着。
+   * 监听挂在 window 上：header 在播放器容器外，播放器自己收不到那一段指针。
+   */
+  useEffect(() => {
+    if (hideOnSelector === undefined) {
+      return undefined;
+    }
+
+    const handleMove = (event: PointerEvent) => {
+      const target = event.target instanceof Element ? event.target : null;
+
+      if (target === null || target.closest(hideOnSelector) === null) {
+        return;
+      }
+
+      if (timerRef.current !== null) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+
+      hoveringRef.current = false;
+      setVisible(false);
+    };
+
+    window.addEventListener('pointermove', handleMove);
+
+    return () => window.removeEventListener('pointermove', handleMove);
+  }, [hideOnSelector]);
 
   return {
     enterControls: () => {

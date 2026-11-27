@@ -108,23 +108,29 @@ const FileTile = memo(
     const content = (
       <>
         {thumbSrc === null ? (
-          <Icon
-            aria-hidden="true"
-            className={cx(styles.icon, isMedia && styles.iconMedia)}
-            size={tileIconSize()}
-            stroke={1.2}
-          />
+          <span className={styles.media}>
+            <Icon
+              aria-hidden="true"
+              className={cx(styles.icon, isMedia && styles.iconMedia)}
+              size={tileIconSize()}
+              stroke={1.2}
+            />
+          </span>
         ) : (
-          <img
-            alt=""
-            className={cx(styles.thumb, usesAppIcon && styles.appIcon)}
-            decoding="async"
-            draggable={false}
-            onError={thumbOnError}
-            onLoad={thumbOnLoad}
-            ref={thumbRef}
-            src={thumbImageSrc}
-          />
+          <span
+            className={cx(styles.media, usesAppIcon && styles.mediaSquare)}
+          >
+            <img
+              alt=""
+              className={cx(styles.thumb, usesAppIcon && styles.appIcon)}
+              decoding="async"
+              draggable={false}
+              onError={thumbOnError}
+              onLoad={thumbOnLoad}
+              ref={thumbRef}
+              src={thumbImageSrc}
+            />
+          </span>
         )}
         <span className={styles.body}>
           <FreeTruncatedText

@@ -12,7 +12,7 @@
 import { execFile } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import type { Stats } from 'node:fs';
-import { mkdir, readdir, rename, rm, stat } from 'node:fs/promises';
+import { mkdir, readdir, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
@@ -25,8 +25,8 @@ const execFileAsync = promisify(execFile);
 /** 缩略图缓存目录：临时目录下的固定子目录，按路径 + 体积 + 修改时间作键 */
 const THUMB_CACHE_DIR = path.join(tmpdir(), 'my-dashboard-thumbs');
 
-/** 输出边长：瓦片里的缩略图按 2 倍图取，显示时再缩 */
-const THUMB_SIZE = 256;
+/** 输出边长：瓦片最宽 248px、按 2 倍图取需要 496，512 正好覆盖；显示时再缩 */
+const THUMB_SIZE = 512;
 
 /** 转码超时：`qlmanage` 起 QuickLook 比 `sips` 慢，给到 30s 免得大视频卡死请求 */
 const IMAGE_TIMEOUT_MS = 15_000;
@@ -88,9 +88,12 @@ const thumbForImage = async (source: string, out: string): Promise<FileThumb | n
   return info !== null && info.size > 0 ? { mime: 'image/jpeg', path: out } : null;
 };
 
-/** 视频：让 `qlmanage` 把 QuickLook 缩略图写进一个临时目录，再搬到缓存位置 */
+/**
+ * 视频：让 `qlmanage` 把 QuickLook 缩略图写进一个临时目录，再用 `sips` 转成 JPEG 搬到缓存位置。
+ * QuickLook 只出 PNG，同尺寸下比 JPEG 大几倍；帧图要按 2 倍图取，不转一道缓存盘会很快堆起来。
+ */
 const thumbForVideo = async (source: string, out: string): Promise<FileThumb | null> => {
-  const staging = path.join(THUMB_CACHE_DIR, `src-${path.basename(out, '.png')}`);
+  const staging = path.join(THUMB_CACHE_DIR, `src-${path.basename(out, '.jpg')}`);
 
   try {
     await mkdir(staging, { recursive: true });
@@ -108,9 +111,15 @@ const thumbForVideo = async (source: string, out: string): Promise<FileThumb | n
       return null;
     }
 
-    await rename(path.join(staging, produced), out);
+    await execFileAsync(
+      'sips',
+      ['-s', 'format', 'jpeg', '-Z', String(THUMB_SIZE), path.join(staging, produced), '--out', out],
+      { timeout: IMAGE_TIMEOUT_MS },
+    );
 
-    return { mime: 'image/png', path: out };
+    const info = await statOrNull(out);
+
+    return info !== null && info.size > 0 ? { mime: 'image/jpeg', path: out } : null;
   } catch {
     return null;
   } finally {
@@ -144,9 +153,9 @@ export const fileThumb = async (input: string): Promise<FileThumb | null> => {
     .update(`${input}:${info.size}:${Math.round(info.mtimeMs)}:${THUMB_SIZE}:${kind}`)
     .digest('hex')
     .slice(0, 16);
-  const extension = kind === 'image' ? 'jpg' : 'png';
-  const mime = kind === 'image' ? 'image/jpeg' : 'image/png';
-  const out = path.join(THUMB_CACHE_DIR, `${key}.${extension}`);
+  /* 两种分类都出 JPEG：视频帧也先转一道，尺寸与体积都按缩略图口径 */
+  const mime = 'image/jpeg';
+  const out = path.join(THUMB_CACHE_DIR, `${key}.jpg`);
   const cached = await statOrNull(out);
 
   if (cached !== null && cached.size > 0) {

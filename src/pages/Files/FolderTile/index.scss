@@ -131,13 +131,35 @@
   opacity: 1;
 }
 
-/* 文件夹图源盒子：铺满瓦片宽度、比例与缩略图同为 16:10，所以盒高与图片 / 视频的图源一致，
-   同排瓦片下方的名称和计数才会齐平；图标视图框已在 index.tsx 裁到图形边界，盒子内能画满 */
+/*
+ * 图源盒：铺满瓦片宽度、比例与缩略图同为 16:10，所以盒高与图片 / 视频的图源一致，
+ * 同排瓦片下方的名称和计数才会齐平；图标视图框已在 index.tsx 裁到图形边界，盒子内能画满。
+ * 圆角与 `overflow: hidden` 只在这里切一次：hover 放大 6% 在盒内进行，
+ * 长出去的部分被裁掉，不会压到瓦片背景或相邻格上。
+ */
+.media {
+  display: flex;
+  flex: 0 0 auto;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+/* 放应用的目录（`isAppFolder`）：图源位收成正方形、宽度由图标自己撑开，
+   与应用图标同一尺寸（`iconSize` 给多少就是多少），不占 16:10 的整行图源位 */
+.mediaFixed {
+  width: auto;
+  aspect-ratio: 1;
+}
+
+/* 图标本体：跟着图源盒走，不再自己定宽度与比例 */
 .icon {
   flex: 0 0 auto;
   width: 100%;
-  height: auto;
-  aspect-ratio: 16 / 10;
+  height: 100%;
   color: var(--mantine-color-blue-5);
   transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
@@ -145,12 +167,6 @@
 /* hover 时图标与文件瓦片的图源同一档放大，指针压上去那一格「浮起来」 */
 .wrapper:hover .icon {
   transform: scale(1.06);
-}
-
-/* 放应用的目录（`isAppFolder`）：图标钉成与应用图标同一尺寸的正方形，
-   不再随瓦片宽度自适应，也不再占 16:10 的图源位——和应用图标同等大小才算「一致」 */
-.iconFixed {
-  aspect-ratio: 1;
 }
 
 .body {

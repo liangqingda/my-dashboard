@@ -5,7 +5,8 @@
 
 | 项 | 约定 |
 | --- | --- |
-| 形状 | `ActionIcon variant="subtle"`；常态弱色（`--app-ink-faint`），悬停主色——**业务侧不要再手写这两条颜色规则** |
+| 形状 | `ActionIcon variant="subtle"`；常态弱色（`--app-ink-faint`），悬停主色 + 一层最浅主色底（`--app-accent-soft`）——**业务侧不要再手写这几条颜色规则** |
+| hover 底色 | 三档都在本组件里钉死，不吃组件库那档「主色实底」（亮色主题下一排图标里突然亮一块饱和青绿，比内容还抢眼）：常规 / `accent` 铺最浅主色，`danger` 铺 `--app-status-danger-soft`；媒体浮层档（`tipDark`）只垫一层很淡的 `--app-glass-float` |
 | 尺寸档 | `xs`（贴着字段 / 文字）、`sm`（标题栏、表格操作列，默认）、`lg`（编辑态那排承担全部操作的按钮）；也可传数字直接给按钮边长（px，视频控制栏那组播放键用） |
 | 语气 | `normal` / `accent`（主操作，常态就用主色）/ `danger`（只描红，不做实底）——语气只改颜色，不改形状 |
 | 提示内容 | 默认等于 `label`；**只在指针停上来时创建**（`useHoverIntent` + `Tooltip target`），几百行列表也不会有几百套常驻定位实例 |

@@ -56,6 +56,7 @@ const FreeVideo = ({
   actions,
   className,
   expanded = false,
+  hideControlsOnSelector,
   nav,
   onAspectChange,
   onCloseOverlay,
@@ -121,6 +122,7 @@ const FreeVideo = ({
   /**
    * 控制栏显隐：与浮层 header 同一节奏，指针静止一会儿收起（暂停 / 播完也一样）；
    * 设置 / 选集面板开着时按住不收起——面板是 portal，指针移进去就离开了播放器。
+   * `hideControlsOnSelector` 是反向的一半：指针跑到浮层 header 上，控制栏当场收起。
    */
   const {
     enterControls,
@@ -128,7 +130,10 @@ const FreeVideo = ({
     leavePlayer,
     reveal,
     visible: controlsVisible,
-  } = useControlsVisibility(CONTROLS_HIDE_DELAY, { suspended: overlayOpen });
+  } = useControlsVisibility(CONTROLS_HIDE_DELAY, {
+    hideOnSelector: hideControlsOnSelector,
+    suspended: overlayOpen,
+  });
 
   /** 帧图最长边：预览框宽 × 设备像素比（封顶 2 倍），窗口越大帧图越清 */
   const frameLongestEdge = Math.round(
@@ -271,7 +276,6 @@ const FreeVideo = ({
           ref={mergedRef}
           src={src}
         />
-
         {status === 'loading' ? (
           <div
             className={cx(
@@ -283,7 +287,6 @@ const FreeVideo = ({
             <span className={styles.overlayText}>正在读取视频…</span>
           </div>
         ) : null}
-
         {status === 'error' ? (
           <div className={styles.overlay}>
             <IconAlertTriangleFilled className={styles.errorIcon} size={28} />
@@ -292,7 +295,6 @@ const FreeVideo = ({
             </span>
           </div>
         ) : null}
-
         {buffering && status === 'ready' ? (
           <div className={styles.overlay}>
             <Loader color="gray" size="sm" />

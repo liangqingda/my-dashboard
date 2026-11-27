@@ -49,6 +49,8 @@
   控制栏根节点带 `data-video-controls` 标记，对应 `constants.ts` 导出的 `VIDEO_CONTROLS_SELECTOR`：
   调用方判断「指针在这块区域里活动不算数」时用这个选择器（视频预览里就是不让浮层 header 跟着
   控制栏 hover 浮出），不要去挑 CSS module 的哈希类名。
+  反向关系由 `hideControlsOnSelector` 给：指针落到调用方那一层 chrome（预览弹窗的浮层 header）上时，
+  控制栏**当场收起**、不重新计时——指针只在其中一层时，另一层不该还挂在画面上。
 - **点画面切播放，双击交给调用方**：单击画面切播放 / 暂停；传了 `onDoubleClick` 才接管双击——
   这时单击要等一个双击窗口（`@/hooks/useSingleOrDoubleClick`，300ms）再切播放，第二下到来就把
   这次播放 / 暂停作废，双击只执行调用方给的动作（视频预览里是切整屏全屏），**不闪播放态**。
