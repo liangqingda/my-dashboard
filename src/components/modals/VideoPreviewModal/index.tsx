@@ -36,6 +36,7 @@ import { cx } from '@/utils/cx';
 import { useFrameCapture } from './hooks/useFrameCapture';
 import { useVideoSettings } from './hooks/useVideoSettings';
 import type { VideoPreviewModalProps } from './types';
+import { createVideoDock } from './utils/dock';
 import { seekTargetTime } from './utils/seek';
 import VideoFooterActions from './VideoFooterActions';
 
@@ -46,6 +47,7 @@ const VideoPreviewModal = ({
   batched = false,
   blocked = false,
   defaultFullscreen = false,
+  dockOrigin = 'page',
   items,
   onCapture,
   onClose,
@@ -215,6 +217,20 @@ const VideoPreviewModal = ({
    */
   const aspectFrame = !fullscreen && !viewportFullscreen;
 
+  /**
+   * 程序坞描述：整个目录与当前段都进快照，换页 / 刷新后仍能重开；
+   * 整屏 / 网页全屏、业务弹层与删除确认开着时不让收（那些状态下框体不属于这一层）。
+   */
+  const dock = createVideoDock({
+    activeId: activeItem.id,
+    disabled:
+      blocked || settingsOpen || episodeOpen || fullscreen || viewportFullscreen,
+    items,
+    origin: dockOrigin,
+    storageScope,
+    title: activeItem.name,
+  });
+
   /*
    * header 是浮层：设置面板 / 删除确认开着时暂停唤出，免得面板跟着 header 一起藏起来；
    * 其余时候打开即收起、鼠标一动浮出、静止 1s 收起（`FreeModal` 的 `headerOverlay`）。
@@ -234,6 +250,7 @@ const VideoPreviewModal = ({
         aspectFrame && styles.contentAspect,
       )}
       contentStyle={{ '--video-aspect': String(videoAspect) } as CSSProperties}
+      dock={dock}
       fullscreen={{
         active: fullscreen,
         onToggle: toggleBrowserFullscreen,
@@ -255,7 +272,9 @@ const VideoPreviewModal = ({
         shortcutHint: navShortcutHint,
         total: items.length,
       }}
-      onCapture={() => void capture(settings.captureDir)}
+      onCapture={
+        onCapture ? () => void capture(settings.captureDir) : undefined
+      }
       onClose={requestClose}
       onRequestDelete={onRequestDelete ? requestDelete : null}
       onSeek={settings.arrowMode === 'seek' ? seekBy : undefined}
@@ -275,7 +294,9 @@ const VideoPreviewModal = ({
               browserFullscreen={fullscreen}
               capturing={capturing}
               items={items}
-              onCapture={() => void capture(settings.captureDir)}
+              onCapture={
+                onCapture ? () => void capture(settings.captureDir) : undefined
+              }
               onEpisodeChangeOpened={setEpisodeOpen}
               onOpenExternal={
                 onOpenExternal ? () => onOpenExternal(activeItem.id) : undefined

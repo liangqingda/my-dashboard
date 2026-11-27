@@ -139,3 +139,9 @@ header 与 hover 显隐），但去掉播放器那一套：没有播放 / 快进
   `start` / `cancel` / `setRect` / `save`），失败提示与「保存后通知页面」也在这里，规格见目录内 README。
 - `utils.ts` / `constants.ts`：裁剪纯函数（比例 → 像素、canvas 重编码、扩展名 → MIME）与偏好键
   （`IMAGE_PREVIEW_CAPABILITY` / `CROP_MODE_FIELD` / 默认 `replace`）。
+
+### 收起到程序坞
+
+描述符快照存整个目录的最小字段（`id / name / src`）与当前条目，恢复后照常翻篇、计数与全屏；
+裁剪、删除、墙纸、待拖拽都依赖页面回调，恢复窗口里不出现这些入口。裁剪、上层确认或整屏全屏开着时
+不可收起。契约见 `docs/dock.md`。

@@ -66,14 +66,16 @@ const VideoFooterActions = ({
       </FreeIconAction>
     ) : null}
 
-    <FreeIconAction
-      label="截图当前画面（存到设置的目录）"
-      loading={capturing}
-      onClick={onCapture}
-      tipDark={tipDark}
-    >
-      <IconCamera size={ICON_SIZE} stroke={ICON_STROKE} />
-    </FreeIconAction>
+    {onCapture ? (
+      <FreeIconAction
+        label="截图当前画面（存到设置的目录）"
+        loading={capturing}
+        onClick={onCapture}
+        tipDark={tipDark}
+      >
+        <IconCamera size={ICON_SIZE} stroke={ICON_STROKE} />
+      </FreeIconAction>
+    ) : null}
 
     {onOpenExternal ? (
       <FreeIconAction

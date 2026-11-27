@@ -35,8 +35,8 @@ export type VideoFooterActionsProps = {
   onRequestDelete?: (() => void) | null;
   /** 截图正在落盘：相机按钮转圈 */
   capturing: boolean;
-  /** 截当前一帧（与 `Enter` 同一口径） */
-  onCapture: () => void;
+  /** 截当前一帧（与 `Enter` 同一口径）；不传则没有相机按钮（程序坞窗口里不能落盘） */
+  onCapture?: () => void;
   /** 用外部播放器打开当前视频；不传则没有这颗按钮 */
   onOpenExternal?: () => void;
   /** 把当前视频加入 / 移出待拖拽区；不传则没有这颗按钮 */

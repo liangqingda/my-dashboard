@@ -1,0 +1,180 @@
+/* 程序坞条：贴边停靠的毛玻璃盒子；朝向决定横竖排布，隐藏时整体移出屏幕 */
+
+.dock {
+  position: fixed;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  transition:
+    transform 240ms cubic-bezier(0.2, 0.8, 0.3, 1),
+    opacity 180ms ease;
+}
+
+.dock.top {
+  top: var(--dock-gap);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.dock.bottom {
+  bottom: var(--dock-gap);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.dock.left {
+  top: 50%;
+  left: var(--dock-gap);
+  transform: translateY(-50%);
+}
+
+.dock.right {
+  top: 50%;
+  right: var(--dock-gap);
+  transform: translateY(-50%);
+}
+
+/* 自动隐藏：连同盒子一起移出屏幕，不占指针，也不挡内容 */
+.dock.top.hidden {
+  opacity: 0;
+  transform: translate(-50%, calc(-100% - var(--dock-gap) * 2));
+}
+
+.dock.bottom.hidden {
+  opacity: 0;
+  transform: translate(-50%, calc(100% + var(--dock-gap) * 2));
+}
+
+.dock.left.hidden {
+  opacity: 0;
+  transform: translate(calc(-100% - var(--dock-gap) * 2), -50%);
+}
+
+.dock.right.hidden {
+  opacity: 0;
+  transform: translate(calc(100% + var(--dock-gap) * 2), -50%);
+}
+
+/*
+ * 盒子：全站毛玻璃配方 + 一圈极淡的高光边，
+ * 竖向（左右停靠）从图标往下排，横向（上下停靠）从图标往右排。
+ */
+.dockBox {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 8px;
+  pointer-events: auto;
+  background: var(--app-glass-panel);
+  border: 1px solid var(--app-glass-edge);
+  border-radius: calc(var(--dock-item-size) * 0.34 + 8px);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 10%),
+    0 14px 38px rgb(0 0 0 / 18%);
+  -webkit-backdrop-filter: blur(var(--app-glass-blur-panel))
+    saturate(var(--app-glass-saturate));
+  backdrop-filter: blur(var(--app-glass-blur-panel))
+    saturate(var(--app-glass-saturate));
+}
+
+.vertical .dockBox {
+  flex-direction: column;
+}
+
+.horizontal .dockBox {
+  flex-direction: row;
+}
+
+/*
+ * 图标格：底色取主色的浅底，两种主题都成立；hover / 相邻放大都只改 transform，
+ * 不动布局——相邻项目靠 :has 与 + 选择器跟着放大，鼠标移开自然回落。
+ */
+.dockItem {
+  display: grid;
+  width: var(--dock-item-size);
+  height: var(--dock-item-size);
+  color: var(--app-ink);
+  place-items: center;
+  background: color-mix(in srgb, var(--app-accent-soft) 68%, transparent);
+  border: 1px solid var(--app-glass-edge);
+  border-radius: calc(var(--dock-item-size) * 0.24);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 8%);
+  transition:
+    transform 160ms cubic-bezier(0.2, 0.8, 0.3, 1),
+    background-color 160ms ease;
+}
+
+.dockItem:hover {
+  background: var(--app-accent-soft-strong);
+}
+
+/* 相邻项目按同一个比例跟着放大，悬停的那一格最后覆盖成完整倍数 */
+.dockItem:has(+ .dockItem:hover),
+.dockItem:hover + .dockItem {
+  transform: scale(
+    calc(1 + (var(--dock-magnify) - 1) * var(--dock-neighbor-scale))
+  );
+}
+
+.dockItem:hover {
+  transform: scale(var(--dock-magnify));
+}
+
+/* 图标朝屏幕内侧长：贴边的那条边固定 */
+.right .dockItem {
+  transform-origin: 100% 50%;
+}
+
+.left .dockItem {
+  transform-origin: 0% 50%;
+}
+
+.bottom .dockItem {
+  transform-origin: 50% 100%;
+}
+
+.top .dockItem {
+  transform-origin: 50% 0%;
+}
+
+/* 窗口落进来时图标先收一下再回弹（由 `utils/dock-motion.ts` 临时打属性） */
+.dockItem[data-receiving='true'] {
+  animation: dockReceive 340ms cubic-bezier(0.3, 0.8, 0.4, 1);
+}
+
+.dockIcon {
+  display: grid;
+  place-items: center;
+  transition: filter 160ms ease;
+}
+
+.dockItem:hover .dockIcon {
+  filter: drop-shadow(0 3px 8px rgb(0 0 0 / 18%));
+}
+
+@keyframes dockReceive {
+  0% {
+    transform: scale(1);
+  }
+
+  38% {
+    transform: scale(0.84);
+  }
+
+  72% {
+    transform: scale(1.08);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dock,
+  .dockItem,
+  .dockItem[data-receiving='true'] {
+    transition: none;
+    animation: none;
+  }
+}

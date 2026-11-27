@@ -1,5 +1,10 @@
 import type { CSSProperties, ReactNode } from 'react';
 
+import type { DockDescriptor } from '@/dock/types';
+
+/** 程序坞描述：给了它，header 的关闭按钮左边才会出现「收起到程序坞」 */
+export type FreeModalDock = DockDescriptor;
+
 /** 上一个 / 下一个：某一端到头时传 null，按钮置灰 */
 export type FreeModalNav = {
   /** 当前位置（从 1 开始） */
@@ -152,6 +157,12 @@ export type FreeModalProps = {
   closeOnSpace?: boolean;
   /** 整组收掉翻页 / 全屏快捷键（加载中、上层浮层开着时传 false） */
   shortcutsEnabled?: boolean;
+  /**
+   * 收起到程序坞：给了它，header 关闭按钮左边固定多一颗最小化按钮，
+   * 点它 / 按 `⌘M` 把这一窗收进程序坞（条目与快照由调用方给，见 `@/dock/types`）。
+   * 编辑中、上层确认开着时用 `disabled` 保留按钮位置但不让收。
+   */
+  dock?: FreeModalDock;
   /** 是否把焦点锁在弹窗里，默认是 */
   trapFocus?: boolean;
   /** 是否垂直居中，默认是 */

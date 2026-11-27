@@ -34,11 +34,12 @@ export type UseFrameCaptureResult = {
  * 管理一次截图流程。
  *
  * @param video 视频元素引用：没有悬停帧时读它当前显示的那一帧
- * @param onCapture 把 data URL 与目标目录交给页面落盘，并返回成功提示文案
+ * @param onCapture 把 data URL 与目标目录交给页面落盘，并返回成功提示文案；
+ *   不传时截图直接不做事（程序坞恢复出来的窗口没有页面落盘能力）
  */
 export const useFrameCapture = (
   video: RefObject<HTMLVideoElement | null>,
-  onCapture: (
+  onCapture?: (
     dataUrl: string,
     captureDir: string,
   ) => Promise<VideoPreviewCaptureReceipt>,
@@ -56,6 +57,10 @@ export const useFrameCapture = (
 
   const capture = useCallback(
     async (captureDir: string): Promise<void> => {
+      if (onCapture === undefined) {
+        return;
+      }
+
       /** 从一开始就进 loading：悬停帧可能要现 seek 到那一秒，界面得先给个「在截」的反馈 */
       setCapturing(true);
 

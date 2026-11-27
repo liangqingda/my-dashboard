@@ -4,6 +4,7 @@ import { IconTrash } from '@tabler/icons-react';
 import FreeIconAction from '@/components/buttons/FreeIconAction';
 import FreeModal from '@/components/modals/FreeModal';
 import { useModalFullscreen } from '@/components/modals/FreeModal/hooks/useModalFullscreen';
+import type { FreeModalDock } from '@/components/modals/FreeModal/types';
 
 import RecordDetailBody from '../RecordDetailBody';
 import { RECORD_DETAIL_STORAGE_KEY } from '../constants';
@@ -24,6 +25,7 @@ const ICON_STROKE = 1.9;
  */
 const RecordDetailModal = ({
   confirming = false,
+  dockOrigin = 'page',
   nav,
   onClose,
   onRequestDelete,
@@ -32,6 +34,22 @@ const RecordDetailModal = ({
 }: RecordDetailModalProps) => {
   /** 全屏是记住的阅读偏好：关掉重开、换一条记录都不重置 */
   const { fullscreen, toggle } = useModalFullscreen(RECORD_DETAIL_STORAGE_KEY);
+
+  /**
+   * 程序坞描述：只存 ID 与标题，正文由恢复窗口按 ID 自取（列表摘要里的标题够撑起 header）；
+   * 删除确认开着时不让收。
+   */
+  const dock: FreeModalDock | undefined =
+    recordId === null
+      ? undefined
+      : {
+          disabled: confirming,
+          id: `record-detail:${recordId}`,
+          kind: 'record-detail',
+          origin: dockOrigin,
+          snapshot: { recordId, title: title ?? '记录详情' },
+          title: title ?? '记录详情',
+        };
 
   return (
     <FreeModal
@@ -44,6 +62,7 @@ const RecordDetailModal = ({
           ? undefined
           : { message: '记录 ID 已复制', text: recordId }
       }
+      dock={dock}
       fullscreen={{ active: fullscreen, onToggle: toggle }}
       headerTail={
         recordId === null || !onRequestDelete ? undefined : (

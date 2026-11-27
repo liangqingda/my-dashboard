@@ -31,6 +31,7 @@ import { IconTrash } from '@tabler/icons-react';
 import FreeIconAction from '@/components/buttons/FreeIconAction';
 import PreviewCounter from '@/components/feedback/PreviewCounter';
 import FreeModal from '@/components/modals/FreeModal';
+import type { FreeModalDock } from '@/components/modals/FreeModal/types';
 import { useBrowserFullscreen } from '@/hooks/useBrowserFullscreen';
 import { useStoredField } from '@/hooks/useStoredField';
 import { scopedStorageKey } from '@/utils/page-storage';
@@ -56,6 +57,7 @@ const ImagePreviewModal = ({
   batched = false,
   blocked = false,
   defaultFullscreen = false,
+  dockOrigin = 'page',
   items,
   onClose,
   onCrop,
@@ -150,6 +152,27 @@ const ImagePreviewModal = ({
     void crop.save(imageRef.current);
   };
 
+  /**
+   * 程序坞描述：列表与当前张都进快照，换页 / 刷新后仍能重开这一组图；
+   * 裁剪与删除确认开着时不让收。
+   */
+  const dock: FreeModalDock = {
+    disabled: cropping || blocked || fullscreen,
+    id: `image-preview:${storageScope}:${activeItem.id}`,
+    kind: 'image-preview',
+    origin: dockOrigin,
+    snapshot: {
+      activeId: activeItem.id,
+      items: items.map((item) => ({
+        id: item.id,
+        name: item.name,
+        src: item.src,
+      })),
+      storageScope,
+    },
+    title: activeItem.name,
+  };
+
   return (
     <FreeModal
       closeButton={!cropping}
@@ -162,6 +185,7 @@ const ImagePreviewModal = ({
           ? undefined
           : ({ '--image-aspect': String(imageAspect) } as CSSProperties)
       }
+      dock={dock}
       extraKeys={cropping ? { enter: saveCrop } : undefined}
       fullscreen={{
         active: fullscreen,

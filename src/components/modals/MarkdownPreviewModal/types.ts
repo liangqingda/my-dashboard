@@ -66,8 +66,7 @@ export type MarkdownPreviewModalProps = {
   /** 标题，通常是文件名 */
   title: string;
   /** Markdown 原文 */
-  markdown: string;
-  /**
+  markdown: string; /**
    * 正文是否还在取。为 true 时正文区显示加载态、不渲染 Markdown，
    * 目录为空，刷新与编辑入口一并收起（没有正文可编辑，也不该把 `markdown` 的空串写成一篇空文档）。
    * 打开、翻篇、刷新都会经过这个状态，调用方按自己的取数时机传。
@@ -116,6 +115,11 @@ export type MarkdownPreviewModalProps = {
    * 弹窗只负责「点一下先问一遍」这一层。
    */
   remove?: MarkdownPreviewRemove;
+  /**
+   * 这一窗是谁：页面打开的（默认）收起时要关掉页面状态；
+   * 程序坞自己恢复出来的窗口传 `dock`，再收起只是回到图标、不关掉条目。
+   */
+  dockOrigin?: 'page' | 'dock';
 };
 
 /**

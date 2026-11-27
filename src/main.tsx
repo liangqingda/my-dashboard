@@ -15,6 +15,15 @@ import ServicesProvider from '@/services/provider';
 import '@/styles/global.scss';
 
 const theme = createTheme({
+  /*
+   * Tooltip 统一抬到 1200：程序坞恢复出来的窗口在 1000、程序坞条在 1010，
+   * 弹窗 header 上的图标 tip 默认 300 会被这两层盖住；tip 本身是浮层，压在最上面才可读。
+   */
+  components: {
+    Tooltip: {
+      defaultProps: { zIndex: 1200 },
+    },
+  },
   defaultRadius: 'md',
   /*
    * 焦点环全站关掉：这个项目里按钮大多是「键盘快捷键也能触发」的图标按钮

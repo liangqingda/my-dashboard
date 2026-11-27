@@ -25,12 +25,17 @@
 - **header 里的按钮**：翻页与全屏走 `FreeIconAction`（`size="sm"`、语气恒为 `normal`、tip 与 `aria-label` 同句，
   键位提示走 `tooltipLabel`），**外壳不自维护图标按钮样式**；关闭按钮是组件库 `Modal` 内建的 `closeButton`。
 - **header 的顺序与间距**：翻页与计数 → 标题 → `headerActions` → 全屏 → `headerTail` →
-  `headerSecondary` → 竖线 → Mantine 关闭按钮。`headerActions` 里的按钮**彼此固定 8px 间距**
+  `headerSecondary` → 收起到程序坞 → 竖线 → Mantine 关闭按钮。`headerActions` 里的按钮**彼此固定 8px 间距**
   （`.actions` 的 `gap: 8px`）：这是全站弹窗 header 操作的统一口径，业务侧直接铺自己的图标按钮，
   不要再包一层窄 gap 的 `Group` 去覆盖它。标题与右侧操作组之间恒留 20px（`.titleGap`），
   标题单行不换行、放不下才省略（hover 看全名），宽度再窄也压不到按钮上。
   竖线只有一条，画在**关闭按钮之前**（操作区与关闭的分界），组与组之间不再画线；
   没有关闭按钮（`closeButton={false}`）或右侧一个图标都没渲染时也不画，免得留一条孤线。
+- **收起到程序坞**（`dock`）：只有阅读类弹窗传描述符，shell 在关闭按钮左边固定画一颗
+  `IconWindowMinimize`；`disabled` 时置灰但保留位置。`useDockMinimize` 负责「量框体 → 交给 Provider
+  编排动画」与 `⌘M` 登记；`origin: 'dock'` 的窗口再收起只回坞、不执行 `onClose`，否则页面状态会留在
+  一半。描述符契约与哪些弹窗不接见 `docs/dock.md`。
+
 - **键盘口径统一在这里**（`hooks/useModalShortcuts`），业务弹窗不各自补快捷键：
   - `Esc`：关窗（Mantine 的 `closeOnEscape`）；传了 `onRequestEscape` 就改走这一套监听——先执行它、
     这一下不关窗（窗内还有一层模式时先退模式，如图片预览的裁剪态）；

@@ -56,19 +56,48 @@
    * 遮罩按「背后是什么」分三档：普通弹窗要压住画布但留出轮廓，列表加载淡一档，
    * 图片 / 视频要靠深底才看得准——媒体那档两种主题都用深色，不跟主题反转。
    */
+  /*
+   * 全局毛玻璃浓度：设置面板把它写到 `<html>` 的 `--app-glass-strength`（40%–100%），
+   * 下面这几档玻璃底色都乘上它，弹窗遮罩 / 浮层 / 程序坞一起变浓变淡。
+   * 100% 等于配方原样；媒体那两档深色遮罩不参与（画面要靠深底才看得准）。
+   */
+  --app-glass-strength: 100%;
   --app-glass-blur: 24px;
   --app-glass-blur-soft: 18px;
   --app-glass-blur-panel: 16px;
   --app-glass-saturate: 180%;
-  --app-glass-overlay: rgb(233 237 235 / 42%);
-  --app-glass-overlay-soft: rgb(240 243 241 / 28%);
+  --app-glass-overlay: color-mix(
+    in srgb,
+    rgb(233 237 235 / 42%) var(--app-glass-strength),
+    transparent
+  );
+  --app-glass-overlay-soft: color-mix(
+    in srgb,
+    rgb(240 243 241 / 28%) var(--app-glass-strength),
+    transparent
+  );
   --app-glass-overlay-media: rgb(12 16 15 / 62%);
-  --app-glass-panel: color-mix(in srgb, var(--app-surface) 62%, transparent);
+  --app-glass-panel: color-mix(
+    in srgb,
+    color-mix(in srgb, var(--app-surface) 62%, transparent)
+      var(--app-glass-strength),
+    transparent
+  );
   --app-glass-float: rgb(255 255 255 / 7%);
   --app-glass-edge: rgb(255 255 255 / 14%);
   /* 上下收边的 chrome 渐变（浮动 header / 播放器控制栏共用）：跟着 chrome 档走，不另挑颜色 */
-  --app-glass-fade-strong: color-mix(in srgb, var(--app-surface-subtle) 72%, transparent);
-  --app-glass-fade-weak: color-mix(in srgb, var(--app-surface-subtle) 28%, transparent);
+  --app-glass-fade-strong: color-mix(
+    in srgb,
+    color-mix(in srgb, var(--app-surface-subtle) 72%, transparent)
+      var(--app-glass-strength),
+    transparent
+  );
+  --app-glass-fade-weak: color-mix(
+    in srgb,
+    color-mix(in srgb, var(--app-surface-subtle) 28%, transparent)
+      var(--app-glass-strength),
+    transparent
+  );
   /*
    * 媒体浮层（图片 / 视频预览的浮动 header 与播放器控制栏）压在画面上：两种主题都固定浅字，
    * 不跟主题反转。浅色下玻璃底是浅灰，主题深色图标压上去对比度不足；这一组浅字与一档
@@ -173,8 +202,16 @@ html[data-mantine-color-scheme='dark'] {
    * `panel` 与两档渐变的底都是 `--app-surface*` 派生出来的，跟着暗色自动换，不在这里重写。
    */
   --app-glass-saturate: 150%;
-  --app-glass-overlay: rgb(9 13 12 / 56%);
-  --app-glass-overlay-soft: rgb(9 13 12 / 40%);
+  --app-glass-overlay: color-mix(
+    in srgb,
+    rgb(9 13 12 / 56%) var(--app-glass-strength),
+    transparent
+  );
+  --app-glass-overlay-soft: color-mix(
+    in srgb,
+    rgb(9 13 12 / 40%) var(--app-glass-strength),
+    transparent
+  );
   --app-glass-overlay-media: rgb(3 5 5 / 68%);
   --app-glass-float: rgb(255 255 255 / 9%);
   --app-glass-edge: rgb(255 255 255 / 10%);

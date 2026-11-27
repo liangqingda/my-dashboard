@@ -44,7 +44,7 @@ export type VideoPreviewModalProps = {
   /** 关闭 */
   onClose: () => void;
   /** 截图当前视频帧：入参是 PNG data URL 与目标目录（空串表示默认桌面） */
-  onCapture: (
+  onCapture?: (
     dataUrl: string,
     captureDir: string,
   ) => Promise<VideoPreviewCaptureReceipt>;
@@ -80,4 +80,9 @@ export type VideoPreviewModalProps = {
    * 拿不到手势时静默停在这个尺寸，不弹失败提示。
    */
   defaultFullscreen?: boolean;
+  /**
+   * 这一窗是谁：页面打开的（默认）收起时要关掉页面状态；
+   * 程序坞自己恢复出来的窗口传 `dock`，再收起只是回到图标。
+   */
+  dockOrigin?: 'page' | 'dock';
 };

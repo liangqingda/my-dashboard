@@ -2,6 +2,47 @@
   min-height: 100vh;
 }
 
+/*
+ * 程序坞让位：顶栏 / 侧栏 / 正文各自把 `--dock-*` 吃进去。
+ * 双类名是为了压过组件库的单类规则（同特异性时只靠加载顺序不可靠）。
+ * 程序坞停左 / 右时顶栏与侧栏一起缩到它外侧；停上 / 下时顶栏与正文整块让开。
+ * 变量由 `BasicLayout` 从程序坞的停靠边与当前厚度写进 AppShell 根节点。
+ */
+.header.header {
+  top: var(--dock-top, 0px);
+  inset-inline-start: var(--dock-left, 0px);
+  inset-inline-end: var(--dock-right, 0px);
+}
+
+.navbar.navbar {
+  top: calc(var(--app-shell-header-offset, 0rem) + var(--dock-top, 0px));
+  height: calc(
+    100dvh - var(--app-shell-header-offset, 0rem) - var(--dock-top, 0px) -
+      var(--dock-bottom, 0px)
+  );
+  inset-inline-start: var(--dock-left, 0px);
+}
+
+.main.main {
+  min-height: calc(100dvh - var(--dock-top, 0px) - var(--dock-bottom, 0px));
+  padding-top: calc(
+    var(--app-shell-header-offset, 0rem) + var(--app-shell-padding) +
+      var(--dock-top, 0px)
+  );
+  padding-bottom: calc(
+    var(--app-shell-footer-offset, 0rem) + var(--app-shell-padding) +
+      var(--dock-bottom, 0px)
+  );
+  padding-inline-start: calc(
+    var(--app-shell-navbar-offset, 0rem) + var(--app-shell-padding) +
+      var(--dock-left, 0px)
+  );
+  padding-inline-end: calc(
+    var(--app-shell-aside-offset, 0rem) + var(--app-shell-padding) +
+      var(--dock-right, 0px)
+  );
+}
+
 .header {
   border-bottom: 1px solid var(--app-line);
   /* 顶栏与侧栏共用同一个底色，避免出现一条更亮的白条 */

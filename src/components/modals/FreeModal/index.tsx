@@ -16,13 +16,16 @@ import {
   IconChevronRight,
   IconMaximize,
   IconMinimize,
+  IconWindowMinimize,
 } from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
 import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
+import { DOCK_WINDOW_Z_INDEX } from '@/dock/constants';
 import { cx } from '@/utils/cx';
 
 import { useAutoHideHeader } from './hooks/useAutoHideHeader';
+import { useDockMinimize } from './hooks/useDockMinimize';
 import { useModalShortcuts } from './hooks/useModalShortcuts';
 import type { FreeModalProps } from './types';
 
@@ -61,6 +64,7 @@ const FreeModal = ({
   contentClassName,
   contentStyle,
   copy,
+  dock,
   extraKeys,
   fullscreen,
   headerActions,
@@ -92,6 +96,21 @@ const FreeModal = ({
    */
   const fullscreenToggleVisible = fullscreen?.showToggle !== false;
   const onToggleFullscreen = fullscreen?.onToggle;
+
+  /** 收起到程序坞：按钮位置固定在关闭按钮左边，动作与 `⌘M` 登记共用一份 */
+  const { canMinimize, minimize: minimizeToDock } = useDockMinimize({
+    dock,
+    onClose,
+    opened,
+  });
+  /** 程序坞恢复出来的窗口默认抬到「压过所有页面弹窗」那一档 */
+  const effectiveZIndex =
+    zIndex ?? (dock?.origin === 'dock' ? DOCK_WINDOW_Z_INDEX : undefined);
+  /** 给动画工具找框体用：程序坞窗口靠这个属性从根节点里量内容框 */
+  const dockSurfaceProps =
+    dock === undefined
+      ? {}
+      : ({ 'data-dock-surface': dock.id } as Record<string, string>);
 
   /** Esc 被业务接管（退出窗内模式）时不再交给 Mantine 关窗，键的处理挪到快捷键那一套里 */
   const escapeOverridden = Boolean(onRequestEscape);
@@ -200,6 +219,7 @@ const FreeModal = ({
       }
       closeOnClickOutside={false}
       closeOnEscape={closeOnEscape && !escapeOverridden}
+      {...dockSurfaceProps}
       fullScreen={fullscreen?.active ?? false}
       onClose={onClose}
       opened={opened}
@@ -274,6 +294,21 @@ const FreeModal = ({
           {headerTail}
           {headerSecondary}
           {/*
+            最小化：紧挨关闭按钮、在竖线之前，位置与「刷新 / 复制」那类操作分开，
+            不让它跟业务操作挤在一起。编辑中 / 上层确认开着时置灰但保留位置。
+          */}
+          {canMinimize ? (
+            <FreeIconAction
+              disabled={dock?.disabled === true}
+              label="收起到程序坞"
+              onClick={minimizeToDock}
+              tipDark={tipDark}
+              tooltipLabel="收起到程序坞（⌘M）"
+            >
+              <IconWindowMinimize size={ICON_SIZE} stroke={ICON_STROKE} />
+            </FreeIconAction>
+          ) : null}
+          {/*
             竖线只画在关闭按钮之前：它是「操作区 / 关闭」的分界，不和组与组的分隔混在一起。
             没有关闭按钮（编辑态关不掉）、或右侧一个图标都没渲染时都不画，免得留一条孤线。
           */}
@@ -281,15 +316,20 @@ const FreeModal = ({
           (headerActions ||
             headerTail ||
             (fullscreen && fullscreenToggleVisible) ||
-            headerSecondary) ? (
+            headerSecondary ||
+            canMinimize) ? (
             <span aria-hidden="true" className={styles.divider} />
           ) : null}
         </div>
       }
-      transitionProps={{ duration: 140, transition: 'fade' }}
+      transitionProps={
+        dock?.origin === 'dock'
+          ? { duration: 0 }
+          : { duration: 140, transition: 'fade' }
+      }
       trapFocus={trapFocus}
       withCloseButton={closeButton}
-      zIndex={zIndex}
+      zIndex={effectiveZIndex}
     >
       {/*
         初始焦点落在隐藏节点上（`data-autofocus` + `tabindex=-1`，全局样式不给它画焦点环）：

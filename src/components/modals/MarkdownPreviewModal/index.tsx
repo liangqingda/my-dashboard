@@ -19,6 +19,7 @@ import { IconTrash } from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
 import FreeModal from '@/components/modals/FreeModal';
+import type { FreeModalDock } from '@/components/modals/FreeModal/types';
 import { useModalFullscreen } from '@/components/modals/FreeModal/hooks/useModalFullscreen';
 
 import type { MarkdownPreviewModalProps, PreviewPanel } from './types';
@@ -74,6 +75,7 @@ const MarkdownPreviewModal = ({
   Editor,
   remove,
   storageScope,
+  dockOrigin = 'page',
 }: MarkdownPreviewModalProps) => {
   /**
    * header 上的就近弹层：同一时刻只开一块（筛选用 `filter`、字号用 `font`、
@@ -168,6 +170,26 @@ const MarkdownPreviewModal = ({
   /** 编辑态（含草稿预览）收掉阅读类操作与全屏入口（铺满外观保留，见 `fullscreen.showToggle`） */
   const documentActionsVisible = !editing.editing;
 
+  /**
+   * 程序坞描述：正文与标题都收进快照，恢复时不依赖页面数据；
+   * 编辑中 / 删除确认开着 / 正文还没取到时不让收（按钮置灰或不画）。
+   */
+  const dock: FreeModalDock | undefined = loading
+    ? undefined
+    : {
+        disabled: editing.editing || removal.confirming,
+        id: `markdown-preview:${storageScope}:${relativePath ?? title}`,
+        kind: 'markdown-preview',
+        origin: dockOrigin,
+        snapshot: {
+          markdown,
+          storageScope,
+          title,
+          ...(relativePath === undefined ? {} : { relativePath }),
+        },
+        title,
+      };
+
   return (
     <>
       <FreeModal
@@ -180,6 +202,7 @@ const MarkdownPreviewModal = ({
             ? { message: '相对路径已复制', text: relativePath }
             : undefined
         }
+        dock={dock}
         fullscreen={{
           active: fullscreen,
           onToggle: toggleFullscreen,

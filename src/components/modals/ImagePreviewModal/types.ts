@@ -77,4 +77,9 @@ export type ImagePreviewModalProps = {
    * 弹窗只把它转给左上角的计数浮标；打开与关窗时归零。
    */
   switchTick: number;
+  /**
+   * 这一窗是谁：页面打开的（默认）收起时要关掉页面状态；
+   * 程序坞自己恢复出来的窗口传 `dock`，再收起只是回到图标。
+   */
+  dockOrigin?: 'page' | 'dock';
 };
