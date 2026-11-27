@@ -4,11 +4,12 @@ import { useMemo } from 'react';
 import { cx } from '@/utils/cx';
 
 import { useBlankDrop } from '../hooks/useBlankDrop';
+import { useGridColumns } from '../hooks/useGridColumns';
 import { useGridEntryClick } from '../hooks/useGridEntryClick';
 import { useGroupBodyAnimation } from '../hooks/useGroupBodyAnimation';
 import AppTile from '../AppTile';
 import EntryGroupHeader from '../EntryGroupHeader';
-import { ENTRY_GROUP_LABELS } from '../constants';
+import { ENTRY_GROUP_LABELS, TILE_GRID_GAP } from '../constants';
 import type { EntryGroupKey, FileEntry, FolderEntry } from '../types';
 import FileTile from '../FileTile';
 import FolderTile from '../FolderTile';
@@ -146,6 +147,12 @@ const DirectoryGrid = ({
     onTogglePending,
   );
 
+  /**
+   * 列宽：按容器宽度算出这一行放几列，再用 `1fr` 均分——整行铺满，右侧不留空带。
+   * 量不到宽度（首帧）或应用目录定宽列时不套，回落 `.grid` 的按瓦片宽度折列。
+   */
+  const { columns, ref: gridRef } = useGridColumns(tileWidth);
+
   const renderFolders = () =>
     folders.map((folder) => (
       <FolderTile
@@ -244,7 +251,7 @@ const DirectoryGrid = ({
           style={groupBodyAnimation.bodyStyle(key)}
         >
           <div className={styles.bodyInner}>
-            <div className={cx(styles.grid, fixedColumns && styles.gridFixed)}>
+            <div className={cx(styles.grid, fillClass, fixedColumns && styles.gridFixed)}>
               {tiles}
             </div>
           </div>
@@ -269,21 +276,32 @@ const DirectoryGrid = ({
 
   /**
    * 瓦片宽度交给 CSS 变量：分组模式下根容器不是网格，内层每段网格靠继承拿到同一个值。
+   * 列间距也走变量（值来自 `TILE_GRID_GAP`），与算列数用的是同一个数。
+   * 量到宽度后给一份完整模板，列数交给 `1fr` 均分；没量到就不给，样式回落定宽折列。
    */
   const gridStyle = {
+    '--tile-gap': `${TILE_GRID_GAP}px`,
     '--tile-width': `${tileWidth}px`,
+    ...(columns === null
+      ? {}
+      : { '--tile-grid-template': `repeat(${columns}, minmax(0, 1fr))` }),
   } as CSSProperties;
+
+  /** 均分铺满的类：应用目录（定宽列）与首帧都不加 */
+  const fillClass =
+    fixedColumns || columns === null ? undefined : styles.gridFill;
 
   return (
     <div
       className={cx(
         grouped
           ? styles.grouped
-          : cx(styles.grid, fixedColumns && styles.gridFixed),
+          : cx(styles.grid, fillClass, fixedColumns && styles.gridFixed),
         blank.blankOver && styles.blankActive,
       )}
       onClickCapture={handleClickCapture}
       {...blank.handlers}
+      ref={gridRef}
       style={gridStyle}
     >
       {emptyText === null ? null : (

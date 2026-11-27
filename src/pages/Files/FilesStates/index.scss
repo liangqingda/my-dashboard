@@ -1,6 +1,6 @@
 /* 列表区的骨架网格与空态文案 */
 
-/* 骨架网格：与真实网格同一列宽口径（`--tile-width` 由页面按设置传进来） */
+/* 骨架网格：按设定瓦片宽度折列，只给形状（真实网格量到容器宽后会均分铺满） */
 .gridSkeleton {
   display: grid;
   grid-template-columns: repeat(auto-fill, var(--tile-width, 168px));

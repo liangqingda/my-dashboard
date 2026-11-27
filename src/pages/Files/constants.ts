@@ -105,6 +105,12 @@ export const TILE_WIDTH_MAX = 360;
 export const TILE_WIDTH_STEP = 8;
 
 /**
+ * 网格列间距（px）：样式里的 `gap` 与「按容器宽度算列数」共用这一个值，
+ * 两边必须一致，否则最后一列会算出多余的空白或挤不下。
+ */
+export const TILE_GRID_GAP = 12;
+
+/**
  * 网格图源基准边长（px）：分类图标、应用图标固定按这个基准换算；缩略图与文件夹图源自适应瓦片宽度。
  */
 export const DEFAULT_TILE_MEDIA_SIZE = 96;

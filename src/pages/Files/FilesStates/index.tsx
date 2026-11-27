@@ -20,7 +20,7 @@ export type FilesStatesProps = {
   tableSkeleton: boolean;
   /** 还没选过目录：引导先填路径 */
   prompt: boolean;
-  /** 网格瓦片宽度（px）：骨架列宽与真实网格同一档 */
+  /** 网格瓦片宽度（px）：骨架按它折列，真实网格量到容器宽后会均分铺满 */
   tileWidth: number;
   /** 失败后重试 */
   onRetry: () => void;

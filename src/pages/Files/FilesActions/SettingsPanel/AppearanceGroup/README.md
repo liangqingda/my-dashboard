@@ -6,6 +6,7 @@
 
 - 只读设置值、只回调，持久化在 `useFilesSettings`；字段外壳走 `FreePanelGroup` / `FreePanelField`。
 - 「瓦片宽度」的可调区间与步长取 `constants.ts` 的 `TILE_WIDTH_*`（120–360，步长 8），默认值与持久化编解码也以那里为准；组件不另存一份范围。
+- 这一档只是列宽基准：实际列宽由内容区宽度按列数均分铺满（口径见 `DirectoryGrid/README.md`），列数不变时相邻档位看不出外框变化。
 - 表格视图不渲染「瓦片宽度」：那里没有瓦片，改了看不到效果。
 
 ## 坑
