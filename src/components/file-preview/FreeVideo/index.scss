@@ -25,7 +25,7 @@
   pointer-events: none;
 }
 
-/* 舞台：视频铺满，浮层以它为定位祖先 */
+/* 舞台：视频铺满，浮层以它为定位祖先；裁掉空带底放大后多出来的那一圈虚化边缘 */
 .stage {
   position: relative;
   display: flex;
@@ -33,6 +33,7 @@
   align-items: center;
   justify-content: center;
   min-height: 0;
+  overflow: hidden;
 }
 
 /*
@@ -59,9 +60,29 @@
   pointer-events: none;
 }
 
+/*
+ * 全屏时的空带底：画面用 `contain` 完整显示（不裁、不拉伸），屏幕比例与片源不一致时会留出
+ * 上下（或左右）一条空带；这里把同一帧的缩略图放大、虚化、压暗铺满整屏当底，
+ * 空带里就是画面的延续色，不再是两片死黑。只是背景，接不到指针。
+ */
+.stageBackdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  filter: blur(40px) saturate(140%) brightness(0.55);
+  transform: scale(1.06);
+  pointer-events: none;
+}
+
 /* 视频按比例完整显示、不裁画面；整块可点，光标提示能切换播放。
-   窗口里黑边由弹窗的宽高比框消掉（见 `VideoPreviewModal/index.scss`），这里只管舞台 */
+   窗口里黑边由弹窗的宽高比框消掉（见 `VideoPreviewModal/index.scss`），这里只管舞台。
+   `z-index` 只为压在空带底之上，其余浮层在它上面 */
 .video {
+  position: relative;
+  z-index: 1;
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -69,19 +90,11 @@
   cursor: pointer;
 }
 
-/*
- * 全屏两档（整屏全屏 / 网页全屏）：屏幕比例由设备定，16:9 的片子放在 16:10 的屏幕上，
- * `contain` 会上下各留一条黑边。铺满屏幕改用 `cover`——等比放大到盖住整屏，
- * 多出来的部分从画面两侧裁掉（画面比例不变、不受形），上下不再有空白带。
- */
-.videoExpanded {
-  object-fit: cover;
-}
-
 /* 加载 / 报错 / 缓冲的居中浮层：黑底上给浅色文字 */
 .overlay {
   position: absolute;
   inset: 0;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;

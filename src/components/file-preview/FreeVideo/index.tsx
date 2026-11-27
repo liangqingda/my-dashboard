@@ -23,7 +23,7 @@
  * 卸载时两路流都主动断掉——连翻几条时既不会成倍占盘，也不会留下在途 Range 请求排队。
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { IconAlertTriangleFilled } from '@tabler/icons-react';
 import { Loader } from '@mantine/core';
 import { useMergedRef } from '@mantine/hooks';
@@ -40,9 +40,9 @@ import {
 import { useControlsVisibility } from './hooks/use-controls-visibility';
 import { useFrameProbe } from './hooks/use-frame-probe';
 import { useHoverFrameGrabber } from './hooks/use-hover-frame-grabber';
+import { usePreviewSize } from './hooks/use-preview-size';
 import { useVideoElement } from './hooks/use-video-element';
 import { useVideoFrames } from './hooks/use-video-frames';
-import { seekPreviewSize, type SeekPreviewSize } from './utils/preview-size';
 import VideoControls from './VideoControls';
 import VideoVolumeControl from './VideoVolumeControl';
 import type { FreeVideoProps } from './types';
@@ -110,15 +110,12 @@ const FreeVideo = ({
     onVolume: setVolume,
   });
 
-  /** 预览框尺寸：跟着舞台与视频比例变化 */
-  const [previewSize, setPreviewSize] = useState<SeekPreviewSize>(() =>
-    seekPreviewSize({
-      aspect: VIDEO_FALLBACK_ASPECT,
-      scale: previewScale,
-      stageHeight: 0,
-      stageWidth: 0,
-    }),
-  );
+  /** 预览框尺寸：跟着舞台与视频比例变化（量矩形与重算在 hook 里） */
+  const previewSize = usePreviewSize({
+    aspect: videoAspect,
+    scale: previewScale,
+    stageRef,
+  });
   /**
    * 控制栏显隐：与浮层 header 同一节奏，指针静止一会儿收起（暂停 / 播完也一样）；
    * 设置 / 选集面板开着时按住不收起——面板是 portal，指针移进去就离开了播放器。
@@ -162,39 +159,6 @@ const FreeVideo = ({
     grabFrame,
     onReady: onHoverFrameGrabberReady,
   });
-
-  /** 舞台尺寸或画面比例变化时重算预览框：窗口缩放、换屏、竖屏视频都靠这次计算 */
-  useEffect(() => {
-    const stage = stageRef.current;
-
-    if (stage === null) {
-      return;
-    }
-
-    const measure = () => {
-      const rect = stage.getBoundingClientRect();
-      const next = seekPreviewSize({
-        aspect: videoAspect,
-        scale: previewScale,
-        stageHeight: rect.height,
-        stageWidth: rect.width,
-      });
-
-      setPreviewSize((previous) =>
-        previous.height === next.height && previous.width === next.width
-          ? previous
-          : next,
-      );
-    };
-
-    measure();
-
-    const observer = new ResizeObserver(measure);
-
-    observer.observe(stage);
-
-    return () => observer.disconnect();
-  }, [previewScale, videoAspect]);
 
   /** 播放 / 暂停：用户手势里调用，失败（编码不支持）由 error 事件接管 */
   const togglePlay = () => videoElement.togglePlay();
@@ -254,8 +218,16 @@ const FreeVideo = ({
       onPointerMove={reveal}
     >
       <div className={styles.stage} ref={stageRef}>
+        {/* 全屏时的空带底：画面完整显示留出的上下黑边，用这一帧的模糊放大版填上，不再是死黑 */}
+        {expanded && poster !== undefined ? (
+          <span
+            aria-hidden="true"
+            className={styles.stageBackdrop}
+            style={{ backgroundImage: `url(${poster})` }}
+          />
+        ) : null}
         <video
-          className={cx(styles.video, expanded && styles.videoExpanded)}
+          className={styles.video}
           disablePictureInPicture
           onCanPlay={videoElement.handleCanPlay}
           onClick={handleVideoClick}
