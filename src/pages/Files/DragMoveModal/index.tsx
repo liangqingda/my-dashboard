@@ -284,7 +284,7 @@ const DragMoveModal = ({
 
             {!loading && error === null && folders.length === 0 && landedInView.length === 0 ? (
               <Text c="dimmed" className={styles.notice} size="sm">
-                这个目录里没有子文件夹：点面包屑换一层，或按 Esc 关窗。
+                这个目录里没有子文件夹：把条目拖到这块空白处就移进当前文件夹；点面包屑换一层，或按 Esc 关窗。
               </Text>
             ) : null}
 
