@@ -148,6 +148,23 @@ export const useFilesPageState = () => {
     [pending.entries],
   );
 
+  /** 预览中的这张图是否已在待拖拽区：图片预览 header 那颗按钮据此显示「已在待拖拽区」 */
+  const imageStaged =
+    imagePreview.activeItem !== null && pending.has(imagePreview.activeItem.id);
+
+  /**
+   * 图片预览 header 的「加入待拖拽区」：弹窗只报「要加当前这一张」，
+   * 路径从预览的当前条目取，条目对象仍交给 `handleTrayDrop` 按路径认（认不出就忽略）。
+   */
+  const { handleTrayDrop } = drag;
+  const stageImage = useCallback(() => {
+    const id = imagePreview.activeItem?.id;
+
+    if (id !== undefined) {
+      handleTrayDrop([id]);
+    }
+  }, [handleTrayDrop, imagePreview.activeItem]);
+
   /** 切换某块弹层：再点一次同一块则收起 */
   const togglePanel = useCallback(
     (panel: FilesActionsPanel) =>
@@ -217,6 +234,7 @@ export const useFilesPageState = () => {
     handlePickDir,
     handleSelectAll,
     imagePreview,
+    imageStaged,
     isFavorite,
     isGridView,
     keyword,
@@ -247,6 +265,7 @@ export const useFilesPageState = () => {
     setKeyword,
     setOpenPanel,
     setView,
+    stageImage,
     toggleFavorite,
     toggleGroup,
     togglePinnedFavorite,

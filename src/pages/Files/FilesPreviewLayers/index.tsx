@@ -41,6 +41,8 @@ export type FilesPreviewLayersProps = {
   onOpenExternal: (id: string) => void;
   /** 当前目录的图片条目 */
   imageItems: ImagePreviewItem[];
+  /** 预览中的这张图是否已在待拖拽区（header 那颗按钮的「已加入」态） */
+  imageStaged: boolean;
   /** 两扇预览是否打开即全屏（来自文件页设置） */
   defaultFullscreen: { image: boolean; video: boolean };
   /** 正在看的图片；null 表示图片弹窗关着 */
@@ -55,6 +57,8 @@ export type FilesPreviewLayersProps = {
   onRequestDelete: (path: string) => void;
   /** 请求把当前预览的图片设为桌面墙纸（只打开二次确认层，真正设置归确认层） */
   onRequestWallpaper: () => void;
+  /** 把预览中的这张图收进待拖拽区（批量拖走用） */
+  onStageImage: () => void;
   /** 删除确认开着：两扇弹窗都收掉快捷键与焦点陷阱 */
   blocked: boolean;
 };
@@ -64,6 +68,7 @@ const FilesPreviewLayers = ({
   defaultFullscreen,
   imageActiveId,
   imageItems,
+  imageStaged,
   onCaptureVideo,
   onCloseImage,
   onCloseVideo,
@@ -74,6 +79,7 @@ const FilesPreviewLayers = ({
   onRequestWallpaper,
   onSelectImage,
   onSelectVideo,
+  onStageImage,
   videoActiveId,
   videoItems,
 }: FilesPreviewLayersProps) => (
@@ -98,11 +104,13 @@ const FilesPreviewLayers = ({
 
     <ImagePreviewModal
       activeId={imageActiveId}
+      batched={imageStaged}
       blocked={blocked}
       defaultFullscreen={defaultFullscreen.image}
       items={imageItems}
       onClose={onCloseImage}
       onCrop={onCropImage}
+      onRequestBatch={onStageImage}
       onRequestDelete={
         imageActiveId !== null ? () => onRequestDelete(imageActiveId) : null
       }

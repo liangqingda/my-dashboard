@@ -6,7 +6,7 @@ header 与 hover 显隐），但去掉播放器那一套：没有播放 / 快进
 
 ## 它锁了什么
 
-- 结构：header（标题 + 张数 / 翻篇 + 图片列表 + 设为桌面墙纸 + 裁剪 + 设置 + 全屏 + 删除）浮在整图之上，
+- 结构：header（标题 + 张数 / 翻篇 + 图片列表 + 设为桌面墙纸 + 加入待拖拽区 + 裁剪 + 设置 + 全屏 + 删除）浮在整图之上，
   正文只有一张黑底舞台；点遮罩关窗（窗口刚拿回焦点的 400ms 内除外），关闭按钮与 `Esc` 同样有效；
 - `defaultFullscreen` 为真时打开就尝试进整屏（文件页设置里的「图片预览打开即全屏」），
   浏览器不给手势就静默停在这个尺寸；
@@ -97,8 +97,11 @@ header 与 hover 显隐），但去掉播放器那一套：没有播放 / 快进
 
 见 `types.ts`：`opened` / `items` / `activeId` / `blocked` / `storageScope` / `onClose` / `onSelect` /
 `onRequestDelete`（不传则没有删除按钮与删除键）/ `onRequestWallpaper`（不传则 header 没有那颗按钮）/
-`onCrop`（不传则没有裁剪与设置按钮）。
+`onRequestBatch` + `batched`（不传则没有「加入待拖拽区」那颗按钮）/ `onCrop`（不传则没有裁剪与设置按钮）。
 
+- `onRequestBatch` 只报「把当前这张加进调用方的待拖拽区」：攒起来的那批归调用方（文件页是
+  `useDragPending`），弹窗不存列表，翻篇 / 关窗都不动它；`batched` 为真时那颗按钮禁用、
+  文案换成「已在待拖拽区」，看得出已经加过了；
 - `storageScope` 必填：保存口径偏好记在 `<scope>:image-preview` 的 `cropSaveMode`，同一份弹窗挂到
   第二页时由那一页传自己的标识；
 - `onCrop` 收 `(request: ImageCropRequest) => Promise<ImageCropResult>`：弹窗只产 data URL 与
@@ -114,9 +117,10 @@ header 与 hover 显隐），但去掉播放器那一套：没有播放 / 快进
   `hooks/use-image-zoom-pan/`，私有件，规格就写在它那份 README 里。
 - `ImageListMenu/`：header 的「图片列表」按钮 + 点击弹层，开合状态由弹窗持有（弹层开着时
   header 要恒可见），条目排布走公共的 [`PreviewItemList`](../PreviewItemList/README.md)。
-- `ImageHeaderActions/`：header 右侧那组图标（列表 / 墙纸 / 裁剪 / 设置），同时持有两层弹层的开合
+- `ImageHeaderActions/`：header 右侧那组图标（列表 / 墙纸 / 加入待拖拽区 / 裁剪 / 设置），同时持有两层弹层的开合
   与互斥、裁剪入口、裁剪态的「取消 / 保存」。抽出来是为了让弹窗本体只编排舞台与键位，不因按钮与
-  弹层开关撑破行数上限。墙纸排在裁剪左边；格式不支持的图，裁剪按钮禁用、tip 说明原因。
+  弹层开关撑破行数上限。墙纸排在裁剪左边，加入待拖拽区紧挨墙纸右边、已在里面时禁用并改成
+  「已在待拖拽区」；格式不支持的图，裁剪按钮禁用、tip 说明原因。
 - `ImageCropOverlay/`：裁剪层（遮罩 + 选框 + 8 个手柄），Pointer Events + 指针捕获；
   几何纯函数（移动 / 改尺寸 / 最小尺寸）在同目录 `utils.ts`，按 `offsetLeft / offsetTop /
   offsetWidth / offsetHeight` 量图，避免 `transform` 把 `getBoundingClientRect` 算歪。

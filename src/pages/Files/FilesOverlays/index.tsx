@@ -51,6 +51,7 @@ const FilesOverlays = ({ modals, preview }: FilesOverlaysProps) => {
         defaultFullscreen={previewRest.defaultFullscreen}
         imageActiveId={image.activeId}
         imageItems={image.items}
+        imageStaged={previewRest.imageStaged}
         onCaptureVideo={video.captureFrame}
         onCloseImage={image.closeImage}
         onCloseVideo={video.closeVideo}
@@ -67,6 +68,7 @@ const FilesOverlays = ({ modals, preview }: FilesOverlaysProps) => {
         }}
         onSelectImage={image.selectImage}
         onSelectVideo={video.selectVideo}
+        onStageImage={previewRest.onStageImage}
         videoActiveId={video.activeId}
         videoItems={video.items}
       />

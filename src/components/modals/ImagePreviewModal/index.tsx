@@ -52,11 +52,13 @@ const ICON_STROKE = 1.8;
 
 const ImagePreviewModal = ({
   activeId,
+  batched = false,
   blocked = false,
   defaultFullscreen = false,
   items,
   onClose,
   onCrop,
+  onRequestBatch,
   onRequestDelete,
   onRequestWallpaper,
   onSelect,
@@ -175,12 +177,14 @@ const ImagePreviewModal = ({
       headerActions={
         <ImageHeaderActions
           activeId={activeItem.id}
+          batched={batched}
           canCrop={onCrop !== undefined}
           crop={crop}
           cropMode={cropMode}
           items={items}
           onCropModeChange={setCropMode}
           onOverlayChange={setActionsOpen}
+          onRequestBatch={onRequestBatch ?? undefined}
           onRequestWallpaper={onRequestWallpaper ?? undefined}
           onSaveCrop={saveCrop}
           onSelect={selectItem}

@@ -1,6 +1,7 @@
 /**
  * 批量状态下的起拖与收件：待拖拽区非空时，列表里的拖拽先不开移动弹窗，
  * 而是「把这一批 / 刚拖的那一条往侧栏拖」，松手落在待拖拽区才收进来。
+ * 图片预览 header 的「加入待拖拽区」也走这里的 `handleTrayDrop`——弹窗只给得到路径。
  *
  * 为什么单独成 hook：这段判定同时要用待拖拽区、条目动作和当前目录的条目表，
  * 留在页面里只是把 JSX 挤长；语义本身只有这两件事，放这里更清楚。
@@ -17,7 +18,7 @@ import type { useEntryActions } from './useEntryActions';
 export type PendingDragHandlers = {
   /** 从列表起拖一条：批量时先往待拖拽区拖，不直接开弹窗 */
   handleDragStartEntry: (entry: FolderEntry | FileEntry) => void;
-  /** 从列表拖到待拖拽区松手：按路径把当前目录里的条目收进来 */
+  /** 从列表拖到待拖拽区松手（预览 header 的「加入待拖拽区」也走它）：按路径把当前目录里的条目收进来 */
   handleTrayDrop: (paths: string[]) => void;
 };
 

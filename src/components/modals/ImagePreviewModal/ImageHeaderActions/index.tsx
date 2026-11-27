@@ -1,5 +1,5 @@
 /**
- * 图片预览 header 的操作组：图片列表、设为桌面墙纸、裁剪、裁剪设置；
+ * 图片预览 header 的操作组：图片列表、设为桌面墙纸、加入待拖拽区、裁剪、裁剪设置；
  * 进入裁剪后只剩取消 / 保存。
  *
  * 两层弹层的开合归这里持有（列表与设置互斥，开一层就收另一层），再向上报一个
@@ -8,7 +8,7 @@
  */
 
 import { useState } from 'react';
-import { IconCheck, IconCrop, IconWallpaper, IconX } from '@tabler/icons-react';
+import { IconCheck, IconCrop, IconDragDrop, IconWallpaper, IconX } from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
 
@@ -44,6 +44,10 @@ export type ImageHeaderActionsProps = {
   onSaveCrop: () => void;
   /** 设为桌面墙纸：排在裁剪左边，不传则没有这颗按钮 */
   onRequestWallpaper?: () => void;
+  /** 加入待拖拽区：紧挨墙纸右边，不传则没有这颗按钮 */
+  onRequestBatch?: () => void;
+  /** 当前这张已经在待拖拽区：按钮禁用并改成「已在待拖拽区」 */
+  batched?: boolean;
   /** 任一弹层开合：弹窗据此让 header 恒可见 */
   onOverlayChange: (open: boolean) => void;
   /** tip 固定深底浅字 */
@@ -52,12 +56,14 @@ export type ImageHeaderActionsProps = {
 
 export const ImageHeaderActions = ({
   activeId,
+  batched = false,
   canCrop,
   crop,
   cropMode,
   items,
   onCropModeChange,
   onOverlayChange,
+  onRequestBatch,
   onRequestWallpaper,
   onSaveCrop,
   onSelect,
@@ -136,6 +142,16 @@ export const ImageHeaderActions = ({
           tipDark={tipDark}
         >
           <IconWallpaper size={ICON_SIZE} stroke={ICON_STROKE} />
+        </FreeIconAction>
+      ) : null}
+      {onRequestBatch ? (
+        <FreeIconAction
+          disabled={batched}
+          label={batched ? '已在待拖拽区' : '加入待拖拽区（随后可整批拖走）'}
+          onClick={onRequestBatch}
+          tipDark={tipDark}
+        >
+          <IconDragDrop size={ICON_SIZE} stroke={ICON_STROKE} />
         </FreeIconAction>
       ) : null}
       {canCrop ? (
