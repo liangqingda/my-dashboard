@@ -7,8 +7,11 @@
   gap: 4px;
   padding: 6px 12px 8px;
   /* 毛玻璃底：媒体渐变收边 + 虚化后面的视频，控制栏压在画面上而不是另起一条实心；
-     两个色标与浮动 header 共用 `--app-glass-fade-media-*`，改一处两处一起变 */
-  background: linear-gradient(
+     两个色标与浮动 header 共用 `--app-glass-fade-media-*`，改一处两处一起变。
+     渐变之间不可过渡，所以「指针进到控制栏再加深」走的是下面那层可过渡的底色 + 虚化半径。
+     常态底色是 0% 的墨（等于没有），只把过渡属性备好 */
+  background-color: var(--app-glass-scrim-chrome);
+  background-image: linear-gradient(
     to top,
     var(--app-glass-fade-media-strong),
     var(--app-glass-fade-media-weak)
@@ -17,10 +20,27 @@
     saturate(var(--app-glass-saturate));
   backdrop-filter: blur(var(--app-glass-blur-panel))
     saturate(var(--app-glass-saturate));
+  transition:
+    background-color 260ms ease,
+    -webkit-backdrop-filter 260ms ease,
+    backdrop-filter 260ms ease;
   /* 玻璃层提前提升、钉住背面：Chrome 在虚化层刚显形时容易闪一帧未虚化的画面 */
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
   will-change: backdrop-filter;
+}
+
+/*
+ * 指针进到控制栏：整条玻璃加深一档——虚化半径 16 → 28，底上再压一层薄墨（亮色 24% / 暗色 14%），
+ * 背后的画面被抹掉，按钮、时间与进度条才看得清楚；两档都在 260ms 里过渡，进出都不硬切。
+ * 只加深「这一层」玻璃：视频本身、轨道这层各自的虚化不动（见下面轨道那条）。
+ */
+.controls:hover {
+  background-color: var(--app-glass-scrim-chrome-hover);
+  -webkit-backdrop-filter: blur(var(--app-glass-blur-panel-hover))
+    saturate(var(--app-glass-saturate));
+  backdrop-filter: blur(var(--app-glass-blur-panel-hover))
+    saturate(var(--app-glass-saturate));
 }
 
 /* 进度条容器：占满整行，悬停预览浮层以它为定位祖先。

@@ -81,6 +81,14 @@
   --app-glass-on-danger: rgb(255 158 150 / 92%);
   --app-glass-fade-media-strong: rgb(17 24 22 / 52%);
   --app-glass-fade-media-weak: rgb(17 24 22 / 16%);
+  /*
+   * 指针进到 chrome 上（播放器控制栏）：整条玻璃再虚化一档、底下压一层薄墨，
+   * 背后的画面细节被抹掉，浅字与图标就显出来。渐变收边保持不动（渐变之间不可过渡，
+   * 只有这层可过渡的底色跟着 `backdrop-filter` 一起走）。
+   */
+  --app-glass-blur-panel-hover: 28px;
+  --app-glass-scrim-chrome: rgb(0 0 0 / 0%);
+  --app-glass-scrim-chrome-hover: rgb(0 0 0 / 24%);
 
   /* status */
   --app-status-ok: #0e7a3d;
@@ -173,6 +181,9 @@ html[data-mantine-color-scheme='dark'] {
   /* 暗色浮层玻璃本身就是深底，渐变沿用 chrome 档即可，不用再叠一层墨色 */
   --app-glass-fade-media-strong: var(--app-glass-fade-strong);
   --app-glass-fade-media-weak: var(--app-glass-fade-weak);
+  /* 暗色那层墨不用压那么重：本来就深，再加 24% 就成了实心条 */
+  --app-glass-blur-panel-hover: 26px;
+  --app-glass-scrim-chrome-hover: rgb(0 0 0 / 14%);
 
   /* 暗色下代码仍取 chrome 档底色、ink 档字色（与浅色同一份口径，见浅色块那份说明）；
      代码靠等宽字体 + 芯片底色与标题区分，不会被读成小标题 */
