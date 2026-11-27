@@ -1,49 +1,44 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
-  DRAG_CLICK_SLOP,
   MAX_IMAGE_SCALE,
   MIN_IMAGE_SCALE,
+  WHEEL_LINE_HEIGHT,
   WHEEL_ZOOM_SPEED,
   WHEEL_ZOOM_STEP_MAX,
   WHEEL_ZOOM_STEP_MIN,
 } from './constants';
 import type {
-  StageClickEvent,
-  StagePointerEvent,
   StageView,
   UseImageZoomPanOptions,
   UseImageZoomPanResult,
 } from './types';
 import { anchorView, clamp, limitView } from './utils';
 
-/** 一次拖拽：按下那一刻的位置与位移；`moved` 一旦置真，这一次的 `click` 就不再算「点了一下」 */
-type DragSession = {
-  pointerId: number;
-  startX: number;
-  startY: number;
-  originX: number;
-  originY: number;
-  moved: boolean;
-};
-
 /** Safari 的捏合事件（非标准，TS 没有对应类型）：`scale` 是相对本次手势起点的倍率 */
-type SafariGestureEvent = Event & { scale: number; clientX: number; clientY: number };
+type SafariGestureEvent = Event & {
+  scale: number;
+  clientX: number;
+  clientY: number;
+};
 
 const INITIAL_VIEW: StageView = { scale: MIN_IMAGE_SCALE, x: 0, y: 0 };
 
 /**
- * 图片舞台的放大 / 缩小与拖拽移动。
+ * 图片舞台的放大 / 缩小与平移，两件事都走 `wheel` 这一族事件：
  *
- * 三种输入各走各的通道，最终落到同一份「倍率 + 位移」：
+ * - **捏合**：Chromium / Firefox 把触控板捏合报成带 `ctrlKey` 的 `wheel`（Ctrl + 滚轮同一条路径），
+ *   Safari 报的是非标准的 `gesturestart` / `gesturechange`；两条都得 `preventDefault`，
+ *   否则浏览器放大的是整页而不是画面；
+ * - **平移**：触控板两指滑动报成**不带** `ctrlKey` 的 `wheel`（`deltaX` / `deltaY` 两个轴都有），
+ *   鼠标滚轮同一条路径。放大后拦掉默认行为、按滚动方向挪画面；没放大就让事件照常走。
  *
- * - **捏合**：Chromium / Firefox 报带 `ctrlKey` 的 `wheel`，Safari 报 `gesturestart` /
- *   `gesturechange`，两条都接并 `preventDefault`，否则浏览器放大的是整页而不是画面；
- * - **拖拽移动**：走 Pointer Events。macOS「三指拖拽」被系统翻译成普通鼠标拖拽，浏览器拿不到
- *   原始触点数；没开那个设置时三指滑动不产生任何事件；
- * - **触屏**：同一套 Pointer Events，`touch-action` 只在放大后关掉，避免整页被当成滚动。
+ * 不做指针拖拽：macOS 的三指拖拽要先在系统辅助功能里打开，浏览器又拿不到触控板的原始触点数；
+ * 而两指滑动本来就是浏览器稳定给到的 `wheel`——同一套事件里既分得出捏合（`ctrlKey`），
+ * 也分得出滑动，不需要第二套手势通道，也不必再为「拖完那一下 click」写抑制逻辑。
  *
  * 缩放以指针位置为锚点，位移夹在「放大后多出来的区域」里（公式见同目录 `utils.ts`）。
+ *
  * 换图时由弹窗用 `key` 换实例重置倍率；裁剪前由舞台调 `reset` 回 1 倍。
  */
 export const useImageZoomPan = ({
@@ -58,14 +53,8 @@ export const useImageZoomPan = ({
   const [view, setView] = useState<StageView>(INITIAL_VIEW);
   /** 倍率与位移的镜像：事件回调里要读到「此刻」的值，不能依赖某一次渲染的闭包 */
   const viewRef = useRef<StageView>(INITIAL_VIEW);
-
-  const [dragging, setDragging] = useState(false);
-  /** 正在拖的那一手；`null` = 没在拖 */
-  const dragRef = useRef<DragSession | null>(null);
-  /** 这一手是不是拖拽：松手后浏览器补的 `click` 要吞掉，否则拖完会顺手把 header 开合一次 */
-  const suppressClickRef = useRef(false);
   /**
-   * 「能不能真缩放」的镜像：捏合监听常驻（图片还在加载时也得拦掉浏览器的整页缩放），
+   * 「能不能真改画面」的镜像：滚轮监听常驻（图片还在加载时也得拦掉浏览器的整页缩放），
    * 原生监听读不到渲染闭包，只能读它。
    */
   const enabledRef = useRef(enabled);
@@ -75,20 +64,23 @@ export const useImageZoomPan = ({
   });
 
   /** 量当下的一对尺寸并夹位移：图片用未缩放的布局尺寸，舞台用内框尺寸 */
-  const fitView = useCallback((next: StageView): StageView => {
-    const stage = stageRef.current;
-    const image = imageRef.current;
+  const fitView = useCallback(
+    (next: StageView): StageView => {
+      const stage = stageRef.current;
+      const image = imageRef.current;
 
-    if (stage === null || image === null) {
-      return next;
-    }
+      if (stage === null || image === null) {
+        return next;
+      }
 
-    return limitView(
-      next,
-      { width: image.offsetWidth, height: image.offsetHeight },
-      { width: stage.clientWidth, height: stage.clientHeight },
-    );
-  }, [imageRef]);
+      return limitView(
+        next,
+        { width: image.offsetWidth, height: image.offsetHeight },
+        { width: stage.clientWidth, height: stage.clientHeight },
+      );
+    },
+    [imageRef],
+  );
 
   /** 落到状态与镜像：同一手势里连着触发时以镜像为准 */
   const applyView = useCallback((next: StageView) => {
@@ -138,88 +130,21 @@ export const useImageZoomPan = ({
     [applyView, fitView],
   );
 
-  const onPointerDown = (event: StagePointerEvent) => {
-    suppressClickRef.current = false;
+  /** 平移：按滚动方向反着挪（往下滚动看图片下半部分，与滚一块大图的直觉一致） */
+  const panBy = useCallback(
+    (dx: number, dy: number) => {
+      const { current } = viewRef;
 
-    // 没放大就没有可移动的余地：这一下仍按「点了一下画面」（开合 header）处理
-    if (!enabled || viewRef.current.scale <= MIN_IMAGE_SCALE) {
-      return;
-    }
-
-    if (event.pointerType === 'mouse' && event.button !== 0) {
-      return;
-    }
-
-    event.currentTarget.setPointerCapture(event.pointerId);
-    dragRef.current = {
-      moved: false,
-      originX: viewRef.current.x,
-      originY: viewRef.current.y,
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      startY: event.clientY,
-    };
-  };
-
-  const onPointerMove = (event: StagePointerEvent) => {
-    const drag = dragRef.current;
-
-    if (drag === null || drag.pointerId !== event.pointerId) {
-      return;
-    }
-
-    const dx = event.clientX - drag.startX;
-    const dy = event.clientY - drag.startY;
-
-    if (!drag.moved) {
-      // 手抖一两个像素仍然算「点了一下」：过了阈值才真正进入拖拽态
-      if (Math.hypot(dx, dy) < DRAG_CLICK_SLOP) {
-        return;
-      }
-
-      drag.moved = true;
-      setDragging(true);
-    }
-
-    applyView(
-      fitView({
-        scale: viewRef.current.scale,
-        x: drag.originX + dx,
-        y: drag.originY + dy,
-      }),
-    );
-  };
-
-  const endDrag = (event: StagePointerEvent) => {
-    const drag = dragRef.current;
-
-    if (drag === null || drag.pointerId !== event.pointerId) {
-      return;
-    }
-
-    dragRef.current = null;
-    setDragging(false);
-    suppressClickRef.current = drag.moved;
-
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-  };
-
-  /** 拖拽后的 `click` 在捕获阶段就吞掉：它不再冒到外层那颗「点画面开合 header」的按钮上 */
-  const onClickCapture = (event: StageClickEvent) => {
-    if (!suppressClickRef.current) {
-      return;
-    }
-
-    suppressClickRef.current = false;
-    event.preventDefault();
-    event.stopPropagation();
-  };
+      applyView(
+        fitView({ scale: current.scale, x: current.x + dx, y: current.y + dy }),
+      );
+    },
+    [applyView, fitView],
+  );
 
   /**
    * 滚轮与 Safari 捏合只能挂原生监听：`preventDefault` 要生效，`wheel` 必须是
-   * `passive: false`（React 的 `onWheel` 挂的是被动监听，拦不住整页缩放）。
+   * `passive: false`（React 的 `onWheel` 挂的是被动监听，拦不住整页缩放 / 滚动）。
    *
    * 监听不随 `enabled` 装卸：图片还在加载时，捏合照样要把浏览器的整页缩放拦下来，
    * 只是不改倍率。
@@ -232,24 +157,40 @@ export const useImageZoomPan = ({
     }
 
     const handleWheel = (event: WheelEvent) => {
-      // 不带 ctrlKey 的两指滚动是页面滚动，不是捏合
-      if (!event.ctrlKey) {
+      /**
+       * 行模式的滚动量不能直接当像素用：Firefox 的鼠标滚轮报的是行数（一格 3 行），
+       * 不换算的话平移和缩放都几乎不动
+       */
+      const unit = event.deltaMode === 1 ? WHEEL_LINE_HEIGHT : 1;
+      const deltaX = event.deltaX * unit;
+      const deltaY = event.deltaY * unit;
+
+      // 带 ctrlKey 的是捏合（Safari / Ctrl + 滚轮）：改倍率
+      if (event.ctrlKey) {
+        event.preventDefault();
+
+        if (!enabledRef.current) {
+          return;
+        }
+
+        const step = clamp(
+          Math.exp(-deltaY * WHEEL_ZOOM_SPEED),
+          WHEEL_ZOOM_STEP_MIN,
+          WHEEL_ZOOM_STEP_MAX,
+        );
+
+        zoomTo(viewRef.current.scale * step, event.clientX, event.clientY);
+
+        return;
+      }
+
+      // 其余是两指滑动 / 滚轮：没放大就没有可移的余地，事件照常走
+      if (!enabledRef.current || viewRef.current.scale <= MIN_IMAGE_SCALE) {
         return;
       }
 
       event.preventDefault();
-
-      if (!enabledRef.current) {
-        return;
-      }
-
-      const step = clamp(
-        Math.exp(-event.deltaY * WHEEL_ZOOM_SPEED),
-        WHEEL_ZOOM_STEP_MIN,
-        WHEEL_ZOOM_STEP_MAX,
-      );
-
-      zoomTo(viewRef.current.scale * step, event.clientX, event.clientY);
+      panBy(-deltaX, -deltaY);
     };
 
     /** `scale` 是相对手势起点的倍率：起点那一下记下来，后续都乘在它上面 */
@@ -289,31 +230,19 @@ export const useImageZoomPan = ({
       stage.removeEventListener('gesturestart', handleGestureStart);
       stage.removeEventListener('wheel', handleWheel);
     };
-  }, [zoomTo]);
+  }, [panBy, zoomTo]);
 
+  /** 回到 1 倍、位移清零（进裁剪前复位，免得选框压在缩放后的画面上） */
   const reset = useCallback(() => {
-    dragRef.current = null;
-    setDragging(false);
     applyView(INITIAL_VIEW);
   }, [applyView]);
 
   return {
-    dragging,
     imageRef,
     imageStyle: {
       transform: `translate3d(${view.x}px, ${view.y}px, 0) scale(${view.scale})`,
     },
     reset,
-    stageProps: {
-      onClickCapture,
-      // 指针被系统 / 浏览器收走（切窗口、触控板手势被打断）也要结束这一手，别让光标卡在「抓着」
-      onLostPointerCapture: endDrag,
-      onPointerCancel: endDrag,
-      onPointerDown,
-      onPointerMove,
-      onPointerUp: endDrag,
-    },
     stageRef,
-    zoomed: view.scale > MIN_IMAGE_SCALE,
   };
 };

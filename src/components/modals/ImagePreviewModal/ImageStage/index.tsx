@@ -1,11 +1,11 @@
 /**
- * 图片舞台：一张图居中「装进去」显示，带加载与失败提示，可捏合缩放、可拖着看。
+ * 图片舞台：一张图居中「装进去」显示，带加载与失败提示，可捏合缩放、可两指滑动平移。
  *
  * 单独成组件的原因只有一个——换图要重置加载态与倍率；调用方用 `key` 换实例即可，
  * 不必在弹窗里为一个图片状态写 effect。
  *
- * 手势口径见同目录 `hooks/use-image-zoom-pan/README.md`：捏合与拖拽都收在那份 hook 里，
- * 舞台只负责把节点接上；拖拽后的那一次 `click` 由它在捕获阶段吞掉，外层不会误开合 header。
+ * 手势口径见同目录 `hooks/use-image-zoom-pan/README.md`：捏合与平移都走 `wheel` 一族事件，
+ * 收在那份 hook 里，舞台只负责把节点接上。
  *
  * 裁剪把同一块画面切成「只拖选框」：缩放 / 平移先让位并复位到 1 倍，选框按未缩放的布局尺寸叠上去。
  */
@@ -33,7 +33,7 @@ export type ImageStageProps = {
   src: string;
   /** 外部要拿这张图去裁剪时传进来；不传则舞台自己持有图片节点 */
   imageRef?: RefObject<HTMLImageElement | null>;
-  /** 正在裁剪：缩放 / 拖拽让位，选框叠在图上 */
+  /** 正在裁剪：缩放 / 平移让位，选框叠在图上 */
   cropping?: boolean;
   /** 当前选框（比例）；裁剪态必传，缺省用居中默认框 */
   cropRect?: CropRect;
@@ -55,15 +55,7 @@ const ImageStage = ({
   src,
 }: ImageStageProps) => {
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
-  const {
-    dragging,
-    imageRef,
-    imageStyle,
-    reset,
-    stageProps,
-    stageRef,
-    zoomed,
-  } = useImageZoomPan({
+  const { imageRef, imageStyle, reset, stageRef } = useImageZoomPan({
     enabled: status === 'ready' && !cropping,
     imageRef: externalImageRef,
   });
@@ -76,15 +68,7 @@ const ImageStage = ({
   }, [cropping, reset]);
 
   return (
-    <div
-      className={cx(
-        styles.stage,
-        zoomed && !cropping && styles.stageZoomed,
-        dragging && styles.stageDragging,
-      )}
-      ref={stageRef}
-      {...stageProps}
-    >
+    <div className={styles.stage} ref={stageRef}>
       {status === 'loading' ? (
         <div className={styles.hint}>
           <Loader color="gray" size="sm" />
@@ -96,7 +80,7 @@ const ImageStage = ({
           <span className={styles.hintText}>这张图片无法显示</span>
         </div>
       ) : null}
-      {/* 加载中先压暗，避免半张图闪一下再撑开；`draggable` 关掉，拖拽走自己的 Pointer Events */}
+      {/* 加载中先压暗，避免半张图闪一下再撑开；`draggable` 关掉，按住拖不出浏览器的原生图片拖影 */}
       <img
         alt={name}
         className={cx(styles.image, status !== 'ready' && styles.imagePending)}

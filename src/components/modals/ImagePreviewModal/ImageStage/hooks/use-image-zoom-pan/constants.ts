@@ -13,5 +13,5 @@ export const WHEEL_ZOOM_STEP_MIN = 0.5;
 /** 单次滚轮的缩放变化最多放大到 2 倍 */
 export const WHEEL_ZOOM_STEP_MAX = 2;
 
-/** 位移超过这么多像素才算拖拽；小于这个数的抖动仍按「点了一下画面」处理 */
-export const DRAG_CLICK_SLOP = 4;
+/** 行模式的滚动量换算成像素：Firefox 的鼠标滚轮报的是行数，不换算会几乎挪不动画面 */
+export const WHEEL_LINE_HEIGHT = 16;
