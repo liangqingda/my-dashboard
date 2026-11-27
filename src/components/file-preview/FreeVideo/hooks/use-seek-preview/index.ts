@@ -13,7 +13,7 @@
  * 截图要存的是「看到的这一帧」，不是光标此刻那一秒。
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { SeekPreviewState } from '../../VideoControls/types';
 
@@ -163,7 +163,7 @@ export const useSeekPreview = ({
    * 取某一落点的帧：与上次请求几乎同处就不重抽（指针抖动不该反复 seek）。
    * 新帧回来之前**保持当前这张**，不先转圈——一路扫过去时反复「转圈 → 出图」才是那个闪。
    */
-  const requestPreviewFrame = (spot: SeekPreviewState) => {
+  const requestPreviewFrame = useCallback((spot: SeekPreviewState): void => {
     const previous = lastAskedTimeRef.current;
     const sameSpot =
       previous !== null && Math.abs(previous - spot.time) < SAME_SPOT_EPSILON;
@@ -188,7 +188,28 @@ export const useSeekPreview = ({
 
       setFrame({ time: spot.time, url });
     });
-  };
+  }, [requestFrame]);
+
+  /**
+   * 指针早就停在进度条上、探针这时才就绪：把那次「等过头的停留」补上。
+   * 两档计时的门槛里都有 `previewReady`，探针没就绪时它们空跑一轮就结束了；
+   * 没有这一步，指针不动就永远等不到，用户看到的正是「hover 了、等几秒也没反应」。
+   */
+  useEffect(() => {
+    if (!previewReady) {
+      return;
+    }
+
+    const spot = spotRef.current;
+
+    if (spot === null) {
+      return;
+    }
+
+    /** 指针还停着就先把浮层摆出来（它已经等过门槛了），再补上这一处的帧 */
+    setPreview((current) => current ?? spot);
+    requestPreviewFrame(spot);
+  }, [previewReady, requestPreviewFrame]);
 
   /**
    * 指针移到某落点：浮出前后两套节奏——没浮出时停够才浮出（划过不闪），

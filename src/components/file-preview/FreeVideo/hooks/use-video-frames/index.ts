@@ -39,6 +39,11 @@ import {
 
 /** 抽帧入参 */
 export type UseVideoFramesOptions = {
+  /**
+   * 有人真的来要帧了（进度条 hover）：调用方可以借这个时机把探针提前挂上，
+   * 不必再等「主画面就绪后那一档空档」——等帧的人不该被省盘的延时拦住。
+   */
+  onDemand?: () => void;
   /** 探针视频引用：调用方渲染的隐藏 `<video>` */
   probeRef: RefObject<HTMLVideoElement | null>;
   /** 视频地址：换片即清缓存重来 */
@@ -75,6 +80,7 @@ type FrameJob = {
 
 export const useVideoFrames = ({
   frameLongestEdge,
+  onDemand,
   probeRef,
   src,
 }: UseVideoFramesOptions): UseVideoFramesResult => {
@@ -85,6 +91,8 @@ export const useVideoFrames = ({
   const pendingRef = useRef<FrameJob | null>(null);
   /** 抽帧循环的启动函数：effect 里换实现，卸载后置空 */
   const pumpRef = useRef<(() => void) | null>(null);
+  /** 探针此刻能不能画帧：拿元数据之前进来的请求先存着，就绪后立刻补跑 */
+  const readyRef = useRef(false);
   /** 请求代次：每来一个新位置的请求就加一，正在跑的旧请求看到代次变了就提前收手 */
   const latestRef = useRef(0);
   /** 暴露给截图的全尺寸抓帧：实现挂在 effect 里（要读探针与片长），卸载即置空 */
@@ -92,6 +100,8 @@ export const useVideoFrames = ({
 
   const requestFrame = useCallback(
     (time: number, onFrame: FrameCallback): void => {
+      onDemand?.();
+
       const bucket = bucketOf(time);
       const cached = cacheRef.current.get(bucket);
 
@@ -114,7 +124,7 @@ export const useVideoFrames = ({
       pendingRef.current = { bucket, onFrame, time };
       pumpRef.current?.();
     },
-    [],
+    [onDemand],
   );
 
   useEffect(() => {
@@ -134,6 +144,7 @@ export const useVideoFrames = ({
     cacheRef.current = new Map();
     pendingRef.current = null;
     latestRef.current = 0;
+    readyRef.current = false;
     setReady(false);
 
     const canvas = document.createElement('canvas');
@@ -223,7 +234,7 @@ export const useVideoFrames = ({
 
     /** 串行跑任务：一支探针一次只能 seek 一个点，抽完一帧再取下一条 */
     const pump = (): void => {
-      if (running) {
+      if (running || !readyRef.current) {
         return;
       }
 
@@ -267,7 +278,14 @@ export const useVideoFrames = ({
         canvas.width = size.width;
         canvas.height = size.height;
         context = canvas.getContext('2d');
+        readyRef.current = true;
         setReady(true);
+
+        /**
+         * 元数据还没到就 hover 的那一帧已经排在 `pendingRef` 里：
+         * 就绪就立刻跑，不必等用户再动一下指针。
+         */
+        pump();
       } catch {
         // 拿不到元数据：预览保持不可用，进度条回落数字浮标，界面上不留痕迹
       }

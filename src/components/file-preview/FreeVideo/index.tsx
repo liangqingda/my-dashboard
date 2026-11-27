@@ -138,7 +138,7 @@ const FreeVideo = ({
    * 抽帧探针的地址晚一步才挂（主画面就绪 + `PROBE_ARM_DELAY`），卸载时两路流一起断：
    * 打开视频的那一刻只有主视频一路读盘，连翻几条也不会有第二条整份流抢盘。
    */
-  const { probeSrc } = useFrameProbe({
+  const { arm: armProbe, probeSrc } = useFrameProbe({
     probeRef,
     ready: status === 'ready',
     src,
@@ -146,6 +146,7 @@ const FreeVideo = ({
   });
   const { grabFrame, ready: previewReady, requestFrame } = useVideoFrames({
     frameLongestEdge,
+    onDemand: armProbe,
     probeRef,
     src: probeSrc,
   });
