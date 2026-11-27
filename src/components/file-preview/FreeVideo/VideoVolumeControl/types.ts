@@ -14,4 +14,6 @@ export type VideoVolumeControlProps = {
   onToggleMute: () => void;
   /** 调整音量（0–1）；调到非零由调用方负责取消静音 */
   onVolumeChange: (volume: number) => void;
+  /** 固定深底浅字：按钮取媒体浮层浅字档，压在画面上不随主题反转 */
+  tipDark?: boolean;
 };

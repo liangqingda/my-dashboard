@@ -19,6 +19,36 @@
 }
 
 /*
+ * 媒体浮层档：按钮压在图片 / 视频画面上的毛玻璃 chrome 里（预览 header、播放器控制栏），
+ * 两种主题都固定浅字，不跟主题反转——亮色下主题深色图标压在浅玻璃上看不清。
+ * 三档语气各自取浮层专用色标，禁用态只收透明度、不另挑灰。
+ */
+.button.onMedia {
+  color: var(--app-glass-on-ink-soft);
+}
+
+.button.onMedia:hover:not(:disabled) {
+  color: var(--app-glass-on-ink);
+}
+
+.button.onMedia.accent {
+  color: var(--app-glass-on-accent);
+}
+
+.button.onMedia.accent:hover:not(:disabled) {
+  color: var(--app-glass-on-ink);
+}
+
+.button.onMedia.danger {
+  color: var(--app-glass-on-danger);
+}
+
+.button.onMedia.danger:hover:not(:disabled) {
+  background: var(--app-glass-float);
+  color: var(--app-glass-on-danger);
+}
+
+/*
  * 禁用：清掉组件库给的灰底与描边。这一排图标平时是透明的，
  * 突然多一块底色会看着像「那一个被选中了」；只留变淡 + 不能点。
  * 加载中（`data-loading`）不掺和：那是「进行中」，不是「不可点」。

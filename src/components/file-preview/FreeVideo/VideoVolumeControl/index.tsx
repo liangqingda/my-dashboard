@@ -37,6 +37,7 @@ const VideoVolumeControl = ({
   muted,
   onToggleMute,
   onVolumeChange,
+  tipDark = false,
   volume,
 }: VideoVolumeControlProps) => {
   const level = volumeLevel(muted, volume);
@@ -72,6 +73,7 @@ const VideoVolumeControl = ({
         disabled={!enabled}
         label={muted ? '取消静音' : '静音'}
         onClick={onToggleMute}
+        tipDark={tipDark}
         tooltip="none"
       >
         <PlayerVolumeIcon level={level} size={ICON_SIZE} stroke={ICON_STROKE} />

@@ -10,6 +10,7 @@
 
 import { useEffect, useRef } from 'react';
 import { FocusTrap, Modal } from '@mantine/core';
+import type { ModalCloseButtonProps } from '@mantine/core';
 import {
   IconChevronLeft,
   IconChevronRight,
@@ -179,11 +180,21 @@ const FreeModal = ({
           styles.header,
           headerIsOverlay && styles.headerOverlay,
           headerHidden && styles.headerHidden,
+          tipDark && styles.headerOverlayOnMedia,
           headerClassName,
         ),
         title: styles.title,
       }}
-      closeButtonProps={{ 'aria-label': closeLabel }}
+      /*
+       * 稳定钩子：浮层浅字档按属性选择器取色，不依赖组件库哈希类名；
+       * 组件库 props 类型没声明自定义 data 属性，这里随按钮原生属性一并透传。
+       */
+      closeButtonProps={
+        {
+          'aria-label': closeLabel,
+          'data-modal-close': true,
+        } as ModalCloseButtonProps
+      }
       closeOnClickOutside={false}
       closeOnEscape={closeOnEscape && !escapeOverridden}
       fullScreen={fullscreen?.active ?? false}

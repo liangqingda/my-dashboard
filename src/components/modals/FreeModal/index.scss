@@ -169,8 +169,9 @@
 /*
  * 浮层 header（`headerOverlay`）：绝对定位覆盖正文顶部，栏体仍在（隐藏时只是淡出上移，不卸载按钮）。
  * 图片 / 视频这类「打开先看画面、header 平时藏起来、要它时才出现」的弹窗用它，正文因此能占满整块高度。
- * 压在内容上面，走毛玻璃：chrome 渐变 + 背景虚化，与播放器控制栏同一口径（两个色标都取自
- * `--app-glass-fade-*`，改一处两处一起变）。
+ * 压在内容上面，走毛玻璃：渐变收边 + 背景虚化，与播放器控制栏同一口径。
+ * 媒体档渐变取 `--app-glass-fade-media-*`：亮色下 chrome 偏浅，叠一层半透明墨色压住画面，
+ * 浅字才压得住；暗色下这两档就是 chrome 渐变本身（见 global.scss 暗色块）。
  */
 .content .headerOverlay {
   position: absolute;
@@ -181,8 +182,8 @@
   border-bottom: 0;
   background: linear-gradient(
     to bottom,
-    var(--app-glass-fade-strong),
-    var(--app-glass-fade-weak)
+    var(--app-glass-fade-media-strong),
+    var(--app-glass-fade-media-weak)
   );
   -webkit-backdrop-filter: blur(var(--app-glass-blur-panel))
     saturate(var(--app-glass-saturate));
@@ -191,6 +192,39 @@
   transition:
     opacity 160ms ease,
     transform 160ms ease;
+}
+
+/*
+ * 媒体浮层固定浅字：header 压在图片 / 视频画面上，两种主题都不跟主题反转。
+ * 标题、计数、图标按钮、关闭按钮与分隔线统一取 `--app-glass-on-*` 一组；
+ * 按钮自身的 normal / accent / danger 语气在下面各自覆写。
+ */
+.content .headerOverlayOnMedia {
+  color: var(--app-glass-on-ink);
+
+  .title,
+  .fileName {
+    color: var(--app-glass-on-ink);
+  }
+
+  .position {
+    color: var(--app-glass-on-ink-soft);
+  }
+
+  .divider {
+    background: var(--app-glass-on-ink-faint);
+  }
+
+  /* 组件库内建关闭按钮：图标跟这一层浅字走，hover 只提一档亮度、不铺浅灰底；
+     钩子是 `closeButtonProps` 挂的 `data-modal-close`，不依赖组件库哈希类名 */
+  [data-modal-close] {
+    color: var(--app-glass-on-ink-soft);
+
+    &:hover:not(:disabled) {
+      background: var(--app-glass-float);
+      color: var(--app-glass-on-ink);
+    }
+  }
 }
 
 /* 隐藏态：淡出上移，且不接收指针事件，免得住上方看不见的按钮被误点 */

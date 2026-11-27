@@ -51,6 +51,9 @@
   媒体预览 `--app-glass-overlay-media`（图片 / 视频的 `FreeModal` 传 `overlayTone="dark"`）；
 - 浮层（浮动 header、播放器控制栏、瓦片 veil、操作组、进度预览）用 `--app-glass-panel` 或
   `--app-glass-float`，虚化与饱和都取 `--app-glass-blur-*` / `--app-glass-saturate`；
+- 压在媒体画面上的常驻 chrome（预览 header、播放器控制栏）固定浅字，取 `--app-glass-on-*`
+  一组，渐变收边走 `--app-glass-fade-media-*`；亮色下 chrome 偏浅，叠一层半透明墨色压住画面，
+  浅色图标才压得住，普通弹窗仍走 ink / chrome 自适应，不套这一组；
 - 业务侧不写裸的 `blur(12px)` / `saturate(1.3)` 这类数值，一律取 `--app-glass-*`；现有档位不够时
   在令牌里加一档，不在页面 / 业务组件里另起一套配方。
 - 叠层遮罩（二次确认压在预览上）两层材料会自然叠加、更浓更糊；业务侧不要再手动补一层虚化或加深底色。

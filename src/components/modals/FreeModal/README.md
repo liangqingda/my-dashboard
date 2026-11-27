@@ -82,7 +82,7 @@
 | `headerOverlay` | `FreeModalHeaderOverlay`；传了就把 header 改成毛玻璃浮层并接管显隐（打开即收起、隐藏时不接收指针事件；收起只影响外观，不卸载按钮）。鼠标一动浮出、静止 1s 收起、指针停在 header 上不收起；`suspended` 暂停唤出并恒为可见，`ignoreSelector` 圈掉不算唤出的区域（如播放器控制栏，指针一进去就当场收起） |
 | `overlayTone` | 遮罩色调：`light`（默认）给普通弹窗，`dark` 给图片 / 视频这类要靠深底看画面的预览；两档的虚化与饱和同一套，只换底色 |
 | `media` | `{ onTogglePlay, onToggleMute }`；传了 `onTogglePlay` 之后空格切播放 / 暂停、不再关窗，传了 `onToggleMute` 才有 `M` 静音 |
-| `tipDark` | 可选。header 内按钮与标题的 tip 固定深底浅字、不随主题反转；媒体预览压在画面上的提示用 |
+| `tipDark` | 可选。header 内按钮、标题与计数固定取媒体浮层浅字档（连同 tip 深底浅字），不随主题反转；媒体预览压在画面上的提示与控件用 |
 | `zIndex` | 层级，默认走组件库的弹窗档；要压在另一扇已打开的弹窗之上时显式抬高（二次确认层由 `ConfirmModal` 默认给 `320`） |
 | `onCapture` | `Enter` 的动作（视频预览截当前帧）；不传则该键不动作 |
 | `onSeek` | `(direction: 'backward' \| 'forward') => void`；传了之后 `←` / `→` 交给它（视频快进 / 后退），翻篇只剩 `[` / `]` |

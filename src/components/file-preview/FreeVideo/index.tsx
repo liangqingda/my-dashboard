@@ -322,6 +322,7 @@ const FreeVideo = ({
                 muted={muted}
                 onToggleMute={toggleMute}
                 onVolumeChange={changeVolume}
+                tipDark={tipDark}
                 volume={volume}
               />
               {actions}

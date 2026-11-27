@@ -100,7 +100,12 @@ const FreeIconAction = ({
     <ActionIcon
       aria-busy={ariaBusy || undefined}
       aria-label={label}
-      className={cx(styles.button, TONE_CLASS[tone], className)}
+      className={cx(
+        styles.button,
+        tipDark && styles.onMedia,
+        TONE_CLASS[tone],
+        className,
+      )}
       disabled={disabled}
       loading={loading}
       onClick={handleClick}

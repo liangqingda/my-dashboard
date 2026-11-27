@@ -69,6 +69,7 @@ const IconPopoverButton = ({
             label={label}
             onClick={() => onChange(!opened)}
             size="sm"
+            tipDark={tipDark}
             tone={active ? 'accent' : 'normal'}
             tooltip="none"
           >

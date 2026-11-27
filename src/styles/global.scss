@@ -69,6 +69,18 @@
   /* 上下收边的 chrome 渐变（浮动 header / 播放器控制栏共用）：跟着 chrome 档走，不另挑颜色 */
   --app-glass-fade-strong: color-mix(in srgb, var(--app-surface-subtle) 72%, transparent);
   --app-glass-fade-weak: color-mix(in srgb, var(--app-surface-subtle) 28%, transparent);
+  /*
+   * 媒体浮层（图片 / 视频预览的浮动 header 与播放器控制栏）压在画面上：两种主题都固定浅字，
+   * 不跟主题反转。浅色下玻璃底是浅灰，主题深色图标压上去对比度不足；这一组浅字与一档
+   * 加深的渐变收边只给这类「常驻画面之上」的 chrome 用，普通弹窗仍走 ink / chrome 自适应。
+   */
+  --app-glass-on-ink: rgb(255 255 255 / 92%);
+  --app-glass-on-ink-soft: rgb(255 255 255 / 72%);
+  --app-glass-on-ink-faint: rgb(255 255 255 / 58%);
+  --app-glass-on-accent: rgb(126 231 205 / 96%);
+  --app-glass-on-danger: rgb(255 158 150 / 92%);
+  --app-glass-fade-media-strong: rgb(17 24 22 / 52%);
+  --app-glass-fade-media-weak: rgb(17 24 22 / 16%);
 
   /* status */
   --app-status-ok: #0e7a3d;
@@ -158,6 +170,9 @@ html[data-mantine-color-scheme='dark'] {
   --app-glass-overlay-media: rgb(3 5 5 / 68%);
   --app-glass-float: rgb(255 255 255 / 9%);
   --app-glass-edge: rgb(255 255 255 / 10%);
+  /* 暗色浮层玻璃本身就是深底，渐变沿用 chrome 档即可，不用再叠一层墨色 */
+  --app-glass-fade-media-strong: var(--app-glass-fade-strong);
+  --app-glass-fade-media-weak: var(--app-glass-fade-weak);
 
   /* 暗色下代码仍取 chrome 档底色、ink 档字色（与浅色同一份口径，见浅色块那份说明）；
      代码靠等宽字体 + 芯片底色与标题区分，不会被读成小标题 */

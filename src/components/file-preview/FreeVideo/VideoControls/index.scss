@@ -6,12 +6,12 @@
   flex-direction: column;
   gap: 4px;
   padding: 6px 12px 8px;
-  /* 毛玻璃底：chrome 渐变 + 虚化后面的视频，控制栏压在画面上而不是另起一条实心；
-     两个色标与浮动 header 共用 `--app-glass-fade-*`，改一处两处一起变 */
+  /* 毛玻璃底：媒体渐变收边 + 虚化后面的视频，控制栏压在画面上而不是另起一条实心；
+     两个色标与浮动 header 共用 `--app-glass-fade-media-*`，改一处两处一起变 */
   background: linear-gradient(
     to top,
-    var(--app-glass-fade-strong),
-    var(--app-glass-fade-weak)
+    var(--app-glass-fade-media-strong),
+    var(--app-glass-fade-media-weak)
   );
   -webkit-backdrop-filter: blur(var(--app-glass-blur-panel))
     saturate(var(--app-glass-saturate));
@@ -164,10 +164,10 @@
   gap: 2px;
 }
 
-/* 时间：等宽数字，播放中不会随数字跳动而左右晃 */
+/* 时间：等宽数字，播放中不会随数字跳动而左右晃；压在画面上取浮层浅字档 */
 .time {
   margin-left: 2px;
-  color: var(--app-ink-faint);
+  color: var(--app-glass-on-ink-soft);
   font-size: 0.72rem;
   font-variant-numeric: tabular-nums;
 }
