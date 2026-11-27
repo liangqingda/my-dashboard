@@ -22,7 +22,7 @@ import {
 } from '../constants';
 import type { FileEntry, FilesRow, FolderEntry } from '../types';
 import { useBlankDrop } from '../hooks/useBlankDrop';
-import { entryClickIntent } from '../utils/entry-click';
+import { entryCanOpen, entryClickIntent } from '../utils/entry-click';
 import { writeDragPayload } from '../utils/drag-image';
 import { entryOf, groupFilesRows } from '../utils/entries-view';
 import { prefetchVideoHead } from '../utils/video-prefetch';
@@ -136,10 +136,10 @@ const FilesTable = memo(
       }
 
       /*
-       * ⌘ + 文件夹＝进入这一层；Shift＝连选；待拖拽区非空时普通点击＝加入 / 移除。
-       * `open` / `ignore` 都不拦事件，交给行上的 onClick。
+       * ⌘＝打开（能打开的那几类）；Shift＝连选；待拖拽区非空时普通点击＝加入 / 移除。
+       * `open` / `ignore` 都不拦事件，交给行 / 名称格上那颗 onClick。
        */
-      const intent = entryClickIntent(event, !('category' in entry), pendingActive);
+      const intent = entryClickIntent(event, entryCanOpen(entry), pendingActive);
 
       if (intent === 'ignore' || intent === 'open') {
         return;

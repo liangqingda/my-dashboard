@@ -1,7 +1,7 @@
 import type { MouseEvent } from 'react';
 import { useCallback } from 'react';
 
-import { entryClickIntent } from '../utils/entry-click';
+import { entryCanOpen, entryClickIntent } from '../utils/entry-click';
 import type {
   DraggableEntry,
   FileEntry,
@@ -11,8 +11,9 @@ import type {
 type GridEntry = FolderEntry | FileEntry;
 
 /**
- * 网格瓦片的点击捕获：⌘ 进目录、Shift 连选、待拖拽区非空时普通点击＝加入 / 移除；
- * 瓦片自带的重命名 / 删除按钮在捕获阶段放行，不参与选中语义。
+ * 网格瓦片的点击捕获：⌘＝打开（文件夹进目录、图片 / 视频进预览）、Shift＝连选、
+ * 待拖拽区非空时普通点击＝加入 / 移除；瓦片自带的重命名 / 删除按钮在捕获阶段放行，
+ * 不参与选中语义。
  */
 export const useGridEntryClick = (
   byPath: Map<string, GridEntry>,
@@ -53,10 +54,10 @@ export const useGridEntryClick = (
       }
 
       /*
-       * ⌘ + 文件夹＝进入这一层；Shift＝连选；待拖拽区非空时普通点击＝加入 / 移除。
+       * ⌘＝打开（能打开的那几类）；Shift＝连选；待拖拽区非空时普通点击＝加入 / 移除。
        * `open` / `ignore` 都不拦事件，让瓦片自己那颗 onClick 照常打开。
        */
-      const intent = entryClickIntent(event, !('category' in entry), pendingActive);
+      const intent = entryClickIntent(event, entryCanOpen(entry), pendingActive);
 
       if (intent === 'ignore' || intent === 'open') {
         return;

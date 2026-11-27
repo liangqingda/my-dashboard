@@ -121,7 +121,7 @@ export const ENTRY_KIND_LABELS = {
  */
 export const FILES_SHORTCUTS: readonly FilesShortcut[] = [
   { action: '待拖拽区非空时，点条目＝加入 / 移出', keys: ['点击'] },
-  { action: '文件夹直接进入（批选到一半想换目录）', keys: ['⌘', '点击'] },
+  { action: '按打开的走：进目录 / 预览图片视频（攒批时也能跳出去）', keys: ['⌘', '点击'] },
   { action: '从上次点的那一条连选到这里', keys: ['Shift', '点击'] },
   { action: '清空待拖拽区', keys: ['Space'] },
   { action: '清空待拖拽区 / 关闭弹窗', keys: ['Esc'] },
