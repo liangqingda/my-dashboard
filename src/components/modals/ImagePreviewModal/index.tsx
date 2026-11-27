@@ -233,6 +233,7 @@ const ImagePreviewModal = ({
         <ImageStage
           cropRect={crop.rect}
           cropping={cropping}
+          fullscreen={fullscreen && !cropping}
           imageRef={imageRef}
           key={activeItem.src}
           name={activeItem.name}

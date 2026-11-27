@@ -13,7 +13,7 @@ import type {
   UseImageZoomPanOptions,
   UseImageZoomPanResult,
 } from './types';
-import { anchorView, clamp, limitView } from './utils';
+import { anchorView, clamp, drawnImageSize, limitView } from './utils';
 
 /** Safari 的捏合事件（非标准，TS 没有对应类型）：`scale` 是相对本次手势起点的倍率 */
 type SafariGestureEvent = Event & {
@@ -63,7 +63,7 @@ export const useImageZoomPan = ({
     enabledRef.current = enabled;
   });
 
-  /** 量当下的一对尺寸并夹位移：图片用未缩放的布局尺寸，舞台用内框尺寸 */
+  /** 量当下的一对尺寸并夹位移：图片用画出来的尺寸，舞台用内框尺寸 */
   const fitView = useCallback(
     (next: StageView): StageView => {
       const stage = stageRef.current;
@@ -73,11 +73,10 @@ export const useImageZoomPan = ({
         return next;
       }
 
-      return limitView(
-        next,
-        { width: image.offsetWidth, height: image.offsetHeight },
-        { width: stage.clientWidth, height: stage.clientHeight },
-      );
+      return limitView(next, drawnImageSize(image), {
+        height: stage.clientHeight,
+        width: stage.clientWidth,
+      });
     },
     [imageRef],
   );

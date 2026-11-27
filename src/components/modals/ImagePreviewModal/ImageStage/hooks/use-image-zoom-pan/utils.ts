@@ -1,9 +1,35 @@
 import type { StageView } from './types';
 
-/** 尺寸（px）：图片这里指「未缩放的布局尺寸」，舞台指它的内框尺寸 */
+/** 尺寸（px）：图片指「画出来的尺寸」，舞台指它的内框尺寸 */
 export type FitSize = {
   width: number;
   height: number;
+};
+
+/**
+ * 画面**实际画出来**的尺寸：`object-fit: contain` 会把图片缩进盒子里，盒子里多出的那条是留白，
+ * 不算可平移的区域。整屏时盒子撑到视口，按盒子算就会多出一大截能拖出去的黑边。
+ */
+export const drawnImageSize = (image: HTMLImageElement): FitSize => {
+  const box: FitSize = {
+    height: image.offsetHeight,
+    width: image.offsetWidth,
+  };
+  const natural: FitSize = {
+    height: image.naturalHeight,
+    width: image.naturalWidth,
+  };
+
+  if (natural.width <= 0 || natural.height <= 0) {
+    return box;
+  }
+
+  const fit = Math.min(box.width / natural.width, box.height / natural.height);
+
+  return {
+    height: natural.height * fit,
+    width: natural.width * fit,
+  };
 };
 
 /** 把值夹在 min / max 之间 */
@@ -19,7 +45,7 @@ export const limitView = (
   image: FitSize,
   stage: FitSize,
 ): StageView => {
-  // 布局尺寸不受 transform 影响，量到的就是「1 倍时图片在舞台里占多大」
+  // 画出来的尺寸不受 transform 影响，量到的就是「1 倍时画面在舞台里占多大」
   const maxX = Math.max(0, (image.width * view.scale - stage.width) / 2);
   const maxY = Math.max(0, (image.height * view.scale - stage.height) / 2);
 

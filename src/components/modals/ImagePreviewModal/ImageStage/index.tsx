@@ -8,6 +8,8 @@
  * 收在那份 hook 里，舞台只负责把节点接上。
  *
  * 裁剪把同一块画面切成「只拖选框」：缩放 / 平移先让位并复位到 1 倍，选框按未缩放的布局尺寸叠上去。
+ *
+ * 整屏全屏时图片撑到舞台大小（仍按比例，`contain`），像素小于屏幕的图也铺满，不在四周留一圈黑。
  */
 
 import { useLayoutEffect, useState } from 'react';
@@ -35,6 +37,8 @@ export type ImageStageProps = {
   imageRef?: RefObject<HTMLImageElement | null>;
   /** 正在裁剪：缩放 / 平移让位，选框叠在图上 */
   cropping?: boolean;
+  /** 整屏全屏：画面按比例撑满舞台，小图也放大到贴边（裁剪态不要传，选框按布局尺寸量） */
+  fullscreen?: boolean;
   /** 当前选框（比例）；裁剪态必传，缺省用居中默认框 */
   cropRect?: CropRect;
   /** 拖动选框后回传（不传则不显示裁剪层） */
@@ -48,6 +52,7 @@ const IMAGE_ICON_SIZE = 28;
 const ImageStage = ({
   cropping = false,
   cropRect,
+  fullscreen = false,
   imageRef: externalImageRef,
   name,
   onCropRectChange,
@@ -83,7 +88,11 @@ const ImageStage = ({
       {/* 加载中先压暗，避免半张图闪一下再撑开；`draggable` 关掉，按住拖不出浏览器的原生图片拖影 */}
       <img
         alt={name}
-        className={cx(styles.image, status !== 'ready' && styles.imagePending)}
+        className={cx(
+          styles.image,
+          status !== 'ready' && styles.imagePending,
+          fullscreen && styles.imageFill,
+        )}
         draggable={false}
         onError={() => setStatus('error')}
         onLoad={(event) => {
