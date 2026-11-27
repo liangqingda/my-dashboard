@@ -31,6 +31,8 @@ export type UseVideoPreviewResult = {
   items: VideoPreviewItem[];
   /** 正在预览的视频路径；null 表示弹窗关闭 */
   activeId: string | null;
+  /** 换过几次（计数浮标的切换序号）：翻篇 / 选集点选 / 删除后顺位切换都会加一 */
+  switchTick: number;
   /** 打开某一条视频 */
   openVideo: (file: FileEntry) => void;
   /** 切到另一条（遮罩层里的翻篇与选集点选都走它） */
@@ -152,5 +154,6 @@ export const useVideoPreview = (
     pickMediaDir,
     selectVideo: list.select,
     skipDeletedVideo: list.skipDeleted,
+    switchTick: list.switchTick,
   };
 };

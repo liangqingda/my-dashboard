@@ -52,6 +52,7 @@ const FilesOverlays = ({ modals, preview }: FilesOverlaysProps) => {
         imageActiveId={image.activeId}
         imageItems={image.items}
         imageStaged={previewRest.imageStaged}
+        imageSwitchTick={image.switchTick}
         onCaptureVideo={video.captureFrame}
         onCloseImage={image.closeImage}
         onCloseVideo={video.closeVideo}
@@ -73,6 +74,7 @@ const FilesOverlays = ({ modals, preview }: FilesOverlaysProps) => {
         videoActiveId={video.activeId}
         videoItems={video.items}
         videoStaged={previewRest.videoStaged}
+        videoSwitchTick={video.switchTick}
       />
     </div>
   );

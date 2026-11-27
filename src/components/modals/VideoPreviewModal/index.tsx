@@ -14,7 +14,8 @@
  *   第二下到来就把这次播放 / 暂停作废，双击只换尺寸、播放态一点都不动；
  * - **header 与控制栏默认藏着**：打开就看到画面，鼠标一动浮出，静止 1s 收起（两层同一节奏，
  *   暂停也一样收起）；控制栏上挪指针只唤控制栏、不唤 header（操作播放不该顶出标题栏）；设置里可让它「打开即全屏」；
- * - 翻篇（按钮 / 选集 / `[` `]` 都算）后左上角浮出一下「3 / 12」，1 秒后自己收掉（`PreviewCounter`）；
+ * - 换条（按钮 / 选集 / `[` `]` 翻篇，以及删掉当前这条后顺位切到下一条）后左上角浮出一下「3 / 12」，
+ *   1 秒后自己收掉（`PreviewCounter`）；
  * - `Esc` 在全屏里交给浏览器退出全屏，非全屏才是关窗。
  */
 
@@ -55,10 +56,9 @@ const VideoPreviewModal = ({
   onToggleBatch,
   opened,
   storageScope,
+  switchTick,
 }: VideoPreviewModalProps) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  /** 翻过几次：每次切到下一条加一，左上角的计数浮标据此浮出再自动收掉 */
-  const [switchTick, setSwitchTick] = useState(0);
   /** 设置面板是否展开：开着手动隐藏 header、并收掉整组快捷键 */
   const [settingsOpen, setSettingsOpen] = useState(false);
   /** 选集弹层是否展开：与设置面板汇总成「有没有业务弹层开着」 */
@@ -83,6 +83,7 @@ const VideoPreviewModal = ({
     setViewportFullscreen,
     settings,
   } = useVideoSettings(storageScope);
+
   const index = items.findIndex((item) => item.id === activeId);
   const activeItem = index >= 0 ? items[index] : null;
 
@@ -190,12 +191,6 @@ const VideoPreviewModal = ({
   /** 二次确认层与上层的删除确认同一口径：任一层开着，底下整组键位与焦点都收掉 */
   const interactionBlocked = blocked;
 
-  /** 翻篇与选集点选共用一个入口：顺手让计数浮标闪一下，比例先回兜底等新片子报上来 */
-  const selectItem = (id: string) => {
-    setSwitchTick((prev) => prev + 1);
-    onSelect(id);
-  };
-
   const previousItem = index > 0 ? items[index - 1] : null;
   const nextItem = index < items.length - 1 ? items[index + 1] : null;
   /** 方向键快进时翻篇只剩方括号；tooltip 跟着改口径 */
@@ -203,8 +198,9 @@ const VideoPreviewModal = ({
     settings.arrowMode === 'seek' ? '[ · ]' : '[ / ← · ] / →';
   /** 控制栏那两颗箭头与实体方向键同一套去向：seek 模式快进 / 后退，nav 模式翻篇 */
   const stepSeek = settings.arrowMode === 'seek';
-  const navBackward = previousItem ? () => selectItem(previousItem.id) : null;
-  const navForward = nextItem ? () => selectItem(nextItem.id) : null;
+  /** 翻篇与选集点选都直接走 `onSelect`：切换序号由 `usePreviewList` 统一加，这里不再包一层 */
+  const navBackward = previousItem ? () => onSelect(previousItem.id) : null;
+  const navForward = nextItem ? () => onSelect(nextItem.id) : null;
   const stepBackward = stepSeek ? () => seekBy('backward') : navBackward;
   const stepForward = stepSeek ? () => seekBy('forward') : navForward;
   const stepPreviousLabel = stepSeek
@@ -254,8 +250,8 @@ const VideoPreviewModal = ({
       }}
       nav={{
         index: index + 1,
-        onNext: nextItem ? () => selectItem(nextItem.id) : null,
-        onPrevious: previousItem ? () => selectItem(previousItem.id) : null,
+        onNext: nextItem ? () => onSelect(nextItem.id) : null,
+        onPrevious: previousItem ? () => onSelect(previousItem.id) : null,
         shortcutHint: navShortcutHint,
         total: items.length,
       }}
@@ -285,7 +281,7 @@ const VideoPreviewModal = ({
                 onOpenExternal ? () => onOpenExternal(activeItem.id) : undefined
               }
               onRequestDelete={onRequestDelete ? requestDelete : null}
-              onSelect={selectItem}
+              onSelect={onSelect}
               onSettingsChangeOpened={setSettingsOpen}
               onToggleBatch={onToggleBatch}
               onToggleBrowserFullscreen={toggleBrowserFullscreen}

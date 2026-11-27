@@ -9,7 +9,8 @@
  *   所以双击即刻换尺寸，不隔一个 300ms 的单击等待窗口；
  * - 图片列表不常驻：header 里的图标按钮点开一层（按钮正下方），列当前目录的全部图片，
  *   点一张切过去并收起；弹层开着时 header 恒可见，此时点图片只收弹层，不再切 header 的显隐；
- * - 翻篇（按钮 / 列表 / 键盘都算）后左上角浮出一下「3 / 12」，1 秒后自己收掉（`PreviewCounter`）；
+ * - 换图（按钮 / 列表 / 键盘翻篇，以及删掉当前这张后顺位切到下一条都算）后左上角浮出一下「3 / 12」，
+ *   1 秒后自己收掉（`PreviewCounter`）；
  * - **可放大、可平移**：捏合（Safari 的 `gesture*` 与其余浏览器的 `ctrlKey` + `wheel` 都接）缩放到
  *   1–5 倍，放大后两指滑动（滚轮同一条路径）平移画面；手势口径在 `ImageStage/hooks/use-image-zoom-pan/`；
  *   只认 `wheel` 一族手势，不做指针拖拽；双击只切全屏，不兼做缩放开关；
@@ -64,6 +65,7 @@ const ImagePreviewModal = ({
   onToggleBatch,
   opened,
   storageScope,
+  switchTick,
 }: ImagePreviewModalProps) => {
   const { active: fullscreen, exit, toggle } = useBrowserFullscreen({
     autoEnter: opened && defaultFullscreen,
@@ -71,8 +73,6 @@ const ImagePreviewModal = ({
 
   /** header 的弹层（图片列表 / 裁剪设置）是否开着：开着时 header 恒可见 */
   const [actionsOpen, setActionsOpen] = useState(false);
-  /** 翻过几次：每切一张加一，左上角的计数浮标据此浮出再自动收掉 */
-  const [switchTick, setSwitchTick] = useState(0);
   /**
    * 最近一次量到的图片固有比例（宽 / 高）：普通窗按它收框，画面正好填满、上下左右不再留黑底。
    * 换图时**保留上一张的比例**，等新图 `load` 再报一次——先回到默认大框再缩回来会闪一下；
@@ -146,12 +146,6 @@ const ImagePreviewModal = ({
    */
   const aspectFrame = !fullscreen && imageAspect !== null;
 
-  /** 翻篇与列表点选共用一个入口：随手让计数浮标闪一下 */
-  const selectItem = (id: string) => {
-    setSwitchTick((prev) => prev + 1);
-    onSelect(id);
-  };
-
   const saveCrop = () => {
     void crop.save(imageRef.current);
   };
@@ -186,7 +180,7 @@ const ImagePreviewModal = ({
           onOverlayChange={setActionsOpen}
           onRequestWallpaper={onRequestWallpaper ?? undefined}
           onSaveCrop={saveCrop}
-          onSelect={selectItem}
+          onSelect={onSelect}
           onToggleBatch={onToggleBatch ?? undefined}
           tipDark
         />
@@ -214,8 +208,8 @@ const ImagePreviewModal = ({
         disabled: cropping,
         index: index + 1,
         nextLabel: '下一张图片（]）',
-        onNext: nextItem ? () => selectItem(nextItem.id) : null,
-        onPrevious: previousItem ? () => selectItem(previousItem.id) : null,
+        onNext: nextItem ? () => onSelect(nextItem.id) : null,
+        onPrevious: previousItem ? () => onSelect(previousItem.id) : null,
         previousLabel: '上一张图片（[）',
         shortcutHint: '[ · ← · →]',
         total: items.length,

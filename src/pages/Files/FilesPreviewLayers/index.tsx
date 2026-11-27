@@ -47,6 +47,8 @@ export type FilesPreviewLayersProps = {
   defaultFullscreen: { image: boolean; video: boolean };
   /** 正在看的图片；null 表示图片弹窗关着 */
   imageActiveId: string | null;
+  /** 图片预览的切换序号（删掉当前这张后顺位切换也会加一） */
+  imageSwitchTick: number;
   /** 切到某张图片 */
   onSelectImage: (id: string) => void;
   /** 关图片弹窗 */
@@ -65,6 +67,8 @@ export type FilesPreviewLayersProps = {
   videoStaged: boolean;
   /** 删除确认开着：两扇弹窗都收掉快捷键与焦点陷阱 */
   blocked: boolean;
+  /** 视频预览的切换序号（删掉当前这条后顺位切换也会加一） */
+  videoSwitchTick: number;
 };
 
 const FilesPreviewLayers = ({
@@ -73,6 +77,7 @@ const FilesPreviewLayers = ({
   imageActiveId,
   imageItems,
   imageStaged,
+  imageSwitchTick,
   onCaptureVideo,
   onCloseImage,
   onCloseVideo,
@@ -88,6 +93,7 @@ const FilesPreviewLayers = ({
   videoActiveId,
   videoItems,
   videoStaged,
+  videoSwitchTick,
 }: FilesPreviewLayersProps) => (
   /* 容器只为挂载，`display: contents` 不进布局：两扇弹窗都挂在 body 里的 portal 上 */
   <div className={styles.layers}>
@@ -108,6 +114,7 @@ const FilesPreviewLayers = ({
       onToggleBatch={onToggleVideo}
       opened={videoActiveId !== null}
       storageScope={FILES_STORAGE_SCOPE}
+      switchTick={videoSwitchTick}
     />
 
     <ImagePreviewModal
@@ -126,6 +133,7 @@ const FilesPreviewLayers = ({
       onToggleBatch={onToggleImage}
       opened={imageActiveId !== null}
       storageScope={FILES_STORAGE_SCOPE}
+      switchTick={imageSwitchTick}
     />
   </div>
 );

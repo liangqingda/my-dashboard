@@ -30,8 +30,10 @@ header 与 hover 显隐），但去掉播放器那一套：没有播放 / 快进
 - **只裁 PNG / JPEG / WebP**：编码保持源扩展名（选框按图片显示区域的比例记录，保存时按
   `naturalWidth / naturalHeight` 换算像素）；其它格式的图，裁剪按钮直接置灰，指针停上去的 tip
   说明「只支持 PNG / JPEG / WebP」——换格式会让扩展名与内容对不上，GIF 还会丢动画；
-- 翻篇（按钮 / 列表 / 键盘都算）后左上角浮出一下「3 / 12」，1 秒后自己收掉（`PreviewCounter`）：
-  header 默认藏着，用户只需要知道「现在第几个」，不必把整条 header 带出来；刚打开时（还没翻过）不出现；
+- 换图后左上角浮出一下「3 / 12」，1 秒后自己收掉（`PreviewCounter`）：入口不只翻篇（按钮 / 列表 /
+  键盘），删掉当前这张后顺位切到下一条同样算——切换序号（`switchTick`）由持有 `activeId` 的那一层
+  统一产出，弹窗不在自己的 handler 里另数一份；
+  header 默认藏着，用户只需要知道「现在第几个」，不必把整条 header 带出来；刚打开时（还没换过）不出现；
 - 删除只开二次确认层（`onRequestDelete` → 页面的 `DeleteEntryConfirm`），不在弹窗里直接删；
   设为桌面墙纸同理（`onRequestWallpaper` → 页面的 `WallpaperConfirm`），弹窗不碰系统设置；
   删除确认开着时 header 也恒可见（与列表弹层同一档：`suspended` 强制显示）；
@@ -95,10 +97,14 @@ header 与 hover 显隐），但去掉播放器那一套：没有播放 / 快进
 
 ## props
 
-见 `types.ts`：`opened` / `items` / `activeId` / `blocked` / `storageScope` / `onClose` / `onSelect` /
-`onRequestDelete`（不传则没有删除按钮与删除键）/ `onRequestWallpaper`（不传则 header 没有那颗按钮）/
+见 `types.ts`：`opened` / `items` / `activeId` / `blocked` / `storageScope` / `switchTick` / `onClose` /
+`onSelect` / `onRequestDelete`（不传则没有删除按钮与删除键）/ `onRequestWallpaper`（不传则 header 没有那颗按钮）/
 `onToggleBatch` + `batched`（不传则没有「加入 / 移出待拖拽区」那颗按钮）/ `onCrop`
 （不传则没有裁剪与设置按钮）。
+
+- `switchTick` 由持有 `activeId` 的那一层给（文件页是 `usePreviewList`）：翻篇、列表点选，
+  以及**删掉当前这张后顺位切到下一条**都会加一，弹窗只把它转给 `PreviewCounter`；
+  打开与关窗归零，所以刚打开不闪；
 
 - `onToggleBatch` 只报「动一下当前这张」：自增还是移出由调用方按自己那份状态决定（弹窗把
   `batched` 原样给它，调用方据此走加入或移出），攒起来的那批归调用方（文件页是 `useDragPending`），

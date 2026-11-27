@@ -32,6 +32,8 @@ export type UseImagePreviewResult = {
   items: ImagePreviewItem[];
   /** 正在预览的图片路径；null 表示弹窗关闭 */
   activeId: string | null;
+  /** 换过几次（计数浮标的切换序号）：翻篇 / 列表点选 / 删除后顺位切换都会加一 */
+  switchTick: number;
   /** 正在预览的那一条；没在预览时为 null（弹窗 header 的操作要拿它的名字） */
   activeItem: ImagePreviewItem | null;
   /** 打开某一张图片 */
@@ -97,5 +99,6 @@ export const useImagePreview = (
     openImage: list.open,
     selectImage: list.select,
     skipDeletedImage: list.skipDeleted,
+    switchTick: list.switchTick,
   };
 };

@@ -34,6 +34,11 @@ export type VideoPreviewModalProps = {
   activeId: string | null;
   /** 页面标识（对应路由）：拼设置项的存储键，组件自己不写死是哪一页 */
   storageScope: string;
+  /**
+   * 切换序号：由持有 `activeId` 的那一层报（翻篇 / 选集点选 / 删除后顺位切换都会加一），
+   * 弹窗只把它转给左上角的计数浮标；打开与关窗时归零。
+   */
+  switchTick: number;
   /** 切换条目（侧栏点选、翻篇都走它） */
   onSelect: (id: string) => void;
   /** 关闭 */

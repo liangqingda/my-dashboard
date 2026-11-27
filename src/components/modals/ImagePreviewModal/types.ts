@@ -72,4 +72,9 @@ export type ImagePreviewModalProps = {
   defaultFullscreen?: boolean;
   /** 页面标识（对应路由）：裁剪保存方式存在 `<标识>:image-preview` 里，组件不写死是哪一页 */
   storageScope: string;
+  /**
+   * 切换序号：由持有 `activeId` 的那一层报（翻篇 / 列表点选 / 删除后顺位切换都会加一），
+   * 弹窗只把它转给左上角的计数浮标；打开与关窗时归零。
+   */
+  switchTick: number;
 };

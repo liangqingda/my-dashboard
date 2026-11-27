@@ -18,11 +18,16 @@ export type PreviewListResult = {
   items: FileEntry[];
   /** 正在预览的路径；null 表示弹层关着（或选中项已不在列表里） */
   activeId: string | null;
-  /** 打开某一条 */
+  /**
+   * 换过几次：每「换一条」加一，预览左上角的计数浮标据此浮出再自动收掉；`0` 表示刚打开。
+   * 翻篇 / 列表点选 / 删掉当前这条后顺位切换都落在这一份状态里，弹窗不再自己数。
+   */
+  switchTick: number;
+  /** 打开某一条（计数归零：刚打开不闪） */
   open: (file: FileEntry) => void;
   /** 切到另一条（翻篇与列表点选都走它） */
   select: (id: string) => void;
-  /** 关闭预览 */
+  /** 关闭预览（计数同样归零，免得残留的序号带进下一次打开） */
   close: () => void;
   /** 预览中的这一条被删掉：切到下一条（没有了就关窗） */
   skipDeleted: (path: string) => void;
@@ -39,6 +44,12 @@ export const usePreviewList = (
   category: FileCategory,
 ): PreviewListResult => {
   const [activeId, setActiveId] = useState<string | null>(null);
+  /**
+   * 换过几次（口径见 `PreviewListResult.switchTick`）：跟着「选中项变了」一起加，
+   * 所以必须与 `activeId` 同一个 hook 持有——删掉当前这条的顺位切换不经过弹窗的 handler，
+   * 放在弹窗里数就会漏掉那条路径。
+   */
+  const [switchTick, setSwitchTick] = useState(0);
 
   /** 列表只在清单或分类变化时重算 */
   const items = useMemo(
@@ -61,6 +72,11 @@ export const usePreviewList = (
     const fallback = items.at(at + 1) ?? items.at(at - 1) ?? null;
 
     setActiveId(fallback === null ? null : fallback.path);
+
+    // 顺位切到了另一条才算换图，列表空了（关窗）不闪
+    if (fallback !== null) {
+      setSwitchTick((prev) => prev + 1);
+    }
   };
 
   return {
@@ -68,10 +84,23 @@ export const usePreviewList = (
       activeId !== null && items.some((file) => file.path === activeId)
         ? activeId
         : null,
-    close: () => setActiveId(null),
+    close: () => {
+      setActiveId(null);
+      setSwitchTick(0);
+    },
     items,
-    open: (file: FileEntry) => setActiveId(file.path),
-    select: (id: string) => setActiveId(id),
+    open: (file: FileEntry) => {
+      setActiveId(file.path);
+      setSwitchTick(0);
+    },
+    select: (id: string) => {
+      setActiveId(id);
+
+      if (id !== activeId) {
+        setSwitchTick((prev) => prev + 1);
+      }
+    },
     skipDeleted,
+    switchTick,
   };
 };
