@@ -1,7 +1,7 @@
 /**
  * 批量状态下的起拖与收件：待拖拽区非空时，列表里的拖拽先不开移动弹窗，
  * 而是「把这一批 / 刚拖的那一条往侧栏拖」，松手落在待拖拽区才收进来。
- * 图片预览 header 那一颗「加入 / 移出待拖拽区」（`handleTogglePendingImage`）也收在这儿——
+ * 图片 / 视频预览那儿的「加入 / 移出待拖拽区」（`handleTogglePendingPreview`）也收在这儿——
  * 弹窗只给得到路径，条目要从当前目录认，动完还得弹一条提示（那会儿预览盖着页面、待拖拽区藏着）。
  *
  * 为什么单独成 hook：这段判定同时要用待拖拽区、条目动作和当前目录的条目表，
@@ -25,8 +25,8 @@ export type PendingDragHandlers = {
   handleDragStartEntry: (entry: FolderEntry | FileEntry) => void;
   /** 从列表拖到待拖拽区松手：按路径把当前目录里的条目收进来 */
   handleTrayDrop: (paths: string[]) => void;
-  /** 预览 header 那一颗：不在待拖拽区就加、在里面就移出，两种都弹一条提示 */
-  handleTogglePendingImage: (path: string) => void;
+  /** 两扇预览那儿的同一颗：不在待拖拽区就加、在里面就移出，两种都弹一条提示 */
+  handleTogglePendingPreview: (path: string) => void;
 };
 
 export const usePendingDrag = (
@@ -82,12 +82,13 @@ export const usePendingDrag = (
   );
 
   /**
-   * 预览里那一颗按钮：来的是「动这张图」的路径，往哪边走看它现在在不在待拖拽区；
+   * 预览里那一颗按钮（图片 / 视频同一套）：来的是「动这一条」的路径，
+   * 往哪边走看它现在在不在待拖拽区；
    * 认不出（不在当前目录）就忽略。提示写在这儿而不是页面里：预览盖着页面、面板是藏着的，
    * 不动一下嘴就看不出加没加上 / 移没移出。移出不给「飞回列表」的起点矩形——那一格这会儿看不见，
    * 直接从批次里摘掉。
    */
-  const handleTogglePendingImage = useCallback(
+  const handleTogglePendingPreview = useCallback(
     (path: string) => {
       const entry = known.get(path);
 
@@ -108,5 +109,5 @@ export const usePendingDrag = (
     [known, pending],
   );
 
-  return { handleDragStartEntry, handleTogglePendingImage, handleTrayDrop };
+  return { handleDragStartEntry, handleTogglePendingPreview, handleTrayDrop };
 };

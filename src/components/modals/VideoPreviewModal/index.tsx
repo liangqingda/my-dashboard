@@ -1,7 +1,7 @@
 /**
  * 视频预览弹窗：`FreeModal`（外壳）+ `FreeVideo`（播放器）的组合，B 站式布局——
  * 画面占满舞台，操作全部收进播放器底部控制栏：进度条独占上层，下层左侧前后 / 播放 / 时间，
- * 右侧选集（点击弹层）、删除、截图、外部打开、设置、网页全屏、整屏全屏。
+ * 右侧选集（点击弹层）、删除、截图、外部打开、加入 / 移出待拖拽区、设置、网页全屏、整屏全屏。
  *
  * - header 只留标题与外壳关闭按钮，不再放业务操作；翻篇计数浮在舞台左上角；
  * - 键盘：空格按设置切播放 / 暂停或关窗（`FreeModal` 的 `media` / `closeOnSpace`），
@@ -42,6 +42,7 @@ import styles from './index.scss';
 
 const VideoPreviewModal = ({
   activeId,
+  batched = false,
   blocked = false,
   defaultFullscreen = false,
   items,
@@ -51,6 +52,7 @@ const VideoPreviewModal = ({
   onPickDir,
   onRequestDelete,
   onSelect,
+  onToggleBatch,
   opened,
   storageScope,
 }: VideoPreviewModalProps) => {
@@ -273,6 +275,7 @@ const VideoPreviewModal = ({
           actions={
             <VideoFooterActions
               activeId={activeItem.id}
+              batched={batched}
               browserFullscreen={fullscreen}
               capturing={capturing}
               items={items}
@@ -284,6 +287,7 @@ const VideoPreviewModal = ({
               onRequestDelete={onRequestDelete ? requestDelete : null}
               onSelect={selectItem}
               onSettingsChangeOpened={setSettingsOpen}
+              onToggleBatch={onToggleBatch}
               onToggleBrowserFullscreen={toggleBrowserFullscreen}
               onToggleViewportFullscreen={toggleViewportFullscreen}
               settings={{

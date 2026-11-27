@@ -148,22 +148,31 @@ export const useFilesPageState = () => {
     [pending.entries],
   );
 
-  /** 预览中的这张图是否已在待拖拽区：图片预览 header 那颗按钮据此显示「已在待拖拽区」 */
+  /** 视频弹窗现在开着哪一条（关着是 null）：两处判定共用，免得各拍一份 */
+  const { activeId: videoActiveId } = videoPreview;
+
+  /** 两扇预览里「当前这一条是否已在待拖拽区」：各自那颗按钮据此亮成强调色 */
   const imageStaged =
     imagePreview.activeItem !== null && pending.has(imagePreview.activeItem.id);
+  const videoStaged = videoActiveId !== null && pending.has(videoActiveId);
 
   /**
-   * 图片预览 header 的「加入 / 移出待拖拽区」：这里只把当前这张的路径交出去，
-   * 认条目、加成还是移出、那条提示都在 `usePendingDrag.handleTogglePendingImage`。
+   * 预览里的「加入 / 移出待拖拽区」：这里只把当前这一条的路径交出去，
+   * 认条目、加成还是移出、那条提示都在 `usePendingDrag.handleTogglePendingPreview`。
    */
-  const { handleTogglePendingImage } = drag;
+  const { handleTogglePendingPreview } = drag;
   const toggleImage = useCallback(() => {
     const active = imagePreview.activeItem;
 
     if (active !== null) {
-      handleTogglePendingImage(active.id);
+      handleTogglePendingPreview(active.id);
     }
-  }, [handleTogglePendingImage, imagePreview.activeItem]);
+  }, [handleTogglePendingPreview, imagePreview.activeItem]);
+  const toggleVideo = useCallback(() => {
+    if (videoActiveId !== null) {
+      handleTogglePendingPreview(videoActiveId);
+    }
+  }, [handleTogglePendingPreview, videoActiveId]);
 
   /** 切换某块弹层：再点一次同一块则收起 */
   const togglePanel = useCallback(
@@ -270,10 +279,12 @@ export const useFilesPageState = () => {
     toggleImage,
     togglePinnedFavorite,
     togglePanel,
+    toggleVideo,
     entryActions,
     entryDelete,
     unlock,
     videoPreview,
+    videoStaged,
     videoApp: settings.videoApp,
     videoOpenMode: settings.videoOpenMode,
     videoThumbStyle: settings.videoThumbStyle,

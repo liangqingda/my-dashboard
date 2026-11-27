@@ -14,9 +14,9 @@
  * 把列表挤到右边、高度撑满内容区（不再浮在列表上）。
  * 攒下东西后点条目只做「加入 / 移除」，整批搬走归待拖拽区底部的「拖拽全部」按钮，
  * 「选择全部 / 取消」也在那条底部条上（面板本身不再是拖拽热区）。
- * 图片预览 header 上还有一颗「加入 / 移出待拖拽区」：看大图时不用回网格按修饰键点，
- * 也能把当前这张收进这一批、或再点一次撤出去；那一下只弹一条提示，待拖拽区等关掉预览才浮出来
- * （它比弹窗高一层，露出来会压住画面）。
+ * 两扇预览各有一颗「加入 / 移出待拖拽区」（图片在 header、视频在控制栏）：看大图或看视频时
+ * 不用回网格按修饰键点，也能把当前这条收进这一批、或再点一次撤出去；那一下只弹一条提示，
+ * 待拖拽区等关掉预览才浮出来（它比弹窗高一层，露出来会压住画面）。
  * 标题栏筛选面板支持按名称关键词过滤与按类型勾选，取消勾选的类型连同对应文件夹一起隐藏。
  * 列表只列摘要；点视频条目会在弹窗里播放（设置里可改成交给外部播放器），
  * 点图片条目会在同形的弹窗里预览，两者的翻篇与列表点选都基于当前目录的同类列表
@@ -95,12 +95,14 @@ const Files = () => {
     toggleImage,
     togglePinnedFavorite,
     togglePanel,
+    toggleVideo,
     entryActions,
     entryDelete,
     unlock,
     videoPreview,
     videoApp,
     videoOpenMode,
+    videoStaged,
     videoThumbStyle,
     view,
     volumeEject,
@@ -252,7 +254,9 @@ const Files = () => {
           imageStaged,
           onRequestDelete: requestDelete,
           onToggleImage: toggleImage,
+          onToggleVideo: toggleVideo,
           video: videoPreview,
+          videoStaged,
         }}
       />
     </MenuContentLayout>

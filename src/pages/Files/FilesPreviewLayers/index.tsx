@@ -59,6 +59,10 @@ export type FilesPreviewLayersProps = {
   onRequestWallpaper: () => void;
   /** 把预览中的这张图加入 / 移出待拖拽区（方向由 `imageStaged` 说） */
   onToggleImage: () => void;
+  /** 把预览中的这条视频加入 / 移出待拖拽区（方向由 `videoStaged` 说） */
+  onToggleVideo: () => void;
+  /** 预览中的这条视频是否已在待拖拽区（控制栏那颗按钮的「已加入」态） */
+  videoStaged: boolean;
   /** 删除确认开着：两扇弹窗都收掉快捷键与焦点陷阱 */
   blocked: boolean;
 };
@@ -80,13 +84,16 @@ const FilesPreviewLayers = ({
   onSelectImage,
   onSelectVideo,
   onToggleImage,
+  onToggleVideo,
   videoActiveId,
   videoItems,
+  videoStaged,
 }: FilesPreviewLayersProps) => (
   /* 容器只为挂载，`display: contents` 不进布局：两扇弹窗都挂在 body 里的 portal 上 */
   <div className={styles.layers}>
     <VideoPreviewModal
       activeId={videoActiveId}
+      batched={videoStaged}
       blocked={blocked}
       defaultFullscreen={defaultFullscreen.video}
       items={videoItems}
@@ -98,6 +105,7 @@ const FilesPreviewLayers = ({
         videoActiveId !== null ? () => onRequestDelete(videoActiveId) : null
       }
       onSelect={onSelectVideo}
+      onToggleBatch={onToggleVideo}
       opened={videoActiveId !== null}
       storageScope={FILES_STORAGE_SCOPE}
     />

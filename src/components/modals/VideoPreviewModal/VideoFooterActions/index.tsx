@@ -1,6 +1,7 @@
 /**
- * 控制栏下层右侧的操作组：选集（点击弹层）→ 删除 → 截图 → 外部打开 → 设置 →
- * 网页全屏 → 整屏全屏，顺序固定在这里；按钮外观与弹窗其余图标同一档。
+ * 控制栏下层右侧的操作组：选集（点击弹层）→ 删除 → 截图 → 外部打开 →
+ * 加入 / 移出待拖拽区 → 设置 → 网页全屏 → 整屏全屏，顺序固定在这里；
+ * 按钮外观与弹窗其余图标同一档。
  *
  * 设置面板的取值与回调仍由弹窗持有，这里只把它的入口按钮排进这一组。
  */
@@ -9,6 +10,7 @@ import {
   IconArrowsDiagonal,
   IconArrowsDiagonalMinimize,
   IconCamera,
+  IconDragDrop,
   IconExternalLink,
   IconTrash,
 } from '@tabler/icons-react';
@@ -27,6 +29,7 @@ const ICON_STROKE = 1.8;
 
 const VideoFooterActions = ({
   activeId,
+  batched = false,
   browserFullscreen,
   capturing,
   items,
@@ -36,6 +39,7 @@ const VideoFooterActions = ({
   onRequestDelete,
   onSelect,
   onSettingsChangeOpened,
+  onToggleBatch,
   onToggleBrowserFullscreen,
   onToggleViewportFullscreen,
   settings,
@@ -78,6 +82,17 @@ const VideoFooterActions = ({
         tipDark={tipDark}
       >
         <IconExternalLink size={ICON_SIZE} stroke={ICON_STROKE} />
+      </FreeIconAction>
+    ) : null}
+
+    {onToggleBatch ? (
+      <FreeIconAction
+        label={batched ? '从待拖拽区移出' : '加入待拖拽区（随后可整批拖走）'}
+        onClick={onToggleBatch}
+        tipDark={tipDark}
+        tone={batched ? 'accent' : 'normal'}
+      >
+        <IconDragDrop size={ICON_SIZE} stroke={ICON_STROKE} />
       </FreeIconAction>
     ) : null}
 
