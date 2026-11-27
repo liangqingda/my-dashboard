@@ -21,7 +21,10 @@
   打开即收起态，鼠标一动浮出、静止 1s 收起，指针停在 header 上不收起；
   `suspended` 暂停唤出（列表弹层 / 设置面板 / 二次确认开着时恒为可见）；`ignoreSelector` 圈掉
   「指针在里面活动不算唤出」的区域（如播放器控制栏）——指针一进去 header 当场收起、也不再排收起计时。
-  普通流 header 仍是实心 chrome 底。
+  **只有框体（`.content`）里的指针活动才算唤出**：外面那层遮罩不属于内容，非全屏时四周都是遮罩，
+  在窗外挪鼠标不该把标题栏顶出来（`surfaceSelector`，外壳自己按 `MODAL_CONTENT_SELECTOR` 给）。
+  两个选择器都从本组件导出（`MODAL_HEADER_SELECTOR` / `MODAL_CONTENT_SELECTOR`），业务侧要判断
+  「指针在哪一层」时用它们，不要去挑 CSS module 的哈希类名。普通流 header 仍是实心 chrome 底。
 - **header 里的按钮**：翻页与全屏走 `FreeIconAction`（`size="sm"`、语气恒为 `normal`、tip 与 `aria-label` 同句，
   键位提示走 `tooltipLabel`），**外壳不自维护图标按钮样式**；关闭按钮是组件库 `Modal` 内建的 `closeButton`。
 - **header 的顺序与间距**：翻页与计数 → 标题 → `headerActions` → 全屏 → `headerTail` →
@@ -84,7 +87,7 @@
 | `headerActions` | 第一组操作（阅读类：复制、筛选、刷新…） |
 | `headerTail` | 排在全屏之后的末尾位，保证「删除」始终在最右 |
 | `headerSecondary` | 第二组操作（如编辑流程），紧接在 `headerTail` 之后、关闭按钮的竖线之前 |
-| `headerOverlay` | `FreeModalHeaderOverlay`；传了就把 header 改成毛玻璃浮层并接管显隐（打开即收起、隐藏时不接收指针事件；收起只影响外观，不卸载按钮）。鼠标一动浮出、静止 1s 收起、指针停在 header 上不收起；`suspended` 暂停唤出并恒为可见，`ignoreSelector` 圈掉不算唤出的区域（如播放器控制栏，指针一进去就当场收起） |
+| `headerOverlay` | `FreeModalHeaderOverlay`；传了就把 header 改成毛玻璃浮层并接管显隐（打开即收起、隐藏时不接收指针事件；收起只影响外观，不卸载按钮）。鼠标一动浮出、静止 1s 收起、指针停在 header 上不收起；`suspended` 暂停唤出并恒为可见，`ignoreSelector` 圈掉不算唤出的区域（如播放器控制栏，指针一进去就当场收起）；只有落在框体（`.content`）里的指针活动才算唤出，遮罩上不动 header |
 | `overlayTone` | 遮罩色调：`light`（默认）给普通弹窗，`dark` 给图片 / 视频这类要靠深底看画面的预览；两档的虚化与饱和同一套，只换底色 |
 | `media` | `{ onTogglePlay, onToggleMute }`；传了 `onTogglePlay` 之后空格切播放 / 暂停、不再关窗，传了 `onToggleMute` 才有 `M` 静音 |
 | `tipDark` | 可选。header 内按钮、标题与计数固定取媒体浮层浅字档（连同 tip 深底浅字），不随主题反转；媒体预览压在画面上的提示与控件用 |

@@ -32,6 +32,7 @@ import {
   VEIL_OPACITY_STORAGE_KEY,
   VIDEO_THUMB_STYLE_STORAGE_KEY,
 } from '../constants';
+import { snapTileWidth } from '../utils/tile-width';
 import type {
   MoveMode,
   TypeFilterMode,
@@ -62,7 +63,7 @@ const MOVE_MODE_CODEC = createChoiceCodec<MoveMode>(['modal', 'direct'], 'modal'
 /** hover 玻璃层透明度：0–100 的百分比，脏值回落 100（完全不透明） */
 const VEIL_OPACITY_CODEC = createRangedNumberCodec(0, 100, 100);
 
-/** 网格瓦片宽度：120–248 的像素值，脏值回落 168（默认瓦片宽度） */
+/** 网格瓦片宽度：120–248 的像素值，读出来吸到 5 个档位之一（老存储值不在档位上） */
 const TILE_WIDTH_CODEC = createRangedNumberCodec(
   TILE_WIDTH_MIN,
   TILE_WIDTH_MAX,
@@ -91,7 +92,7 @@ export type UseFilesSettingsResult = {
   setImageFullscreen: (enabled: boolean) => void;
   /** 改视频预览的默认全屏 */
   setVideoFullscreen: (enabled: boolean) => void;
-  /** 网格瓦片宽度（px）：网格按它固定折列 */
+  /** 网格瓦片宽度（px）：只会是 5 个档位之一，网格按它算列数、再均分铺满 */
   tileWidth: number;
   /** 改网格瓦片宽度 */
   setTileWidth: (width: number) => void;
@@ -147,7 +148,7 @@ export const useFilesSettings = (): UseFilesSettingsResult => {
     VEIL_OPACITY_STORAGE_KEY,
     VEIL_OPACITY_CODEC,
   );
-  const [tileWidth, setTileWidth] = useStoredState(
+  const [storedTileWidth, setStoredTileWidth] = useStoredState(
     TILE_WIDTH_STORAGE_KEY,
     TILE_WIDTH_CODEC,
   );
@@ -172,6 +173,9 @@ export const useFilesSettings = (): UseFilesSettingsResult => {
     STRING_CODEC,
   );
 
+  /** 存储里可能留着老档位（168 这类），读出来先吸到最近的档位再交给滑块与网格 */
+  const tileWidth = snapTileWidth(storedTileWidth);
+
   return {
     filterMode,
     grouped,
@@ -185,7 +189,7 @@ export const useFilesSettings = (): UseFilesSettingsResult => {
     setLockPassword,
     setImageFullscreen,
     setMoveMode,
-    setTileWidth,
+    setTileWidth: (width: number) => setStoredTileWidth(snapTileWidth(width)),
     setVideoApp,
     setVideoFullscreen,
     setVideoOpenMode,

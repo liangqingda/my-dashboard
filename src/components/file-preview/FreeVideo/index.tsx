@@ -255,7 +255,7 @@ const FreeVideo = ({
     >
       <div className={styles.stage} ref={stageRef}>
         <video
-          className={styles.video}
+          className={cx(styles.video, expanded && styles.videoExpanded)}
           disablePictureInPicture
           onCanPlay={videoElement.handleCanPlay}
           onClick={handleVideoClick}

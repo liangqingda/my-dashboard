@@ -3,7 +3,7 @@
  * 塞进来的操作组（喇叭、选集、截图、外部打开、设置、全屏这类；B 站式排布）。
  *
  * 翻篇箭头排在播放键两侧（常见播放器的位置），是因为「上一条 / 下一条」在这里就是前后两格；
- * 这两颗箭头的 tip 只在指上去的 1.5s 内出现，之后自己收掉，免得压在进度条上。
+ * 播放区三颗按钮的 tip 只在指上去的 1s 内出现，之后自己收掉，免得常挂在播放条上压住进度。
  *
  * 进度条拖到哪就 seek 到哪（拖动过程连续 seek，松手不额外跳一次）；
  * 时长还没解出来时进度条禁用，避免 0 上限的滑块把当前时间压成 0。
@@ -45,7 +45,7 @@ const STEP_ICON_SIZE_EXPANDED = 23;
 const CONTROL_BUTTON_SIZE = 34;
 
 /** 翻篇箭头的 tip 只亮这么久就自己收掉：常挂在播放条上会挡住进度 */
-const STEP_TIP_DURATION = 1000;
+const PLAY_TIP_DURATION = 1000;
 
 const VideoControls = ({
   actions,
@@ -169,7 +169,7 @@ const VideoControls = ({
               onClick={nav.onPrevious ?? undefined}
               size={CONTROL_BUTTON_SIZE}
               tipDark={tipDark}
-              tipDuration={STEP_TIP_DURATION}
+              tipDuration={PLAY_TIP_DURATION}
             >
               <PlayerStepBackwardIcon size={stepIconSize} />
             </FreeIconAction>
@@ -181,6 +181,7 @@ const VideoControls = ({
             onClick={onTogglePlay}
             size={CONTROL_BUTTON_SIZE}
             tipDark={tipDark}
+            tipDuration={PLAY_TIP_DURATION}
           >
             {playing ? (
               <PlayerPauseIcon size={playIconSize} />
@@ -196,7 +197,7 @@ const VideoControls = ({
               onClick={nav.onNext ?? undefined}
               size={CONTROL_BUTTON_SIZE}
               tipDark={tipDark}
-              tipDuration={STEP_TIP_DURATION}
+              tipDuration={PLAY_TIP_DURATION}
             >
               <PlayerStepForwardIcon size={stepIconSize} />
             </FreeIconAction>

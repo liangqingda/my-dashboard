@@ -6,11 +6,14 @@
  * 监听挂在 window 上而不是 header 自身——header 收起后指针不可能再停在它上面，
  * 挂在它自己身上就再也唤不出来。每次活动都重置计时器，按住不放的移动不会被当成「静止」。
  *
- * 两个选择器圈出两种「不算普通指针活动」的区域：
+ * 三个选择器圈出三种特殊区域：
  * - `holdSelector`：指针停在上面就不收起（传 header 自身），停在那一块里多久都保持可见，
  *   指针移到别处才开始计时收起；
  * - `ignoreSelector`：指针在里面活动**不算唤出**（如播放器控制栏）。控制栏有自己的显隐节奏，
- *   在上面挪指针不该把 header 顶出来：一进去就当场收起，也不再排收起计时。
+ *   在上面挪指针不该把 header 顶出来：一进去就当场收起，也不再排收起计时；
+ * - `surfaceSelector`：只有落在框体（`.content`）里的指针活动才算数。弹窗外面那层遮罩
+ *   不属于内容，在遮罩上晃鼠标不该把 header 唤出来——预览弹窗非全屏时四周都是遮罩，
+ *   指针只是路过窗外，画面里的标题栏忽然浮出就很怪。
  *
  * 只认指针移动 / 滚轮：点击本身不算活动——点画面是切播放 / 收弹层，
  * 不该在按下那一刻顺手把 header 顶出来。
@@ -29,6 +32,8 @@ type UseAutoHideHeaderOptions = {
   holdSelector?: string;
   /** 指针在命中的区域里活动不算唤出（如播放器控制栏） */
   ignoreSelector?: string;
+  /** 指针必须落在命中的区域里才算活动（传弹窗内容框）：遮罩上不算 */
+  surfaceSelector?: string;
 };
 
 /**
@@ -39,6 +44,7 @@ export const useAutoHideHeader = ({
   enabled,
   holdSelector,
   ignoreSelector,
+  surfaceSelector,
 }: UseAutoHideHeaderOptions): boolean => {
   const [visible, setVisible] = useState(false);
 
@@ -74,6 +80,15 @@ export const useAutoHideHeader = ({
     /** 指针移动 / 滚轮：亮出 header，并按这次活动重新计时收起 */
     const handleActivity = (event: Event) => {
       const target = event.target instanceof Element ? event.target : null;
+
+      // 遮罩这类框体外的区域：不算唤出，header 当场收起（指针只是路过窗外）
+      if (surfaceSelector !== undefined && !hits(target, surfaceSelector)) {
+        holding = false;
+        clearTimer();
+        hide();
+
+        return;
+      }
 
       // 控制栏这类自己管显隐的 chrome：header 当场收起，也不重新计时
       if (hits(target, ignoreSelector)) {
@@ -118,7 +133,7 @@ export const useAutoHideHeader = ({
       window.removeEventListener('wheel', handleActivity);
       document.removeEventListener('pointerleave', handleLeaveWindow);
     };
-  }, [delay, enabled, holdSelector, ignoreSelector]);
+  }, [delay, enabled, holdSelector, ignoreSelector, surfaceSelector]);
 
   /** 非启用态恒为可见：暂停时不必再走一遍自动隐藏 */
   return !enabled || visible;

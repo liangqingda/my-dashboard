@@ -49,6 +49,12 @@ const NAV_SHORTCUT_HINT = '[ / ← · ] / →';
 export const MODAL_HEADER_SELECTOR = `.${styles.header}`;
 
 /**
+ * 框体那一层的选择器：给「只有指针落在内容框里才算活动」用。
+ * 弹窗外面那层遮罩不属于内容——预览弹窗非全屏时四周都是遮罩，在遮罩上挪指针不该唤出 header。
+ */
+export const MODAL_CONTENT_SELECTOR = `.${styles.content}`;
+
+/**
  * 基础弹窗外壳。业务侧只管「标题是什么、右侧放哪些操作、正文是什么」，
  * header 的排布、全屏与关闭按钮的位置固定在这里。
  */
@@ -124,6 +130,7 @@ const FreeModal = ({
     enabled: headerOverlay !== undefined && headerOverlay.suspended !== true,
     holdSelector: MODAL_HEADER_SELECTOR,
     ignoreSelector: headerOverlay?.ignoreSelector,
+    surfaceSelector: headerIsOverlay ? MODAL_CONTENT_SELECTOR : undefined,
   });
   /** 收起态只对浮层 header 有意义：普通流 header 不参与显隐 */
   const headerHidden = headerIsOverlay && !autoHideVisible;

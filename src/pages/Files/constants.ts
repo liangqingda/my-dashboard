@@ -89,12 +89,13 @@ export const TILE_WIDTH_STORAGE_KEY = scopedStorageKey(
 
 /**
  * 网格瓦片宽度（px）：设置面板「瓦片宽度」调的就是它，决定网格**一列至少多宽**。
- * 实际列数按内容区宽度算、列宽由剩余空间均分铺满（口径见 `DirectoryGrid/README.md`），
- * 所以列数不变时相邻档位看不出外框变化——这是「铺满整行」的必然结果。
+ * 实际列数按内容区宽度算、列宽由剩余空间均分铺满（口径见 `DirectoryGrid/README.md`）。
+ * 滑块只在 5 个档位上停（120 / 152 / 184 / 216 / 248，见 `TILE_WIDTH_STEP`）：
+ * 一档跨 32px，拖动每一格基本都会重排列数，不必在「过了好几个像素还没反应」的细档里空拖。
  * 可调区间见下方 `TILE_WIDTH_*`：再窄图源与名称会挤成一条，再宽一屏只剩一两列；
- * 默认值 168 落在区间内且是步长的整数倍，滑块才能正好停在默认档。
+ * 默认值取中间那一档，滑块才会正好停在默认位置。
  */
-export const DEFAULT_TILE_WIDTH = 168;
+export const DEFAULT_TILE_WIDTH = 184;
 
 /** 可调下限（px） */
 export const TILE_WIDTH_MIN = 120;
@@ -102,8 +103,12 @@ export const TILE_WIDTH_MIN = 120;
 /** 可调上限（px）：248 时一屏还能排五六列，再宽就只剩三四列、列宽也被铺满拉得很开 */
 export const TILE_WIDTH_MAX = 248;
 
-/** 滑块步长（px） */
-export const TILE_WIDTH_STEP = 8;
+/**
+ * 滑块步长（px）：区间正好被 4 步切成 5 个档位（120 / 152 / 184 / 216 / 248）。
+ * 档位之间跨 32px，相邻两档落在同一列数里的机会很小；老存储值（168 这类旧默认）
+ * 读出来按最近的档位落位，见 `utils/tile-width.ts` 的 `snapTileWidth`。
+ */
+export const TILE_WIDTH_STEP = 32;
 
 /**
  * 网格列间距（px）：样式里的 `gap` 与「按容器宽度算列数」共用这一个值，
