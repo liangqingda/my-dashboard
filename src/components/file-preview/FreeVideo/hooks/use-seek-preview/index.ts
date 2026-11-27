@@ -6,6 +6,11 @@
  * 帧只在停稳 `HOVER_SETTLE_DELAY`（150ms）后换（比浮出早 150ms 发请求，浮出时通常已经是画面、
  * 而不是先转圈）。移动过程中保留上一张：一路扫过去不抽帧，探针不用被反复打断。
  *
+ * 浮出**不看探针就绪**：就绪与否是「帧到没到」的事，不是「要不要回话」的事。早 hover 的时候
+ * 探针可能还在拿元数据，两档计时要是都卡在就绪上，指针不动就永远等不到——看起来就是
+ * 「hover 了、几秒没反应」。所以照常浮出、浮层里转圈，请求照发（`use-video-frames` 会存着，
+ * 探针一就绪就抽）。
+ *
  * 停着不动的鼠标也会送 ±1px 的 move，那不算移动——算进去的话两档计时被一直重排，
  * 浮层与帧都出不来。
  *
@@ -13,7 +18,7 @@
  * 截图要存的是「看到的这一帧」，不是光标此刻那一秒。
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import type { SeekPreviewState } from '../../VideoControls/types';
 
@@ -54,8 +59,8 @@ export type SeekPreviewFrame = {
 
 /** 悬停预览入参 */
 export type UseSeekPreviewOptions = {
-  /** 抽帧是否可用（探针已拿到元数据）：false 时浮层不出图，进度条继续用数字浮标 */
-  previewReady: boolean;
+  /** 抽帧这条路还能不能用（探针元数据始终拿不到时为 false）：不能时干脆不浮出，进度条用数字浮标 */
+  framesAvailable: boolean;
   /** 请求某一时刻的帧：已缓存同步回调，否则排队现抽 */
   requestFrame: (time: number, onFrame: (url: string) => void) => void;
   /** 浮层正显示的那一帧（收起 / 还没出图时给 `null`）：截图按它决定存哪一帧 */
@@ -77,8 +82,8 @@ export type UseSeekPreviewResult = {
 };
 
 export const useSeekPreview = ({
+  framesAvailable,
   onPreviewFrameChange,
-  previewReady,
   requestFrame,
 }: UseSeekPreviewOptions): UseSeekPreviewResult => {
   /** 指针落点：null 表示浮层不显示 */
@@ -163,7 +168,7 @@ export const useSeekPreview = ({
    * 取某一落点的帧：与上次请求几乎同处就不重抽（指针抖动不该反复 seek）。
    * 新帧回来之前**保持当前这张**，不先转圈——一路扫过去时反复「转圈 → 出图」才是那个闪。
    */
-  const requestPreviewFrame = useCallback((spot: SeekPreviewState): void => {
+  const requestPreviewFrame = (spot: SeekPreviewState): void => {
     const previous = lastAskedTimeRef.current;
     const sameSpot =
       previous !== null && Math.abs(previous - spot.time) < SAME_SPOT_EPSILON;
@@ -188,28 +193,7 @@ export const useSeekPreview = ({
 
       setFrame({ time: spot.time, url });
     });
-  }, [requestFrame]);
-
-  /**
-   * 指针早就停在进度条上、探针这时才就绪：把那次「等过头的停留」补上。
-   * 两档计时的门槛里都有 `previewReady`，探针没就绪时它们空跑一轮就结束了；
-   * 没有这一步，指针不动就永远等不到，用户看到的正是「hover 了、等几秒也没反应」。
-   */
-  useEffect(() => {
-    if (!previewReady) {
-      return;
-    }
-
-    const spot = spotRef.current;
-
-    if (spot === null) {
-      return;
-    }
-
-    /** 指针还停着就先把浮层摆出来（它已经等过门槛了），再补上这一处的帧 */
-    setPreview((current) => current ?? spot);
-    requestPreviewFrame(spot);
-  }, [previewReady, requestPreviewFrame]);
+  };
 
   /**
    * 指针移到某落点：浮出前后两套节奏——没浮出时停够才浮出（划过不闪），
@@ -236,7 +220,7 @@ export const useSeekPreview = ({
 
       const next = spotRef.current;
 
-      if (previewReady && next !== null) {
+      if (framesAvailable && next !== null) {
         requestPreviewFrame(next);
       }
     }, HOVER_SETTLE_DELAY);
@@ -255,8 +239,8 @@ export const useSeekPreview = ({
 
       const next = spotRef.current;
 
-      // 探针还没拿到元数据：浮层出不来图，进度条继续用数字浮标（别叠两套浮层）
-      if (!previewReady || next === null) {
+      // 这一部片子抽不出帧：别摆一个永远转圈的浮层，进度条继续用数字浮标
+      if (!framesAvailable || next === null) {
         return;
       }
 

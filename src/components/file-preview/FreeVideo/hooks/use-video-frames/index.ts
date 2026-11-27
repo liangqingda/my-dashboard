@@ -24,6 +24,8 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 import {
   FRAME_CACHE_LIMIT,
   FRAME_CAPTURE_PRESENT_TIMEOUT,
+  FRAME_CAPTURE_RETRY_DELAY,
+  FRAME_CAPTURE_RETRY_LIMIT,
   FRAME_DRAW_READY_STATE,
   FRAME_JPEG_QUALITY,
   FRAME_RETRY_OFFSET,
@@ -48,6 +50,11 @@ export type UseVideoFramesOptions = {
   probeRef: RefObject<HTMLVideoElement | null>;
   /** 视频地址：换片即清缓存重来 */
   src: string;
+  /**
+   * 主视频元素：同一份文件、同一次解析，时长与画面尺寸都以它为准，
+   * 探针不必自己再等一遍 `loadedmetadata`——hover 一到就能直接 seek。
+   */
+  sourceRef?: RefObject<HTMLVideoElement | null>;
   /** 帧图最长边像素：预览框宽 × 设备像素比，窗口越大帧图越清 */
   frameLongestEdge: number;
 };
@@ -66,10 +73,14 @@ export type UseVideoFramesResult = {
   grabFrame: (time: number) => Promise<string | null>;
   /** 探针是否已拿到元数据：false 时预览整块不可用 */
   ready: boolean;
+  /** 探针这条路彻底废了（元数据始终拿不到，`ready` 永远不会是 true） */
+  failed: boolean;
 };
 
 /** 一帧的检索与抽取单位：时间桶号 + 取帧秒数 + 拿到图后交给谁 */
 type FrameJob = {
+  /** 已经抽过几次（0 表示第一次）：失败后按同一位置再试一次 */
+  attempts: number;
   /** 缓存键（时间桶号） */
   bucket: number;
   /** 抽好后回调 */
@@ -82,8 +93,10 @@ export const useVideoFrames = ({
   frameLongestEdge,
   onDemand,
   probeRef,
+  sourceRef,
   src,
 }: UseVideoFramesOptions): UseVideoFramesResult => {
+  const [failed, setFailed] = useState(false);
   const [ready, setReady] = useState(false);
   /** 时间桶号 → JPEG data URL */
   const cacheRef = useRef<Map<number, string>>(new Map());
@@ -121,7 +134,7 @@ export const useVideoFrames = ({
       }
 
       latestRef.current += 1;
-      pendingRef.current = { bucket, onFrame, time };
+      pendingRef.current = { attempts: 0, bucket, onFrame, time };
       pumpRef.current?.();
     },
     [onDemand],
@@ -145,6 +158,7 @@ export const useVideoFrames = ({
     pendingRef.current = null;
     latestRef.current = 0;
     readyRef.current = false;
+    setFailed(false);
     setReady(false);
 
     const canvas = document.createElement('canvas');
@@ -170,7 +184,13 @@ export const useVideoFrames = ({
         shouldStop: giveUp,
       });
 
-      if (giveUp() || context === null || !presented) {
+      if (giveUp() || context === null) {
+        return;
+      }
+
+      if (!presented) {
+        scheduleRetry(job, generation);
+
         return;
       }
 
@@ -190,6 +210,34 @@ export const useVideoFrames = ({
       }
 
       job.onFrame(url);
+    };
+
+    /**
+     * 没抽到这一帧：隔一会儿按同一位置再抽一次。
+     *
+     * 第一次多半栽在「冷位置的数据还没读进来」，等的这几百毫秒里读流会把那一段落到缓存，
+     * 第二次通常就成。不重试的话浮层会一直转圈，直到用户再动一下指针——看着就像「没反应」。
+     */
+    const scheduleRetry = (job: FrameJob, generation: number): void => {
+      if (
+        job.attempts >= FRAME_CAPTURE_RETRY_LIMIT ||
+        latestRef.current !== generation
+      ) {
+        return;
+      }
+
+      setTimeout(() => {
+        if (
+          isCancelled() ||
+          latestRef.current !== generation ||
+          pendingRef.current !== null
+        ) {
+          return;
+        }
+
+        pendingRef.current = { ...job, attempts: job.attempts + 1 };
+        pump();
+      }, FRAME_CAPTURE_RETRY_DELAY);
     };
 
     /**
@@ -262,18 +310,29 @@ export const useVideoFrames = ({
       void step();
     };
 
-    /** 等元数据 → 定好画布尺寸 → 打开可用开关；之后全部由 `requestFrame` 驱动 */
+    /**
+     * 定好时长与画布尺寸、打开可用开关；之后全部由 `requestFrame` 驱动。
+     *
+     * 主视频已经把时长与画面尺寸解出来了（同一份文件、同一次解析），就不必再等探针自己的
+     * `loadedmetadata`：省掉一轮往返，hover 一到直接 seek。拿不到这两项时才退回去读探针。
+     */
     const run = async (): Promise<void> => {
       try {
-        const seconds = await readDuration(element);
+        const source = sourceRef?.current ?? null;
+        const hintDuration = source !== null && source.duration > 0 ? source.duration : 0;
+        const hintWidth = source?.videoWidth ?? 0;
+        const hintHeight = source?.videoHeight ?? 0;
+
+        duration = hintDuration > 0 ? hintDuration : await readDuration(element);
 
         if (isCancelled()) {
           return;
         }
 
-        duration = seconds;
-
-        const size = frameCanvasSize(element, frameLongestEdge);
+        const size =
+          hintWidth > 0 && hintHeight > 0
+            ? frameCanvasSize(hintWidth, hintHeight, frameLongestEdge)
+            : frameCanvasSize(element.videoWidth, element.videoHeight, frameLongestEdge);
 
         canvas.width = size.width;
         canvas.height = size.height;
@@ -287,7 +346,8 @@ export const useVideoFrames = ({
          */
         pump();
       } catch {
-        // 拿不到元数据：预览保持不可用，进度条回落数字浮标，界面上不留痕迹
+        // 拿不到元数据：这一部片子没有悬停预览，进度条回落数字浮标
+        setFailed(true);
       }
     };
 
@@ -301,7 +361,7 @@ export const useVideoFrames = ({
       pendingRef.current = null;
       cacheRef.current = new Map();
     };
-  }, [frameLongestEdge, probeRef, src]);
+  }, [frameLongestEdge, probeRef, sourceRef, src]);
 
   const grabFrame = useCallback(
     (time: number): Promise<string | null> =>
@@ -309,5 +369,5 @@ export const useVideoFrames = ({
     [],
   );
 
-  return { grabFrame, ready, requestFrame };
+  return { failed, grabFrame, ready, requestFrame };
 };

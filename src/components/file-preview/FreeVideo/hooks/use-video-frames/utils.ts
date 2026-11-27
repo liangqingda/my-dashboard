@@ -22,27 +22,31 @@ import {
 /** 时间 → 缓存桶号：同一个桶内 hover 复用同一张图 */
 export const bucketOf = (time: number): number => Math.round(time / FRAME_TIME_BUCKET);
 
-/** 帧图的长宽：按最长边缩放，源本身比目标还小就不放大；尺寸读不出来时按 16:9 兜底 */
+/**
+ * 帧图的长宽：按最长边缩放，源本身比目标还小就不放大；尺寸读不出来时按 16:9 兜底。
+ * 源尺寸由调用方给数字而不是给 `<video>`：主视频已经把画面尺寸解出来了，探针不必再等一遍。
+ */
 export const frameCanvasSize = (
-  video: HTMLVideoElement,
+  sourceWidth: number,
+  sourceHeight: number,
   longestEdge: number,
 ): { width: number; height: number } => {
   if (!Number.isFinite(longestEdge) || longestEdge <= 0) {
     return { height: 1, width: 1 };
   }
 
-  if (video.videoWidth <= 0 || video.videoHeight <= 0) {
+  if (sourceWidth <= 0 || sourceHeight <= 0) {
     return {
       height: Math.round(longestEdge / VIDEO_FALLBACK_ASPECT),
       width: longestEdge,
     };
   }
 
-  const scale = Math.min(1, longestEdge / Math.max(video.videoWidth, video.videoHeight));
+  const scale = Math.min(1, longestEdge / Math.max(sourceWidth, sourceHeight));
 
   return {
-    height: Math.round(video.videoHeight * scale),
-    width: Math.round(video.videoWidth * scale),
+    height: Math.round(sourceHeight * scale),
+    width: Math.round(sourceWidth * scale),
   };
 };
 

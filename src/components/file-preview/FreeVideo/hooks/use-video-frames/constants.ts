@@ -47,6 +47,15 @@ export const FRAME_DRAW_READY_STATE = 2;
 /** `readyState` 到「已有元数据」的档位：到这一档才读得到时长与画面尺寸 */
 export const READY_STATE_METADATA = 1;
 
+/**
+ * 抽帧失败后的自动重试次数：第一次没抽到多半是冷位置还没读进来，
+ * 隔一会儿按同一位置再抽一次通常就成——不让浮层一直转圈等下一次 hover。
+ */
+export const FRAME_CAPTURE_RETRY_LIMIT = 1;
+
+/** 重试前等多久（毫秒）：给在途的读流一点时间落盘到浏览器缓存 */
+export const FRAME_CAPTURE_RETRY_DELAY = 400;
+
 /** 抽帧时间离片尾留的余量（秒）：seek 到正片尾可能停在最后一帧，多留一点更稳 */
 export const FRAME_TAIL_GUARD = 0.05;
 

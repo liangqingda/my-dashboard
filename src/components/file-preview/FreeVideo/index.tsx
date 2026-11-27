@@ -144,10 +144,11 @@ const FreeVideo = ({
     src,
     videoRef: ownRef,
   });
-  const { grabFrame, ready: previewReady, requestFrame } = useVideoFrames({
+  const { failed: framesFailed, grabFrame, requestFrame } = useVideoFrames({
     frameLongestEdge,
     onDemand: armProbe,
     probeRef,
+    sourceRef: ownRef,
     src: probeSrc,
   });
 
@@ -330,13 +331,13 @@ const FreeVideo = ({
           duration={duration}
           enabled={status === 'ready'}
           expanded={expanded}
+          framesAvailable={!framesFailed}
           nav={nav}
           onPreviewFrameChange={handlePreviewFrameChange}
           onSeek={seek}
           onTogglePlay={togglePlay}
           playing={playing}
           previewHeight={previewSize.height}
-          previewReady={previewReady}
           previewWidth={previewSize.width}
           requestFrame={requestFrame}
           tipDark={tipDark}

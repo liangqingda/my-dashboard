@@ -59,7 +59,7 @@ const VideoControls = ({
   onTogglePlay,
   playing,
   previewHeight,
-  previewReady,
+  framesAvailable,
   previewWidth,
   requestFrame,
   tipDark = false,
@@ -76,8 +76,8 @@ const VideoControls = ({
     move: movePreview,
     preview,
   } = useSeekPreview({
+    framesAvailable,
     onPreviewFrameChange,
-    previewReady,
     requestFrame,
   });
 
@@ -138,8 +138,8 @@ const VideoControls = ({
             track: styles.track,
           }}
           disabled={!enabled || duration <= 0}
-          /* 预览可用时数字浮标让位给帧浮层，免两套浮层叠在一起 */
-          label={previewReady ? null : formatProgressLabel}
+          /* 浮层出现时数字浮标让位，免两套浮层叠在一起（帧还没到就先在浮层里转圈） */
+          label={preview !== null ? null : formatProgressLabel}
           max={duration > 0 ? duration : 1}
           onChange={onSeek}
           size="md"

@@ -47,8 +47,11 @@ export type VideoControlsProps = {
   nav?: FreeVideoNav;
   /** 请求某一时刻的帧：已缓存同步回调，否则排队现抽；抽到后回调拿到图 */
   requestFrame: (time: number, onFrame: (url: string) => void) => void;
-  /** 抽帧是否可用（探针已拿到元数据）：false 时不显示预览、进度条回落数字浮标 */
-  previewReady: boolean;
+  /**
+   * 抽帧这条路还能不能用（探针的元数据始终拿不到时为 `false`，这一部片子就没有悬停预览）。
+   * 注意不是「现在有没有帧」：帧还没抽好照样浮出，浮层里转圈等着。
+   */
+  framesAvailable: boolean;
   /**
    * 悬停帧是否正显示在上面：显示时给这一帧的时间与图片（`url` 是浮层里的缩略图），
    * 收起 / 转圈等还没出图时给 `null`。截图按它决定存哪一帧。
