@@ -38,8 +38,9 @@
   width: 100%;
 }
 
-/* 轨道：平时比 Mantine 默认的 8px 细一档（4px）；指针进到这条热区就加粗到 12px（比原来还粗）。
-   只改轨道高度，根节点仍是 2×--slider-size，加粗不会把控制栏顶高、滑块也不用跟着挪 */
+/* 轨道：平时比 Mantine 默认的 8px 细一档（4px）；指针在热区里停住 100ms 才加粗到 12px，
+   只是从画面上划过去不会闪一下。只改轨道高度，根节点仍是 2×--slider-size，
+   加粗不会把控制栏顶高、滑块也不用跟着挪 */
 .progress .track {
   height: 4px;
   transition: height 120ms ease;
@@ -47,6 +48,8 @@
 
 .progressWrap:hover .track {
   height: 12px;
+  /* 延迟只挂在 hover 态：离开时按基础态的 0 延迟立刻收回去，不拖着 */
+  transition-delay: 100ms;
 }
 
 /* 轨道与已播放段换底都走同一个时长：进出 hover 是渐变，不硬切 */
