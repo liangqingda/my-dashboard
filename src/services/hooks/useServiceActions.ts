@@ -57,7 +57,8 @@ export function useServiceActions({
       const serviceName = service?.name ?? id;
       const label = ACTION_LABELS[action];
       // 工作台自身不允许停止：重启它会把页面到 dev server 的代理连接一起断掉
-      const restartsSelf = action === 'restart' && service?.canStop === false;
+      const restartsSelf =
+        action === 'restart' && service !== undefined && !service.canStop;
       /** 代理被切断（而不是接口报错）：成败只能等它重新上线后再判定 */
       let interrupted = false;
 

@@ -49,6 +49,8 @@
 8. **说明文档跟着代码走**：组件 / hook / 页面自己的规格写在其目录的 `README.md`（hook 要写说明
    时提升为 `hooks/<hook>/index.ts` + `README.md`），不进 `docs/`——`docs/` 只放跨文件的约定与
    流程，判据见 `docs/code-splitting.md`。
+9. **不做历史兼容**（单人本地自用）：改名 / 改格式 / 改字段一律硬切——旧路由不加重定向、
+   旧存储键与旧字段不写迁移，旧链接直接 404、旧数据直接丢弃；本机 agent 旧进程的在线热升级保留（运行时自愈）。
 
 以上由工具兜底的部分：`pnpm lint` 依次跑 `eslint .`（通用规则全部来自
 `@liangqingda/eslint-config` 的 `react-typed`：import 分组与空行、`@/pages/**` 排最后、

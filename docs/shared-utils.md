@@ -54,6 +54,8 @@
   `/english/knowledge-base` → `english-knowledge-base`、`/services` → `services`）；
   拼法只走 `@/utils/page-storage`：有 pathname 的地方用 `pageStorageKey(pathname, capability)`，
   页面 / 组件已经知道自己标识的地方用 `scopedStorageKey(scope, capability)`，别一处手拼、一处走工具。
+- **改名即失效，不写兼容**：页面标识或字段名一改，旧键里的偏好就直接不读；单人本地自用，
+  不写旧键迁移、不保留旧字段别名。
 - 例：`english-notes:view-mode`、`english-notes:notes-filter-range`、
   `english-notes:markdown-preview`、`english-notes:anchor-section-preview`、
   `english-knowledge-base:record-detail`、`english-notes:fullscreen`、

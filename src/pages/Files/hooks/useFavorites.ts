@@ -3,11 +3,7 @@ import { useCallback } from 'react';
 import { useStoredState } from '@/hooks/useStoredState';
 import type { StoredCodec } from '@/utils/local-storage';
 
-import {
-  DEFAULT_FAVORITES,
-  FAVORITES_STORAGE_KEY,
-  SYSTEM_APPS_FAVORITE,
-} from '../constants';
+import { DEFAULT_FAVORITES, FAVORITES_STORAGE_KEY } from '../constants';
 import type { FavoriteEntry } from '../types';
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
@@ -21,9 +17,8 @@ const groupPinnedFirst = (list: FavoriteEntry[]): FavoriteEntry[] => [
 
 /**
  * 收藏目录的编解码：localStorage 存 JSON 数组，条目为 `{ path, name, pinned }`；
- * 读回时逐项校验路径与名字非空、同一路径只留第一条，再按「固定优先」重排。
- * 旧数据（条目没有 `pinned` 字段）补回预置的系统应用条目；新格式下用户自己删掉的条目、
- * 以及清空后的空数组都不会被补回来。脏值 / 非法 JSON 一律回落空列表。
+ * 读回时逐项校验路径 / 名字非空、`pinned` 为布尔值、同一路径只留第一条，再按「固定优先」重排。
+ * 缺字段的条目直接丢弃；脏值 / 非法 JSON 一律回落空列表。
  */
 const favoritesCodec: StoredCodec<FavoriteEntry[]> = {
   decode: (raw) => {
@@ -44,10 +39,6 @@ const favoritesCodec: StoredCodec<FavoriteEntry[]> = {
     }
 
     const seen = new Set<string>();
-    /** 旧格式没有 `pinned`：据此判断要不要补预置条目；空数组按「用户清空了收藏」处理，不补 */
-    const legacy = parsed.some(
-      (item) => isObject(item) && typeof item.pinned !== 'boolean',
-    );
 
     const entries = parsed.flatMap((item): FavoriteEntry[] => {
       if (!isObject(item)) {
@@ -56,22 +47,18 @@ const favoritesCodec: StoredCodec<FavoriteEntry[]> = {
 
       const path = typeof item.path === 'string' ? item.path : '';
       const name = typeof item.name === 'string' ? item.name : '';
+      const { pinned } = item;
 
-      if (!path || !name || seen.has(path)) {
+      if (!path || !name || typeof pinned !== 'boolean' || seen.has(path)) {
         return [];
       }
 
       seen.add(path);
 
-      return [{ name, path, pinned: item.pinned === true }];
+      return [{ name, path, pinned }];
     });
 
-    const seeded =
-      legacy && !seen.has(SYSTEM_APPS_FAVORITE.path)
-        ? [{ ...SYSTEM_APPS_FAVORITE }, ...entries]
-        : entries;
-
-    return groupPinnedFirst(seeded);
+    return groupPinnedFirst(entries);
   },
   encode: (value) => JSON.stringify(value),
 };

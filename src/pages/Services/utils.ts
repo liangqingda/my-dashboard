@@ -10,8 +10,6 @@ import type { PillView, PrimaryServiceAction, StatusViewInput } from './types';
  * 主操作按钮该做什么：运行中且允许停止才能「停止」；
  * 承载当前页面的服务（工作台自身）停掉就打不开页面，只能「重启」；
  * 没运行时按编译结果选「启动」或「重启」。
- * 只有 agent 明确给了 `canStop: false` 才换按钮：旧版 agent 不返回该字段，
- * 那时期望保持原来的「停止」，不能把每个运行中的服务都改成重启。
  */
 export const resolvePrimaryAction = (
   service: ServiceStatus,
@@ -20,7 +18,7 @@ export const resolvePrimaryAction = (
     return service.build === 'fail' ? 'restart' : 'start';
   }
 
-  return service.canStop === false ? 'restart' : 'stop';
+  return service.canStop ? 'stop' : 'restart';
 };
 
 /** 服务是否有可访问的 http 地址并且正在运行 */

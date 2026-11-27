@@ -20,7 +20,7 @@ import styles from './index.scss';
 const formatDateTimeOrEmpty = (value: string | null): string =>
   value === null || value === '' ? EMPTY_CELL : formatDateTime(value);
 
-/** 状态文案：历史记录里的旧状态也走同一套词；认不出时保留原值 */
+/** 状态文案：未知状态原样显示，不静默隐藏 */
 const statusText = (status: string): string =>
   status in STATUS_LABELS
     ? STATUS_LABELS[status as RecordStatus]

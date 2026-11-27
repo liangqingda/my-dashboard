@@ -57,7 +57,7 @@ const ServiceRow = ({
    * 工作台自身不允许停止，主按钮已经是重启，不用再重复
    */
   const showRestartShortcut =
-    service.running && service.canStop !== false && service.build === 'fail';
+    service.running && service.canStop && service.build === 'fail';
 
   const runPrimary = (id: string) => {
     if (primaryAction === 'start') {
