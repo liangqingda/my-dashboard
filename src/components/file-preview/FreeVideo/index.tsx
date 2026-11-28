@@ -218,14 +218,6 @@ const FreeVideo = ({
       onPointerMove={reveal}
     >
       <div className={styles.stage} ref={stageRef}>
-        {/* 全屏时的空带底：画面完整显示留出的上下黑边，用这一帧的模糊放大版填上，不再是死黑 */}
-        {expanded && poster !== undefined ? (
-          <span
-            aria-hidden="true"
-            className={styles.stageBackdrop}
-            style={{ backgroundImage: `url(${poster})` }}
-          />
-        ) : null}
         <video
           className={styles.video}
           disablePictureInPicture

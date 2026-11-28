@@ -25,7 +25,7 @@
   pointer-events: none;
 }
 
-/* 舞台：视频铺满，浮层以它为定位祖先；裁掉空带底放大后多出来的那一圈虚化边缘 */
+/* 舞台：视频铺满，浮层以它为定位祖先 */
 .stage {
   position: relative;
   display: flex;
@@ -60,35 +60,16 @@
   pointer-events: none;
 }
 
-/*
- * 全屏时的空带底：画面用 `contain` 完整显示（不裁、不拉伸），屏幕比例与片源不一致时会留出
- * 上下（或左右）一条空带；这里把同一帧的缩略图放大、虚化、压暗铺满整屏当底，
- * 空带里就是画面的延续色，不再是两片死黑。只是背景，接不到指针。
- */
-.stageBackdrop {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: cover;
-  filter: blur(40px) saturate(140%) brightness(0.55);
-  transform: scale(1.06);
-  pointer-events: none;
-}
-
 /* 视频按比例完整显示、不裁画面；整块可点，光标提示能切换播放。
-   窗口里黑边由弹窗的宽高比框消掉（见 `VideoPreviewModal/index.scss`），这里只管舞台。
-   `z-index` 只为压在空带底之上，其余浮层在它上面。
-   **不铺自己的底色**：`object-fit: contain` 留出的空带其实是元素自己的底，铺黑会把背后那层
-   空带底整块盖死；透明之后空带透出下层，窗口模式下底子仍是舞台 / 播放器的黑，观感不变 */
+   窗口里黑边由弹窗的宽高比框消掉（见 `VideoPreviewModal/index.scss`），这里只管舞台；
+   铺开成整屏时上下留出的空带就是它自己的底：纯黑，不做模糊延展 */
 .video {
   position: relative;
   z-index: 1;
   width: 100%;
   height: 100%;
   object-fit: contain;
-  background: transparent;
+  background: #000;
   cursor: pointer;
 }
 
