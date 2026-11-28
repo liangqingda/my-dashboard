@@ -1,6 +1,9 @@
-# Markdown 编辑能力（插槽与解析回写）
+# Markdown 编辑能力：本项目落点
 
-## 职责边界（对所有文档通用）
+通用判据（插槽职责边界、三层分工、未知语法降级、往返逐字一致、禁止 contentEditable 反向序列化）
+见 `best-markdown-editing` skill。本文件只写本项目接的插槽、解析位置、验证命令与英语笔记示例。
+
+## 本项目插槽
 
 公共组件只提供 `MarkdownEditorProps`（`markdown` 快照 + `onChange` 草稿回传，可选 `onHandleReady`
 交出 `revealHeading` 定位能力）这一个插槽；**编辑逻辑按文档类别放在对应页面目录里**，
@@ -12,25 +15,18 @@
    `onChange` 回传。
 2. **分三层**：页面适配层（把插槽接到编辑器）→ 受控控件（按块渲染编辑界面）→ 解析 / 回写
    （正文 ↔ 块，纯函数，放该页 `utils/`）。
-3. **定降级口径**（见下），不认识的写法一律源码块。
+3. **定降级口径**：不认识的写法一律整块降级为源码块，不硬解析后重排。
 4. **验证**：`pnpm check:md` + 对真实文件做 parse → serialize 逐字 diff。
 
-细节契约、目录规则与验证方式见仓库内 skill `personalize-edit-markdown`（`.claude/skills/`）；
-仓库内的 skill 目录不会被 agent 自动扫描，需要按路径手动 `Read` `SKILL.md`。
+## 本项目降级口径
 
-## 数据安全底线：不认识的写法一律降级
-
-判据是**「往返是否逐字一致」**，不是一份结构白名单：任何解析器无法保证往返不丢结构的写法，
-整块降级为「源码文本块」，用户直接改原文，不硬解析后重排。新增块类型要同时改解析与序列化两侧。
+判据是**往返是否逐字一致**，不是一份结构白名单。任何解析器无法保证往返不丢结构的写法，整块降级为
+「源码文本块」，用户直接改原文。新增块类型要同时改解析与序列化两侧。
 
 示例：英语笔记的表格，单元格内含标签、`<thead>` / `<tbody>` / `<tfoot>` / `<caption>`、`<tr>`
 带属性、表格嵌套、`&nbsp;` / 数字实体，都会整表降级（`isStructuredTableSafe`）。
 
-## 硬性禁止
-
-**不要走 contentEditable + DOM 反向序列化**：会丢格式、和 React 抢 DOM，且父级刷新时编辑内容当场消失。
-
-## 往返自检
+## 验证命令
 
 ```bash
 pnpm check:md   # scripts/md-roundtrip.mts，夹具在 scripts/fixtures/md/
@@ -40,8 +36,6 @@ pnpm check:md   # scripts/md-roundtrip.mts，夹具在 scripts/fixtures/md/
 `pnpm lint` 已包含这一步。
 
 ## 示例：英语笔记的实现
-
-三层分工：
 
 | 位置 | 职责 |
 | --- | --- |

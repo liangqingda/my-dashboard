@@ -1,26 +1,22 @@
-# 公共能力复用
+# 公共能力复用：本项目清单与落点
 
-## 判据
+通用判据（高频中性能力先提、第二处兜底、持久化边界、UI / 逻辑分开）见 `best-react-code` 的
+《能力上提与持久化边界》与《公共化边界：UI 与逻辑分开判》。本文件只登记本项目已有的入口、
+键名规则与落点，不重复判据。
 
-先判这段能力是不是**跨页面通用的高频口径**，再决定落点；「出现第二处」只是兜底阈值，不是
-「第一处可以先写一份」的理由。
+## 本项目落点
 
-- **通用高频能力**（体积 / 路径 / 时间 / 错误文案 / 剪贴板这类几乎每页都会用到的口径，或语义已经中性、
-  不绑某页业务）→ 直接上提 `src/utils/<kebab-case>.ts`（纯函数）或 `src/hooks/`（状态机），不要先在
-  页面里写一份等第二处；
-- **只在一个页面 / 组件里用、且看不出通用价值** → 该目录自己的 `utils.ts`；
-- **组件形态的通用 UI** → `src/components/<分类>/<PascalCase>/`（分类见 `docs/ui-components.md`）。
+- 纯函数 → `src/utils/<kebab-case>.ts`
+- 跨页面状态机 → `src/hooks/`
+- 页面自己的状态机 / 纯函数 → 该页 `hooks/` / `utils.ts`
+- 组件形态 → `src/components/<分类>/<Name>/`（分类见 `docs/ui-components.md`）
 
-判「通用」看三点：输入输出是否中性、口径是否跨页一致、是不是常见场景；只是两处长得像但语义不同的，
-不硬合并。**第二处就该提是兜底阈值**：拿不准通用价值时，出现第二处必须抽，不许各写一遍。
-
-**「逻辑提了、UI 提不提」「UI 提了、逻辑留不留」另有一份判据**：见 `docs/reuse-boundaries.md`
-（同一件事的 UI 与逻辑分开判，允许只提一半；公共件里不许出现页面语义）。
+新增同类能力先查下表，再按 skill 判据决定放哪；不要在页面里另写一份。
 
 ## 已抽好的能力
 
 只登记**入口**；默认值、坑与行为细节写在该文件的 JSDoc 或组件自己的 `README.md`，这里不复述
-（清单是事实，不是规则，判据见 `docs/doc-writing.md`）。
+（清单是事实，不是规则）。
 
 | 场景 | 用哪个 |
 | --- | --- |
@@ -41,9 +37,7 @@
 | 一个弹窗的整组偏好（同一次阅读的全屏 / 字号 / 目录宽度…） | `@/hooks/useStoredField(key, field, codec)` + `FLAG_FIELD_CODEC` / `createChoiceFieldCodec(choices, fallback)` |
 | 存储键的拼法（不知道键该怎么起名） | `@/utils/page-storage` 的 `pageStorageScope` / `pageStorageKey` / `scopedStorageKey`；细则见下面「存储键的命名」，不要手拼字符串 |
 
-界面状态持久化的判据：**用户手动切换的展示偏好**才记（展开的日志面板、页面全屏、英语页看板 /
-表格形态），刷新后应当还在；**由数据或操作结果推导出来的状态**（正在加载、当前选中的笔记、
-排序方向）不记——后者要么能重算，要么记下来反而与真实数据不一致。
+界面状态持久化的判据（只记用户手动切换的展示偏好，不记数据推导状态）见 skill；本项目的键名规则如下。
 
 ### 存储键的命名
 
@@ -55,7 +49,7 @@
   `/english/knowledge-base` → `english-knowledge-base`、`/services` → `services`）；
   拼法只走 `@/utils/page-storage`：有 pathname 的地方用 `pageStorageKey(pathname, capability)`，
   页面 / 组件已经知道自己标识的地方用 `scopedStorageKey(scope, capability)`，别一处手拼、一处走工具。
-- **改名即失效，不写兼容**：页面标识或字段名一改，旧键里的偏好就直接不读；单人本地自用，
+- **改名即失效，不写兼容**：本项目单人本地自用，页面标识或字段名一改，旧键里的偏好就直接不读；
   不写旧键迁移、不保留旧字段别名。
 - 例：`english-notes:view-mode`、`english-notes:notes-filter-range`、
   `english-notes:markdown-preview`、`english-notes:anchor-section-preview`、
@@ -88,8 +82,7 @@ grep -rn "'my-dashboard:" src   # 应当没有结果：键不带全局前缀（�
 
 ## 新增公共能力时
 
-1. **先判该不该自己写**：按 `docs/dependencies.md` 的三问走（先查已在用的依赖，再看会不会带出
-   第二套范式），该引库就别自造；
-2. 再确认它真的是「跨页面通用」，只是两处长得像但语义不同的，不要硬合并；
+1. 先按 skill 判据确认它真的是「跨页面通用」，并查上表是否已有入口；
+2. 再按 `docs/dependencies.md` 判要不要引库；
 3. 文件命名 kebab-case，写 JSDoc 说明用途与边界（为什么这么实现）；
 4. 抽取后把原处全部改成引用，不留旧实现做对照。

@@ -31,13 +31,12 @@
    或 `src/utils`；页面只做数据拼装与状态编排。
 2. **按五维拆分**：类型 `types.ts` / 纯函数 `utils.ts`（多了建 `utils/`）/ 副作用 `hooks/` /
    展示单元 一组件一目录 / 常量 `constants.ts`。一个 `index.tsx` 只放一个组件，不嵌套 `components/`。
-3. **公共能力不许重复实现**：通用高频能力直接上提，第二处是兜底阈值不是先写一份的理由；现有入口
-   清单见 `docs/shared-utils.md`，新增同类能力先查清单再动手，不在页面里另写一份。
+3. **公共能力先查清单**：新增同类能力先看 `docs/shared-utils.md` 的现有入口，不在页面里另写一份；
+   通用判据见 `best-react-code`，本项目只维护清单与落点。
 4. **服务状态不做后台定时轮询**：只在进页面、页面重新可见 / 窗口聚焦、手动刷新时取数；
    仅「有服务在启动 / 部署 / 操作中」时短暂按 1 秒刷新。新页面不要自己加 `setInterval`。
-5. **每次改完代码自检自改两轮**（`docs/self-check.md`，发现问题直接改，不只在回复里列）：
-   第一轮全量过一遍；第二轮重跑命令、只看第一轮改动**新引入**的问题。命令绿且第二轮无新增
-   问题才算收尾，回复里写明第二轮结果。通用判据只写在那份 skill 里，本项目 `docs/` 不复述。
+5. **每次改完代码自检两轮**：按 `best-react-code`《两轮自检》执行，本项目第二轮额外检查见
+   `docs/self-check.md`；发现问题直接改，回复里写明第二轮结果。
 6. **前端 / 视觉改动默认不做浏览器实测**：不启 dev server、不截图，以 `typecheck` / `lint` 为准，
    除非用户明确要求浏览器验证。
 7. **UI 一律先用组件库**（Mantine）：按钮、图标按钮、表格、弹窗、输入框、tooltip、加载、
@@ -66,8 +65,9 @@
 由 `@liangqingda/eslint-config@1.6.0` 起的规则兜住（`eslint-comments` 与 `ban-ts-comment`）。
 
 通用规范的落点分工：机器可判的规则在 `@liangqingda/eslint-config` 与 `@liangqingda/tsconfig`
-（新项目直接用 `strictest.json`）；需要判断的拆分维度、性能反模式、注释语义写在
-`best-react-code` skill；只有布局/弹窗/数据链路这类本项目事实才留在本文件与 `docs/`。
+（新项目直接用 `strictest.json`）；需要判断的拆分维度、公共化边界、性能反模式、注释语义写在
+`best-react-code` skill，文档写法与 Markdown 编辑器安全分别见 `best-docs` / `best-markdown-editing`；
+只有布局/弹窗/数据链路这类本项目事实才留在本文件与 `docs/`。
 
 ## 维护本文件（每次改动都要自优化，不用等用户提）
 

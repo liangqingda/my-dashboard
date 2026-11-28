@@ -3,6 +3,10 @@
 **能用组件库（Mantine）的都一律用组件库，不自己手写一套。** 原生标签只在组件库没有对应能力、
 或只是纯语义容器（`<section>`、`<li>`）时出现，每一处都要能当场说出理由。
 
+通用分层判据（组件库优先、唯一入口壳、业务不越层、同一交互只落一处、不造薄壳）见
+`best-react-code` 的《UI 分层与唯一入口》。本文件只保留本项目的 Mantine 选型、`FreeXxx` 命名、
+分类目录与 `check-structure` 检查。
+
 ## 场景 → 用哪个
 
 新写任何 UI 先在这张表里找，找不到再看下面三层判据；**表里有的一律不许手写原生标签**。
@@ -66,28 +70,19 @@
 | `FreeXxx`（项目标准层） | 这一类对象**全站只允许一种形态 / 一套交互**，业务不许越过它直连底层 | `src/components/<分类>/FreeXxx/` |
 | 业务组件 | 有业务语义（特殊列、特殊交互、特殊数据形态），但所属品类已有 Free 层 | `src/pages/<Page>/<Name>/`，基于 Free 层加增量 |
 
-- **`Free` 标的是「唯一入口」，不是「包了组件库」**：`FreeTable` 底下是 Mantine `Table`，
-  `FreeVideo` / `FreePdf` 底下可能是第三方库，`FreeTruncatedText` 底下是自研逻辑；
-  前缀承诺的是「这类东西全站只有这一个入口」，不承诺「从名字看出包的是谁」。
-- **业务组件不许越过 Free 层**：品类已有 Free 层时，业务侧再直接 import 底层（`Table` / `Modal` /
-  播放器 / 自己写截断逻辑）就是缺陷——**只有一处用也不例外**；缺 props / 插槽就先给 Free 层加，
+- **`Free` 前缀只承诺「某类对象的全站唯一入口」**，不是「包了组件库」：底层是 Mantine、第三方库
+  还是自研都行（`FreeTable` / `FreeVideo` / `FreeTruncatedText`）。
+- **业务不许越过 Free 层**：品类已有 Free 层时，业务侧再直接 import 底层（`Table` / `Modal` /
+  播放器 / 自己写截断）就是缺陷——**只有一处用也不例外**；缺 props / 插槽就先给 Free 层加，
   不在业务里另起一套口径。
-- **「有没有第二处」不是判据**：判据是「同一类对象是否只允许一种形态」。一处用也走 Free 层；
-  反过来，只出现在一页、且不构成某类对象唯一形态的东西留在页面，别上提。
-- **`FreeXxx` 必须真的锁住东西**（尺寸档、边框、表头、间距、键位、加载 / 错误态这类默认外观与
-  默认行为）。说不清锁什么的，说明它只是组件库的别名，先别建——**不提前造薄壳**指的是这一条，
-  不是「等第二处」。
+- **`FreeXxx` 必须真的锁住东西**：尺寸档、边框、表头、间距、键位、加载 / 错误态这类默认外观与
+  默认行为。说不清锁什么的，说明它只是组件库的别名，先别建。
 - **场景限定不是例外**：只服务弹层面板的 `FreeSelectField`、只服务面板底部的 `FreePanelFooter`
   同样算 Free 层——它们在该场景内是唯一入口、且锁了外观。真正不挂 `Free` 的是「提供某个动作的
   现成实现、不构成某类对象唯一形态」的件（复制、筛选、图标弹层、二次确认、文档预览）。
-- **按钮要当锚点也走 Free 层**：需要把图标按钮摆进「只容得下**一个**能接 `ref` 的元素」的位置
-  （`Popover.Target`、`Tooltip` 这类用 `cloneElement` 注入 `ref` 的地方），用 `FreeIconAction` 的
-  `tooltip="none"` 只取按钮本体、tip 交给外壳挂——**不许因为塞不进去就另抄一份按钮外观**。
-- **不复制样式**：业务组件要改外观通过 props / 自己的 `index.scss` 加增量，不把 `FreeXxx`
-  的规则抄一遍。
-- **配置对象也算样式**：`{ label: { marginBottom: 4 } }` 这种「同一套外观的 params」出现第二处
-  就上提成一份常量，别在每个调用方各复制一份——复制的那几份注释里往往还写着「同一份口径」，
-  那正是该上提的信号。
+- **按钮要当锚点也走 Free 层**：需要把图标按钮摆进只容得下一个能接 `ref` 的元素的位置
+  （`Popover.Target`、`Tooltip` 这类），用 `FreeIconAction` 的 `tooltip="none"` 只取按钮本体，
+  不许因为塞不进去就另抄一份按钮外观。
 - **不接第二套渲染栈**：已经该用 `MarkdownPreviewModal` 的场景，页面里再出现 `react-markdown`
   直连、或另起 `Modal` + 渲染器，等同于复制整套组件。
 
@@ -134,7 +129,8 @@
 2. 它只是某个动作的现成实现，各场景按需要选用、并不构成某类对象的唯一形态？→ 不挂 `Free`
    （复制、筛选、图标弹层、二次确认、文档预览是一套能力，不是某类对象的唯一入口）。
 3. props 里出现只有某一页才成立的语义（某页的筛选项、某页的文档结构）？→ 它不该在
-   `src/components`，回 `src/pages/<Page>/`（判据见 `docs/reuse-boundaries.md` 的形态 ④）。
+   `src/components`，回 `src/pages/<Page>/`（判据见 `docs/reuse-boundaries.md` 落点表的
+   「两者都不提」一档）。
 
 边缘情形回同一条判据问：**这个场景内，这类对象是否只允许一种形态 / 一套交互。**
 
@@ -173,27 +169,15 @@
 | `VideoPreviewModal` | `src/components/modals/VideoPreviewModal/README.md` |
 | `ImagePreviewModal` | `src/components/modals/ImagePreviewModal/README.md` |
 
-## 基础组件锁的是「外观 + 行为」
+## 交互键位归外壳
 
-`FreeXxx` 不只是包样式：这个组件的 UI 定义里还包括它的**默认交互**——怎么开合、`Esc` / 空格怎么退出、
-翻篇与全屏这类全局键位、初始焦点落在哪。判据只有一条：**同一时刻只能有一套**。
+通用判据（同一交互只落一处、键位与 tooltip 标注一起上提）见 skill《UI 分层与唯一入口》。
 
-- 同类交互第二次出现在别的业务弹窗 / 页面 → 下沉到 `FreeXxx`（交互逻辑放它目录下的 `hooks/`），
-  同时删掉上层那一份监听，绝不两边各写一遍；
-- **给已有弹窗新增 header 操作也按这条判**：先问「另一扇弹窗有没有这个操作、它是哪个键」——
-  有就一次上提（键位、通知与 tooltip 键位标注一起搬），不要只在当前这一处补按钮，
-  否则用户看到的就是「一边能用、另一边不能用」；
-- 业务组件只传数据与插槽（`nav` / `headerActions` / `onClose` …），自己不 `addEventListener`；
-- 键位与放行口径（⌘ / Ctrl / Alt 放行、输入中不抢字符、按住连发不算）只写一份，示例见
-  `FreeModal/hooks/useModalShortcuts`，业务侧的整组开关走 `shortcutsEnabled` 这类中性 prop。
-
-**需要一次上提的信号**：同一操作在两处都要用，而键位只挂了一处——用户感知会是「这边能用、
-那边不能用」。此时键位、通知与 tooltip 标注一起收进外壳，业务侧只传中性参数。
-（示例：复制 / 删除两扇阅读弹窗都要，所以 `copy` 与 `onRequestDelete` 在 `FreeModal`，业务只传
-「复制哪段、删除怎么确认」。）
-
-**这套「哪些提公共、提到哪一层」的判据不在本文件**，见 `docs/reuse-boundaries.md`：
-本文件管「UI 形态怎么选」，那份管「UI 与逻辑各自该不该提公共」。
+本项目落在 `FreeModal` 目录下的 hooks：`Esc` / 空格 / 翻篇 / 全屏 / `⌘M` 只在那里挂；业务组件只传
+`nav` / `headerActions` / `onClose` / `shortcutsEnabled` 这类中性参数，自己不 `addEventListener`。
+给已有弹窗新增 header 操作也按这条判：先问另一扇弹窗有没有这个操作、它是哪个键；有就一次上提，
+键位、通知与 tooltip 键位标注一起搬。`check-structure` 拦业务层自己监听 `keydown`，但「只加按钮
+没挂键」看不出来，仍需手动对。
 
 ## 例外：编辑器表层的输入控件
 
@@ -205,22 +189,13 @@ root 容器并带上自己的高度 / 内边距 / 边框体系，全部覆盖反
 - 只限编辑器表层，不扩散到普通表单——表单、设置项一律用 `TextInput` / `Select` 等，搜索框走
   `FreeSearchInput`。
 
-## 同族组件：封了壳就只走壳
+## 封了壳就只走壳
 
-`Modal` 是最容易漏的一个，规则对**所有** `FreeXxx` 同样成立：既然已经封了 `FreeTable` /
-`FreeSelectField` / `FreePanelFooter`，业务侧就只传数据与插槽，不再 import 底层的
-Mantine `Table` / `Select` / 自己拼一套底栏——两套外观迟早会漂，而且改基线时要改两处。
-
-- 已封壳的场景里出现底层组件 → 算缺陷，改成壳 + 缺 props 就先给壳加插槽；
-- 属于「某类对象全站只允许一种形态」但还没封 → 按上文三层判据封 `FreeXxx`
-  （一处用也封；连同键位、开合这类默认行为一起收）；
-- 不属于上述两类（单处用、也不构成某类对象的唯一形态）→ 继续直接用组件库，不造薄壳。
-
-**这条现在由 `check-structure` 拦，不再靠人眼**：`Modal` / `Table` / `TextInput` / `ActionIcon`
-只许出现在对应的 Free 组件里，别处 import 一律报错；例外只有在脚本白名单里登记过才放过——
-当前只有两处（`layouts/Header` 品牌区主题切换、`ProseFontControl` 的 `A-` / `A+`），
-且必须同时写在本文件与对应组件的 README。**新增例外等于同时改脚本、改文档、写理由**，
-不写理由的一律按「漏改」处理。
+通用判据见 skill《UI 分层与唯一入口》。本项目由 `scripts/check-structure.mjs` 拦：`Modal` /
+`Table` / `TextInput` / `ActionIcon` 只许出现在对应的 Free 组件里，别处 import 一律报错；
+例外只有在脚本白名单里登记过才放过——当前只有两处（`layouts/Header` 品牌区主题切换、
+`ProseFontControl` 的 `A-` / `A+`），且必须同时写在本文件与对应组件的 README。
+**新增例外等于同时改脚本、改文档、写理由**，不写理由的一律按「漏改」处理。
 
 ## 自检
 

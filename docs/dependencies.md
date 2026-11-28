@@ -1,44 +1,35 @@
-# 第三方库：装还是不装
+# 第三方库：本项目基线
 
-「有成熟轮子就用轮子」**不是**本仓库的规则。本仓库写死的只有一条——**组件库优先**
-（`docs/ui-components.md`）。组件库之外（工具函数、hook、数据层）要不要多装一个包，
-按下面三问决定，**不问「能不能把它用满」**。
+通用判据（已在用依赖优先、第二套范式冲突、`sideEffects` 与按需引入、宽接口包窄类型、下线删依赖）
+见 `best-react-code` 的《依赖决策》。本文件只记本项目的已有基线、硬约束与已定案个例。
 
-## 三问
+## 已有基线
 
-| 顺序 | 问什么 | 结论 |
-| --- | --- | --- |
-| 1 | 已在用的依赖里有等价件吗？（`@mantine/hooks`、`dayjs`、`@/utils`） | 有 → 用它。确实不能用，把差异写进**该文件**的 JSDoc 头部，不许只留在脑子里 |
-| 2 | 这个包的招牌能力会不会带出与 `AGENTS.md` 硬约束冲突的第二套范式？ | 会 → 不装（典型：`useRequest` 的缓存 / 轮询 / 重试，与「服务状态不做后台定时轮询」互斥）。只要它某个通用小件 → 回第 1 问 |
-| 3 | 以上都过了 | 装，**哪怕只用它一个函数 / hook** |
+优先查这些，不要为同一能力再装第二个包：
 
-## 体积不是门槛
+- UI / 交互：`@mantine/core`、`@mantine/dates`、`@mantine/notifications`、`@mantine/hooks`、
+  `@tabler/icons-react`；
+- 日期：`dayjs`；
+- Markdown 渲染：`react-markdown` + `remark-gfm` + `rehype-raw`，只在 `MarkdownPreviewModal` 里接，
+  页面不自己另起渲染器；
+- 通用能力：先查 `docs/shared-utils.md` 的入口表，再决定要不要引库或自己写。
 
-按需引入在 build 阶段成立：库满足 ESM 产物 + `package.json` 的 `sideEffects: false` 时，
-rollup 只打包真正 import 到的链路，用没用到全量无所谓。判据看 `sideEffects` 字段与产物形态，
-不看宣传口径。
+## 本项目硬约束
 
-dev 阶段 `optimizeDeps` 会把依赖入口整包预打包（没用到的也进 prebundle），只影响启动与缓存
-体积，不影响产物——**别拿 dev 体积当反对理由**。
+- **组件库优先**：能用 Mantine 就不手写；`FreeXxx` 是唯一入口的地方，业务不越过它直连底层。
+- **不引入带第二套请求范式的包**：带缓存 / 轮询 / 重试的请求 hook（如 `useRequest` 类）与
+  `AGENTS.md`「服务状态不做后台定时轮询」冲突；只要其中某个通用小件时，回已有依赖那一问。
+- **装进来就要能删掉**：包只服务某个能力时，能力下线同一次改动里 `pnpm remove <包>`；
+  `scripts/check-imports.mjs` 已按 `dependencies` 逐条校验，全仓没人 import 的包直接判失败。
 
-## 换来更宽的接口，比少写十行亏
-
-- 自家的窄类型（如 `cx` 只收 `string | false | null | undefined`）在编译期就在约束写法；
-  社区库的宽类型（对象 / 数组 / 数字都收）约束不了。
-- 要库的实现、但接口要窄时：**在自己的文件里 `import` 库，再以窄类型导出**，既不自造整套
-  实现，也不把宽接口铺到调用方。
-- 反过来，库的语义与自家用法完全一致、又没类型收益（防抖、UUID、深哈希、日期串解析这类）
-  就该用库——自己写才会出事。
-
-## 装进来就要能删掉
-
-包只服务某个能力时，那个能力下线要在**同一次改动**里把它从 `package.json` 与 lockfile 移除
-（`pnpm remove <包>` 一步做完），不留「以后也许还用到」。判据是「`src` 与 `scripts/vite` 里
-已经没有任何 `import`」——`pnpm lint` 的 `check-imports` 会按 `dependencies` 逐条校验，
-没人 import 的包直接判失败。
-
-## 已定案的个例不复述
+## 已定案个例
 
 具体到某个文件为什么没换社区版 / Mantine 版，理由写在**它自己的 JSDoc 头部**
 （`@/utils/cx`、`@/utils/clipboard`、`@/hooks/useHoverIntent`、`@/hooks/useStoredState`）。
 改这些实现前先读那段，不要凭印象判它「该用轮子」。
+
+## 新增依赖时
+
+1. 先按 skill 的三问与实际 `package.json` 已有基线判；
+2. 决定装之后，同一次改动补 import、JSDoc 与必要的使用说明；
+3. 需要升级 / 移除时确认 lockfile 与 `pnpm lint` 的 `check-imports` 都过。
