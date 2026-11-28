@@ -442,6 +442,8 @@ export type OutlineNavProps = {
   onSelect: (index: number) => void;
   /** 这层预览的偏好命名空间：目录宽度与收起状态各层各记一份 */
   storageKey: string;
+  /** 正文还在取：目录列铺骨架行，不渲染空树，避免开窗动画途中再长出一列 */
+  skeleton?: boolean;
 };
 
 /** 目录宽度偏好：收起时仍记住展开过的宽度，点窄轨能还原回去 */

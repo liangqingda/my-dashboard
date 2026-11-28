@@ -10,6 +10,7 @@
 
 import { useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
+import { Skeleton } from '@mantine/core';
 import { IconChevronRight } from '@tabler/icons-react';
 
 import { cx } from '@/utils/cx';
@@ -67,6 +68,15 @@ const allExpandedKeys = (nodes: MarkdownOutlineNode[]): ReadonlySet<string> => {
   return keys;
 };
 
+/** 骨架目录条目：宽度错落几档，避免一排等长条看着像表格 */
+const SKELETON_ROWS = [
+  { width: 88, id: 'row-a' },
+  { width: 64, id: 'row-b' },
+  { width: 76, id: 'row-c' },
+  { width: 52, id: 'row-d' },
+  { width: 70, id: 'row-e' },
+] as const;
+
 /**
  * 用户对展开态做过的手动改动：`base` 记录这份表属于哪一棵树（也就是哪一篇文档），
  * `fullscreen` 记录它属于哪一种默认展开策略（常规两级 / 全屏全展开）。
@@ -90,6 +100,7 @@ const OutlineNav = ({
   forceVisible = false,
   fullscreen,
   onSelect,
+  skeleton = false,
   storageKey,
 }: OutlineNavProps) => {
   const tree = useMemo(() => buildMarkdownOutlineTree(headings), [headings]);
@@ -143,6 +154,32 @@ const OutlineNav = ({
 
     return next;
   }, [activePath, defaultExpanded, expansion, fullscreen, tree]);
+
+  if (skeleton) {
+    return (
+      <div
+        aria-disabled={disabled}
+        aria-hidden="true"
+        className={cx(
+          styles.nav,
+          fullscreen && styles.navFullscreen,
+          disabled && styles.disabled,
+        )}
+        ref={navRef}
+      >
+        <div className={styles.inner}>
+          <span className={styles.label}>目录</span>
+          <ul className={styles.list}>
+            {SKELETON_ROWS.map((row) => (
+              <li key={row.id}>
+                <Skeleton height={12} radius="sm" width={`${row.width}%`} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    );
+  }
 
   if (headings.length <= 1 && !forceVisible) {
     return null;

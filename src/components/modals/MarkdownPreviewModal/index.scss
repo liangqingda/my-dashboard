@@ -60,13 +60,24 @@
   display: none;
 }
 
-/* 正文还在取时的占位：只放一个居中的加载指示，不渲染空 Markdown */
+/* 正文还在取时的占位：骨架行铺满正文列，与真实正文同一档留白，框体高度在开窗动画途中不跳 */
 .loadingBody {
   display: flex;
   flex: 1 1 auto;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-start;
   min-height: 0;
+}
+
+/* 正文骨架：对齐 `.prose` 的内边距与行距，避免骨架替换成正文时整段错位 */
+.proseSkeleton {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  padding: 22px 26px 18px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 /* 筛选后一条都不剩：正文区居中给一句说明，不留一块空白 */

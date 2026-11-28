@@ -12,7 +12,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
-import { Loader, Text } from '@mantine/core';
+import { Skeleton, Text } from '@mantine/core';
 
 import FreeMarkdown from '@/components/file-preview/FreeMarkdown';
 import { cx } from '@/utils/cx';
@@ -87,6 +87,17 @@ const PreviewWorkspace = ({
   /** 偏移以 CSS 变量下发到正文自身，与模式默认的 `--prose-grow` 在同一条 calc 里相加 */
   const proseStyle = { '--prose-extra': `${fontOffset}px` } as CSSProperties;
 
+  /** 正文骨架行：标题档 + 错落段落档，撑起与真实正文接近的块结构，不在开窗动画途中换布局 */
+  const proseSkeleton = [
+    { height: 18, width: '52%', key: 'title' },
+    { height: 13, width: '100%', key: 'p1' },
+    { height: 13, width: '94%', key: 'p2' },
+    { height: 13, width: '78%', key: 'p3' },
+    { height: 13, width: '96%', key: 'p4' },
+    { height: 13, width: '64%', key: 'p5' },
+    { height: 13, width: '88%', key: 'p6' },
+  ];
+
   /** 滚动正文时跟踪当前小节，供标题目录高亮 */
   const activeIndex = useActiveHeadingIndex({
     container: bodyElement,
@@ -160,13 +171,23 @@ const PreviewWorkspace = ({
         fullscreen={fullscreen}
         headings={outline}
         onSelect={jumpToHeading}
+        skeleton={loading}
         storageKey={storageKey}
       />
       <div className={styles.pane}>
-        {/* 正文还在取：只放一个居中的加载指示，不渲染空 Markdown，也不给编辑入口 */}
+        {/* 正文还在取：铺与正文同留白的骨架行，不渲染空 Markdown，也不给编辑入口 */}
         {loading ? (
           <div aria-busy="true" className={styles.loadingBody}>
-            <Loader size="sm" />
+            <div className={styles.proseSkeleton}>
+              {proseSkeleton.map((row) => (
+                <Skeleton
+                  height={row.height}
+                  key={row.key}
+                  radius="sm"
+                  width={row.width}
+                />
+              ))}
+            </div>
           </div>
         ) : null}
 
