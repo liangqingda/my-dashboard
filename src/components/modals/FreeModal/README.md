@@ -42,7 +42,8 @@
   `useDockMinimize` 负责「量框体 → 交给 Provider 编排动画」、`⌘M` 登记与移除；`origin: 'dock'`
   再收起只回坞、不执行 `onClose`，否则页面状态会留一半。
   **页面弹窗只有程序坞里已有当前内容那条**（口径按描述符 `id`）才算收录，横线最小化 / Esc /
-  遮罩 / 空格才收起回坞；未收录的页面弹窗照常 `onClose`。`origin: 'dock'` 的窗口**永远算收录**：
+  遮罩 / 空格才收起（条目保留、页面状态按 `onMinimize` 口径收场）；未收录的页面弹窗照常 `onClose`。
+  收起动画的落点仍是**打开它那一点**，不飞向图标（见下面「开合动画」）。`origin: 'dock'` 的窗口**永远算收录**：
   它是某颗图标的窗，窗内翻篇只换 `id`，header 与关闭动作不随内容变。收录判断、X 删哪条与收起
   落点按「窗挂着的图标」（owner，`windowOwnerId`）算：开窗时是打开它的 `surfaceId` 那条，
   窗内翻到程序坞里另一条就改挂到那一条，翻到程序坞外则不改挂；条目的快照始终不动。
@@ -104,6 +105,9 @@
 - **不叠组件库过渡**：框体 `transitionProps` 的 `duration` / `exitDuration` 归零，动画全由 WAAPI
   直接作用在 `section[role="dialog"]` 上，只动 transform / opacity、不动布局；遮罩由这一层做
   160ms 淡入，退出时与框体同步淡出（组件库那边只留 `fade` 名字、时长归零）。
+- **关闭落点恒为打开点**：坞里已有同一条时，关闭只刷新那条（条目留在坞里、图标不闪），动画照旧
+  缩回点击处；只有 header 的「收起到程序坞」与 `⌘M` 才飞到图标——那是「搬去程序坞」，不是关闭。
+  落点编排在 `hooks/useModalClosePlan.ts`。
 - **例外**：`dock.origin === 'dock'` 的窗交给 Provider；全屏（`fullscreen.active`，含浏览器整屏）
   不做几何位移、只淡入淡出；`prefers-reduced-motion: reduce` 全部即时。
 - **根节点标记**：`data-motion-surface` 一直挂着，查找时挑「还挂着内容框」的根节点；它的 id 只认
@@ -122,7 +126,7 @@
 
 | prop | 说明 |
 | --- | --- |
-| `opened` / `onClose` | 开合。已收录（程序坞里有当前内容的条目）的弹窗 **横线最小化 / Esc / 遮罩 / 空格先收回程序坞**，条目保留；行尾 `IconX`「关闭并从程序坞移除」才删。未收录的弹窗 X / Esc / 遮罩走 `onClose` |
+| `opened` / `onClose` | 开合。已收录（程序坞里有当前内容的条目）的弹窗 **横线最小化 / Esc / 遮罩 / 空格先收起**（条目保留，`onMinimize` 给了就交给它，否则 `onClose`）；行尾 `IconX`「关闭并从程序坞移除」才删。未收录的弹窗 X / Esc / 遮罩走 `onClose`。两条关闭动画都缩回打开点，只有横线最小化飞向图标 |
 | `beforeMinimize` | 收起前先做的动作（可异步）：全屏 / 网页全屏先退出，完成后再量落点；程序坞恢复窗因此总能回到普通尺寸 |
 | `title` | header 标题（`ReactNode`），通常是文件名 / 条目名 |
 | `nav` | `FreeModalNav`：`index`（从 1 起）、`total`、`onPrevious` / `onNext`（到头传 `null` 置灰）、`previousLabel` / `nextLabel`、`shortcutHint`（只进 tooltip）、`disabled`（整组禁用，如编辑中） |

@@ -109,6 +109,25 @@ export const useDockMinimize = ({
       .then(proceed);
   }, []);
 
+  /**
+   * 条目已经在坞里时刷新它，但**不跑到图标去**：关闭的落点仍归窗口自己（打开它的那一点），
+   * 飞到图标只属于 header 那颗「收起到程序坞」按钮。`sourceEl` 传 null 就是「不飞」。
+   */
+  const refreshEntry = useCallback(() => {
+    const descriptor = dockRef.current;
+    const context = dockContextRef.current;
+
+    if (
+      descriptor === undefined ||
+      descriptor.disabled === true ||
+      context === null
+    ) {
+      return;
+    }
+
+    context.minimize(descriptor, null);
+  }, []);
+
   useEffect(() => {
     const context = dockContextRef.current;
 
@@ -159,6 +178,7 @@ export const useDockMinimize = ({
     canMinimize: dock !== undefined && dockContext !== null,
     canRemove,
     minimize,
+    refreshEntry,
     remove,
   };
 };

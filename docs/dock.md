@@ -146,6 +146,8 @@ Provider 只维护一个 `windowSlot`，它自己带 `phase`（`opening` / `clos
 - **页面弹窗不接这一套**：普通页面弹窗的开合由 `FreeModal` 自己做（从点击点长大 / 缩回同一点，
   见 `src/components/modals/FreeModal/README.md`）；只有「收进程序坞」那一下才是这里的飞入，
   两边不叠加。`origin: 'dock'` 的窗跳过 `FreeModal` 那层，仍由这里按图标长大 / 缩回。
+- **页面弹窗关闭不飞向图标**：Esc / 遮罩 / 空格 / X 一律缩回打开点；只有 header 的「收起到程序坞」
+  与 `⌘M` 才走这里的收进。坞里已有同一条时关闭只刷新条目（`sourceEl` 传 null），图标不闪。
 - **框体只认挂着内容框的根节点**：关掉的弹窗只卸载内容框，根节点还留在 DOM 里，
   所以 `data-dock-surface` 只在窗开着时挂，查找也只取挂着 `section[role="dialog"]` 的那个
   （多个都挂着时取最后挂进 DOM 的）。拿空壳量框体，开合动画会整段被跳过。

@@ -30,8 +30,8 @@ type UseModalSurfaceMotionParams = {
 type UseModalSurfaceMotionResult = {
   /** 是否正在播关闭动画 */
   isClosing: () => boolean;
-  /** 关闭入口：先动画、再 `onClose` */
-  requestClose: () => void;
+  /** 关闭入口：先动画、再按 `after`（不传就是 `onClose`）收场 */
+  requestClose: (after?: () => void) => void;
   /** 摊到 `Modal` 上的根节点 data 属性 */
   surfaceProps: Record<string, string>;
 };

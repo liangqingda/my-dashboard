@@ -20,6 +20,7 @@ import HeaderNav from './HeaderNav';
 import { useAutoHideHeader } from './hooks/useAutoHideHeader';
 import { useDockNav } from './hooks/useDockNav';
 import { useDockMinimize } from './hooks/useDockMinimize';
+import { useModalClosePlan } from './hooks/useModalClosePlan';
 import { useModalDockState } from './hooks/useModalDockState';
 import { useModalSurfaceMotion } from './hooks/useModalSurfaceMotion';
 import { useOverlayFocusGuard } from './hooks/useOverlayFocusGuard';
@@ -95,9 +96,9 @@ const FreeModal = ({
   const onToggleFullscreen = fullscreen?.onToggle;
 
   /** 收起到程序坞：按钮位置固定在关闭按钮左边，动作与 `⌘M` 登记共用一份 */
-  const { canMinimize, canRemove, minimize: minimizeToDock, remove: removeFromDock } =
+  const { canMinimize, canRemove, minimize: minimizeToDock, refreshEntry, remove: removeFromDock } =
     useDockMinimize({ beforeMinimize, dock, onClose, onMinimize, opened });
-  /** 只有已收录的窗关闭才回坞；普通页面弹窗照常关闭 */
+  /** 「是不是已收录」与背景坞窗态：关闭动作怎么编排由 `useModalClosePlan` 判 */
   const { backgroundDockWindow, docked } = useModalDockState({
     canRemove,
     dock,
@@ -117,17 +118,17 @@ const FreeModal = ({
     surfaceId,
   });
 
-  /** 已收录的窗关闭走回坞（`minimizeToDock` 自带收放动画），没收录的才走这里的开关窗动画 */
-  const closeAction = docked ? minimizeToDock : requestClose;
-
-  /** 已收录的窗：X 先移除条目再关页；程序坞窗口由 Provider 的 remove 直接收场 */
-  const closeAndRemoveFromDock = () => {
-    removeFromDock();
-
-    if (dock?.origin === 'page') {
-      requestClose();
-    }
-  };
+  /** 关闭编排：坞窗回图标，页面弹窗回打开点（坞里已有那条时只刷新条目不飞） */
+  const { close: closeAction, closeAndRemove: closeAndRemoveFromDock } =
+    useModalClosePlan({
+      dock,
+      docked,
+      minimize: minimizeToDock,
+      onMinimize,
+      refreshEntry,
+      remove: removeFromDock,
+      requestClose,
+    });
 
   const systemCloseAction = docked ? closeAndRemoveFromDock : closeAction;
   const systemCloseLabel = docked ? '关闭并从程序坞移除' : closeLabel;
@@ -182,9 +183,9 @@ const FreeModal = ({
       return;
     }
 
-    // 已收录的窗：遮罩只负责收回程序坞；没收录的普通弹窗仍按 closeOnClickOutside 关闭
+    // 已收录的窗：遮罩只负责「收起」（条目保留）；没收录的普通弹窗仍按 closeOnClickOutside 关闭
     if (docked) {
-      minimizeToDock();
+      closeAction();
 
       return;
     }

@@ -43,8 +43,11 @@ type UseModalMotionParams = {
 type UseModalMotionResult = {
   /** 是否正在播关闭动画：期间弹窗仍算打开，重复关闭只认第一次 */
   isClosing: () => boolean;
-  /** 关闭入口：先动画、再 `onClose` */
-  requestClose: () => void;
+  /**
+   * 关闭入口：先动画、再收场。`after` 是这一轮的收场动作，不传就是 `onClose`
+   * （已收录的窗收起后要按「收起」口径收场而不是关页，两边共用同一段动画）。
+   */
+  requestClose: (after?: () => void) => void;
 };
 
 /**
@@ -279,35 +282,38 @@ export const useModalMotion = ({
 
   const isClosing = useCallback(() => closingRef.current, []);
 
-  const requestClose = useCallback(() => {
-    if (!enabled) {
-      onCloseRef.current();
+  const requestClose = useCallback(
+    (after?: () => void) => {
+      if (!enabled) {
+        (after ?? onCloseRef.current)();
 
-      return;
-    }
-
-    if (closingRef.current) {
-      return;
-    }
-
-    closingRef.current = true;
-    tokenRef.current += 1;
-    const token = tokenRef.current;
-
-    const finish = () => {
-      if (token !== tokenRef.current) {
         return;
       }
 
-      closingRef.current = false;
-
-      if (openedRef.current) {
-        onCloseRef.current();
+      if (closingRef.current) {
+        return;
       }
-    };
 
-    void playExit(surfaceId, originRef.current).then(finish, finish);
-  }, [enabled, surfaceId]);
+      closingRef.current = true;
+      tokenRef.current += 1;
+      const token = tokenRef.current;
+
+      const finish = () => {
+        if (token !== tokenRef.current) {
+          return;
+        }
+
+        closingRef.current = false;
+
+        if (openedRef.current) {
+          (after ?? onCloseRef.current)();
+        }
+      };
+
+      void playExit(surfaceId, originRef.current).then(finish, finish);
+    },
+    [enabled, surfaceId],
+  );
 
   return { isClosing, requestClose };
 };
