@@ -409,6 +409,58 @@ const scanFolder = async (
 };
 
 /**
+ * Finder 的「应用程序」不是单个物理目录：`/Applications` 同层还会显示
+ * `/System/Applications` 里的系统自带应用（图书、备忘录、音乐…）。
+ * 打开前者时把后者的应用并进来，与 Finder 看到的条目保持一致。
+ */
+const COMPANION_APP_DIRS: Readonly<Record<string, string>> = {
+  '/Applications': '/System/Applications',
+};
+
+/** 读一个目录里的 `.app` 条目；目录读不到按空数组，单个包解析失败跳过 */
+const describeAppsInDirectory = async (dir: string): Promise<AppEntry[]> => {
+  const entries = await readEntries(dir);
+  const apps: AppEntry[] = [];
+
+  for (const entry of entries) {
+    if (isHiddenName(entry.name) || !isAppBundleName(entry.name)) {
+      continue;
+    }
+
+    const app = await describeAppEntry(path.join(dir, entry.name), entry.name);
+
+    if (app !== null) {
+      apps.push(app);
+    }
+  }
+
+  return apps;
+};
+
+/** 合并两批应用条目：同名（不区分大小写）只保留先出现的那条 */
+export const mergeAppEntries = (
+  apps: AppEntry[],
+  extra: AppEntry[],
+): AppEntry[] => {
+  const names = new Set(apps.map((app) => app.name.toLowerCase()));
+
+  return [
+    ...apps,
+    ...extra.filter((app) => {
+      const name = app.name.toLowerCase();
+
+      if (names.has(name)) {
+        return false;
+      }
+
+      names.add(name);
+
+      return true;
+    }),
+  ];
+};
+
+/**
  * 扫描一个目录：子文件夹直属条目数 + 直属文件的大小与修改时间。
  * 单个条目读不到就跳过，不影响同级其它条目；目录本身读不到时抛错给路由壳归类。
  */
@@ -424,7 +476,7 @@ export const listDirectory = async (input: string): Promise<DirListing> => {
   }
 
   const folderSources: { name: string; path: string }[] = [];
-  const apps: AppEntry[] = [];
+  let apps: AppEntry[] = [];
   const files: FileEntry[] = [];
 
   for (const entry of entries) {
@@ -469,6 +521,12 @@ export const listDirectory = async (input: string): Promise<DirListing> => {
         // 单文件 stat 失败就跳过这一条，目录里其它条目照常展示。
       }
     }
+  }
+
+  const companionDir = COMPANION_APP_DIRS[dir];
+
+  if (companionDir !== undefined) {
+    apps = mergeAppEntries(apps, await describeAppsInDirectory(companionDir));
   }
 
   const folders = await mapWithConcurrency(

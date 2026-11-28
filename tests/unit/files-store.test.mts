@@ -11,6 +11,8 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { after, before, describe, it } from 'node:test';
 
+import type { AppEntry } from '../../scripts/vite/files-apps.ts';
+
 import {
   buildPickerScript,
   compareByUpdatedDesc,
@@ -19,6 +21,7 @@ import {
   deleteEntry,
   listDirectory,
   moveEntry,
+  mergeAppEntries,
   renameEntry,
 } from '../../scripts/vite/files-store.ts';
 
@@ -328,6 +331,31 @@ describe('files-store', () => {
     } finally {
       await rm(zone, { force: true, recursive: true });
     }
+  });
+
+  it('合并应用目录：同名（不区分大小写）只留先出现的一条', () => {
+    const app = (name: string, dir: string): AppEntry => ({
+      name,
+      path: `${dir}/${name}.app`,
+      updatedAt: '2026-01-01T00:00:00.000Z',
+      updatedMs: 1,
+      system: dir.startsWith('/System/'),
+    });
+
+    assert.deepEqual(
+      mergeAppEntries(
+        [app('IINA', '/Applications'), app('Safari', '/Applications')],
+        [
+          app('iina', '/System/Applications'),
+          app('Books', '/System/Applications'),
+        ],
+      ).map((entry) => entry.path),
+      [
+        '/Applications/IINA.app',
+        '/Applications/Safari.app',
+        '/System/Applications/Books.app',
+      ],
+    );
   });
 
   it('删除：空文件夹直接删除；非空文件夹连同内部文件与子文件夹递归删除；不存在的路径报错', async () => {

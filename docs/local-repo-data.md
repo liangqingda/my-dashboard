@@ -189,7 +189,7 @@
 - **仅开发模式**：中间件挂在 `configureServer`，静态构建不带这些接口，页面回落「静态构建不支持读取本地目录」提示态，不产出目录快照；
 - **路径校验**：`~` 展开为用户主目录，其余必须是绝对路径；相对路径拒收，避免拼到进程 cwd 上读到意料之外的位置；隐藏条目（点开头）跳过；
 - **打开应用**：点网格里的应用瓦片把路径交给 `POST /api/files/open-app`，中间件校验是 `.app` 目录后调系统 `open`（等同 Finder 里双击）；启动请求在跑时不重复拉起，失败弹通知。
-- **应用包**：名字以 `.app` 结尾、且实际是目录（含符号链接）的条目单独进 `listing.apps`，不再当文件夹：列表中显示为一条应用（真实图标 + 「应用 / 系统应用」），也不参与文件夹条目计数与分类扫描——包里动辄几千个文件，既拖慢列表、分类也没有意义。普通符号链接仍跳过；符号链接到 `/System`、`/usr` 等只读路径的应用标记 `system: true`，只展示、不给卸载入口；
+- **应用包**：名字以 `.app` 结尾、且实际是目录（含符号链接）的条目单独进 `listing.apps`，不再当文件夹：列表中显示为一条应用（真实图标 + 「应用 / 系统应用」），也不参与文件夹条目计数与分类扫描——包里动辄几千个文件，既拖慢列表、分类也没有意义。普通符号链接仍跳过；符号链接到 `/System`、`/usr` 等只读路径的应用标记 `system: true`，只展示、不给卸载入口；打开 `/Applications` 时额外并入 `/System/Applications` 的应用并按名字去重——Finder 的「应用程序」本来就同时显示这两处，页面只读单个目录会漏掉系统自带应用（图书、备忘录等）；
 - **应用图标**：`app-icon` 只接受 `.app` 路径，图标文件必须落在该包自己的 `Contents/Resources` 内；转码失败或只有 `Assets.car` 时回 404，前端回落通用应用图标，不影响条目；
 - **卸载**：`app-residue` 先按 bundle id 与显示名精确推导残留（Application Support / Caches / Preferences / Saved Application State / Logs / Cookies / HTTPStorages / WebKit / Containers / Application Scripts / Group Containers / LaunchAgents 与对应的 `/Library` 系统级路径），只返回真实存在的条目；确认弹窗逐条列出后才允许 `uninstall-app`。卸载时先尽力退出应用，再删整包与全部残留；普通删除遇到 `EACCES` / `EPERM` 时用一次 `osascript` 管理员授权补删（会弹 macOS 密码窗），用户取消就按「未删除」如实返回，不假装删干净；
 - **目录选择**：`pick-dir` 优先走原生 `NSOpenPanel` 小工具——首次把一段 Swift 源码编进 `node_modules/.cache`，服务启动时后台预热，之后点按钮几乎即时弹出；编译 / 运行不可用时回落到原来的 `osascript` `choose folder`。body 里的当前目录作为默认位置，返回 POSIX 路径；用户取消按 `cancelled` 收口，不报错；前端在选择框等待期间把按钮置为 loading（「正在打开目录选择框」）；
