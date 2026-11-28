@@ -67,11 +67,11 @@ const DockProvider = ({ children }: { children: ReactNode }) => {
   const activeEntryId =
     windowSlot === null ? modalEntryId : windowActiveEntryId;
   /*
-   * 窗还是那颗图标开的，内容已经翻到别处：那颗图标算「打开着、但内容不是我的」，
-   * 画成空心点，点它装回自己的弹窗而不是收起。
+   * 窗里翻到一条不在程序坞的内容：窗自己那颗图标画成 hover 态，
+   * 提示点它会装回自己的内容（翻到的内容本身在程序坞时不算，那时它的图标是实心点）。
    */
-  const pendingEntryId =
-    windowSlot !== null && windowSlot.entry.id !== windowActiveEntryId
+  const hoverEntryId =
+    windowSlot !== null && windowActiveEntryId === null
       ? windowSlot.entry.id
       : null;
 
@@ -80,10 +80,10 @@ const DockProvider = ({ children }: { children: ReactNode }) => {
     collect,
     entries,
     fullscreenCount,
+    hoverEntryId,
     minimize,
     minimizeTop,
     nativeFullscreen,
-    pendingEntryId,
     receivingIds,
     registerModal,
     remove,

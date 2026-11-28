@@ -106,17 +106,17 @@ export type DockContextValue = {
   /** 窗里正在显示的那条内容的条目 id（程序坞里画实心运行点用）；内容没收录时为 null */
   activeEntryId: string | null;
   /**
-   * 「窗是我开的，但窗内已经翻到别的内容」的那条条目 id：图标仍算打开、只是画空心点，
-   * 提示它自己的内容在等着被装回来。点这颗图标会装回它的弹窗，而不是收起。
+   * 「窗是我开的，但窗内已经翻到一条不在程序坞的内容」的那条条目 id：
+   * 这颗图标画成 hover 态（不算激活），点它会装回它自己的内容。
    */
-  pendingEntryId: string | null;
+  hoverEntryId: string | null;
   /** 当前打开的全屏弹窗数量：CSS 全屏与浏览器全屏都算 */
   fullscreenCount: number;
   /** 浏览器是否处于原生全屏：程序坞条与右下角控件整个让开 */
   nativeFullscreen: boolean;
   /**
    * 程序坞窗口上报「当前正在展示哪一条」：
-   * 翻篇 / 列表切换后，激活的是哪颗图标（实心点 / 空心点）跟着它走；
+   * 翻篇 / 列表切换后，哪颗图标亮实心点、哪颗画成 hover 态跟着它走；
    * 窗的收录口径与 header 动作不跟它变，仍按 `surfaceId` 那条。
    */
   reportWindowEntry: (id: string | null) => void;

@@ -34,8 +34,8 @@ const DockBar = () => {
     activeEntryId,
     entries,
     fullscreenCount,
+    hoverEntryId,
     nativeFullscreen,
-    pendingEntryId,
     receivingIds,
     remove,
     restore,
@@ -190,10 +190,10 @@ const DockBar = () => {
                 const Icon = DOCK_KIND_ICON[entry.kind];
                 const active = activeEntryId === entry.id;
                 /*
-                 * 窗是这颗图标开的、内容已经翻走：图标仍算打开着，只是画空心点，
+                 * 窗是这颗图标开的、内容却翻到了一条不在程序坞的：图标画成 hover 态，
                  * 提示它自己的内容在等着被装回来（点它会装回，而不是收起）。
                  */
-                const pending = !active && pendingEntryId === entry.id;
+                const hovered = !active && hoverEntryId === entry.id;
                 const receiving = receivingIds.includes(entry.id);
 
                 return (
@@ -216,8 +216,8 @@ const DockBar = () => {
                       data-active={active ? 'true' : undefined}
                       data-dock-item={entry.id}
                       data-editing={editActive ? 'true' : undefined}
+                      data-hover={hovered ? 'true' : undefined}
                       data-kind={entry.kind}
-                      data-pending={pending ? 'true' : undefined}
                       data-receiving={receiving ? 'true' : undefined}
                       disabled={receiving}
                       onClick={() => handleItemClick(entry.id)}
@@ -232,12 +232,8 @@ const DockBar = () => {
                           </span>
                         </span>
                       ) : null}
-                      {(active || pending) && !receiving && !editActive ? (
-                        <span
-                          aria-hidden="true"
-                          className={styles.dockDot}
-                          data-hollow={pending ? 'true' : undefined}
-                        />
+                      {active && !receiving && !editActive ? (
+                        <span aria-hidden="true" className={styles.dockDot} />
                       ) : null}
                     </UnstyledButton>
                   </Tooltip>

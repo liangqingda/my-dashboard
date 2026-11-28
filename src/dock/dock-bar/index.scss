@@ -162,21 +162,6 @@
     0 7px 16px rgb(0 0 0 / 20%);
 }
 
-/*
- * 窗是这颗图标开的、内容已经翻到别处：图标仍算打开着，但只留一圈淡描边、图标略压暗，
- * 和「正在显示这一条」的亮圈区分开——一看就知道它的内容在等着被装回来。
- */
-.dockItem[data-pending='true'] {
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 30%),
-    0 0 0 1.5px rgb(255 255 255 / 16%),
-    0 7px 16px rgb(0 0 0 / 16%);
-}
-
-.dockItem[data-pending='true'] .dockIcon {
-  opacity: 0.72;
-}
-
 /* 编辑模式：图标保持原样；hover / 聚焦到某一格时，这一格才盖出移除遮罩 */
 .dockItem[data-editing='true'] {
   cursor: pointer;
@@ -246,16 +231,6 @@
   transform: translateX(-50%);
 }
 
-/* 空心点：窗开着但内容已经翻走，跟实心点区分 */
-.dockDot[data-hollow='true'] {
-  width: 5px;
-  height: 5px;
-  background: transparent;
-  box-shadow:
-    inset 0 0 0 1px rgb(28 28 34 / 46%),
-    0 0 0 1px rgb(255 255 255 / 34%);
-}
-
 /* 图标内容：飞入完成后由 0.24 长到 1 */
 .dockIcon {
   display: grid;
@@ -267,7 +242,9 @@
     filter 160ms ease;
 }
 
-.dockItem:hover .dockIcon {
+/* `data-hover` 是「窗开着但内容翻到了一条不在程序坞的」：不算激活，只按 hover 画 */
+.dockItem:hover .dockIcon,
+.dockItem[data-hover='true'] .dockIcon {
   filter: drop-shadow(0 4px 10px rgb(0 0 0 / 30%));
 }
 
