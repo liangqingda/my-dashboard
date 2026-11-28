@@ -7,7 +7,7 @@
 
 | 环节 | 在哪 |
 | --- | --- |
-| 选框几何（拖框 / 8 个手柄 / 最小尺寸） | `../../ImageCropOverlay/utils.ts` |
+| 选框几何（拖框 / 8 个手柄 / 最小尺寸） | `@/components/file-preview/FreeImageSelection/utils.ts` |
 | 比例 → 源图像素、按扩展名编码 data URL | `../../utils.ts`（`renderCropDataUrl`） |
 | 写盘（原子覆盖 / 另存目录、编号递增） | 调用方 `onCrop` → 页面 `cropImage` → `scripts/vite/files-crop.ts` |
 | 时序与提示（保存中、成功 / 失败通知） | 本 hook |

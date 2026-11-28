@@ -25,8 +25,9 @@
 | Markdown 渲染（不要弹窗外壳） | `FreeMarkdown`（全站唯一的渲染栈：`react-markdown` + gfm + raw；只管把文本渲染成节点，排版、目录、筛选归调用方） |
 | 视频播放 | `FreeVideo`（全站唯一的播放器，不自己拼 `<video>` 控制栏；行为见 `src/components/file-preview/FreeVideo/README.md`） |
 | 图片展示 / 缩放 | `FreeImage`（全站唯一的图片舞台：整图装下 + 加载 / 失败态 + 捏合缩放与平移；行为见 `src/components/file-preview/FreeImage/README.md`） |
+| 图片框选（裁剪选框、标记选区） | `FreeImageSelection`（全站唯一的图片选框：叠在画面上，拖框平移 + 8 手柄改尺寸，只回传比例矩形，不裁剪 / 不写盘；盒子由 `FreeImage` 的 `overlay` 给；行为见 `src/components/file-preview/FreeImageSelection/README.md`） |
 | 视频预览 | `VideoPreviewModal`（`FreeModal` + `FreeVideo`，B 站式控制栏 + 选集弹层；行为见 `src/components/modals/VideoPreviewModal/README.md`） |
-| 图片预览 | `ImagePreviewModal`（`FreeModal` + `FreeImage` + header 的图片列表弹层与裁剪层；裁剪仍归弹窗，不进 `FreeImage`；行为见 `src/components/modals/ImagePreviewModal/README.md`） |
+| 图片预览 | `ImagePreviewModal`（`FreeModal` + `FreeImage` + `FreeImageSelection` + header 的图片列表弹层；裁剪的会话与写盘仍归弹窗；行为见 `src/components/modals/ImagePreviewModal/README.md`） |
 | 单行输入（无搜索语义） | `FreeInput` |
 | 搜索框（左搜索图标 + 一键清空） | `FreeSearchInput` |
 | 多行输入（普通表单） | `Textarea` |
@@ -102,7 +103,7 @@
 | `panels` | 面板级排布件（底栏、分组、字段） | `FreePanelFooter`、`FreePanelGroup`、`FreePanelField` |
 | `texts` | 文本展示与截断 | `FreeTruncatedText` |
 | `feedback` | 加载、空态、提示这类状态呈现 | `PageLoading`、`PreviewCounter` |
-| `file-preview` | 把文件内容渲染 / 播放出来的组件（视频、图片、Markdown 文档，后续 PDF） | `FreeVideo`、`FreeImage`、`FreeMarkdown` |
+| `file-preview` | 把文件内容渲染 / 播放出来的组件（视频、图片、Markdown 文档，后续 PDF） | `FreeVideo`、`FreeImage`、`FreeImageSelection`、`FreeMarkdown` |
 
 - **分类目录一律小写**（`@liangqingda/eslint-config` 1.8.0 起放行 `components` 下一层的分类名单，
   名单在 `config/web-naming-rules.js`；进入分类目录后组件目录仍是 `PascalCase`）；
@@ -169,6 +170,7 @@
 | `FreeInput` | `Free` | `src/components/fields/FreeInput/README.md` |
 | `FreeVideo` | `Free` | `src/components/file-preview/FreeVideo/README.md` |
 | `FreeImage` | `Free` | `src/components/file-preview/FreeImage/README.md` |
+| `FreeImageSelection` | `Free` | `src/components/file-preview/FreeImageSelection/README.md` |
 | `FreeMarkdown` | `Free` | `src/components/file-preview/FreeMarkdown/README.md` |
 | `PreviewItemList` | 能力件 | `src/components/modals/PreviewItemList/README.md` |
 | `VideoPreviewModal` | 能力件 | `src/components/modals/VideoPreviewModal/README.md` |

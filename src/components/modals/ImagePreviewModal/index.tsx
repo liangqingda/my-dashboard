@@ -1,6 +1,6 @@
 /**
- * 图片预览弹窗：`FreeModal`（外壳）+ `FreeImage`（整图舞台）+ `ImageHeaderActions`（header 操作组）+ 裁剪。
- *
+ * 图片预览弹窗：`FreeModal`（外壳）+ `FreeImage`（整图舞台）+ `FreeImageSelection`（裁剪选框）
+ * + `ImageHeaderActions`（header 操作组）。
  * 与视频预览同形，但更朴素——没有播放器，也就没有播放 / 快进 / 截图那一套：
  *
  * - header 是毛玻璃浮层、**默认藏着**（先看整幅图）：鼠标一动浮出、静止 1s 收起，
@@ -31,6 +31,7 @@ import { IconTrash } from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
 import FreeImage from '@/components/file-preview/FreeImage';
+import FreeImageSelection from '@/components/file-preview/FreeImageSelection';
 import PreviewCounter from '@/components/feedback/PreviewCounter';
 import FreeModal from '@/components/modals/FreeModal';
 import type { FreeModalDock } from '@/components/modals/FreeModal/types';
@@ -45,7 +46,6 @@ import {
   IMAGE_PREVIEW_CAPABILITY,
 } from './constants';
 import { useImageCrop } from './hooks/use-image-crop';
-import ImageCropOverlay from './ImageCropOverlay';
 import { ImageHeaderActions } from './ImageHeaderActions';
 import type { ImagePreviewModalProps } from './types';
 
@@ -90,8 +90,6 @@ const ImagePreviewModal = ({
   const [imageAspect, setImageAspect] = useState<number | null>(null);
   /** 裁剪编码要重新读这张图的原始像素：节点由弹窗持有，舞台只用它 */
   const imageRef = useRef<HTMLImageElement | null>(null);
-  /** 裁剪层要同时观察图片与舞台：舞台节点由弹窗持有，与 `FreeImage` 内部指向同一元素 */
-  const stageRef = useRef<HTMLDivElement | null>(null);
 
   /** 裁剪保存方式：按页面持久化，默认替换源文件 */
   const [cropMode, setCropMode] = useStoredField(
@@ -282,17 +280,17 @@ const ImagePreviewModal = ({
           name={activeItem.name}
           onIntrinsicSize={(width, height) => setImageAspect(width / height)}
           overlay={
-            cropping ? (
-              <ImageCropOverlay
-                imageRef={imageRef}
-                onChange={crop.setRect}
-                rect={crop.rect}
-                stageRef={stageRef}
-              />
-            ) : undefined
+            cropping
+              ? (box) => (
+                  <FreeImageSelection
+                    box={box}
+                    onChange={crop.setRect}
+                    rect={crop.rect}
+                  />
+                )
+              : undefined
           }
           src={activeItem.src}
-          stageRef={stageRef}
         />
         <PreviewCounter
           index={index + 1}

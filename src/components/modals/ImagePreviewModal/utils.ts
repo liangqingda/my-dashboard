@@ -1,21 +1,14 @@
 /**
- * 图片裁剪的纯函数：选框几何、像素换算与 canvas 编码。
+ * 图片裁剪的纯函数：默认选框、像素换算与 canvas 编码。
  *
  * 选框用**相对图片显示区域的比例**存（0–1），显示多大、窗口怎么缩放都不影响裁剪结果；
  * 保存时再按源图的原始像素换算，换算出界与 0 尺寸都在这里兜住。
  */
 
-/** 裁剪框：相对源图的比例坐标（0–1） */
-export type CropRect = {
-  /** 左边界比例 */
-  x: number;
-  /** 上边界比例 */
-  y: number;
-  /** 宽度比例 */
-  width: number;
-  /** 高度比例 */
-  height: number;
-};
+import type { SelectionRect } from '@/components/file-preview/FreeImageSelection/types';
+
+/** 裁剪框：相对源图的比例坐标（0–1），与 `FreeImageSelection` 的选框同一套 */
+export type CropRect = SelectionRect;
 
 /** 进入裁剪模式时的默认选框：居中、四周各留一成 */
 export const DEFAULT_CROP_RECT: CropRect = {

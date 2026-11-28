@@ -123,18 +123,18 @@ header 与 hover 显隐），展示层与视频侧的 `FreeVideo` 对称：舞�
 ## 内部件
 
 - `FreeImage`（公共件，`src/components/file-preview/FreeImage/`）：单图舞台（加载 / 失败态 + 放大 /
-  平移）。弹窗用 `key` 换实例重置，裁剪层从它的 `overlay` 挂进舞台；规格写在那份 README 与
-  `hooks/use-image-zoom-pan/README.md`，弹窗这里只管什么时候开裁剪。
+  平移）。弹窗用 `key` 换实例重置，裁剪选框从它的 `overlay` 挂进舞台（回调给图片盒子）；
+  规格写在那份 README 与 `hooks/use-image-zoom-pan/README.md`，弹窗这里只管什么时候开裁剪。
 - `ImageListMenu/`：header 的「图片列表」按钮 + 点击弹层，开合状态由弹窗持有（弹层开着时
   header 要恒可见），条目排布走公共的 [`PreviewItemList`](../PreviewItemList/README.md)。
 - `ImageHeaderActions/`：header 右侧那组图标（列表 / 墙纸 / 加入 / 移出待拖拽区 / 裁剪 / 设置），同时持有两层弹层的开合
   与互斥、裁剪入口、裁剪态的「取消 / 保存」。抽出来是为了让弹窗本体只编排舞台与键位，不因按钮与
   弹层开关撑破行数上限。墙纸排在裁剪左边，待拖拽区那颗紧挨墙纸右边，已在里面时亮成强调色、
   文案改成「从待拖拽区移出」；格式不支持的图，裁剪按钮禁用、tip 说明原因。
-- `ImageCropOverlay/`：裁剪层（遮罩 + 选框 + 8 个手柄），由弹窗经 `FreeImage` 的 `overlay` 挂进舞台；
-  Pointer Events + 指针捕获；几何纯函数（移动 / 改尺寸 / 最小尺寸）在同目录 `utils.ts`，
-  按 `offsetLeft / offsetTop / offsetWidth / offsetHeight` 量图，避免 `transform` 把
-  `getBoundingClientRect` 算歪。进裁剪时 `FreeImage` 传 `interactive={false}`，先把倍率回 1。
+- `FreeImageSelection`（公共件，`src/components/file-preview/FreeImageSelection/`）：裁剪选框
+  （遮罩 + 选框 + 8 个手柄），由弹窗经 `FreeImage` 的 `overlay` 挂进舞台；比例一律按舞台给来的
+  图片盒子算，`transform: scale()` 不会把坐标算歪，叠层自己也不量 DOM。进裁剪时 `FreeImage` 传
+  `interactive={false}`，先把倍率回 1；规格写在那份 README。
 - `ImageCropSettings/`：保存口径弹层（`IconPopoverButton` + `FreePanelGroup` + 分段选择：
   替换源文件 / 另存新目录），只出 `mode`；两种落点的规则写在本 README 与
   `docs/local-repo-data.md`，面板里不再铺说明文字。

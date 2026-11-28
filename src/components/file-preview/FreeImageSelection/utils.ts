@@ -1,17 +1,17 @@
 /**
- * 裁剪选框的手柄与拖拽几何：只算比例，不碰 DOM。
+ * 选框的手柄与拖拽几何：只算比例，不碰 DOM。
  *
  * 拖拽一律以「按下那一刻的选框」为基准、累加本次指针的总位移，而不是逐次累加增量——
  * 后者在指针抖动或丢帧时会把误差攒进选框，松手后位置对不上指针。
  */
 
-import type { CropRect } from '../utils';
+import type { SelectionRect } from './types';
 
 /** 八个方向的手柄：四角 + 四边 */
-export type CropHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
+export type SelectionHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
 
 /** 手柄的排列顺序（角在前、边在后） */
-export const CROP_HANDLES: readonly CropHandle[] = [
+export const SELECTION_HANDLES: readonly SelectionHandle[] = [
   'nw',
   'n',
   'ne',
@@ -24,7 +24,7 @@ export const CROP_HANDLES: readonly CropHandle[] = [
 
 /** 手柄在选框里的位置（百分比，配合 CSS 的 translate(-50%, -50%) 居中） */
 export const HANDLE_POSITION: Readonly<
-  Record<CropHandle, { left: string; top: string }>
+  Record<SelectionHandle, { left: string; top: string }>
 > = {
   e: { left: '100%', top: '50%' },
   n: { left: '50%', top: '0%' },
@@ -37,7 +37,7 @@ export const HANDLE_POSITION: Readonly<
 };
 
 /** 手柄对应的光标：方向对手的 resize 光标 */
-export const HANDLE_CURSOR: Readonly<Record<CropHandle, string>> = {
+export const HANDLE_CURSOR: Readonly<Record<SelectionHandle, string>> = {
   e: 'ew-resize',
   n: 'ns-resize',
   ne: 'nesw-resize',
@@ -53,11 +53,11 @@ const clampRange = (value: number, min: number, max: number): number =>
   Math.min(Math.max(value, min), max);
 
 /** 平移选框：只夹位置，不改尺寸 */
-export const moveCropRect = (
-  rect: CropRect,
+export const moveSelectionRect = (
+  rect: SelectionRect,
   dx: number,
   dy: number,
-): CropRect => ({
+): SelectionRect => ({
   height: rect.height,
   width: rect.width,
   x: clampRange(rect.x + dx, 0, 1 - rect.width),
@@ -71,14 +71,14 @@ export const moveCropRect = (
  * @param minWidth 最小宽度（比例）；图片很窄时最多按整幅算
  * @param minHeight 最小高度（比例）
  */
-export const resizeCropRect = (
-  rect: CropRect,
-  handle: CropHandle,
+export const resizeSelectionRect = (
+  rect: SelectionRect,
+  handle: SelectionHandle,
   dx: number,
   dy: number,
   minWidth: number,
   minHeight: number,
-): CropRect => {
+): SelectionRect => {
   let left = rect.x;
   let right = rect.x + rect.width;
   let top = rect.y;
