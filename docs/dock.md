@@ -141,8 +141,9 @@ Provider 只维护一个 `windowSlot`，它自己带 `phase`（`opening` / `clos
 `⌘M` 收起当前最上层、可收起的弹窗；键位监听在 `layouts/BasicLayout`。`FreeModal` 通过
 `useDockMinimize` 在打开时登记进 `modalStack`，`minimizeTop()` 返回是否真的收到一扇。
 
-- 程序坞恢复窗的 header 计数仍按**内容翻篇位置**（笔记 / 记录 / 图片目录），`⌘←` / `⌘→`
-  由 `layouts/BasicLayout` 按程序坞顺序切条目；内容自己的 `←` / `→`（含视频快进）仍归内容。
+- 程序坞恢复窗的 header 计数按**程序坞条目位置**（与程序坞条同一份排序），点两侧箭头按这个顺序切窗；
+  键盘切窗是 `⌘←` / `⌘→`（`layouts/BasicLayout`）。内容自己的 `←` / `→`（含视频快进）仍归内容——
+  程序坞窗不抢内容的方向键，和页面里打开同一扇窗同口径。
 - **窗内翻篇只换内容与快照，不换窗口根节点 id**：恢复窗的 `dockId` 固定为收坞条目 id，
   横线最小化、行尾 X 与图标定位始终按同一条目走；不会因为翻到别的图片 / 记录 / 笔记
   多出条目，也不会让关闭按钮退化成普通关闭。再次收起时把当前内容写回同一条目快照。
@@ -161,7 +162,7 @@ Provider 只维护一个 `windowSlot`，它自己带 `phase`（`opening` / `clos
 2. `dock/utils/dock-entries.ts` 的编解码补这一支，坏项一律返回 `null`；
 3. `dock/windows/registry.ts` 加动态 import；
 4. 新增恢复渲染器：只传快照与 `onRequestClose`，`dockOrigin="dock"`、`dockId={entry.id}`；
-   header 操作与页面弹窗逐项对齐（标题、复制路径、翻篇计数、刷新 / 保存 / 删除 / 裁剪 /
+   header 操作与页面弹窗逐项对齐（标题、复制路径、内容翻篇、刷新 / 保存 / 删除 / 裁剪 /
    截图 / 外部打开 / 待拖拽 / 全屏），唯一允许的差异是「收起到程序坞」换成「最小化到程序坞」；
 5. 业务弹窗接 `dock` 描述符：`id` 稳定、`snapshot` 可序列化、`disabled` 覆盖「不能收」的状态；
 6. **动作复用是硬约束**：恢复窗不得在 `src/dock/windows/` 里另写删除、保存、裁剪、截图、

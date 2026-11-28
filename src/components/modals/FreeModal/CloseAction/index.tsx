@@ -10,6 +10,8 @@ type CloseActionProps = {
   label: string;
   onClick: () => void;
   tipDark?: boolean;
+  /** 覆盖默认的「（Esc）」提示：Esc 不指向这颗按钮时（已收录的窗会收回程序坞）传纯文案 */
+  tooltipLabel?: string;
 };
 
 const CloseAction = ({
@@ -18,12 +20,13 @@ const CloseAction = ({
   label,
   onClick,
   tipDark,
+  tooltipLabel,
 }: CloseActionProps) => (
   <FreeIconAction
     label={label}
     onClick={onClick}
     tipDark={tipDark}
-    tooltipLabel={`${label}（Esc）`}
+    tooltipLabel={tooltipLabel ?? `${label}（Esc）`}
   >
     <IconX size={iconSize} stroke={iconStroke} />
   </FreeIconAction>

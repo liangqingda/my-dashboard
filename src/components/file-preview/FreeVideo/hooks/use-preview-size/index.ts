@@ -4,6 +4,12 @@
  * 观察器挂在舞台上而不是 window：舞台矩形本身就是结果，弹窗尺寸变了它也会变，多挂一层窗口事件
  * 只会多一次重排。宽高没变时不写回状态——拖动窗口的每一帧都会回调，但预览框只在跨过像素时才变。
  *
+ * 量的是**布局尺寸**（`clientWidth` / `clientHeight`），不用 `getBoundingClientRect`：
+ * 程序坞窗口打开时整扇框体会被 `transform: scale()` 从图标那一点放大（`growWindowFromDock`），
+ * 那一刻量到的是缩放后的盒子，预览框就一直停在最小宽度；缩放不改变布局盒、也不再触发
+ * `ResizeObserver`，量错一次就再也改不回来。布局尺寸跟视觉缩放无关，量出来才是设置里那个比例
+ * 该对应的大小。
+ *
  * 为什么单独一个 hook：这段只有「量矩形 → 算尺寸」一件事，留在播放器里会和播放、抽帧的
  * 一堆状态挤在同一个组件里；换成 `@mantine/hooks` 的尺寸 hook 又会把整份 rect 一起进状态。
  */
@@ -46,12 +52,11 @@ export const usePreviewSize = ({
     }
 
     const measure = () => {
-      const rect = stage.getBoundingClientRect();
       const next = seekPreviewSize({
         aspect,
         scale,
-        stageHeight: rect.height,
-        stageWidth: rect.width,
+        stageHeight: stage.clientHeight,
+        stageWidth: stage.clientWidth,
       });
 
       /* 宽高都没变就不写回：拖动窗口时观察器每帧都回调，状态不该跟着抖 */

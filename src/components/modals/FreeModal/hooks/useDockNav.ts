@@ -1,6 +1,7 @@
 /**
  * 程序坞恢复出来的窗口，header 计数改报程序坞条目，而不是窗内内容的翻篇计数。
- * 内容自己的方括号翻篇仍由 `useModalShortcuts` 管；左右方向键在这个窗口里归程序坞条目。
+ * 内容自己的方括号 / 方向键翻篇仍由 `useModalShortcuts` 管；这两颗箭头只切程序坞条目，
+ * 键盘切窗走 `⌘←` / `⌘→`（`layouts/BasicLayout`），不抢内容的方向键（视频快进照旧）。
  */
 
 import { useDockOptional } from '@/dock/hooks/useDock';
@@ -35,7 +36,7 @@ export const useDockNav = (
       context.stepWindow(-1);
     },
     previousLabel: '上一个程序坞窗口',
-    shortcutHint: '← · →',
+    shortcutHint: '⌘← · ⌘→',
     total: context.entries.length,
   };
 };

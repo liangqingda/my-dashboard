@@ -5,12 +5,18 @@
 画面比例取**视频画面**而不是舞台：`object-fit: contain` 下竖屏视频两侧有黑边，
 按舞台算会让浮层比画面还宽，不像「画面的放大」。
 
-`usePreviewSize({ aspect, scale, stageRef })`：挂载时先量一次舞台矩形，之后由舞台上的
+`usePreviewSize({ aspect, scale, stageRef })`：挂载时先量一次舞台，之后由舞台上的
 `ResizeObserver` 跟进；宽高都没变就不写回状态（拖窗口时回调每帧都来，状态不该跟着抖）。
+
+尺寸一律按舞台的**布局尺寸**（`clientWidth` / `clientHeight`）量，不读 `getBoundingClientRect`：
+程序坞窗口打开时框体正在 `transform: scale()` 从图标位置放大，那时候读到的矩形是缩放后的，
+预览框会被夹到最小宽度并一直停在那儿（缩放不改布局盒，也不会再触发 `ResizeObserver`）。
+同一扇窗从页面打开没有这层缩放，所以只有程序坞窗会「不跟设置走」。
 
 ## 边界
 
 - 只跟舞台与画面比例，不读窗口尺寸：弹窗自己的尺寸变，舞台矩形也会变。
 - 尺寸算不出来的初始态（舞台还没布局）由 `utils/preview-size` 给一个最小宽兜底，
   不会出现 0 宽浮层。
-- 播放器不另存一份 `stageWidth` / `stageHeight` 状态：量出来的矩形只在这次计算里用。
+- 播放器不另存一份 `stageWidth` / `stageHeight` 状态：量出来的尺寸只在这次计算里用。
+- 量尺寸只认布局尺寸：缩放、动画、`zoom` 这类视觉变换都不该参与计算。

@@ -149,7 +149,6 @@ const FreeModal = ({
     copyMessage: copy?.message,
     disabled: shortcutsEnabled === false || backgroundDockWindow,
     enabled: opened,
-    arrowNav: dock?.origin === 'dock' ? headerNav : undefined,
     extraKeys,
     nav,
     onCapture,
@@ -220,7 +219,8 @@ const FreeModal = ({
       closeOnEscape={closeOnEscape && !escapeOverridden}
       {...dockSurfaceProps}
       fullScreen={fullscreen?.active ?? false}
-      onClose={systemCloseAction}
+      /* Esc 与空格 / 遮罩同口径：已收录的窗收回程序坞、条目保留；X 才负责连条目一起删 */
+      onClose={closeAction}
       opened={opened}
       overlayProps={{
         className: cx(
@@ -296,6 +296,8 @@ const FreeModal = ({
               label={systemCloseLabel}
               onClick={systemCloseAction}
               tipDark={tipDark}
+              /* 已收录时 Esc 是「收回程序坞」而不是关掉，X 的提示就不能再挂 Esc */
+              tooltipLabel={docked ? systemCloseLabel : undefined}
             />
           ) : null}
         </div>
