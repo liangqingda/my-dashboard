@@ -28,6 +28,7 @@ import PreviewHeaderActions from './HeaderActions';
 import PreviewOverlays from './PreviewOverlays';
 import PreviewWorkspace from './PreviewWorkspace';
 import { mainPreviewStorageKey } from './constants';
+import { useReportPreviewReady } from './hooks/useReportPreviewReady';
 import { useCloseRequest } from './hooks/useCloseRequest';
 import { useDocumentInteractions } from './hooks/useDocumentInteractions';
 import { useDockPreviewActions } from './hooks/useDockPreviewActions';
@@ -66,6 +67,7 @@ const MarkdownPreviewModal = ({
   storageScope,
   dockOrigin = 'page',
   dockId,
+  onWindowReady,
 }: MarkdownPreviewModalProps) => {
   /* header 就近弹层：同一时刻只开一块，换篇 / 刷新 / 进编辑 / 关窗时统一收起。 */
   const [panel, setPanel] = useState<PreviewPanel | null>(null);
@@ -92,6 +94,9 @@ const MarkdownPreviewModal = ({
     markdown,
     onSave,
   });
+
+  /** 正文就位上报：程序坞冷唤起的后备 / 页面窗，等骨架换成正文再报 true，宿主才启动开窗动画 */
+  useReportPreviewReady({ onWindowReady, ready: !loading });
 
   /** 关闭请求：编辑态（含草稿预览）不关，只提示先退出编辑，其余照常关 */
   const requestClose = useCloseRequest({

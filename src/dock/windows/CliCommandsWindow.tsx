@@ -14,8 +14,13 @@ import { useCliCommands } from '@/pages/Services/QuickCommands/hooks/useCliComma
 
 import type { DockWindowProps } from '../types';
 
+import { useReportWindowReady } from './hooks/useReportWindowReady';
+
 const CliCommandsWindow = ({ entry, onRequestClose }: DockWindowProps) => {
   const cli = useCliCommands(true);
+
+  /* 清单回来前先挂骨架；列表就位后再解除开窗动画等待 */
+  useReportWindowReady({ loading: cli.loading });
 
   if (entry.kind !== 'cli-commands') {
     return null;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ScrollArea } from '@mantine/core';
 import { IconTrash } from '@tabler/icons-react';
 
@@ -33,6 +33,7 @@ const RecordDetailModal = ({
   onRequestDelete,
   recordId,
   title,
+  onWindowReady,
 }: RecordDetailModalProps) => {
   /** 页面弹窗的全屏是记住的阅读偏好：关掉重开、换一条记录都不重置 */
   const { fullscreen: storedFullscreen, toggle: toggleStored } =
@@ -44,6 +45,15 @@ const RecordDetailModal = ({
     dockOrigin === 'dock'
       ? () => setDockFullscreen((current) => !current)
       : toggleStored;
+
+  /** 正文取数结束后上报就位；换一条记录重新挂 `RecordDetailBody` 时先回到未就绪 */
+  const [readyByRecord, setReadyByRecord] = useState<Record<string, boolean>>({});
+
+  const bodyReady = recordId !== null && readyByRecord[recordId] === true;
+
+  useEffect(() => {
+    onWindowReady?.(bodyReady);
+  }, [bodyReady, onWindowReady]);
 
   /**
    * 程序坞描述：只存 ID 与标题，正文由恢复窗口按 ID 自取（列表摘要里的标题够撑起 header）；
@@ -105,7 +115,13 @@ const RecordDetailModal = ({
       {recordId === null ? null : (
         <ScrollArea className={styles.scroll} scrollbars="y" type="auto">
           <div className={styles.paper}>
-            <RecordDetailBody key={recordId} recordId={recordId} />
+            <RecordDetailBody
+              key={recordId}
+              onReady={() => {
+                setReadyByRecord((current) => ({ ...current, [recordId]: true }));
+              }}
+              recordId={recordId}
+            />
           </div>
         </ScrollArea>
       )}

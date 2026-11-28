@@ -57,11 +57,13 @@ const DockProvider = ({ children }: { children: ReactNode }) => {
     receivingIds,
     remove,
     reportWindowEntry,
+    reportWindowReady,
     requestCloseWindow,
     restore,
     stepWindow,
     windowEntryId,
     windowOwnerId,
+    windowReadyRef,
     windowSlot,
   } = useDockWindowController({
     entries,
@@ -103,6 +105,7 @@ const DockProvider = ({ children }: { children: ReactNode }) => {
     remove,
     reportFullscreen,
     reportWindowEntry,
+    reportWindowReady,
     requestCloseWindow,
     restore,
     stepWindow,
@@ -117,6 +120,7 @@ const DockProvider = ({ children }: { children: ReactNode }) => {
         <DockWindowHost
           onExited={finishClosing}
           onRequestClose={requestCloseWindow}
+          readyRef={windowReadyRef}
           slot={windowSlot}
         />
       )}

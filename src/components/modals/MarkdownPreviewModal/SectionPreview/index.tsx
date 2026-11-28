@@ -34,6 +34,7 @@ import { useActiveHeadingIndex } from '../hooks/useActiveHeadingIndex';
 import { useDocumentScrollReset } from '../hooks/useDocumentScrollReset';
 import { useHeaderActionShortcuts } from '../hooks/useHeaderActionShortcuts';
 import { useProseFontScale } from '../hooks/useProseFontScale';
+import { useReportPreviewReady } from '../hooks/useReportPreviewReady';
 import {
   getClickedAnchor,
   scrollToAnchor,
@@ -68,6 +69,7 @@ const SectionPreview = ({
   nextLabel = '下一个区块',
   onClose,
   onIndexChange,
+  onWindowReady,
   peers,
   previousLabel = '上一个区块',
   sections,
@@ -136,6 +138,9 @@ const SectionPreview = ({
     enabled: section !== null,
     headings,
   });
+
+  /** 正文就位上报：段落解析出来后再解除宿主开窗动画等待；页面弹窗不传回调 */
+  useReportPreviewReady({ onWindowReady, ready: section !== null });
 
   /** 换段时正文回到顶部：上一段读到一半的位置不该留给下一段 */
   useDocumentScrollReset(bodyRef, section ? section.key : '', section !== null);

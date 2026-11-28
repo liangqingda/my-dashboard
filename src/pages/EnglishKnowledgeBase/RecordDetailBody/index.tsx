@@ -48,7 +48,7 @@ const fieldRow = (label: string, value: string, action?: ReactNode) => (
  * 记录详情主体：讲解、例句、统计数据与复习历史。
  * 列表页不铺正文，这一份只在打开某一条时取。
  */
-const RecordDetailBody = ({ recordId }: RecordDetailBodyProps) => {
+const RecordDetailBody = ({ recordId, onReady }: RecordDetailBodyProps) => {
   const [state, setState] = useState<DetailState>({
     detail: null,
     error: null,
@@ -93,6 +93,13 @@ const RecordDetailBody = ({ recordId }: RecordDetailBodyProps) => {
   }, [recordId]);
 
   const { detail, error, loading } = state;
+
+  /** 取数结束（成功 / 失败 / 空态都算就位）：父级据此解除开窗动画等待 */
+  useEffect(() => {
+    if (!loading) {
+      onReady?.();
+    }
+  }, [loading, onReady]);
 
   if (loading) {
     return (

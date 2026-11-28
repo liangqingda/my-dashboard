@@ -6,13 +6,14 @@
  * 程序坞内换窗则整屏左右滑动（`slide`）。X / Esc 与空格一样收坞，只有「移除」走 `dismiss` 淡出。
  */
 
-import { useEffect, useLayoutEffect, useRef } from 'react';
-import type { ComponentType } from 'react';
+import { useEffect, useCallback, useLayoutEffect, useRef } from 'react';
+import type { ComponentType, MutableRefObject } from 'react';
 
 import {
   DOCK_DISMISS_DURATION,
   DOCK_SHRINK_DURATION,
   DOCK_TRANSFORM_DURATION,
+  DOCK_WINDOW_READY_TIMEOUT,
 } from '../constants';
 import {
   dismissWindow,
@@ -22,6 +23,7 @@ import {
   shrinkWindowToDock,
   slideOffset,
   slideWindowIn,
+  waitForCondition,
   waitForFrames,
 } from '../utils/dock-motion';
 import type { DockSlideDirection } from '../utils/dock-motion';
@@ -58,9 +60,16 @@ type DockWindowHostProps = {
   onRequestClose: () => void;
   /** 要渲染的那扇窗 */
   slot: DockWindowSlot;
+  /** 窗正文是否就位：宿主开窗几何动画等它，取数慢的窗首帧为 false */
+  readyRef: MutableRefObject<boolean>;
 };
 
-const DockWindowHost = ({ onExited, onRequestClose, slot }: DockWindowHostProps) => {
+const DockWindowHost = ({
+  onExited,
+  onRequestClose,
+  readyRef,
+  slot,
+}: DockWindowHostProps) => {
   const {
     Component,
     animate,
@@ -72,10 +81,16 @@ const DockWindowHost = ({ onExited, onRequestClose, slot }: DockWindowHostProps)
     revision = 0,
   } = slot;
   const onExitedRef = useRef(onExited);
+  const readyRefRef = useRef(readyRef);
 
   useEffect(() => {
     onExitedRef.current = onExited;
   }, [onExited]);
+
+  /** 窗正文就位上报：直通控制器的 readyRef，宿主开窗动画据此解除等待 */
+  const handleWindowReady = useCallback((ready: boolean) => {
+    readyRefRef.current.current = ready;
+  }, []);
 
   useLayoutEffect(() => {
     const controller = new AbortController();
@@ -122,6 +137,22 @@ const DockWindowHost = ({ onExited, onRequestClose, slot }: DockWindowHostProps)
         return;
       }
 
+      /*
+       * 空场长大（genie）的窗先挂骨架、正文异步替换：几何动画量到的框体必须是正文就位后的
+       * 终态，否则骨架→正文的整块替换会在动画途中二次重排 / 重挂。等窗自己上报就位；
+       * 超时兜底，上报链路异常时也不把窗卡在隐藏态。换窗滑动（slide）的框体与上一扇同构，不等。
+       */
+      if (phase === 'opening' && animate === 'genie') {
+        await waitForCondition(
+          () => readyRefRef.current.current,
+          DOCK_WINDOW_READY_TIMEOUT,
+        );
+
+        if (isCancelled()) {
+          return;
+        }
+      }
+
       const root = findDockRoot(entryId);
 
       if (phase === 'opening') {
@@ -165,6 +196,7 @@ const DockWindowHost = ({ onExited, onRequestClose, slot }: DockWindowHostProps)
       entry={entry}
       key={`${entry.id}#${revision}`}
       onRequestClose={onRequestClose}
+      onWindowReady={handleWindowReady}
     />
   );
 };

@@ -52,22 +52,31 @@ const resolveDetailsScope = (scope: string): DetailsNavScope =>
     ? (scope as DetailsNavScope)
     : DEFAULT_DETAILS_NAV_SCOPE;
 
-const MarkdownSectionWindow = ({ entry, onRequestClose }: DockWindowProps) => {
+const MarkdownSectionWindow = ({ entry, onRequestClose, onWindowReady }: DockWindowProps) => {
   if (entry.kind !== 'markdown-section') {
     return null;
   }
 
   return (
-    <MarkdownSectionWindowBody entry={entry} onRequestClose={onRequestClose} />
+    <MarkdownSectionWindowBody
+      entry={entry}
+      onRequestClose={onRequestClose}
+      onWindowReady={onWindowReady}
+    />
   );
 };
 
 type BodyProps = {
   entry: Extract<DockWindowProps['entry'], { kind: 'markdown-section' }>;
   onRequestClose: () => void;
+  onWindowReady?: (ready: boolean) => void;
 };
 
-const MarkdownSectionWindowBody = ({ entry, onRequestClose }: BodyProps) => {
+const MarkdownSectionWindowBody = ({
+  entry,
+  onRequestClose,
+  onWindowReady,
+}: BodyProps) => {
   const { snapshot } = entry;
   const note = useDockMarkdownNote({ title: snapshot.noteTitle });
   const [pickedIndex, setPickedIndex] = useState<number | null>(null);
@@ -142,6 +151,7 @@ const MarkdownSectionWindowBody = ({ entry, onRequestClose }: BodyProps) => {
       index={index}
       onClose={onRequestClose}
       onIndexChange={setPickedIndex}
+      onWindowReady={onWindowReady}
       peers={resolved?.peers ?? []}
       sections={resolved?.sections ?? []}
       storageScope={snapshot.storageScope}

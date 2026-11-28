@@ -21,6 +21,7 @@ type RecordWindowBodyProps = {
   recordId: string;
   title: string;
   onRequestClose: () => void;
+  onWindowReady?: (ready: boolean) => void;
 };
 
 const RecordWindowBody = ({
@@ -28,6 +29,7 @@ const RecordWindowBody = ({
   recordId,
   title,
   onRequestClose,
+  onWindowReady,
 }: RecordWindowBodyProps) => {
   const records = useReviewRecords();
   const detail = useRecordDetailNav({
@@ -66,6 +68,7 @@ const RecordWindowBody = ({
         nav={detail.activeIndex >= 0 ? detail.nav : undefined}
         onClose={onRequestClose}
         onRequestDelete={() => deletion.requestDelete(deleteTarget)}
+        onWindowReady={onWindowReady}
         recordId={detail.activeId}
         title={detail.activeTitle ?? title}
       />
@@ -79,7 +82,7 @@ const RecordWindowBody = ({
   );
 };
 
-const RecordWindow = ({ entry, onRequestClose }: DockWindowProps) => {
+const RecordWindow = ({ entry, onRequestClose, onWindowReady }: DockWindowProps) => {
   if (entry.kind !== 'record-detail') {
     return null;
   }
@@ -88,6 +91,7 @@ const RecordWindow = ({ entry, onRequestClose }: DockWindowProps) => {
     <RecordWindowBody
       entryId={entry.id}
       onRequestClose={onRequestClose}
+      onWindowReady={onWindowReady}
       recordId={entry.snapshot.recordId}
       title={entry.snapshot.title}
     />

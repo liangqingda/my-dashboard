@@ -29,6 +29,7 @@
 | `filter` | `MarkdownPreviewFilter`（可选） | 预览态的内容筛选槽：传了才出现 header 的筛选图标按钮与就近弹层；筛什么、怎么持久化由调用方给。编辑态与保存始终用未筛选的原文 |
 | `remove` | `{ description: string \| ((checkedKeys: readonly string[]) => string); choices?: readonly MarkdownPreviewRemoveChoice[]; confirm: (checkedKeys: readonly string[]) => Promise<void> }`（可选） | 提供后才出现 header 的删除图标按钮：点一下或按 `Delete` / `Backspace` 先弹二次确认（`DeleteConfirm`），确认后调用 `confirm`，参数是确认层说明块下方勾中的 key 数组（没传 `choices` 时为空数组）。删什么、删完怎么关弹窗与刷新列表都由调用方决定，组件只给「先问一遍」这一层与那组可选勾选项 |
 | `storageScope` | `string` | 这一页在 localStorage 里的页面标识（路由，如 `english-notes`，见 `@/utils/page-storage`）。全屏 / 字号 / 目录宽度这些阅读偏好按 `<标识>:markdown-preview` 这类命名空间存：**同一个弹窗挂在不同页面时由页面传各自的标识**，组件不写死页面，否则两页会共用同一份偏好 |
+| `onWindowReady` | `(ready: boolean) => void`（可选） | 正文就位上报：程序坞恢复窗据此推迟开窗几何动画，骨架→正文替换完再启动；页面弹窗不传。卸载 / 回到加载态时回传 `false` |
 
 ## 行为细节
 

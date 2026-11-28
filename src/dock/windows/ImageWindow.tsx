@@ -19,6 +19,7 @@ import type { DockEntry, DockWindowProps } from '../types';
 import { toDockImageItems } from '../utils/dock-media';
 
 import { useDockImageActions } from './hooks/useDockImageActions';
+import { useReportWindowReady } from './hooks/useReportWindowReady';
 
 /** 收窄到图片条目：kind 判别后快照才是这一份 */
 type ImageEntry = Extract<DockEntry, { kind: 'image-preview' }>;
@@ -35,6 +36,10 @@ const ImageWindowBody = ({
     items: snapshotItems,
     storageScope,
   } = entry.snapshot;
+
+  /* 快照自带媒体项，首帧即就位：开窗动画不等取数 */
+  useReportWindowReady({});
+
   const initialItems = useMemo(
     () => toDockImageItems(snapshotItems),
     [snapshotItems],

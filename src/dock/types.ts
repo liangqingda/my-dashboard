@@ -188,6 +188,12 @@ export type DockContextValue = {
    * 返回注销函数，弹窗关闭时调用。
    */
   registerModal: (registration: DockModalRegistration) => () => void;
+  /**
+   * 坞窗上报「正文已就位、布局稳定」：宿主据此再启动开窗几何动画。
+   * 取数先挂载骨架、正文异步到位的窗，不在骨架帧量框体；取数同步 / 快照自带内容的窗
+   * 首帧就绪即上报。窗卸载 / 收起时由宿主复位为未就绪，这里不另留注销口径。
+   */
+  reportWindowReady: (ready: boolean) => void;
 };
 
 /** 登记进窗口栈的一扇弹窗 */
@@ -210,4 +216,10 @@ export type DockWindowProps = {
   entry: DockEntry;
   /** 用户关掉这扇窗（X / Esc 与空格、遮罩同口径，都先收回程序坞） */
   onRequestClose: () => void;
+  /**
+   * 正文就位、布局稳定后上报：宿主据此再启动开窗几何动画。
+   * 取数先挂骨架、正文异步到位的窗，等正文替换骨架后再报 true；
+   * 快照自带内容 / 首帧即就位的窗首帧报 true。不传表示这扇窗首帧就绪。
+   */
+  onWindowReady?: (ready: boolean) => void;
 };

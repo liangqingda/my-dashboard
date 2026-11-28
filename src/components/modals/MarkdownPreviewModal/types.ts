@@ -128,6 +128,8 @@ export type MarkdownPreviewModalProps = {
   dockOrigin?: 'page' | 'dock';
   /** 程序坞窗口根节点 id：恢复窗传收坞条目 id，窗内换篇不换根节点，收坞动画按它认框体 */
   dockId?: string;
+  /** 正文就位上报：程序坞窗据此推迟开窗几何动画；页面弹窗不接，不传即可 */
+  onWindowReady?: (ready: boolean) => void;
 };
 
 /**
@@ -364,6 +366,8 @@ export type SectionPreviewProps = {
   dockOrigin?: 'page' | 'dock';
   /** 程序坞窗口根节点 id：恢复窗传收坞条目 id，窗内换段不换根节点 */
   dockId?: string;
+  /** 正文就位上报：程序坞窗据此推迟开窗几何动画；页面弹窗不传 */
+  onWindowReady?: (ready: boolean) => void;
 };
 
 /**

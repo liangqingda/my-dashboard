@@ -36,10 +36,12 @@ const MarkdownLiveBody = ({
   actions,
   entryId,
   onRequestClose,
+  onWindowReady,
 }: {
   actions: MarkdownDockActions;
   entryId: string;
   onRequestClose: () => void;
+  onWindowReady?: (ready: boolean) => void;
 }) => (
   <MarkdownPreviewModal
     Editor={actions.Editor ?? NoteEditor}
@@ -53,6 +55,7 @@ const MarkdownLiveBody = ({
     onPrevious={actions.onPrevious ?? null}
     onRefresh={actions.onRefresh ?? null}
     onSave={actions.onSave}
+    onWindowReady={onWindowReady}
     opened
     position={actions.position}
     relativePath={actions.relativePath}
@@ -69,12 +72,14 @@ const MarkdownFallbackBody = ({
   initialRelativePath,
   initialTitle,
   onRequestClose,
+  onWindowReady,
 }: {
   entry: MarkdownEntry;
   initialMarkdown?: string;
   initialRelativePath?: string;
   initialTitle?: string;
   onRequestClose: () => void;
+  onWindowReady?: (ready: boolean) => void;
 }) => {
   const {
     relativePath: snapshotRelativePath,
@@ -119,6 +124,7 @@ const MarkdownFallbackBody = ({
       onPrevious={note.onPrevious}
       onRefresh={canWrite && noteReady ? note.refresh : null}
       onSave={canWrite && noteReady ? note.save : undefined}
+      onWindowReady={onWindowReady}
       opened
       position={note.position}
       relativePath={note.relativePath ?? initialRelativePath ?? snapshotRelativePath}
@@ -132,9 +138,11 @@ const MarkdownFallbackBody = ({
 const MarkdownWindowBody = ({
   entry,
   onRequestClose,
+  onWindowReady,
 }: {
   entry: MarkdownEntry;
   onRequestClose: () => void;
+  onWindowReady?: (ready: boolean) => void;
 }) => {
   const actions = useMarkdownDockActions(entry.id);
 
@@ -144,6 +152,7 @@ const MarkdownWindowBody = ({
         actions={actions}
         entryId={entry.id}
         onRequestClose={onRequestClose}
+        onWindowReady={onWindowReady}
       />
     );
   }
@@ -155,13 +164,18 @@ const MarkdownWindowBody = ({
       initialRelativePath={actions?.relativePath || undefined}
       initialTitle={actions?.title || undefined}
       onRequestClose={onRequestClose}
+      onWindowReady={onWindowReady}
     />
   );
 };
 
-const MarkdownWindow = ({ entry, onRequestClose }: DockWindowProps) =>
+const MarkdownWindow = ({ entry, onRequestClose, onWindowReady }: DockWindowProps) =>
   entry.kind === 'markdown-preview' ? (
-    <MarkdownWindowBody entry={entry} onRequestClose={onRequestClose} />
+    <MarkdownWindowBody
+      entry={entry}
+      onRequestClose={onRequestClose}
+      onWindowReady={onWindowReady}
+    />
   ) : null;
 
 export default MarkdownWindow;

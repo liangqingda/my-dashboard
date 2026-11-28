@@ -58,3 +58,9 @@ export const DOCK_DISMISS_DURATION = 140;
 
 /** 页面弹窗 / 瓦片收进程序坞时，飞行克隆的时长（毫秒） */
 export const DOCK_FLY_DURATION = 520;
+
+/**
+ * 开窗几何动画等待正文就位的兜底时长（毫秒）：异步取数的窗上报就位后再启动动画；
+ * 超过这段还没上报就不再等，避免上报链路异常时整扇窗卡在隐藏态。
+ */
+export const DOCK_WINDOW_READY_TIMEOUT = 1500;

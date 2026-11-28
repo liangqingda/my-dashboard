@@ -18,6 +18,7 @@ import type { DockEntry, DockWindowProps } from '../types';
 import { toDockVideoItems } from '../utils/dock-media';
 
 import { useDockVideoActions } from './hooks/useDockVideoActions';
+import { useReportWindowReady } from './hooks/useReportWindowReady';
 
 /** 收窄到视频条目：kind 判别后快照才是这一份 */
 type VideoEntry = Extract<DockEntry, { kind: 'video-preview' }>;
@@ -34,6 +35,10 @@ const VideoWindowBody = ({
     items: snapshotItems,
     storageScope,
   } = entry.snapshot;
+
+  /* 快照自带媒体项，首帧即就位：开窗动画不等取数 */
+  useReportWindowReady({});
+
   const initialItems = useMemo(
     () => toDockVideoItems(snapshotItems),
     [snapshotItems],

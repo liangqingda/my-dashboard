@@ -43,6 +43,27 @@ export const waitForFrames = async <T>(
   return attempt(Math.max(1, frames));
 };
 
+/** 等一个条件成立：逐帧轮询；条件久不满足时兜底超时返回，不把开窗卡死在等待上 */
+export const waitForCondition = (
+  check: () => boolean,
+  timeoutMs: number,
+): Promise<void> =>
+  new Promise((resolve) => {
+    const deadline = performance.now() + Math.max(0, timeoutMs);
+
+    const poll = () => {
+      if (check() || performance.now() >= deadline) {
+        resolve();
+
+        return;
+      }
+
+      requestAnimationFrame(poll);
+    };
+
+    requestAnimationFrame(poll);
+  });
+
 /** 同一 id 的弹窗根节点可能不止一个：关闭后组件库只卸载内容框，空壳根节点还在 DOM 里 */
 const dockRootsOf = (id: string): HTMLElement[] => [
   ...document.querySelectorAll<HTMLElement>('[data-dock-surface]'),

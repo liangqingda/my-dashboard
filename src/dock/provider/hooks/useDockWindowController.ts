@@ -46,6 +46,8 @@ export const useDockWindowController = ({
   const [receivingIds, setReceivingIds] = useState<readonly string[]>([]);
   const windowRef = useRef<DockWindowSlot | null>(windowSlot);
   const windowEntryIdRef = useRef<string | null>(windowEntryId);
+  /** 坞窗正文是否已就位：宿主开窗几何动画等它（兜底超时由宿主处理） */
+  const windowReadyRef = useRef(false);
   const restoreSeq = useRef(0);
   const receivingRef = useRef(new Set<string>());
   const {
@@ -73,6 +75,11 @@ export const useDockWindowController = ({
     [adoptOwner],
   );
 
+  /** 坞窗上报正文就位 / 卸载：宿主开窗动画据此决定是否推迟启动 */
+  const reportWindowReady = useCallback((ready: boolean) => {
+    windowReadyRef.current = ready;
+  }, []);
+
   const setWindow = (next: DockWindowSlot | null) => {
     windowRef.current = next;
     setWindowSlotState(next);
@@ -80,6 +87,13 @@ export const useDockWindowController = ({
     if (next === null) {
       writeWindowEntry(null);
       writeWindowOwner(null);
+      windowReadyRef.current = false;
+    } else {
+      /*
+       * 新窗 / 换条目先按未就绪挂着：窗体自己上报正文就位后才翻 true。
+       * 首帧即就位的窗（快照自带内容）会在挂载 effect 里立刻报 true。
+       */
+      windowReadyRef.current = false;
     }
   };
 
@@ -297,11 +311,13 @@ export const useDockWindowController = ({
     receivingIds,
     remove,
     reportWindowEntry,
+    reportWindowReady,
     requestCloseWindow,
     restore,
     stepWindow,
     windowEntryId,
     windowOwnerId,
+    windowReadyRef,
     windowSlot,
   };
 };
