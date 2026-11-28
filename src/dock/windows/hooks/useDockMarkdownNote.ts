@@ -28,6 +28,8 @@ export const useDockMarkdownNote = ({ title }: Params) => {
     notes: list.notes,
     onDeleted: list.removeSummary,
     onSummary: list.applySummary,
+    /* 坞窗后备路径：骨架第一帧就挂上，不压页面弹窗那段加载延迟 */
+    dockFallback: true,
   });
   const bootstrapped = useRef(false);
   const { open } = note;

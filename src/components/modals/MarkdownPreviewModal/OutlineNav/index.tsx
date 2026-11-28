@@ -172,7 +172,7 @@ const OutlineNav = ({
           <ul className={styles.list}>
             {SKELETON_ROWS.map((row) => (
               <li key={row.id}>
-                <Skeleton height={12} radius="sm" width={`${row.width}%`} />
+                <Skeleton animate={false} height={12} radius="sm" width={`${row.width}%`} />
               </li>
             ))}
           </ul>

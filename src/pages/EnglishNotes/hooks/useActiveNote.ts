@@ -39,6 +39,11 @@ type UseActiveNoteParams = {
   onSummary: (summary: NoteSummary) => void;
   /** 一篇被删掉了，交回列表把它摘掉 */
   onDeleted: (name: string) => void;
+  /**
+   * 程序坞后备窗：正文一取就亮加载态，不压延迟。页面弹窗可压一段延迟避开几十毫秒的加载闪，
+   * 坞窗冷唤起时骨架必须第一帧就挂住框内结构，不能留空窗等延迟。
+   */
+  dockFallback?: boolean;
 };
 
 /** 两条摘要是否完全一致：一致就不用回灌列表，省一次整份看板的重算与重渲染 */
@@ -53,6 +58,7 @@ const isSameSummary = (current: NoteSummary, next: NoteSummary): boolean =>
  * 取不到就明确报错并关掉弹窗，不让空弹窗冒充一篇内容。
  */
 export const useActiveNote = ({
+  dockFallback = false,
   notes,
   onSummary,
   onDeleted,
@@ -114,14 +120,20 @@ export const useActiveNote = ({
       /*
        * 先不亮加载态：这段时间弹窗自己在播展开动画，正文通常也就到了。
        * 超过 LOADING_DELAY_MS 还没回来才亮，避免几十毫秒的转圈闪一下。
+       * 坞窗后备路径除外：冷唤起时骨架要第一帧挂住框内结构，不能压延迟留空窗。
        */
       clearLoadingTimer();
-      setLoading(false);
-      loadingTimer.current = window.setTimeout(() => {
-        if (seq === openSeq.current) {
-          setLoading(true);
-        }
-      }, LOADING_DELAY_MS);
+
+      if (dockFallback) {
+        setLoading(true);
+      } else {
+        setLoading(false);
+        loadingTimer.current = window.setTimeout(() => {
+          if (seq === openSeq.current) {
+            setLoading(true);
+          }
+        }, LOADING_DELAY_MS);
+      }
 
       try {
         const body = await fetchEnglishNote(name);
@@ -165,7 +177,7 @@ export const useActiveNote = ({
         });
       }
     },
-    [clearLoadingTimer, notes, onSummary],
+    [clearLoadingTimer, dockFallback, notes, onSummary],
   );
 
   const close = useCallback(() => {

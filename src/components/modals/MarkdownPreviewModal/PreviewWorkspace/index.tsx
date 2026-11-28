@@ -181,6 +181,7 @@ const PreviewWorkspace = ({
             <div className={styles.proseSkeleton}>
               {proseSkeleton.map((row) => (
                 <Skeleton
+                  animate={false}
                   height={row.height}
                   key={row.key}
                   radius="sm"
