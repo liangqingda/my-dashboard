@@ -14,6 +14,9 @@
 | 动 `agent/` 或 `scripts/vite/*` | 再加 `pnpm test`（node 原生测试，不碰浏览器） |
 | 用户明确要求浏览器验证 | `pnpm test:e2e`；默认不跑（见 `AGENTS.md`「前端 / 视觉改动默认不做浏览器实测」） |
 
+三条命令分工不重叠：`pnpm build` 只跑 `vite build`，抓的是 rollup 层错误（模块路径、资源引用、
+动态 import）；类型检查由同批的 `pnpm typecheck` 负责——`build` 里不再重复跑 `tsc`。
+
 `pnpm lint` = `eslint .` + `check-structure` + `check-scss` + `check-imports` + `check:md`。
 布局 / 引用 / 命名 / 300 行上限 / import 分组 / 禁裸 `eslint-disable` / 禁 `@ts-ignore`、
 **越过 Free 层直连（`Modal` / `Table` / `TextInput` / `ActionIcon`）、公共组件缺 `README.md`、
@@ -25,8 +28,12 @@
 
 - 改到行为 / 契约：对应的 `docs/` 是否同步，入口 `AGENTS.md` 是否仍只有硬约束与索引，没有该拆未拆的段落；
 - 动到 `agent/` 或 `scripts/vite/*`：`pnpm test` 是否跟着跑过；
+- 动到交互与布局（命中区、hover 与延迟、层叠与定位、键位归属）：按 `best-ui-interactions` 过一遍，
+  静态检查兜不住、又不做浏览器实测的那部分只能靠这一遍；
 - 旧路径 / 旧符号 / 旧路由 / 旧存储键 / 旧字段别名 / 已下线依赖：全仓 grep 是否还有残留；
-- 回复里写清第二轮查到了什么，没有也要写「第二轮无新增问题」。
+- 回复里的第二轮结论必须带**可核对的证据**：重跑了哪几条命令、grep 了哪些词、把 diff 里哪几处
+  当别人的代码重看过。**本项目加严，取代 skill《两轮自检》同条的「写清结果」口径**：无证据的
+  「第二轮无新增问题」不算做过第二轮。
 
 ## 3. 异步回调的卸载 / 取消守卫
 
@@ -45,7 +52,6 @@
 ## 4. 本项目容易返工的几条
 
 - 拆文件时手写样式容易丢声明：拆 `index.scss` 要从原文按块搬，只改选择器名。
-- 新加的图标按钮要有 `aria-label`。
 - **「塞不进去」不是例外，是 Free 层缺档位**：某个外壳位置只收得下一个节点、某个场景要特定尺寸时，
   正确动作是给 Free 组件加一档能力（插槽 / 尺寸 / `tooltip="none"` 这类开关），不是在外壳里抄一份外观。
   例外只留给「本来就不是这一类」的对象，并且要同时进 `check-structure` 白名单与 `docs/ui-components.md`。

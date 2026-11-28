@@ -8,7 +8,7 @@
     "start": "bash scripts/auto-start.sh",
     "stop": "node scripts/stop-local.mjs all",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.node.json --noEmit",
-    "build": "tsc -p tsconfig.json && tsc -p tsconfig.node.json && vite build",
+    "build": "vite build",
     "lint": "eslint . && node scripts/check-structure.mjs && liangqingda-check-scss src && node scripts/check-imports.mjs && pnpm check:md",
     "check:md": "node --experimental-strip-types scripts/md-roundtrip.mts",
     "component:new": "node scripts/new-component.mjs",
