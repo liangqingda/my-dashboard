@@ -246,107 +246,11 @@
   filter: drop-shadow(0 4px 10px rgb(0 0 0 / 30%));
 }
 
-/*
- * 右下角控制组：固定一列按钮，收起按钮在最下，编辑按钮叠在它上方。
- * 以后再加按钮只管往这列里塞，不各自算 fixed 坐标。
- */
-.dockControls {
-  position: fixed;
-  right: 14px;
-  bottom: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: center;
-  pointer-events: none;
-  transition:
-    opacity 220ms ease,
-    transform 220ms ease;
-}
-
-/* 全屏弹窗 / 原生全屏：右下角控件让开内容 */
-.dockControls[data-controls-hidden='true'] {
-  pointer-events: none;
-  opacity: 0;
-  transform: translateY(8px);
-}
-
-/* 仍有程序坞展示时控件也先虚化，指针回来再实体化 */
-.dockControls[data-dock-dim='true'] {
-  opacity: 0.46;
-}
-
-.dockControls[data-dock-dim='true']:hover {
-  opacity: 1;
-}
-
-/* 单个控制按钮：收起时是程序坞图标，展开后变成向下收起的箭头 */
-.dockControl {
-  position: relative;
-  display: grid;
-  width: 34px;
-  height: 34px;
-  color: #fff;
-  pointer-events: auto;
-  place-items: center;
-  background: rgb(255 255 255 / 9%);
-  border: 1px solid rgb(255 255 255 / 18%);
-  border-radius: 12px;
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 20%),
-    0 4px 14px rgb(0 0 0 / 14%);
-  opacity: 0.42;
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  backdrop-filter: blur(20px) saturate(180%);
-  transition:
-    transform 180ms ease,
-    background 180ms ease,
-    border-color 180ms ease,
-    opacity 160ms ease;
-}
-
-.dockControl:hover:not(:disabled) {
-  background: rgb(255 255 255 / 24%);
-  border-color: rgb(255 255 255 / 42%);
-  opacity: 1;
-  transform: translateY(-1px);
-}
-
-.dockControl[data-active='true'] {
-  background: rgb(255 255 255 / 22%);
-  border-color: rgb(255 255 255 / 40%);
-  opacity: 0.88;
-}
-
-.dockControl:disabled {
-  cursor: default;
-  opacity: 0.46;
-}
-
-/* 收起状态下给一个数量角标：条目都藏在下面，也能一眼知道存了几条 */
-.dockToggleCount {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  display: grid;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  font-size: 10px;
-  line-height: 1;
-  color: #fff;
-  place-items: center;
-  background: rgb(28 32 30 / 82%);
-  border: 1px solid rgb(255 255 255 / 35%);
-  border-radius: 9px;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .dock,
   .dockBox,
   .dockItem,
-  .dockIcon,
-  .dockControl {
+  .dockIcon {
     transition: none;
     animation: none;
   }

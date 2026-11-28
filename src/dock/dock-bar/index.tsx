@@ -9,13 +9,7 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import type { CSSProperties, PointerEvent } from 'react';
 import { Tooltip, UnstyledButton } from '@mantine/core';
-import {
-  IconApps,
-  IconCheck,
-  IconChevronDown,
-  IconPencil,
-  IconX,
-} from '@tabler/icons-react';
+import { IconX } from '@tabler/icons-react';
 
 import {
   DOCK_EDGE_GAP,
@@ -27,15 +21,13 @@ import { useDock } from '../hooks/useDock';
 import { groupDockEntries } from '../utils/dock-groups';
 
 import { DOCK_KIND_ICON } from './constants';
+import Controls from './controls';
 import { resetMagnification } from './reset-magnification';
 
 import styles from './index.scss';
 
 /** 放大影响范围：以图标边长为基准，指针离得越远越接近原尺寸 */
 const MAGNIFY_REACH_RATIO = 2.4;
-
-const TOGGLE_ICON_SIZE = 18;
-const EDIT_ICON_SIZE = 17;
 
 const DockBar = () => {
   const {
@@ -173,16 +165,6 @@ const DockBar = () => {
     restore(id);
   };
 
-  let toggleLabel = '展开程序坞';
-
-  if (empty) {
-    toggleLabel = '还没有收起的窗口';
-  } else if (showing) {
-    toggleLabel = '收起程序坞';
-  }
-
-  const ToggleIcon = showing ? IconChevronDown : IconApps;
-
   return (
     <>
       <aside
@@ -255,57 +237,16 @@ const DockBar = () => {
         </div>
       </aside>
 
-      <div
-        className={styles.dockControls}
-        data-controls-hidden={controlsHidden ? 'true' : undefined}
-        data-dock-dim={dimmed ? 'true' : undefined}
-        style={{ zIndex: DOCK_Z_INDEX }}
-      >
-        {showing ? (
-          <Tooltip
-            label={editActive ? '完成编辑' : '编辑程序坞'}
-            position="left"
-            transitionProps={{ duration: 80 }}
-            withArrow
-          >
-            <UnstyledButton
-              aria-label={editActive ? '完成编辑' : '编辑程序坞'}
-              aria-pressed={editActive}
-              className={styles.dockControl}
-              data-active={editActive ? 'true' : undefined}
-              onClick={handleEditToggle}
-            >
-              {editActive ? (
-                <IconCheck size={EDIT_ICON_SIZE} stroke={1.8} />
-              ) : (
-                <IconPencil size={EDIT_ICON_SIZE} stroke={1.8} />
-              )}
-            </UnstyledButton>
-          </Tooltip>
-        ) : null}
-        <Tooltip
-          label={toggleLabel}
-          position="left"
-          transitionProps={{ duration: 80 }}
-          withArrow
-        >
-          <UnstyledButton
-            aria-expanded={showing}
-            aria-label={empty ? '程序坞为空' : toggleLabel}
-            className={styles.dockControl}
-            data-dock-toggle="true"
-            disabled={empty}
-            onClick={handleToggle}
-          >
-            <ToggleIcon size={TOGGLE_ICON_SIZE} stroke={1.8} />
-            {!showing && !empty ? (
-              <span aria-hidden="true" className={styles.dockToggleCount}>
-                {entries.length}
-              </span>
-            ) : null}
-          </UnstyledButton>
-        </Tooltip>
-      </div>
+      <Controls
+        count={entries.length}
+        dim={dimmed}
+        editing={editActive}
+        empty={empty}
+        hidden={controlsHidden}
+        onEditToggle={handleEditToggle}
+        onToggle={handleToggle}
+        open={showing}
+      />
     </>
   );
 };
