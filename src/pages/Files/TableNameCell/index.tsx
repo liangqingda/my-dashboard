@@ -76,7 +76,7 @@ const TableNameCell = ({
       />
       {cloudPlaceholder ? (
         <IconCloudDownload
-          aria-label="iCloud 云端文件，点开时下载到本机"
+          aria-label="iCloud 云端文件，预览时下载到本机"
           className={styles.cloudIcon}
           size={15}
           stroke={1.6}

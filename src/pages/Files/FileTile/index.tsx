@@ -153,7 +153,7 @@ const FileTile = memo(
           <span className={styles.meta}>
             {formatFileSize(file.size)}
             {cloudPlaceholder ? (
-              <Tooltip label="iCloud 云端文件，点开时下载到本机" withArrow>
+              <Tooltip label="iCloud 云端文件，预览时下载到本机" withArrow>
                 <IconCloudDownload
                   aria-hidden="true"
                   className={styles.cloudBadge}

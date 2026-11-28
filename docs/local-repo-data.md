@@ -256,7 +256,7 @@
   按「路径 + 体积 + 修改时间 + 尺寸」缓存在临时目录，`Cache-Control: private, max-age=600`；转不出来返回 404，
   前端（`utils/media-thumbs.ts` 拼 URL、`FileTile` 的 `onError`）回落分类图标。
   占位文件先落地再转码；列表摘要里 `cloudPlaceholder` 为真时瓦片 / 表格不挂缩略图，
-  改摆分类图标 + 下载徽标（Tooltip 提示点开时下载）。
+  改摆分类图标 + 下载徽标（Tooltip 提示预览时下载）。
   网格里视频在「外部应用」模式下由设置 `video-thumb-style` 决定大图：默认摆所选播放器的图标
   （`GET /api/files/app-icon?app=<应用名>`，应用名由 `files-video-apps.ts` 的
   `videoAppBundlePath` 映射成包路径，名字为空回落 IINA）；选「视频帧」时大图仍走缩略图，
