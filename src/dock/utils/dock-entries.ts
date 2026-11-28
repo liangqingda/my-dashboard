@@ -137,6 +137,9 @@ const decodeEntry = (value: unknown): DockEntry | null => {
               activeId: snapshot.activeId,
               storageScope: snapshot.storageScope,
               items,
+              ...(isText(snapshot.externalApp)
+                ? { externalApp: snapshot.externalApp }
+                : {}),
             },
           }
         : null;

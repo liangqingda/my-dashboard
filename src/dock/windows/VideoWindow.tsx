@@ -1,14 +1,17 @@
 /**
  * 程序坞里的视频预览窗：目录、当前段与封面都随快照一起存，恢复后照常播放与翻篇。
  *
- * 截图落盘、外部打开、删除与待拖拽动作依赖文件页运行期能力，
- * 页面还挂着时经 `PreviewDockActions` 注入；页面不在时对应按钮自然不出现。
+ * 外部打开自带接口兜底（应用名随快照存）；截图落盘、删除与待拖拽仍依赖文件页运行期能力，
+ * 页面还挂着时经 `PreviewDockActions` 注入，页面不在时对应按钮自然不出现。
  */
 
 import { useState } from 'react';
+import { notifications } from '@mantine/notifications';
 
 import { usePreviewDockActions } from '@/components/modals/PreviewDockActions/hooks/usePreviewDockActions';
 import VideoPreviewModal from '@/components/modals/VideoPreviewModal';
+import { getErrorMessage } from '@/utils/error';
+import { openFileExternally } from '@/utils/open-file';
 
 import type { DockEntry, DockWindowProps } from '../types';
 
@@ -27,6 +30,17 @@ const VideoWindowBody = ({
   const [switchTick, setSwitchTick] = useState(0);
   const dockActions = usePreviewDockActions();
   const actions = dockActions?.video;
+  const externalApp = actions?.externalApp ?? entry.snapshot.externalApp;
+  const openExternal =
+    actions?.onOpenExternal ??
+    ((id: string) => {
+      void openFileExternally(id, externalApp).catch((error: unknown) => {
+        notifications.show({
+          color: 'red',
+          message: getErrorMessage(error, '外部打开失败'),
+        });
+      });
+    });
 
   return (
     <VideoPreviewModal
@@ -34,11 +48,11 @@ const VideoWindowBody = ({
       batched={actions?.isBatched(activeId) ?? false}
       blocked={dockActions?.blocked ?? false}
       dockOrigin="dock"
-      externalApp={actions?.externalApp}
+      externalApp={externalApp}
       items={items}
       onCapture={actions?.onCapture}
       onClose={onRequestClose}
-      onOpenExternal={actions?.onOpenExternal}
+      onOpenExternal={openExternal}
       onPickDir={actions?.onPickDir}
       onRequestDelete={actions?.onRequestDelete}
       onSelect={(id) => {

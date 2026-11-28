@@ -37,6 +37,9 @@ type PreviewDockActions = {
 };
 ```
 
+程序坞视频窗的外部打开另有 `@/utils/open-file` + 快照里的 `externalApp` 兜底，页面不在也能用；
+其余依赖页面列表状态的动作仍只在此桥有效。
+
 `blocked` 会在页面删除 / 墙纸二次确认开着时变 true，程序坞窗口据此收掉键位与底层交互；
 确认层层级已抬到程序坞窗口之上（见 `docs/dock.md` 的层级表）。
 

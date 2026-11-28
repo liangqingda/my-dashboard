@@ -21,6 +21,8 @@ type VideoDockParams = {
   origin: 'page' | 'dock';
   /** 页面标识：恢复窗口按它继续记字号 / 播放偏好 */
   storageScope: string;
+  /** 设置里选定的外部播放器名，随快照存一份 */
+  externalApp?: string;
   /** 窗口标题与程序坞 tip */
   title: string;
 };
@@ -28,6 +30,7 @@ type VideoDockParams = {
 export const createVideoDock = ({
   activeId,
   disabled,
+  externalApp,
   id,
   items,
   origin,
@@ -40,6 +43,7 @@ export const createVideoDock = ({
   origin,
   snapshot: {
     activeId,
+    externalApp,
     items: items.map((item) => ({
       id: item.id,
       name: item.name,

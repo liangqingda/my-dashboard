@@ -32,6 +32,7 @@
 | 复制图标按钮 | `@/components/buttons/CopyIconButton` |
 | 页面级刷新 | `@/utils/page-refresh` 的 `requestPageRefresh()` / `onPageRefresh(handler)` |
 | Markdown 标题目录 | `@/utils/markdown-outline` 的 `extractMarkdownOutline` |
+| 把本机文件交给外部应用打开 | `@/utils/open-file` 的 `openFileExternally(path, appName?)`（页面与程序坞窗口共用） |
 | 单行 / 两行省略文本（默认中间省略，尾部省略传 `ellipsis="end"`）、截断才提示 | `@/components/texts/FreeTruncatedText` |
 | 悬停 / 聚焦意图 | `@/hooks/useHoverIntent` |
 | 组件是否仍挂载（异步回调写状态前挡卸载后的迟到响应） | `@/hooks/useMounted` |

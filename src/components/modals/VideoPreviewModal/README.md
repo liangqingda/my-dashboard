@@ -159,6 +159,7 @@
 ### 收起到程序坞
 
 快照存整个目录（多一张 `poster`）与当前条目，恢复后照常播放、翻篇与改播放偏好；
-截图要写盘、外部打开要知道文件位置，这两样不在快照里。文件页挂载时经 `PreviewDockActions`
-把 `onCapture` / `onOpenExternal` 等能力注入程序坞窗口；页面卸载后能力清空，对应按钮与 `Enter` 截图不出现。整屏 / 网页全屏不再阻止收起：收起前先退出两种全屏，
+截图要写盘、外部打开要知道文件位置。文件页挂载时经 `PreviewDockActions` 把 `onCapture` /
+`onOpenExternal` 等能力注入程序坞窗口；页面卸载后外部打开仍按快照里的 `externalApp` 走
+`@/utils/open-file`，按钮不消失；`onCapture` 等页面能力清空，对应按钮与 `Enter` 截图不出现。整屏 / 网页全屏不再阻止收起：收起前先退出两种全屏，
 恢复窗从普通尺寸出来；业务弹层或确认层开着时仍不可收起。契约见 `docs/dock.md`。

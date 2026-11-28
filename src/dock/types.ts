@@ -43,6 +43,8 @@ export type VideoDockItem = ImageDockItem & {
 /** 视频预览窗口快照 */
 export type VideoDockSnapshot = {
   activeId: string;
+  /** 设置里选定的外部播放器名：页面卸载后仍能按它给按钮提示并尝试打开 */
+  externalApp?: string;
   items: VideoDockItem[];
   storageScope: string;
 };

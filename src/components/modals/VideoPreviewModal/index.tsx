@@ -213,8 +213,8 @@ const VideoPreviewModal = ({
    * 业务弹层与删除确认开着时不让收；全屏时允许收，收起前由 `beforeMinimize` 先退全屏。
    */
   const dock = createVideoDock({
-    activeId: activeItem.id, disabled: blocked || settingsOpen || episodeOpen, id: dockId,
-    items, origin: dockOrigin, storageScope, title: activeItem.name,
+    activeId: activeItem.id, disabled: blocked || settingsOpen || episodeOpen,
+    externalApp, id: dockId, items, origin: dockOrigin, storageScope, title: activeItem.name,
   });
 
   /*
