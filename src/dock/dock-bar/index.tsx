@@ -123,6 +123,14 @@ const DockBar = () => {
     const pointer = event.clientX - boxRect.left;
 
     box.querySelectorAll<HTMLElement>('[data-dock-item]').forEach((item) => {
+      /*
+       * 强行 hover 态那一格固定停在 hover 倍率：按距离算会把它缩回去，
+       * 「点它能恢复」的提示就看不出来了。
+       */
+      if (item.dataset.hover === 'true') {
+        return;
+      }
+
       const itemRect = item.getBoundingClientRect();
       const center = itemRect.left + itemRect.width / 2 - boxRect.left;
       const delta = center - pointer;
@@ -190,16 +198,26 @@ const DockBar = () => {
                 const Icon = DOCK_KIND_ICON[entry.kind];
                 const active = activeEntryId === entry.id;
                 /*
-                 * 窗是这颗图标开的、内容却翻到了一条不在程序坞的：图标画成 hover 态，
-                 * 提示它自己的内容在等着被装回来（点它会装回，而不是收起）。
+                 * 窗是这颗图标开的、内容却翻到了一条不在程序坞的：激活之上再叠 hover 态，
+                 * 点它会装回自己的内容，而不是收起。
                  */
-                const hovered = !active && hoverEntryId === entry.id;
+                const hovered = hoverEntryId === entry.id;
                 const receiving = receivingIds.includes(entry.id);
+                const label = hovered
+                  ? `恢复到「${entry.title}」`
+                  : `${active ? '收起' : '打开'}「${entry.title}」`;
+                /** 强行 hover 态：按满格 hover 倍率摆住并压过邻格，指针放大不覆盖它 */
+                const hoverStyle = hovered
+                  ? ({
+                      '--dock-item-scale': String(DOCK_MAGNIFICATION),
+                      zIndex: Math.round(DOCK_MAGNIFICATION * 100),
+                    } as CSSProperties)
+                  : undefined;
 
                 return (
                   <Tooltip
                     key={entry.id}
-                    label={entry.title}
+                    label={label}
                     position="top"
                     transitionProps={{ duration: 80 }}
                     withArrow
@@ -209,7 +227,7 @@ const DockBar = () => {
                       aria-label={
                         editActive
                           ? `从程序坞移除「${entry.title}」`
-                          : `${active ? '收起' : '打开'}「${entry.title}」`
+                          : label
                       }
                       aria-pressed={editActive ? undefined : active}
                       className={styles.dockItem}
@@ -221,6 +239,7 @@ const DockBar = () => {
                       data-receiving={receiving ? 'true' : undefined}
                       disabled={receiving}
                       onClick={() => handleItemClick(entry.id)}
+                      style={hoverStyle}
                     >
                       <span className={styles.dockIcon}>
                         <Icon size={iconSize} stroke={1.55} />

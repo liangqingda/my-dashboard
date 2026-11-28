@@ -61,14 +61,18 @@ const DockProvider = ({ children }: { children: ReactNode }) => {
   });
 
   /*
-   * 页面里浮着的同一扇弹窗也算激活：有程序坞窗口时只看窗口当前条目，
-   * 没有窗口时才落到弹窗登记栈；窗口翻到未收录内容时窗口侧返回 null。
+   * 页面里浮着的同一扇弹窗也算激活：没有程序坞窗口时落到弹窗登记栈；
+   * 有窗口时看窗口当前条目，翻到程序坞外的一条内容时退成窗自己那条——
+   * 窗还挂在它这儿，只是内容暂时不是它的。
    */
   const activeEntryId =
-    windowSlot === null ? modalEntryId : windowActiveEntryId;
+    windowSlot === null
+      ? modalEntryId
+      : windowActiveEntryId ?? windowSlot.entry.id;
   /*
-   * 窗里翻到一条不在程序坞的内容：窗自己那颗图标画成 hover 态，
-   * 提示点它会装回自己的内容（翻到的内容本身在程序坞时不算，那时它的图标是实心点）。
+   * 窗里翻到一条不在程序坞的内容：窗自己那颗图标在激活之上再叠一层 hover 态
+   * （放大 + 图标阴影 + 「点击恢复」的 tip），提示点它能装回自己的内容；
+   * 翻到的内容本身在程序坞时不算，那时它自己那颗图标是实心点。
    */
   const hoverEntryId =
     windowSlot !== null && windowActiveEntryId === null

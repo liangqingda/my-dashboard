@@ -242,7 +242,7 @@
     filter 160ms ease;
 }
 
-/* `data-hover` 是「窗开着但内容翻到了一条不在程序坞的」：不算激活，只按 hover 画 */
+/* `data-hover` 是「窗开着、但内容翻到了一条不在程序坞的」：在激活之上再叠一层 hover 阴影 */
 .dockItem:hover .dockIcon,
 .dockItem[data-hover='true'] .dockIcon {
   filter: drop-shadow(0 4px 10px rgb(0 0 0 / 30%));

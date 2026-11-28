@@ -103,11 +103,15 @@ export type DockContextValue = {
   entries: readonly DockEntry[];
   /** 正在飞入、还没有长出图标的条目 id：程序坞里先画虚位 */
   receivingIds: readonly string[];
-  /** 窗里正在显示的那条内容的条目 id（程序坞里画实心运行点用）；内容没收录时为 null */
+  /**
+   * 程序坞里画实心运行点的那条条目 id：窗里正显示这一条，或是
+   * 「窗是它开的、内容却翻到程序坞外」的那条（见 `hoverEntryId`）
+   */
   activeEntryId: string | null;
   /**
    * 「窗是我开的，但窗内已经翻到一条不在程序坞的内容」的那条条目 id：
-   * 这颗图标画成 hover 态（不算激活），点它会装回它自己的内容。
+   * 这颗图标除了算激活，还强行画成 hover 态（放大 + 图标阴影 + 恢复 tip），
+   * 点它会装回它自己的内容。
    */
   hoverEntryId: string | null;
   /** 当前打开的全屏弹窗数量：CSS 全屏与浏览器全屏都算 */
