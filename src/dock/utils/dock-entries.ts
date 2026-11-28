@@ -186,6 +186,15 @@ export const removeDockEntry = (
  * 业务弹窗的描述符 → 持久化条目：补上来源页与收起时间，并丢掉运行期的
  * `origin` / `disabled`（它们只影响这一次收起怎么做，不该进存储）。
  */
+/**
+ * 由描述符生成一条新条目：`createdAt` 只在这里取当前时间，
+ * 调用方（弹窗与外层的 hook）保持纯函数口径。
+ */
+export const createDockEntry = (
+  descriptor: DockDescriptor,
+  page: string,
+): DockEntry => toDockEntry(descriptor, page, Date.now());
+
 export const toDockEntry = (
   descriptor: DockDescriptor,
   page: string,

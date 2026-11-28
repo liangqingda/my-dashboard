@@ -3,7 +3,7 @@
  *
  * 两套口径：
  * - 页面弹窗：按当前内容的 id 找条目，有就更新快照，没有就新收一条（下次打开停在这一条）；
- * - 程序坞窗口：窗是某颗图标的窗，窗内翻篇只是临时换内容，收起就回到那颗图标，
+ * - 程序坞窗口：窗挂在哪颗图标上就回到哪颗（窗内翻篇只是临时换内容），
  *   条目的快照不动——图标对应的始终是它自己那份内容。
  */
 
@@ -21,6 +21,8 @@ type MinimizeDockWindowArgs = {
   current: DockWindowSlot | null;
   descriptor: DockDescriptor;
   entries: DockEntry[];
+  /** 这扇窗现在挂着的图标条目（收起落点）；没有窗时传 null */
+  ownerEntry: DockEntry | null;
   receiveEntry: (entry: DockEntry, sourceEl: HTMLElement | null) => void;
   sourceEl: HTMLElement | null;
   writeEntries: (next: DockEntry[]) => void;
@@ -31,6 +33,7 @@ export const minimizeDockWindow = ({
   current,
   descriptor,
   entries,
+  ownerEntry,
   receiveEntry,
   sourceEl,
   writeEntries,
@@ -40,12 +43,12 @@ export const minimizeDockWindow = ({
   }
 
   /*
-   * 程序坞窗口收起只回它自己的图标：翻篇换来的内容不写回条目，
+   * 程序坞窗口收起只回它挂着的图标：翻篇换来的内容不写回条目，
    * 下次点这颗图标仍然装出它自己那份内容（点它也是「装回」而不是「收起」）。
    */
   if (current !== null && descriptor.origin === 'dock') {
     beginClosing(
-      { ...current, contentEntry: current.entry },
+      { ...current, contentEntry: ownerEntry ?? current.entry },
       false,
       'minimize',
     );

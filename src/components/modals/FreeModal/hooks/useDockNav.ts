@@ -2,8 +2,8 @@
  * 程序坞恢复出来的窗口：header 计数与 `←` / `→` 一律报程序坞条目，而不是窗内内容的翻篇。
  * 内容自己的方括号翻篇仍由 `useModalShortcuts` 管。
  *
- * 位置取值优先「窗里正在显示的那一条」，它没收录时退回「这扇窗自己的条目」——
- * 窗内翻篇是这扇窗临时换了内容，计数仍要报它是从哪颗图标开的。
+ * 位置取值优先「窗里正在显示的那一条」，它没收录时退回「这扇窗挂着的图标」——
+ * 窗内翻篇是这扇窗临时换了内容，计数仍要报它挂在哪颗图标上。
  */
 
 import { useDockOptional } from '@/dock/hooks/useDock';
@@ -30,7 +30,8 @@ export const useDockNav = (
   const { entries } = context;
   const shownIndex = entries.findIndex((entry) => entry.id === dock.id);
   const ownIndex = entries.findIndex(
-    (entry) => entry.id === (dock.surfaceId ?? dock.id),
+    (entry) =>
+      entry.id === (context.windowOwnerId ?? dock.surfaceId ?? dock.id),
   );
   const index = shownIndex !== -1 ? shownIndex : ownIndex;
   const stepNav: FreeModalNav = {

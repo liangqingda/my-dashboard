@@ -117,17 +117,21 @@ export const useDockMinimize = ({
   }, [dockDisabled, dockId, minimize, opened]);
 
   /*
-   * 已收录：页面弹窗看内容那条，程序坞窗口看它自己的那条——窗内翻到别的内容也仍算收录，
-   * 否则 header 会退回「关闭」口径，和图标状态对不上。
+   * 已收录：页面弹窗看内容那条，程序坞窗口看它挂着的图标那条（`windowOwnerId`，
+   * 窗内翻到别的内容也仍算收录），否则 header 会退回「关闭」口径，和图标状态对不上。
    */
   const canRemove =
     dock !== undefined &&
     dockContext !== null &&
     dockContext.entries.some(
-      (entry) => entry.id === (dock.origin === 'dock' ? dock.surfaceId ?? dock.id : dock.id),
+      (entry) =>
+        entry.id ===
+        (dock.origin === 'dock'
+          ? dockContext.windowOwnerId ?? dock.surfaceId ?? dock.id
+          : dock.id),
     );
 
-  /** X 移除的是这一窗自己的条目（程序坞窗口），页面弹窗移除当前内容那条 */
+  /** X 移除的是这一窗挂着的图标（程序坞窗口），页面弹窗移除当前内容那条 */
   const remove = useCallback(() => {
     const descriptor = dockRef.current;
     const context = dockContextRef.current;
@@ -138,7 +142,7 @@ export const useDockMinimize = ({
 
     context.remove(
       descriptor.origin === 'dock'
-        ? descriptor.surfaceId ?? descriptor.id
+        ? context.windowOwnerId ?? descriptor.surfaceId ?? descriptor.id
         : descriptor.id,
     );
   }, []);

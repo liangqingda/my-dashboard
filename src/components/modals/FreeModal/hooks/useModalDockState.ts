@@ -43,12 +43,13 @@ export const useModalDockState = ({
   /**
    * 页面弹窗背后的程序坞窗口还开着时，这一层退成只读背景：
    * 快捷键与焦点都让给顶层，避免两个 F 同时触发全屏请求。
+   * 按「有没有坞窗」判，而不是按激活的条目 id —— 坞窗翻到别的内容时图标归属会变，
+   * 但那一层仍然是顶层。
    */
   const backgroundDockWindow =
     dock?.origin === 'page' &&
     dockContext !== null &&
-    dockContext.activeEntryId !== null &&
-    dockContext.activeEntryId !== dock.id;
+    dockContext.windowOwnerId !== null;
 
   const reportFullscreen = dockContext?.reportFullscreen;
   const reportWindowEntry = dockContext?.reportWindowEntry;

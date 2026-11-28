@@ -8,17 +8,23 @@ import type { MutableRefObject } from 'react';
 
 import type { UseDockModalStackResult } from '../../hooks/useDockModalStack';
 import type { DockWindowSlot } from '../../dock-window';
-import { toDockEntry, upsertDockEntry, removeDockEntry } from '../../utils/dock-entries';
+import type { DockEntry, DockEntryDraft } from '../../types';
+import {
+  createDockEntry,
+  removeDockEntry,
+  upsertDockEntry,
+} from '../../utils/dock-entries';
 import { flyWindowToDock } from '../../utils/dock-fly';
-import { minimizeDockWindow } from '../../utils/dock-minimize';
 import { findDockSurface, slideWindowOut } from '../../utils/dock-motion';
 import { slideDirectionOf } from '../../utils/dock-slide';
+import {
+  dockOwnerEntry,
+  dockStepIndex,
+} from '../../utils/dock-window-target';
 import { restoreDockWindow } from '../restore-dock-window';
-import type {
-  DockDescriptor,
-  DockEntry,
-  DockEntryDraft,
-} from '../../types';
+
+import { useDockWindowDisposal } from './useDockWindowDisposal';
+import { useDockWindowOwner } from './useDockWindowOwner';
 
 type Params = {
   entries: readonly DockEntry[];
@@ -41,20 +47,30 @@ export const useDockWindowController = ({
   const windowEntryIdRef = useRef<string | null>(windowEntryId);
   const restoreSeq = useRef(0);
   const receivingRef = useRef(new Set<string>());
+  const {
+    adoptOwner,
+    ownerId: windowOwnerId,
+    ownerRef: windowOwnerIdRef,
+    writeOwner: writeWindowOwner,
+  } = useDockWindowOwner(entriesRef);
 
   const writeWindowEntry = (id: string | null) => {
     windowEntryIdRef.current = id;
     setWindowEntryIdState(id);
   };
 
-  const reportWindowEntry = useCallback((id: string | null) => {
-    if (windowRef.current === null) {
-      return;
-    }
+  const reportWindowEntry = useCallback(
+    (id: string | null) => {
+      if (windowRef.current === null) {
+        return;
+      }
 
-    windowEntryIdRef.current = id;
-    setWindowEntryIdState(id);
-  }, []);
+      windowEntryIdRef.current = id;
+      setWindowEntryIdState(id);
+      adoptOwner(id);
+    },
+    [adoptOwner],
+  );
 
   const setWindow = (next: DockWindowSlot | null) => {
     windowRef.current = next;
@@ -62,6 +78,7 @@ export const useDockWindowController = ({
 
     if (next === null) {
       writeWindowEntry(null);
+      writeWindowOwner(null);
     }
   };
 
@@ -74,6 +91,9 @@ export const useDockWindowController = ({
     receivingRef.current.delete(id);
     setReceivingIds([...receivingRef.current]);
   };
+
+  const ownerEntryOf = (slot: DockWindowSlot): DockEntry =>
+    dockOwnerEntry(entriesRef.current, windowOwnerIdRef.current, slot.entry);
 
   const receiveEntry = (entry: DockEntry, sourceEl: HTMLElement | null) => {
     if (sourceEl === null) {
@@ -104,7 +124,7 @@ export const useDockWindowController = ({
   };
 
   const collect = (draft: DockEntryDraft, sourceEl?: HTMLElement | null) => {
-    const entry = toDockEntry(draft, window.location.pathname, Date.now());
+    const entry = createDockEntry(draft, window.location.pathname);
 
     writeEntries(upsertDockEntry(entriesRef.current, entry));
     receiveEntry(entry, sourceEl ?? null);
@@ -133,6 +153,7 @@ export const useDockWindowController = ({
     Component: DockWindowSlot['Component'],
   ) => {
     writeWindowEntry(entry.id);
+    writeWindowOwner(entry.id);
 
     const { current } = windowRef;
 
@@ -171,23 +192,26 @@ export const useDockWindowController = ({
   };
 
   /**
-   * 窗内翻到别的内容后点回它自己的图标：把这一条的快照重新装进这扇窗，不收起。
-   * 换一个 `revision` 让宿主重挂窗口体，窗本身与根节点都不动。
+   * 窗内翻到程序坞外的内容后点回它挂着的图标：把这一条的快照重新装进这扇窗，不收起。
+   * 换一个 `revision` 让宿主重挂窗口体；`entry` 同时换成这一条，窗的根节点与 key 跟着换，
+   * 窗本身（槽位）不重建、也不跑开合动画。
    */
-  const resetContent = () => {
+  const resetContent = (entry: DockEntry) => {
     const { current } = windowRef;
 
     if (current === null || current.phase === 'closing') {
       return;
     }
 
-    // 先把「当前显示」改回它自己：图标那圈弱激活当场消掉，等窗里重新上报同一条
-    writeWindowEntry(current.entry.id);
+    // 先把「当前显示」改回它自己：图标那圈 hover 态当场消掉，等窗里重新上报同一条
+    writeWindowEntry(entry.id);
+    writeWindowOwner(entry.id);
 
     setWindow({
       ...current,
       animate: 'none',
-      contentEntry: current.entry,
+      contentEntry: entry,
+      entry,
       phase: 'opening',
       removeOnExit: false,
       revision: (current.revision ?? 0) + 1,
@@ -207,6 +231,7 @@ export const useDockWindowController = ({
       id,
       currentSeq: () => restoreSeq.current,
       modalStack,
+      ownerIdRef: windowOwnerIdRef,
       resetContent,
       seq,
       windowRef,
@@ -214,19 +239,12 @@ export const useDockWindowController = ({
   };
 
   const stepWindow = (delta: -1 | 1): boolean => {
-    const { current } = windowRef;
     const list = entriesRef.current;
-    const reported = windowEntryIdRef.current;
-    /*
-     * 位置按当前内容找；窗内翻到一条没收录的内容时它不在列表里，
-     * 退回这一窗自己的条目位置，`←` / `→` 才不会在这扇窗里失灵。
-     */
-    const id =
-      reported !== null && list.some((entry) => entry.id === reported)
-        ? reported
-        : current?.entry.id;
-    const index =
-      id === undefined ? -1 : list.findIndex((entry) => entry.id === id);
+    const index = dockStepIndex(
+      list,
+      windowEntryIdRef.current,
+      windowOwnerIdRef.current,
+    );
 
     if (index < 0 || list.length < 2) {
       return false;
@@ -239,53 +257,16 @@ export const useDockWindowController = ({
     return true;
   };
 
-  const requestCloseWindow = () => {
-    const { current } = windowRef;
-
-    if (current === null) {
-      return;
-    }
-
-    /*
-     * 坞窗永远只回它自己的图标：窗内翻篇是临时状态，不碰任何条目。
-     * 条目真的被删掉时走 `remove`，那条路径会直接把窗淡出。
-     */
-    beginClosing({ ...current, contentEntry: current.entry }, false, 'minimize');
-  };
-
-  const remove = (id: string) => {
-    const { current } = windowRef;
-
-    if (
-      current !== null &&
-      (current.entry.id === id || windowEntryIdRef.current === id)
-    ) {
-      if (current.phase === 'closing') {
-        return;
-      }
-
-      beginClosing({ ...current, removeId: id }, true, 'dismiss');
-
-      return;
-    }
-
-    writeEntries(removeDockEntry(entriesRef.current, id));
-  };
-
-  const minimize = (
-    descriptor: DockDescriptor,
-    sourceEl: HTMLElement | null,
-  ) => {
-    minimizeDockWindow({
-      beginClosing,
-      current: windowRef.current,
-      descriptor,
-      entries: entriesRef.current,
-      receiveEntry,
-      sourceEl,
-      writeEntries,
-    });
-  };
+  const { minimize, remove, requestCloseWindow } = useDockWindowDisposal({
+    beginClosing,
+    contentIdRef: windowEntryIdRef,
+    entriesRef,
+    ownerEntryOf,
+    ownerIdRef: windowOwnerIdRef,
+    receiveEntry,
+    windowRef,
+    writeEntries,
+  });
 
   const shownEntryId =
     windowEntryId !== null &&
@@ -304,6 +285,8 @@ export const useDockWindowController = ({
     requestCloseWindow,
     restore,
     stepWindow,
+    windowEntryId,
+    windowOwnerId,
     windowSlot,
   };
 };

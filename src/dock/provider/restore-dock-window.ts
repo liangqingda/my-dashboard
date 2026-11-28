@@ -1,7 +1,7 @@
 /**
  * 从程序坞图标恢复（或切回）一扇窗口：
  * - 窗里正显示这一条内容：再点它的图标就是收回程序坞；
- * - 窗是这颗图标开的、只是内容被翻走了：装回这条的快照，不收起；
+ * - 窗挂在这颗图标上、只是内容被翻到程序坞外了：装回这条的快照，不收起；
  * - 其它条目：不先回坞再出来，按程序坞顺序整屏滑动切过去。
  */
 
@@ -27,8 +27,10 @@ type RestoreDockWindowParams = {
   entriesRef: MutableRefObject<DockEntry[]>;
   id: string;
   modalStack: UseDockModalStackResult['modalStack'];
-  /** 把窗重新装回它自己那条的快照（不收起） */
-  resetContent: () => void;
+  /** 把窗重新装回某一条的快照（不收起） */
+  resetContent: (entry: DockEntry) => void;
+  /** 这扇窗现在挂着的图标 id（窗内翻到程序坞里另一条时会改挂） */
+  ownerIdRef: MutableRefObject<string | null>;
   /** 本次恢复的序号：后续恢复会把旧序号顶掉 */
   seq: number;
   currentSeq: () => number;
@@ -42,6 +44,7 @@ export const restoreDockWindow = ({
   entriesRef,
   id,
   modalStack,
+  ownerIdRef,
   resetContent,
   currentSeq,
   seq,
@@ -93,11 +96,13 @@ export const restoreDockWindow = ({
     }
 
     /*
-     * 窗是这颗图标开的、内容已经翻到别处：点它就是「装回我的弹窗」，
+     * 窗挂在这颗图标上、内容却翻到了程序坞外：点它就是「装回我的弹窗」，
      * 不能收起——收起会让它看起来像这一条自己开着。
+     * 窗自己那条（打开它的图标）同理：内容翻到别的条目去了，点它也是装回快照，
+     * 不滑切——窗的根节点就是这一条，滑切只会原地换状态、画面还停在新内容上。
      */
-    if (current.entry.id === id) {
-      resetContent();
+    if (ownerIdRef.current === id || current.entry.id === id) {
+      resetContent(entry);
 
       return;
     }
