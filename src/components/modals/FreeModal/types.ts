@@ -175,6 +175,11 @@ export type FreeModalProps = {
    * 避免按全屏时的几何位置做收起动画。
    */
   beforeMinimize?: () => Promise<void> | void;
+  /**
+   * 页面弹窗收进程序坞时改走它：只把弹窗隐藏、保留页面正文与编辑能力；
+   * 不传则照旧走 `onClose`。
+   */
+  onMinimize?: () => void;
   /** 是否垂直居中，默认是 */
   centered?: boolean;
   /**

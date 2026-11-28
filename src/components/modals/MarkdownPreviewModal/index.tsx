@@ -29,12 +29,13 @@ import PreviewOverlays from './PreviewOverlays';
 import PreviewWorkspace from './PreviewWorkspace';
 import { mainPreviewStorageKey } from './constants';
 import { useCloseRequest } from './hooks/useCloseRequest';
+import { useDocumentInteractions } from './hooks/useDocumentInteractions';
+import { useDockPreviewActions } from './hooks/useDockPreviewActions';
 import { useNoteEditing } from './hooks/useNoteEditing';
 import { usePreviewHeaderActions } from './hooks/usePreviewHeaderActions';
 import { useProseFontScale } from './hooks/useProseFontScale';
 import { useRefreshPreview } from './hooks/useRefreshPreview';
 import { useRemoveRequest } from './hooks/useRemoveRequest';
-import { useDocumentInteractions } from './hooks/useDocumentInteractions';
 import { withSideEffect } from './utils/with-side-effect';
 
 import styles from './index.scss';
@@ -44,20 +45,7 @@ export type {
   MarkdownPreviewFilter,
 } from './types/filter';
 
-export type {
-  AnchorLinkBehavior,
-  DetailsBlockBehavior,
-  InteractionControlProps,
-  MarkdownAnchorBlock,
-  MarkdownDetailBlock,
-  MarkdownEditorHandle,
-  MarkdownEditorProps,
-  MarkdownPreviewModalProps,
-  MarkdownPreviewRemove,
-  MarkdownPreviewRemoveChoice,
-  MarkdownPreviewSection,
-  SectionPreviewProps,
-} from './types';
+export type * from './types';
 
 const MarkdownPreviewModal = ({
   opened,
@@ -68,6 +56,7 @@ const MarkdownPreviewModal = ({
   relativePath,
   filter,
   onClose,
+  onMinimize,
   onPrevious,
   onNext,
   onRefresh,
@@ -77,11 +66,7 @@ const MarkdownPreviewModal = ({
   storageScope,
   dockOrigin = 'page',
 }: MarkdownPreviewModalProps) => {
-  /**
-   * header 上的就近弹层：同一时刻只开一块（筛选用 `filter`、字号用 `font`、
-   * 文档内交互方式用 `interaction`），由弹窗持有是为了换篇、刷新、进编辑、关弹窗时统一收起——
-   * 面板说的永远是当前这一次阅读。
-   */
+  /* header 就近弹层：同一时刻只开一块，换篇 / 刷新 / 进编辑 / 关窗时统一收起。 */
   const [panel, setPanel] = useState<PreviewPanel | null>(null);
 
   /** 这一页的偏好命名空间：同一个弹窗挂在不同页面时各记各的（页面标识由调用方给） */
@@ -90,17 +75,14 @@ const MarkdownPreviewModal = ({
   /** 全屏开关：记住的展示偏好，关闭弹窗也不重置；Esc 不归它管，永远是关弹窗 */
   const { fullscreen: storedFullscreen, toggle: toggleFullscreen } =
     useModalFullscreen(storageKey);
-  /** 程序坞恢复窗永远从普通尺寸出来：不继承页面里记住的全屏偏好 */
-  const fullscreen = dockOrigin === 'dock' ? false : storedFullscreen;
+  /** 页面弹窗与程序坞窗共用同一份全屏偏好：两边只差「收起到程序坞」那颗按钮 */
+  const fullscreen = storedFullscreen;
   /** 正文字号的用户偏移：跨篇、跨会话记住，叠在常规 / 全屏各自的默认字号上 */
   const proseFont = useProseFontScale(storageKey);
   /** 刷新按钮的 loading 与失败提示都在这个 hook 里 */
   const { refresh, refreshing } = useRefreshPreview(onRefresh);
 
-  /**
-   * 删除请求：点 header 的删除按钮先弹二次确认，确认后才真的删。
-   * 确认层开着时 Esc 与焦点都归它（主弹窗这一层让开），删除失败只收确认层、正文留着。
-   */
+  /* 删除先二次确认；确认层开着时 Esc 与焦点归它，失败只收确认层、正文留着。 */
   const removal = useRemoveRequest({ remove });
 
   const editing = useNoteEditing({
@@ -165,17 +147,11 @@ const MarkdownPreviewModal = ({
     requestClose();
   };
 
-  /*
-   * 编辑态（含草稿预览）关不掉：关闭按钮不渲染，Esc / 点遮罩只提示；唯一出口是返回箭头。
-   * Esc 的归属：header 弹层 / 子区域预览开着时只收那一层（`closeOnEscape` 由它们把关）。
-   */
+  /* 编辑态关不掉：关闭按钮不渲染，Esc / 点遮罩只提示，唯一出口是返回箭头。 */
   /** 编辑态（含草稿预览）收掉阅读类操作与全屏入口（铺满外观保留，见 `fullscreen.showToggle`） */
   const documentActionsVisible = !editing.editing;
 
-  /**
-   * 程序坞描述：正文与标题都收进快照，恢复时不依赖页面数据；
-   * 编辑中 / 删除确认开着 / 正文还没取到时不让收（按钮置灰或不画）。
-   */
+  /* 程序坞描述：正文与标题收进快照；编辑 / 删除确认 / 未加载时不让收。 */
   const dock: FreeModalDock | undefined = loading
     ? undefined
     : {
@@ -191,6 +167,24 @@ const MarkdownPreviewModal = ({
         },
         title,
       };
+
+  useDockPreviewActions({
+    Editor,
+    filter,
+    id: dockOrigin === 'page' ? dock?.id : undefined,
+    loading,
+    markdown,
+    onClose: handleClose,
+    onNext,
+    onPrevious,
+    onRefresh,
+    onSave,
+    position,
+    relativePath,
+    remove,
+    storageScope,
+    title,
+  });
 
   return (
     <>
@@ -208,9 +202,8 @@ const MarkdownPreviewModal = ({
         dock={dock}
         fullscreen={{
           active: fullscreen,
-          onToggle:
-            dockOrigin === 'dock' ? undefined : toggleFullscreen,
-          showToggle: documentActionsVisible && dockOrigin !== 'dock',
+          onToggle: toggleFullscreen,
+          showToggle: documentActionsVisible,
         }}
         headerActions={
           documentActionsVisible ? (
@@ -282,6 +275,7 @@ const MarkdownPreviewModal = ({
             : undefined
         }
         onClose={handleClose}
+        onMinimize={onMinimize}
         onRequestDelete={
           documentActionsVisible &&
           remove !== undefined &&

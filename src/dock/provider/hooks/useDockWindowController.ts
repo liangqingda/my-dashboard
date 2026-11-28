@@ -97,6 +97,7 @@ export const useDockWindowController = ({
       writeEntries(removeDockEntry(entriesRef.current, closing.entry.id));
     }
 
+    clearReceiving(closing.entry.id);
     setWindow(null);
   };
 
@@ -114,6 +115,11 @@ export const useDockWindowController = ({
   ) => {
     if (slot.phase === 'closing') {
       return;
+    }
+
+    // 缩回图标前先占住虚位：程序坞收起时也会立即弹出，收坞动画才量得到最终落点
+    if (exit === 'minimize') {
+      markReceiving(slot.entry.id);
     }
 
     setWindow({ ...slot, exit, phase: 'closing', removeOnExit });

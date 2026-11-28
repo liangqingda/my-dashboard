@@ -154,9 +154,21 @@ export const shrinkWindowToDock = async (
   content: HTMLElement,
   id: string,
 ): Promise<void> => {
-  const item = findDockAnchor(id);
+  if (prefersReducedMotion()) {
+    return;
+  }
 
-  if (prefersReducedMotion() || item === null) {
+  // 程序坞可能刚被自动展开：等目标图标真正露出来再量落点，不能退回右下角开关
+  const item = await waitForFrames(() => {
+    const candidate = findDockItem(id);
+
+    return candidate !== null &&
+      candidate.closest('[data-dock-open="true"]') !== null
+      ? candidate
+      : null;
+  });
+
+  if (item === null) {
     return;
   }
 

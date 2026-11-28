@@ -4,31 +4,23 @@ import { IconLayoutGrid, IconLayoutList } from '@tabler/icons-react';
 
 import FilterButton from '@/components/buttons/FilterButton';
 import FreeIconAction from '@/components/buttons/FreeIconAction';
-import MarkdownPreviewModal from '@/components/modals/MarkdownPreviewModal';
-import type { MarkdownPreviewFilter } from '@/components/modals/MarkdownPreviewModal';
 import MenuContentLayout from '@/layouts/MenuContentLayout';
 import { onPageRefresh } from '@/utils/page-refresh';
 import { cx } from '@/utils/cx';
 
 import type { NoteSummary, NotesSort } from './types';
-import {
-  DEFAULT_NOTE_SORT,
-  NOTES_STORAGE_SCOPE,
-  createNoteRemove,
-} from './constants';
+import { DEFAULT_NOTE_SORT } from './constants';
 import { useActiveNote } from './hooks/useActiveNote';
 import { useEnglishNotes } from './hooks/useEnglishNotes';
-import { useNoteFilter } from './hooks/useNoteFilter';
+import { useNotePreviewFilter } from './hooks/useNotePreviewFilter';
 import { useNotesFilter } from './hooks/useNotesFilter';
 import { useNotesViewMode } from './hooks/useNotesViewMode';
-import NoteEditor from './NoteEditor';
-import NoteFilter from './NoteFilter';
 import NotesBoard from './NotesBoard';
 import NotesFilter from './NotesFilter';
 import NotesTable from './NotesTable';
+import NotePreviewModal from './NotePreviewModal';
 import { buildCategoryPlan } from './utils/category';
 import {
-  getNoteRelativePath,
   groupNotesByCategory,
   sortNoteRows,
   toNoteRows,
@@ -71,6 +63,8 @@ const English = () => {
    * 记在 localStorage 里，切过的形态都留着，来回切只切显隐（见 `useNotesViewMode`）。
    */
   const { isBoardView, mounted, toggle: toggleView, view } = useNotesViewMode();
+  /** 预览窗是否只是收进了程序坞：保留 active 正文，恢复时同一套操作还能用 */
+  const [previewMinimized, setPreviewMinimized] = useState(false);
   /** 表格视图的排序状态：默认按更新时间倒序 */
   const [sort, setSort] = useState<NotesSort>(DEFAULT_NOTE_SORT);
   /** 列表筛选弹层是否打开：由页面持有，切视图、刷新时不留下一个悬着的面板 */
@@ -148,49 +142,24 @@ const English = () => {
       ? -1
       : scopeNotes.findIndex((note) => note.name === active.name);
 
-  /** 预览正文的筛选条件：范围 + 关键词，记在 localStorage，换篇 / 刷新都保留 */
-  const {
-    active: filterActive,
-    apply: applyFilter,
-    keyword: filterKeyword,
-    reset: resetFilter,
-    scope: filterScope,
-    setKeyword: setFilterKeyword,
-    setScope: setFilterScope,
-  } = useNoteFilter();
-  /**
-   * 交给弹窗的筛选槽：筛选语义（错题 / 习题 / 关键词）与持久化都在这一页，
-   * 弹窗只管图标按钮、就近弹层与「编辑态不筛」。
-   */
-  const previewFilter = useMemo<MarkdownPreviewFilter>(
-    () => ({
-      active: filterActive,
-      apply: applyFilter,
-      keyword: filterKeyword,
-      render: ({ navigation }) => (
-        <NoteFilter
-          keyword={filterKeyword}
-          navigation={navigation}
-          onKeywordChange={setFilterKeyword}
-          onReset={resetFilter}
-          onScopeChange={setFilterScope}
-          scope={filterScope}
-        />
-      ),
-    }),
-    [
-      applyFilter,
-      filterActive,
-      filterKeyword,
-      filterScope,
-      resetFilter,
-      setFilterKeyword,
-      setFilterScope,
-    ],
-  );
+  const previewFilter = useNotePreviewFilter();
 
   // 页面头部「刷新当前页面」按钮：重新读取仓库里的笔记
   useEffect(() => onPageRefresh(reload), [reload]);
+
+  /** 从列表 / 翻篇打开预览：任何新打开都要先取消「收在程序坞」的隐藏态 */
+  const openPreview = useCallback(
+    async (name: string) => {
+      setPreviewMinimized(false);
+      await openNote(name);
+    },
+    [openNote],
+  );
+
+  const closePreview = useCallback(() => {
+    setPreviewMinimized(false);
+    closeNote();
+  }, [closeNote]);
 
   /** 在「当前视图的可见顺序」里循环切换上一篇 / 下一篇。 */
   const step = (delta: number) => {
@@ -200,7 +169,7 @@ const English = () => {
 
     const next = (activeIndex + delta + scopeNotes.length) % scopeNotes.length;
 
-    void openNote(scopeNotes[next].name);
+    void openPreview(scopeNotes[next].name);
   };
 
   /**
@@ -279,7 +248,7 @@ const English = () => {
               error={error}
               filtered={notesFilterActive}
               loading={loading}
-              onOpen={openNote}
+              onOpen={openPreview}
             />
           </div>
         ) : null}
@@ -290,7 +259,7 @@ const English = () => {
               error={error}
               filtered={notesFilterActive}
               loading={loading}
-              onOpen={openNote}
+              onOpen={openPreview}
               onSort={sortBy}
               rows={rows}
               sort={sort}
@@ -299,33 +268,28 @@ const English = () => {
         ) : null}
       </MenuContentLayout>
 
-      <MarkdownPreviewModal
-        Editor={NoteEditor}
+      <NotePreviewModal
+        active={active}
+        body={activeBody}
         filter={previewFilter}
         loading={noteLoading}
-        markdown={activeBody ?? ''}
-        onClose={closeNote}
+        onClose={closePreview}
+        onMinimize={() => setPreviewMinimized(true)}
         onNext={scopeNotes.length > 1 ? () => step(1) : null}
         onPrevious={scopeNotes.length > 1 ? () => step(-1) : null}
         onRefresh={import.meta.env.DEV && activeBody !== null ? refreshActive : null}
         onSave={
           import.meta.env.DEV && activeBody !== null ? saveActive : undefined
         }
-        opened={active !== null}
+        opened={active !== null && !previewMinimized}
         position={
           active && scopeNotes.length > 0 && activeIndex >= 0
             ? { index: activeIndex + 1, total: scopeNotes.length }
             : undefined
         }
-        relativePath={active ? getNoteRelativePath(active.name) : undefined}
         remove={
-          // 删除要落盘到记录仓库，只在开发模式（有中间件）里给入口
-          import.meta.env.DEV && activeBody !== null
-            ? createNoteRemove(removeActive)
-            : undefined
+          import.meta.env.DEV && activeBody !== null ? removeActive : undefined
         }
-        storageScope={NOTES_STORAGE_SCOPE}
-        title={active?.name ?? ''}
       />
     </>
   );

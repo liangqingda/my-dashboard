@@ -20,6 +20,7 @@
 | `position` | `{ index: number; total: number }`（可选） | 展示「第几 / 共几」 |
 | `relativePath` | `string`（可选） | 文档的相对路径（相对其记录仓库根目录）；提供后 header 出现复制图标按钮，不传则不显示。组件不拼路径，由调用方给 |
 | `onClose` | `() => void` | 关闭 |
+| `onMinimize` | `() => void`（可选） | 页面弹窗「最小化到程序坞」时改走它（只隐藏弹窗、保留页面 active 状态）；不传则等同 `onClose` |
 | `onPrevious` | `(() => void) \| null`（可选） | 上一篇；`null` 表示到头，按钮置灰 |
 | `onNext` | `(() => void) \| null`（可选） | 下一篇；`null` 表示到头，按钮置灰 |
 | `onRefresh` | `(() => Promise<void> \| void) \| null`（可选） | header 右侧操作组里的刷新按钮；调用方重取最新正文并回灌 `markdown`，返回 Promise 时按钮显示 loading，不传则不显示；编辑中不渲染（刷新会把草稿盖掉） |
@@ -538,7 +539,13 @@ disabled 时会落到第一个图标按钮上，把复制按钮那类 focus 型 
 
 ### 收起到程序坞
 
-传 `dock` 描述符（`markdown` 原文 + 标题 + `storageScope` + 相对路径）后，header 固定出现最小化按钮，
-收起即进程序坞；编辑中、删除确认开着、正文未加载时按钮置灰或不画。程序坞恢复出来的窗口带
-`dockOrigin="dock"`，再收起只回坞、不关页面状态，且只保留阅读能力（编辑 / 筛选 / 保存依赖页面回调，
-不在快照里）。`⌘M` 与层级见 `docs/dock.md`。
+传 `dock` 描述符（`markdown` 原文 + 标题 + `storageScope` + 相对路径）后，header 固定出现收坞按钮：
+已收录时是横线「最小化到程序坞」，未收录时是窗口最小化图标「收起到程序坞」；编辑中、删除确认开着、
+正文未加载时按钮置灰或不画。程序坞恢复出来的窗口带 `dockOrigin="dock"`，再收起只回坞、不关页面状态。
+
+**程序坞内外同一套 header 操作**：页面侧通过 `useDockPreviewActions` 把复制路径 / 筛选 / 字号 /
+刷新 / 编辑 / 删除 / 全屏等能力按 dock id 登记到 `DockActions/Registry`（模块级 store，用
+`useSyncExternalStore` 订阅）；`MarkdownWindow` 按同一个 id 取回整套 props，所以两边的按钮顺序、
+可用态与动作一致，唯一差异是页面弹窗可能走 `onMinimize`、坞窗只回坞。页面已经卸载、登记表没有这一条时，
+坞窗退回快照只读（正文与标题还在，编辑 / 筛选 / 删除这类依赖页面数据与回调的按钮不画）。
+`⌘M` 与层级见 `docs/dock.md`。

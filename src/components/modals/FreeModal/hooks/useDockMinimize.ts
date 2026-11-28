@@ -20,6 +20,8 @@ type UseDockMinimizeParams = {
   onClose: () => void;
   /** 收起动画开始前先做（如退出整屏 / 网页全屏），完成后才量落点 */
   beforeMinimize?: () => Promise<void> | void;
+  /** 页面弹窗收起时改走它（保留页面状态）；不传则走 onClose */
+  onMinimize?: () => void;
   /** 弹窗是否开着 */
   opened: boolean;
 };
@@ -29,16 +31,23 @@ export const useDockMinimize = ({
   beforeMinimize,
   dock,
   onClose,
+  onMinimize,
   opened,
 }: UseDockMinimizeParams) => {
   const dockContext = useDockOptional();
+  const dockContextRef = useRef(dockContext);
   const dockRef = useRef(dock);
   const onCloseRef = useRef(onClose);
+  const onMinimizeRef = useRef(onMinimize);
   const beforeMinimizeRef = useRef(beforeMinimize);
   const dockId = dock?.id;
   const dockDisabled = dock?.disabled;
 
   // 事件里读最新值、又不在渲染阶段写 ref：提交后再同步
+  useEffect(() => {
+    dockContextRef.current = dockContext;
+  }, [dockContext]);
+
   useEffect(() => {
     dockRef.current = dock;
   }, [dock]);
@@ -48,25 +57,30 @@ export const useDockMinimize = ({
   }, [onClose]);
 
   useEffect(() => {
+    onMinimizeRef.current = onMinimize;
+  }, [onMinimize]);
+
+  useEffect(() => {
     beforeMinimizeRef.current = beforeMinimize;
   }, [beforeMinimize]);
 
   const minimize = useCallback(() => {
     const descriptor = dockRef.current;
+    const context = dockContextRef.current;
 
     if (
       descriptor === undefined ||
       descriptor.disabled === true ||
-      dockContext === null
+      context === null
     ) {
       return;
     }
 
     const proceed = () => {
-      dockContext.minimize(descriptor, findDockSurface(descriptor.id));
+      context.minimize(descriptor, findDockSurface(descriptor.id));
 
       if (descriptor.origin !== 'dock') {
-        onCloseRef.current();
+        (onMinimizeRef.current ?? onCloseRef.current)();
       }
     };
 
@@ -81,20 +95,22 @@ export const useDockMinimize = ({
       .then(() => beforeMinimizeRef.current?.())
       .catch(() => undefined)
       .then(proceed);
-  }, [dockContext]);
+  }, []);
 
   useEffect(() => {
+    const context = dockContextRef.current;
+
     if (
       !opened ||
       dockId === undefined ||
       dockDisabled === true ||
-      dockContext === null
+      context === null
     ) {
       return undefined;
     }
 
-    return dockContext.registerModal({ id: dockId, minimize });
-  }, [dockContext, dockDisabled, dockId, minimize, opened]);
+    return context.registerModal({ id: dockId, minimize });
+  }, [dockDisabled, dockId, minimize, opened]);
 
   /** 程序坞里已经有同 id 条目：header 那颗按钮改成「移除」，不再重复收录 */
   const canRemove =
@@ -104,13 +120,14 @@ export const useDockMinimize = ({
 
   const remove = useCallback(() => {
     const descriptor = dockRef.current;
+    const context = dockContextRef.current;
 
-    if (descriptor === undefined || dockContext === null) {
+    if (descriptor === undefined || context === null) {
       return;
     }
 
-    dockContext.remove(descriptor.id);
-  }, [dockContext]);
+    context.remove(descriptor.id);
+  }, []);
 
   return {
     canMinimize: dock !== undefined && dockContext !== null,

@@ -84,6 +84,11 @@ export type MarkdownPreviewModalProps = {
   /** 关闭预览 */
   onClose: () => void;
   /**
+   * 收起到程序坞时改走它：调用方只把弹窗隐藏、保留正文状态；
+   * 不传则按旧口径走 `onClose`，程序坞窗口只用快照阅读。
+   */
+  onMinimize?: () => void;
+  /**
    * 这一页在 localStorage 里的页面标识（路由，如 `english-notes`，见 `@/utils/page-storage`）。
    * 全屏 / 字号 / 目录宽度这些阅读偏好按 `<标识>:markdown-preview` 这类命名空间存——
    * 同一个预览弹窗挂在不同页面各记各的，所以标识由页面传，组件不写死。
@@ -584,4 +589,35 @@ export type HeaderActionShortcutParams = {
   onToggleFilter?: (() => void) | null;
   /** 刷新正文；不传表示没有刷新能力 */
   onRefresh?: (() => void) | null;
+};
+
+/** 页面登记给程序坞窗口的一整套 Markdown 预览能力（快照只是兜底） */
+export type MarkdownDockActions = {
+  /** 正文最新内容 */
+  markdown: string;
+  /** 正文是否还在取 */
+  loading?: boolean;
+  /** 当前翻篇位置 */
+  position?: { index: number; total: number };
+  /** 相对路径 */
+  relativePath?: string;
+  /** 关闭页面弹窗 */
+  onClose: () => void;
+  /** 上一篇 / 下一篇 */
+  onPrevious?: (() => void) | null;
+  onNext?: (() => void) | null;
+  /** 重取正文 */
+  onRefresh?: (() => Promise<void> | void) | null;
+  /** 保存编辑 */
+  onSave?: (markdown: string) => Promise<{ notice?: string }>;
+  /** 这一类文档的编辑器 */
+  Editor?: ComponentType<MarkdownEditorProps>;
+  /** 预览态筛选 */
+  filter?: MarkdownPreviewFilter;
+  /** 删除能力 */
+  remove?: MarkdownPreviewRemove;
+  /** 页面偏好命名空间 */
+  storageScope: string;
+  /** 标题 */
+  title: string;
 };

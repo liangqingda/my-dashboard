@@ -4,7 +4,6 @@
  */
 
 import { FocusTrap, Modal } from '@mantine/core';
-import type { ModalCloseButtonProps } from '@mantine/core';
 import {
   IconMaximize,
   IconMinimize,
@@ -15,9 +14,9 @@ import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
 import { DOCK_WINDOW_Z_INDEX } from '@/dock/constants';
 import { cx } from '@/utils/cx';
 
+import CloseAction from './CloseAction';
 import DockAction from './DockAction';
 import HeaderNav from './HeaderNav';
-import MinimizeAction from './MinimizeAction';
 import { useAutoHideHeader } from './hooks/useAutoHideHeader';
 import { useDockNav } from './hooks/useDockNav';
 import { useDockMinimize } from './hooks/useDockMinimize';
@@ -71,6 +70,7 @@ const FreeModal = ({
   media,
   nav,
   onClose,
+  onMinimize,
   onRequestDelete,
   onRequestEscape,
   onCapture,
@@ -93,7 +93,7 @@ const FreeModal = ({
 
   /** 收起到程序坞：按钮位置固定在关闭按钮左边，动作与 `⌘M` 登记共用一份 */
   const { canMinimize, canRemove, minimize: minimizeToDock, remove: removeFromDock } =
-    useDockMinimize({ beforeMinimize, dock, onClose, opened });
+    useDockMinimize({ beforeMinimize, dock, onClose, onMinimize, opened });
   /** 只有已收录的窗关闭才回坞；普通页面弹窗照常关闭 */
   const { backgroundDockWindow, docked } = useModalDockState({
     canRemove,
@@ -101,14 +101,20 @@ const FreeModal = ({
     fullscreenActive: fullscreen?.reportActive ?? (fullscreen?.active === true),
     opened,
   });
+
   const closeAction = docked ? minimizeToDock : onClose;
-  /**
-   * 已收录的窗：右上角那颗外观像关闭，动作却是收坞，容易误解。
-   * 这里把它换成最小化图标；「关闭并从程序坞移除」则交给 `DockAction` 的 X。
-   * 未收录的窗仍保留组件库原生关闭按钮，语义与外观一致。
-   */
-  const minimizeClose = closeButton && docked;
-  const systemClose = closeButton && !docked;
+
+  /** 已收录的窗：X 先移除条目再关页；程序坞窗口由 Provider 的 remove 直接收场 */
+  const closeAndRemoveFromDock = () => {
+    removeFromDock();
+
+    if (dock?.origin === 'page') {
+      onClose();
+    }
+  };
+
+  const systemCloseAction = docked ? closeAndRemoveFromDock : onClose;
+  const systemCloseLabel = docked ? '关闭并从程序坞移除' : closeLabel;
   const headerNav = useDockNav(dock, nav);
   const effectiveZIndex =
     zIndex ?? (dock?.origin === 'dock' ? DOCK_WINDOW_Z_INDEX : undefined);
@@ -210,21 +216,11 @@ const FreeModal = ({
         ),
         title: styles.title,
       }}
-      /*
-       * 稳定钩子：浮层浅字档按属性选择器取色，不依赖组件库哈希类名；
-       * 组件库 props 类型没声明自定义 data 属性，这里随按钮原生属性一并透传。
-       */
-      closeButtonProps={
-        {
-          'aria-label': closeLabel,
-          'data-modal-close': true,
-        } as ModalCloseButtonProps
-      }
       closeOnClickOutside={false}
       closeOnEscape={closeOnEscape && !escapeOverridden}
       {...dockSurfaceProps}
       fullScreen={fullscreen?.active ?? false}
-      onClose={closeAction}
+      onClose={systemCloseAction}
       opened={opened}
       overlayProps={{
         className: cx(
@@ -238,12 +234,7 @@ const FreeModal = ({
       size={size}
       styles={{ content: contentStyle }}
       title={
-        <div
-          className={cx(
-            styles.titleRow,
-            closeButton && styles.titleRowBeforeClose,
-          )}
-        >
+        <div className={styles.titleRow}>
           {headerNav ? (
             <HeaderNav
               iconSize={STEP_ICON_SIZE}
@@ -284,25 +275,26 @@ const FreeModal = ({
               )}
             </FreeIconAction>
           ) : null}
-          <DockAction
-            canMinimize={canMinimize}
-            canRemove={canRemove}
-            disabled={dock?.disabled === true}
-            iconSize={ICON_SIZE}
-            iconStroke={ICON_STROKE}
-            onMinimize={minimizeToDock}
-            onRemove={removeFromDock}
-            tipDark={tipDark}
-          />
+          {canMinimize ? (
+            <DockAction
+              canRemove={canRemove}
+              disabled={dock?.disabled === true}
+              iconSize={ICON_SIZE}
+              iconStroke={ICON_STROKE}
+              onMinimize={minimizeToDock}
+              tipDark={tipDark}
+            />
+          ) : null}
           {/* 关闭前只画一条分界；没有关闭按钮或右侧没图标时不画，免得留孤线 */}
           {closeButton && (hasCustomActions || hasFixedActions) ? (
             <span aria-hidden="true" className={styles.divider} />
           ) : null}
-          {minimizeClose ? (
-            <MinimizeAction
+          {closeButton ? (
+            <CloseAction
               iconSize={ICON_SIZE}
               iconStroke={ICON_STROKE}
-              onClick={closeAction}
+              label={systemCloseLabel}
+              onClick={systemCloseAction}
               tipDark={tipDark}
             />
           ) : null}
@@ -314,7 +306,7 @@ const FreeModal = ({
           : { duration: 140, transition: 'fade' }
       }
       trapFocus={trapFocus && !backgroundDockWindow}
-      withCloseButton={systemClose}
+      withCloseButton={false}
       zIndex={effectiveZIndex}
     >
       {/*

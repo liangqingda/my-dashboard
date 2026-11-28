@@ -157,13 +157,21 @@
   min-width: 4px;
 }
 
-/* 右侧操作组：组内间距与标题栏同一档，任何宽度下都不换行 */
+/* 右侧操作组：组内间距与标题栏同一档，任何宽度下都不换行；窄屏允许横向滚动，X 始终留在行尾 */
 .actions {
   display: flex;
-  flex: 0 0 auto;
+  flex: 0 1 auto;
   flex-wrap: nowrap;
   align-items: center;
+  min-width: 0;
   gap: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /*
@@ -214,17 +222,6 @@
   .divider {
     background: var(--app-glass-on-ink-faint);
   }
-
-  /* 组件库内建关闭按钮：图标跟这一层浅字走，hover 只提一档亮度、不铺浅灰底；
-     钩子是 `closeButtonProps` 挂的 `data-modal-close`，不依赖组件库哈希类名 */
-  [data-modal-close] {
-    color: var(--app-glass-on-ink-soft);
-
-    &:hover:not(:disabled) {
-      background: var(--app-glass-float);
-      color: var(--app-glass-on-ink);
-    }
-  }
 }
 
 /* 隐藏态：淡出上移，且不接收指针事件，免得住上方看不见的按钮被误点 */
@@ -242,16 +239,4 @@
   height: 18px;
   margin-inline: 2px;
   background: var(--app-line-strong);
-}
-
-/* 关闭按钮紧接在标题行之后：右端留一段间距，免得最后一个图标贴上去 */
-.titleRowBeforeClose {
-  padding-inline-end: 10px;
-}
-
-/* 窄屏：给关闭按钮留出位置，避免 header 文字被压住 */
-@media (max-width: 560px) {
-  .header {
-    padding-right: 40px;
-  }
 }
