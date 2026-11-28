@@ -50,15 +50,27 @@ export const useModalSurfaceMotion = ({
    */
   const motionSurfaceId = surfaceId ?? dock?.surfaceId ?? fallbackId;
 
+  /*
+   * 是不是程序坞里的窗：`dock` 只在正文就位后才给（加载期不让收坞、不让删），
+   * 但动画身份不能跟着丢——加载期一丢就被当成页面弹窗，照着点击点自己播一趟开窗动画，
+   * 正文到位后切成坞窗再把它取消、由宿主重播一遍，观感就是闪一下、重新长一次。
+   * `surfaceId` 是业务在加载期就能交代的同一份身份，用它兜住。
+   */
+  const isDockWindow = dock?.origin === 'dock' || surfaceId !== undefined;
+
   const { isClosing, requestClose } = useModalMotion({
-    enabled: dock?.origin !== 'dock',
+    enabled: !isDockWindow,
     geometryEnabled: !fullscreenActive,
     onClose,
     opened,
     surfaceId: motionSurfaceId,
   });
 
-  const dockSurfaceId = dock?.surfaceId ?? dock?.id;
+  /*
+   * 宿主按这个属性找框体。加载期也要挂：挂晚了宿主第一帧找不到框体，
+   * 骨架框体会先以终态露一下，属性补上后再从头跑几何动画。
+   */
+  const dockSurfaceId = dock?.surfaceId ?? dock?.id ?? surfaceId;
 
   const surfaceProps: Record<string, string> = {
     'data-motion-surface': motionSurfaceId,

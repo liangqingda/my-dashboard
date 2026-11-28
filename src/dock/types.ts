@@ -131,6 +131,11 @@ export type DockContextValue = {
   /** 正在飞入、还没有长出图标的条目 id：程序坞里先画虚位 */
   receivingIds: readonly string[];
   /**
+   * 刚点开、正文还在路上的条目 id：图标转圈等着，窗等正文就位后才从它那里长出来。
+   * 只要开窗几何动画的窗都算——正文到位即清空，不是持久状态
+   */
+  preparingId: string | null;
+  /**
    * 程序坞里画实心运行点的那条条目 id：窗里正显示这一条；内容翻到程序坞外时退成
    * 窗挂着的那颗图标（见 `windowOwnerId` 与 `hoverEntryId`）
    */

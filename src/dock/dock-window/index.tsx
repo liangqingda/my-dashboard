@@ -56,6 +56,8 @@ export type DockWindowSlot = {
 type DockWindowHostProps = {
   /** 收起动画结束 */
   onExited: () => void;
+  /** 这扇窗开始跑开窗几何动画：图标上的等待提示可以收了 */
+  onPrepared: () => void;
   /** 用户关闭当前窗口：由 Provider 决定「先淡出再删条目」 */
   onRequestClose: () => void;
   /** 要渲染的那扇窗 */
@@ -66,6 +68,7 @@ type DockWindowHostProps = {
 
 const DockWindowHost = ({
   onExited,
+  onPrepared,
   onRequestClose,
   readyRef,
   slot,
@@ -81,11 +84,13 @@ const DockWindowHost = ({
     revision = 0,
   } = slot;
   const onExitedRef = useRef(onExited);
+  const onPreparedRef = useRef(onPrepared);
   const readyRefRef = useRef(readyRef);
 
   useEffect(() => {
     onExitedRef.current = onExited;
-  }, [onExited]);
+    onPreparedRef.current = onPrepared;
+  }, [onExited, onPrepared]);
 
   /** 窗正文就位上报：直通控制器的 readyRef，宿主开窗动画据此解除等待 */
   const handleWindowReady = useCallback((ready: boolean) => {
@@ -97,25 +102,36 @@ const DockWindowHost = ({
     const isCancelled = () => controller.signal.aborted;
     const entryId = entry.id;
 
-    // 展开前先接管第一帧：genie 隐藏等动画，slide 直接摆到屏幕外，避免闪终态
-    if (phase === 'opening' && animate !== 'none') {
-      const immediate = findDockSurface(entryId);
-      const root = findDockRoot(entryId);
-      const overlay = findDockOverlay(root);
+    /*
+     * 展开前接管第一帧：genie 隐藏等动画，slide 直接摆到屏幕外，避免闪终态。
+     * 框体可能还没渲染出来（内容框由弹窗组件晚一两帧挂），所以这里不能只试一次——
+     * 先在本帧试，`run` 里找到框体后再补一次，否则骨架会先以终态露一屏，
+     * 再被动画拽回图标起点。
+     */
+    const captureOpeningFrame = () => {
+      if (phase !== 'opening' || animate === 'none') {
+        return;
+      }
 
-      if (immediate !== null) {
+      const content = findDockSurface(entryId);
+
+      if (content !== null) {
         if (animate === 'slide') {
-          immediate.style.transformOrigin = 'center';
-          immediate.style.transform = `translate3d(${slideOffset(immediate, direction)}px, 0, 0)`;
+          content.style.transformOrigin = 'center';
+          content.style.transform = `translate3d(${slideOffset(content, direction)}px, 0, 0)`;
         } else {
-          immediate.style.opacity = '0';
+          content.style.opacity = '0';
         }
       }
+
+      const overlay = findDockOverlay(findDockRoot(entryId));
 
       if (overlay !== null) {
         overlay.style.opacity = animate === 'slide' ? '1' : '0';
       }
-    }
+    };
+
+    captureOpeningFrame();
 
     const run = async () => {
       // 窗已经开着、只是把内容换回它自己那条：不动几何，直接结束
@@ -126,6 +142,9 @@ const DockWindowHost = ({
       const content = await waitForFrames(() => findDockSurface(entryId));
 
       if (content === null) {
+        // 框体始终没挂出来：图标上的等待提示不能一直转
+        onPreparedRef.current();
+
         if (phase === 'closing') {
           onExitedRef.current();
         }
@@ -136,6 +155,9 @@ const DockWindowHost = ({
       if (isCancelled()) {
         return;
       }
+
+      /* 框体这一帧才出现：补一次接管，骨架不能先以终态画出来 */
+      captureOpeningFrame();
 
       /*
        * 空场长大（genie）的窗先挂骨架、正文异步替换：几何动画量到的框体必须是正文就位后的
@@ -156,6 +178,9 @@ const DockWindowHost = ({
       const root = findDockRoot(entryId);
 
       if (phase === 'opening') {
+        // 窗要现身了：图标上的等待提示交给这趟动画
+        onPreparedRef.current();
+
         if (animate === 'slide') {
           await slideWindowIn(content, direction);
         } else {

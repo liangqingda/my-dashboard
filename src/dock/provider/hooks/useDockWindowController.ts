@@ -31,6 +31,7 @@ type Params = {
   entries: readonly DockEntry[];
   entriesRef: MutableRefObject<DockEntry[]>;
   modalStack: UseDockModalStackResult['modalStack'];
+  onPreparing: (id: string | null) => void;
   writeEntries: (next: DockEntry[]) => void;
 };
 
@@ -38,6 +39,7 @@ export const useDockWindowController = ({
   entries,
   entriesRef,
   modalStack,
+  onPreparing,
   writeEntries,
 }: Params) => {
   const [windowSlot, setWindowSlotState] = useState<DockWindowSlot | null>(null);
@@ -88,6 +90,7 @@ export const useDockWindowController = ({
       writeWindowEntry(null);
       writeWindowOwner(null);
       windowReadyRef.current = false;
+      onPreparing(null);
     } else {
       /*
        * 新窗 / 换条目先按未就绪挂着：窗体自己上报正文就位后才翻 true。
@@ -218,6 +221,8 @@ export const useDockWindowController = ({
       phase: 'opening',
       removeOnExit: false,
     });
+    // 空场长大的窗等正文就位才起动画：先把图标转起来，别让点击看着像没反应
+    onPreparing(entry.id);
   };
 
   /**
@@ -248,9 +253,9 @@ export const useDockWindowController = ({
   };
 
   const restore = (id: string) => {
-    const seq = restoreSeq.current + 1;
+    restoreSeq.current += 1;
 
-    restoreSeq.current = seq;
+    const seq = restoreSeq.current;
 
     restoreDockWindow({
       activateEntry,
@@ -279,9 +284,7 @@ export const useDockWindowController = ({
       return false;
     }
 
-    const next = list[(index + delta + list.length) % list.length];
-
-    restore(next.id);
+    restore(list[(index + delta + list.length) % list.length].id);
 
     return true;
   };
@@ -297,14 +300,11 @@ export const useDockWindowController = ({
     writeEntries,
   });
 
-  const shownEntryId =
-    windowEntryId !== null &&
-    entries.some((entry) => entry.id === windowEntryId)
-      ? windowEntryId
-      : null;
-
   return {
-    activeEntryId: shownEntryId,
+    activeEntryId:
+      windowEntryId !== null && entries.some((entry) => entry.id === windowEntryId)
+        ? windowEntryId
+        : null,
     collect,
     finishClosing,
     minimize,

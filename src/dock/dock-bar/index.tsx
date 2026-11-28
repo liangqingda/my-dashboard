@@ -36,6 +36,7 @@ const DockBar = () => {
     fullscreenCount,
     hoverEntryId,
     nativeFullscreen,
+    preparingId,
     receivingIds,
     remove,
     restore,
@@ -203,6 +204,7 @@ const DockBar = () => {
                  */
                 const hovered = hoverEntryId === entry.id;
                 const receiving = receivingIds.includes(entry.id);
+                const preparing = preparingId === entry.id;
                 const label = hovered
                   ? `恢复到「${entry.title}」`
                   : `${active ? '收起' : '打开'}「${entry.title}」`;
@@ -236,6 +238,7 @@ const DockBar = () => {
                       data-editing={editActive ? 'true' : undefined}
                       data-hover={hovered ? 'true' : undefined}
                       data-kind={entry.kind}
+                      data-preparing={preparing ? 'true' : undefined}
                       data-receiving={receiving ? 'true' : undefined}
                       disabled={receiving}
                       onClick={() => handleItemClick(entry.id)}
@@ -243,6 +246,9 @@ const DockBar = () => {
                     >
                       <span className={styles.dockIcon}>
                         <Icon size={iconSize} stroke={1.55} />
+                        {preparing ? (
+                          <span aria-hidden="true" className={styles.dockWaiting} />
+                        ) : null}
                       </span>
                       {editActive ? (
                         <span aria-hidden="true" className={styles.dockRemove}>

@@ -15,6 +15,7 @@ import { DOCK_ENTRIES_CODEC } from '../utils/dock-entries';
 import { notifyDockPersistFailed } from '../utils/dock-notice';
 import type { DockContextValue, DockEntry } from '../types';
 
+import { useDockPreparing } from './hooks/useDockPreparing';
 import { useDockWindowController } from './hooks/useDockWindowController';
 
 const DockProvider = ({ children }: { children: ReactNode }) => {
@@ -49,6 +50,7 @@ const DockProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const { markPreparing, preparingId } = useDockPreparing();
   const {
     activeEntryId: windowActiveEntryId,
     collect,
@@ -69,6 +71,7 @@ const DockProvider = ({ children }: { children: ReactNode }) => {
     entries,
     entriesRef,
     modalStack,
+    onPreparing: markPreparing,
     writeEntries,
   });
 
@@ -100,6 +103,7 @@ const DockProvider = ({ children }: { children: ReactNode }) => {
     minimize,
     minimizeTop,
     nativeFullscreen,
+    preparingId,
     receivingIds,
     registerModal,
     remove,
@@ -119,6 +123,7 @@ const DockProvider = ({ children }: { children: ReactNode }) => {
       {windowSlot === null ? null : (
         <DockWindowHost
           onExited={finishClosing}
+          onPrepared={() => markPreparing(null)}
           onRequestClose={requestCloseWindow}
           readyRef={windowReadyRef}
           slot={windowSlot}

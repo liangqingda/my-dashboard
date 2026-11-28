@@ -241,6 +241,7 @@
 
 /* 图标内容：飞入完成后由 0.24 长到 1 */
 .dockIcon {
+  position: relative;
   display: grid;
   place-items: center;
   filter: drop-shadow(0 1px 2px rgb(0 0 0 / 22%));
@@ -248,6 +249,23 @@
     opacity 180ms var(--app-ease-standard),
     transform 240ms var(--app-ease-spring),
     filter 160ms var(--app-ease-standard);
+}
+
+/* 点了要异步取正文的图标：图标外圈转一道环，窗等正文就位再从它这里长出来 */
+.dockWaiting {
+  position: absolute;
+  inset: -5px;
+  border: 2px solid rgb(255 255 255 / 70%);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: dockWaiting 900ms linear infinite;
+  pointer-events: none;
+}
+
+@keyframes dockWaiting {
+  to {
+    transform: rotate(1turn);
+  }
 }
 
 /* `data-hover` 是「窗开着、但内容翻到了一条不在程序坞的」：在激活之上再叠一层 hover 阴影 */
