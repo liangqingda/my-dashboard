@@ -41,10 +41,12 @@ export type FilesOverlaysProps = {
     imageStaged: boolean;
     /** 预览中的这条视频是否已在待拖拽区（控制栏那颗按钮的「已加入」态） */
     videoStaged: boolean;
-    /** 把预览中的这张图加入 / 移出待拖拽区（方向由 `imageStaged` 说） */
-    onToggleImage: () => void;
-    /** 把预览中的这条视频加入 / 移出待拖拽区（方向由 `videoStaged` 说） */
-    onToggleVideo: () => void;
+    /** 把某张图片加入 / 移出待拖拽区 */
+    onToggleImage: (id: string) => void;
+    /** 把某条视频加入 / 移出待拖拽区 */
+    onToggleVideo: (id: string) => void;
+    /** 待拖拽区路径：程序坞窗口据此判断当前条目是否已加入 */
+    pendingPaths: readonly string[];
     /** 设置里选定的外部播放器名称（跟设置列表走） */
     videoApp: string;
     video: ReturnType<typeof useVideoPreview>;

@@ -4,8 +4,8 @@
  */
 
 import {
-  IconCircleMinus,
   IconWindowMinimize,
+  IconX,
 } from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
@@ -35,16 +35,22 @@ const DockAction = ({
     return null;
   }
 
+  /*
+   * 已收录时这颗按钮是「关闭并从程序坞移除」，图标用 X；
+   * 未收录时是「收起到程序坞」，图标用最小化窗格。
+   * 已收录时 header 行尾换成最小化图标，Mantine 原生关闭叉隐藏，
+   * 两处视觉语义不能都像关闭。
+   */
   return (
     <FreeIconAction
       disabled={disabled}
-      label={canRemove ? '从程序坞移除' : '收起到程序坞'}
+      label={canRemove ? '关闭并从程序坞移除' : '收起到程序坞'}
       onClick={canRemove ? onRemove : onMinimize}
       tipDark={tipDark}
-      tooltipLabel={canRemove ? '从程序坞移除' : '收起到程序坞（⌘M）'}
+      tooltipLabel={canRemove ? '关闭并从程序坞移除' : '收起到程序坞（⌘M）'}
     >
       {canRemove ? (
-        <IconCircleMinus size={iconSize} stroke={iconStroke} />
+        <IconX size={iconSize} stroke={iconStroke} />
       ) : (
         <IconWindowMinimize size={iconSize} stroke={iconStroke} />
       )}

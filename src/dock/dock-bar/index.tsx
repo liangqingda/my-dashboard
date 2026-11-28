@@ -27,6 +27,7 @@ import { useDock } from '../hooks/useDock';
 import { groupDockEntries } from '../utils/dock-groups';
 
 import { DOCK_KIND_ICON } from './constants';
+import { resetMagnification } from './reset-magnification';
 
 import styles from './index.scss';
 
@@ -35,14 +36,6 @@ const MAGNIFY_REACH_RATIO = 2.4;
 
 const TOGGLE_ICON_SIZE = 18;
 const EDIT_ICON_SIZE = 17;
-
-/** 清掉指针放大写在节点上的临时变量 */
-const resetMagnification = (box: HTMLElement | null) => {
-  box?.querySelectorAll<HTMLElement>('[data-dock-item]').forEach((item) => {
-    item.style.removeProperty('--dock-item-scale');
-    item.style.removeProperty('z-index');
-  });
-};
 
 const DockBar = () => {
   const {
@@ -59,6 +52,8 @@ const DockBar = () => {
   const [editing, setEditing] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
   const fullscreenRef = useRef(false);
+  /** 进全屏前的展开态：退出后要恢复，而不是把程序坞一直收着 */
+  const openBeforeFullscreenRef = useRef(false);
   const empty = entries.length === 0;
   const showing = open && !empty;
   const editActive = editing && showing;
@@ -94,21 +89,21 @@ const DockBar = () => {
     return () => window.cancelAnimationFrame(frame);
   }, [receivingIds.length]);
 
-  /**
-   * 进入全屏时默认收掉程序坞与右下角控件，先让出内容；
-   * 全屏期间若因收进新窗口又弹出来，则按 `data-dock-dim` 虚化显示。
-   */
+  /** 进入全屏先收掉程序坞与控件；退出时恢复进全屏前的展开态 */
   useEffect(() => {
     const inside = fullscreenCount > 0;
 
     if (inside && !fullscreenRef.current) {
+      openBeforeFullscreenRef.current = open;
       setOpen(false);
       setEditing(false);
       resetMagnification(boxRef.current);
+    } else if (!inside && fullscreenRef.current) {
+      setOpen(openBeforeFullscreenRef.current);
     }
 
     fullscreenRef.current = inside;
-  }, [fullscreenCount]);
+  }, [fullscreenCount, open]);
 
   useEffect(() => {
     if (!instant) {
@@ -199,7 +194,6 @@ const DockBar = () => {
         data-dock-open={showing ? 'true' : 'false'}
         data-editing={editActive ? 'true' : undefined}
         data-instant={instant ? 'true' : undefined}
-        data-open={showing ? 'true' : 'false'}
         onPointerLeave={() => resetMagnification(boxRef.current)}
         style={dockStyle}
       >
@@ -300,7 +294,6 @@ const DockBar = () => {
             aria-label={empty ? '程序坞为空' : toggleLabel}
             className={styles.dockControl}
             data-dock-toggle="true"
-            data-open={showing ? 'true' : undefined}
             disabled={empty}
             onClick={handleToggle}
           >

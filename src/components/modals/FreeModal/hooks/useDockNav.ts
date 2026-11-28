@@ -17,13 +17,16 @@ export const useDockNav = (
     return nav;
   }
 
+  const index = context.entries.findIndex((entry) => entry.id === dock.id);
+
+  // 窗内翻到未收录的内容：这一窗已经和程序坞条目脱钩，header 计数回到内容自己的翻篇
+  if (index === -1) {
+    return nav;
+  }
+
   return {
     disabled: context.entries.length < 2,
-    index:
-      Math.max(
-        0,
-        context.entries.findIndex((entry) => entry.id === dock.id),
-      ) + 1,
+    index: index + 1,
     nextLabel: '下一个程序坞窗口',
     onNext: () => {
       context.stepWindow(1);

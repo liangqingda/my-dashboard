@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import FilesModals from '../FilesModals';
 import FilesPreviewLayers from '../FilesPreviewLayers';
 import { favoriteTargetOf } from '../utils/files';
@@ -18,6 +20,13 @@ import styles from './index.scss';
 const FilesOverlays = ({ modals, preview }: FilesOverlaysProps) => {
   const { deleteEntry, favorites, entryActions, wallpaper, ...modalRest } = modals;
   const { image, video, videoApp, ...previewRest } = preview;
+  const { requestWallpaper } = wallpaper;
+  const handleRequestWallpaper = useCallback(
+    (id: string, name: string) => {
+      requestWallpaper({ name, path: id });
+    },
+    [requestWallpaper],
+  );
 
   return (
     <div className={styles.layers}>
@@ -61,17 +70,12 @@ const FilesOverlays = ({ modals, preview }: FilesOverlaysProps) => {
         onOpenExternal={video.openExternal}
         onPickDir={video.pickMediaDir}
         onRequestDelete={previewRest.onRequestDelete}
-        onRequestWallpaper={() => {
-          const active = image.activeItem;
-
-          if (active !== null) {
-            wallpaper.requestWallpaper({ name: active.name, path: active.id });
-          }
-        }}
+        onRequestWallpaper={handleRequestWallpaper}
         onSelectImage={image.selectImage}
         onSelectVideo={video.selectVideo}
         onToggleImage={previewRest.onToggleImage}
         onToggleVideo={previewRest.onToggleVideo}
+        pendingPaths={previewRest.pendingPaths}
         videoActiveId={video.activeId}
         videoItems={video.items}
         videoStaged={previewRest.videoStaged}

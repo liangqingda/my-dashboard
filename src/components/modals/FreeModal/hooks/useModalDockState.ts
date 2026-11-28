@@ -32,10 +32,13 @@ export const useModalDockState = ({
   const fallbackModalId = useId();
   const modalFullscreenId = dock?.id ?? fallbackModalId;
 
+  /*
+   * 只有程序坞里确实存在当前这条时才算「已收录」：
+   * 程序坞窗口翻篇到一条没收录的内容后，X 要恢复成普通关闭，
+   * 原来的图标也不能继续亮着。程序坞窗口在每次换条时上报当前 id。
+   */
   const docked =
-    dock !== undefined &&
-    dock.disabled !== true &&
-    (dock.origin === 'dock' || canRemove);
+    dock !== undefined && dock.disabled !== true && canRemove;
 
   /**
    * 页面弹窗背后的程序坞窗口还开着时，这一层退成只读背景：
@@ -48,6 +51,17 @@ export const useModalDockState = ({
     dockContext.activeEntryId !== dock.id;
 
   const reportFullscreen = dockContext?.reportFullscreen;
+  const reportWindowEntry = dockContext?.reportWindowEntry;
+
+  useEffect(() => {
+    if (dock?.origin !== 'dock' || !opened || reportWindowEntry === undefined) {
+      return undefined;
+    }
+
+    reportWindowEntry(dock.id);
+
+    return () => reportWindowEntry(null);
+  }, [dock?.id, dock?.origin, opened, reportWindowEntry]);
 
   useEffect(() => {
     if (reportFullscreen === undefined || !opened || !fullscreenActive) {

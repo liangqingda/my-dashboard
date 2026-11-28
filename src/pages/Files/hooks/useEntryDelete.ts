@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { notifications } from '@mantine/notifications';
 
 import { useMounted } from '@/hooks/useMounted';
@@ -51,13 +51,16 @@ export const useEntryDelete = (
   }
 
   /** 点瓦片上的删除按钮：记下目标，先弹二次确认 */
-  const requestDelete = (path: string) => setDeletingPath(path);
+  const requestDelete = useCallback(
+    (path: string) => setDeletingPath(path),
+    [],
+  );
 
   /** 取消删除：只关弹窗，不动磁盘 */
-  const cancelDelete = () => setDeletingPath(null);
+  const cancelDelete = useCallback(() => setDeletingPath(null), []);
 
   /** 切目录前清掉待删除状态，不沿用到新目录 */
-  const resetDelete = () => setDeletingPath(null);
+  const resetDelete = useCallback(() => setDeletingPath(null), []);
 
   const confirmDelete = async () => {
     if (!deletingPath) {

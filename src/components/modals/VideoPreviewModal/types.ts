@@ -62,16 +62,16 @@ export type VideoPreviewModalProps = {
   externalApp?: string;
   /**
    * 把当前视频加入 / 移出调用方的待拖拽区；不传则控制栏没有那颗按钮。
-   * 只报「动一下当前这一条」，自增还是移出由调用方按自己的 `batched` 决定。
+   * 传入的是当前条目 id：程序坞里翻篇后，动作要落在当前这一条而不是页面原来那条。
    */
-  onToggleBatch?: () => void;
+  onToggleBatch?: (id: string) => void;
   /** 当前这一条已在待拖拽区：那颗按钮亮成强调色、文案改成「移出」 */
   batched?: boolean;
   /**
    * 删除当前视频的请求：只应打开二次确认层，不在这里直接删；
    * 不传则 header 没有删除按钮，`Delete` 键也不触发。
    */
-  onRequestDelete?: (() => void) | null;
+  onRequestDelete?: ((id: string) => void) | null;
   /**
    * 上层浮层（删除二次确认）开着：整组快捷键与焦点陷阱交给那一层，
    * 底下的播放器不再响应空格 / 方向键 / Delete。

@@ -151,21 +151,6 @@ const VideoPreviewModal = ({
     }
   }, [blocked]);
 
-  /**
-   * 请求删除当前视频：删除确认层会盖住画面，先把片子停下来；
-   * 取消后若是我们停的，再续上（原本就是暂停的保持不变）。
-   */
-  const requestDelete = () => {
-    const element = videoRef.current;
-
-    if (element !== null && !element.paused) {
-      pausedForDelete.current = true;
-      element.pause();
-    }
-
-    onRequestDelete?.();
-  };
-
   /** 关窗：先退出整屏全屏，再真正关闭，避免弹窗没了页面还停在全屏 */
   const requestClose = () => {
     if (document.fullscreenElement === null) {
@@ -180,6 +165,21 @@ const VideoPreviewModal = ({
   if (activeItem === null) {
     return null;
   }
+
+  /**
+   * 请求删除当前视频：删除确认层会盖住画面，先把片子停下来；
+   * 取消后若是我们停的，再续上（原本就是暂停的保持不变）。
+   */
+  const requestDelete = () => {
+    const element = videoRef.current;
+
+    if (element !== null && !element.paused) {
+      pausedForDelete.current = true;
+      element.pause();
+    }
+
+    onRequestDelete?.(activeItem.id);
+  };
 
   /** 二次确认层与上层的删除确认同一口径：任一层开着，底下整组键位与焦点都收掉 */
   const interactionBlocked = blocked;
@@ -293,7 +293,11 @@ const VideoPreviewModal = ({
               onRequestDelete={onRequestDelete ? requestDelete : null}
               onSelect={onSelect}
               onSettingsChangeOpened={setSettingsOpen}
-              onToggleBatch={onToggleBatch}
+              onToggleBatch={
+                onToggleBatch
+                  ? () => onToggleBatch(activeItem.id)
+                  : undefined
+              }
               onToggleBrowserFullscreen={toggleBrowserFullscreen}
               onToggleViewportFullscreen={toggleViewportFullscreen}
               popoverZIndex={popoverZIndex}

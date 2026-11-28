@@ -208,10 +208,16 @@ const ImagePreviewModal = ({
           items={items}
           onCropModeChange={setCropMode}
           onOverlayChange={setActionsOpen}
-          onRequestWallpaper={onRequestWallpaper ?? undefined}
+          onRequestWallpaper={
+            onRequestWallpaper
+              ? () => onRequestWallpaper(activeItem.id, activeItem.name)
+              : undefined
+          }
           onSaveCrop={saveCrop}
           onSelect={onSelect}
-          onToggleBatch={onToggleBatch ?? undefined}
+          onToggleBatch={
+            onToggleBatch ? () => onToggleBatch(activeItem.id) : undefined
+          }
           popoverZIndex={popoverZIndex}
           tipDark
         />
@@ -227,7 +233,7 @@ const ImagePreviewModal = ({
         cropping || !onRequestDelete ? undefined : (
           <FreeIconAction
             label="删除这张图片（Delete）"
-            onClick={() => onRequestDelete()}
+            onClick={() => onRequestDelete(activeItem.id)}
             tipDark
             tone="danger"
           >
@@ -246,7 +252,11 @@ const ImagePreviewModal = ({
         total: items.length,
       }}
       onClose={requestClose}
-      onRequestDelete={cropping ? null : (onRequestDelete ?? null)}
+      onRequestDelete={
+        cropping || !onRequestDelete
+          ? null
+          : () => onRequestDelete(activeItem.id)
+      }
       onRequestEscape={cropping ? crop.cancel : undefined}
       opened={opened}
       overlayTone="dark"

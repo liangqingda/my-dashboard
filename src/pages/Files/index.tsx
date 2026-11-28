@@ -295,6 +295,7 @@ const Files = () => {
           onRequestDelete: requestDelete,
           onToggleImage: toggleImage,
           onToggleVideo: toggleVideo,
+          pendingPaths,
           video: videoPreview,
           videoApp,
           videoStaged,

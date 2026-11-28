@@ -97,6 +97,11 @@ export type DockContextValue = {
   fullscreenCount: number;
   /** 浏览器是否处于原生全屏：程序坞条与右下角控件整个让开 */
   nativeFullscreen: boolean;
+  /**
+   * 程序坞窗口上报「当前正在展示哪一条」：
+   * 翻篇 / 列表切换后，激活点与 header 的收录动作都要跟着当前条目走。
+   */
+  reportWindowEntry: (id: string | null) => void;
   /** 弹窗上报自己的全屏态；`id` 必须稳定，卸载 / 退出时传 false */
   reportFullscreen: (id: string, active: boolean) => void;
   /** 把一扇窗收进程序坞；`sourceEl` 是窗口框体或整张瓦片，用来做飞入动画 */

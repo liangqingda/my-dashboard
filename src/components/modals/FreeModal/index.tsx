@@ -6,8 +6,6 @@
 import { FocusTrap, Modal } from '@mantine/core';
 import type { ModalCloseButtonProps } from '@mantine/core';
 import {
-  IconChevronLeft,
-  IconChevronRight,
   IconMaximize,
   IconMinimize,
 } from '@tabler/icons-react';
@@ -18,6 +16,8 @@ import { DOCK_WINDOW_Z_INDEX } from '@/dock/constants';
 import { cx } from '@/utils/cx';
 
 import DockAction from './DockAction';
+import HeaderNav from './HeaderNav';
+import MinimizeAction from './MinimizeAction';
 import { useAutoHideHeader } from './hooks/useAutoHideHeader';
 import { useDockNav } from './hooks/useDockNav';
 import { useDockMinimize } from './hooks/useDockMinimize';
@@ -102,6 +102,13 @@ const FreeModal = ({
     opened,
   });
   const closeAction = docked ? minimizeToDock : onClose;
+  /**
+   * 已收录的窗：右上角那颗外观像关闭，动作却是收坞，容易误解。
+   * 这里把它换成最小化图标；「关闭并从程序坞移除」则交给 `DockAction` 的 X。
+   * 未收录的窗仍保留组件库原生关闭按钮，语义与外观一致。
+   */
+  const minimizeClose = closeButton && docked;
+  const systemClose = closeButton && !docked;
   const headerNav = useDockNav(dock, nav);
   const effectiveZIndex =
     zIndex ?? (dock?.origin === 'dock' ? DOCK_WINDOW_Z_INDEX : undefined);
@@ -238,29 +245,13 @@ const FreeModal = ({
           )}
         >
           {headerNav ? (
-            <>
-              <FreeIconAction
-                disabled={headerNav.disabled === true || headerNav.onPrevious === null}
-                label={headerNav.previousLabel ?? '上一个'}
-                onClick={headerNav.onPrevious ?? undefined}
-                tipDark={tipDark}
-                tooltipLabel={tip(headerNav.previousLabel ?? '上一个')}
-              >
-                <IconChevronLeft size={STEP_ICON_SIZE} stroke={ICON_STROKE} />
-              </FreeIconAction>
-              <FreeIconAction
-                disabled={headerNav.disabled === true || headerNav.onNext === null}
-                label={headerNav.nextLabel ?? '下一个'}
-                onClick={headerNav.onNext ?? undefined}
-                tipDark={tipDark}
-                tooltipLabel={tip(headerNav.nextLabel ?? '下一个')}
-              >
-                <IconChevronRight size={STEP_ICON_SIZE} stroke={ICON_STROKE} />
-              </FreeIconAction>
-              <span className={styles.position}>
-                {headerNav.index} / {headerNav.total}
-              </span>
-            </>
+            <HeaderNav
+              iconSize={STEP_ICON_SIZE}
+              iconStroke={ICON_STROKE}
+              nav={headerNav}
+              tip={tip}
+              tipDark={tipDark}
+            />
           ) : null}
           <FreeTruncatedText
             className={styles.fileName}
@@ -307,6 +298,14 @@ const FreeModal = ({
           {closeButton && (hasCustomActions || hasFixedActions) ? (
             <span aria-hidden="true" className={styles.divider} />
           ) : null}
+          {minimizeClose ? (
+            <MinimizeAction
+              iconSize={ICON_SIZE}
+              iconStroke={ICON_STROKE}
+              onClick={closeAction}
+              tipDark={tipDark}
+            />
+          ) : null}
         </div>
       }
       transitionProps={
@@ -315,7 +314,7 @@ const FreeModal = ({
           : { duration: 140, transition: 'fade' }
       }
       trapFocus={trapFocus && !backgroundDockWindow}
-      withCloseButton={closeButton}
+      withCloseButton={systemClose}
       zIndex={effectiveZIndex}
     >
       {/*

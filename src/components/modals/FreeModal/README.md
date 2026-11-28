@@ -26,24 +26,27 @@
   两个选择器都从本组件导出（`MODAL_HEADER_SELECTOR` / `MODAL_CONTENT_SELECTOR`），业务侧要判断
   「指针在哪一层」时用它们，不要去挑 CSS module 的哈希类名。普通流 header 仍是实心 chrome 底。
 - **header 里的按钮**：翻页与全屏走 `FreeIconAction`（`size="sm"`、语气恒为 `normal`、tip 与 `aria-label` 同句，
-  键位提示走 `tooltipLabel`），**外壳不自维护图标按钮样式**；关闭按钮是组件库 `Modal` 内建的 `closeButton`。
+  键位提示走 `tooltipLabel`），**外壳不自维护图标按钮样式**。关闭按钮分两态：已收录窗在行尾画
+  `MinimizeAction`（`IconWindowMinimize`「最小化到程序坞」）并隐藏组件库原生 X；未收录窗才用
+  `Modal` 内建的 X 正常关闭。
 - **header 的顺序与间距**：翻页与计数 → 标题 → `headerActions` → `headerSecondary` → `headerTail`
-  → **组间竖线** → 全屏 → 收起到程序坞 / 从程序坞移除 → 竖线 → Mantine 关闭按钮。
+  → **组间竖线** → 全屏 → 收录按钮 → 竖线 → 关闭 / 最小化。已收录窗的关闭位是最小化图标，
+  收录按钮变成 `IconX`「关闭并从程序坞移除」；未收录窗的收录按钮是「收起到程序坞」，关闭位是原生 X。
   `headerActions` 里的按钮**彼此固定 8px 间距**（`.actions` 的 `gap: 8px`）：这是全站弹窗 header 操作的统一口径，
   业务侧直接铺自己的图标按钮，不要再包一层窄 gap 的 `Group` 去覆盖它。标题与右侧操作组之间恒留 20px
   （`.titleGap`），标题单行不换行、放不下才省略（hover 看全名），宽度再窄也压不到按钮上。
   两条竖线：一条分「页面定制操作 / 外壳固定操作（全屏 + 收录）」，一条分「操作区 / 关闭」；
   没有关闭按钮（`closeButton={false}`）或没有对应分组时不画，免得留孤线。
 - **收起到程序坞**（`dock`）：只有阅读类弹窗传描述符，shell 在关闭按钮左边固定画一颗收录按钮。
-  页面弹窗是 `IconWindowMinimize`「收起到程序坞」；同 id 条目已经在程序坞里时，按钮自动换成
-  `IconCircleMinus`「从程序坞移除」。`disabled` 时置灰但保留位置。`useDockMinimize` 负责
-  「量框体 → 交给 Provider 编排动画」、`⌘M` 登记与移除；`origin: 'dock'` 再收起只回坞、不执行
-  `onClose`，否则页面状态会留一半。
-  **只有 `origin === 'dock'` 或程序坞里已有同 id 条目的页面弹窗**，X / Esc / 遮罩 / 空格才收起回坞；
-  未收录的普通弹窗照常 `onClose`。描述符契约与哪些弹窗不接见 `docs/dock.md`。
+  未收录时是 `IconWindowMinimize`「收起到程序坞」；同 id 条目已经在程序坞里时，按钮自动换成
+  `IconX`「关闭并从程序坞移除」，行尾的关闭位同时换成最小化图标。`disabled` 时置灰但保留位置。
+  `useDockMinimize` 负责「量框体 → 交给 Provider 编排动画」、`⌘M` 登记与移除；`origin: 'dock'`
+  再收起只回坞、不执行 `onClose`，否则页面状态会留一半。
+  **只有 `origin === 'dock'` 或程序坞里已有同 id 条目的页面弹窗**，最小化图标 / Esc / 遮罩 / 空格
+  才收起回坞；未收录的普通弹窗照常 `onClose`。描述符契约与哪些弹窗不接见 `docs/dock.md`。
 
 - **键盘口径统一在这里**（`hooks/useModalShortcuts`），业务弹窗不各自补快捷键：
-  - `Esc`：与 X 完全同一口径——已收录的弹窗先收回程序坞，未收录的走 `onClose`；传了 `onRequestEscape`
+  - `Esc`：与最小化图标同一口径——已收录的弹窗先收回程序坞，未收录的原生 X / `onClose`；传了 `onRequestEscape`
     就改走这一套监听——先执行它、这一下不关窗（窗内还有一层模式时先退模式，如图片预览的裁剪态）；
   - **空格**：已收录时**收回程序坞**（`onDismiss`，条目保留），否则按 `closeOnSpace` 关窗；传了
     `media.onTogglePlay` 时改为播放 / 暂停，不关窗。都会 `preventDefault` 掉浏览器「空格 = 点击
@@ -87,7 +90,7 @@
 
 | prop | 说明 |
 | --- | --- |
-| `opened` / `onClose` | 开合。已收录的弹窗 **X / Esc / 遮罩 / 空格先收回程序坞**，条目保留；「从程序坞移除」才删。未收录的普通弹窗 X / Esc / 遮罩走 `onClose` |
+| `opened` / `onClose` | 开合。已收录的弹窗 **最小化图标 / Esc / 遮罩 / 空格先收回程序坞**，条目保留；`IconX`「关闭并从程序坞移除」才删。未收录的普通弹窗原生 X / Esc / 遮罩走 `onClose` |
 | `beforeMinimize` | 收起前先做的动作（可异步）：全屏 / 网页全屏先退出，完成后再量落点；程序坞恢复窗因此总能回到普通尺寸 |
 | `title` | header 标题（`ReactNode`），通常是文件名 / 条目名 |
 | `nav` | `FreeModalNav`：`index`（从 1 起）、`total`、`onPrevious` / `onNext`（到头传 `null` 置灰）、`previousLabel` / `nextLabel`、`shortcutHint`（只进 tooltip）、`disabled`（整组禁用，如编辑中） |
@@ -98,7 +101,7 @@
 | `overlayTone` | 遮罩色调：`light`（默认）给普通弹窗，`dark` 给图片 / 视频这类要靠深底看画面的预览；两档的虚化与饱和同一套，只换底色 |
 | `media` | `{ onTogglePlay, onToggleMute }`；传了 `onTogglePlay` 之后空格切播放 / 暂停、不再关窗，传了 `onToggleMute` 才有 `M` 静音 |
 | `tipDark` | 可选。header 内按钮、标题与计数固定取媒体浮层浅字档（连同 tip 深底浅字），不随主题反转；媒体预览压在画面上的提示与控件用 |
-| `zIndex` | 层级，默认走组件库的弹窗档；要压在另一扇已打开的弹窗之上时显式抬高（二次确认层由 `ConfirmModal` 默认给 `320`） |
+| `zIndex` | 层级，默认走组件库的弹窗档；要压在另一扇已打开的弹窗之上时显式抬高（二次确认层由 `ConfirmModal` 默认给 `1040`） |
 | `onCapture` | `Enter` 的动作（视频预览截当前帧）；不传则该键不动作 |
 | `onSeek` | `(direction: 'backward' \| 'forward') => void`；传了之后 `←` / `→` 交给它（视频快进 / 后退），翻篇只剩 `[` / `]`。程序坞恢复窗口有多个条目时方向键先切程序坞，单条目才让回给媒体 |
 | `fullscreen` | `{ active, onToggle?, showToggle?, reportActive? }`；不传则没有全屏外观与按钮。`showToggle` 默认 `true`，传 `false` 只收掉 header 按钮；`onToggle` 给了的话 `F` 键照常生效（进编辑这类不该换尺寸的场景，回调与按钮都不给）。`reportActive` 单独上报程序坞全屏态，默认跟随 `active`，业务自管铺满时用 |

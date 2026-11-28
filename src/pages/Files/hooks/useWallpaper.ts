@@ -4,7 +4,7 @@
  * 页面只把两个入口接上（瓦片的 `onSetWallpaper`、预览弹窗的 `onRequestWallpaper`）。
  */
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { notifications } from '@mantine/notifications';
 
 import { useMounted } from '@/hooks/useMounted';
@@ -43,9 +43,12 @@ export const useWallpaper = (): UseWallpaperResult => {
   const [loading, setLoading] = useState(false);
   const mounted = useMounted();
 
-  const requestWallpaper = (target: WallpaperRequest) => setRequest(target);
+  const requestWallpaper = useCallback(
+    (target: WallpaperRequest) => setRequest(target),
+    [],
+  );
 
-  const cancel = () => setRequest(null);
+  const cancel = useCallback(() => setRequest(null), []);
 
   const confirm = async () => {
     if (request === null) {

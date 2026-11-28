@@ -4,7 +4,7 @@
  * 「列表 + 选中项」的通用部分走 `usePreviewList`。
  */
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import type {
   ImageCropRequest,
@@ -76,19 +76,20 @@ export const useImagePreview = (
     [list.items, version],
   );
 
-  const saveCrop = async (
-    request: ImageCropRequest,
-  ): Promise<ImageCropResult> => {
-    const result = await cropImage(request);
+  const saveCrop = useCallback(
+    async (request: ImageCropRequest): Promise<ImageCropResult> => {
+      const result = await cropImage(request);
 
-    if (result.mode === 'replace') {
-      setVersion((prev) => prev + 1);
-    } else {
-      await onSaved?.();
-    }
+      if (result.mode === 'replace') {
+        setVersion((prev) => prev + 1);
+      } else {
+        await onSaved?.();
+      }
 
-    return result;
-  };
+      return result;
+    },
+    [onSaved],
+  );
 
   return {
     activeId: list.activeId,

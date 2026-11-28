@@ -35,8 +35,8 @@ header 与 hover 显隐），但去掉播放器那一套：没有播放 / 快进
   键盘），删掉当前这张后顺位切到下一条同样算——切换序号（`switchTick`）由持有 `activeId` 的那一层
   统一产出，弹窗不在自己的 handler 里另数一份；
   header 默认藏着，用户只需要知道「现在第几个」，不必把整条 header 带出来；刚打开时（还没换过）不出现；
-- 删除只开二次确认层（`onRequestDelete` → 页面的 `DeleteEntryConfirm`），不在弹窗里直接删；
-  设为桌面墙纸同理（`onRequestWallpaper` → 页面的 `WallpaperConfirm`），弹窗不碰系统设置；
+- 删除只开二次确认层（`onRequestDelete(id)` → 页面的 `DeleteEntryConfirm`），不在弹窗里直接删；
+  设为桌面墙纸同理（`onRequestWallpaper(id, name)` → 页面的 `WallpaperConfirm`），弹窗不碰系统设置；
   删除确认开着时 header 也恒可见（与列表弹层同一档：`suspended` 强制显示）；
 - 舞台：整图 `object-fit: contain` 居中装下，加载时压暗并转一个 loader；
   读不出来给「这张图片无法显示」，不留空白也不弹通知；
@@ -99,15 +99,15 @@ header 与 hover 显隐），但去掉播放器那一套：没有播放 / 快进
 ## props
 
 见 `types.ts`：`opened` / `items` / `activeId` / `blocked` / `storageScope` / `switchTick` / `onClose` /
-`onSelect` / `onRequestDelete`（不传则没有删除按钮与删除键）/ `onRequestWallpaper`（不传则 header 没有那颗按钮）/
-`onToggleBatch` + `batched`（不传则没有「加入 / 移出待拖拽区」那颗按钮）/ `onCrop`
+`onSelect` / `onRequestDelete(id)`（不传则没有删除按钮与删除键）/ `onRequestWallpaper(id, name)`（不传则 header 没有那颗按钮）/
+`onToggleBatch(id)` + `batched`（不传则没有「加入 / 移出待拖拽区」那颗按钮）/ `onCrop`
 （不传则没有裁剪与设置按钮）。
 
 - `switchTick` 由持有 `activeId` 的那一层给（文件页是 `usePreviewList`）：翻篇、列表点选，
   以及**删掉当前这张后顺位切到下一条**都会加一，弹窗只把它转给 `PreviewCounter`；
   打开与关窗归零，所以刚打开不闪；
 
-- `onToggleBatch` 只报「动一下当前这张」：自增还是移出由调用方按自己那份状态决定（弹窗把
+- `onToggleBatch(id)` 只报「动一下当前这张」：自增还是移出由调用方按 id 查自己那份状态决定（弹窗把
   `batched` 原样给它，调用方据此走加入或移出），攒起来的那批归调用方（文件页是 `useDragPending`），
   弹窗不存列表，翻篇 / 关窗都不动它；`batched` 为真时那颗按钮亮成强调色、文案换成
   「从待拖拽区移出」，再点一次就是取消；

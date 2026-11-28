@@ -4,7 +4,7 @@
  * 「列表 + 选中项」的通用部分走 `usePreviewList`。
  */
 
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { notifications } from '@mantine/notifications';
 
 import type {
@@ -86,7 +86,7 @@ export const useVideoPreview = (
   );
 
   /** 中间件写盘后回文件名：提示里带上目标目录与文件名，用户能直接去找 */
-  const captureFrame = async (
+  const captureFrame = useCallback(async (
     dataUrl: string,
     captureDir: string,
   ): Promise<VideoPreviewCaptureReceipt> => {
@@ -94,13 +94,13 @@ export const useVideoPreview = (
     const target = captureDir.length > 0 ? captureDir : '桌面';
 
     return { message: `已保存到${target}：${name}` };
-  };
+  }, []);
 
   /**
    * 外部打开：把解码交给本地播放器（IINA / mpv 的硬解与直接读盘比浏览器快得多）。
    * 提示里区分「IINA」与「系统默认」，失败也给原因，不让按钮点了没反应。
    */
-  const openExternal = (id: string, appName?: string) => {
+  const openExternal = useCallback((id: string, appName?: string) => {
     void openFileExternally(id, appName)
       .then((app) => {
         if (!mounted.current) {
@@ -124,7 +124,7 @@ export const useVideoPreview = (
           message: getErrorMessage(error, '外部打开失败'),
         });
       });
-  };
+  }, [mounted]);
 
   /** 点视频：按设置分流——外部模式直接把文件交给播放器，否则在弹窗里播放 */
   const openVideo = (file: FileEntry) => {
@@ -138,11 +138,11 @@ export const useVideoPreview = (
   };
 
   /** 选截图目录：默认从当前目录弹起，用户取消不当作失败 */
-  const pickMediaDir = async (): Promise<string | null> => {
+  const pickMediaDir = useCallback(async (): Promise<string | null> => {
     const picked = await pickPickedDir(listing?.path ?? null);
 
     return 'path' in picked ? picked.path : null;
-  };
+  }, [listing?.path]);
 
   return {
     activeId: list.activeId,

@@ -161,18 +161,14 @@ export const useFilesPageState = () => {
    * 认条目、加成还是移出、那条提示都在 `usePendingDrag.handleTogglePendingPreview`。
    */
   const { handleTogglePendingPreview } = drag;
-  const toggleImage = useCallback(() => {
-    const active = imagePreview.activeItem;
-
-    if (active !== null) {
-      handleTogglePendingPreview(active.id);
-    }
-  }, [handleTogglePendingPreview, imagePreview.activeItem]);
-  const toggleVideo = useCallback(() => {
-    if (videoActiveId !== null) {
-      handleTogglePendingPreview(videoActiveId);
-    }
-  }, [handleTogglePendingPreview, videoActiveId]);
+  const toggleImage = useCallback(
+    (id: string) => handleTogglePendingPreview(id),
+    [handleTogglePendingPreview],
+  );
+  const toggleVideo = useCallback(
+    (id: string) => handleTogglePendingPreview(id),
+    [handleTogglePendingPreview],
+  );
 
   /** 切换某块弹层：再点一次同一块则收起 */
   const togglePanel = useCallback(
