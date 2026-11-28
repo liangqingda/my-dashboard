@@ -1,17 +1,17 @@
 /**
- * 程序坞条：贴边停靠、毛玻璃盒子、图标 hover 放大与落点动画。
+ * 程序坞条：悬浮贴边的亮色毛玻璃盒子、macOS 式指针距离放大与落点动画。
  *
- * 它只负责把「收起的窗口」摆出来并接收点击；打开 / 收起窗口的编排在 Provider 里，
- * 页面让位靠 `BasicLayout` 读 `reservedThickness`，这里不碰布局。
+ * 它只负责把「收起的窗口」摆出来并接收点击；打开 / 收起窗口的编排在 Provider 里。
+ * 程序坞不向页面要空间：`fixed` 悬浮，页面在它下面正常铺满。
  */
 
 import { useEffect, useRef } from 'react';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, PointerEvent } from 'react';
 import { Tooltip, UnstyledButton } from '@mantine/core';
 
 import { cx } from '@/utils/cx';
 
-import { DOCK_EDGE_GAP, DOCK_NEIGHBOR_SCALE_RATIO, DOCK_Z_INDEX } from '../constants';
+import { DOCK_EDGE_GAP, DOCK_Z_INDEX } from '../constants';
 import { useDock } from '../hooks/useDock';
 import type { DockPlacement } from '../types';
 
@@ -30,8 +30,22 @@ const TIP_POSITION: Record<DockPlacement, 'left' | 'right' | 'top' | 'bottom'> =
 /** 自动隐藏时，指针离开盒子后留一点缓冲再收（从图标移到 tip 上不算离开） */
 const HIDE_DELAY = 500;
 
+/** 放大影响范围：以图标边长为基准，指针离得越远越接近原尺寸 */
+const MAGNIFY_REACH_RATIO = 2.4;
+
+/** 清掉指针放大写在节点上的临时变量 */
+const resetMagnification = (box: HTMLElement | null) => {
+  box?.querySelectorAll<HTMLElement>('[data-dock-item]').forEach((item) => {
+    item.style.removeProperty('--dock-item-scale');
+    item.style.removeProperty('--dock-shift-x');
+    item.style.removeProperty('--dock-shift-y');
+    item.style.removeProperty('z-index');
+  });
+};
+
 const DockBar = () => {
   const {
+    activeEntryId,
     entries,
     hideDock,
     restore,
@@ -39,6 +53,7 @@ const DockBar = () => {
     settings,
     showDock,
   } = useDock();
+  const boxRef = useRef<HTMLDivElement>(null);
   const hideTimer = useRef<number | undefined>(undefined);
 
   const clearHideTimer = () => {
@@ -59,11 +74,9 @@ const DockBar = () => {
   const dockStyle = {
     '--dock-gap': `${DOCK_EDGE_GAP}px`,
     '--dock-item-size': `${settings.itemSize}px`,
-    '--dock-magnify': settings.magnification,
-    '--dock-neighbor-scale': DOCK_NEIGHBOR_SCALE_RATIO,
     zIndex: DOCK_Z_INDEX,
   } as CSSProperties;
-  const iconSize = Math.max(20, Math.round(settings.itemSize * 0.56));
+  const iconSize = Math.max(20, Math.round(settings.itemSize * 0.62));
 
   const handleEnter = () => {
     clearHideTimer();
@@ -74,12 +87,52 @@ const DockBar = () => {
   };
 
   const handleLeave = () => {
+    resetMagnification(boxRef.current);
+
     if (!settings.autoHide) {
       return;
     }
 
     clearHideTimer();
     hideTimer.current = window.setTimeout(hideDock, HIDE_DELAY);
+  };
+
+  /**
+   * 指针距离放大（macOS 那一套）：只沿停靠轴算距离，越近越大；
+   * 每一项按自己的倍率朝远离指针的方向让位，图标之间不会挤在一起。
+   * 直接写 CSS 变量，不走 React 状态，指针移动时不触发整条程序坞重渲染。
+   */
+  const handleMagnify = (event: PointerEvent<HTMLDivElement>) => {
+    const box = boxRef.current;
+
+    if (box === null) {
+      return;
+    }
+
+    const boxRect = box.getBoundingClientRect();
+    const pointer = vertical
+      ? event.clientY - boxRect.top
+      : event.clientX - boxRect.left;
+    const reach = Math.max(
+      settings.itemSize * MAGNIFY_REACH_RATIO,
+      settings.itemSize + 12,
+    );
+    const strength = settings.magnification - 1;
+
+    box.querySelectorAll<HTMLElement>('[data-dock-item]').forEach((item) => {
+      const center = vertical
+        ? item.offsetTop + item.offsetHeight / 2
+        : item.offsetLeft + item.offsetWidth / 2;
+      const delta = center - pointer;
+      const ratio = Math.max(0, 1 - Math.abs(delta) / reach);
+      const scale = 1 + strength * ratio * ratio;
+      const shift = Math.sign(delta) * ((scale - 1) * settings.itemSize) / 2;
+
+      item.style.setProperty('--dock-item-scale', String(scale));
+      item.style.setProperty('--dock-shift-x', vertical ? '0px' : `${shift}px`);
+      item.style.setProperty('--dock-shift-y', vertical ? `${shift}px` : '0px');
+      item.style.setProperty('z-index', String(Math.round(scale * 100)));
+    });
   };
 
   return (
@@ -95,9 +148,14 @@ const DockBar = () => {
       onPointerLeave={handleLeave}
       style={dockStyle}
     >
-      <div className={styles.dockBox}>
+      <div
+        className={styles.dockBox}
+        onPointerMove={handleMagnify}
+        ref={boxRef}
+      >
         {entries.map((entry) => {
           const Icon = DOCK_KIND_ICON[entry.kind];
+          const active = activeEntryId === entry.id;
 
           return (
             <Tooltip
@@ -110,14 +168,18 @@ const DockBar = () => {
               zIndex={DOCK_Z_INDEX + 60}
             >
               <UnstyledButton
-                aria-label={`打开「${entry.title}」`}
+                aria-label={`${active ? '收起' : '打开'}「${entry.title}」`}
+                aria-pressed={active}
                 className={styles.dockItem}
+                data-active={active ? 'true' : undefined}
                 data-dock-item={entry.id}
+                data-kind={entry.kind}
                 onClick={() => restore(entry.id)}
               >
                 <span className={styles.dockIcon}>
-                  <Icon size={iconSize} stroke={1.6} />
+                  <Icon size={iconSize} stroke={1.55} />
                 </span>
+                {active ? <span aria-hidden="true" className={styles.dockDot} /> : null}
               </UnstyledButton>
             </Tooltip>
           );

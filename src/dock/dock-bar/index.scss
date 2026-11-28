@@ -1,4 +1,4 @@
-/* 程序坞条：贴边停靠的毛玻璃盒子；朝向决定横竖排布，隐藏时整体移出屏幕 */
+/* 程序坞条：悬浮贴边的亮色毛玻璃盒子；朝向决定横竖排布，隐藏时整体移出屏幕 */
 
 .dock {
   position: fixed;
@@ -6,7 +6,7 @@
   justify-content: center;
   pointer-events: none;
   transition:
-    transform 240ms cubic-bezier(0.2, 0.8, 0.3, 1),
+    transform 260ms cubic-bezier(0.2, 0.8, 0.3, 1),
     opacity 180ms ease;
 }
 
@@ -34,7 +34,7 @@
   transform: translateY(-50%);
 }
 
-/* 自动隐藏：连同盒子一起移出屏幕，不占指针，也不挡内容 */
+/* 自动隐藏：整条盒子滑出屏幕，不挡内容、不占指针 */
 .dock.top.hidden {
   opacity: 0;
   transform: translate(-50%, calc(-100% - var(--dock-gap) * 2));
@@ -56,25 +56,30 @@
 }
 
 /*
- * 盒子：全站毛玻璃配方 + 一圈极淡的高光边，
- * 竖向（左右停靠）从图标往下排，横向（上下停靠）从图标往右排。
+ * 盒子：固定亮色玻璃，不跟主题变深——深色主题下也是 macOS 那块发白的底板。
+ * 浓度只受全局「毛玻璃浓度」控制；竖向（左右停靠）从上往下排，横向（上下）从左往右排。
  */
 .dockBox {
+  position: relative;
   display: flex;
-  gap: 6px;
+  gap: 7px;
   align-items: center;
-  padding: 8px;
+  padding: 9px;
   pointer-events: auto;
-  background: var(--app-glass-panel);
-  border: 1px solid var(--app-glass-edge);
-  border-radius: calc(var(--dock-item-size) * 0.34 + 8px);
+  background: color-mix(
+    in srgb,
+    rgb(255 255 255 / 56%) var(--app-glass-strength, 100%),
+    transparent
+  );
+  border: 1px solid rgb(255 255 255 / 58%);
+  border-radius: calc(var(--dock-item-size) * 0.36 + 10px);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 10%),
-    0 14px 38px rgb(0 0 0 / 18%);
-  -webkit-backdrop-filter: blur(var(--app-glass-blur-panel))
-    saturate(var(--app-glass-saturate));
-  backdrop-filter: blur(var(--app-glass-blur-panel))
-    saturate(var(--app-glass-saturate));
+    inset 0 1px 0 rgb(255 255 255 / 72%),
+    inset 0 -1px 0 rgb(0 0 0 / 5%),
+    0 18px 44px rgb(0 0 0 / 26%),
+    0 2px 8px rgb(0 0 0 / 12%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  backdrop-filter: blur(28px) saturate(190%);
 }
 
 .vertical .dockBox {
@@ -86,41 +91,52 @@
 }
 
 /*
- * 图标格：底色取主色的浅底，两种主题都成立；hover / 相邻放大都只改 transform，
- * 不动布局——相邻项目靠 :has 与 + 选择器跟着放大，鼠标移开自然回落。
+ * 图标格：macOS 那种彩色圆角 app 图标；放大只改 transform，不触发重排。
+ * 指针距离倍率与让位位移由 JS 写进 `--dock-item-scale` / `--dock-shift-*`。
  */
 .dockItem {
+  position: relative;
   display: grid;
   width: var(--dock-item-size);
   height: var(--dock-item-size);
-  color: var(--app-ink);
+  color: #fff;
   place-items: center;
-  background: color-mix(in srgb, var(--app-accent-soft) 68%, transparent);
-  border: 1px solid var(--app-glass-edge);
-  border-radius: calc(var(--dock-item-size) * 0.24);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 8%);
+  background: linear-gradient(145deg, #a7a7ae 0%, #6e6e76 100%);
+  border: 1px solid rgb(255 255 255 / 26%);
+  border-radius: calc(var(--dock-item-size) * 0.22);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 32%),
+    inset 0 -2px 4px rgb(0 0 0 / 14%),
+    0 6px 14px rgb(0 0 0 / 18%);
+  transform: translate(
+      var(--dock-shift-x, 0px),
+      var(--dock-shift-y, 0px)
+    )
+    scale(var(--dock-item-scale, 1));
   transition:
-    transform 160ms cubic-bezier(0.2, 0.8, 0.3, 1),
-    background-color 160ms ease;
+    transform 140ms cubic-bezier(0.22, 0.8, 0.3, 1),
+    box-shadow 160ms ease,
+    filter 160ms ease;
 }
 
-.dockItem:hover {
-  background: var(--app-accent-soft-strong);
+/* 彩色 app 图标：不同窗口种类各有一套渐变，收起后仍能一眼认出 */
+.dockItem[data-kind='markdown-preview'] {
+  background: linear-gradient(145deg, #7cc4ff 0%, #2f6bff 62%, #1f4fd8 100%);
 }
 
-/* 相邻项目按同一个比例跟着放大，悬停的那一格最后覆盖成完整倍数 */
-.dockItem:has(+ .dockItem:hover),
-.dockItem:hover + .dockItem {
-  transform: scale(
-    calc(1 + (var(--dock-magnify) - 1) * var(--dock-neighbor-scale))
-  );
+.dockItem[data-kind='record-detail'] {
+  background: linear-gradient(145deg, #ffc46b 0%, #ff8a3d 58%, #e45b2c 100%);
 }
 
-.dockItem:hover {
-  transform: scale(var(--dock-magnify));
+.dockItem[data-kind='image-preview'] {
+  background: linear-gradient(145deg, #ffa6c9 0%, #f25a91 58%, #d62f6d 100%);
 }
 
-/* 图标朝屏幕内侧长：贴边的那条边固定 */
+.dockItem[data-kind='video-preview'] {
+  background: linear-gradient(145deg, #72e4d8 0%, #12a597 58%, #067a71 100%);
+}
+
+/* 贴边的那一侧固定，放大时朝屏幕内侧长，不会被边缘裁掉 */
 .right .dockItem {
   transform-origin: 100% 50%;
 }
@@ -137,19 +153,40 @@
   transform-origin: 50% 0%;
 }
 
-/* 窗口落进来时图标先收一下再回弹（由 `utils/dock-motion.ts` 临时打属性） */
-.dockItem[data-receiving='true'] {
-  animation: dockReceive 340ms cubic-bezier(0.3, 0.8, 0.4, 1);
+.dockItem[data-active='true'] {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 38%),
+    0 0 0 2px rgb(255 255 255 / 42%),
+    0 8px 18px rgb(0 0 0 / 22%);
+}
+
+/* 运行指示点：当前展开着的那一扇下面亮一个小点，和 macOS 的运行中标记一致 */
+.dockDot {
+  position: absolute;
+  bottom: -7px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  background: rgb(28 28 34 / 62%);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 35%);
+  transform: translateX(-50%);
 }
 
 .dockIcon {
   display: grid;
   place-items: center;
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 22%));
   transition: filter 160ms ease;
 }
 
 .dockItem:hover .dockIcon {
-  filter: drop-shadow(0 3px 8px rgb(0 0 0 / 18%));
+  filter: drop-shadow(0 4px 10px rgb(0 0 0 / 30%));
+}
+
+/* 窗口落进来时图标先收一下再回弹（由 `utils/dock-motion.ts` 临时打属性） */
+.dockItem[data-receiving='true'] {
+  animation: dockReceive 340ms cubic-bezier(0.3, 0.8, 0.4, 1);
 }
 
 @keyframes dockReceive {

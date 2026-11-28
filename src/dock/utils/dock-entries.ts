@@ -172,14 +172,22 @@ export const normalizeDockEntries = (value: unknown): DockEntry[] => {
     .slice(-MAX_DOCK_ENTRIES);
 };
 
-/** 收进一条：同 id 只留最新（位置挪到末尾），超出上限淘汰最旧的 */
+/** 收进一条：同 id 原地换最新快照，新条目排到末尾；超出上限淘汰最旧的 */
 export const upsertDockEntry = (
   entries: readonly DockEntry[],
   entry: DockEntry,
-): DockEntry[] =>
-  [...entries.filter((candidate) => candidate.id !== entry.id), entry].slice(
-    -MAX_DOCK_ENTRIES,
-  );
+): DockEntry[] => {
+  const index = entries.findIndex((candidate) => candidate.id === entry.id);
+
+  // 已收录的那一条原地换快照，图标不因为「再收起一次」跳到队尾
+  if (index >= 0) {
+    return entries.map((candidate) =>
+      candidate.id === entry.id ? entry : candidate,
+    );
+  }
+
+  return [...entries, entry].slice(-MAX_DOCK_ENTRIES);
+};
 
 /** 从程序坞移除一条 */
 export const removeDockEntry = (

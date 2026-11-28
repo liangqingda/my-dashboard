@@ -27,20 +27,11 @@ export const DOCK_MINIMIZE_DURATION = 420;
 /** 展开（程序坞 → 窗口）动画时长（毫秒） */
 export const DOCK_RESTORE_DURATION = 440;
 
-/** 连开两扇时，第一扇回坞动画走到这一比例就开始放开第二扇（需求：约三分之一） */
-export const DOCK_SWITCH_LEAD_RATIO = 1 / 3;
+/** 程序坞里换窗的原位淡入时长（毫秒） */
+export const DOCK_SWAP_DURATION = 200;
 
 /** 程序坞与屏幕边缘的间距 */
 export const DOCK_EDGE_GAP = 12;
 
-/** 程序坞盒子内边距 */
-export const DOCK_BOX_PADDING = 8;
-
-/** 程序坞盒子描边 */
-export const DOCK_BOX_BORDER = 1;
-
 /** 刚收进程序坞时给落点打一下的属性：图标收一下再回弹 */
 export const DOCK_RECEIVE_ATTRIBUTE = 'data-receiving';
-
-/** 图标放大后相邻项目的次级放大比例（0 = 不带动邻居） */
-export const DOCK_NEIGHBOR_SCALE_RATIO = 0.45;

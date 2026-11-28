@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { AppShell } from '@mantine/core';
-import type { CSSProperties } from 'react';
 
 import { useDock } from '@/dock/hooks/useDock';
-import { dockLayoutVars } from '@/dock/utils/dock-layout';
 import Header from '@/layouts/Header';
 import Sidebar from '@/layouts/Sidebar';
 
@@ -14,11 +12,6 @@ import styles from './index.scss';
 const BasicLayout = ({ children }: BasicLayoutProps) => {
   const [opened, setOpened] = useState(false);
   const dock = useDock();
-  /** 程序坞停在哪条边，页面就从哪条边让出厚度（见 index.scss 的四条 `--dock-*` 覆盖） */
-  const layoutStyle = dockLayoutVars(
-    dock.settings.placement,
-    dock.reservedThickness,
-  ) as CSSProperties;
   const dockRef = useRef(dock);
 
   // 键位在 window 上只挂一次，回调里读最新程序坞状态；渲染阶段不写 ref
@@ -54,7 +47,6 @@ const BasicLayout = ({ children }: BasicLayoutProps) => {
       header={{ height: 44 }}
       navbar={{ breakpoint: 'sm', width: 184, collapsed: { mobile: !opened } }}
       padding={0}
-      style={layoutStyle}
       withBorder={false}
     >
       <AppShell.Header className={styles.header}>

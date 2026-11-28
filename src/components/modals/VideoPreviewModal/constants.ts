@@ -63,7 +63,7 @@ export const MIN_SEEK_STEP = 1;
 /** 步长上限（秒）：再大就不如直接拖进度条 */
 export const MAX_SEEK_STEP = 600;
 
-/** 空格键的两种去向：播放 / 暂停（默认）与关闭弹窗 */
+/** 空格键的两种去向：播放 / 暂停（默认）与收进程序坞（内部值仍叫 close） */
 export const SPACE_MODES = ['play', 'close'] as const;
 
 /** 空格键去向 */

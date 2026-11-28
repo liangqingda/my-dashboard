@@ -57,46 +57,62 @@
 弹窗（含 700 那档全屏拖拽）。Tooltip 在 `MantineProvider` 里统一抬到 1200，否则窗口 header 上的图标 tip
 会被 1000 的窗口盖住。
 
-## 布局让位
+## 悬浮与位置
 
-程序坞停在哪条边，页面就从哪条边让出一条厚度：顶栏、侧栏与正文一起让，侧栏仍贴在顶栏下面。
-`dockLayoutVars(placement, reservedThickness)` 输出四个 CSS 变量写到 `AppShell` 根节点，
-`layouts/BasicLayout/index.scss` 用双类名覆盖 Mantine 的 Header / Navbar / Main。
+程序坞是**悬浮层**，不向页面要空间：`BasicLayout` 的 Header / Navbar / Main 保持原尺寸铺满，
+程序坞用 `fixed` 停在四条边之一，盖在内容上方。停左 / 右时竖向垂直居中，停上 / 下时横向居中；
+盒子始终是固定亮色毛玻璃，不跟主题变深，只受全局毛玻璃浓度影响。
 
-- 让位厚度 = 程序坞盒子厚度 + 两侧呼吸位（`dockReservedThickness`）。
-- **没有条目、或自动隐藏且当前未唤出时厚度为 0**：空程序坞不该在页面边上留一条空白。
-- 停左 / 右时程序坞竖向垂直居中，顶栏与侧栏缩到它外侧；停上 / 下时顶栏与正文整块让开。
+- 没有条目时不渲染整条程序坞，页面上不留任何占位；自动隐藏时整条滑出屏幕。
+- 遮罩层级低于程序坞（1000 < 1010），所以弹窗遮罩不会盖住它，收起 / 切窗时仍能点程序坞。
 
 ## 一次只开一扇
 
-Provider 同时只维持一个 `windowSlot`。打开第二扇时，当前窗口先移到 `closingSlot`（`removeOnExit: false`），
-等回坞动画走到 `DOCK_SWITCH_LEAD_RATIO`（约三分之一）再挂新窗口；已有窗口在收尾期间，程序坞点击被忽略。
-关闭（X）时 `removeOnExit: true`，动画结束才删条目。
+Provider 只维护一个 `windowSlot`，它自己带 `phase`（`opening` / `closing`）与 `removeOnExit`：
+
+- **点同一图标**：当前窗就把它当场缩回程序坞（`removeOnExit: false`），条目保留；再次点击再展开。
+- **点另一图标**：不经过「先回坞、再出来」，直接把 `windowSlot` 换成新窗口，按 `animate: 'swap'`
+  在原位淡入；旧窗口卸载、新窗口接管同一个位置。
+- **关闭（X / Esc）**：`removeOnExit: true`，收起动画结束才删条目；最小化与关闭共用同一个宿主，
+  收起阶段 React 复用原组件实例，不重新挂载。
+- 收起动画进行中（约 420ms）忽略其它程序坞点击，避免两套状态同时抢窗口。
 
 ## 动画
 
-`src/dock/utils/dock-motion.ts` 是唯一实现处，业务层不写收放动画：
+`src/dock/utils/dock-motion.ts` 是收放 / 切换的唯一实现处；「页面弹窗立即卸载」用的克隆飞入单独在
+`src/dock/utils/dock-fly.ts`，两边共用同一组关键帧与落点测量，业务层不写动画：
 
-- 页面弹窗收起：量源框体 → 等程序坞项目出现 → **克隆**框体 fixed 定位，边位移边非等比缩放，
-  同时用 `clip-path` 把远端收成漏斗；原窗口可以立即卸载。落点图标打 `data-receiving` 触发回弹。
-- 程序坞窗口收起 / 打开：作用在**真实框体**上（收起用 `shrinkWindowToDock`，打开用 `growWindowFromDock`）。
-  打开前先把框体 `opacity: 0`，等动画第一帧接管，避免闪一帧终态。
+- 页面弹窗收起：量源框体 → 等程序坞项目出现 → 克隆框体 fixed 定位，边位移边非等比缩放，
+  同时用 `clip-path` 把远端收成漏斗；原窗口立即卸载。落点图标打 `data-receiving` 触发回弹。
+- 程序坞窗口收起 / 打开：作用在**真实框体**上（`shrinkWindowToDock` / `growWindowFromDock`）。
+  关键帧按贴程序坞那条边取 `transform-origin`，平移量按原点换算，保证终点精确落在图标上；
+  展开前先把框体 `opacity: 0`，等动画第一帧接管，避免闪一帧终态。
+- 切换窗口：`swapWindowInPlace` 只做 200ms 的原位淡入 + 轻微缩放，不再来回飞。
+- 遮罩跟着框体一起淡入 / 淡出（`dock-overlay.ts`），开窗时从透明长到原样、收窗时反过来，
+  不让背景在窗口飞行途中硬切。
 - `prefers-reduced-motion: reduce` 时全部跳过，只做即时挂载 / 卸载。
 
 ## 设置与存储
 
 全局设置面板在系统顶栏（`settings-panel`），读写 `app:dock-settings`；收起条目存在 `app:dock`。
 
-- 位置：上 / 右 / 下 / 左，默认右；图标大小、hover 放大倍数、自动隐藏都可调。
-- 自动隐藏：隐藏后由顶栏的图标按钮唤出 / 收起；`revealed` 只影响可见性与让位厚度，不删条目。
+- 位置：上 / 右 / 下 / 左，默认右；图标大小、hover 放大倍数、自动隐藏都在「程序坞」这一组里。
+- 自动隐藏：隐藏后由顶栏的图标按钮唤出 / 收起；`revealed` 只影响可见性，不删条目、不占布局。
+- hover 放大按指针沿停靠轴到各图标的距离算倍率（越近越大），并把图标向远离指针的方向让位；
+  图标本身是彩色圆角 app 图标，当前展开项下面有运行小点。
 - 全局毛玻璃浓度：Provider 把 `40%–100%` 写到 `<html>` 的 `--app-glass-strength`，`global.scss` 里
-  `--app-glass-*` 用 `color-mix` 乘上它；`100%` 等于原配方。媒体深色遮罩不参与。
+  `--app-glass-*` 用 `color-mix` 乘上它；程序坞底板固定用白色玻璃乘这个浓度，不跟主题变深。
 
-## 快捷键归属
+## 快捷键与关闭口径
 
 `⌘M` 收起当前最上层、可收起的弹窗。键位监听放在 `layouts/BasicLayout`（结构检查只允许
 `FreeModal` 与 `layouts/` 监听 keydown）；`FreeModal` 通过 `useDockMinimize` 在打开时把自己登记进
 `modalStack`，Provider 的 `minimizeTop()` 返回是否真的收到一扇，没收到就把键让给浏览器。
+
+对能收起的弹窗，**只有 X 与 Esc 是关闭**（删条目）；点遮罩与按空格都是「收回到程序坞」：
+`FreeModal` 在 `dock` 可用且未禁用时把遮罩点击与空格的 `onDismiss` 交给 `minimizeToDock`。
+不可收起（编辑中 / 裁剪中 / 全屏等）时这两下只做无动作，不会误关窗口。
+页面弹窗收起后仍会执行 `onClose` 清掉页面状态；程序坞恢复出来的窗口则只回到图标。
 
 ## 新增一类可收起窗口要动的地方
 

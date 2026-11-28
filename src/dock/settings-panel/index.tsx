@@ -1,8 +1,8 @@
 /**
  * 全局设置里的程序坞面板：停靠边、图标大小、悬停放大、自动隐藏、全局毛玻璃浓度。
  *
- * 只做「读当前值 → 写回设置」，不持有本地副本：改一下立即持久化并作用到布局与程序坞，
- * 所以面板开着也能看到页面让位 / 图标大小跟着变。
+ * 只做「读当前值 → 写回设置」，不持有本地副本：改一下立即持久化并作用到程序坞，
+ * 所以面板开着也能看到位置 / 图标大小跟着变。
  */
 
 import { SegmentedControl, Slider, Switch, Text } from '@mantine/core';
@@ -75,9 +75,6 @@ const DockSettingsPanel = () => {
             value={settings.magnification}
           />
         </FreePanelField>
-      </FreePanelGroup>
-
-      <FreePanelGroup layout="stack" title="显示">
         <FreePanelField label="自动隐藏" wide>
           <Switch
             checked={settings.autoHide}
@@ -107,7 +104,7 @@ const DockSettingsPanel = () => {
           />
         </FreePanelField>
         <Text className={styles.hint}>
-          同时作用于弹窗遮罩、浮层玻璃与程序坞底板；100% 为现有配方原样。
+          同时作用于弹窗遮罩、浮层玻璃与程序坞底板；程序坞固定亮色玻璃，只随这里变浓淡。
         </Text>
       </FreePanelGroup>
     </div>

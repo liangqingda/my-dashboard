@@ -8,7 +8,6 @@
  * 全屏状态由调用方持有（正文排版要跟着变），状态本身用 `hooks/useModalFullscreen` 记住。
  */
 
-import { useEffect, useRef } from 'react';
 import { FocusTrap, Modal } from '@mantine/core';
 import type { ModalCloseButtonProps } from '@mantine/core';
 import {
@@ -26,6 +25,7 @@ import { cx } from '@/utils/cx';
 
 import { useAutoHideHeader } from './hooks/useAutoHideHeader';
 import { useDockMinimize } from './hooks/useDockMinimize';
+import { useOverlayFocusGuard } from './hooks/useOverlayFocusGuard';
 import { useModalShortcuts } from './hooks/useModalShortcuts';
 import type { FreeModalProps } from './types';
 
@@ -35,9 +35,6 @@ import styles from './index.scss';
 const ICON_SIZE = 15;
 const STEP_ICON_SIZE = 16;
 const ICON_STROKE = 1.9;
-
-/** 窗口拿回焦点后这段时间内的遮罩点击只当「回焦」，不关窗 */
-const OVERLAY_FOCUS_GUARD_MS = 400;
 
 /** 翻页的默认快捷键提示，只进 tooltip */
 const NAV_SHORTCUT_HINT = '[ / ← · ] / →';
@@ -109,6 +106,7 @@ const FreeModal = ({
     onClose,
     opened,
   });
+  const canDismissToDock = canMinimize && dock?.disabled !== true;
   /** 程序坞恢复出来的窗口默认抬到「压过所有页面弹窗」那一档 */
   const effectiveZIndex =
     zIndex ?? (dock?.origin === 'dock' ? DOCK_WINDOW_Z_INDEX : undefined);
@@ -149,6 +147,7 @@ const FreeModal = ({
     nav,
     onCapture,
     onClose,
+    onDismiss: dock === undefined ? undefined : minimizeToDock,
     onRequestDelete,
     onRequestEscape,
     onSeek,
@@ -157,30 +156,27 @@ const FreeModal = ({
     onTogglePlay: media?.onTogglePlay,
   });
 
-  /** 窗口刚拿回焦点的时间点：从外部应用切回来的第一下点击只当回焦，不关窗 */
-  const focusAtRef = useRef(0);
+  /** 刚回焦的那一下遮罩点击只当拿焦点，不关窗 / 不收起 */
+  const isOverlayFocusGuard = useOverlayFocusGuard();
 
-  useEffect(() => {
-    const onFocus = () => {
-      focusAtRef.current = performance.now();
-    };
-
-    window.addEventListener('focus', onFocus);
-
-    return () => window.removeEventListener('focus', onFocus);
-  }, []);
-
-  /** 遮罩点击：真正关窗的是这里（Mantine 那套关掉，换成带回焦保护的版本） */
+  /** 遮罩点击：能收起就先收进程序坞（条目保留），普通弹窗才关窗；回焦第一下不算 */
   const handleOverlayClick = () => {
-    if (!closeOnClickOutside) {
+    if (isOverlayFocusGuard()) {
       return;
     }
 
-    if (performance.now() - focusAtRef.current < OVERLAY_FOCUS_GUARD_MS) {
+    // 能收起的弹窗：遮罩只负责收回程序坞，绝不在这里关掉条目
+    if (dock !== undefined) {
+      if (canDismissToDock) {
+        minimizeToDock();
+      }
+
       return;
     }
 
-    onClose();
+    if (closeOnClickOutside) {
+      onClose();
+    }
   };
 
   /** 翻页 tooltip 的快捷键提示：业务侧没给就用这套统一的键位 */

@@ -3,7 +3,8 @@
  *
  * - `Esc`：默认关窗（由 Mantine `Modal` 的 `closeOnEscape` 负责）；业务接管时
  *   （`onRequestEscape`，如裁剪先退模式）改在这里执行、这一下不关窗；
- * - **空格**：关窗（给了媒体能力时改为播放 / 暂停），并 `preventDefault` 掉浏览器
+ * - **空格**：关窗；弹窗能收起到程序坞时改走 `onDismiss`（最小化，不关条目），
+ *   给了媒体能力时改为播放 / 暂停。并 `preventDefault` 掉浏览器
  *   「空格 = 点击当前焦点按钮」的默认行为——焦点常留在 header 图标上，不拦的话按空格会莫名
  *   翻到下一条 / 切了全屏；
  * - **`[` / `【`、`]` / `】` 上一篇 / 下一篇**（有 `nav` 且没被禁用时）；
@@ -71,6 +72,8 @@ type ModalShortcutsParams = {
   closeOnSpace: boolean;
   /** 关窗 */
   onClose: () => void;
+  /** 空格被「收起到程序坞」接管时走它；不传则仍然关窗 */
+  onDismiss?: () => void;
   /** 翻页配置；不传表示这扇窗没有翻页 */
   nav?: FreeModalNav;
   /** 切换全屏；不传表示没有全屏按钮 */
@@ -108,6 +111,7 @@ export const useModalShortcuts = ({
   extraKeys,
   nav,
   onClose,
+  onDismiss,
   onRequestDelete,
   onRequestEscape,
   onSeek,
@@ -172,7 +176,12 @@ export const useModalShortcuts = ({
 
         if (closeOnSpace) {
           event.preventDefault();
-          onClose();
+
+          if (onDismiss) {
+            onDismiss();
+          } else {
+            onClose();
+          }
         }
 
         return;
@@ -273,6 +282,7 @@ export const useModalShortcuts = ({
     nav,
     onCapture,
     onClose,
+    onDismiss,
     onRequestDelete,
     onRequestEscape,
     onSeek,

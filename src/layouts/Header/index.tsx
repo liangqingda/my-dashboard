@@ -39,7 +39,7 @@ const Header = ({ menuOpened, onToggleMenu }: HeaderProps) => {
   const { setColorScheme } = useMantineColorScheme();
   const isDark = useComputedColorScheme('light') === 'dark';
   const [settingsOpened, setSettingsOpened] = useState(false);
-  const { revealed, settings, toggleDock } = useDock();
+  const { entries, revealed, settings, toggleDock } = useDock();
   /** 自动隐藏开着时，顶栏这颗按钮反映「现在露着没有」；关着时程序坞常显，不画它 */
   const dockVisible = !settings.autoHide || revealed;
 
@@ -64,7 +64,7 @@ const Header = ({ menuOpened, onToggleMenu }: HeaderProps) => {
       </Group>
 
       <Group gap={4} ml="auto" wrap="nowrap">
-        {settings.autoHide ? (
+        {settings.autoHide && entries.length > 0 ? (
           <FreeIconAction
             label={dockVisible ? '隐藏程序坞' : '显示程序坞'}
             onClick={toggleDock}

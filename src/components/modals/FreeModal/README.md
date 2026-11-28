@@ -42,9 +42,10 @@
 - **键盘口径统一在这里**（`hooks/useModalShortcuts`），业务弹窗不各自补快捷键：
   - `Esc`：关窗（Mantine 的 `closeOnEscape`）；传了 `onRequestEscape` 就改走这一套监听——先执行它、
     这一下不关窗（窗内还有一层模式时先退模式，如图片预览的裁剪态）；
-  - **空格**：关窗（传了 `media.onTogglePlay` 时改为播放 / 暂停，不关窗），并 `preventDefault`
-    掉浏览器「空格 = 点击当前焦点按钮」——焦点常留在 header 图标上，不拦的话按空格会莫名翻到
-    下一条 / 切了全屏；`closeOnSpace` 默认跟随 `closeOnEscape`；
+  - **空格**：能收起到程序坞时**收回程序坞**（`onDismiss`，条目保留），否则关窗；传了
+    `media.onTogglePlay` 时改为播放 / 暂停，不关窗。都会 `preventDefault` 掉浏览器「空格 = 点击
+    当前焦点按钮」——焦点常留在 header 图标上，不拦的话按空格会莫名翻到下一条 / 切了全屏；
+    `closeOnSpace` 默认跟随 `closeOnEscape`；
   - **`[` / `【` 上一个；`]` / `】` 下一个**：有 `nav` 且未禁用时；
   - **`←` / `→`**：默认同方括号翻篇；传了 `onSeek` 就整组交给它（视频快进 / 后退），
     翻篇只剩方括号 —— 方向键在两种归属里只能选一种；
@@ -81,7 +82,7 @@
 
 | prop | 说明 |
 | --- | --- |
-| `opened` / `onClose` | 开合；Esc、点遮罩（`closeOnClickOutside` 为真时）、点关闭按钮都走 `onClose` |
+| `opened` / `onClose` | 开合；**X 与 Esc**走 `onClose`。能收起到程序坞的弹窗，点遮罩 / 按空格改走收回程序坞，不再关条目；普通弹窗点遮罩在 `closeOnClickOutside` 为真时走 `onClose` |
 | `title` | header 标题（`ReactNode`），通常是文件名 / 条目名 |
 | `nav` | `FreeModalNav`：`index`（从 1 起）、`total`、`onPrevious` / `onNext`（到头传 `null` 置灰）、`previousLabel` / `nextLabel`、`shortcutHint`（只进 tooltip）、`disabled`（整组禁用，如编辑中） |
 | `headerActions` | 第一组操作（阅读类：复制、筛选、刷新…） |
@@ -100,8 +101,8 @@
 | `onRequestEscape` | 传了就把 `Esc` 交给它（只执行动作、这一下不关窗）：窗内还有一层模式时用，如图片预览先退裁剪 |
 | `extraKeys` | 业务自己的单键动作（`{ c: 开合收藏面板 }` 这类，键名小写）；只在本窗开着时生效，业务侧不自己监听 keydown |
 | `closeButton` | 是否显示关闭按钮，默认显示（编辑态这类「关不掉」的场景传 `false`） |
-| `closeOnClickOutside` | 点遮罩是否关窗，默认 `true`。遮罩点击由外壳自己接管：窗口拿回焦点后 400ms 内的那一下只当「回焦」不关窗，避免从外部应用切回来时误关 |
-| `closeOnEscape` / `closeOnSpace` / `trapFocus` | Esc 与空格是否关窗（`closeOnSpace` 默认跟随 `closeOnEscape`）、上层浮层开着时由调用方关掉，避免一下全关 / 焦点被抢、是否锁焦点 |
+| `closeOnClickOutside` | 普通弹窗点遮罩是否关窗，默认 `true`。带 `dock` 的弹窗不看这一项：遮罩只负责收进程序坞；不可收起时这一下不动作，绝不误关。遮罩点击由外壳自己接管，窗口拿回焦点后 400ms 内的那一下只当「回焦」 |
+| `closeOnEscape` / `closeOnSpace` / `trapFocus` | Esc 是否关窗、空格是否允许收起 / 关窗（默认跟随 `closeOnEscape`）；上层浮层开着时由调用方关掉，避免一下全关 / 焦点被抢、是否锁焦点 |
 | `shortcutsEnabled` | 默认 `true`；加载中、上层浮层开着时传 `false`，一次收掉翻页、方向键、`F` 全屏、`M` 静音、`S` 面板、`C` 复制与删除键（空格也一并收；只关窗的 `closeOnSpace` 另把关） |
 | `size` / `centered` / `closeLabel` | 宽度档（默认 `min(980px, 92vw)`）、是否垂直居中、关闭按钮的 `aria-label` |
 | `contentClassName` / `bodyClassName` / `innerClassName` / `headerClassName` | 只加增量类名，复制框体 / header 样式不算；`innerClassName` 加在 Mantine 内层定位容器上（全屏时清两侧 5vw 内边距用），`headerClassName` 加在 header 行上（不改排布与间距） |

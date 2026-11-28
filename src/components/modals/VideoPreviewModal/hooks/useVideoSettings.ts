@@ -42,7 +42,7 @@ export type VideoPreviewSettings = {
   previewScale: number;
   /** 快进 / 后退步长（秒） */
   seekStep: number;
-  /** 空格键是播放 / 暂停还是关闭弹窗 */
+  /** 空格键是播放 / 暂停还是收进程序坞（内部值仍叫 close） */
   spaceMode: VideoSpaceMode;
   /** 网页全屏（框体铺满视口）是否保持开启：当作「怎么看」的偏好记住 */
   viewportFullscreen: boolean;

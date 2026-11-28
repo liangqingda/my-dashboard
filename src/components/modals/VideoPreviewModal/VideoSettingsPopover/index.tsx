@@ -57,7 +57,7 @@ const ARROW_MODE_OPTIONS: { label: string; value: VideoArrowMode }[] = [
 /** 空格键去向的两档 */
 const SPACE_MODE_OPTIONS: { label: string; value: VideoSpaceMode }[] = [
   { label: '播放 / 暂停', value: 'play' },
-  { label: '关闭弹窗', value: 'close' },
+  { label: '收进程序坞', value: 'close' },
 ];
 
 /** 正在选截图目录：选择框开着时按钮转圈 */
@@ -84,7 +84,7 @@ const VideoSettingsPopover = ({
 
   /** 全部键位速查：方向键与空格两行随设置变，其余固定 */
   const spaceRow = {
-    action: spaceMode === 'play' ? '播放 / 暂停' : '关闭弹窗',
+    action: spaceMode === 'play' ? '播放 / 暂停' : '收进程序坞',
     keys: ['空格'],
   };
   const shortcutRows: readonly { action: string; keys: readonly string[] }[] =

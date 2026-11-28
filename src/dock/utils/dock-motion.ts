@@ -10,51 +10,54 @@
  */
 
 import {
-  DOCK_FLY_Z_INDEX,
   DOCK_MINIMIZE_DURATION,
-  DOCK_RECEIVE_ATTRIBUTE,
   DOCK_RESTORE_DURATION,
+  DOCK_SWAP_DURATION,
 } from '../constants';
 import type { DockPlacement } from '../types';
 
 /** 动画用的矩形（`DOMRect` 的超集） */
-type RectLike = {
+export type RectLike = {
   height: number;
   left: number;
   top: number;
   width: number;
 };
 
-const FULL_CLIP = 'polygon(0 0, 100% 0, 100% 100%, 0 100%)';
+export const FULL_CLIP = 'polygon(0 0, 100% 0, 100% 100%, 0 100%)';
 
 /** 漏斗形：越靠近程序坞的那条边越完整，远端先收 */
-const CLIP_BY_PLACEMENT: Record<
+export const CLIP_BY_PLACEMENT: Record<
   DockPlacement,
-  { mid: string; end: string; origin: string }
+  { mid: string; late: string; end: string; origin: string }
 > = {
   right: {
     mid: 'polygon(8% 0, 100% 0, 100% 100%, 30% 100%)',
-    end: 'polygon(90% 0, 100% 0, 100% 100%, 96% 100%)',
+    late: 'polygon(56% 0, 100% 0, 100% 100%, 76% 100%)',
+    end: 'polygon(94% 0, 100% 0, 100% 100%, 97% 100%)',
     origin: '100% 50%',
   },
   left: {
     mid: 'polygon(0 0, 92% 0, 70% 100%, 0 100%)',
-    end: 'polygon(0 0, 10% 0, 4% 100%, 0 100%)',
+    late: 'polygon(0 0, 44% 0, 24% 100%, 0 100%)',
+    end: 'polygon(0 0, 6% 0, 3% 100%, 0 100%)',
     origin: '0% 50%',
   },
   top: {
     mid: 'polygon(0 0, 100% 0, 80% 100%, 20% 100%)',
-    end: 'polygon(0 0, 100% 0, 100% 4%, 0 4%)',
+    late: 'polygon(0 0, 100% 0, 56% 100%, 44% 100%)',
+    end: 'polygon(0 0, 100% 0, 97% 4%, 3% 4%)',
     origin: '50% 0%',
   },
   bottom: {
     mid: 'polygon(20% 0, 80% 0, 100% 100%, 0 100%)',
-    end: 'polygon(0 96%, 100% 96%, 100% 100%, 0 100%)',
+    late: 'polygon(44% 0, 56% 0, 100% 100%, 0 100%)',
+    end: 'polygon(3% 96%, 97% 96%, 100% 100%, 0 100%)',
     origin: '50% 100%',
   },
 };
 
-const prefersReducedMotion = () =>
+export const prefersReducedMotion = () =>
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const centerOf = (rect: RectLike) => ({
@@ -103,98 +106,40 @@ export const findDockItem = (id: string): HTMLElement | null => {
   return item ?? null;
 };
 
-const transformKeyframe = (
-  from: RectLike,
-  to: RectLike,
-  progress: number,
-) => {
-  const fromCenter = centerOf(from);
-  const toCenter = centerOf(to);
-  const scaleX = 1 + (to.width / from.width - 1) * progress;
-  const scaleY = 1 + (to.height / from.height - 1) * progress;
+/** 把 `100% 50%` 这类 transform-origin 换算成原窗口里的绝对点 */
+const originPoint = (rect: RectLike, origin: string) => {
+  const [xToken = '50%', yToken = '50%'] = origin.split(' ');
+  const xRatio = Number.parseFloat(xToken) / 100;
+  const yRatio = Number.parseFloat(yToken) / 100;
 
-  return `translate3d(${(toCenter.x - fromCenter.x) * progress}px, ${
-    (toCenter.y - fromCenter.y) * progress
-  }px, 0) scale(${scaleX}, ${scaleY})`;
+  return {
+    x: rect.left + rect.width * xRatio,
+    y: rect.top + rect.height * yRatio,
+  };
 };
 
 /**
- * 窗口 → 程序坞：克隆一份窗口框体飞进去（原窗口可以立即卸载，动画继续）。
- * 返回的 Promise 用来在动画结束后清掉克隆。
+ * 从原窗口向程序坞落点收放的一帧。
+ * 缩放以贴程序坞那条边为原点，所以平移量要按原点算：
+ * `T - O - s * (C - O)`，这样终点仍精确落在图标上，中途则贴着屏幕边往里收。
  */
-export const flyWindowToDock = async (
-  source: HTMLElement,
-  id: string,
-  placement: DockPlacement,
-): Promise<void> => {
-  if (prefersReducedMotion()) {
-    return;
-  }
+export const transformKeyframe = (
+  from: RectLike,
+  to: RectLike,
+  progress: number,
+  origin: string,
+) => {
+  const fromCenter = centerOf(from);
+  const toCenter = centerOf(to);
+  const anchor = originPoint(from, origin);
+  const scaleX = 1 + (to.width / from.width - 1) * progress;
+  const scaleY = 1 + (to.height / from.height - 1) * progress;
+  const translateX =
+    toCenter.x - anchor.x - (fromCenter.x - anchor.x) * scaleX;
+  const translateY =
+    toCenter.y - anchor.y - (fromCenter.y - anchor.y) * scaleY;
 
-  const sourceRect = source.getBoundingClientRect();
-  const item = await waitForFrames(() => findDockItem(id));
-  const clone = source.cloneNode(true) as HTMLElement;
-
-  clone.querySelectorAll('[id]').forEach((node) => node.removeAttribute('id'));
-  clone.removeAttribute('data-dock-surface');
-  clone.setAttribute('aria-hidden', 'true');
-  clone.setAttribute('inert', '');
-  clone.style.position = 'fixed';
-  clone.style.left = `${sourceRect.left}px`;
-  clone.style.top = `${sourceRect.top}px`;
-  clone.style.width = `${sourceRect.width}px`;
-  clone.style.height = `${sourceRect.height}px`;
-  clone.style.maxWidth = 'none';
-  clone.style.maxHeight = 'none';
-  clone.style.margin = '0';
-  clone.style.pointerEvents = 'none';
-  clone.style.zIndex = String(DOCK_FLY_Z_INDEX);
-  clone.style.transformOrigin = 'center';
-  clone.style.willChange = 'transform, clip-path';
-  clone.style.overflow = 'hidden';
-  document.body.appendChild(clone);
-
-  if (item === null) {
-    clone.remove();
-    return;
-  }
-
-  const targetRect = item.getBoundingClientRect();
-  const clip = CLIP_BY_PLACEMENT[placement];
-
-  item.setAttribute(DOCK_RECEIVE_ATTRIBUTE, 'true');
-
-  const animation = clone.animate(
-    [
-      {
-        clipPath: FULL_CLIP,
-        offset: 0,
-        opacity: 1,
-        transform: transformKeyframe(sourceRect, targetRect, 0),
-      },
-      {
-        clipPath: clip.mid,
-        offset: 0.55,
-        opacity: 0.96,
-        transform: transformKeyframe(sourceRect, targetRect, 0.55),
-      },
-      {
-        clipPath: clip.end,
-        offset: 1,
-        opacity: 0.72,
-        transform: transformKeyframe(sourceRect, targetRect, 1),
-      },
-    ],
-    {
-      duration: DOCK_MINIMIZE_DURATION,
-      easing: 'cubic-bezier(0.55, 0, 0.82, 0.35)',
-      fill: 'both',
-    },
-  );
-
-  await animation.finished.catch(() => undefined);
-  clone.remove();
-  item.removeAttribute(DOCK_RECEIVE_ATTRIBUTE);
+  return `translate3d(${translateX}px, ${translateY}px, 0) scale(${scaleX}, ${scaleY})`;
 };
 
 /**
@@ -218,7 +163,7 @@ export const shrinkWindowToDock = async (
   const clip = CLIP_BY_PLACEMENT[placement];
   const frame = content;
 
-  frame.style.transformOrigin = 'center';
+  frame.style.transformOrigin = clip.origin;
   frame.style.willChange = 'transform, clip-path';
 
   const animation = content.animate(
@@ -231,20 +176,26 @@ export const shrinkWindowToDock = async (
       },
       {
         clipPath: clip.mid,
-        offset: 0.55,
+        offset: 0.42,
         opacity: 0.96,
-        transform: transformKeyframe(contentRect, itemRect, 0.55),
+        transform: transformKeyframe(contentRect, itemRect, 0.46, clip.origin),
+      },
+      {
+        clipPath: clip.late,
+        offset: 0.72,
+        opacity: 0.88,
+        transform: transformKeyframe(contentRect, itemRect, 0.76, clip.origin),
       },
       {
         clipPath: clip.end,
         offset: 1,
-        opacity: 0.72,
-        transform: transformKeyframe(contentRect, itemRect, 1),
+        opacity: 0.62,
+        transform: transformKeyframe(contentRect, itemRect, 1, clip.origin),
       },
     ],
     {
       duration: DOCK_MINIMIZE_DURATION,
-      easing: 'cubic-bezier(0.55, 0, 0.82, 0.35)',
+      easing: 'cubic-bezier(0.5, 0.02, 0.72, 0.38)',
       fill: 'both',
     },
   );
@@ -275,7 +226,7 @@ export const growWindowFromDock = async (
   const frame = content;
 
   frame.style.opacity = '0';
-  frame.style.transformOrigin = 'center';
+  frame.style.transformOrigin = clip.origin;
   frame.style.willChange = 'transform, clip-path';
 
   const animation = content.animate(
@@ -284,13 +235,19 @@ export const growWindowFromDock = async (
         clipPath: clip.end,
         offset: 0,
         opacity: 0.15,
-        transform: transformKeyframe(contentRect, itemRect, 1),
+        transform: transformKeyframe(contentRect, itemRect, 1, clip.origin),
+      },
+      {
+        clipPath: clip.late,
+        offset: 0.2,
+        opacity: 0.58,
+        transform: transformKeyframe(contentRect, itemRect, 0.8, clip.origin),
       },
       {
         clipPath: clip.mid,
-        offset: 0.55,
-        opacity: 0.9,
-        transform: transformKeyframe(contentRect, itemRect, 0.45),
+        offset: 0.5,
+        opacity: 0.94,
+        transform: transformKeyframe(contentRect, itemRect, 0.48, clip.origin),
       },
       {
         clipPath: FULL_CLIP,
@@ -301,7 +258,7 @@ export const growWindowFromDock = async (
     ],
     {
       duration: DOCK_RESTORE_DURATION,
-      easing: 'cubic-bezier(0.22, 0.9, 0.3, 1)',
+      easing: 'cubic-bezier(0.18, 0.88, 0.24, 1)',
       fill: 'both',
     },
   );
@@ -309,5 +266,37 @@ export const growWindowFromDock = async (
   await animation.finished.catch(() => undefined);
   content.style.removeProperty('opacity');
   content.style.removeProperty('will-change');
+  animation.cancel();
+};
+
+/**
+ * 程序坞里从一扇窗换到另一扇：不回坞、不飞行，只在原位淡入 + 轻微放大。
+ * 旧窗口已经被新窗口替换，这里只负责把新框体平滑接上。
+ */
+export const swapWindowInPlace = async (content: HTMLElement): Promise<void> => {
+  const { style } = content;
+
+  if (prefersReducedMotion()) {
+    style.removeProperty('opacity');
+    return;
+  }
+
+  style.opacity = '0';
+  style.transformOrigin = 'center';
+
+  const animation = content.animate(
+    [
+      { opacity: 0.32, transform: 'scale(0.985, 0.985)' },
+      { opacity: 1, transform: 'scale(1, 1)' },
+    ],
+    {
+      duration: DOCK_SWAP_DURATION,
+      easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
+      fill: 'both',
+    },
+  );
+
+  await animation.finished.catch(() => undefined);
+  style.removeProperty('opacity');
   animation.cancel();
 };

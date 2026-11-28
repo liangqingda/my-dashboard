@@ -112,8 +112,8 @@ export type DockContextValue = {
   entries: readonly DockEntry[];
   /** 程序坞是否可见（自动隐藏关闭时恒为 true） */
   revealed: boolean;
-  /** 程序坞占用的那条边厚度（px，隐藏时为 0） */
-  reservedThickness: number;
+  /** 当前真正展开着的条目 id（程序坞里画运行小点用） */
+  activeEntryId: string | null;
   /** 唤出 / 收起（自动隐藏关闭时收起无效） */
   showDock: () => void;
   hideDock: () => void;
@@ -125,7 +125,10 @@ export type DockContextValue = {
    * 布局层据此决定要不要 `preventDefault`，没有弹窗时别抢浏览器的键。
    */
   minimizeTop: () => boolean;
-  /** 点程序坞里的项目：恢复这扇窗（同时只留一扇） */
+  /**
+   * 点程序坞里的项目：没打开就恢复这扇窗，已经打开着就收回程序坞；
+   * 同一时刻只留一扇，切到另一扇时原地淡入，不再回坞绕一圈。
+   */
   restore: (id: string) => void;
   /** 关闭当前恢复出来的窗口（从程序坞里移除这一条） */
   requestCloseWindow: () => void;
