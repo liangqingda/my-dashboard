@@ -67,7 +67,7 @@ export type DockEntry = DockWindowPayload & {
   title: string;
   /** 收起时所在页面的路由（只用于说明来源，不参与恢复） */
   page: string;
-  /** 收起时间：超出条数上限时按它淘汰最旧的 */
+  /** 收起时间：程序坞内的排序与读取时的超限截断都按它 */
   createdAt: number;
 };
 
@@ -131,8 +131,12 @@ export type DockContextValue = {
   reportWindowEntry: (id: string | null) => void;
   /** 弹窗上报自己的全屏态；`id` 必须稳定，卸载 / 退出时传 false */
   reportFullscreen: (id: string, active: boolean) => void;
-  /** 把一扇窗收进程序坞；`sourceEl` 是窗口框体或整张瓦片，用来做飞入动画 */
-  minimize: (descriptor: DockDescriptor, sourceEl: HTMLElement | null) => void;
+  /**
+   * 把一扇窗收进程序坞；`sourceEl` 是窗口框体或整张瓦片，用来做飞入动画。
+   * 返回是否真的收进去了：程序坞已满时返回 false（不淘汰已有条目、不跑动画），
+   * 调用方据此不关窗并给提示。
+   */
+  minimize: (descriptor: DockDescriptor, sourceEl: HTMLElement | null) => boolean;
   /** 不经弹窗，直接把一条快照收进程序坞；`sourceEl` 是整张瓦片，用来做飞入动画 */
   collect: (draft: DockEntryDraft, sourceEl?: HTMLElement | null) => void;
   /**

@@ -5,12 +5,16 @@
  * - 页面弹窗：按当前内容的 id 找条目，有就更新快照，没有就新收一条（下次打开停在这一条）；
  * - 程序坞窗口：窗挂在哪颗图标上就回到哪颗（窗内翻篇只是临时换内容），
  *   条目的快照不动——图标对应的始终是它自己那份内容。
+ *
+ * 返回是否真的收进去了：满员拒收时返回 false 并给提示，调用方据此**不关窗**、
+ * 不跑收起动画——页面弹窗必须留在原地，不能「没进程序坞却先关掉了」。
  */
 
 import type { DockWindowSlot } from '../dock-window';
 import type { DockDescriptor, DockEntry } from '../types';
 
 import { toDockEntry, upsertDockEntry } from './dock-entries';
+import { notifyDockFull } from './dock-notice';
 
 type MinimizeDockWindowArgs = {
   beginClosing: (
@@ -37,9 +41,9 @@ export const minimizeDockWindow = ({
   receiveEntry,
   sourceEl,
   writeEntries,
-}: MinimizeDockWindowArgs) => {
+}: MinimizeDockWindowArgs): boolean => {
   if (current?.phase === 'closing') {
-    return;
+    return false;
   }
 
   /*
@@ -53,7 +57,7 @@ export const minimizeDockWindow = ({
       'minimize',
     );
 
-    return;
+    return true;
   }
 
   const created = toDockEntry(descriptor, window.location.pathname, Date.now());
@@ -62,8 +66,15 @@ export const minimizeDockWindow = ({
     existing === undefined
       ? created
       : { ...created, createdAt: existing.createdAt, page: existing.page };
+  const { accepted, entries: next } = upsertDockEntry(entries, target);
 
-  writeEntries(upsertDockEntry(entries, target));
+  if (!accepted) {
+    notifyDockFull();
+
+    return false;
+  }
+
+  writeEntries(next);
 
   // 同一扇窗还开着（页面弹窗与它同一条）：复用窗实例收回去
   if (current !== null && current.entry.id === descriptor.id) {
@@ -73,8 +84,10 @@ export const minimizeDockWindow = ({
       'minimize',
     );
 
-    return;
+    return true;
   }
 
   receiveEntry(target, sourceEl);
+
+  return true;
 };

@@ -79,14 +79,17 @@ export const useDockWindowDisposal = ({
     writeEntries(removeDockEntry(entriesRef.current, id));
   };
 
-  /** header 的「收起到程序坞」按钮与 `⌘M`：页面弹窗与坞窗同一套，差异在 `dock-minimize` 里 */
+  /**
+   * header 的「收起到程序坞」按钮与 `⌘M`：页面弹窗与坞窗同一套，差异在 `dock-minimize` 里。
+   * 返回是否真的收进去了；满员拒收时为 false，调用方不要接着关窗。
+   */
   const minimize = (
     descriptor: DockDescriptor,
     sourceEl: HTMLElement | null,
-  ) => {
+  ): boolean => {
     const { current } = windowRef;
 
-    minimizeDockWindow({
+    return minimizeDockWindow({
       beginClosing,
       current,
       descriptor,

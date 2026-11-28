@@ -16,6 +16,7 @@ import {
 } from '../../utils/dock-entries';
 import { flyWindowToDock } from '../../utils/dock-fly';
 import { findDockSurface, slideWindowOut } from '../../utils/dock-motion';
+import { notifyDockFull } from '../../utils/dock-notice';
 import { slideDirectionOf } from '../../utils/dock-slide';
 import {
   dockOwnerEntry,
@@ -123,10 +124,24 @@ export const useDockWindowController = ({
     setWindow(null);
   };
 
+  /*
+   * 瓦片直接收起：满员时整件事不发生——不写条目、不摆虚位、不飞入，
+   * 只给一句「已满」，坞里已有的条目不因为这次点击被顶掉。
+   */
   const collect = (draft: DockEntryDraft, sourceEl?: HTMLElement | null) => {
     const entry = createDockEntry(draft, window.location.pathname);
+    const { accepted, entries: next } = upsertDockEntry(
+      entriesRef.current,
+      entry,
+    );
 
-    writeEntries(upsertDockEntry(entriesRef.current, entry));
+    if (!accepted) {
+      notifyDockFull();
+
+      return;
+    }
+
+    writeEntries(next);
     receiveEntry(entry, sourceEl ?? null);
   };
 

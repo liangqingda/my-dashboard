@@ -78,10 +78,18 @@ export const useDockMinimize = ({
 
     const proceed = () => {
       // 程序坞窗口的根节点按 surfaceId 找（翻篇后它与当前内容的条目 id 已经不同）
-      context.minimize(
+      const accepted = context.minimize(
         descriptor,
         findDockSurface(descriptor.surfaceId ?? descriptor.id),
       );
+
+      /*
+       * 满员拒收时窗必须留在原地：先关窗再提示「没收进去」，
+       * 用户看到的就是一次性丢了一扇窗，而不是「坞满了」。
+       */
+      if (!accepted) {
+        return;
+      }
 
       if (descriptor.origin !== 'dock') {
         (onMinimizeRef.current ?? onCloseRef.current)();

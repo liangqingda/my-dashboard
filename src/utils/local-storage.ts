@@ -123,12 +123,18 @@ export const readStoredString = (key: string): string | null => {
   }
 };
 
-/** 写入原始字符串；写不进去（隐私模式 / 配额写满）时静默放弃，状态只在本轮有效 */
-export const writeStoredString = (key: string, value: string): void => {
+/**
+ * 写入原始字符串；写不进去（隐私模式 / 配额写满）时静默放弃，状态只在本轮有效。
+ * 返回是否真的写进去了：默认偏好不需要这个结果，程序坞这类「写失败要告诉用户」的调用方用它区分。
+ */
+export const writeStoredString = (key: string, value: string): boolean => {
   try {
     window.localStorage.setItem(key, value);
+
+    return true;
   } catch {
     // 存不进去不影响当前界面，刷新后只是回到默认状态
+    return false;
   }
 };
 

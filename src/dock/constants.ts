@@ -25,8 +25,12 @@ export const NOTIFICATION_Z_INDEX = 1030;
 /** 飞入 / 飞出过程中那一层克隆的层级：比程序坞还高，落点才看得见 */
 export const DOCK_FLY_Z_INDEX = 1150;
 
-/** 程序坞最多留几条：超出按收起时间淘汰最旧的，避免 localStorage 被快照撑爆 */
-export const MAX_DOCK_ENTRIES = 8;
+/**
+ * 程序坞最多留几条：上限是「程序坞承载 + 单次写入体积」的固定边界
+ * （每次收起都会把整份条目 JSON 序列化后同步写一遍），不是为了兜配额。
+ * 满了就**拒收新条目并提示**，不淘汰已经在坞里的条目；同 id 已收录的只换快照，不受上限影响。
+ */
+export const MAX_DOCK_ENTRIES = 16;
 
 /** 图标边长（px）：固定不跟设置走 */
 export const DOCK_ITEM_SIZE = 36;

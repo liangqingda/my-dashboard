@@ -2,7 +2,8 @@
  * 程序坞条目的持久化编解码与增删。
  *
  * 只做「结构校验 + 条数上限」：快照里缺一个字段就整条丢掉（恢复时会渲染不出来），
- * 被手工改坏也不会把整份列表一起作废。最旧的条目先淘汰，避免 localStorage 被正文撑爆。
+ * 被手工改坏也不会把整份列表一起作废。满员时**拒收新条目**并把结果告诉调用方，
+ * 不静默淘汰已有条目——用户收起来的东西不该在别处被顶掉。
  */
 
 import type { StoredCodec } from '@/utils/local-storage';
@@ -120,7 +121,10 @@ const decodeEntry = (value: unknown): DockEntry | null => {
   }
 };
 
-/** 读出来的列表：坏项丢掉、同 id 留最新一条、按时间正序、超上限留最新的 */
+/**
+ * 读出来的列表：坏项丢掉、同 id 留最新一条、按时间正序、超上限只留最新的。
+ * 写入侧满员就拒收，正常流程不会超；这里的截断只防手工改坏存储导致无限增长。
+ */
 export const normalizeDockEntries = (value: unknown): DockEntry[] => {
   if (!Array.isArray(value)) {
     return [];
@@ -149,31 +153,42 @@ export const normalizeDockEntries = (value: unknown): DockEntry[] => {
   );
 };
 
-/** 收进一条：同 id 原地换最新快照，新条目排到末尾；超出上限淘汰最旧的 */
+/** 收进一条的结果：`accepted` 为假表示程序坞已满且这不是已收录的同一条，条目原样不动 */
+export type DockUpsertResult = {
+  entries: DockEntry[];
+  accepted: boolean;
+};
+
+/**
+ * 收进一条：同 id 原地换最新快照；新条目排到末尾。
+ * 满员时不收也不淘汰——返回 `accepted: false` 与进来的原列表，调用方据此给提示。
+ */
 export const upsertDockEntry = (
   entries: readonly DockEntry[],
   entry: DockEntry,
-): DockEntry[] => {
+): DockUpsertResult => {
   const index = entries.findIndex((candidate) => candidate.id === entry.id);
 
   // 已收录的那一条只换快照；同组内按收起时间排，图标不会因此乱跳到别的组
   if (index >= 0) {
-    return sortDockEntriesByKind(
-      entries.map((candidate) =>
-        candidate.id === entry.id ? entry : candidate,
+    return {
+      entries: sortDockEntriesByKind(
+        entries.map((candidate) =>
+          candidate.id === entry.id ? entry : candidate,
+        ),
       ),
-    );
+      accepted: true,
+    };
   }
 
-  const merged = [...entries, entry];
-  const capped =
-    merged.length > MAX_DOCK_ENTRIES
-      ? merged
-          .toSorted((left, right) => right.createdAt - left.createdAt)
-          .slice(0, MAX_DOCK_ENTRIES)
-      : merged;
+  if (entries.length >= MAX_DOCK_ENTRIES) {
+    return { entries: [...entries], accepted: false };
+  }
 
-  return sortDockEntriesByKind(capped);
+  return {
+    entries: sortDockEntriesByKind([...entries, entry]),
+    accepted: true,
+  };
 };
 
 /** 从程序坞移除一条 */

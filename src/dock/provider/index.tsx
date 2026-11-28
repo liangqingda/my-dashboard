@@ -12,6 +12,7 @@ import { DockContext } from '../context';
 import { useDockFullscreen } from '../hooks/useDockFullscreen';
 import { useDockModalStack } from '../hooks/useDockModalStack';
 import { DOCK_ENTRIES_CODEC } from '../utils/dock-entries';
+import { notifyDockPersistFailed } from '../utils/dock-notice';
 import type { DockContextValue, DockEntry } from '../types';
 
 import { useDockWindowController } from './hooks/useDockWindowController';
@@ -36,9 +37,16 @@ const DockProvider = ({ children }: { children: ReactNode }) => {
     entriesRef.current = entries;
   }, [entries]);
 
+  /*
+   * 每次改条目都整份写一遍存储：写不进去时本轮仍按内存里的列表走，
+   * 但不能让它悄悄变成「刷新后全没了」——当场提示一句。
+   */
   const writeEntries = (next: DockEntry[]) => {
     entriesRef.current = next;
-    setStoredEntries(next);
+
+    if (!setStoredEntries(next)) {
+      notifyDockPersistFailed();
+    }
   };
 
   const {
