@@ -29,6 +29,8 @@
 | 页面级刷新 | `@/utils/page-refresh` 的 `requestPageRefresh()` / `onPageRefresh(handler)` |
 | Markdown 标题目录 | `@/utils/markdown-outline` 的 `extractMarkdownOutline` |
 | 把本机文件交给外部应用打开 | `@/utils/open-file` 的 `openFileExternally(path, appName?)`（页面与程序坞窗口共用） |
+| 开合动画的几何算式（`from` / `to` 两个矩形 → 平移 + 等比缩放）、是否要减少动效 | `@/utils/motion-geometry` 的 `shiftBetweenRects(from, to)` / `prefersReducedMotion()`（程序坞与弹窗共用） |
+| 「用户从哪一点打开的」记录（`pointerdown` / 键盘回退、过期判定） | `@/utils/pointer-origin` 的 `readPointerOrigin()` / `resolveOriginRect(origin)` |
 | 单行 / 两行省略文本（默认中间省略，尾部省略传 `ellipsis="end"`）、截断才提示 | `@/components/texts/FreeTruncatedText` |
 | 悬停 / 聚焦意图 | `@/hooks/useHoverIntent` |
 | 组件是否仍挂载（异步回调写状态前挡卸载后的迟到响应） | `@/hooks/useMounted` |

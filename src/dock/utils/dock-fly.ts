@@ -5,9 +5,11 @@
  * 落到虚位中心后克隆淡掉，真正的图标由小到大长出来（见 `dock-bar` 的 receiving 样式）。
  */
 
+import { prefersReducedMotion } from '@/utils/motion-geometry';
+
 import { DOCK_FLY_DURATION, DOCK_FLY_Z_INDEX } from '../constants';
 
-import { findDockItem, prefersReducedMotion, waitForFrames } from './dock-motion';
+import { findDockItem, waitForFrames } from './dock-motion';
 
 /** 飞行的起点 / 终点几何 */
 type FlightGeometry = {

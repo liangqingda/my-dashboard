@@ -143,6 +143,9 @@ Provider 只维护一个 `windowSlot`，它自己带 `phase`（`opening` / `clos
 
 `src/dock/utils/dock-motion.ts` 是程序坞窗口动画的唯一实现处：
 
+- **页面弹窗不接这一套**：普通页面弹窗的开合由 `FreeModal` 自己做（从点击点长大 / 缩回同一点，
+  见 `src/components/modals/FreeModal/README.md`）；只有「收进程序坞」那一下才是这里的飞入，
+  两边不叠加。`origin: 'dock'` 的窗跳过 `FreeModal` 那层，仍由这里按图标长大 / 缩回。
 - **框体只认挂着内容框的根节点**：关掉的弹窗只卸载内容框，根节点还留在 DOM 里，
   所以 `data-dock-surface` 只在窗开着时挂，查找也只取挂着 `section[role="dialog"]` 的那个
   （多个都挂着时取最后挂进 DOM 的）。拿空壳量框体，开合动画会整段被跳过。

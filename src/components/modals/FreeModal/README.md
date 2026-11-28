@@ -85,6 +85,31 @@
 - **正文区**：`.body` 是 flex 纵向容器（`flex: 1 1 auto; min-height: 0`），正文自己决定怎么滚
   （`ScrollArea` 或整块不滚）；全屏由调用方持有状态（正文排版要用），这里只画按钮。
 
+## 开合动画
+
+全站弹窗的开合只有一份（`hooks/useModalSurfaceMotion` + `hooks/useModalMotion`）：打开时从用户
+点的那一点由小长到大，关闭时缩回同一点。程序坞窗口（`origin: 'dock'`）不接这一层——那扇窗的开合
+由 Provider 按图标做，见 `docs/dock.md`。
+
+- **打开点**是应用级单例记录（`@/utils/pointer-origin`），`main.tsx` 启动时装监听：`pointerdown`
+  捕获阶段记下最近点击的可点目标（`button` / `a` / `[role="button"]` / `[data-motion-anchor]`），
+  键盘 `click`（`detail === 0`）回退到聚焦元素；超过 500ms 视为过期。业务侧打开弹窗不传 ref，
+  也不在调用点各记一份。
+- **几何与程序坞同一套**：算式在 `@/utils/motion-geometry`（`shiftBetweenRects`），中心位移 +
+  取较小一维等比缩放，起点缩到 `MODAL_MIN_ORIGIN_SCALE` 为止。
+- **关闭先动画、后 `onClose`**：`requestClose` 播 220ms 反向动画，播完才调 `onClose`，所以
+  `onClose` 比动画晚一拍生效——业务侧「关窗即清数据 / 组件 `return null`」的写法不用改，动画
+  期间框体与内容都还活着（视频仍是活画面）；同一轮里重复关闭只认第一次。关闭时打开点若已不在
+  DOM（翻篇、删除），落回打开时那一点的坐标。
+- **不叠组件库过渡**：框体 `transitionProps` 的 `duration` / `exitDuration` 归零，动画全由 WAAPI
+  直接作用在 `section[role="dialog"]` 上，只动 transform / opacity、不动布局；遮罩由这一层做
+  160ms 淡入，退出时与框体同步淡出（组件库那边只留 `fade` 名字、时长归零）。
+- **例外**：`dock.origin === 'dock'` 的窗交给 Provider；全屏（`fullscreen.active`，含浏览器整屏）
+  不做几何位移、只淡入淡出；`prefers-reduced-motion: reduce` 全部即时。
+- **根节点标记**：`data-motion-surface` 一直挂着，查找时挑「还挂着内容框」的根节点；它的 id 只认
+  「窗自己」（`surfaceId` → 程序坞窗口自己的条目 → 实例 id），**不跟 `dock.id`（当前内容那条）走**，
+  否则翻篇一换内容就重播一遍开窗动画。`data-dock-surface` 仍只在开着时挂（程序坞那边按它认框体）。
+
 ## 它不管什么
 
 - 标题文案、翻页数据与范围（`nav.index / total / onPrevious / onNext` 由调用方算）；
@@ -109,7 +134,7 @@
 | `media` | `{ onTogglePlay, onToggleMute }`；传了 `onTogglePlay` 之后空格切播放 / 暂停、不再关窗，传了 `onToggleMute` 才有 `M` 静音 |
 | `tipDark` | 可选。header 内按钮、标题与计数固定取媒体浮层浅字档（连同 tip 深底浅字），不随主题反转；媒体预览压在画面上的提示与控件用 |
 | `zIndex` | 层级，默认走组件库的弹窗档；要压在另一扇已打开的弹窗之上时显式抬高（二次确认层由 `ConfirmModal` 默认给 `1040`） |
-| `surfaceId` | 程序坞动画找框体用的根节点 id，与 `dock` 描述符分开给：正文还在加载、还不能收进程序坞时也要让开合动画认得到窗的根节点；给了 `dock` 就默认沿用 `dock.surfaceId`（窗自己的条目）/ `dock.id`（当前内容那条） |
+| `surfaceId` | 开合动画找框体用的根节点 id（程序坞与弹窗动画共用一份）：正文还在加载、还不能收进程序坞时也要让开合动画认得到窗的根节点；给了 `dock` 就默认沿用 `dock.surfaceId`（窗自己的条目）/ `dock.id`（当前内容那条） |
 | `onCapture` | `Enter` 的动作（视频预览截当前帧）；不传则该键不动作 |
 | `onSeek` | `(direction: 'backward' \| 'forward') => void`；传了之后 `←` / `→` 交给它（视频快进 / 后退），翻篇只剩 `[` / `]`。`origin: 'dock'` 的窗有两条以上条目时方向键一律切程序坞条目，单条目才让回给媒体；内容翻篇只留 `[` / `]` |
 | `fullscreen` | `{ active, onToggle?, showToggle?, reportActive? }`；不传则没有全屏外观与按钮。`showToggle` 默认 `true`，传 `false` 只收掉 header 按钮；`onToggle` 给了的话 `F` 键照常生效（进编辑这类不该换尺寸的场景，回调与按钮都不给）。`reportActive` 单独上报程序坞全屏态，默认跟随 `active`，业务自管铺满时用 |

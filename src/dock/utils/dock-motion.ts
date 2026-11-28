@@ -6,6 +6,8 @@
  */
 
 /* eslint-disable no-param-reassign -- 动画函数收到的参数就是待改写的 DOM 框体，直接写它的 style 是这套工具的唯一职责 */
+import { prefersReducedMotion, shiftBetweenRects } from '@/utils/motion-geometry';
+
 import {
   DOCK_DISMISS_DURATION,
   DOCK_SHRINK_DURATION,
@@ -15,24 +17,8 @@ import {
   DOCK_WINDOW_Z_INDEX,
 } from '../constants';
 
-/** 动画用的矩形（`DOMRect` 的超集） */
-export type RectLike = {
-  height: number;
-  left: number;
-  top: number;
-  width: number;
-};
-
 /** 换窗方向：`next` 往程序坞后面翻（旧窗向左、新窗从右进），`prev` 反过来 */
 export type DockSlideDirection = 'next' | 'prev';
-
-export const prefersReducedMotion = () =>
-  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-const centerOf = (rect: RectLike) => ({
-  x: rect.left + rect.width / 2,
-  y: rect.top + rect.height / 2,
-});
 
 /** 等若干帧，等 React 把程序坞项目 / 窗口挂进 DOM */
 export const waitForFrames = async <T>(
@@ -104,17 +90,6 @@ const findDockAnchor = (id: string): HTMLElement | null => {
   return document.querySelector<HTMLElement>('[data-dock-toggle]');
 };
 
-const shiftToItem = (from: RectLike, to: RectLike) => {
-  const fromCenter = centerOf(from);
-  const toCenter = centerOf(to);
-
-  return {
-    dx: toCenter.x - fromCenter.x,
-    dy: toCenter.y - fromCenter.y,
-    scale: Math.min(to.width / from.width, to.height / from.height),
-  };
-};
-
 /**
  * 程序坞 → 窗口：真实框体从图标中心由小长到大。
  * 调用方在布局阶段先把框体隐藏，避免动画起来前闪一帧终态。
@@ -132,7 +107,7 @@ export const growWindowFromDock = async (
 
   const contentRect = content.getBoundingClientRect();
   const itemRect = item.getBoundingClientRect();
-  const { dx, dy, scale } = shiftToItem(contentRect, itemRect);
+  const { dx, dy, scale } = shiftBetweenRects(contentRect, itemRect);
 
   content.style.opacity = '0';
   content.style.transformOrigin = 'center';
@@ -189,7 +164,7 @@ export const shrinkWindowToDock = async (
 
   const contentRect = content.getBoundingClientRect();
   const itemRect = item.getBoundingClientRect();
-  const { dx, dy, scale } = shiftToItem(contentRect, itemRect);
+  const { dx, dy, scale } = shiftBetweenRects(contentRect, itemRect);
 
   content.style.transformOrigin = 'center';
   content.style.willChange = 'transform, opacity';

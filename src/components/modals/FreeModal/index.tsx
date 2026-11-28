@@ -21,8 +21,10 @@ import { useAutoHideHeader } from './hooks/useAutoHideHeader';
 import { useDockNav } from './hooks/useDockNav';
 import { useDockMinimize } from './hooks/useDockMinimize';
 import { useModalDockState } from './hooks/useModalDockState';
+import { useModalSurfaceMotion } from './hooks/useModalSurfaceMotion';
 import { useOverlayFocusGuard } from './hooks/useOverlayFocusGuard';
 import { useModalShortcuts } from './hooks/useModalShortcuts';
+import { MODAL_FADE_DURATION } from './constants';
 import type { FreeModalProps } from './types';
 
 import styles from './index.scss';
@@ -103,35 +105,35 @@ const FreeModal = ({
     opened,
   });
 
-  const closeAction = docked ? minimizeToDock : onClose;
+  /**
+   * 从打开点长出来、关闭时缩回同一点；程序坞窗口交给 Provider，这里只负责页面弹窗。
+   * 全屏时不做几何位移：100vw 从一个小点长出来太夸张，只淡入淡出。
+   */
+  const { isClosing, requestClose, surfaceProps } = useModalSurfaceMotion({
+    dock,
+    fullscreenActive: fullscreen?.active === true,
+    onClose,
+    opened,
+    surfaceId,
+  });
+
+  /** 已收录的窗关闭走回坞（`minimizeToDock` 自带收放动画），没收录的才走这里的开关窗动画 */
+  const closeAction = docked ? minimizeToDock : requestClose;
 
   /** 已收录的窗：X 先移除条目再关页；程序坞窗口由 Provider 的 remove 直接收场 */
   const closeAndRemoveFromDock = () => {
     removeFromDock();
 
     if (dock?.origin === 'page') {
-      onClose();
+      requestClose();
     }
   };
 
-  const systemCloseAction = docked ? closeAndRemoveFromDock : onClose;
+  const systemCloseAction = docked ? closeAndRemoveFromDock : closeAction;
   const systemCloseLabel = docked ? '关闭并从程序坞移除' : closeLabel;
   const { arrowNav, headerNav } = useDockNav(dock, nav);
   const effectiveZIndex =
     zIndex ?? (dock?.origin === 'dock' ? DOCK_WINDOW_Z_INDEX : undefined);
-  /*
-   * 程序坞动画按这个属性找框体；只有开着的窗才挂——关掉的弹窗组件库会留下空壳根节点，
-   * 空壳也带标记的话，下一次开窗会先量到空壳、整段动画被跳过。
-   * id 先按描述符算，描述符还不能给（正文加载中）时由 `surfaceId` 单独交代窗的身份。
-   */
-  const resolvedSurfaceId = dock?.surfaceId ?? dock?.id ?? surfaceId;
-  const dockSurfaceProps =
-    resolvedSurfaceId === undefined || !opened
-      ? {}
-      : ({
-          'data-dock-surface': resolvedSurfaceId,
-        } as Record<string, string>);
-
   const escapeOverridden = Boolean(onRequestEscape);
 
   /**
@@ -175,7 +177,8 @@ const FreeModal = ({
   const isOverlayFocusGuard = useOverlayFocusGuard();
 
   const handleOverlayClick = () => {
-    if (isOverlayFocusGuard()) {
+    // 正在收起：这一下不再触发另一条关闭路径
+    if (isClosing() || isOverlayFocusGuard()) {
       return;
     }
 
@@ -187,7 +190,7 @@ const FreeModal = ({
     }
 
     if (closeOnClickOutside) {
-      onClose();
+      closeAction();
     }
   };
 
@@ -227,7 +230,7 @@ const FreeModal = ({
       }}
       closeOnClickOutside={false}
       closeOnEscape={closeOnEscape && !escapeOverridden}
-      {...dockSurfaceProps}
+      {...surfaceProps}
       fullScreen={fullscreen?.active ?? false}
       /* Esc 与空格 / 遮罩同口径：已收录的窗收回程序坞、条目保留；X 才负责连条目一起删 */
       onClose={closeAction}
@@ -238,6 +241,8 @@ const FreeModal = ({
           overlayTone === 'dark' && styles.overlayMedia,
         ),
         onClick: handleOverlayClick,
+        /* 退出时长归零：真正淡出由 `useModalMotion` 与框体同步做，组件库这边不等它 */
+        transitionProps: { duration: MODAL_FADE_DURATION, exitDuration: 0 },
       }}
       padding={0}
       radius="md"
@@ -312,11 +317,11 @@ const FreeModal = ({
           ) : null}
         </div>
       }
-      transitionProps={
-        dock?.origin === 'dock'
-          ? { duration: 0 }
-          : { duration: 140, transition: 'fade' }
-      }
+      /*
+       * 组件库这条过渡全程交给这里的两支动画（`useModalMotion`）：开窗直接从打开点长，
+       * 关窗先播收缩、播完才真正 `onClose`。组件库自己再淡一次就会和几何动画叠在一起。
+       */
+      transitionProps={{ duration: 0, exitDuration: 0 }}
       trapFocus={trapFocus && !backgroundDockWindow}
       withCloseButton={false}
       zIndex={effectiveZIndex}

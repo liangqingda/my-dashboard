@@ -13,6 +13,7 @@ import { Notifications } from '@mantine/notifications';
 import App from '@/App';
 import { NOTIFICATION_Z_INDEX } from '@/dock/constants';
 import ServicesProvider from '@/services/provider';
+import { ensurePointerOrigin } from '@/utils/pointer-origin';
 import '@/styles/global.scss';
 
 const theme = createTheme({
@@ -57,6 +58,12 @@ const theme = createTheme({
     fontWeight: '700',
   },
 });
+
+/*
+ * 弹窗开合动画的起点：必须在用户第一次点击之前就开始记「是在哪一点的」。
+ * 挂晚了（例如等弹窗第一次挂载）会漏掉「按需挂载的弹窗」那一下打开。
+ */
+ensurePointerOrigin();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
