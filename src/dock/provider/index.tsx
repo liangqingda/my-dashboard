@@ -1,10 +1,4 @@
-/**
- * 程序坞的应用级容器：收起条目、窗口编排与 `⌘M` 栈都在这里。
- *
- * 挂在 App 层（Router 内、布局外）：页面切走 / 刷新都还在；
- * 窗口本身由 `windows/*` 里的渲染器按快照重建，页面组件不参与恢复。
- * 程序坞固定悬浮在底部，同一时刻只展开一扇窗；换窗按程序坞顺序左右滑动。
- */
+/** 程序坞应用级容器：条目、窗口编排与 `⌘M` 栈；挂在 App 层，切页 / 刷新仍在 */
 
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
@@ -23,6 +17,7 @@ import {
   upsertDockEntry,
 } from '../utils/dock-entries';
 import { flyWindowToDock } from '../utils/dock-fly';
+import { minimizeDockWindow } from '../utils/dock-minimize';
 import { findDockSurface, slideWindowOut } from '../utils/dock-motion';
 import { slideDirectionOf } from '../utils/dock-slide';
 import { loadDockWindow } from '../windows/registry';
@@ -62,7 +57,7 @@ const DockProvider = ({ children }: { children: ReactNode }) => {
     setStoredEntries(next);
   };
 
-  /** 飞入期间让程序坞画虚位、藏住图标；飞完再让图标由小长出来 */
+  /** 飞入期间画虚位、藏图标；飞完图标由小长出来 */
   const markReceiving = (id: string) => {
     receivingRef.current.add(id);
     setReceivingIds([...receivingRef.current]);
@@ -73,7 +68,6 @@ const DockProvider = ({ children }: { children: ReactNode }) => {
     setReceivingIds([...receivingRef.current]);
   };
 
-  /** 页面弹窗 / 瓦片收进程序坞：条目先落位成虚位，再飞进去 */
   const receiveEntry = (entry: DockEntry, sourceEl: HTMLElement | null) => {
     if (sourceEl === null) {
       return;
@@ -99,7 +93,6 @@ const DockProvider = ({ children }: { children: ReactNode }) => {
     setWindow(null);
   };
 
-  /** 不经过页面弹窗，直接把一条快照收进程序坞（瓦片按钮用） */
   const collect = (draft: DockEntryDraft, sourceEl?: HTMLElement | null) => {
     const entry = toDockEntry(draft, window.location.pathname, Date.now());
 
@@ -107,7 +100,6 @@ const DockProvider = ({ children }: { children: ReactNode }) => {
     receiveEntry(entry, sourceEl ?? null);
   };
 
-  /** 当前这扇窗开始退出；真正的卸载等动画结束 */
   const beginClosing = (
     slot: DockWindowSlot,
     removeOnExit: boolean,
@@ -120,10 +112,7 @@ const DockProvider = ({ children }: { children: ReactNode }) => {
     setWindow({ ...slot, exit, phase: 'closing', removeOnExit });
   };
 
-  /**
-   * 挂一扇新窗：没有窗口时从图标中心长出来；已有另一扇时按程序坞顺序整屏滑动切换，
-   * 旧窗向左 / 右滑出、新窗从另一侧滑入，不再淡入淡出。
-   */
+  /** 新窗：空场从图标中心长出；已有窗则按程序坞顺序整屏滑动切换，旧窗同时离场 */
   const activateEntry = (
     entry: DockEntry,
     Component: DockWindowSlot['Component'],
@@ -162,7 +151,6 @@ const DockProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  /** 点程序坞图标：已经展开着就收起，没展开就恢复 */
   const restore = (id: string) => {
     const entry = entriesRef.current.find((candidate) => candidate.id === id);
 
@@ -204,7 +192,6 @@ const DockProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  /** `⌘←` / `⌘→`：按程序坞顺序切上一条 / 下一条 */
   const stepWindow = (delta: -1 | 1): boolean => {
     const { current } = windowRef;
     const list = entriesRef.current;
@@ -222,7 +209,6 @@ const DockProvider = ({ children }: { children: ReactNode }) => {
     return true;
   };
 
-  /** X / Esc：不缩回程序坞，按弹窗默认淡出；动画结束再删条目 */
   const requestCloseWindow = () => {
     const { current } = windowRef;
 
@@ -230,46 +216,35 @@ const DockProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    beginClosing(current, true, 'dismiss');
+    beginClosing(current, false, 'minimize');
+  };
+
+  const remove = (id: string) => {
+    const { current } = windowRef;
+
+    if (current !== null && current.entry.id === id) {
+      if (current.phase === 'closing') {
+        return;
+      }
+
+      beginClosing(current, true, 'dismiss');
+
+      return;
+    }
+
+    writeEntries(removeDockEntry(entriesRef.current, id));
   };
 
   const minimize = (descriptor: DockDescriptor, sourceEl: HTMLElement | null) => {
-    const { current } = windowRef;
-
-    if (current?.phase === 'closing') {
-      return;
-    }
-
-    /*
-     * 程序坞自己恢复出来的窗口再收起：图片 / 视频能在窗内翻篇，窗口还是这一扇，
-     * 但快照已经换了。除了 id，再按 origin + kind 兜底认窗；条目 id 保持稳定，
-     * 只换快照与标题，图标不会因为翻页多出一条。
-     */
-    const isDockWindow =
-      descriptor.origin === 'dock' && current?.entry.kind === descriptor.kind;
-
-    if (current !== null && (current.entry.id === descriptor.id || isDockWindow)) {
-      const entry = isDockWindow
-        ? {
-            ...toDockEntry(descriptor, window.location.pathname, Date.now()),
-            createdAt: current.entry.createdAt,
-            id: current.entry.id,
-            page: current.entry.page,
-          }
-        : current.entry;
-
-      if (isDockWindow) {
-        writeEntries(upsertDockEntry(entriesRef.current, entry));
-      }
-
-      beginClosing({ ...current, entry }, false, 'minimize');
-      return;
-    }
-
-    const entry = toDockEntry(descriptor, window.location.pathname, Date.now());
-
-    writeEntries(upsertDockEntry(entriesRef.current, entry));
-    receiveEntry(entry, sourceEl);
+    minimizeDockWindow({
+      beginClosing,
+      current: windowRef.current,
+      descriptor,
+      entries: entriesRef.current,
+      receiveEntry,
+      sourceEl,
+      writeEntries,
+    });
   };
 
   const registerModal = (registration: DockModalRegistration) => {
@@ -302,6 +277,7 @@ const DockProvider = ({ children }: { children: ReactNode }) => {
     minimizeTop,
     receivingIds,
     registerModal,
+    remove,
     requestCloseWindow,
     restore,
     stepWindow,

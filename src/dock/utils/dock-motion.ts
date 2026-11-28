@@ -8,7 +8,9 @@
 /* eslint-disable no-param-reassign -- 动画函数收到的参数就是待改写的 DOM 框体，直接写它的 style 是这套工具的唯一职责 */
 import {
   DOCK_DISMISS_DURATION,
+  DOCK_SHRINK_DURATION,
   DOCK_SLIDE_DURATION,
+  DOCK_SLIDE_OUT_DURATION,
   DOCK_TRANSFORM_DURATION,
   DOCK_WINDOW_Z_INDEX,
 } from '../constants';
@@ -179,7 +181,7 @@ export const shrinkWindowToDock = async (
       },
     ],
     {
-      duration: DOCK_TRANSFORM_DURATION,
+      duration: DOCK_SHRINK_DURATION,
       easing: 'cubic-bezier(0.55, 0.02, 0.72, 0.36)',
       fill: 'both',
     },
@@ -188,7 +190,7 @@ export const shrinkWindowToDock = async (
   await animation.finished.catch(() => undefined);
 };
 
-/** 关闭（X / Esc）：按弹窗默认的淡出，不做收坞位移 */
+/** 从程序坞移除当前窗：按弹窗默认的淡出，不做收坞位移 */
 export const dismissWindow = async (content: HTMLElement): Promise<void> => {
   if (prefersReducedMotion()) {
     return;
@@ -294,17 +296,25 @@ export const slideWindowOut = (
   // 旧窗垫在新窗口层的下边：新窗滑进来时压着它、遮住它，而不是反过来盖住新窗
   clone.style.zIndex = String(DOCK_WINDOW_Z_INDEX - 1);
   clone.style.willChange = 'transform';
+  // 组件库 / 内容的 CSS 过渡不能叠加到这条 Web Animation 上，否则旧窗会在结束后继续挪
+  clone.style.transition = 'none';
+  clone.style.animation = 'none';
   document.body.appendChild(clone);
 
-  // 旧窗要完整退出屏幕，不能用新窗那个「压着点」的起点
-  const target = direction === 'next' ? -window.innerWidth : window.innerWidth;
+  /*
+   * 旧窗只要完整退出屏幕就够了：按自己左右边缘算距离，别用整屏宽白跑一截。
+   * 时长也比新窗短一档，保证下一扇完全就位时，旧窗已经滑完。
+   */
+  const exitDistance =
+    direction === 'next' ? rect.right + 16 : window.innerWidth - rect.left + 16;
+  const target = direction === 'next' ? -exitDistance : exitDistance;
   const animation = clone.animate(
     [
       { transform: 'translate3d(0, 0, 0)' },
       { transform: `translate3d(${target}px, 0, 0)` },
     ],
     {
-      duration: DOCK_SLIDE_DURATION,
+      duration: DOCK_SLIDE_OUT_DURATION,
       easing: 'cubic-bezier(0.55, 0, 0.75, 0.2)',
       fill: 'both',
     },

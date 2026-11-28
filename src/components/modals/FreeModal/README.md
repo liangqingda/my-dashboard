@@ -27,28 +27,29 @@
   「指针在哪一层」时用它们，不要去挑 CSS module 的哈希类名。普通流 header 仍是实心 chrome 底。
 - **header 里的按钮**：翻页与全屏走 `FreeIconAction`（`size="sm"`、语气恒为 `normal`、tip 与 `aria-label` 同句，
   键位提示走 `tooltipLabel`），**外壳不自维护图标按钮样式**；关闭按钮是组件库 `Modal` 内建的 `closeButton`。
-- **header 的顺序与间距**：翻页与计数 → 标题 → `headerActions` → 全屏 → `headerTail` →
-  `headerSecondary` → 收起到程序坞 → 竖线 → Mantine 关闭按钮。`headerActions` 里的按钮**彼此固定 8px 间距**
-  （`.actions` 的 `gap: 8px`）：这是全站弹窗 header 操作的统一口径，业务侧直接铺自己的图标按钮，
-  不要再包一层窄 gap 的 `Group` 去覆盖它。标题与右侧操作组之间恒留 20px（`.titleGap`），
-  标题单行不换行、放不下才省略（hover 看全名），宽度再窄也压不到按钮上。
-  竖线只有一条，画在**关闭按钮之前**（操作区与关闭的分界），组与组之间不再画线；
-  没有关闭按钮（`closeButton={false}`）或右侧一个图标都没渲染时也不画，免得留一条孤线。
-- **收起到程序坞**（`dock`）：只有阅读类弹窗传描述符，shell 在关闭按钮左边固定画一颗
-  `IconWindowMinimize`；`disabled` 时置灰但保留位置。`useDockMinimize` 负责「量框体 → 交给 Provider
-  编排动画」与 `⌘M` 登记；`origin: 'dock'` 的窗口再收起只回坞、不执行 `onClose`，否则页面状态会留在
-  一半。描述符契约与哪些弹窗不接见 `docs/dock.md`。
+- **header 的顺序与间距**：翻页与计数 → 标题 → `headerActions` → `headerSecondary` → `headerTail`
+  → **组间竖线** → 全屏 → 收起到程序坞 / 从程序坞移除 → 竖线 → Mantine 关闭按钮。
+  `headerActions` 里的按钮**彼此固定 8px 间距**（`.actions` 的 `gap: 8px`）：这是全站弹窗 header 操作的统一口径，
+  业务侧直接铺自己的图标按钮，不要再包一层窄 gap 的 `Group` 去覆盖它。标题与右侧操作组之间恒留 20px
+  （`.titleGap`），标题单行不换行、放不下才省略（hover 看全名），宽度再窄也压不到按钮上。
+  两条竖线：一条分「页面定制操作 / 外壳固定操作（全屏 + 收录）」，一条分「操作区 / 关闭」；
+  没有关闭按钮（`closeButton={false}`）或没有对应分组时不画，免得留孤线。
+- **收起到程序坞**（`dock`）：只有阅读类弹窗传描述符，shell 在关闭按钮左边固定画一颗收录按钮。
+  页面弹窗是 `IconWindowMinimize`「收起到程序坞」；同 id 条目已经在程序坞里时，按钮自动换成
+  `IconCircleMinus`「从程序坞移除」。`disabled` 时置灰但保留位置。`useDockMinimize` 负责
+  「量框体 → 交给 Provider 编排动画」、`⌘M` 登记与移除；`origin: 'dock'` 再收起只回坞、不执行
+  `onClose`，否则页面状态会留一半。描述符契约与哪些弹窗不接见 `docs/dock.md`。
 
 - **键盘口径统一在这里**（`hooks/useModalShortcuts`），业务弹窗不各自补快捷键：
-  - `Esc`：关窗（Mantine 的 `closeOnEscape`）；传了 `onRequestEscape` 就改走这一套监听——先执行它、
-    这一下不关窗（窗内还有一层模式时先退模式，如图片预览的裁剪态）；
+  - `Esc`：与 X 完全同一口径——能收起的弹窗先收回程序坞，不能收起才关窗；传了 `onRequestEscape`
+    就改走这一套监听——先执行它、这一下不关窗（窗内还有一层模式时先退模式，如图片预览的裁剪态）；
   - **空格**：能收起到程序坞时**收回程序坞**（`onDismiss`，条目保留），否则关窗；传了
     `media.onTogglePlay` 时改为播放 / 暂停，不关窗。都会 `preventDefault` 掉浏览器「空格 = 点击
     当前焦点按钮」——焦点常留在 header 图标上，不拦的话按空格会莫名翻到下一条 / 切了全屏；
     `closeOnSpace` 默认跟随 `closeOnEscape`；
   - **`[` / `【` 上一个；`]` / `】` 下一个**：有 `nav` 且未禁用时；
-  - **`←` / `→`**：默认同方括号翻篇；传了 `onSeek` 就整组交给它（视频快进 / 后退），
-    翻篇只剩方括号 —— 方向键在两种归属里只能选一种；
+  - **`←` / `→`**：程序坞恢复出来的窗口优先切程序坞条目（`arrowNav`），压过视频快进；
+    只有一个条目时才让回给媒体；普通弹窗默认同方括号翻篇，传了 `onSeek` 就整组交给它；
   - **`F`**：切换全屏（给了 `fullscreen.onToggle` 就生效；`showToggle: false` 只是不在外壳画按钮，快捷键仍保留）；
   - **`M` 静音**：传了 `media.onToggleMute` 才生效（视频预览里是静音）；
   - **`Enter` 截图**：传了 `onCapture` 时触发（视频预览截当前帧）；还没解出画面等
@@ -82,19 +83,19 @@
 
 | prop | 说明 |
 | --- | --- |
-| `opened` / `onClose` | 开合；**X 与 Esc**走 `onClose`。能收起到程序坞的弹窗，点遮罩 / 按空格改走收回程序坞，不再关条目；普通弹窗点遮罩在 `closeOnClickOutside` 为真时走 `onClose` |
+| `opened` / `onClose` | 开合。能收起到程序坞的弹窗，**X / Esc / 遮罩 / 空格全部先收回程序坞**，条目保留；「从程序坞移除」才删。不能收起的弹窗 X / Esc / 遮罩才走 `onClose` |
 | `title` | header 标题（`ReactNode`），通常是文件名 / 条目名 |
 | `nav` | `FreeModalNav`：`index`（从 1 起）、`total`、`onPrevious` / `onNext`（到头传 `null` 置灰）、`previousLabel` / `nextLabel`、`shortcutHint`（只进 tooltip）、`disabled`（整组禁用，如编辑中） |
 | `headerActions` | 第一组操作（阅读类：复制、筛选、刷新…） |
-| `headerTail` | 排在全屏之后的末尾位，保证「删除」始终在最右 |
-| `headerSecondary` | 第二组操作（如编辑流程），紧接在 `headerTail` 之后、关闭按钮的竖线之前 |
+| `headerTail` | 页面定制操作的末尾位（通常是删除），在组间竖线之前 |
+| `headerSecondary` | 第二组页面定制操作（如编辑流程），与 `headerActions` 同组、在全屏之前 |
 | `headerOverlay` | `FreeModalHeaderOverlay`；传了就把 header 改成毛玻璃浮层并接管显隐（打开即收起、隐藏时不接收指针事件；收起只影响外观，不卸载按钮）。鼠标一动浮出、静止 1s 收起、指针停在 header 上不收起；`suspended` 暂停唤出并恒为可见，`ignoreSelector` 圈掉不算唤出的区域（如播放器控制栏，指针一进去就当场收起）；只有落在框体（`.content`）里的指针活动才算唤出，遮罩上不动 header |
 | `overlayTone` | 遮罩色调：`light`（默认）给普通弹窗，`dark` 给图片 / 视频这类要靠深底看画面的预览；两档的虚化与饱和同一套，只换底色 |
 | `media` | `{ onTogglePlay, onToggleMute }`；传了 `onTogglePlay` 之后空格切播放 / 暂停、不再关窗，传了 `onToggleMute` 才有 `M` 静音 |
 | `tipDark` | 可选。header 内按钮、标题与计数固定取媒体浮层浅字档（连同 tip 深底浅字），不随主题反转；媒体预览压在画面上的提示与控件用 |
 | `zIndex` | 层级，默认走组件库的弹窗档；要压在另一扇已打开的弹窗之上时显式抬高（二次确认层由 `ConfirmModal` 默认给 `320`） |
 | `onCapture` | `Enter` 的动作（视频预览截当前帧）；不传则该键不动作 |
-| `onSeek` | `(direction: 'backward' \| 'forward') => void`；传了之后 `←` / `→` 交给它（视频快进 / 后退），翻篇只剩 `[` / `]` |
+| `onSeek` | `(direction: 'backward' \| 'forward') => void`；传了之后 `←` / `→` 交给它（视频快进 / 后退），翻篇只剩 `[` / `]`。程序坞恢复窗口有多个条目时方向键先切程序坞，单条目才让回给媒体 |
 | `fullscreen` | `{ active, onToggle?, showToggle? }`；不传则没有全屏外观与按钮。`showToggle` 默认 `true`，传 `false` 只收掉 header 按钮；`onToggle` 给了的话 `F` 键照常生效（进编辑这类不该换尺寸的场景，回调与按钮都不给） |
 | `copy` | `{ text, message }`；传了就有 `C` 复制键（`text` 进剪贴板，`message` 是成功提示），与 header 的复制按钮同一口径 |
 | `onRequestDelete` | 传了就有 `Delete` / `Backspace` 删除键；只应打开二次确认层，不直接删 |

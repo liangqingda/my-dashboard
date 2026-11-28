@@ -34,18 +34,18 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 9px;
+  gap: 8px;
+  padding: 11px 12px;
   pointer-events: auto;
-  background: rgb(255 255 255 / 8%);
-  border: 1px solid rgb(255 255 255 / 16%);
-  border-radius: 19px;
+  background: rgb(255 255 255 / 7%);
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 20px;
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 24%),
     inset 0 -1px 0 rgb(0 0 0 / 8%),
     0 6px 22px rgb(0 0 0 / 18%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.03);
-  backdrop-filter: blur(28px) saturate(180%) brightness(1.03);
+  -webkit-backdrop-filter: blur(26px) saturate(180%) brightness(1.01);
+  backdrop-filter: blur(26px) saturate(180%) brightness(1.01);
   transition:
     background 220ms ease,
     border-color 220ms ease,
@@ -53,8 +53,8 @@
 }
 
 .dock:hover .dockBox {
-  background: rgb(255 255 255 / 14%);
-  border-color: rgb(255 255 255 / 26%);
+  background: rgb(255 255 255 / 12%);
+  border-color: rgb(255 255 255 / 22%);
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 36%),
     inset 0 -1px 0 rgb(0 0 0 / 8%),
@@ -137,6 +137,27 @@
     0 7px 16px rgb(0 0 0 / 20%);
 }
 
+/* 编辑模式：图标角上挂红点，点它等于移除；此时不做指针放大 */
+.dockItem[data-editing='true'] {
+  cursor: pointer;
+  box-shadow:
+    inset 0 0 0 1.5px rgb(255 96 96 / 52%),
+    0 5px 12px rgb(0 0 0 / 16%);
+}
+
+.dockItem[data-editing='true']::after {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 13px;
+  height: 13px;
+  content: '';
+  background: #e5484d;
+  border: 1px solid rgb(255 255 255 / 60%);
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 32%);
+}
+
 /* 运行指示点：当前展开着的那一扇下面亮一个小点，和 macOS 的运行中标记一致 */
 .dockDot {
   position: absolute;
@@ -165,11 +186,24 @@
   filter: drop-shadow(0 4px 10px rgb(0 0 0 / 30%));
 }
 
-/* 右下角开关：收起时是程序坞图标，展开后变成向下收起的箭头 */
-.dockToggle {
+/*
+ * 右下角控制组：固定一列按钮，收起按钮在最下，编辑按钮叠在它上方。
+ * 以后再加按钮只管往这列里塞，不各自算 fixed 坐标。
+ */
+.dockControls {
   position: fixed;
   right: 14px;
   bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  pointer-events: none;
+}
+
+/* 单个控制按钮：收起时是程序坞图标，展开后变成向下收起的箭头 */
+.dockControl {
+  position: relative;
   display: grid;
   width: 34px;
   height: 34px;
@@ -191,17 +225,19 @@
     opacity 160ms ease;
 }
 
-.dockToggle:hover:not(:disabled) {
+.dockControl:hover:not(:disabled) {
   background: rgb(255 255 255 / 24%);
   border-color: rgb(255 255 255 / 42%);
   transform: translateY(-1px);
 }
 
-.dockToggle[data-open='true'] {
+.dockControl[data-open='true'],
+.dockControl[data-active='true'] {
   background: rgb(255 255 255 / 22%);
+  border-color: rgb(255 255 255 / 40%);
 }
 
-.dockToggle:disabled {
+.dockControl:disabled {
   cursor: default;
   opacity: 0.46;
 }
@@ -229,7 +265,7 @@
   .dockBox,
   .dockItem,
   .dockIcon,
-  .dockToggle {
+  .dockControl {
     transition: none;
     animation: none;
   }

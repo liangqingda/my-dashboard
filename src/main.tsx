@@ -21,7 +21,20 @@ const theme = createTheme({
    */
   components: {
     Tooltip: {
-      defaultProps: { zIndex: 1200 },
+      defaultProps: {
+        multiline: true,
+        zIndex: 1200,
+        styles: {
+          tooltip: {
+            maxWidth: 'min(360px, calc(100vw - 32px))',
+            maxHeight: 'min(280px, 42vh)',
+            overflowX: 'hidden',
+            overflowY: 'auto',
+            overflowWrap: 'anywhere',
+            overscrollBehavior: 'contain',
+          },
+        },
+      },
     },
   },
   defaultRadius: 'md',

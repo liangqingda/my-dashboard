@@ -31,7 +31,7 @@
 | 弹层面板底部（一句边界说明 + 重置） | `FreePanelFooter` |
 | 日期选择 | `@mantine/dates` 的 `DatePicker`（内联日历）/ `DatePickerInput`（带弹层的日期输入）；全站日历口径（中文、周一为第一天）由 `src/main.tsx` 的 `DatesProvider` 统一给，不要自己拼日历或改用原生 `type="date"` |
 | 分段切换（视图模式、日志类别） | `SegmentedControl` |
-| 悬停 / 聚焦提示 | `Tooltip`（截断后的完整内容走 `FreeTruncatedText`）；**列表里成百上千个条目不要给每条常驻一个 `Tooltip`**，用 `@/hooks/useHoverIntent` 在被指到时才挂一个（`target` 指向被指的节点，不替换它），`FreeTruncatedText`、`FreeIconAction` 与 `CopyIconButton` 已内置这套做法 |
+| 悬停 / 聚焦提示 | `Tooltip`（截断后的完整内容走 `FreeTruncatedText`）；**列表里成百上千个条目不要给每条常驻一个 `Tooltip`**，用 `@/hooks/useHoverIntent` 在被指到时才挂一个（`target` 指向被指的节点，不替换它），`FreeTruncatedText`、`FreeIconAction` 与 `CopyIconButton` 已内置这套做法。全站 `Tooltip` 默认多行、最大宽 `360px`（随视口收窄）、最大高 `42vh`（上限 `280px`），超出纵向滚动；长文案不要自己再撑宽 |
 | 加载中 | `Loader`（占位骨架 `Skeleton`） |
 | 一次性提示 | `notifications.show`（不自己造 toast） |
 | 折叠 / 展开 | `Collapse`、`Accordion` |

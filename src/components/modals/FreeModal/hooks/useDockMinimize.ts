@@ -74,8 +74,26 @@ export const useDockMinimize = ({
     return dockContext.registerModal({ id: dockId, minimize });
   }, [dockContext, dockDisabled, dockId, minimize, opened]);
 
+  /** 程序坞里已经有同 id 条目：header 那颗按钮改成「移除」，不再重复收录 */
+  const canRemove =
+    dock !== undefined &&
+    dockContext !== null &&
+    dockContext.entries.some((entry) => entry.id === dock.id);
+
+  const remove = useCallback(() => {
+    const descriptor = dockRef.current;
+
+    if (descriptor === undefined || dockContext === null) {
+      return;
+    }
+
+    dockContext.remove(descriptor.id);
+  }, [dockContext]);
+
   return {
     canMinimize: dock !== undefined && dockContext !== null,
+    canRemove,
     minimize,
+    remove,
   };
 };

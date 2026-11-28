@@ -1,11 +1,9 @@
 /**
- * 弹窗外壳的基础组件（前端 UI 基建）：Mantine `Modal` 加项目统一外观。
+ * 弹窗外壳：Mantine `Modal` 加项目统一外观。
  *
- * 框体尺寸与描边、紧凑 header（翻页 + 计数 + 标题 + 操作组 + 全屏 + 关闭）、正文区、
- * 全屏铺满这些只在这里定义一次；业务弹窗（`MarkdownPreviewModal`、记录的详情弹窗）
- * 通过 props 给标题、操作与正文，不再各自拼一遍 `Modal` 与 header 行。
- *
- * 全屏状态由调用方持有（正文排版要跟着变），状态本身用 `hooks/useModalFullscreen` 记住。
+ * 框体、紧凑 header（翻页 + 计数 + 标题 + 操作组 + 全屏 + 关闭）与正文区只在这里定义一次；
+ * 业务弹窗通过 props 给标题、操作与正文，不再各自拼一遍 `Modal`。
+ * 全屏状态由调用方持有（正文排版要跟着变），这里只读 `active`。
  */
 
 import { FocusTrap, Modal } from '@mantine/core';
@@ -15,7 +13,6 @@ import {
   IconChevronRight,
   IconMaximize,
   IconMinimize,
-  IconWindowMinimize,
 } from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
@@ -23,6 +20,7 @@ import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
 import { DOCK_WINDOW_Z_INDEX } from '@/dock/constants';
 import { cx } from '@/utils/cx';
 
+import DockAction from './DockAction';
 import { useAutoHideHeader } from './hooks/useAutoHideHeader';
 import { useDockNav } from './hooks/useDockNav';
 import { useDockMinimize } from './hooks/useDockMinimize';
@@ -34,8 +32,7 @@ import styles from './index.scss';
 
 /** header 图标的尺寸与线宽：翻页、全屏、关闭同一档 */
 const ICON_SIZE = 15;
-const STEP_ICON_SIZE = 16;
-const ICON_STROKE = 1.9;
+const STEP_ICON_SIZE = 16, ICON_STROKE = 1.9;
 
 /** 翻页的默认快捷键提示，只进 tooltip */
 const NAV_SHORTCUT_HINT = '[ / ← · ] / →';
@@ -52,10 +49,7 @@ export const MODAL_HEADER_SELECTOR = `.${styles.header}`;
  */
 export const MODAL_CONTENT_SELECTOR = `.${styles.content}`;
 
-/**
- * 基础弹窗外壳。业务侧只管「标题是什么、右侧放哪些操作、正文是什么」，
- * header 的排布、全屏与关闭按钮的位置固定在这里。
- */
+/** 弹窗外壳：业务侧只管标题、右侧操作与正文，header 排布与固定按钮都在这里 */
 const FreeModal = ({
   bodyClassName,
   centered = true,
@@ -102,23 +96,27 @@ const FreeModal = ({
   const onToggleFullscreen = fullscreen?.onToggle;
 
   /** 收起到程序坞：按钮位置固定在关闭按钮左边，动作与 `⌘M` 登记共用一份 */
-  const { canMinimize, minimize: minimizeToDock } = useDockMinimize({
+  const {
+    canMinimize,
+    canRemove,
+    minimize: minimizeToDock,
+    remove: removeFromDock,
+  } = useDockMinimize({
     dock,
     onClose,
     opened,
   });
   const canDismissToDock = canMinimize && dock?.disabled !== true;
+  /** 能收起的弹窗，所有关闭动作都先收回程序坞；不能再收时才真正关窗 */
+  const closeAction = canDismissToDock ? minimizeToDock : onClose;
   const headerNav = useDockNav(dock, nav);
-  /** 程序坞恢复出来的窗口默认抬到「压过所有页面弹窗」那一档 */
   const effectiveZIndex =
     zIndex ?? (dock?.origin === 'dock' ? DOCK_WINDOW_Z_INDEX : undefined);
-  /** 给动画工具找框体用：程序坞窗口靠这个属性从根节点里量内容框 */
   const dockSurfaceProps =
     dock === undefined
       ? {}
       : ({ 'data-dock-surface': dock.id } as Record<string, string>);
 
-  /** Esc 被业务接管（退出窗内模式）时不再交给 Mantine 关窗，键的处理挪到快捷键那一套里 */
   const escapeOverridden = Boolean(onRequestEscape);
 
   /**
@@ -145,11 +143,12 @@ const FreeModal = ({
     copyMessage: copy?.message,
     disabled: shortcutsEnabled === false,
     enabled: opened,
+    arrowNav: dock?.origin === 'dock' ? headerNav : undefined,
     extraKeys,
     nav,
     onCapture,
-    onClose,
-    onDismiss: dock === undefined ? undefined : minimizeToDock,
+    onClose: closeAction,
+    onDismiss: dock === undefined ? undefined : closeAction,
     onRequestDelete,
     onRequestEscape,
     onSeek,
@@ -158,10 +157,8 @@ const FreeModal = ({
     onTogglePlay: media?.onTogglePlay,
   });
 
-  /** 刚回焦的那一下遮罩点击只当拿焦点，不关窗 / 不收起 */
   const isOverlayFocusGuard = useOverlayFocusGuard();
 
-  /** 遮罩点击：能收起就先收进程序坞（条目保留），普通弹窗才关窗；回焦第一下不算 */
   const handleOverlayClick = () => {
     if (isOverlayFocusGuard()) {
       return;
@@ -181,11 +178,14 @@ const FreeModal = ({
     }
   };
 
-  /** 翻页 tooltip 的快捷键提示：业务侧没给就用这套统一的键位 */
   const navHint = headerNav?.shortcutHint ?? NAV_SHORTCUT_HINT;
 
-  /** tooltip 文案：带快捷键时括在文案后面，aria-label 仍是纯动作名 */
   const tip = (label: string): string => `${label}（${navHint}）`;
+
+  const hasCustomActions = Boolean(headerActions || headerTail || headerSecondary);
+  const hasFixedActions = Boolean(
+    (fullscreen && fullscreenToggleVisible) || canMinimize,
+  );
 
   return (
     <Modal
@@ -226,7 +226,7 @@ const FreeModal = ({
       closeOnEscape={closeOnEscape && !escapeOverridden}
       {...dockSurfaceProps}
       fullScreen={fullscreen?.active ?? false}
-      onClose={onClose}
+      onClose={closeAction}
       opened={opened}
       overlayProps={{
         className: cx(
@@ -282,6 +282,12 @@ const FreeModal = ({
           {headerActions ? (
             <div className={styles.actions}>{headerActions}</div>
           ) : null}
+          {headerSecondary}
+          {headerTail}
+          {/* 页面定制操作与弹窗固定操作分成两组，不让业务按钮和全屏 / 收录挤在一起 */}
+          {hasCustomActions && hasFixedActions ? (
+            <span aria-hidden="true" className={styles.divider} />
+          ) : null}
           {fullscreen && fullscreenToggleVisible ? (
             <FreeIconAction
               label={fullscreen.active ? '退出全屏' : '全屏'}
@@ -296,33 +302,18 @@ const FreeModal = ({
               )}
             </FreeIconAction>
           ) : null}
-          {headerTail}
-          {headerSecondary}
-          {/*
-            最小化：紧挨关闭按钮、在竖线之前，位置与「刷新 / 复制」那类操作分开，
-            不让它跟业务操作挤在一起。编辑中 / 上层确认开着时置灰但保留位置。
-          */}
-          {canMinimize ? (
-            <FreeIconAction
-              disabled={dock?.disabled === true}
-              label="收起到程序坞"
-              onClick={minimizeToDock}
-              tipDark={tipDark}
-              tooltipLabel="收起到程序坞（⌘M）"
-            >
-              <IconWindowMinimize size={ICON_SIZE} stroke={ICON_STROKE} />
-            </FreeIconAction>
-          ) : null}
-          {/*
-            竖线只画在关闭按钮之前：它是「操作区 / 关闭」的分界，不和组与组的分隔混在一起。
-            没有关闭按钮（编辑态关不掉）、或右侧一个图标都没渲染时都不画，免得留一条孤线。
-          */}
-          {closeButton &&
-          (headerActions ||
-            headerTail ||
-            (fullscreen && fullscreenToggleVisible) ||
-            headerSecondary ||
-            canMinimize) ? (
+          <DockAction
+            canMinimize={canMinimize}
+            canRemove={canRemove}
+            disabled={dock?.disabled === true}
+            iconSize={ICON_SIZE}
+            iconStroke={ICON_STROKE}
+            onMinimize={minimizeToDock}
+            onRemove={removeFromDock}
+            tipDark={tipDark}
+          />
+          {/* 关闭前只画一条分界；没有关闭按钮或右侧没图标时不画，免得留孤线 */}
+          {closeButton && (hasCustomActions || hasFixedActions) ? (
             <span aria-hidden="true" className={styles.divider} />
           ) : null}
         </div>

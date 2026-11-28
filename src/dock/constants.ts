@@ -27,13 +27,19 @@ export const DOCK_MAGNIFICATION = 1.1;
 /** 程序坞与屏幕底边的间距 */
 export const DOCK_EDGE_GAP = 10;
 
-/** 从图标中心展开 / 收回到图标中心的时长（毫秒） */
+/** 从图标中心展开的时长（毫秒） */
 export const DOCK_TRANSFORM_DURATION = 420;
 
-/** 程序坞里换窗：左右整屏滑动的时长（毫秒） */
+/** 收回到图标中心的时长（毫秒）：比展开快一档，收起不拖泥带水 */
+export const DOCK_SHRINK_DURATION = 220;
+
+/** 程序坞里换窗：新窗滑入的时长（毫秒） */
 export const DOCK_SLIDE_DURATION = 360;
 
-/** 关闭（X / Esc）走弹窗默认淡出：时长与 FreeModal 的一致 */
+/** 换窗时旧窗滑出的时长（毫秒）：必须短于新窗，下一扇完全就位前旧窗先离场 */
+export const DOCK_SLIDE_OUT_DURATION = 240;
+
+/** 从程序坞移除当前窗口走默认淡出：时长与 FreeModal 的一致 */
 export const DOCK_DISMISS_DURATION = 140;
 
 /** 页面弹窗 / 瓦片收进程序坞时，飞行克隆的时长（毫秒） */

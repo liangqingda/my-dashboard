@@ -107,8 +107,10 @@ export type DockContextValue = {
    * 同一时刻只留一扇，切到另一扇时整屏左右滑动，不再回坞绕一圈。
    */
   restore: (id: string) => void;
-  /** 关闭当前恢复出来的窗口：走弹窗默认淡出，结束后移除这一条 */
+  /** 关闭当前恢复出来的窗口：按统一口径收回到程序坞，条目保留 */
   requestCloseWindow: () => void;
+  /** 从程序坞移除一条；如果它正展开着，窗口按弹窗默认淡出后删除 */
+  remove: (id: string) => void;
   /** 按程序坞顺序切上一个 / 下一个（`-1` / `1`）；返回是否真的切了 */
   stepWindow: (delta: -1 | 1) => boolean;
   /**
@@ -136,6 +138,6 @@ export type DockEntryDraft = DockWindowPayload & {
 export type DockWindowProps = {
   /** 要恢复的那一条 */
   entry: DockEntry;
-  /** 用户关掉这扇窗（X / Esc；空格与遮罩走收起，不经过这里） */
+  /** 用户关掉这扇窗（X / Esc 与空格、遮罩同口径，都先收回程序坞） */
   onRequestClose: () => void;
 };

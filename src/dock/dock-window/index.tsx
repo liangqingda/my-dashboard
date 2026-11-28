@@ -3,7 +3,7 @@
  *
  * 同一扇窗在同一个宿主里经历 `opening` 与 `closing`：收起时先改阶段、复用组件实例，
  * 动画结束才卸载。打开分两种：第一次从图标中心长大（`genie`），
- * 程序坞内换窗则整屏左右滑动（`slide`）。关闭（X / Esc）走 `dismiss` 淡出，不缩回程序坞。
+ * 程序坞内换窗则整屏左右滑动（`slide`）。X / Esc 与空格一样收坞，只有「移除」走 `dismiss` 淡出。
  */
 
 import { useEffect, useLayoutEffect, useRef } from 'react';
@@ -11,6 +11,7 @@ import type { ComponentType } from 'react';
 
 import {
   DOCK_DISMISS_DURATION,
+  DOCK_SHRINK_DURATION,
   DOCK_TRANSFORM_DURATION,
 } from '../constants';
 import {
@@ -120,7 +121,7 @@ const DockWindowHost = ({ onExited, onRequestClose, slot }: DockWindowHostProps)
         fadeDockOverlay(root, 'out', DOCK_DISMISS_DURATION);
         await dismissWindow(content);
       } else {
-        fadeDockOverlay(root, 'out', DOCK_TRANSFORM_DURATION);
+        fadeDockOverlay(root, 'out', DOCK_SHRINK_DURATION);
         await shrinkWindowToDock(content, entryId);
       }
 
