@@ -10,6 +10,8 @@ import type { StoredCodec } from '@/utils/local-storage';
 import { MAX_DOCK_ENTRIES } from '../constants';
 import type { DockDescriptor, DockEntry, ImageDockItem, VideoDockItem } from '../types';
 
+import { sortDockEntriesByKind } from './dock-groups';
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
@@ -167,9 +169,11 @@ export const normalizeDockEntries = (value: unknown): DockEntry[] => {
     }
   }
 
-  return [...latestById.values()]
-    .toSorted((left, right) => left.createdAt - right.createdAt)
-    .slice(-MAX_DOCK_ENTRIES);
+  return sortDockEntriesByKind(
+    [...latestById.values()]
+      .toSorted((left, right) => left.createdAt - right.createdAt)
+      .slice(-MAX_DOCK_ENTRIES),
+  );
 };
 
 /** 收进一条：同 id 原地换最新快照，新条目排到末尾；超出上限淘汰最旧的 */
@@ -179,14 +183,24 @@ export const upsertDockEntry = (
 ): DockEntry[] => {
   const index = entries.findIndex((candidate) => candidate.id === entry.id);
 
-  // 已收录的那一条原地换快照，图标不因为「再收起一次」跳到队尾
+  // 已收录的那一条只换快照；同组内按收起时间排，图标不会因此乱跳到别的组
   if (index >= 0) {
-    return entries.map((candidate) =>
-      candidate.id === entry.id ? entry : candidate,
+    return sortDockEntriesByKind(
+      entries.map((candidate) =>
+        candidate.id === entry.id ? entry : candidate,
+      ),
     );
   }
 
-  return [...entries, entry].slice(-MAX_DOCK_ENTRIES);
+  const merged = [...entries, entry];
+  const capped =
+    merged.length > MAX_DOCK_ENTRIES
+      ? merged
+          .toSorted((left, right) => right.createdAt - left.createdAt)
+          .slice(0, MAX_DOCK_ENTRIES)
+      : merged;
+
+  return sortDockEntriesByKind(capped);
 };
 
 /** 从程序坞移除一条 */

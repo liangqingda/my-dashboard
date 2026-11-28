@@ -1,4 +1,4 @@
-/* 程序坞条：底部固定、悬浮的轻量玻璃盒子；默认半隐，hover 才浮出来 */
+/* 程序坞条：底部悬浮的亮色玻璃盒子；默认收起，从下方滑出，右下角有独立开关 */
 
 .dock {
   position: fixed;
@@ -7,26 +7,23 @@
   display: flex;
   justify-content: center;
   pointer-events: none;
-  opacity: 0.52;
   transform: translateX(-50%);
-  transition:
-    opacity 240ms ease,
-    transform 300ms cubic-bezier(0.2, 0.8, 0.25, 1);
+  transition: transform 360ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* 没有条目时只淡出，位置不动：新条目一出现就能量到最终落点，飞入不会追着移动的虚位 */
-.dock[data-empty='true'] {
-  opacity: 0;
+/* 收起：整条从屏幕下沿滑出去，不占页面空间 */
+.dock[data-open='false'] {
   pointer-events: none;
+  transform: translate(-50%, calc(100% + var(--dock-gap) + 14px));
 }
 
-/* 空态也要挡住指针：透明盒子不能在屏幕底部悄悄吃掉点击 */
-.dock[data-empty='true'] .dockBox {
+/* 收进新窗口时由 JS 禁用一帧过渡，让虚位先稳稳落在最终位置，飞行克隆才量得准 */
+.dock[data-instant='true'] {
+  transition: none;
+}
+
+.dock[data-open='false'] .dockBox {
   pointer-events: none;
-}
-
-.dock:hover {
-  opacity: 1;
 }
 
 /*
@@ -37,12 +34,12 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 5px;
+  gap: 7px;
+  padding: 9px;
   pointer-events: auto;
   background: rgb(255 255 255 / 8%);
   border: 1px solid rgb(255 255 255 / 16%);
-  border-radius: 16px;
+  border-radius: 19px;
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 24%),
     inset 0 -1px 0 rgb(0 0 0 / 8%),
@@ -64,6 +61,16 @@
     0 10px 30px rgb(0 0 0 / 26%);
 }
 
+/* 分组分隔：同一类放一段，组与组之间只留一道很细的亮线 */
+.dockSeparator {
+  flex: 0 0 auto;
+  width: 1px;
+  height: calc(var(--dock-item-size) * 0.78);
+  margin: 0 2px;
+  background: rgb(255 255 255 / 26%);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 5%);
+}
+
 /*
  * 图标格：macOS 那种彩色圆角 app 图标；放大只改 transform，不触发重排。
  * 指针距离倍率由 JS 写进 `--dock-item-scale`；位置不动，避免图标躲开指针。
@@ -71,6 +78,7 @@
 .dockItem {
   position: relative;
   display: grid;
+  flex: 0 0 auto;
   width: var(--dock-item-size);
   height: var(--dock-item-size);
   color: #fff;
@@ -83,6 +91,7 @@
     inset 0 -2px 4px rgb(0 0 0 / 14%),
     0 5px 12px rgb(0 0 0 / 16%);
   transform: scale(var(--dock-item-scale, 1));
+  transform-origin: 50% 100%;
   transition:
     transform 140ms cubic-bezier(0.22, 0.8, 0.3, 1),
     background 180ms ease,
@@ -96,6 +105,7 @@
   border-style: dashed;
   border-color: rgb(255 255 255 / 30%);
   box-shadow: none;
+  transform-origin: center;
 }
 
 .dockItem[data-receiving='true'] .dockIcon {
@@ -118,15 +128,6 @@
 
 .dockItem[data-kind='video-preview'] {
   background: linear-gradient(145deg, #72e4d8 0%, #12a597 58%, #067a71 100%);
-}
-
-/* 贴着底边放大朝上长，不会被屏幕底边裁掉 */
-.dockItem {
-  transform-origin: 50% 100%;
-}
-
-.dockItem[data-receiving='true'] {
-  transform-origin: center;
 }
 
 .dockItem[data-active='true'] {
@@ -164,11 +165,71 @@
   filter: drop-shadow(0 4px 10px rgb(0 0 0 / 30%));
 }
 
+/* 右下角开关：收起时是程序坞图标，展开后变成向下收起的箭头 */
+.dockToggle {
+  position: fixed;
+  right: 14px;
+  bottom: 12px;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  color: #fff;
+  pointer-events: auto;
+  place-items: center;
+  background: rgb(255 255 255 / 16%);
+  border: 1px solid rgb(255 255 255 / 30%);
+  border-radius: 12px;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 30%),
+    0 4px 14px rgb(0 0 0 / 18%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  transition:
+    transform 180ms ease,
+    background 180ms ease,
+    border-color 180ms ease,
+    opacity 160ms ease;
+}
+
+.dockToggle:hover:not(:disabled) {
+  background: rgb(255 255 255 / 24%);
+  border-color: rgb(255 255 255 / 42%);
+  transform: translateY(-1px);
+}
+
+.dockToggle[data-open='true'] {
+  background: rgb(255 255 255 / 22%);
+}
+
+.dockToggle:disabled {
+  cursor: default;
+  opacity: 0.46;
+}
+
+/* 收起状态下给一个数量角标：条目都藏在下面，也能一眼知道存了几条 */
+.dockToggleCount {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: grid;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  font-size: 10px;
+  line-height: 1;
+  color: #fff;
+  place-items: center;
+  background: rgb(28 32 30 / 82%);
+  border: 1px solid rgb(255 255 255 / 35%);
+  border-radius: 9px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .dock,
   .dockBox,
   .dockItem,
-  .dockIcon {
+  .dockIcon,
+  .dockToggle {
     transition: none;
     animation: none;
   }

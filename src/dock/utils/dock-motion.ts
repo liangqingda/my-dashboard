@@ -8,9 +8,9 @@
 /* eslint-disable no-param-reassign -- 动画函数收到的参数就是待改写的 DOM 框体，直接写它的 style 是这套工具的唯一职责 */
 import {
   DOCK_DISMISS_DURATION,
-  DOCK_FLY_Z_INDEX,
   DOCK_SLIDE_DURATION,
   DOCK_TRANSFORM_DURATION,
+  DOCK_WINDOW_Z_INDEX,
 } from '../constants';
 
 /** 动画用的矩形（`DOMRect` 的超集） */
@@ -73,6 +73,20 @@ export const findDockItem = (id: string): HTMLElement | null => {
   return item ?? null;
 };
 
+/**
+ * 收放动画的落点：程序坞展开时是那个图标；手动收起时条目在屏幕下方，
+ * 就落到右下角那颗开关上，避免窗口缩到屏幕外面去。
+ */
+const findDockAnchor = (id: string): HTMLElement | null => {
+  const item = findDockItem(id);
+
+  if (item !== null && item.closest('[data-dock-open="true"]') !== null) {
+    return item;
+  }
+
+  return document.querySelector<HTMLElement>('[data-dock-toggle]');
+};
+
 const shiftToItem = (from: RectLike, to: RectLike) => {
   const fromCenter = centerOf(from);
   const toCenter = centerOf(to);
@@ -92,7 +106,7 @@ export const growWindowFromDock = async (
   content: HTMLElement,
   id: string,
 ): Promise<void> => {
-  const item = findDockItem(id);
+  const item = findDockAnchor(id);
 
   if (prefersReducedMotion() || item === null) {
     content.style.removeProperty('opacity');
@@ -138,7 +152,7 @@ export const shrinkWindowToDock = async (
   content: HTMLElement,
   id: string,
 ): Promise<void> => {
-  const item = findDockItem(id);
+  const item = findDockAnchor(id);
 
   if (prefersReducedMotion() || item === null) {
     return;
@@ -195,9 +209,22 @@ export const dismissWindow = async (content: HTMLElement): Promise<void> => {
   await animation.finished.catch(() => undefined);
 };
 
-/** 滑动起点：`next` 的新窗从右边进，`prev` 从左边进 */
-export const slideOffset = (direction: DockSlideDirection): number =>
-  direction === 'next' ? window.innerWidth : -window.innerWidth;
+/** 换窗时新窗稍微压住旧窗的那一点宽度 */
+const SLIDE_OVERLAP = 56;
+
+/**
+ * 新窗的滑动起点：`next` 从右边进，`prev` 从左边进。
+ * 起点不是屏幕外，而是命中旧窗右 / 左边缘前的 56px，所以下一扇一出现就压着当前那扇。
+ */
+export const slideOffset = (
+  content: HTMLElement,
+  direction: DockSlideDirection,
+): number => {
+  const { width } = content.getBoundingClientRect();
+  const enter = Math.max(width - SLIDE_OVERLAP, 0);
+
+  return direction === 'next' ? enter : -enter;
+};
 
 /** 新窗从屏幕外侧滑到原位；不带淡入淡出 */
 export const slideWindowIn = async (
@@ -209,7 +236,7 @@ export const slideWindowIn = async (
     return;
   }
 
-  const start = slideOffset(direction);
+  const start = slideOffset(content, direction);
 
   content.style.transformOrigin = 'center';
   content.style.willChange = 'transform';
@@ -264,11 +291,13 @@ export const slideWindowOut = (
   clone.style.margin = '0';
   clone.style.pointerEvents = 'none';
   clone.style.transformOrigin = 'center';
-  clone.style.zIndex = String(DOCK_FLY_Z_INDEX);
+  // 旧窗垫在新窗口层的下边：新窗滑进来时压着它、遮住它，而不是反过来盖住新窗
+  clone.style.zIndex = String(DOCK_WINDOW_Z_INDEX - 1);
   clone.style.willChange = 'transform';
   document.body.appendChild(clone);
 
-  const target = -slideOffset(direction);
+  // 旧窗要完整退出屏幕，不能用新窗那个「压着点」的起点
+  const target = direction === 'next' ? -window.innerWidth : window.innerWidth;
   const animation = clone.animate(
     [
       { transform: 'translate3d(0, 0, 0)' },

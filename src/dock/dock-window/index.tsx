@@ -73,7 +73,7 @@ const DockWindowHost = ({ onExited, onRequestClose, slot }: DockWindowHostProps)
       if (immediate !== null) {
         if (animate === 'slide') {
           immediate.style.transformOrigin = 'center';
-          immediate.style.transform = `translate3d(${slideOffset(direction)}px, 0, 0)`;
+          immediate.style.transform = `translate3d(${slideOffset(immediate, direction)}px, 0, 0)`;
         } else {
           immediate.style.opacity = '0';
         }
@@ -137,7 +137,7 @@ const DockWindowHost = ({ onExited, onRequestClose, slot }: DockWindowHostProps)
   }, [animate, direction, entry.id, exit, phase]);
 
   return (
-    <Component entry={entry} onRequestClose={onRequestClose} />
+    <Component entry={entry} key={entry.id} onRequestClose={onRequestClose} />
   );
 };
 

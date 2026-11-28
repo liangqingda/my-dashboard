@@ -66,7 +66,13 @@ export const flyWindowToDock = async (
   // 页面弹窗收起后会立即卸载：先量好矩形、拷出飞行块，再等程序坞条目出现
   const sourceRect = source.getBoundingClientRect();
   const clone = cloneForFlight(source, sourceRect);
-  const item = await waitForFrames(() => findDockItem(id));
+  const item = await waitForFrames(() => {
+    const candidate = findDockItem(id);
+    const opened =
+      candidate !== null && candidate.closest('[data-dock-open="true"]') !== null;
+
+    return opened ? candidate : null;
+  });
 
   if (item === null) {
     clone.remove();
