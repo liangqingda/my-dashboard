@@ -85,4 +85,9 @@ export type VideoPreviewModalProps = {
    * 程序坞自己恢复出来的窗口传 `dock`，再收起只是回到图标。
    */
   dockOrigin?: 'page' | 'dock';
+  /**
+   * 程序坞条目 id：程序坞恢复出来的窗口传稳定 id，窗内换段不换根节点，
+   * 收起动画才能继续找得到框体；页面弹窗不传，按当前视频生成。
+   */
+  dockId?: string;
 };

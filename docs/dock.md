@@ -71,6 +71,8 @@
 Provider 只维护一个 `windowSlot`，它自己带 `phase`（`opening` / `closing`）与 `removeOnExit`：
 
 - **点同一图标**：当前窗就把它当场缩回程序坞（`removeOnExit: false`），条目保留；再次点击再展开。
+  程序坞恢复出来的图片 / 视频带稳定 `dockId`，窗内翻篇只换快照、不换根节点；收起后下次展开
+  仍停在最后看的那一张。Provider 另按 `origin + kind` 兜底认窗，翻页不会多出图标。
 - **点另一图标**：不经过「先回坞、再出来」，直接把 `windowSlot` 换成新窗口，按 `animate: 'swap'`
   在原位淡入；旧窗口卸载、新窗口接管同一个位置。
 - **关闭（X / Esc）**：`removeOnExit: true`，收起动画结束才删条目；最小化与关闭共用同一个宿主，
@@ -83,7 +85,8 @@ Provider 只维护一个 `windowSlot`，它自己带 `phase`（`opening` / `clos
 `src/dock/utils/dock-fly.ts`，两边共用同一组关键帧与落点测量，业务层不写动画：
 
 - 页面弹窗收起：量源框体 → 等程序坞项目出现 → 克隆框体 fixed 定位，边位移边非等比缩放，
-  同时用 `clip-path` 把远端收成漏斗；原窗口立即卸载。落点图标打 `data-receiving` 触发回弹。
+  同时用 `clip-path` 把远端收成漏斗，最后一帧收成落在图标中心的方块；原窗口立即卸载。
+  落点图标打 `data-receiving` 触发回弹。
 - 程序坞窗口收起 / 打开：作用在**真实框体**上（`shrinkWindowToDock` / `growWindowFromDock`）。
   关键帧按贴程序坞那条边取 `transform-origin`，平移量按原点换算，保证终点精确落在图标上；
   展开前先把框体 `opacity: 0`，等动画第一帧接管，避免闪一帧终态。
@@ -98,8 +101,10 @@ Provider 只维护一个 `windowSlot`，它自己带 `phase`（`opening` / `clos
 
 - 位置：上 / 右 / 下 / 左，默认右；图标大小、hover 放大倍数、自动隐藏都在「程序坞」这一组里。
 - 自动隐藏：隐藏后由顶栏的图标按钮唤出 / 收起；`revealed` 只影响可见性，不删条目、不占布局。
-- hover 放大按指针沿停靠轴到各图标的距离算倍率（越近越大），并把图标向远离指针的方向让位；
+- hover 放大按指针沿停靠轴到各图标的距离算倍率（越近越大），位置保持不动；
   图标本身是彩色圆角 app 图标，当前展开项下面有运行小点。
+- 文件页的图片 / 视频瓦片 hover 时可直接「收起到程序坞」：不打开预览，用 `collect` 把当前目录的
+  同类列表与这一条的快照交给程序坞，恢复后仍是完整预览。
 - 全局毛玻璃浓度：Provider 把 `40%–100%` 写到 `<html>` 的 `--app-glass-strength`，`global.scss` 里
   `--app-glass-*` 用 `color-mix` 乘上它；程序坞底板固定用白色玻璃乘这个浓度，不跟主题变深。
 

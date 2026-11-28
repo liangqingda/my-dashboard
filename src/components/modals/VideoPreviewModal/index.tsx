@@ -47,6 +47,7 @@ const VideoPreviewModal = ({
   batched = false,
   blocked = false,
   defaultFullscreen = false,
+  dockId,
   dockOrigin = 'page',
   items,
   onCapture,
@@ -223,6 +224,7 @@ const VideoPreviewModal = ({
    */
   const dock = createVideoDock({
     activeId: activeItem.id,
+    id: dockId,
     disabled:
       blocked || settingsOpen || episodeOpen || fullscreen || viewportFullscreen,
     items,

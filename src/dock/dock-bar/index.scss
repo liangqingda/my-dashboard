@@ -92,7 +92,7 @@
 
 /*
  * 图标格：macOS 那种彩色圆角 app 图标；放大只改 transform，不触发重排。
- * 指针距离倍率与让位位移由 JS 写进 `--dock-item-scale` / `--dock-shift-*`。
+ * 指针距离倍率由 JS 写进 `--dock-item-scale`；位置不动，避免图标躲开指针。
  */
 .dockItem {
   position: relative;
@@ -108,11 +108,7 @@
     inset 0 1px 0 rgb(255 255 255 / 32%),
     inset 0 -2px 4px rgb(0 0 0 / 14%),
     0 6px 14px rgb(0 0 0 / 18%);
-  transform: translate(
-      var(--dock-shift-x, 0px),
-      var(--dock-shift-y, 0px)
-    )
-    scale(var(--dock-item-scale, 1));
+  transform: scale(var(--dock-item-scale, 1));
   transition:
     transform 140ms cubic-bezier(0.22, 0.8, 0.3, 1),
     box-shadow 160ms ease,

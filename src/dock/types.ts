@@ -120,6 +120,8 @@ export type DockContextValue = {
   toggleDock: () => void;
   /** 把一扇窗收进程序坞；`sourceEl` 是窗口框体，用来做飞入动画 */
   minimize: (descriptor: DockDescriptor, sourceEl: HTMLElement | null) => void;
+  /** 不经弹窗，直接把一条窗口快照收进程序坞（文件瓦片上的「收起到程序坞」） */
+  collect: (draft: DockEntryDraft) => void;
   /**
    * `⌘M`：收起当前最上层、可收起的弹窗。返回是否真的收到了一扇——
    * 布局层据此决定要不要 `preventDefault`，没有弹窗时别抢浏览器的键。
@@ -145,6 +147,12 @@ export type DockModalRegistration = {
   id: string;
   /** 收起这一扇（与 header 上的最小化按钮同一个动作） */
   minimize: () => void;
+};
+
+/** 由业务侧直接交给程序坞的一条：`page` / `createdAt` 由程序坞补 */
+export type DockEntryDraft = DockWindowPayload & {
+  id: string;
+  title: string;
 };
 
 /** 恢复出来的窗口渲染器的入参 */

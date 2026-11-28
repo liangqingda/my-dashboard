@@ -73,6 +73,7 @@ const DirectoryGrid = ({
   onDropBlank,
   onDropFolder,
   onEditEntry,
+  onMinimizeFileToDock,
   onOpenApp,
   onOpenExternalVideo,
   onOpenFolder,
@@ -203,6 +204,11 @@ const DirectoryGrid = ({
       onDragEnd={onDragEnd}
       onDragStartEntry={() => onDragStartEntry(file)}
       onEdit={() => onEditEntry(file)}
+      onMinimizeToDock={
+        file.category === 'video' || file.category === 'image'
+          ? () => onMinimizeFileToDock(file)
+          : undefined
+      }
       onOpen={previewHandler(file, onOpenVideo, onOpenImage)}
       onOpenExternal={onOpenExternalVideo}
       onRequestDelete={() => onRequestDeleteEntry(file.path)}

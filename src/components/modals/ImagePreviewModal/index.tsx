@@ -57,6 +57,7 @@ const ImagePreviewModal = ({
   batched = false,
   blocked = false,
   defaultFullscreen = false,
+  dockId,
   dockOrigin = 'page',
   items,
   onClose,
@@ -158,7 +159,7 @@ const ImagePreviewModal = ({
    */
   const dock: FreeModalDock = {
     disabled: cropping || blocked || fullscreen,
-    id: `image-preview:${storageScope}:${activeItem.id}`,
+    id: dockId ?? `image-preview:${storageScope}:${activeItem.id}`,
     kind: 'image-preview',
     origin: dockOrigin,
     snapshot: {

@@ -30,8 +30,10 @@
 
 import { Stack } from '@mantine/core';
 
+import { useDock } from '@/dock/hooks/useDock';
 import MenuContentLayout from '@/layouts/MenuContentLayout';
 
+import { FILES_STORAGE_SCOPE } from './constants';
 import DirBreadcrumb from './DirBreadcrumb';
 import FilesActions from './FilesActions';
 import FilesEntries from './FilesEntries';
@@ -42,10 +44,12 @@ import FilesWorkspace from './FilesWorkspace';
 import { describeDirSpace } from './utils/files';
 import { pickDirectory } from './utils/files-api';
 import { useFilesPageState } from './hooks/useFilesPageState';
+import type { FileEntry } from './types';
 
 import styles from './index.scss';
 
 const Files = () => {
+  const dock = useDock();
   const state = useFilesPageState();
   const {
     appUninstall,
@@ -108,6 +112,39 @@ const Files = () => {
     volumeEject,
     wallpaper,
   } = state;
+
+  /**
+   * 瓦片上的「收起到程序坞」：不打开预览，直接把当前目录的同类列表与这一条的快照
+   * 交给程序坞；恢复出来仍是完整预览，能继续翻篇。
+   */
+  const sendFileToDock = (file: FileEntry) => {
+    if (file.category === 'image') {
+      dock.collect({
+        id: `image-preview:${FILES_STORAGE_SCOPE}:${file.path}`,
+        kind: 'image-preview',
+        snapshot: {
+          activeId: file.path,
+          items: imagePreview.items,
+          storageScope: FILES_STORAGE_SCOPE,
+        },
+        title: file.name,
+      });
+      return;
+    }
+
+    if (file.category === 'video') {
+      dock.collect({
+        id: `video-preview:${FILES_STORAGE_SCOPE}:${file.path}`,
+        kind: 'video-preview',
+        snapshot: {
+          activeId: file.path,
+          items: videoPreview.items,
+          storageScope: FILES_STORAGE_SCOPE,
+        },
+        title: file.name,
+      });
+    }
+  };
 
   /** 安全锁开着、密码也设了：本次停留还没输对，就只给那一扇密码窗 */
   if (locked) {
@@ -208,6 +245,7 @@ const Files = () => {
               onDropBlank={drag.handleDropBlank}
               onDropFolder={drag.handleDropFolder}
               onEditEntry={entryActions.editEntry}
+              onMinimizeFileToDock={sendFileToDock}
               onOpenApp={launchApp}
               onOpenExternalVideo={openVideoExternal}
               onOpenFolder={openFolder}

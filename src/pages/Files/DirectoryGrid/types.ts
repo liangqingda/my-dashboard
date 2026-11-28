@@ -114,4 +114,6 @@ export type DirectoryGridProps = {
   onRequestDeleteEntry: (path: string) => void;
   /** 请求把某张图片设为桌面墙纸（先弹二次确认；只有图片瓦片有这颗按钮） */
   onSetWallpaper: (file: FileEntry) => void;
+  /** 把某条媒体直接收进程序坞（图片 / 视频瓦片 hover 时多一颗按钮） */
+  onMinimizeFileToDock: (file: FileEntry) => void;
 };

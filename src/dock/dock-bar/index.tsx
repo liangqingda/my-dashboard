@@ -37,8 +37,6 @@ const MAGNIFY_REACH_RATIO = 2.4;
 const resetMagnification = (box: HTMLElement | null) => {
   box?.querySelectorAll<HTMLElement>('[data-dock-item]').forEach((item) => {
     item.style.removeProperty('--dock-item-scale');
-    item.style.removeProperty('--dock-shift-x');
-    item.style.removeProperty('--dock-shift-y');
     item.style.removeProperty('z-index');
   });
 };
@@ -98,8 +96,9 @@ const DockBar = () => {
   };
 
   /**
-   * 指针距离放大（macOS 那一套）：只沿停靠轴算距离，越近越大；
-   * 每一项按自己的倍率朝远离指针的方向让位，图标之间不会挤在一起。
+   * 指针距离放大（macOS 那一套）：只沿停靠轴算距离，越近越大。
+   * 图标位置固定、只改缩放——如果同时把图标往远离指针的方向推，指针靠近时图标会一直躲，
+   * 反而点不中；重叠交给 z-index 处理。
    * 直接写 CSS 变量，不走 React 状态，指针移动时不触发整条程序坞重渲染。
    */
   const handleMagnify = (event: PointerEvent<HTMLDivElement>) => {
@@ -126,11 +125,8 @@ const DockBar = () => {
       const delta = center - pointer;
       const ratio = Math.max(0, 1 - Math.abs(delta) / reach);
       const scale = 1 + strength * ratio * ratio;
-      const shift = Math.sign(delta) * ((scale - 1) * settings.itemSize) / 2;
 
       item.style.setProperty('--dock-item-scale', String(scale));
-      item.style.setProperty('--dock-shift-x', vertical ? '0px' : `${shift}px`);
-      item.style.setProperty('--dock-shift-y', vertical ? `${shift}px` : '0px');
       item.style.setProperty('z-index', String(Math.round(scale * 100)));
     });
   };

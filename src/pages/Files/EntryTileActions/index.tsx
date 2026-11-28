@@ -9,7 +9,12 @@
  */
 
 import { memo } from 'react';
-import { IconPencil, IconTrash, IconWallpaper } from '@tabler/icons-react';
+import {
+  IconPencil,
+  IconTrash,
+  IconWallpaper,
+  IconWindowMinimize,
+} from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
 import { cx } from '@/utils/cx';
@@ -24,11 +29,31 @@ import styles from './index.scss';
 const ACTION_ICON_SIZE = 16;
 
 const EntryTileActions = memo(
-  ({ kind, onEdit, onRequestDelete, onSetWallpaper, className }: EntryTileActionsProps) => {
+  ({
+    kind,
+    onEdit,
+    onMinimizeToDock,
+    onRequestDelete,
+    onSetWallpaper,
+    className,
+  }: EntryTileActionsProps) => {
     const label = ENTRY_KIND_LABELS[kind];
 
     return (
       <div className={cx(styles.actions, className)} data-tile-actions="true">
+        {onMinimizeToDock ? (
+          <FreeIconAction
+            label="收起到程序坞"
+            onClick={(event) => {
+              event.stopPropagation();
+              onMinimizeToDock();
+            }}
+            size="sm"
+            tooltip="none"
+          >
+            <IconWindowMinimize size={ACTION_ICON_SIZE} />
+          </FreeIconAction>
+        ) : null}
         {onSetWallpaper ? (
           <FreeIconAction
             label="设为桌面墙纸"

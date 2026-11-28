@@ -15,6 +15,8 @@ export type EntryTileActionsProps = {
   onRequestDelete: () => void;
   /** 请求把这张图片设为桌面墙纸（先弹二次确认）；只有图片条目会传，不传就不画 */
   onSetWallpaper?: () => void;
+  /** 直接把这条媒体收进程序坞；只有图片 / 视频瓦片会传，不传就不画 */
+  onMinimizeToDock?: () => void;
   /** 外壳追加的 class，用于挂瓦片自己的 hover 显隐规则 */
   className?: string;
 };

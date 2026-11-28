@@ -29,7 +29,8 @@ import styles from './index.scss';
  * 设置里选了「外部应用」时
  * 视频大图默认换那个播放器的图标，也可切成仍摆视频帧——这时播放器图标缩到体积右侧，
  * 用一条竖线隔开，既保留识别也还能看见画面。取不到图源回落分类图标。
- * hover 时右上角浮出重命名 / 删除按钮（图片另有一颗「设为桌面墙纸」），同时盖一层暗色遮罩：缩略图与视频帧都偏亮，
+ * hover 时右上角浮出重命名 / 删除按钮（图片另有一颗「设为桌面墙纸」，图片 / 视频另有
+ * 「收起到程序坞」），同时盖一层暗色遮罩：缩略图与视频帧都偏亮，
  * 不压一层按钮和文字都看不清。遮罩盖住图源、文字与按钮浮在它上面。
  * 视频 / 图片（调用方传了 `onOpen`）整块可点，交给对应的预览弹窗；其它文件仍只是展示。
  * 体积旁的播放器小图标可单独点（`onOpenExternal`），绕开弹窗直接交给外部应用。
@@ -47,6 +48,7 @@ const FileTile = memo(
     onDragEnd,
     onDragStartEntry,
     onEdit,
+    onMinimizeToDock,
     onOpen,
     onOpenExternal,
     onRequestDelete,
@@ -220,6 +222,9 @@ const FileTile = memo(
             className={styles.actions}
             kind="file"
             onEdit={() => onEdit?.()}
+            onMinimizeToDock={
+              isMedia && onMinimizeToDock ? () => onMinimizeToDock() : undefined
+            }
             onRequestDelete={() => onRequestDelete?.()}
             onSetWallpaper={onSetWallpaper ? () => onSetWallpaper() : undefined}
           />

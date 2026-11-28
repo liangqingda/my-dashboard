@@ -14,11 +14,9 @@ import { useStoredState } from '@/hooks/useStoredState';
 import DockBar from '../dock-bar';
 import DockWindowHost from '../dock-window';
 import type { DockWindowSlot } from '../dock-window';
-import {
-  DOCK_ENTRIES_STORAGE_KEY,
-  DOCK_SETTINGS_STORAGE_KEY,
-} from '../constants';
+import { DOCK_ENTRIES_STORAGE_KEY } from '../constants';
 import { DockContext } from '../context';
+import { useDockSettings } from '../hooks/useDockSettings';
 import {
   DOCK_ENTRIES_CODEC,
   removeDockEntry,
@@ -26,12 +24,12 @@ import {
   upsertDockEntry,
 } from '../utils/dock-entries';
 import { flyWindowToDock } from '../utils/dock-fly';
-import { DOCK_SETTINGS_CODEC, mergeDockSettings } from '../utils/dock-settings';
 import { loadDockWindow } from '../windows/registry';
 import type {
   DockContextValue,
   DockDescriptor,
   DockEntry,
+  DockEntryDraft,
   DockModalRegistration,
 } from '../types';
 
@@ -40,27 +38,25 @@ type DockProviderProps = {
 };
 
 const DockProvider = ({ children }: DockProviderProps) => {
-  const [settings, setStoredSettings] = useStoredState(
-    DOCK_SETTINGS_STORAGE_KEY,
-    DOCK_SETTINGS_CODEC,
-  );
+  const {
+    hideDock,
+    revealed,
+    settings,
+    settingsRef,
+    showDock,
+    toggleDock,
+    updateSettings,
+  } = useDockSettings();
   const [entries, setStoredEntries] = useStoredState(
     DOCK_ENTRIES_STORAGE_KEY,
     DOCK_ENTRIES_CODEC,
   );
-  const [revealed, setRevealed] = useState(!settings.autoHide);
   const [windowSlot, setWindowSlotState] = useState<DockWindowSlot | null>(null);
 
-  const settingsRef = useRef(settings);
   const entriesRef = useRef(entries);
   const windowRef = useRef<DockWindowSlot | null>(windowSlot);
   const restoreSeq = useRef(0);
   const modalStack = useRef<DockModalRegistration[]>([]);
-
-  // 事件里要读最新值、又不该在渲染阶段写 ref：提交后再同步
-  useEffect(() => {
-    settingsRef.current = settings;
-  }, [settings]);
 
   useEffect(() => {
     entriesRef.current = entries;
@@ -76,44 +72,6 @@ const DockProvider = ({ children }: DockProviderProps) => {
     setStoredEntries(next);
   };
 
-  useEffect(() => {
-    document.documentElement.style.setProperty(
-      '--app-glass-strength',
-      `${settings.glassOpacity}%`,
-    );
-
-    return () => {
-      document.documentElement.style.removeProperty('--app-glass-strength');
-    };
-  }, [settings.glassOpacity]);
-
-  const updateSettings = (patch: Partial<typeof settings>) => {
-    const next = mergeDockSettings(settingsRef.current, patch);
-
-    settingsRef.current = next;
-    setStoredSettings(next);
-
-    if (patch.autoHide !== undefined) {
-      setRevealed(!next.autoHide);
-    }
-  };
-
-  const showDock = () => setRevealed(true);
-
-  const hideDock = () => {
-    if (settingsRef.current.autoHide) {
-      setRevealed(false);
-    }
-  };
-
-  const toggleDock = () => {
-    if (!settingsRef.current.autoHide) {
-      return;
-    }
-
-    setRevealed((visible) => !visible);
-  };
-
   /** 收起动画结束时决定条目去留：关闭删条，最小化保留 */
   const finishClosing = () => {
     const closing = windowRef.current;
@@ -127,6 +85,14 @@ const DockProvider = ({ children }: DockProviderProps) => {
     }
 
     setWindow(null);
+  };
+
+  /** 不经过页面弹窗，直接把一条快照收进程序坞（瓦片按钮用） */
+  const collect = (draft: DockEntryDraft) => {
+    const entry = toDockEntry(draft, window.location.pathname, Date.now());
+
+    writeEntries(upsertDockEntry(entriesRef.current, entry));
+    showDock();
   };
 
   /** 当前这扇窗开始缩回程序坞；真正的卸载等动画结束 */
@@ -188,7 +154,15 @@ const DockProvider = ({ children }: DockProviderProps) => {
       }
 
       if (current.entry.id === id) {
-        beginClosing(current, false);
+        // 走登记的收起动作：翻篇后的最新快照只有这一窗的描述符知道
+        const registration = modalStack.current.find((candidate) => candidate.id === id);
+
+        if (registration !== undefined) {
+          registration.minimize();
+        } else {
+          beginClosing(current, false);
+        }
+
         return;
       }
     }
@@ -224,19 +198,30 @@ const DockProvider = ({ children }: DockProviderProps) => {
       return;
     }
 
-    // 程序坞自己恢复出来的窗口再收起：让它当场缩回图标，条目保留（快照换成当前位置）
-    if (current?.entry.id === descriptor.id) {
-      const entry =
-        descriptor.origin === 'dock'
-          ? toDockEntry(descriptor, window.location.pathname, Date.now())
-          : current.entry;
+    /*
+     * 程序坞自己恢复出来的窗口再收起：图片 / 视频能在窗内翻篇，窗口还是这一扇，
+     * 但快照已经换了。除了 id，再按 origin + kind 兜底认窗；条目 id 保持稳定，
+     * 只换快照与标题，图标不会因为翻页多出一条。
+     */
+    const isDockWindow =
+      descriptor.origin === 'dock' && current?.entry.kind === descriptor.kind;
 
-      if (descriptor.origin === 'dock') {
+    if (current !== null && (current.entry.id === descriptor.id || isDockWindow)) {
+      const entry = isDockWindow
+        ? {
+            ...toDockEntry(descriptor, window.location.pathname, Date.now()),
+            createdAt: current.entry.createdAt,
+            id: current.entry.id,
+            page: current.entry.page,
+          }
+        : current.entry;
+
+      if (isDockWindow) {
         writeEntries(upsertDockEntry(entriesRef.current, entry));
       }
 
       // 自动隐藏时也要先让程序坞露出来，收起动画才有落点可看
-      setRevealed(true);
+      showDock();
       beginClosing({ ...current, entry }, false);
       return;
     }
@@ -244,7 +229,7 @@ const DockProvider = ({ children }: DockProviderProps) => {
     const entry = toDockEntry(descriptor, window.location.pathname, Date.now());
 
     writeEntries(upsertDockEntry(entriesRef.current, entry));
-    setRevealed(true);
+    showDock();
 
     if (sourceEl !== null) {
       void flyWindowToDock(sourceEl, entry.id, settingsRef.current.placement);
@@ -275,6 +260,7 @@ const DockProvider = ({ children }: DockProviderProps) => {
 
   const contextValue: DockContextValue = {
     activeEntryId: windowSlot === null ? null : windowSlot.entry.id,
+    collect,
     entries,
     hideDock,
     minimize,

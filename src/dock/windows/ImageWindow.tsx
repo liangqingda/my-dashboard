@@ -28,6 +28,7 @@ const ImageWindowBody = ({
   return (
     <ImagePreviewModal
       activeId={activeId}
+      dockId={entry.id}
       dockOrigin="dock"
       items={items}
       onClose={onRequestClose}

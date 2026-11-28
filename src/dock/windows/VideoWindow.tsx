@@ -28,6 +28,7 @@ const VideoWindowBody = ({
   return (
     <VideoPreviewModal
       activeId={activeId}
+      dockId={entry.id}
       dockOrigin="dock"
       items={items}
       onClose={onRequestClose}

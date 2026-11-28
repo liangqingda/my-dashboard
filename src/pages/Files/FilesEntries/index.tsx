@@ -42,6 +42,7 @@ const FilesEntries = ({
   onDropBlank,
   onDropFolder,
   onEditEntry,
+  onMinimizeFileToDock,
   onOpenApp,
   onOpenExternalVideo,
   onOpenFolder,
@@ -137,6 +138,7 @@ const FilesEntries = ({
             onDragStartEntry={onDragStartEntry}
             onDropFolder={onDropFolder}
             onEditEntry={onEditEntry}
+            onMinimizeFileToDock={onMinimizeFileToDock}
             onOpenApp={onOpenApp}
             onOpenExternalVideo={onOpenExternalVideo}
             onOpenFolder={onOpenFolder}
