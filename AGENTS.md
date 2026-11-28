@@ -65,9 +65,9 @@
 由 `@liangqingda/eslint-config@1.6.0` 起的规则兜住（`eslint-comments` 与 `ban-ts-comment`）。
 
 通用规范的落点分工：机器可判的规则在 `@liangqingda/eslint-config` 与 `@liangqingda/tsconfig`
-（新项目直接用 `strictest.json`）；需要判断的拆分维度、公共化边界、性能反模式、注释语义写在
-`best-react-code` skill，文档写法与 Markdown 编辑器安全分别见 `best-docs` / `best-markdown-editing`；
-只有布局/弹窗/数据链路这类本项目事实才留在本文件与 `docs/`。
+（新项目直接用 `strictest.json`）；需要判断的拆分、公共化、性能、注释语义写在
+`best-react-code`，文档写法 / Markdown 编辑 / UI 交互见 `best-docs` / `best-markdown-editing` /
+`best-ui-interactions`；只有布局/弹窗/数据链路这类本项目事实才留在本文件与 `docs/`。
 
 ## 维护本文件（每次改动都要自优化，不用等用户提）
 
