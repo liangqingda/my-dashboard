@@ -8,7 +8,7 @@
 import type { StoredCodec } from '@/utils/local-storage';
 
 import { MAX_DOCK_ENTRIES } from '../constants';
-import type { DockDescriptor, DockEntry, ImageDockItem, VideoDockItem } from '../types';
+import type { DockDescriptor, DockEntry, MediaDockItem } from '../types';
 
 import { sortDockEntriesByKind } from './dock-groups';
 
@@ -18,47 +18,20 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const isText = (value: unknown): value is string =>
   typeof value === 'string' && value.trim() !== '';
 
-/** 图片列表：每条至少带 id / 名称 / 地址，缺一张就整条窗口丢掉（恢复出来会缺图） */
-const decodeImageItems = (value: unknown): ImageDockItem[] | null => {
+/**
+ * 媒体列表：每条只留路径，名称与取图地址在渲染时推导。
+ * 旧存储里还带着 `name` / `src` / `poster` 的条目照样能读——多出来的字段直接忽略。
+ */
+const decodeMediaItems = (value: unknown): MediaDockItem[] | null => {
   if (!Array.isArray(value) || value.length === 0) {
     return null;
   }
 
   const items = value.map((item) =>
-    isRecord(item) && isText(item.id) && isText(item.name) && isText(item.src)
-      ? { id: item.id, name: item.name, src: item.src }
-      : null,
+    isRecord(item) && isText(item.id) ? { id: item.id } : null,
   );
 
-  return items.some((item) => item === null)
-    ? null
-    : (items as ImageDockItem[]);
-};
-
-/** 视频列表：在图片字段上多一张封面 */
-const decodeVideoItems = (value: unknown): VideoDockItem[] | null => {
-  if (!Array.isArray(value) || value.length === 0) {
-    return null;
-  }
-
-  const items = value.map((item) =>
-    isRecord(item) &&
-    isText(item.id) &&
-    isText(item.name) &&
-    isText(item.src) &&
-    isText(item.poster)
-      ? {
-          id: item.id,
-          name: item.name,
-          poster: item.poster,
-          src: item.src,
-        }
-      : null,
-  );
-
-  return items.some((item) => item === null)
-    ? null
-    : (items as VideoDockItem[]);
+  return items.some((item) => item === null) ? null : (items as MediaDockItem[]);
 };
 
 /** 把存储里的一项还原成可用的条目；结构不对返回 null */
@@ -85,14 +58,11 @@ const decodeEntry = (value: unknown): DockEntry | null => {
 
   switch (value.kind) {
     case 'markdown-preview':
-      return isText(snapshot.markdown) &&
-        isText(snapshot.title) &&
-        isText(snapshot.storageScope)
+      return isText(snapshot.title) && isText(snapshot.storageScope)
         ? {
             ...base,
             kind: 'markdown-preview',
             snapshot: {
-              markdown: snapshot.markdown,
               title: snapshot.title,
               storageScope: snapshot.storageScope,
               ...(isText(snapshot.relativePath)
@@ -111,7 +81,7 @@ const decodeEntry = (value: unknown): DockEntry | null => {
         : null;
 
     case 'image-preview': {
-      const items = decodeImageItems(snapshot.items);
+      const items = decodeMediaItems(snapshot.items);
 
       return isText(snapshot.activeId) && isText(snapshot.storageScope) && items
         ? {
@@ -127,7 +97,7 @@ const decodeEntry = (value: unknown): DockEntry | null => {
     }
 
     case 'video-preview': {
-      const items = decodeVideoItems(snapshot.items);
+      const items = decodeMediaItems(snapshot.items);
 
       return isText(snapshot.activeId) && isText(snapshot.storageScope) && items
         ? {
@@ -135,8 +105,8 @@ const decodeEntry = (value: unknown): DockEntry | null => {
             kind: 'video-preview',
             snapshot: {
               activeId: snapshot.activeId,
-              storageScope: snapshot.storageScope,
               items,
+              storageScope: snapshot.storageScope,
               ...(isText(snapshot.externalApp)
                 ? { externalApp: snapshot.externalApp }
                 : {}),

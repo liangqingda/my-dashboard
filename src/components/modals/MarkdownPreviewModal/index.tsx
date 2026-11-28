@@ -152,7 +152,11 @@ const MarkdownPreviewModal = ({
   /** 编辑态（含草稿预览）收掉阅读类操作与全屏入口（铺满外观保留，见 `fullscreen.showToggle`） */
   const documentActionsVisible = !editing.editing;
 
-  /* 程序坞描述：正文与标题收进快照；编辑 / 删除确认 / 未加载时不让收。 */
+  /*
+   * 程序坞描述：只收定位信息（标题 / 相对路径 / 页面标识），正文不进快照——
+   * 恢复窗按笔记名从仓库重读，取不到时给一句「笔记已不在仓库里」。
+   * 编辑 / 删除确认 / 未加载时不让收。
+   */
   const dock: FreeModalDock | undefined = loading
     ? undefined
     : {
@@ -161,7 +165,6 @@ const MarkdownPreviewModal = ({
         kind: 'markdown-preview',
         origin: dockOrigin,
         snapshot: {
-          markdown,
           storageScope,
           title,
           ...(relativePath === undefined ? {} : { relativePath }),

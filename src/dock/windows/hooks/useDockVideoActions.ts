@@ -18,7 +18,7 @@ import { useVideoCapture } from '@/pages/Files/hooks/useVideoCapture';
 
 /** 后备能力入参 */
 type Params = {
-  /** 快照里的整组视频 */
+  /** 坞窗按快照路径补出来的整组视频 */
   initialItems: readonly VideoPreviewItem[];
   /** 外部打开用的应用名；跟页面设置或快照走 */
   externalApp?: string;

@@ -24,6 +24,13 @@ import { useDockMarkdownNote } from './hooks/useDockMarkdownNote';
 /** 收窄到 Markdown 条目：kind 判别后快照才是这一份 */
 type MarkdownEntry = Extract<DockEntry, { kind: 'markdown-preview' }>;
 
+/**
+ * 笔记已经不在仓库时的占位正文：快照不再存全文，取不到就是取不到，
+ * 空正文会看起来像「这篇本来就是空的」，这里明确说明并给出出口。
+ */
+const MISSING_NOTE_MARKDOWN =
+  '> 这篇笔记已经不在仓库里了，可以关闭这扇窗，或从程序坞移除它。';
+
 /** 页面还挂载：登记的动作就是页面那一套，窗口只负责转发 */
 const MarkdownLiveBody = ({
   actions,
@@ -70,7 +77,6 @@ const MarkdownFallbackBody = ({
   onRequestClose: () => void;
 }) => {
   const {
-    markdown: snapshotMarkdown,
     relativePath: snapshotRelativePath,
     storageScope,
     title: snapshotTitle,
@@ -81,6 +87,13 @@ const MarkdownFallbackBody = ({
   const note = useDockMarkdownNote({ title });
   const noteReady = note.active !== null;
   const { remove: removeNote } = note;
+
+  /*
+   * 正文取不到时的说明按原因分开：读失败说读失败，仓库里确实没有才说没有——
+   * 两种空态混成一句，用户会以为笔记被删了。
+   */
+  const unavailableMarkdown =
+    note.error === null ? MISSING_NOTE_MARKDOWN : `> 读取笔记失败：${note.error}`;
 
   const remove = useMemo(
     () =>
@@ -100,7 +113,7 @@ const MarkdownFallbackBody = ({
       dockOrigin="dock"
       filter={filter}
       loading={note.loading}
-      markdown={note.content ?? initialMarkdown ?? snapshotMarkdown}
+      markdown={note.content ?? initialMarkdown ?? unavailableMarkdown}
       onClose={onRequestClose}
       onNext={note.onNext}
       onPrevious={note.onPrevious}

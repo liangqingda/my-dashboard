@@ -7,9 +7,12 @@
  * 所以切到别的页面、刷新之后仍能点开程序坞里的项目。
  */
 
-/** Markdown 预览窗口恢复所需的最小快照：正文随条目一起存，恢复时不再依赖页面数据 */
+/**
+ * Markdown 预览窗口恢复所需的最小快照：只留定位信息，正文按笔记名从仓库重读。
+ * 正文动辄几十 KB，进 localStorage 没有意义——现象是页面不在时首帧空着，
+ * 由 `useDockMarkdownNote` 按名取回，取不到再给一句「笔记已不在仓库」。
+ */
 export type MarkdownDockSnapshot = {
-  markdown: string;
   title: string;
   storageScope: string;
   relativePath?: string;
@@ -21,23 +24,20 @@ export type RecordDockSnapshot = {
   title: string;
 };
 
-/** 图片预览里的一条（与文件页的条目同形，只留恢复需要的字段） */
-export type ImageDockItem = {
+/**
+ * 坞窗里的媒体条目：只记文件路径。
+ * 名称、取图地址与视频封面都能从路径推导（与文件页预览同一套拼法），
+ * 所以 localStorage 里一条只占一个路径，而不是「路径 + 名字 + 长 URL」。
+ */
+export type MediaDockItem = {
   id: string;
-  name: string;
-  src: string;
 };
 
 /** 图片预览窗口快照 */
 export type ImageDockSnapshot = {
   activeId: string;
-  items: ImageDockItem[];
+  items: MediaDockItem[];
   storageScope: string;
-};
-
-/** 视频预览里的一条：多一张封面 */
-export type VideoDockItem = ImageDockItem & {
-  poster: string;
 };
 
 /** 视频预览窗口快照 */
@@ -45,7 +45,7 @@ export type VideoDockSnapshot = {
   activeId: string;
   /** 设置里选定的外部播放器名：页面卸载后仍能按它给按钮提示并尝试打开 */
   externalApp?: string;
-  items: VideoDockItem[];
+  items: MediaDockItem[];
   storageScope: string;
 };
 

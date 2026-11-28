@@ -8,14 +8,16 @@
 
 import { useCallback, useState } from 'react';
 
+import type { ImagePreviewItem } from '@/components/modals/ImagePreviewModal/types';
+
 import { useImageCropSave } from '@/pages/Files/hooks/useImageCropSave';
 import { useEntryDelete } from '@/pages/Files/hooks/useEntryDelete';
 import { useWallpaper } from '@/pages/Files/hooks/useWallpaper';
 
 /** 后备能力入参 */
 type Params = {
-  /** 快照里的整组图片 */
-  initialItems: readonly { id: string; name: string; src: string }[];
+  /** 坞窗按快照路径补出来的整组图片 */
+  initialItems: readonly ImagePreviewItem[];
   /** 删除最后一张后要关掉窗口 */
   onRequestClose: () => void;
   /** 当前条目，删除后要顺位切到下一张 */

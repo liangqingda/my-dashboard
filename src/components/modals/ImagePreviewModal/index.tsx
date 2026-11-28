@@ -158,8 +158,8 @@ const ImagePreviewModal = ({
   };
 
   /**
-   * 程序坞描述：列表与当前张都进快照，换页 / 刷新后仍能重开这一组图；
-   * 裁剪与删除确认开着时不让收；全屏时允许收，收起前先退全屏。
+   * 程序坞描述：列表只收路径（名称与取图地址渲染时推导），当前张进快照，
+   * 换页 / 刷新后仍能重开这一组图；裁剪与删除确认开着时不让收；全屏时允许收，收起前先退全屏。
    *
    * `id` 永远按当前这张图算（图标激活、X 口径、header 计数都跟它走），
    * 程序坞窗口另外给 `surfaceId` 让开合动画认窗。
@@ -171,11 +171,7 @@ const ImagePreviewModal = ({
     origin: dockOrigin,
     snapshot: {
       activeId: activeItem.id,
-      items: items.map((item) => ({
-        id: item.id,
-        name: item.name,
-        src: item.src,
-      })),
+      items: items.map((item) => ({ id: item.id })),
       storageScope,
     },
     surfaceId: dockOrigin === 'dock' ? dockId : undefined,

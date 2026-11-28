@@ -32,7 +32,7 @@ export const useDockMarkdownNote = ({ title }: Params) => {
   const bootstrapped = useRef(false);
   const { open } = note;
 
-  // 列表回来之后按快照里的笔记名打开一次；列表里没有这篇时保留快照正文
+  // 列表回来之后按快照里的笔记名打开一次；列表里没有这篇就不再取正文（窗里给占位说明）
   useEffect(() => {
     if (bootstrapped.current || !list.notes.some((item) => item.name === title)) {
       return;
@@ -64,7 +64,13 @@ export const useDockMarkdownNote = ({ title }: Params) => {
   return {
     active: note.active,
     content: note.content,
-    loading: note.loading,
+    /** 摘要列表读失败的原因：窗里据此区分「笔记没了」和「没读到」 */
+    error: list.error,
+    /*
+     * 列表加载也算 loading：正文要等摘要回来才按名去取，这一段如果不算加载，
+     * 窗里会先闪一下「笔记已不在仓库」的占位，再被真正文顶掉。
+     */
+    loading: note.loading || list.loading,
     onNext: total > 1 ? () => step(1) : null,
     onPrevious: total > 1 ? () => step(-1) : null,
     position: index >= 0 ? { index: index + 1, total } : undefined,

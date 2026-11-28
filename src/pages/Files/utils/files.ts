@@ -94,8 +94,8 @@ export type PathRoot = {
 };
 
 /**
- * 路径末段的目录名：收藏这类只要 `path` + `name` 的地方（拖拽弹窗里收藏当前层）用它补名字，
- * `/` 自身与末尾带斜杠的路径都兜住。
+ * 路径末段名：收藏这类只要 `path` + `name` 的地方（拖拽弹窗里收藏当前层）用它补名字，
+ * 程序坞按路径补文件名时也走它；`/` 自身与末尾带斜杠的路径都兜住。
  */
 export const baseNameOfPath = (dir: string): string => {
   const parts = dir.split('/').filter(Boolean);

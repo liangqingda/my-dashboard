@@ -114,8 +114,8 @@ const Files = () => {
   } = state;
 
   /**
-   * 瓦片上的「收起到程序坞」：不打开预览，直接把当前目录的同类列表与这一条的快照
-   * 交给程序坞；恢复出来仍是完整预览，能继续翻篇。
+   * 瓦片上的「收起到程序坞」：不打开预览，直接把当前目录的同类文件路径与这一条的快照
+   * 交给程序坞；恢复出来仍是完整预览，能继续翻篇（名称与地址由坞窗按路径重建）。
    */
   const sendFileToDock = (file: FileEntry, sourceEl: HTMLElement | null) => {
     if (file.category === 'image') {
@@ -124,7 +124,7 @@ const Files = () => {
         kind: 'image-preview',
         snapshot: {
           activeId: file.path,
-          items: imagePreview.items,
+          items: imagePreview.items.map((item) => ({ id: item.id })),
           storageScope: FILES_STORAGE_SCOPE,
         },
         title: file.name,
@@ -138,7 +138,7 @@ const Files = () => {
         kind: 'video-preview',
         snapshot: {
           activeId: file.path,
-          items: videoPreview.items,
+          items: videoPreview.items.map((item) => ({ id: item.id })),
           storageScope: FILES_STORAGE_SCOPE,
         },
         title: file.name,
