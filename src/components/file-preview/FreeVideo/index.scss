@@ -79,14 +79,16 @@
 
 /* 视频按比例完整显示、不裁画面；整块可点，光标提示能切换播放。
    窗口里黑边由弹窗的宽高比框消掉（见 `VideoPreviewModal/index.scss`），这里只管舞台。
-   `z-index` 只为压在空带底之上，其余浮层在它上面 */
+   `z-index` 只为压在空带底之上，其余浮层在它上面。
+   **不铺自己的底色**：`object-fit: contain` 留出的空带其实是元素自己的底，铺黑会把背后那层
+   空带底整块盖死；透明之后空带透出下层，窗口模式下底子仍是舞台 / 播放器的黑，观感不变 */
 .video {
   position: relative;
   z-index: 1;
   width: 100%;
   height: 100%;
   object-fit: contain;
-  background: #000;
+  background: transparent;
   cursor: pointer;
 }
 
