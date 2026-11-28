@@ -255,7 +255,7 @@
 }
 
 .prose tbody tr {
-  transition: background-color 100ms ease;
+  transition: background-color 100ms var(--app-ease-standard);
 }
 
 .prose tbody tr:hover {

@@ -7,10 +7,10 @@
   align-self: start;
   border-radius: 8px;
   transition:
-    transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    box-shadow 180ms ease,
-    opacity 140ms ease,
-    background 120ms ease;
+    transform 180ms var(--app-ease-standard),
+    box-shadow 180ms var(--app-ease-standard),
+    opacity 140ms var(--app-ease-standard),
+    background 120ms var(--app-ease-standard);
 
   &:hover {
     background: var(--app-surface-hover);
@@ -69,7 +69,7 @@
   white-space: nowrap;
   pointer-events: none;
   transform: translateX(-50%);
-  animation: drop-hint-in 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: drop-hint-in 180ms var(--app-ease-standard) both;
 }
 
 @keyframes drop-hint-in {
@@ -161,7 +161,7 @@
   width: 100%;
   height: 100%;
   color: var(--mantine-color-blue-5);
-  transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: transform 180ms var(--app-ease-standard);
 }
 
 /* hover 时图标与文件瓦片的图源同一档放大，指针压上去那一格「浮起来」 */

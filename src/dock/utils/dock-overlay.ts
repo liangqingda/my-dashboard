@@ -5,6 +5,7 @@
  * 两者用同一段时长，才不会出现「窗口在飞、背景先没了」。
  */
 
+import { MOTION_EASING } from '@/utils/motion-easing';
 import { prefersReducedMotion } from '@/utils/motion-geometry';
 
 /** 根节点里的遮罩元素（Mantine Overlay 的静态类名） */
@@ -34,6 +35,6 @@ export const fadeDockOverlay = (
       { opacity: direction === 'in' ? 0 : 1 },
       { opacity: direction === 'in' ? 1 : 0 },
     ],
-    { duration, easing: 'ease', fill: 'both' },
+    { duration, easing: MOTION_EASING.standard, fill: 'both' },
   );
 };

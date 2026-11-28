@@ -5,6 +5,7 @@
  * 落到虚位中心后克隆淡掉，真正的图标由小到大长出来（见 `dock-bar` 的 receiving 样式）。
  */
 
+import { MOTION_EASING } from '@/utils/motion-easing';
 import { prefersReducedMotion } from '@/utils/motion-geometry';
 
 import { DOCK_FLY_DURATION, DOCK_FLY_Z_INDEX } from '../constants';
@@ -114,7 +115,7 @@ export const flyWindowToDock = async (
     ],
     {
       duration: DOCK_FLY_DURATION,
-      easing: 'cubic-bezier(0.32, 0.72, 0.24, 1)',
+      easing: MOTION_EASING.emphasized,
       fill: 'forwards',
     },
   );

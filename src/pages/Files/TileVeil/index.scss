@@ -19,5 +19,5 @@
     saturate(var(--app-glass-saturate));
   opacity: 0;
   pointer-events: none;
-  transition: opacity 140ms ease;
+  transition: opacity 140ms var(--app-ease-standard);
 }

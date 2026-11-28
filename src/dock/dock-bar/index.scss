@@ -9,8 +9,8 @@
   pointer-events: none;
   transform: translateX(-50%);
   transition:
-    transform 360ms cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 220ms ease;
+    transform 360ms var(--app-ease-emphasized),
+    opacity 220ms var(--app-ease-standard);
 }
 
 /* 收起：整条从屏幕下沿滑出去，不占页面空间 */
@@ -70,10 +70,10 @@
   -webkit-backdrop-filter: blur(26px) saturate(180%) brightness(1.01);
   backdrop-filter: blur(26px) saturate(180%) brightness(1.01);
   transition:
-    background 220ms ease,
-    border-color 220ms ease,
-    box-shadow 220ms ease,
-    opacity 220ms ease;
+    background 220ms var(--app-ease-standard),
+    border-color 220ms var(--app-ease-standard),
+    box-shadow 220ms var(--app-ease-standard),
+    opacity 220ms var(--app-ease-standard);
 }
 
 .dock:hover .dockBox {
@@ -117,11 +117,11 @@
   transform: scale(var(--dock-item-scale, 1));
   transform-origin: 50% 100%;
   transition:
-    transform 140ms cubic-bezier(0.22, 0.8, 0.3, 1),
-    background 180ms ease,
-    border-color 180ms ease,
-    box-shadow 160ms ease,
-    opacity 180ms ease;
+    transform 140ms var(--app-ease-standard),
+    background 180ms var(--app-ease-standard),
+    border-color 180ms var(--app-ease-standard),
+    box-shadow 160ms var(--app-ease-standard),
+    opacity 180ms var(--app-ease-standard);
 }
 
 /* 虚位：条目先占住位置、画出虚线空槽，飞行块落进来后图标再由小长出来 */
@@ -181,8 +181,8 @@
   -webkit-backdrop-filter: blur(7px) saturate(130%);
   backdrop-filter: blur(7px) saturate(130%);
   transition:
-    opacity 180ms ease,
-    background 180ms ease;
+    opacity 180ms var(--app-ease-standard),
+    background 180ms var(--app-ease-standard);
 }
 
 .dockRemoveIcon {
@@ -199,7 +199,7 @@
   -webkit-backdrop-filter: blur(10px) saturate(160%);
   backdrop-filter: blur(10px) saturate(160%);
   transform: scale(0.86);
-  transition: transform 160ms ease;
+  transition: transform 160ms var(--app-ease-standard);
 }
 
 .dockItem[data-editing='true']:hover .dockRemove,
@@ -237,9 +237,9 @@
   place-items: center;
   filter: drop-shadow(0 1px 2px rgb(0 0 0 / 22%));
   transition:
-    opacity 180ms ease,
-    transform 240ms cubic-bezier(0.2, 0.9, 0.25, 1.16),
-    filter 160ms ease;
+    opacity 180ms var(--app-ease-standard),
+    transform 240ms var(--app-ease-spring),
+    filter 160ms var(--app-ease-standard);
 }
 
 /* `data-hover` 是「窗开着、但内容翻到了一条不在程序坞的」：在激活之上再叠一层 hover 阴影 */

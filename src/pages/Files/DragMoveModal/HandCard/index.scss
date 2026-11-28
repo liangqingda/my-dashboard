@@ -27,7 +27,7 @@
 .idle {
   border-color: var(--app-accent);
   border-style: dashed;
-  animation: handPulse 1600ms ease-out infinite;
+  animation: handPulse 1600ms var(--app-ease-standard) infinite;
 }
 
 /* 条目：按可用宽度折列，间距 12px；每条仍可单独拖起 */
@@ -49,10 +49,10 @@
   background: var(--app-surface-subtle);
   cursor: grab;
   transition:
-    border-color 120ms ease,
-    background 120ms ease,
-    box-shadow 120ms ease,
-    transform 120ms ease;
+    border-color 120ms var(--app-ease-standard),
+    background 120ms var(--app-ease-standard),
+    box-shadow 120ms var(--app-ease-standard),
+    transform 120ms var(--app-ease-standard);
 }
 
 /*
@@ -109,8 +109,8 @@
   min-width: 0;
   transform-origin: center;
   transition:
-    opacity 200ms ease,
-    transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    opacity 200ms var(--app-ease-standard),
+    transform 220ms var(--app-ease-standard);
 }
 
 /* 抓手：说明这一条能单独拖 */
@@ -134,7 +134,7 @@
 
 .iconClickable {
   cursor: pointer;
-  transition: color 120ms ease;
+  transition: color 120ms var(--app-ease-standard);
 }
 
 .iconButton:hover .iconClickable {

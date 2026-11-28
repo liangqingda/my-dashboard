@@ -16,5 +16,5 @@
   backdrop-filter: blur(var(--app-glass-blur-panel))
     saturate(var(--app-glass-saturate));
   opacity: 0;
-  transition: opacity 120ms ease;
+  transition: opacity 120ms var(--app-ease-standard);
 }

@@ -30,6 +30,7 @@
 | Markdown 标题目录 | `@/utils/markdown-outline` 的 `extractMarkdownOutline` |
 | 把本机文件交给外部应用打开 | `@/utils/open-file` 的 `openFileExternally(path, appName?)`（页面与程序坞窗口共用） |
 | 开合动画的几何算式（`from` / `to` 两个矩形 → 平移 + 等比缩放）、是否要减少动效 | `@/utils/motion-geometry` 的 `shiftBetweenRects(from, to)` / `prefersReducedMotion()`（程序坞与弹窗共用） |
+| 过渡 / 动画的缓动曲线（Web Animations 用） | `@/utils/motion-easing` 的 `MOTION_EASING`（与 `--app-ease-*` 同值；新写动画不许裸写 `cubic-bezier`，选档见 `docs/motion.md`） |
 | 「用户从哪一点打开的」记录（`pointerdown` / 键盘回退、过期判定） | `@/utils/pointer-origin` 的 `readPointerOrigin()` / `resolveOriginRect(origin)` |
 | 单行 / 两行省略文本（默认中间省略，尾部省略传 `ellipsis="end"`）、截断才提示 | `@/components/texts/FreeTruncatedText` |
 | 悬停 / 聚焦意图 | `@/hooks/useHoverIntent` |

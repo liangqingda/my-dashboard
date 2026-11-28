@@ -18,7 +18,7 @@
 
 .chevron {
   flex: 0 0 auto;
-  transition: transform 120ms ease;
+  transition: transform 120ms var(--app-ease-standard);
 }
 
 /* 展开态：箭头朝下；收起态朝右，旋转口径与折叠动画一致 */

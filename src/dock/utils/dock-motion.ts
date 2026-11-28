@@ -6,6 +6,7 @@
  */
 
 /* eslint-disable no-param-reassign -- 动画函数收到的参数就是待改写的 DOM 框体，直接写它的 style 是这套工具的唯一职责 */
+import { MOTION_EASING } from '@/utils/motion-easing';
 import { prefersReducedMotion, shiftBetweenRects } from '@/utils/motion-geometry';
 
 import {
@@ -124,7 +125,7 @@ export const growWindowFromDock = async (
     ],
     {
       duration: DOCK_TRANSFORM_DURATION,
-      easing: 'cubic-bezier(0.2, 0.86, 0.22, 1)',
+      easing: MOTION_EASING.standard,
       fill: 'both',
     },
   );
@@ -184,7 +185,7 @@ export const shrinkWindowToDock = async (
     ],
     {
       duration: DOCK_SHRINK_DURATION,
-      easing: 'cubic-bezier(0.55, 0.02, 0.72, 0.36)',
+      easing: MOTION_EASING.exit,
       fill: 'both',
     },
   );
@@ -205,7 +206,7 @@ export const dismissWindow = async (content: HTMLElement): Promise<void> => {
     ],
     {
       duration: DOCK_DISMISS_DURATION,
-      easing: 'ease-out',
+      easing: MOTION_EASING.standard,
       fill: 'both',
     },
   );
@@ -252,7 +253,7 @@ export const slideWindowIn = async (
     ],
     {
       duration: DOCK_SLIDE_DURATION,
-      easing: 'cubic-bezier(0.2, 0.88, 0.24, 1)',
+      easing: MOTION_EASING.emphasized,
       fill: 'both',
     },
   );
@@ -317,7 +318,7 @@ export const slideWindowOut = (
     ],
     {
       duration: DOCK_SLIDE_OUT_DURATION,
-      easing: 'cubic-bezier(0.55, 0, 0.75, 0.2)',
+      easing: MOTION_EASING.exit,
       fill: 'both',
     },
   );

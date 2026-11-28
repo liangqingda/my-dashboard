@@ -7,9 +7,9 @@
   align-self: start;
   border-radius: 8px;
   transition:
-    transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    opacity 140ms ease,
-    background 120ms ease;
+    transform 180ms var(--app-ease-standard),
+    opacity 140ms var(--app-ease-standard),
+    background 120ms var(--app-ease-standard);
 
   &:hover {
     background: var(--app-surface-hover);
@@ -76,7 +76,7 @@
  * 像访达里指针压上去那一格图源浮起来；拖拽态与落点态不受影响（放大只挂在 hover 上）。
  */
 .media > * {
-  transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: transform 180ms var(--app-ease-standard);
 }
 
 .wrapper:hover .media > * {

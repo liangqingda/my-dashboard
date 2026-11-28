@@ -12,6 +12,7 @@
 /* eslint-disable no-param-reassign -- 这里收到的参数就是待改写的弹窗框体，直接写它的 style 是这套动画的唯一职责 */
 import { useCallback, useLayoutEffect, useEffect, useRef } from 'react';
 
+import { MOTION_EASING } from '@/utils/motion-easing';
 import { prefersReducedMotion, shiftBetweenRects } from '@/utils/motion-geometry';
 import type { MotionRect } from '@/utils/motion-geometry';
 import { readPointerOrigin, resolveOriginRect } from '@/utils/pointer-origin';
@@ -83,7 +84,7 @@ const fadeIn = (content: HTMLElement): Animation => {
 
   const animation = content.animate([{ opacity: 0 }, { opacity: 1 }], {
     duration: MODAL_FADE_DURATION,
-    easing: 'ease-out',
+    easing: MOTION_EASING.standard,
     fill: 'both',
   });
 
@@ -120,7 +121,7 @@ const growFromOrigin = (content: HTMLElement, origin: MotionRect): Animation => 
     ],
     {
       duration: MODAL_ENTER_DURATION,
-      easing: 'cubic-bezier(0.2, 0.86, 0.22, 1)',
+      easing: MOTION_EASING.standard,
       fill: 'both',
     },
   );
@@ -161,7 +162,7 @@ const fadeOverlay = (root: HTMLElement): void => {
 
   overlay.animate(
     [{ opacity: Number.isFinite(start) ? start : 1 }, { opacity: 0 }],
-    { duration: MODAL_EXIT_DURATION, easing: 'ease', fill: 'both' },
+    { duration: MODAL_EXIT_DURATION, easing: MOTION_EASING.standard, fill: 'both' },
   );
 };
 
@@ -170,7 +171,7 @@ const fadeOut = (content: HTMLElement): Animation => {
 
   return content.animate(
     [{ opacity: Number.isFinite(start) ? start : 1 }, { opacity: 0 }],
-    { duration: MODAL_EXIT_DURATION, easing: 'ease', fill: 'both' },
+    { duration: MODAL_EXIT_DURATION, easing: MOTION_EASING.standard, fill: 'both' },
   );
 };
 
@@ -198,7 +199,7 @@ const shrinkToOrigin = (content: HTMLElement, origin: MotionRect): Animation => 
     ],
     {
       duration: MODAL_EXIT_DURATION,
-      easing: 'cubic-bezier(0.55, 0.02, 0.72, 0.36)',
+      easing: MOTION_EASING.exit,
       fill: 'both',
     },
   );

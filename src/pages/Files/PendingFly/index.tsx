@@ -1,5 +1,8 @@
 import { createElement, useEffect, useLayoutEffect, useRef } from 'react';
 
+import { MOTION_EASING } from '@/utils/motion-easing';
+import { prefersReducedMotion } from '@/utils/motion-geometry';
+
 import { entryIcon } from '../utils/entry-icon';
 import {
   cloneFlightBody,
@@ -22,10 +25,6 @@ const MORPH_AT = 0.3;
 
 /** 收进待拖拽区时，缩到多小才把真身换回图标（占整趟的比例）：与回来那趟的 0.3 对称 */
 const SHRINK_TO_ICON_AT = 0.62;
-
-/** 系统开了「减少动态」就只留结果、不做位移 */
-const prefersReducedMotion = (): boolean =>
-  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
  * 「条目在列表与待拖拽区之间挪动」的那一下动画。
@@ -109,7 +108,7 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
     if (target === null) {
       const fade = block.animate([{ opacity: 1 }, { opacity: 0 }], {
         duration: FLY_MS,
-        easing: 'ease-out',
+        easing: MOTION_EASING.standard,
         fill: 'forwards',
       });
 
@@ -211,7 +210,7 @@ const PendingFlightLayer = ({ flight, onDone }: PendingFlightLayerProps) => {
 
     const move = block.animate(frames, {
       duration: FLY_MS,
-      easing: 'cubic-bezier(0.32, 0.72, 0.24, 1)',
+      easing: MOTION_EASING.emphasized,
       fill: 'forwards',
     });
 

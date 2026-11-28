@@ -51,7 +51,7 @@
   bottom: 0;
   left: 0;
   z-index: 2;
-  transition: opacity 180ms ease;
+  transition: opacity 180ms var(--app-ease-standard);
   will-change: opacity;
 }
 

@@ -31,9 +31,9 @@
     saturate(var(--app-glass-saturate));
   /* 收起 / 展开平滑过渡；拖拽中由 .navDragging 关掉，宽度直接跟指针 */
   transition:
-    flex-basis 220ms cubic-bezier(0.33, 0, 0.2, 1),
-    width 220ms cubic-bezier(0.33, 0, 0.2, 1),
-    padding 220ms cubic-bezier(0.33, 0, 0.2, 1);
+    flex-basis 220ms var(--app-ease-layout),
+    width 220ms var(--app-ease-layout),
+    padding 220ms var(--app-ease-layout);
 }
 
 /* 目录内容：收起时整块淡出隐藏；自身裁掉溢出，列宽收窄期间文字不戳到正文上 */
@@ -46,7 +46,7 @@
   min-height: 0;
   overflow: hidden;
   transition:
-    opacity 160ms ease,
+    opacity 160ms var(--app-ease-standard),
     visibility 160ms;
 }
 
@@ -102,7 +102,7 @@
   border-radius: 1px;
   background: var(--app-line-strong);
   opacity: 0;
-  transition: opacity 120ms ease;
+  transition: opacity 120ms var(--app-ease-standard);
 }
 
 .handle:hover::before,

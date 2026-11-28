@@ -21,9 +21,9 @@
   backdrop-filter: blur(var(--app-glass-blur-panel))
     saturate(var(--app-glass-saturate));
   transition:
-    background-color 260ms ease,
-    -webkit-backdrop-filter 260ms ease,
-    backdrop-filter 260ms ease;
+    background-color 260ms var(--app-ease-standard),
+    -webkit-backdrop-filter 260ms var(--app-ease-standard),
+    backdrop-filter 260ms var(--app-ease-standard);
   /* 玻璃层提前提升、钉住背面：Chrome 在虚化层刚显形时容易闪一帧未虚化的画面 */
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
@@ -63,7 +63,7 @@
    加粗不会把控制栏顶高、滑块也不用跟着挪 */
 .progress .track {
   height: 4px;
-  transition: height 120ms ease;
+  transition: height 120ms var(--app-ease-standard);
 }
 
 .progressWrap:hover .track {
@@ -76,8 +76,8 @@
 .progress .track::before,
 .progress .bar {
   transition:
-    background-color 160ms ease,
-    box-shadow 160ms ease;
+    background-color 160ms var(--app-ease-standard),
+    box-shadow 160ms var(--app-ease-standard);
 }
 
 /* 轨道底：默认只铺一层 20% 的半透明色块，不叠 `backdrop-filter`——控制栏本身已经虚化了视频，
@@ -131,9 +131,9 @@
   border-radius: 50%;
   background-color: var(--mantine-color-white);
   transition:
-    width 120ms ease,
-    height 120ms ease,
-    border-width 120ms ease;
+    width 120ms var(--app-ease-standard),
+    height 120ms var(--app-ease-standard),
+    border-width 120ms var(--app-ease-standard);
 }
 
 /* 深色主题下主色圆点配白环（口径同 Mantine 自己的滑块） */

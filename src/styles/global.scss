@@ -39,6 +39,20 @@
   --app-accent-soft-strong: #d6ece3;
 
   /*
+   * motion：全站唯一一套缓动曲线，按时长之外的「语义」分五档——
+   * standard（常规状态 / 淡入淡出 / 小位移）、emphasized（大位移、飞入、展开）、
+   * layout（宽度 / flex / 高度这类布局尺寸）、exit（收起、滑出、折叠）、
+   * spring（落点回弹，只给程序坞图标）。新写过渡一律引用这组，不再写 cubic-bezier；
+   * JS 侧（Web Animations）用 `@/utils/motion-easing` 的同名常量，两处必须同值。
+   * 持续旋转仍用 `linear`，它不在这套语义里。
+   */
+  --app-ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --app-ease-emphasized: cubic-bezier(0.22, 1, 0.36, 1);
+  --app-ease-layout: cubic-bezier(0.33, 0, 0.2, 1);
+  --app-ease-exit: cubic-bezier(0.55, 0.02, 0.72, 0.36);
+  --app-ease-spring: cubic-bezier(0.2, 0.9, 0.25, 1.16);
+
+  /*
    * 导航行（页面侧栏菜单与预览弹窗的标题目录共用一套行级状态）：
    * 纸面 → hover（最浅主色）→ 选中（重一档主色）的递进，左侧同一条 2px 主色标线。
    * 两处只消费这组令牌，不再各自写一份底色、圆角与阴影。
@@ -47,7 +61,7 @@
   --app-nav-row-hover: var(--app-accent-soft);
   --app-nav-row-active: var(--app-accent-soft-strong);
   --app-nav-row-marker: inset 2px 0 0 var(--app-accent);
-  --app-nav-row-transition: 120ms ease;
+  --app-nav-row-transition: 120ms var(--app-ease-standard);
 
   /*
    * glass：全站浮层毛玻璃的唯一配方。

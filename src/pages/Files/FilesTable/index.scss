@@ -81,7 +81,7 @@
   white-space: nowrap;
   pointer-events: none;
   transform: translateX(-50%);
-  animation: blank-hint-in 160ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: blank-hint-in 160ms var(--app-ease-standard) both;
 }
 
 @keyframes blank-hint-in {

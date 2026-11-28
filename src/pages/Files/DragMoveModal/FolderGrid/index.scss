@@ -26,9 +26,9 @@
   background: var(--app-surface);
   cursor: pointer;
   transition:
-    background-color 120ms ease,
-    border-color 120ms ease,
-    box-shadow 120ms ease;
+    background-color 120ms var(--app-ease-standard),
+    border-color 120ms var(--app-ease-standard),
+    box-shadow 120ms var(--app-ease-standard);
 }
 
 /* 平常的 hover：整格亮成强调色，阴影只往下打——滚动视口会裁掉超出格子上沿的部分，往上抬会把上边框切掉 */

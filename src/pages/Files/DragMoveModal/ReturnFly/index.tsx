@@ -1,5 +1,8 @@
 import { useEffect, useRef } from 'react';
 
+import { MOTION_EASING } from '@/utils/motion-easing';
+import { prefersReducedMotion } from '@/utils/motion-geometry';
+
 import { framesFor } from '../../utils/pending-frames';
 
 import type { ReturnFlyProps } from './types';
@@ -12,10 +15,6 @@ import styles from './index.scss';
  * 缩进去的那一格是**它真正落座的位置**（手卡末尾那一行），不是手卡左上角。
  */
 const FLY_MS = 560;
-
-/** 系统开了「减少动态」就只留结果、不做位移 */
-const prefersReducedMotion = (): boolean =>
-  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
  * 「把这次搬进文件夹的条目放回手卡」那一下：拿那格瓦片做整块拷贝，
@@ -67,7 +66,7 @@ const ReturnFly = ({ flight, onDone }: ReturnFlyProps) => {
       framesFor({ direction: 'in', dx, dy, endScale, landScale, midScale }),
       {
         duration: FLY_MS,
-        easing: 'cubic-bezier(0.32, 0.72, 0.24, 1)',
+        easing: MOTION_EASING.emphasized,
         fill: 'forwards',
       },
     );

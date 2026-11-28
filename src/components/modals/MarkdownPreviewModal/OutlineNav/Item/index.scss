@@ -46,7 +46,7 @@
 
 /* 展开时朝下、收起时朝右；只用 transform，不换图标 */
 .chevron {
-  transition: transform 120ms ease;
+  transition: transform 120ms var(--app-ease-standard);
 }
 
 .collapsed {
