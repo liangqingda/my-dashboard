@@ -18,12 +18,15 @@ type UseDockMinimizeParams = {
   dock?: DockDescriptor;
   /** 页面弹窗收起后要执行的关闭动作 */
   onClose: () => void;
+  /** 收起动画开始前先做（如退出整屏 / 网页全屏），完成后才量落点 */
+  beforeMinimize?: () => Promise<void> | void;
   /** 弹窗是否开着 */
   opened: boolean;
 };
 
 /** 返回最小化动作；`canMinimize` 决定 header 上画不画那颗按钮 */
 export const useDockMinimize = ({
+  beforeMinimize,
   dock,
   onClose,
   opened,
@@ -31,6 +34,7 @@ export const useDockMinimize = ({
   const dockContext = useDockOptional();
   const dockRef = useRef(dock);
   const onCloseRef = useRef(onClose);
+  const beforeMinimizeRef = useRef(beforeMinimize);
   const dockId = dock?.id;
   const dockDisabled = dock?.disabled;
 
@@ -43,6 +47,10 @@ export const useDockMinimize = ({
     onCloseRef.current = onClose;
   }, [onClose]);
 
+  useEffect(() => {
+    beforeMinimizeRef.current = beforeMinimize;
+  }, [beforeMinimize]);
+
   const minimize = useCallback(() => {
     const descriptor = dockRef.current;
 
@@ -54,11 +62,25 @@ export const useDockMinimize = ({
       return;
     }
 
-    dockContext.minimize(descriptor, findDockSurface(descriptor.id));
+    const proceed = () => {
+      dockContext.minimize(descriptor, findDockSurface(descriptor.id));
 
-    if (descriptor.origin !== 'dock') {
-      onCloseRef.current();
+      if (descriptor.origin !== 'dock') {
+        onCloseRef.current();
+      }
+    };
+
+    if (beforeMinimizeRef.current === undefined) {
+      proceed();
+
+      return;
     }
+
+    // 全屏退出是异步的；先退出再量程序坞落点，避免按全屏时的几何位置飞
+    void Promise.resolve()
+      .then(() => beforeMinimizeRef.current?.())
+      .catch(() => undefined)
+      .then(proceed);
   }, [dockContext]);
 
   useEffect(() => {

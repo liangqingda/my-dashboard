@@ -31,6 +31,7 @@ const ImageListMenu = ({
   onSelect,
   opened,
   tipDark = false,
+  zIndex,
 }: ImageListMenuProps) => (
   <IconPopoverButton
     active={opened}
@@ -44,6 +45,7 @@ const ImageListMenu = ({
     position="bottom"
     tipDark={tipDark}
     width={MENU_WIDTH}
+    zIndex={zIndex}
   >
     <PreviewItemList
       activeId={activeId}

@@ -33,6 +33,7 @@ const VideoEpisodeMenu = ({
   onChangeOpened,
   onSelect,
   tipDark = false,
+  zIndex,
 }: VideoEpisodeMenuProps) => {
   /** 开合由按钮点击切换；点外部 / Esc 由弹层壳收回并回写这里 */
   const [opened, setOpened] = useState(false);
@@ -57,6 +58,7 @@ const VideoEpisodeMenu = ({
       position="top"
       tipDark={tipDark}
       width={MENU_WIDTH}
+      zIndex={zIndex}
     >
       <PreviewItemList
         activeId={activeId}

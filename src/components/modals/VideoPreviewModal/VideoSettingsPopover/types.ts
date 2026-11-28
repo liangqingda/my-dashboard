@@ -35,4 +35,6 @@ export type VideoSettingsPopoverProps = {
   spaceMode: VideoSpaceMode;
   /** 按钮与省略 tip 固定深底浅字、不随主题反转 */
   tipDark?: boolean;
+  /** 弹层层级：放进程序坞窗口（z-index 1000）时由调用方抬到窗口之上 */
+  zIndex?: number;
 };

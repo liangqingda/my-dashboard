@@ -88,8 +88,10 @@ const MarkdownPreviewModal = ({
   const storageKey = mainPreviewStorageKey(storageScope);
 
   /** 全屏开关：记住的展示偏好，关闭弹窗也不重置；Esc 不归它管，永远是关弹窗 */
-  const { fullscreen, toggle: toggleFullscreen } =
+  const { fullscreen: storedFullscreen, toggle: toggleFullscreen } =
     useModalFullscreen(storageKey);
+  /** 程序坞恢复窗永远从普通尺寸出来：不继承页面里记住的全屏偏好 */
+  const fullscreen = dockOrigin === 'dock' ? false : storedFullscreen;
   /** 正文字号的用户偏移：跨篇、跨会话记住，叠在常规 / 全屏各自的默认字号上 */
   const proseFont = useProseFontScale(storageKey);
   /** 刷新按钮的 loading 与失败提示都在这个 hook 里 */
@@ -193,6 +195,7 @@ const MarkdownPreviewModal = ({
   return (
     <>
       <FreeModal
+        beforeMinimize={fullscreen ? toggleFullscreen : undefined}
         closeButton={!editing.editing}
         closeLabel="关闭预览"
         closeOnEscape={panel === null && !interactions.subPreviewOpen && !removal.confirming}
@@ -205,8 +208,9 @@ const MarkdownPreviewModal = ({
         dock={dock}
         fullscreen={{
           active: fullscreen,
-          onToggle: toggleFullscreen,
-          showToggle: documentActionsVisible,
+          onToggle:
+            dockOrigin === 'dock' ? undefined : toggleFullscreen,
+          showToggle: documentActionsVisible && dockOrigin !== 'dock',
         }}
         headerActions={
           documentActionsVisible ? (

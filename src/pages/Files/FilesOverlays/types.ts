@@ -45,6 +45,8 @@ export type FilesOverlaysProps = {
     onToggleImage: () => void;
     /** 把预览中的这条视频加入 / 移出待拖拽区（方向由 `videoStaged` 说） */
     onToggleVideo: () => void;
+    /** 设置里选定的外部播放器名称（跟设置列表走） */
+    videoApp: string;
     video: ReturnType<typeof useVideoPreview>;
     onRequestDelete: (path: string) => void;
   };

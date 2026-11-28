@@ -14,6 +14,7 @@ import {
   IconCheck,
   IconChevronDown,
   IconPencil,
+  IconX,
 } from '@tabler/icons-react';
 
 import {
@@ -44,14 +45,27 @@ const resetMagnification = (box: HTMLElement | null) => {
 };
 
 const DockBar = () => {
-  const { activeEntryId, entries, receivingIds, remove, restore } = useDock();
+  const {
+    activeEntryId,
+    entries,
+    fullscreenCount,
+    nativeFullscreen,
+    receivingIds,
+    remove,
+    restore,
+  } = useDock();
   const [open, setOpen] = useState(false);
   const [instant, setInstant] = useState(false);
   const [editing, setEditing] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
+  const fullscreenRef = useRef(false);
   const empty = entries.length === 0;
   const showing = open && !empty;
   const editActive = editing && showing;
+  /** 原生全屏时整条让开；CSS 全屏进入时由下方 effect 自动收起，之后被收进新窗口再弹出时减淡 */
+  const hidden = nativeFullscreen;
+  const dimmed = !hidden && fullscreenCount > 0 && showing;
+  const controlsHidden = nativeFullscreen || fullscreenCount > 0;
   const groups = groupDockEntries(entries);
   const reach = DOCK_ITEM_SIZE * MAGNIFY_REACH_RATIO;
   const strength = DOCK_MAGNIFICATION - 1;
@@ -79,6 +93,22 @@ const DockBar = () => {
 
     return () => window.cancelAnimationFrame(frame);
   }, [receivingIds.length]);
+
+  /**
+   * 进入全屏时默认收掉程序坞与右下角控件，先让出内容；
+   * 全屏期间若因收进新窗口又弹出来，则按 `data-dock-dim` 虚化显示。
+   */
+  useEffect(() => {
+    const inside = fullscreenCount > 0;
+
+    if (inside && !fullscreenRef.current) {
+      setOpen(false);
+      setEditing(false);
+      resetMagnification(boxRef.current);
+    }
+
+    fullscreenRef.current = inside;
+  }, [fullscreenCount]);
 
   useEffect(() => {
     if (!instant) {
@@ -161,9 +191,11 @@ const DockBar = () => {
   return (
     <>
       <aside
-        aria-hidden={showing ? undefined : 'true'}
+        aria-hidden={showing && !hidden ? undefined : 'true'}
         aria-label="已收起的窗口"
         className={styles.dock}
+        data-dock-dim={dimmed ? 'true' : undefined}
+        data-dock-hidden={hidden ? 'true' : undefined}
         data-dock-open={showing ? 'true' : 'false'}
         data-editing={editActive ? 'true' : undefined}
         data-instant={instant ? 'true' : undefined}
@@ -210,7 +242,14 @@ const DockBar = () => {
                       <span className={styles.dockIcon}>
                         <Icon size={iconSize} stroke={1.55} />
                       </span>
-                      {active && !receiving ? (
+                      {editActive ? (
+                        <span aria-hidden="true" className={styles.dockRemove}>
+                          <span className={styles.dockRemoveIcon}>
+                            <IconX size={15} stroke={2} />
+                          </span>
+                        </span>
+                      ) : null}
+                      {active && !receiving && !editActive ? (
                         <span aria-hidden="true" className={styles.dockDot} />
                       ) : null}
                     </UnstyledButton>
@@ -222,7 +261,12 @@ const DockBar = () => {
         </div>
       </aside>
 
-      <div className={styles.dockControls} style={{ zIndex: DOCK_Z_INDEX }}>
+      <div
+        className={styles.dockControls}
+        data-controls-hidden={controlsHidden ? 'true' : undefined}
+        data-dock-dim={dimmed ? 'true' : undefined}
+        style={{ zIndex: DOCK_Z_INDEX }}
+      >
         {showing ? (
           <Tooltip
             label={editActive ? '完成编辑' : '编辑程序坞'}

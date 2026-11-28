@@ -10,6 +10,8 @@ import DockWindowHost from '../dock-window';
 import type { DockWindowSlot } from '../dock-window';
 import { DOCK_ENTRIES_STORAGE_KEY } from '../constants';
 import { DockContext } from '../context';
+import { useDockFullscreen } from '../hooks/useDockFullscreen';
+import { useDockModalStack } from '../hooks/useDockModalStack';
 import {
   DOCK_ENTRIES_CODEC,
   removeDockEntry,
@@ -26,7 +28,6 @@ import type {
   DockDescriptor,
   DockEntry,
   DockEntryDraft,
-  DockModalRegistration,
 } from '../types';
 
 const DockProvider = ({ children }: { children: ReactNode }) => {
@@ -36,11 +37,18 @@ const DockProvider = ({ children }: { children: ReactNode }) => {
   );
   const [windowSlot, setWindowSlotState] = useState<DockWindowSlot | null>(null);
   const [receivingIds, setReceivingIds] = useState<readonly string[]>([]);
+  const { fullscreenCount, nativeFullscreen, reportFullscreen } =
+    useDockFullscreen();
+  const {
+    activeEntryId: modalEntryId,
+    modalStack,
+    minimizeTop,
+    registerModal,
+  } = useDockModalStack(entries);
 
   const entriesRef = useRef(entries);
   const windowRef = useRef<DockWindowSlot | null>(windowSlot);
   const restoreSeq = useRef(0);
-  const modalStack = useRef<DockModalRegistration[]>([]);
   const receivingRef = useRef(new Set<string>());
 
   useEffect(() => {
@@ -160,6 +168,22 @@ const DockProvider = ({ children }: { children: ReactNode }) => {
 
     const { current } = windowRef;
 
+    if (current === null) {
+      /*
+       * 页面里的同一扇弹窗已经开着（条目在程序坞里所以图标是激活的）：
+       * 再点图标就是把它收回程序坞，不能又装一扇程序坞窗口出来。
+       */
+      const registration = modalStack.current.find(
+        (candidate) => candidate.id === id,
+      );
+
+      if (registration !== undefined) {
+        registration.minimize();
+
+        return;
+      }
+    }
+
     if (current !== null) {
       if (current.phase === 'closing') {
         return;
@@ -182,6 +206,14 @@ const DockProvider = ({ children }: { children: ReactNode }) => {
     const seq = restoreSeq.current + 1;
 
     restoreSeq.current = seq;
+
+    /*
+     * 程序坞窗口永远以普通尺寸恢复：旧页面弹窗若还占着浏览器整屏，先退出，
+     * 避免新窗挂载时误判成全屏、两边同时请求 Fullscreen API。
+     */
+    if (document.fullscreenElement !== null) {
+      void document.exitFullscreen().catch(() => undefined);
+    }
 
     void loadDockWindow(entry.kind).then((Component) => {
       if (restoreSeq.current !== seq) {
@@ -247,37 +279,19 @@ const DockProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const registerModal = (registration: DockModalRegistration) => {
-    modalStack.current = [...modalStack.current, registration];
-
-    return () => {
-      modalStack.current = modalStack.current.filter(
-        (candidate) => candidate !== registration,
-      );
-    };
-  };
-
-  const minimizeTop = () => {
-    const last = modalStack.current.at(-1);
-
-    if (last === undefined) {
-      return false;
-    }
-
-    last.minimize();
-
-    return true;
-  };
-
   const contextValue: DockContextValue = {
-    activeEntryId: windowSlot === null ? null : windowSlot.entry.id,
+    activeEntryId:
+      windowSlot === null ? modalEntryId : windowSlot.entry.id,
     collect,
     entries,
+    fullscreenCount,
     minimize,
     minimizeTop,
+    nativeFullscreen,
     receivingIds,
     registerModal,
     remove,
+    reportFullscreen,
     requestCloseWindow,
     restore,
     stepWindow,

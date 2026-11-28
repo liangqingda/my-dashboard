@@ -48,6 +48,8 @@ export type ImageHeaderActionsProps = {
   onToggleBatch?: () => void;
   /** 当前这张已经在待拖拽区：按钮亮成强调色，提示改成「从待拖拽区移出」 */
   batched?: boolean;
+  /** 弹层层级：程序坞窗口里抬到窗口之上 */
+  popoverZIndex?: number;
   /** 任一弹层开合：弹窗据此让 header 恒可见 */
   onOverlayChange: (open: boolean) => void;
   /** tip 固定深底浅字 */
@@ -67,6 +69,7 @@ export const ImageHeaderActions = ({
   onSaveCrop,
   onSelect,
   onToggleBatch,
+  popoverZIndex,
   tipDark = false,
 }: ImageHeaderActionsProps) => {
   const [listOpen, setListOpen] = useState(false);
@@ -134,6 +137,7 @@ export const ImageHeaderActions = ({
         onSelect={onSelect}
         opened={listOpen}
         tipDark={tipDark}
+        zIndex={popoverZIndex}
       />
       {onRequestWallpaper ? (
         <FreeIconAction
@@ -175,6 +179,7 @@ export const ImageHeaderActions = ({
             onChangeOpened={changeSettingsOpen}
             opened={settingsOpen}
             tipDark={tipDark}
+            zIndex={popoverZIndex}
           />
         </>
       ) : null}

@@ -39,6 +39,8 @@ export type FilesPreviewLayersProps = {
   onPickDir: () => Promise<string | null>;
   /** 用外部播放器打开某条视频 */
   onOpenExternal: (id: string) => void;
+  /** 设置里选定的外部播放器名称（跟设置列表走，如 IINA / TV） */
+  externalApp: string;
   /** 当前目录的图片条目 */
   imageItems: ImagePreviewItem[];
   /** 预览中的这张图是否已在待拖拽区（header 那颗按钮的「已加入」态） */
@@ -74,6 +76,7 @@ export type FilesPreviewLayersProps = {
 const FilesPreviewLayers = ({
   blocked,
   defaultFullscreen,
+  externalApp,
   imageActiveId,
   imageItems,
   imageStaged,
@@ -102,6 +105,7 @@ const FilesPreviewLayers = ({
       batched={videoStaged}
       blocked={blocked}
       defaultFullscreen={defaultFullscreen.video}
+      externalApp={externalApp}
       items={videoItems}
       onCapture={onCaptureVideo}
       onClose={onCloseVideo}

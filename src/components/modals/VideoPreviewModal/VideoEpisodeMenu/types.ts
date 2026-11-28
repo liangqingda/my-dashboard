@@ -17,4 +17,6 @@ export type VideoEpisodeMenuProps = {
   onChangeOpened?: (opened: boolean) => void;
   /** 条目省略 tip 固定深底浅字、不随主题反转 */
   tipDark?: boolean;
+  /** 弹层层级：程序坞窗口层级更高时由调用方抬高 */
+  zIndex?: number;
 };

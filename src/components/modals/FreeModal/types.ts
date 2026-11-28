@@ -36,6 +36,11 @@ export type FreeModalFullscreen = {
    * 按钮与回调都不给，只保留「当前是否铺满」这一层外观。
    */
   showToggle?: boolean;
+  /**
+   * 上报给程序坞的全屏态，默认跟随 `active`。
+   * 业务自己实现铺满（如视频的网页全屏）但不想让外壳也切成 Mantine 全屏时，用它单独上报。
+   */
+  reportActive?: boolean;
 };
 
 /**
@@ -165,6 +170,11 @@ export type FreeModalProps = {
   dock?: FreeModalDock;
   /** 是否把焦点锁在弹窗里，默认是 */
   trapFocus?: boolean;
+  /**
+   * 收起到程序坞前先执行（如退出整屏 / 网页全屏）：它会等 Promise 完成再测窗口落点，
+   * 避免按全屏时的几何位置做收起动画。
+   */
+  beforeMinimize?: () => Promise<void> | void;
   /** 是否垂直居中，默认是 */
   centered?: boolean;
   /**

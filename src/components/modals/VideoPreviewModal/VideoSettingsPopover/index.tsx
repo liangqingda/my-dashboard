@@ -78,6 +78,7 @@ const VideoSettingsPopover = ({
   seekStep,
   spaceMode,
   tipDark = false,
+  zIndex,
 }: VideoSettingsPopoverProps) => {
   /** 目录选择框打开中：按钮转圈并禁用，避免连点弹出两个系统框 */
   const [picking, setPicking] = useState<PickingTarget | null>(null);
@@ -172,6 +173,7 @@ const VideoSettingsPopover = ({
   return (
     <IconPopoverButton
       active={opened}
+      hint="视频设置"
       icon={<IconSettings size={ICON_SIZE} stroke={ICON_STROKE} />}
       label="视频设置"
       /* 弹层走 portal，拿不到弹窗高度：标准弹窗高 82dvh，封顶它的 80% ≈ 66dvh，超出在面板内部滚动 */
@@ -181,6 +183,7 @@ const VideoSettingsPopover = ({
       opened={opened}
       tipDark={tipDark}
       width={SETTINGS_PANEL_WIDTH}
+      zIndex={zIndex}
     >
       <div className={styles.panel}>
         <FreePanelGroup title="播放">

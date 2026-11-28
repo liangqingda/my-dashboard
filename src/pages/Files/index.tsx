@@ -296,6 +296,7 @@ const Files = () => {
           onToggleImage: toggleImage,
           onToggleVideo: toggleVideo,
           video: videoPreview,
+          videoApp,
           videoStaged,
         }}
       />

@@ -18,4 +18,6 @@ export type ImageListMenuProps = {
   onSelect: (id: string) => void;
   /** 条目省略 tip 固定深底浅字、不随主题反转 */
   tipDark?: boolean;
+  /** 弹层层级：程序坞窗口里抬到窗口之上 */
+  zIndex?: number;
 };

@@ -30,6 +30,12 @@ export type UseBrowserFullscreenOptions = {
   autoEnter?: boolean;
 };
 
+/**
+ * 同一时刻只允许一次 `requestFullscreen`：页面弹窗与程序坞窗口可能同时挂着，
+ * 两个 hook 各收到一次 F 会把请求叠在一起，后一次直接报 `Permissions check failed`。
+ */
+let fullscreenRequestInFlight = false;
+
 /** 浏览器全屏状态同步 + 主动退出全屏；失败不抛给调用方，只提示一次 */
 export const useBrowserFullscreen = (
   options: UseBrowserFullscreenOptions = {},
@@ -50,6 +56,8 @@ export const useBrowserFullscreen = (
     };
 
     document.addEventListener('fullscreenchange', sync);
+    // 挂载时可能已有别的弹窗占着整屏：先同步一次，别把自己当成「没全屏」
+    sync();
 
     return () => document.removeEventListener('fullscreenchange', sync);
   }, []);
@@ -80,9 +88,14 @@ export const useBrowserFullscreen = (
 
   const enter = useCallback(
     async (options: { silent?: boolean } = {}): Promise<void> => {
-      if (document.fullscreenElement !== null) {
+      if (
+        fullscreenRequestInFlight ||
+        document.fullscreenElement !== null
+      ) {
         return;
       }
+
+      fullscreenRequestInFlight = true;
 
       try {
         await document.documentElement.requestFullscreen();
@@ -98,6 +111,8 @@ export const useBrowserFullscreen = (
           message: getErrorMessage(error, '浏览器拒绝了这次全屏请求'),
           title: '全屏失败',
         });
+      } finally {
+        fullscreenRequestInFlight = false;
       }
     },
     [],

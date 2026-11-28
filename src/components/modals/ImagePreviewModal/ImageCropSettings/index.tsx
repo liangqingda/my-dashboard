@@ -36,6 +36,8 @@ export type ImageCropSettingsProps = {
   onChangeOpened: (opened: boolean) => void;
   /** 压在媒体画面上，提示固定深底浅字 */
   tipDark?: boolean;
+  /** 弹层层级：程序坞窗口里抬到窗口之上 */
+  zIndex?: number;
 };
 
 const ImageCropSettings = ({
@@ -44,6 +46,7 @@ const ImageCropSettings = ({
   onChangeOpened,
   opened,
   tipDark = false,
+  zIndex,
 }: ImageCropSettingsProps) => (
   <IconPopoverButton
     active={opened}
@@ -57,6 +60,7 @@ const ImageCropSettings = ({
     position="bottom"
     tipDark={tipDark}
     width={232}
+    zIndex={zIndex}
   >
     <FreePanelGroup title="裁剪后">
       <FreePanelField label="保存方式" wide>

@@ -39,6 +39,10 @@ export type VideoFooterActionsProps = {
   onCapture?: () => void;
   /** 用外部播放器打开当前视频；不传则没有这颗按钮 */
   onOpenExternal?: () => void;
+  /** 外部播放器名称（跟设置里选的应用走），只用于按钮提示 */
+  externalApp?: string;
+  /** 弹层层级：程序坞窗口里把设置 / 选集弹层抬到窗口之上 */
+  popoverZIndex?: number;
   /** 把当前视频加入 / 移出待拖拽区；不传则没有这颗按钮 */
   onToggleBatch?: () => void;
   /** 当前这一条已在待拖拽区：那颗按钮亮成强调色、文案改成「移出」 */

@@ -1,22 +1,8 @@
 /**
- * 视频预览弹窗：`FreeModal`（外壳）+ `FreeVideo`（播放器）的组合，B 站式布局——
- * 画面占满舞台，操作全部收进播放器底部控制栏：进度条独占上层，下层左侧前后 / 播放 / 时间，
- * 右侧选集（点击弹层）、删除、截图、外部打开、加入 / 移出待拖拽区、设置、网页全屏、整屏全屏。
- *
- * - header 只留标题与外壳关闭按钮，不再放业务操作；翻篇计数浮在舞台左上角；
- * - 键盘：空格按设置切播放 / 暂停或收进程序坞（`FreeModal` 的 `media` / `closeOnSpace`），
- *   `Enter` 截当前帧、`m` / `M` 静音，`[` / `]` 翻篇，`←` / `→` 默认按设置步长快进 / 后退
- *   （可在设置面板改成翻篇），`F` 整屏全屏；`Delete` 触发删除确认；设置面板或确认层开着时整组收掉；
- * - 设置面板：按「播放 / 截图 / 快捷键」分组，可改步长、方向键去向、空格去向、悬停预览帧大小
- *   与截图存放目录，全部键位双列列一遍；
- * - 控制栏的两颗箭头在播放键左右两侧，去向跟着「方向键去向」设置：快进 / 后退，或翻篇；
- * - **双击画面切整屏**（与 `F` 同一档）：单击那一下切成播放 / 暂停要等一个双击窗口，
- *   第二下到来就把这次播放 / 暂停作废，双击只换尺寸、播放态一点都不动；
- * - **header 与控制栏默认藏着**：打开就看到画面，鼠标一动浮出，静止 1s 收起（两层同一节奏，
- *   暂停也一样收起）；控制栏上挪指针只唤控制栏、不唤 header（操作播放不该顶出标题栏）；设置里可让它「打开即全屏」；
- * - 换条（按钮 / 选集 / `[` `]` 翻篇，以及删掉当前这条后顺位切到下一条）后左上角浮出一下「3 / 12」，
- *   1 秒后自己收掉（`PreviewCounter`）；
- * - `Esc` 在全屏里交给浏览器退出全屏，非全屏才是关窗。
+ * 视频预览弹窗：`FreeModal` + `FreeVideo` 的 B 站式布局，操作全部收进底部控制栏。
+ * 键盘：空格播放 / 收坞，`Enter` 截图，`m` 静音，`[` `]` 翻篇，`←` `→` 快进 / 后退（可改翻篇），
+ * `F` 整屏全屏，`Delete` 删除；双击画面切整屏，单击播放 / 暂停要等一个双击窗口。
+ * header 与控制栏默认藏着，指针活动才浮出；设置面板含步长、方向键去向、空格去向、预览帧与截图目录。
  */
 
 import type { CSSProperties } from 'react';
@@ -35,6 +21,7 @@ import { cx } from '@/utils/cx';
 
 import { useFrameCapture } from './hooks/useFrameCapture';
 import { useVideoSettings } from './hooks/useVideoSettings';
+import { useVideoViewport } from './hooks/useVideoViewport';
 import type { VideoPreviewModalProps } from './types';
 import { createVideoDock } from './utils/dock';
 import { seekTargetTime } from './utils/seek';
@@ -49,6 +36,7 @@ const VideoPreviewModal = ({
   defaultFullscreen = false,
   dockId,
   dockOrigin = 'page',
+  externalApp,
   items,
   onCapture,
   onClose,
@@ -74,9 +62,7 @@ const VideoPreviewModal = ({
   const [videoAspect, setVideoAspect] = useState(VIDEO_FALLBACK_ASPECT);
   /** 整屏全屏：走浏览器 Fullscreen API，占整块屏幕 */
   const { active: fullscreen, exit, toggle: toggleBrowserFullscreen } =
-    useBrowserFullscreen({
-      autoEnter: opened && defaultFullscreen,
-    });
+    useBrowserFullscreen({ autoEnter: opened && defaultFullscreen });
   const {
     setArrowMode,
     setCaptureDir,
@@ -90,10 +76,15 @@ const VideoPreviewModal = ({
   const index = items.findIndex((item) => item.id === activeId);
   const activeItem = index >= 0 ? items[index] : null;
 
-  /** 网页全屏：框体铺满视口（不调浏览器 Fullscreen API），偏好记住，与整屏全屏各记一份 */
-  const { viewportFullscreen } = settings;
-  const toggleViewportFullscreen = () =>
-    setViewportFullscreen(!viewportFullscreen);
+  /**
+   * 网页全屏：页面窗沿用设置里记住的偏好；程序坞窗固定普通尺寸，
+   * 窗内可临时铺满，收起前复位（见 `useVideoViewport`）。
+   */
+  const {
+    beforeMinimize, popoverZIndex, toggleViewportFullscreen, viewportFullscreen,
+  } = useVideoViewport({
+    dockOrigin, exit, fullscreen, settings, setViewportFullscreen,
+  });
 
   /** `←` / `→`：按设置的步长快进 / 后退；方向键交给它之后翻篇只剩方括号 */
   const seekBy = (direction: FreeModalSeekDirection) => {
@@ -104,8 +95,7 @@ const VideoPreviewModal = ({
     }
   };
 
-  const { capture, capturing, handleHoverFrameGrabberReady } =
-    useFrameCapture(videoRef, onCapture);
+  const { capture, capturing, handleHoverFrameGrabberReady } = useFrameCapture(videoRef, onCapture);
 
   /** 任一业务弹层开着：点画面只收弹层，不切播放 */
   const overlayOpen = settingsOpen || episodeOpen;
@@ -220,17 +210,11 @@ const VideoPreviewModal = ({
 
   /**
    * 程序坞描述：整个目录与当前段都进快照，换页 / 刷新后仍能重开；
-   * 整屏 / 网页全屏、业务弹层与删除确认开着时不让收（那些状态下框体不属于这一层）。
+   * 业务弹层与删除确认开着时不让收；全屏时允许收，收起前由 `beforeMinimize` 先退全屏。
    */
   const dock = createVideoDock({
-    activeId: activeItem.id,
-    id: dockId,
-    disabled:
-      blocked || settingsOpen || episodeOpen || fullscreen || viewportFullscreen,
-    items,
-    origin: dockOrigin,
-    storageScope,
-    title: activeItem.name,
+    activeId: activeItem.id, disabled: blocked || settingsOpen || episodeOpen, id: dockId,
+    items, origin: dockOrigin, storageScope, title: activeItem.name,
   });
 
   /*
@@ -243,6 +227,7 @@ const VideoPreviewModal = ({
    */
   return (
     <FreeModal
+      beforeMinimize={beforeMinimize}
       closeOnEscape={!fullscreen && !settingsOpen && !interactionBlocked}
       closeOnSpace={
         settings.spaceMode === 'close' && !settingsOpen && !interactionBlocked
@@ -256,6 +241,7 @@ const VideoPreviewModal = ({
       fullscreen={{
         active: fullscreen,
         onToggle: toggleBrowserFullscreen,
+        reportActive: fullscreen || viewportFullscreen,
         showToggle: false,
       }}
       headerOverlay={{
@@ -295,6 +281,7 @@ const VideoPreviewModal = ({
               batched={batched}
               browserFullscreen={fullscreen}
               capturing={capturing}
+              externalApp={externalApp}
               items={items}
               onCapture={
                 onCapture ? () => void capture(settings.captureDir) : undefined
@@ -309,6 +296,7 @@ const VideoPreviewModal = ({
               onToggleBatch={onToggleBatch}
               onToggleBrowserFullscreen={toggleBrowserFullscreen}
               onToggleViewportFullscreen={toggleViewportFullscreen}
+              popoverZIndex={popoverZIndex}
               settings={{
                 arrowMode: settings.arrowMode,
                 captureDir: settings.captureDir,

@@ -32,8 +32,11 @@ const RecordDetailModal = ({
   recordId,
   title,
 }: RecordDetailModalProps) => {
-  /** 全屏是记住的阅读偏好：关掉重开、换一条记录都不重置 */
-  const { fullscreen, toggle } = useModalFullscreen(RECORD_DETAIL_STORAGE_KEY);
+  /** 全屏是记住的阅读偏好：关掉重开、换一条记录都不重置；程序坞窗口不继承 */
+  const { fullscreen: storedFullscreen, toggle } = useModalFullscreen(
+    RECORD_DETAIL_STORAGE_KEY,
+  );
+  const fullscreen = dockOrigin === 'dock' ? false : storedFullscreen;
 
   /**
    * 程序坞描述：只存 ID 与标题，正文由恢复窗口按 ID 自取（列表摘要里的标题够撑起 header）；
@@ -53,6 +56,7 @@ const RecordDetailModal = ({
 
   return (
     <FreeModal
+      beforeMinimize={fullscreen ? toggle : undefined}
       closeButton
       closeLabel="关闭记录详情"
       closeOnEscape={!confirming}
@@ -63,7 +67,11 @@ const RecordDetailModal = ({
           : { message: '记录 ID 已复制', text: recordId }
       }
       dock={dock}
-      fullscreen={{ active: fullscreen, onToggle: toggle }}
+      fullscreen={{
+        active: fullscreen,
+        onToggle: dockOrigin === 'dock' ? undefined : toggle,
+        showToggle: dockOrigin !== 'dock',
+      }}
       headerTail={
         recordId === null || !onRequestDelete ? undefined : (
           <FreeIconAction

@@ -34,6 +34,7 @@ import FreeModal from '@/components/modals/FreeModal';
 import type { FreeModalDock } from '@/components/modals/FreeModal/types';
 import { useBrowserFullscreen } from '@/hooks/useBrowserFullscreen';
 import { useStoredField } from '@/hooks/useStoredField';
+import { DOCK_POPOVER_Z_INDEX } from '@/dock/constants';
 import { scopedStorageKey } from '@/utils/page-storage';
 
 import {
@@ -73,6 +74,9 @@ const ImagePreviewModal = ({
   const { active: fullscreen, exit, toggle } = useBrowserFullscreen({
     autoEnter: opened && defaultFullscreen,
   });
+
+  /** 程序坞窗口层级 1000，图片列表 / 裁剪设置弹层要抬到它上面 */
+  const popoverZIndex = DOCK_POPOVER_Z_INDEX;
 
   /** header 的弹层（图片列表 / 裁剪设置）是否开着：开着时 header 恒可见 */
   const [actionsOpen, setActionsOpen] = useState(false);
@@ -155,10 +159,10 @@ const ImagePreviewModal = ({
 
   /**
    * 程序坞描述：列表与当前张都进快照，换页 / 刷新后仍能重开这一组图；
-   * 裁剪与删除确认开着时不让收。
+   * 裁剪与删除确认开着时不让收；全屏时允许收，收起前先退全屏。
    */
   const dock: FreeModalDock = {
-    disabled: cropping || blocked || fullscreen,
+    disabled: cropping || blocked,
     id: dockId ?? `image-preview:${storageScope}:${activeItem.id}`,
     kind: 'image-preview',
     origin: dockOrigin,
@@ -176,6 +180,7 @@ const ImagePreviewModal = ({
 
   return (
     <FreeModal
+      beforeMinimize={exit}
       closeButton={!cropping}
       closeOnClickOutside={!cropping}
       closeOnEscape={!fullscreen && !blocked && !cropping}
@@ -207,6 +212,7 @@ const ImagePreviewModal = ({
           onSaveCrop={saveCrop}
           onSelect={onSelect}
           onToggleBatch={onToggleBatch ?? undefined}
+          popoverZIndex={popoverZIndex}
           tipDark
         />
       }

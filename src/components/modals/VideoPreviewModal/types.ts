@@ -58,6 +58,8 @@ export type VideoPreviewModalProps = {
    * 不传则 header 没有那颗按钮——组件不认识「IINA」或「文件在哪」，只把条目 id 交回去。
    */
   onOpenExternal?: (id: string) => void;
+  /** 设置里选定的外部播放器名称（IINA / TV 等），只用于按钮提示 */
+  externalApp?: string;
   /**
    * 把当前视频加入 / 移出调用方的待拖拽区；不传则控制栏没有那颗按钮。
    * 只报「动一下当前这一条」，自增还是移出由调用方按自己的 `batched` 决定。

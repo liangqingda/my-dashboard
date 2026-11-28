@@ -17,7 +17,7 @@ import styles from './index.scss';
  */
 const FilesOverlays = ({ modals, preview }: FilesOverlaysProps) => {
   const { deleteEntry, favorites, entryActions, wallpaper, ...modalRest } = modals;
-  const { image, video, ...previewRest } = preview;
+  const { image, video, videoApp, ...previewRest } = preview;
 
   return (
     <div className={styles.layers}>
@@ -49,6 +49,7 @@ const FilesOverlays = ({ modals, preview }: FilesOverlaysProps) => {
       <FilesPreviewLayers
         blocked={previewRest.blocked || wallpaper.request !== null}
         defaultFullscreen={previewRest.defaultFullscreen}
+        externalApp={videoApp}
         imageActiveId={image.activeId}
         imageItems={image.items}
         imageStaged={previewRest.imageStaged}

@@ -38,12 +38,14 @@
   页面弹窗是 `IconWindowMinimize`「收起到程序坞」；同 id 条目已经在程序坞里时，按钮自动换成
   `IconCircleMinus`「从程序坞移除」。`disabled` 时置灰但保留位置。`useDockMinimize` 负责
   「量框体 → 交给 Provider 编排动画」、`⌘M` 登记与移除；`origin: 'dock'` 再收起只回坞、不执行
-  `onClose`，否则页面状态会留一半。描述符契约与哪些弹窗不接见 `docs/dock.md`。
+  `onClose`，否则页面状态会留一半。
+  **只有 `origin === 'dock'` 或程序坞里已有同 id 条目的页面弹窗**，X / Esc / 遮罩 / 空格才收起回坞；
+  未收录的普通弹窗照常 `onClose`。描述符契约与哪些弹窗不接见 `docs/dock.md`。
 
 - **键盘口径统一在这里**（`hooks/useModalShortcuts`），业务弹窗不各自补快捷键：
-  - `Esc`：与 X 完全同一口径——能收起的弹窗先收回程序坞，不能收起才关窗；传了 `onRequestEscape`
+  - `Esc`：与 X 完全同一口径——已收录的弹窗先收回程序坞，未收录的走 `onClose`；传了 `onRequestEscape`
     就改走这一套监听——先执行它、这一下不关窗（窗内还有一层模式时先退模式，如图片预览的裁剪态）；
-  - **空格**：能收起到程序坞时**收回程序坞**（`onDismiss`，条目保留），否则关窗；传了
+  - **空格**：已收录时**收回程序坞**（`onDismiss`，条目保留），否则按 `closeOnSpace` 关窗；传了
     `media.onTogglePlay` 时改为播放 / 暂停，不关窗。都会 `preventDefault` 掉浏览器「空格 = 点击
     当前焦点按钮」——焦点常留在 header 图标上，不拦的话按空格会莫名翻到下一条 / 切了全屏；
     `closeOnSpace` 默认跟随 `closeOnEscape`；
@@ -62,6 +64,8 @@
   放行口径：带 ⌘ / Ctrl / Alt 的组合键不拦、正在输入（输入框 / 可编辑区）不拦、按住连发不算；
   翻页、方向键、全屏、静音、面板显隐、截图、复制与删除可由 `shortcutsEnabled` 整组收掉（加载中、上层浮层开着时），
   收掉时**连空格一起收**——上层确认层开着，底下的播放器不该还在响应播放 / 暂停。
+  程序坞窗口压在这一层上时，`FreeModal` 还会把快捷键与焦点陷阱让给顶层，避免两扇窗同时按 `F`
+  去请求浏览器 Fullscreen API。
   复制与删除的键位收在外壳：同一操作只要有两扇弹窗都要用，键位就必须只有一份（留在一处就会出现
   「这边能用、那边不能用」）；具体复制什么、删除时怎么确认仍归调用方。
 - **初始焦点**：内容最前面固定放一个 `FocusTrap.InitialFocus`（`data-autofocus` 隐藏节点，
@@ -83,7 +87,8 @@
 
 | prop | 说明 |
 | --- | --- |
-| `opened` / `onClose` | 开合。能收起到程序坞的弹窗，**X / Esc / 遮罩 / 空格全部先收回程序坞**，条目保留；「从程序坞移除」才删。不能收起的弹窗 X / Esc / 遮罩才走 `onClose` |
+| `opened` / `onClose` | 开合。已收录的弹窗 **X / Esc / 遮罩 / 空格先收回程序坞**，条目保留；「从程序坞移除」才删。未收录的普通弹窗 X / Esc / 遮罩走 `onClose` |
+| `beforeMinimize` | 收起前先做的动作（可异步）：全屏 / 网页全屏先退出，完成后再量落点；程序坞恢复窗因此总能回到普通尺寸 |
 | `title` | header 标题（`ReactNode`），通常是文件名 / 条目名 |
 | `nav` | `FreeModalNav`：`index`（从 1 起）、`total`、`onPrevious` / `onNext`（到头传 `null` 置灰）、`previousLabel` / `nextLabel`、`shortcutHint`（只进 tooltip）、`disabled`（整组禁用，如编辑中） |
 | `headerActions` | 第一组操作（阅读类：复制、筛选、刷新…） |
@@ -96,13 +101,13 @@
 | `zIndex` | 层级，默认走组件库的弹窗档；要压在另一扇已打开的弹窗之上时显式抬高（二次确认层由 `ConfirmModal` 默认给 `320`） |
 | `onCapture` | `Enter` 的动作（视频预览截当前帧）；不传则该键不动作 |
 | `onSeek` | `(direction: 'backward' \| 'forward') => void`；传了之后 `←` / `→` 交给它（视频快进 / 后退），翻篇只剩 `[` / `]`。程序坞恢复窗口有多个条目时方向键先切程序坞，单条目才让回给媒体 |
-| `fullscreen` | `{ active, onToggle?, showToggle? }`；不传则没有全屏外观与按钮。`showToggle` 默认 `true`，传 `false` 只收掉 header 按钮；`onToggle` 给了的话 `F` 键照常生效（进编辑这类不该换尺寸的场景，回调与按钮都不给） |
+| `fullscreen` | `{ active, onToggle?, showToggle?, reportActive? }`；不传则没有全屏外观与按钮。`showToggle` 默认 `true`，传 `false` 只收掉 header 按钮；`onToggle` 给了的话 `F` 键照常生效（进编辑这类不该换尺寸的场景，回调与按钮都不给）。`reportActive` 单独上报程序坞全屏态，默认跟随 `active`，业务自管铺满时用 |
 | `copy` | `{ text, message }`；传了就有 `C` 复制键（`text` 进剪贴板，`message` 是成功提示），与 header 的复制按钮同一口径 |
 | `onRequestDelete` | 传了就有 `Delete` / `Backspace` 删除键；只应打开二次确认层，不直接删 |
 | `onRequestEscape` | 传了就把 `Esc` 交给它（只执行动作、这一下不关窗）：窗内还有一层模式时用，如图片预览先退裁剪 |
 | `extraKeys` | 业务自己的单键动作（`{ c: 开合收藏面板 }` 这类，键名小写）；只在本窗开着时生效，业务侧不自己监听 keydown |
 | `closeButton` | 是否显示关闭按钮，默认显示（编辑态这类「关不掉」的场景传 `false`） |
-| `closeOnClickOutside` | 普通弹窗点遮罩是否关窗，默认 `true`。带 `dock` 的弹窗不看这一项：遮罩只负责收进程序坞；不可收起时这一下不动作，绝不误关。遮罩点击由外壳自己接管，窗口拿回焦点后 400ms 内的那一下只当「回焦」 |
+| `closeOnClickOutside` | 普通弹窗点遮罩是否关窗，默认 `true`。已收录的弹窗不看这一项：遮罩只负责收进程序坞；未收录时仍按这一项正常关闭，绝不误收 |
 | `closeOnEscape` / `closeOnSpace` / `trapFocus` | Esc 是否关窗、空格是否允许收起 / 关窗（默认跟随 `closeOnEscape`）；上层浮层开着时由调用方关掉，避免一下全关 / 焦点被抢、是否锁焦点 |
 | `shortcutsEnabled` | 默认 `true`；加载中、上层浮层开着时传 `false`，一次收掉翻页、方向键、`F` 全屏、`M` 静音、`S` 面板、`C` 复制与删除键（空格也一并收；只关窗的 `closeOnSpace` 另把关） |
 | `size` / `centered` / `closeLabel` | 宽度档（默认 `min(980px, 92vw)`）、是否垂直居中、关闭按钮的 `aria-label` |

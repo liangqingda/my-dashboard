@@ -1,9 +1,6 @@
 /**
- * 弹窗外壳：Mantine `Modal` 加项目统一外观。
- *
- * 框体、紧凑 header（翻页 + 计数 + 标题 + 操作组 + 全屏 + 关闭）与正文区只在这里定义一次；
- * 业务弹窗通过 props 给标题、操作与正文，不再各自拼一遍 `Modal`。
- * 全屏状态由调用方持有（正文排版要跟着变），这里只读 `active`。
+ * 弹窗外壳：Mantine `Modal` 加项目统一外观。框体、header 与正文区只在这里定义一次；
+ * 业务弹窗通过 props 给标题、操作与正文。全屏状态由调用方持有，这里只读 `active`。
  */
 
 import { FocusTrap, Modal } from '@mantine/core';
@@ -24,6 +21,7 @@ import DockAction from './DockAction';
 import { useAutoHideHeader } from './hooks/useAutoHideHeader';
 import { useDockNav } from './hooks/useDockNav';
 import { useDockMinimize } from './hooks/useDockMinimize';
+import { useModalDockState } from './hooks/useModalDockState';
 import { useOverlayFocusGuard } from './hooks/useOverlayFocusGuard';
 import { useModalShortcuts } from './hooks/useModalShortcuts';
 import type { FreeModalProps } from './types';
@@ -37,10 +35,7 @@ const STEP_ICON_SIZE = 16, ICON_STROKE = 1.9;
 /** 翻页的默认快捷键提示，只进 tooltip */
 const NAV_SHORTCUT_HINT = '[ / ← · ] / →';
 
-/**
- * header 那一行的选择器：给「指针停在 header 上就别自动收起」用（class 是哈希后的，只能由本组件算）。
- * 业务侧反向用得上——指针跑到 header 上时，把播放器控制栏这类同层 chrome 当场收掉。
- */
+/** header 选择器：给「指针停在 header 上就别自动收起」用，业务侧也拿它收播放器控制栏 */
 export const MODAL_HEADER_SELECTOR = `.${styles.header}`;
 
 /**
@@ -51,6 +46,7 @@ export const MODAL_CONTENT_SELECTOR = `.${styles.content}`;
 
 /** 弹窗外壳：业务侧只管标题、右侧操作与正文，header 排布与固定按钮都在这里 */
 const FreeModal = ({
+  beforeMinimize,
   bodyClassName,
   centered = true,
   children,
@@ -96,19 +92,16 @@ const FreeModal = ({
   const onToggleFullscreen = fullscreen?.onToggle;
 
   /** 收起到程序坞：按钮位置固定在关闭按钮左边，动作与 `⌘M` 登记共用一份 */
-  const {
-    canMinimize,
+  const { canMinimize, canRemove, minimize: minimizeToDock, remove: removeFromDock } =
+    useDockMinimize({ beforeMinimize, dock, onClose, opened });
+  /** 只有已收录的窗关闭才回坞；普通页面弹窗照常关闭 */
+  const { backgroundDockWindow, docked } = useModalDockState({
     canRemove,
-    minimize: minimizeToDock,
-    remove: removeFromDock,
-  } = useDockMinimize({
     dock,
-    onClose,
+    fullscreenActive: fullscreen?.reportActive ?? (fullscreen?.active === true),
     opened,
   });
-  const canDismissToDock = canMinimize && dock?.disabled !== true;
-  /** 能收起的弹窗，所有关闭动作都先收回程序坞；不能再收时才真正关窗 */
-  const closeAction = canDismissToDock ? minimizeToDock : onClose;
+  const closeAction = docked ? minimizeToDock : onClose;
   const headerNav = useDockNav(dock, nav);
   const effectiveZIndex =
     zIndex ?? (dock?.origin === 'dock' ? DOCK_WINDOW_Z_INDEX : undefined);
@@ -141,14 +134,14 @@ const FreeModal = ({
     closeOnSpace: closeOnSpace ?? closeOnEscape,
     copy: copy?.text,
     copyMessage: copy?.message,
-    disabled: shortcutsEnabled === false,
+    disabled: shortcutsEnabled === false || backgroundDockWindow,
     enabled: opened,
     arrowNav: dock?.origin === 'dock' ? headerNav : undefined,
     extraKeys,
     nav,
     onCapture,
     onClose: closeAction,
-    onDismiss: dock === undefined ? undefined : closeAction,
+    onDismiss: docked ? closeAction : undefined,
     onRequestDelete,
     onRequestEscape,
     onSeek,
@@ -164,11 +157,9 @@ const FreeModal = ({
       return;
     }
 
-    // 能收起的弹窗：遮罩只负责收回程序坞，绝不在这里关掉条目
-    if (dock !== undefined) {
-      if (canDismissToDock) {
-        minimizeToDock();
-      }
+    // 已收录的窗：遮罩只负责收回程序坞；没收录的普通弹窗仍按 closeOnClickOutside 关闭
+    if (docked) {
+      minimizeToDock();
 
       return;
     }
@@ -323,7 +314,7 @@ const FreeModal = ({
           ? { duration: 0 }
           : { duration: 140, transition: 'fade' }
       }
-      trapFocus={trapFocus}
+      trapFocus={trapFocus && !backgroundDockWindow}
       withCloseButton={closeButton}
       zIndex={effectiveZIndex}
     >

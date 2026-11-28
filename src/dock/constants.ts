@@ -12,6 +12,9 @@ export const DOCK_Z_INDEX = 1010;
 /** 恢复出来的窗口的层级：压过页面与既有弹窗（含服务页全屏拖拽 700） */
 export const DOCK_WINDOW_Z_INDEX = 1000;
 
+/** 弹窗内就近弹层的层级：压过程序坞窗口与程序坞条，又不盖住 tooltip */
+export const DOCK_POPOVER_Z_INDEX = 1020;
+
 /** 飞入 / 飞出过程中那一层克隆的层级：比程序坞还高，落点才看得见 */
 export const DOCK_FLY_Z_INDEX = 1150;
 

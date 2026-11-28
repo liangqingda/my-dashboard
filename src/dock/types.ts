@@ -93,6 +93,12 @@ export type DockContextValue = {
   receivingIds: readonly string[];
   /** 当前真正展开着的条目 id（程序坞里画运行小点用） */
   activeEntryId: string | null;
+  /** 当前打开的全屏弹窗数量：CSS 全屏与浏览器全屏都算 */
+  fullscreenCount: number;
+  /** 浏览器是否处于原生全屏：程序坞条与右下角控件整个让开 */
+  nativeFullscreen: boolean;
+  /** 弹窗上报自己的全屏态；`id` 必须稳定，卸载 / 退出时传 false */
+  reportFullscreen: (id: string, active: boolean) => void;
   /** 把一扇窗收进程序坞；`sourceEl` 是窗口框体或整张瓦片，用来做飞入动画 */
   minimize: (descriptor: DockDescriptor, sourceEl: HTMLElement | null) => void;
   /** 不经弹窗，直接把一条快照收进程序坞；`sourceEl` 是整张瓦片，用来做飞入动画 */
