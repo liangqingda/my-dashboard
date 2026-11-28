@@ -11,16 +11,15 @@ import { notifications } from '@mantine/notifications';
 import { getErrorMessage } from '@/utils/error';
 
 import type {
-  DeletedNoteResult,
   NoteDeleteMode,
   NoteSummary,
   UseActiveNoteResult,
 } from '../types';
 import {
-  deleteEnglishNote,
-  fetchEnglishNote,
-  saveEnglishNote,
-} from '../utils/notes-api';
+  deleteEnglishNoteWithNotice,
+  saveEnglishNoteWithCommitNotice,
+} from '../utils/note-actions';
+import { fetchEnglishNote } from '../utils/notes-api';
 
 /** 取数失败时的兜底文案 */
 const READ_ERROR_FALLBACK = '读取笔记正文失败';
@@ -41,85 +40,6 @@ type UseActiveNoteParams = {
   /** 一篇被删掉了，交回列表把它摘掉 */
   onDeleted: (name: string) => void;
 };
-
-/** 删除结果的第一段：这一篇删掉了什么 / 留住了什么 */
-const describeDeletedHead = ({
-  noteDeleted,
-  recordDeleted,
-  recordError,
-  recordKept,
-}: DeletedNoteResult): string => {
-  if (recordKept) {
-    return '笔记已删除，学习记录已保留';
-  }
-
-  if (noteDeleted && recordDeleted) {
-    return '笔记与学习记录已删除';
-  }
-
-  if (noteDeleted) {
-    return recordError
-      ? `笔记已删除，但学习记录删除失败：${recordError}`
-      : '笔记已删除（没有找到对应的学习记录）';
-  }
-
-  if (recordDeleted) {
-    return '学习记录已删除，笔记保留';
-  }
-
-  return '没有删除任何内容';
-};
-
-/** 删除结果的后一段：提交 / 推送到了哪一步；没提交就没有这一段 */
-const describeDeletedCommit = ({
-  commitError,
-  commitHash,
-  pushError,
-}: DeletedNoteResult): string[] => {
-  if (commitError) {
-    return [`自动提交失败：${commitError}`];
-  }
-
-  if (!commitHash) {
-    return [];
-  }
-
-  return [
-    `已提交 ${commitHash}`,
-    pushError ? `未推送：${pushError}` : '已推送到远端',
-  ];
-};
-
-/** 提示的颜色：记录没删成是错误，提交 / 推送没成是警告，其余算成功 */
-const describeDeletedColor = ({
-  recordError,
-  commitError,
-  pushError,
-}: DeletedNoteResult): string => {
-  if (recordError) {
-    return 'red';
-  }
-
-  return commitError || pushError ? 'orange' : 'teal';
-};
-
-/**
- * 删除成功的提示：说清删了什么、提交推送到哪一步。
- *
- * 三件事都可能是「部分成功」：md 删了但记录没删成、提交失败、提交成功但推送失败。
- * 一条「已删除」盖过去，用户会以为远端也干净了。
- */
-const describeDeleted = (
-  result: DeletedNoteResult,
-): {
-  message: string;
-  color: string;
-} => ({
-  color: describeDeletedColor(result),
-  message: [describeDeletedHead(result), ...describeDeletedCommit(result)].join(
-    '；',
-  ),
-});
 
 /** 两条摘要是否完全一致：一致就不用回灌列表，省一次整份看板的重算与重渲染 */
 const isSameSummary = (current: NoteSummary, next: NoteSummary): boolean =>
@@ -267,7 +187,10 @@ export const useActiveNote = ({
         return {};
       }
 
-      const saved = await saveEnglishNote(active.name, markdown);
+      const result = await saveEnglishNoteWithCommitNotice(
+        active.name,
+        markdown,
+      );
 
       try {
         await readActive(active.name);
@@ -275,9 +198,7 @@ export const useActiveNote = ({
         // 保存已经成功，重取失败只是这一轮没刷新到最新正文
       }
 
-      return saved.commitError
-        ? { notice: `自动提交失败：${saved.commitError}` }
-        : {};
+      return result;
     },
     [active, readActive],
   );
@@ -305,7 +226,7 @@ export const useActiveNote = ({
       }
 
       const { name } = active;
-      const deleted = await deleteEnglishNote(name, mode);
+      const deleted = await deleteEnglishNoteWithNotice(name, mode);
 
       close();
 
@@ -313,10 +234,6 @@ export const useActiveNote = ({
       if (deleted.noteDeleted) {
         onDeleted(name);
       }
-
-      const { color, message } = describeDeleted(deleted);
-
-      notifications.show({ color, message, title: '已删除' });
     },
     [active, close, onDeleted],
   );

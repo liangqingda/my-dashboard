@@ -7,12 +7,9 @@
  */
 
 import { useState } from 'react';
-import { notifications } from '@mantine/notifications';
 
 import { usePreviewDockActions } from '@/components/modals/PreviewDockActions/hooks/usePreviewDockActions';
 import VideoPreviewModal from '@/components/modals/VideoPreviewModal';
-import { getErrorMessage } from '@/utils/error';
-import { openFileExternally } from '@/utils/open-file';
 
 import DeleteEntryConfirm from '@/pages/Files/DeleteEntryConfirm';
 
@@ -35,24 +32,15 @@ const VideoWindowBody = ({
   const [switchTick, setSwitchTick] = useState(0);
   const dockActions = usePreviewDockActions();
   const pageActions = dockActions?.video;
+  const externalApp = pageActions?.externalApp ?? entry.snapshot.externalApp;
   const fallback = useDockVideoActions({
     activeId,
+    externalApp,
     initialItems,
     onRequestClose,
     setActiveId,
     setSwitchTick,
   });
-  const externalApp = pageActions?.externalApp ?? entry.snapshot.externalApp;
-  const openExternal =
-    pageActions?.onOpenExternal ??
-    ((id: string) => {
-      void openFileExternally(id, externalApp).catch((error: unknown) => {
-        notifications.show({
-          color: 'red',
-          message: getErrorMessage(error, '外部打开失败'),
-        });
-      });
-    });
   const blocked =
     dockActions?.blocked === true || fallback.deleteConfirmOpen;
 
@@ -67,7 +55,7 @@ const VideoWindowBody = ({
         items={fallback.items}
         onCapture={pageActions?.onCapture ?? fallback.onCapture}
         onClose={onRequestClose}
-        onOpenExternal={openExternal}
+        onOpenExternal={pageActions?.onOpenExternal ?? fallback.onOpenExternal}
         onPickDir={pageActions?.onPickDir ?? fallback.onPickDir}
         onRequestDelete={pageActions?.onRequestDelete ?? fallback.onRequestDelete}
         onSelect={(id) => {

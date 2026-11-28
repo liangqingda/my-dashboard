@@ -4,7 +4,7 @@
  * 「列表 + 选中项」的通用部分走 `usePreviewList`。
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import type {
   ImageCropRequest,
@@ -13,8 +13,9 @@ import type {
 } from '@/components/modals/ImagePreviewModal/types';
 
 import type { DirListing, FileEntry } from '../types';
-import { cropImage, imageContentUrl } from '../utils/files-api';
+import { imageContentUrl } from '../utils/files-api';
 
+import { useImageCropSave } from './useImageCropSave';
 import { usePreviewList } from './usePreviewList';
 
 /** 图片预览 hook 的入参 */
@@ -59,11 +60,8 @@ export const useImagePreview = (
   { onSaved }: UseImagePreviewOptions = {},
 ): UseImagePreviewResult => {
   const list = usePreviewList(listing, 'image');
-  /**
-   * 图片地址的版本号：覆盖源文件后路径没变，浏览器不会自己重取，
-   * 换个查询值让正在看的这张重新加载；另存模式不动它。
-   */
-  const [version, setVersion] = useState(0);
+  /** 裁剪落盘与地址版本和坞窗共用同一份动作 */
+  const { cropImage: saveCrop, version } = useImageCropSave({ onSaved });
 
   /** 条目只在图片列表或地址版本变化时重算 */
   const items = useMemo(
@@ -74,21 +72,6 @@ export const useImagePreview = (
         src: `${imageContentUrl(file.path)}${version > 0 ? `&v=${version}` : ''}`,
       })),
     [list.items, version],
-  );
-
-  const saveCrop = useCallback(
-    async (request: ImageCropRequest): Promise<ImageCropResult> => {
-      const result = await cropImage(request);
-
-      if (result.mode === 'replace') {
-        setVersion((prev) => prev + 1);
-      } else {
-        await onSaved?.();
-      }
-
-      return result;
-    },
-    [onSaved],
   );
 
   return {

@@ -4,7 +4,6 @@ import { notifications } from '@mantine/notifications';
 import { useMounted } from '@/hooks/useMounted';
 import { getErrorMessage } from '@/utils/error';
 
-import type { FileEntry, FolderEntry } from '../types';
 import { deleteEntry } from '../utils/files-api';
 
 /** 等待删除的一条目：类型决定确认弹窗与成功通知文案 */
@@ -17,38 +16,37 @@ export type DeletingEntry = {
   itemCount?: number;
 };
 
+/** 删除条目编排的入参 */
+export type EntryDeleteParams = {
+  /**
+   * 按路径取确认层要展示的条目；路径已不在当前列表里时返回 null。
+   * 文件页从目录清单里取，坞窗从快照条目的本地列表里取，两边共用同一套删除流程。
+   */
+  resolveEntry: (path: string) => DeletingEntry | null;
+  /** 删除成功后的数据刷新；坞窗已在 `onDeleted` 更新本地列表时传空实现 */
+  reload: () => Promise<void> | void;
+  /** 删除成功、刷新之前通知一次：预览层据此切到下一条，而不是等列表刷新后自己关窗 */
+  onDeleted?: (path: string) => void;
+};
+
 /**
  * 条目删除编排：记录等待确认删除的条目与请求态，确认后调删除接口并静默刷新列表。
  * 同名冲突 / 不存在等失败由接口收口，这里弹通知；弹窗开关与确认动作都交回页面层接线。
+ *
+ * 文件页与程序坞预览窗共用这一份：区别只在「路径从哪份列表解析」和「删除后怎么刷新」。
  */
-export const useEntryDelete = (
-  folders: FolderEntry[],
-  files: FileEntry[],
-  reload: () => Promise<void>,
-  /** 删除成功、重读列表之前通知一次：预览层据此切到下一条，而不是等列表刷新后自己关窗 */
-  onDeleted?: (path: string) => void,
-) => {
+export const useEntryDelete = ({
+  resolveEntry,
+  reload,
+  onDeleted,
+}: EntryDeleteParams) => {
   const [deletingPath, setDeletingPath] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const mounted = useMounted();
 
   /** 等待删除的条目；路径已不在列表里时按 null 收口，弹窗随之关闭 */
-  const matchFolder = folders.find((folder) => folder.path === deletingPath);
-  const matchFile = matchFolder
-    ? null
-    : files.find((file) => file.path === deletingPath) ?? null;
-
-  let deletingEntry: DeletingEntry | null = null;
-
-  if (matchFolder) {
-    deletingEntry = {
-      name: matchFolder.name,
-      kind: 'folder',
-      itemCount: matchFolder.itemCount,
-    };
-  } else if (matchFile) {
-    deletingEntry = { name: matchFile.name, kind: 'file' };
-  }
+  const deletingEntry =
+    deletingPath === null ? null : resolveEntry(deletingPath);
 
   /** 点瓦片上的删除按钮：记下目标，先弹二次确认 */
   const requestDelete = useCallback(

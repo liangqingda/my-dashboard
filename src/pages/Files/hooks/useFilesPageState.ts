@@ -94,10 +94,29 @@ export const useFilesPageState = () => {
   /** 设为桌面墙纸：列表瓦片的 hover 按钮与预览 header 共用这一套确认流程 */
   const wallpaper = useWallpaper();
   /** 删除条目：整份结果也给浮层层复用（弹窗的字段从它挑） */
-  const entryDelete = useEntryDelete(folders, allFiles, reload, (path) => {
+  const entryDelete = useEntryDelete({
+    // 确认层只认路径；文件夹 / 文件从当前目录清单里解析
+    resolveEntry: (path) => {
+      const folder = folders.find((candidate) => candidate.path === path);
+
+      if (folder) {
+        return {
+          kind: 'folder',
+          name: folder.name,
+          itemCount: folder.itemCount,
+        };
+      }
+
+      const file = allFiles.find((candidate) => candidate.path === path);
+
+      return file ? { kind: 'file', name: file.name } : null;
+    },
+    reload,
     // 删掉的正好是预览中的那一张：先切到下一条（没有了才关窗）
-    videoPreview.skipDeletedVideo(path);
-    imagePreview.skipDeletedImage(path);
+    onDeleted: (path) => {
+      videoPreview.skipDeletedVideo(path);
+      imagePreview.skipDeletedImage(path);
+    },
   });
   const { deletingEntry, requestDelete, resetDelete } = entryDelete;
 

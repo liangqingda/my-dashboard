@@ -7,7 +7,6 @@
  */
 
 import { useCallback, useMemo, useState } from 'react';
-import { notifications } from '@mantine/notifications';
 
 import MarkdownPreviewModal from '@/components/modals/MarkdownPreviewModal';
 import type {
@@ -21,10 +20,10 @@ import { createNoteRemove } from '@/pages/EnglishNotes/constants';
 import { useNotePreviewFilter } from '@/pages/EnglishNotes/hooks/useNotePreviewFilter';
 import type { NoteDeleteMode } from '@/pages/EnglishNotes/types';
 import {
-  deleteEnglishNote,
-  fetchEnglishNote,
-  saveEnglishNote,
-} from '@/pages/EnglishNotes/utils/notes-api';
+  deleteEnglishNoteWithNotice,
+  saveEnglishNoteWithCommitNotice,
+} from '@/pages/EnglishNotes/utils/note-actions';
+import { fetchEnglishNote } from '@/pages/EnglishNotes/utils/notes-api';
 
 import type { DockEntry, DockWindowProps } from '../types';
 
@@ -54,13 +53,8 @@ const MarkdownWindowBody = ({
     localMarkdown ?? actions?.markdown ?? snapshotMarkdown;
 
   const saveFallback = useCallback(
-    async (next: string): Promise<{ notice?: string }> => {
-      const saved = await saveEnglishNote(title, next);
-
-      return saved.commitError
-        ? { notice: `自动提交失败：${saved.commitError}` }
-        : {};
-    },
+    (next: string): Promise<{ notice?: string }> =>
+      saveEnglishNoteWithCommitNotice(title, next),
     [title],
   );
 
@@ -77,8 +71,7 @@ const MarkdownWindowBody = ({
   const deleteFallback = useMemo(
     () =>
       createNoteRemove(async (mode: NoteDeleteMode) => {
-        await deleteEnglishNote(title, mode);
-        notifications.show({ color: 'teal', message: '已删除', title: '已删除' });
+        await deleteEnglishNoteWithNotice(title, mode);
         onRequestClose();
       }),
     [onRequestClose, title],

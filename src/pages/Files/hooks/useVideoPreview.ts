@@ -4,26 +4,20 @@
  * 「列表 + 选中项」的通用部分走 `usePreviewList`。
  */
 
-import { useCallback, useMemo } from 'react';
-import { notifications } from '@mantine/notifications';
+import { useMemo } from 'react';
 
 import type {
   VideoPreviewCaptureReceipt,
   VideoPreviewItem,
 } from '@/components/modals/VideoPreviewModal/types';
-import { useMounted } from '@/hooks/useMounted';
-import { getErrorMessage } from '@/utils/error';
 
 import type { DirListing, FileEntry, VideoOpenMode } from '../types';
-import {
-  captureVideoFrame,
-  pickPickedDir,
-  videoContentUrl,
-} from '../utils/files-api';
+import { videoContentUrl } from '../utils/files-api';
 import { fileThumbUrl } from '../utils/media-thumbs';
-import { openFileExternally } from '../utils/video-api';
 
+import { useOpenExternal } from './useOpenExternal';
 import { usePreviewList } from './usePreviewList';
+import { useVideoCapture } from './useVideoCapture';
 
 /** 视频预览 hook 的返回 */
 export type UseVideoPreviewResult = {
@@ -71,7 +65,10 @@ export const useVideoPreview = (
   { videoApp, videoOpenMode }: UseVideoPreviewOptions,
 ): UseVideoPreviewResult => {
   const list = usePreviewList(listing, 'video');
-  const mounted = useMounted();
+  const { captureFrame, pickMediaDir } = useVideoCapture({
+    defaultDir: listing?.path ?? null,
+  });
+  const openExternal = useOpenExternal();
 
   /** 条目只在视频列表变化时重算 */
   const items = useMemo(
@@ -85,47 +82,6 @@ export const useVideoPreview = (
     [list.items],
   );
 
-  /** 中间件写盘后回文件名：提示里带上目标目录与文件名，用户能直接去找 */
-  const captureFrame = useCallback(async (
-    dataUrl: string,
-    captureDir: string,
-  ): Promise<VideoPreviewCaptureReceipt> => {
-    const name = await captureVideoFrame(dataUrl, captureDir);
-    const target = captureDir.length > 0 ? captureDir : '桌面';
-
-    return { message: `已保存到${target}：${name}` };
-  }, []);
-
-  /**
-   * 外部打开：把解码交给本地播放器（IINA / mpv 的硬解与直接读盘比浏览器快得多）。
-   * 提示里区分「IINA」与「系统默认」，失败也给原因，不让按钮点了没反应。
-   */
-  const openExternal = useCallback((id: string, appName?: string) => {
-    void openFileExternally(id, appName)
-      .then((app) => {
-        if (!mounted.current) {
-          return;
-        }
-
-        notifications.show({
-          message:
-            app === 'default'
-              ? '已用系统默认播放器打开这个视频'
-              : `已用 ${app} 打开这个视频`,
-        });
-      })
-      .catch((error: unknown) => {
-        if (!mounted.current) {
-          return;
-        }
-
-        notifications.show({
-          color: 'red',
-          message: getErrorMessage(error, '外部打开失败'),
-        });
-      });
-  }, [mounted]);
-
   /** 点视频：按设置分流——外部模式直接把文件交给播放器，否则在弹窗里播放 */
   const openVideo = (file: FileEntry) => {
     if (videoOpenMode === 'external') {
@@ -136,13 +92,6 @@ export const useVideoPreview = (
 
     list.open(file);
   };
-
-  /** 选截图目录：默认从当前目录弹起，用户取消不当作失败 */
-  const pickMediaDir = useCallback(async (): Promise<string | null> => {
-    const picked = await pickPickedDir(listing?.path ?? null);
-
-    return 'path' in picked ? picked.path : null;
-  }, [listing?.path]);
 
   return {
     activeId: list.activeId,
