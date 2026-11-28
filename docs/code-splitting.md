@@ -1,69 +1,38 @@
-# 代码拆分与命名
+# 代码拆分、命名与引用：本项目落点
 
 通用判据（五维归位、公共化边界、别名与跨模块引用）见 `best-react-code` 的《分层拆分》
-《公共化边界：UI 与逻辑分开判》《别名与跨模块引用》。本文件只写本项目落点与命名，不重复判据。
+《公共化边界：UI 与逻辑分开判》《别名与跨模块引用》。本文件只回答「在这个项目里放哪个文件、
+文件叫什么、由哪条机器检查拦」，不重复判据。
 
 ## 页面代码就近放
 
 页面代码写在 `src/pages/<Page>/` 里，页面自己的组件、hook、工具函数都放该页面目录下；只有
 **真正跨页面复用**的才上提到 `src/components`（组件）或 `src/utils`（纯函数）。
 
-## 五个维度
+## 本项目五维落点
 
-属于哪类就落到哪个文件 / 目录，非公共的就近放在用它的目录里：
+先按 skill 的五维与公共化边界判断归属，再按本表落到本项目的具体路径：
 
-| 维度 | 放哪 | 判据 |
+| 维度 | 本项目落点 | 本项目附加要求 |
 | --- | --- | --- |
-| 类型 | `types.ts` | 跨文件共享的 type / interface，不放组件文件里 |
-| 纯函数 | `utils.ts`，多了建 `utils/` 目录按主题拆多个文件 | 无 React 依赖；同一逻辑出现两处即上提 |
+| 类型 | `types.ts` | 跨文件共享的 type / interface 不放组件文件里 |
+| 纯函数 | `utils.ts`，多了建 `utils/` 目录按主题拆多个文件 | 无 React 依赖；跨页复用先按 skill 判 |
 | 副作用 / 状态 | `hooks/`，一个 hook 一个文件（要写说明时提升为 `hooks/<hook>/index.ts` + `README.md`） | 需要 useEffect / useState / 订阅 |
-| 展示单元 | 一个组件一个目录：`<name>/index.tsx` + `index.scss` | 能在别处复用的 UI 片段 |
+| 展示单元 | 一个组件一个目录：`<name>/index.tsx`（有自己样式规则时再加 `index.scss`） | 页面目录的 `index.scss` 由 `check-structure` 强制 |
 | 常量 | `constants.ts` | 魔法数字、文案、插件数组、存储键 |
 
-判据只看「这段东西属哪个维度、是否跨文件共享」，与现有文件怎么摆无关。
+本表只回答「放这个项目的哪」，不重新定义五维判据；现有文件怎么摆不参与判断。
 
-## 说明文档跟着代码走
+## 本项目目录与文件形态
 
-**只有跨文件的约定与流程才进 `docs/`**；某个组件 / hook / 页面自己的规格与说明写在它自己的目录
-里，随代码一起改、一起删。
-
-| 对象 | 放哪 |
-| --- | --- |
-| 组件规格（契约、行为细节、样式约定） | `src/components/<分类>/<Name>/README.md`；页面自己的业务组件同理放页面目录 |
-| hook 说明（触发条件、竞态处理、为什么这么写） | 该 hook 的目录：`hooks/use-notes/index.ts` + `README.md` |
-| 跨组件 / 跨页面的约定与流程（本文件、布局、复用、自检…） | `docs/` 对应文件 |
-
-hook 默认一个文件（`hooks/useXxx.ts`）；**一旦要为它写说明，就把它提升成同名目录**
-（`use-notes/index.ts` + `README.md`），不要再造「`useXxx.ts` + 同目录 `useXxx.md`」这种两份并列。
-
-判据：**这份文档只有改这个东西的人才需要读** → 跟代码走；改别处也会被牵连、要当时就知道 →
-进 `docs/`。拿不准时按「改动半径」判：半径为 1 个目录的，别占全局。
-
-### 哪些目录必须有 README.md
-
-- **公共组件**（`src/components/<分类>/<Name>/`）结构检查强制，缺了 lint 失败；
-- **页面自己的业务组件目录**同样要写：瓦片 / 行 / 弹窗 / 面板 / 排布壳，凡是别的人要改它就得先看懂
-  「锁了什么、props 边界、交互口径、坑」的，目录里放 `README.md`；纯展示、口径全在 props 类型里的
-  小件可以不写，但判断拿不准就写；
-- **页面根目录**写一份编排说明：各 hook / 子组件怎么分工、主要交互口径与边界（不复制组件内 README）；
-- **带说明的 hook** 提升为 `hooks/<hook>/index.ts` + `README.md`（见上一节），写触发条件、竞态处理、
-  为什么这么实现；
-- README 内容写**契约**：职责边界、props 分组口径、与相邻组件的分工、容易踩的坑；不复制组件库规则，
-  不复述 `docs/` 里已有的跨文件约定。
-
-## 组件的硬要求
-
-- 单个 `index.tsx` 只放一个组件，**不得**堆多个组件；超长文件按五维拆开，公共组件同样适用
-  （示例：`MarkdownPreviewModal` 目录下的 `types.ts` / `constants.ts` / `hooks/` / 子组件目录）。
-- 组件目录内**不嵌套** `components/` 层，子组件目录直接放父组件目录下。
 - 公共组件先按类型进分类目录：`src/components/<分类>/<组件>/`（分类名单与判据见
   `docs/ui-components.md` 的「公共组件按类型分目录」），分类目录小写、组件目录 `PascalCase`。
-- 每个组件目录有 `index.tsx`；样式只在这个组件**要写自己的规则**时才需要 `index.scss`
+- 每个组件目录有 `index.tsx`；样式只在这个组件**要写自己的规则**时才建 `index.scss`
   （外观全交给组件库 props 的不建空文件），CSS Module 类名自动 camelCase；规格写同目录 `README.md`。
-  页面目录另有一条硬要求：含 `index.tsx` 的目录必须有 `index.scss`（`check-structure` 校验，
+- 页面目录另有一条硬要求：含 `index.tsx` 的目录必须有 `index.scss`（`check-structure` 校验，
   没样式就留一个说明性注释占位）。
-- 在组件里定义的局部变量不要与 import 进来的组件 / 函数同名（读代码时无法分辨，重命名其中一个）。
-  示例：两个图标别名不要都叫 `ActionIcon`——会和 Mantine 的 `ActionIcon` 撞名。
+- 单个 `index.tsx` 只放一个组件、子组件不嵌套 `components/`、局部变量不与 import 同名，按 skill
+  的分层拆分与项目入口硬约束执行，本文件不复述。
 
 ## 命名（ESLint 强制，来自 `@liangqingda/eslint-config`）
 
@@ -82,11 +51,12 @@ hook 默认一个文件（`hooks/useXxx.ts`）；**一旦要为它写说明，�
 其它已生效规则：禁数组变异（`no-restricted-syntax`）、禁嵌套三元、JSX props 字母序、
 `padding-line-between-statements`、`@typescript-eslint/no-unnecessary-condition`。
 
-## 引用规则
+## 本项目引用检查
 
-- 页面 / 组件目录内部用相对路径（公共组件的「自己这一层」指 `src/components/<分类>/<组件>/`）；
-- 跨出所属目录一律用 `@/` 别名（`@` → `src`），结构检查会拦穿过页面目录的相对导入；
-- 不造 barrel 文件，直接从具体文件导入。
+- 页面 / 组件目录内部引用自己的文件用相对路径；跨出所属目录用 `@/`（`@` → `src`）。
+  公共组件的「自己这一层」指 `src/components/<分类>/<组件>/`。
+- `scripts/check-imports.mjs` 拦两件事：页面 / 组件 / 布局目录内部引用自己的文件必须用相对路径；
+  `dependencies` 里的包必须真有源码 import。跨模块别名与不造 barrel 的通用判据见 skill。
 
 ### import 分组（`eslint .` 强制，规则来自共享包）
 
@@ -106,7 +76,3 @@ hook 默认一个文件（`hooks/useXxx.ts`）；**一旦要为它写说明，�
 上面这套顺序由 `@liangqingda/eslint-config` 的 `react-typed` 统一强制（1.5.0 起 type 跟随路径、
 就近按 `../` / `./` 拆块），本仓库不再在 `eslint.config.js` 里覆写 `import/order`；
 值导入里内联 `type` 也由同一套配置的 `consistent-type-imports` 拦下。
-
-只会留在本仓库 `scripts/check-imports.mjs` 的是 ESLint 表达不了的一条：页面 / 组件 / 布局
-目录内部引用自己的文件必须用相对路径（`no-restricted-imports` 只能禁 pattern，表达不了
-「只禁本目录的别名写法」）。
