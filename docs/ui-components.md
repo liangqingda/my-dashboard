@@ -21,10 +21,12 @@
 | 阅读类弹窗（文档预览 / 条目详情） | `FreeModal`（业务弹窗基于它封装，见下文） |
 | 普通弹窗（说明 / 短表单 / 列表） | `FreeModal` 传 `height="auto"`（高度随内容、正文自己滚） |
 | 二次确认（删除 / 覆盖等不可逆操作） | `ConfirmModal`（基于 `FreeModal` 的通用业务组件：说明块 + 可选额外内容 + 取消 / 确认） |
-| 任何 Markdown / 文档预览 | `MarkdownPreviewModal`，不自己接渲染器（行为见 `src/components/modals/MarkdownPreviewModal/README.md`） |
+| 任何 Markdown / 文档预览 | `MarkdownPreviewModal`（`FreeModal` + `FreeMarkdown`，不自己接渲染器；行为见 `src/components/modals/MarkdownPreviewModal/README.md`） |
+| Markdown 渲染（不要弹窗外壳） | `FreeMarkdown`（全站唯一的渲染栈：`react-markdown` + gfm + raw；只管把文本渲染成节点，排版、目录、筛选归调用方） |
 | 视频播放 | `FreeVideo`（全站唯一的播放器，不自己拼 `<video>` 控制栏；行为见 `src/components/file-preview/FreeVideo/README.md`） |
+| 图片展示 / 缩放 | `FreeImage`（全站唯一的图片舞台：整图装下 + 加载 / 失败态 + 捏合缩放与平移；行为见 `src/components/file-preview/FreeImage/README.md`） |
 | 视频预览 | `VideoPreviewModal`（`FreeModal` + `FreeVideo`，B 站式控制栏 + 选集弹层；行为见 `src/components/modals/VideoPreviewModal/README.md`） |
-| 图片预览 | `ImagePreviewModal`（`FreeModal` + 整图舞台 + header 的图片列表弹层；行为见 `src/components/modals/ImagePreviewModal/README.md`） |
+| 图片预览 | `ImagePreviewModal`（`FreeModal` + `FreeImage` + header 的图片列表弹层与裁剪层；裁剪仍归弹窗，不进 `FreeImage`；行为见 `src/components/modals/ImagePreviewModal/README.md`） |
 | 单行输入（无搜索语义） | `FreeInput` |
 | 搜索框（左搜索图标 + 一键清空） | `FreeSearchInput` |
 | 多行输入（普通表单） | `Textarea` |
@@ -73,7 +75,7 @@
 - **`Free` 前缀只承诺「某类对象的全站唯一入口」**，不是「包了组件库」：底层是 Mantine、第三方库
   还是自研都行（`FreeTable` / `FreeVideo` / `FreeTruncatedText`）。
 - **业务不许越过 Free 层**：品类已有 Free 层时，业务侧再直接 import 底层（`Table` / `Modal` /
-  播放器 / 自己写截断）就是缺陷——**只有一处用也不例外**；缺 props / 插槽就先给 Free 层加，
+  播放器 / `react-markdown` / 自己写截断）就是缺陷——**只有一处用也不例外**；缺 props / 插槽就先给 Free 层加，
   不在业务里另起一套口径。
 - **`FreeXxx` 必须真的锁住东西**：尺寸档、边框、表头、间距、键位、加载 / 错误态这类默认外观与
   默认行为。说不清锁什么的，说明它只是组件库的别名，先别建。
@@ -100,7 +102,7 @@
 | `panels` | 面板级排布件（底栏、分组、字段） | `FreePanelFooter`、`FreePanelGroup`、`FreePanelField` |
 | `texts` | 文本展示与截断 | `FreeTruncatedText` |
 | `feedback` | 加载、空态、提示这类状态呈现 | `PageLoading`、`PreviewCounter` |
-| `file-preview` | 把文件内容渲染 / 播放出来的组件（视频、后续 PDF / 文档播放器） | `FreeVideo` |
+| `file-preview` | 把文件内容渲染 / 播放出来的组件（视频、图片、Markdown 文档，后续 PDF） | `FreeVideo`、`FreeImage`、`FreeMarkdown` |
 
 - **分类目录一律小写**（`@liangqingda/eslint-config` 1.8.0 起放行 `components` 下一层的分类名单，
   名单在 `config/web-naming-rules.js`；进入分类目录后组件目录仍是 `PascalCase`）；
@@ -147,27 +149,30 @@
 目录结构与其它组件一致（见 `docs/code-splitting.md`）：`index.tsx` + `types.ts`（需要跨文件共享时），
 要写自己的样式才加 `index.scss`，一个 `index.tsx` 只放一个组件。
 
-## 现有 Free 层组件：契约在哪
+## 公共件契约索引
 
 组件的「锁了什么 / 不管什么 / props」写在各自目录的 `README.md`——判据：只有改它的人才需要读
-→ 跟代码走。本文件只维护选型表与分层判据，不复制组件规格。
+→ 跟代码走。本文件只维护选型表与分层判据，不复制组件规格。「层」一列按命名判据标：
+`Free` 是全站唯一入口，能力件只是某个动作的现成实现。
 
-| 组件 | 契约 |
-| --- | --- |
-| `FreeTable` | `src/components/tables/FreeTable/README.md` |
-| `FreeSelectField` | `src/components/fields/FreeSelectField/README.md` |
-| `FreePanelFooter` | `src/components/panels/FreePanelFooter/README.md` |
-| `FreePanelGroup` | `src/components/panels/FreePanelGroup/README.md` |
-| `FreePanelField` | `src/components/panels/FreePanelField/README.md` |
-| `FreeModal` | `src/components/modals/FreeModal/README.md` |
-| `FreeTruncatedText` | `src/components/texts/FreeTruncatedText/README.md` |
-| `FreeIconAction` | `src/components/buttons/FreeIconAction/README.md` |
-| `FreeSearchInput` | `src/components/fields/FreeSearchInput/README.md` |
-| `FreeInput` | `src/components/fields/FreeInput/README.md` |
-| `FreeVideo` | `src/components/file-preview/FreeVideo/README.md` |
-| `PreviewItemList` | `src/components/modals/PreviewItemList/README.md` |
-| `VideoPreviewModal` | `src/components/modals/VideoPreviewModal/README.md` |
-| `ImagePreviewModal` | `src/components/modals/ImagePreviewModal/README.md` |
+| 组件 | 层 | 契约 |
+| --- | --- | --- |
+| `FreeTable` | `Free` | `src/components/tables/FreeTable/README.md` |
+| `FreeSelectField` | `Free` | `src/components/fields/FreeSelectField/README.md` |
+| `FreePanelFooter` | `Free` | `src/components/panels/FreePanelFooter/README.md` |
+| `FreePanelGroup` | `Free` | `src/components/panels/FreePanelGroup/README.md` |
+| `FreePanelField` | `Free` | `src/components/panels/FreePanelField/README.md` |
+| `FreeModal` | `Free` | `src/components/modals/FreeModal/README.md` |
+| `FreeTruncatedText` | `Free` | `src/components/texts/FreeTruncatedText/README.md` |
+| `FreeIconAction` | `Free` | `src/components/buttons/FreeIconAction/README.md` |
+| `FreeSearchInput` | `Free` | `src/components/fields/FreeSearchInput/README.md` |
+| `FreeInput` | `Free` | `src/components/fields/FreeInput/README.md` |
+| `FreeVideo` | `Free` | `src/components/file-preview/FreeVideo/README.md` |
+| `FreeImage` | `Free` | `src/components/file-preview/FreeImage/README.md` |
+| `FreeMarkdown` | `Free` | `src/components/file-preview/FreeMarkdown/README.md` |
+| `PreviewItemList` | 能力件 | `src/components/modals/PreviewItemList/README.md` |
+| `VideoPreviewModal` | 能力件 | `src/components/modals/VideoPreviewModal/README.md` |
+| `ImagePreviewModal` | 能力件 | `src/components/modals/ImagePreviewModal/README.md` |
 
 ## 交互键位归外壳
 

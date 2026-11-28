@@ -17,10 +17,10 @@
  * 所以两组键不会打架。
  */
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import type { CSSProperties, MouseEvent } from 'react';
-import Markdown from 'react-markdown';
 
+import FreeMarkdown from '@/components/file-preview/FreeMarkdown';
 import FreeModal from '@/components/modals/FreeModal';
 import { useModalFullscreen } from '@/components/modals/FreeModal/hooks/useModalFullscreen';
 import { cx } from '@/utils/cx';
@@ -29,11 +29,7 @@ import type { MarkdownOutlineHeading } from '@/utils/markdown-outline';
 import type { SectionPreviewProps } from '../types';
 import OutlineNav from '../OutlineNav';
 import ProseFontControl from '../ProseFontControl';
-import {
-  REHYPE_PLUGINS,
-  REMARK_PLUGINS,
-  sectionPreviewStorageKey,
-} from '../constants';
+import { sectionPreviewStorageKey } from '../constants';
 import { useActiveHeadingIndex } from '../hooks/useActiveHeadingIndex';
 import { useDocumentScrollReset } from '../hooks/useDocumentScrollReset';
 import { useHeaderActionShortcuts } from '../hooks/useHeaderActionShortcuts';
@@ -131,17 +127,6 @@ const SectionPreview = ({
         section !== null && !(current.key === section.key && current.opened),
     }));
   }, [section]);
-
-  /** 正文只随这一段重建：`react-markdown` 每次渲染都要重新解析整段 */
-  const bodyContent = useMemo(
-    () =>
-      section ? (
-        <Markdown rehypePlugins={REHYPE_PLUGINS} remarkPlugins={REMARK_PLUGINS}>
-          {section.markdown}
-        </Markdown>
-      ) : null,
-    [section],
-  );
 
   /** 滚动正文时跟踪当前小节，供这一段自己的目录高亮 */
   const activeIndex = useActiveHeadingIndex({
@@ -250,7 +235,8 @@ const SectionPreview = ({
               ref={attachBody}
               style={proseStyle}
             >
-              {bodyContent}
+              <FreeMarkdown markdown={section.markdown} />
+
             </article>
           ) : null}
         </div>

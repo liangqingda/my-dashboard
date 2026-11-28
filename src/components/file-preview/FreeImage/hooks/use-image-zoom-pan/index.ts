@@ -39,7 +39,8 @@ const INITIAL_VIEW: StageView = { scale: MIN_IMAGE_SCALE, x: 0, y: 0 };
  *
  * 缩放以指针位置为锚点，位移夹在「放大后多出来的区域」里（公式见同目录 `utils.ts`）。
  *
- * 换图时由弹窗用 `key` 换实例重置倍率；裁剪前由舞台调 `reset` 回 1 倍。
+ * 换图时由调用方用 `key` 换实例重置倍率；`interactive` 关掉（进裁剪这类要按布局尺寸量的状态）时
+ * 由舞台调 `reset` 回 1 倍。
  */
 export const useImageZoomPan = ({
   enabled,

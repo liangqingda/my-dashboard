@@ -3,7 +3,7 @@
  *
  * 位置一律按**图片的布局尺寸**（`offsetLeft / offsetWidth`）算，不看 `getBoundingClientRect`：
  * 后者会把 `transform: scale()` 算进去，图片还带着上一档缩放时选框就对不上了。
- * 进入裁剪时 `ImageStage` 会把缩放复位到 1 倍，这里的测量才是所见即所得。
+ * 进入裁剪时 `FreeImage` 会先把缩放复位到 1 倍（`interactive={false}`），这里的测量才是所见即所得。
  *
  * 选框拖拽走 Pointer Events + 指针捕获：手指 / 鼠标同一套，
  * 拖出舞台也不会断（松手在画面外仍能收尾）。

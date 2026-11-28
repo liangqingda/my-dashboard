@@ -10,8 +10,8 @@
 - UI / 交互：`@mantine/core`、`@mantine/dates`、`@mantine/notifications`、`@mantine/hooks`、
   `@tabler/icons-react`；
 - 日期：`dayjs`；
-- Markdown 渲染：`react-markdown` + `remark-gfm` + `rehype-raw`，只在 `MarkdownPreviewModal` 里接，
-  页面不自己另起渲染器；
+- Markdown 渲染：`react-markdown` + `remark-gfm` + `rehype-raw`，只在 `FreeMarkdown` 里接，
+  页面与弹窗都不自己另起渲染器；
 - 通用能力：先查 `docs/shared-utils.md` 的入口表，再决定要不要引库或自己写。
 
 ## 本项目硬约束

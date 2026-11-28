@@ -12,8 +12,8 @@
  *     包内容，页面样式不得再定义 .page
  *  6. Modal 只许出现在封装壳（FreeModal）里，业务侧不得直连 Mantine Modal
  *  7. 键盘监听只许出现在外壳 / 布局：业务页面与业务弹窗不得自己 addEventListener('keydown')
- *  7.1 Free 层是唯一入口：Modal / Table / TextInput / ActionIcon 只许在对应的 Free 组件里直连，
- *      别处直连就是绕层（例外登记在 FREE_LAYER_OWNERS[].allowFiles，且必须同时写进 docs/ui-components.md）
+ *  7.1 Free 层是唯一入口：Modal / Table / TextInput / ActionIcon / react-markdown 只许在对应的
+ *      Free 组件里直连，别处直连就是绕层（例外登记在 FREE_LAYER_OWNERS[].allowFiles，且必须同时写进 docs/ui-components.md）
  *  7.2 每个公共组件目录必须有 README.md：契约（锁了什么、props、坑）跟代码走
  *  7.3 单行省略只许出自 FreeTruncatedText：别处写 text-overflow: ellipsis 就是两套口径
  *  8. 入口文档 AGENTS.md 只放硬约束与索引：行数不超上限，docs/ 下的细则与索引一一对应，
@@ -490,6 +490,28 @@ function checkFreeLayerIsOnlyEntry() {
 }
 
 /**
+ * Markdown 渲染栈只有一套：`react-markdown` 只许出现在 `FreeMarkdown`。
+ * 别处再 import 一次，插件表与 gfm / raw 的口径就会分叉——同一篇文档在两处长成两个样子。
+ */
+function checkMarkdownRendererIsOnlyEntry() {
+  const ownerDir = path.join(SRC, 'components', 'file-preview', 'FreeMarkdown');
+
+  for (const file of collectFiles(SRC, CODE_EXTS)) {
+    if (file.startsWith(`${ownerDir}${path.sep}`)) continue;
+
+    const lines = readFileSync(file, 'utf8').split('\n');
+
+    lines.forEach((line, index) => {
+      if (!/from\s+['"]react-markdown['"]/.test(line)) return;
+
+      errors.push(
+        `[结构] ${path.relative(ROOT, file)}:${index + 1} 直连 react-markdown：Markdown 渲染一律走 @/components/file-preview/FreeMarkdown（渲染栈与插件表都在它里面）`,
+      );
+    });
+  }
+}
+
+/**
  * 公共组件的契约（锁了什么、props、边界与坑）跟着代码走，写在组件目录的 README.md 里。
  * 缺 README 的组件等于「只有实现、没有判据」，下一个人只能靠猜改它。
  */
@@ -638,6 +660,7 @@ checkComponents();
 checkMenuPages();
 checkEntryDocs();
 checkFreeLayerIsOnlyEntry();
+checkMarkdownRendererIsOnlyEntry();
 checkComponentReadmes();
 checkSingleLineEllipsis();
 checkKeyboardListeners();
@@ -649,5 +672,5 @@ if (errors.length > 0) {
 }
 
 console.log(
-  '[✓] 结构检查通过：pages 目录组织、公共组件分类目录与 README、菜单页布局、Free 层唯一入口（Modal / Table / TextInput / ActionIcon）、单行省略归属、键位归属与入口文档索引符合约定',
+  '[✓] 结构检查通过：pages 目录组织、公共组件分类目录与 README、菜单页布局、Free 层唯一入口（Modal / Table / TextInput / ActionIcon / react-markdown）、单行省略归属、键位归属与入口文档索引符合约定',
 );

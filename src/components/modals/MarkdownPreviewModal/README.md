@@ -3,8 +3,8 @@
 组件规格，跟代码放在一起（非全局性文档不进 `docs/`）。**什么时候必须用它（选型）**归
 `docs/ui-components.md` 的「场景 → 用哪个」，本文件只讲它的行为契约与实现约束。
 
-渲染栈固定为 `react-markdown` + `remark-gfm` + `rehype-raw`（需要 GFM 表格与 `<details>` 折叠块）；
-新增 Markdown 能力时改这个组件，不要在别处另装渲染器。
+正文渲染走 `FreeMarkdown`（`react-markdown` + `remark-gfm` + `rehype-raw` 这套栈锁在它那里，
+它按 `markdown` 变化 `memo`）；新增 Markdown 能力时改 `FreeMarkdown`，本组件与页面都不再另装渲染器。
 
 职责边界：**调用方**决定「相邻文档是谁」「保存落到哪里」以及「这类文档怎么编辑」（编辑插槽见
 `docs/markdown-editing.md`）；**导航与编辑态流程**由组件负责。
@@ -151,8 +151,8 @@ header 文档操作组里的「文档内交互方式」图标按钮（`Interacti
 练习 → 两块「练习…」）。
 
 - 拦截方式是在 `<article>` 上挂 `onClick`、用 `event.target.closest('a')` 判定，**不用
-  `components={{ a: … }}` 换掉 `a` 渲染器**——那会改掉 `react-markdown` 的组件对象，正文的 `useMemo`
-  失去稳定性，长文档每渲染一次就重解析一遍。外链与相对路径一律放行（交给浏览器）；
+  `components={{ a: … }}` 换掉 `a` 渲染器**——那等于在 `FreeMarkdown` 的公用渲染栈上长出第二套
+  链接行为，预览与其它渲染面就不一致了。外链与相对路径一律放行（交给浏览器）；
   同文档锚点必须 `preventDefault()`，否则点一下会把地址栏改成 `#…`；
 - 区块的切分口径（`utils/anchor-blocks.ts`，纯文本行扫描、跳代码围栏）：
   - 收集 h1–h4 标题行与 `<a id|name>` 定义行，以及 `](#x)` / `<a href="#x">` 指向的目标集合；
@@ -415,8 +415,9 @@ header 文档操作组**最后一个**图标（垃圾桶，颜色与同排图标
 
 ### 正文渲染性能
 
-正文渲染结果必须用 `useMemo` 包住（只依赖 `renderedMarkdown`）：`react-markdown` 每次渲染都会重新解析
-整篇，正文节点挂载、刷新、编辑态切换这类内部状态变化时重解析一次就是几十毫秒的「点开卡一下」。
+`FreeMarkdown` 按 `markdown` 字符串 `memo`：正文节点挂载、刷新、编辑态切换这类内部状态变化不会
+再重解析整篇（`react-markdown` 每次解析长文档要几十毫秒）。这一层不必再套 `useMemo`；
+但**别把原文切段、拼成新数组传进去**——每次都算新内容，`memo` 直接失效。
 
 ### 全屏预览
 

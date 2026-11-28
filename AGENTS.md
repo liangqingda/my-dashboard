@@ -57,7 +57,7 @@
 值导入里的 type 单独成句、命名、单文件 300 行上限等，原 `eslint.config.js` 的项目层
 `import/order` 覆写已删除）、`scripts/check-structure.mjs`（features 废弃 / 页面组织 /
 菜单页布局 / 键位归属（业务层不得监听 `keydown`）/ **越过 Free 层直连（`Modal` / `Table` /
-`TextInput` / `ActionIcon`）/ 公共组件缺 `README.md` / 样式里自己写 `text-overflow: ellipsis`** /
+`TextInput` / `ActionIcon` / `react-markdown`）/ 公共组件缺 `README.md` / 样式里自己写 `text-overflow: ellipsis`** /
 入口文档行数与索引对应 / `CLAUDE.md` 软链形态，项目事实不上提；例外要在脚本白名单里登记）、
 `liangqingda-check-scss src`（共享包零依赖 CLI，样式块间空行 / 选择器列表 / 行尾空格 /
 类名：非 ASCII、数字或连字符开头、下划线、同文件混用 camelCase 与 kebab-case）、

@@ -13,8 +13,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Loader, Text } from '@mantine/core';
-import Markdown from 'react-markdown';
 
+import FreeMarkdown from '@/components/file-preview/FreeMarkdown';
 import { cx } from '@/utils/cx';
 import { extractMarkdownOutline } from '@/utils/markdown-outline';
 
@@ -23,7 +23,6 @@ import type {
   PreviewWorkspaceProps,
 } from '../types';
 import OutlineNav from '../OutlineNav';
-import { REHYPE_PLUGINS, REMARK_PLUGINS } from '../constants';
 import { scrollToHeading } from '../utils/prose-navigation';
 import { useActiveHeadingIndex } from '../hooks/useActiveHeadingIndex';
 import { useDocumentScrollReset } from '../hooks/useDocumentScrollReset';
@@ -83,18 +82,6 @@ const PreviewWorkspace = ({
   );
   /** 筛选是否正在裁剪正文：这时正文可能只剩一两节，目录列仍要留着，不能整列消失 */
   const filtering = Boolean(filter?.active) && !editing.editing;
-  /**
-   * 正文只随内容重建：`react-markdown` 每次渲染都会重新解析整篇（长文档几十毫秒），
-   * 工作区内部状态（正文节点挂载、编辑态切换）变化时不该再解析一遍。
-   */
-  const bodyContent = useMemo(
-    () => (
-      <Markdown rehypePlugins={REHYPE_PLUGINS} remarkPlugins={REMARK_PLUGINS}>
-        {visibleMarkdown}
-      </Markdown>
-    ),
-    [visibleMarkdown],
-  );
   /** 正文渲染出来后才能测量 / 跟踪标题：编辑态只有草稿预览时满足；正文还在取时什么都没有 */
   const bodyReady = opened && !loading && (!editing.editing || showingDraftPreview);
   /** 偏移以 CSS 变量下发到正文自身，与模式默认的 `--prose-grow` 在同一条 calc 里相加 */
@@ -218,7 +205,7 @@ const PreviewWorkspace = ({
             ref={attachBody}
             style={proseStyle}
           >
-            {bodyContent}
+            <FreeMarkdown markdown={visibleMarkdown} />
           </article>
         ) : null}
       </div>

@@ -1,4 +1,4 @@
-/* 图片舞台：黑底、整张图居中装下，加载与失败提示压在图片上面 */
+/* 图片舞台：整张图居中装下，加载与失败提示压在图片上面 */
 
 .stage {
   position: relative;
@@ -7,9 +7,9 @@
   align-items: center;
   justify-content: center;
   min-width: 0;
-  /* 放大后超出的那部分裁在舞台里，不爬到 header 上 */
+  /* 放大后超出的那部分裁在舞台里，不爬到别的层上 */
   overflow: hidden;
-  background: #000;
+  background: var(--free-image-backdrop, #000);
 }
 
 /* 按比例完整显示，不超过舞台；选不中，双击不会误选文字（位移与缩放走行内 transform） */
@@ -28,7 +28,7 @@
 
 /*
  * 整屏：盒子撑到舞台大小，`contain` 再按比例把画面缩进去——像素比屏幕小的图也会放大到贴住长边，
- * 比例与屏幕不一致时只剩长边那一侧一条黑边，画面本身不裁。
+ * 比例与舞台不一致时只剩长边那一侧一条边，画面本身不裁。
  */
 .imageFill {
   width: 100%;

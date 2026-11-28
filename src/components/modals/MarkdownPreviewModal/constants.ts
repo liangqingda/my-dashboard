@@ -1,9 +1,7 @@
 /**
- * Markdown 预览弹窗的常量：提示时长、无编辑器提示与固定渲染插件。
+ * Markdown 预览弹窗的常量：提示时长、无编辑器提示与阅读偏好字段。
+ * 渲染插件表不在这里——正文渲染走 `FreeMarkdown`，那份栈由它自己锁。
  */
-
-import rehypeRaw from 'rehype-raw';
-import remarkGfm from 'remark-gfm';
 
 import { scopedStorageKey } from '@/utils/page-storage';
 
@@ -78,11 +76,6 @@ export const CLOSE_BLOCKED_EDITING_MESSAGE =
 /** 草稿预览态想关弹窗时的提示：这时返回箭头是「回到编辑」，不是退出编辑 */
 export const CLOSE_BLOCKED_PREVIEWING_MESSAGE =
 '现在是草稿预览：先点「返回编辑」回到编辑器，再退出编辑才能关闭。';
-
-/** 固定引用，避免每次渲染重建插件数组 */
-export const REMARK_PLUGINS = [remarkGfm];
-
-export const REHYPE_PLUGINS = [rehypeRaw];
 
 /** 文档内参与标题目录的标题层级 */
 export const HEADING_SELECTOR = 'h1, h2, h3, h4';
