@@ -162,13 +162,10 @@
     0 7px 16px rgb(0 0 0 / 20%);
 }
 
-/* 编辑模式：每个图标都整格盖一层毛玻璃，中间是移除按钮；整格点击都执行移除 */
+/* 编辑模式：图标保持原样；hover / 聚焦到某一格时，这一格才盖出移除遮罩 */
 .dockItem[data-editing='true'] {
-  padding: 0;
   cursor: pointer;
-  background: transparent;
-  border-color: transparent;
-  box-shadow: none;
+  box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 34%);
 }
 
 .dockRemove {
@@ -180,7 +177,7 @@
   place-items: center;
   background: rgb(16 18 22 / 90%);
   border-radius: inherit;
-  opacity: 1;
+  opacity: 0;
   -webkit-backdrop-filter: blur(7px) saturate(130%);
   backdrop-filter: blur(7px) saturate(130%);
   transition:
@@ -232,11 +229,6 @@
   border-radius: 50%;
   box-shadow: 0 0 0 1px rgb(255 255 255 / 30%);
   transform: translateX(-50%);
-}
-
-/* 编辑态整格覆盖时底层图标一起收掉，避免从毛玻璃里透出彩色轮廓 */
-.dockItem[data-editing='true'] .dockIcon {
-  opacity: 0;
 }
 
 /* 图标内容：飞入完成后由 0.24 长到 1 */
