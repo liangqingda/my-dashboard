@@ -1,20 +1,11 @@
 /**
- * 程序坞窗口的遮罩层：根节点定位与收放时的淡入 / 淡出。
+ * 程序坞窗口的遮罩层：收放时的淡入 / 淡出。
  *
  * 框体是「神奇效果」，背景不能硬切：开窗时遮罩从透明长到原样，收窗时反过来，
  * 两者用同一段时长，才不会出现「窗口在飞、背景先没了」。
  */
 
 import { prefersReducedMotion } from './dock-motion';
-
-/** 程序坞窗口的根节点（含遮罩层） */
-export const findDockRoot = (id: string): HTMLElement | null => {
-  const roots = document.querySelectorAll<HTMLElement>('[data-dock-surface]');
-
-  return (
-    [...roots].find((candidate) => candidate.dataset.dockSurface === id) ?? null
-  );
-};
 
 /** 根节点里的遮罩元素（Mantine Overlay 的静态类名） */
 export const findDockOverlay = (root: HTMLElement | null): HTMLElement | null =>

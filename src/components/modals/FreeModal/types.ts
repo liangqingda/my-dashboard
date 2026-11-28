@@ -168,6 +168,11 @@ export type FreeModalProps = {
    * 编辑中、上层确认开着时用 `disabled` 保留按钮位置但不让收。
    */
   dock?: FreeModalDock;
+  /**
+   * 程序坞动画找框体用的根节点 id：与 `dock` 分开给，正文还没加载、还不能收进程序坞时
+   * 也要让恢复动画量得到框体；传了 `dock` 时默认沿用 `dock.surfaceId ?? dock.id`。
+   */
+  surfaceId?: string;
   /** 是否把焦点锁在弹窗里，默认是 */
   trapFocus?: boolean;
   /**

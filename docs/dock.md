@@ -128,6 +128,9 @@ Provider 只维护一个 `windowSlot`，它自己带 `phase`（`opening` / `clos
 
 `src/dock/utils/dock-motion.ts` 是程序坞窗口动画的唯一实现处：
 
+- **框体只认挂着内容框的根节点**：关掉的弹窗只卸载内容框，根节点还留在 DOM 里，
+  所以 `data-dock-surface` 只在窗开着时挂，查找也只取挂着 `section[role="dialog"]` 的那个
+  （多个都挂着时取最后挂进 DOM 的）。拿空壳量框体，开合动画会整段被跳过。
 - **第一次打开**：真实框体从图标正中心由小长到大（`growWindowFromDock`，420ms），带一点回弹。
 - **最后一次收起**：真实框体由大到小缩到目标图标正中心（`shrinkWindowToDock`，220ms），同时遮罩淡出。
   程序坞若已被手动收起，收坞前先按条目 id 把程序坞无过渡展开并摆出目标虚位，再量最终图标位置；

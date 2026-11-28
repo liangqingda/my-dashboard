@@ -56,16 +56,31 @@ export const waitForFrames = async <T>(
   return attempt(Math.max(1, frames));
 };
 
+/** 同一 id 的弹窗根节点可能不止一个：关闭后组件库只卸载内容框，空壳根节点还在 DOM 里 */
+const dockRootsOf = (id: string): HTMLElement[] => [
+  ...document.querySelectorAll<HTMLElement>('[data-dock-surface]'),
+].filter((candidate) => candidate.dataset.dockSurface === id);
+
+/** 根节点里真挂着内容框：空壳（关掉的弹窗）没有 */
+const hasContent = (root: HTMLElement): boolean =>
+  root.querySelector('section[role="dialog"]') !== null;
+
+/**
+ * 窗口的根节点（含遮罩层）：只认挂着内容框的那一个；
+ * 多个都挂着时取最后挂进 DOM 的——新窗总排在旧壳之后。
+ */
+export const findDockRoot = (id: string): HTMLElement | null => {
+  const roots = dockRootsOf(id);
+
+  return roots.findLast(hasContent) ?? roots.at(-1) ?? null;
+};
+
 /**
  * 窗口框体：入口是弹窗根节点上的 `data-dock-surface`；
  * Mantine 把内容框渲染成 `<section role="dialog">`，按它取动画对象。
  */
-export const findDockSurface = (id: string): HTMLElement | null => {
-  const roots = document.querySelectorAll<HTMLElement>('[data-dock-surface]');
-  const root = [...roots].find((candidate) => candidate.dataset.dockSurface === id);
-
-  return root?.querySelector<HTMLElement>('section[role="dialog"]') ?? null;
-};
+export const findDockSurface = (id: string): HTMLElement | null =>
+  findDockRoot(id)?.querySelector<HTMLElement>('section[role="dialog"]') ?? null;
 
 /** 程序坞里的一个项目 */
 export const findDockItem = (id: string): HTMLElement | null => {

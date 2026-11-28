@@ -44,7 +44,10 @@
   **只有程序坞里已有同 id 条目**（口径按描述符 `id`，也就是当前显示的内容），
   横线最小化 / Esc / 遮罩 / 空格才收起回坞；未收录的弹窗照常 `onClose`。
   `origin: 'dock'` 的窗口另外用 `surfaceId` 标窗自身的根节点：窗内翻篇后 `id` 跟着内容换，
-  根节点与开合动画仍按 `surfaceId`。描述符契约与哪些弹窗不接见 `docs/dock.md`。
+  根节点与开合动画仍按 `surfaceId`。`data-dock-surface` **只在 `opened` 时挂**：关掉的弹窗
+  只卸载内容框、根节点还留在 DOM 里，空壳带着标记会让下一次开窗先量到空壳、开合动画被跳过。
+  描述符暂时给不出（正文加载中）时用 `surfaceId` 单独交代窗的身份，动画不依赖数据是否就绪。
+  描述符契约与哪些弹窗不接见 `docs/dock.md`。
 
 - **键盘口径统一在这里**（`hooks/useModalShortcuts`），业务弹窗不各自补快捷键：
   - `Esc`：与最小化图标同一口径——已收录的弹窗先收回程序坞，未收录的 X / `onClose`；传了 `onRequestEscape`
@@ -103,6 +106,7 @@
 | `media` | `{ onTogglePlay, onToggleMute }`；传了 `onTogglePlay` 之后空格切播放 / 暂停、不再关窗，传了 `onToggleMute` 才有 `M` 静音 |
 | `tipDark` | 可选。header 内按钮、标题与计数固定取媒体浮层浅字档（连同 tip 深底浅字），不随主题反转；媒体预览压在画面上的提示与控件用 |
 | `zIndex` | 层级，默认走组件库的弹窗档；要压在另一扇已打开的弹窗之上时显式抬高（二次确认层由 `ConfirmModal` 默认给 `1040`） |
+| `surfaceId` | 程序坞动画找框体用的根节点 id，与 `dock` 描述符分开给：正文还在加载、还不能收进程序坞时也要让开合动画认得到窗的根节点；给了 `dock` 就默认沿用 `dock.surfaceId` / `dock.id` |
 | `onCapture` | `Enter` 的动作（视频预览截当前帧）；不传则该键不动作 |
 | `onSeek` | `(direction: 'backward' \| 'forward') => void`；传了之后 `←` / `→` 交给它（视频快进 / 后退），翻篇只剩 `[` / `]`。`origin: 'dock'` 的窗口有两条以上条目时方向键切程序坞条目（与当前内容是否已收录无关），单条目才让回给媒体；内容翻篇只留 `[` / `]` |
 | `fullscreen` | `{ active, onToggle?, showToggle?, reportActive? }`；不传则没有全屏外观与按钮。`showToggle` 默认 `true`，传 `false` 只收掉 header 按钮；`onToggle` 给了的话 `F` 键照常生效（进编辑这类不该换尺寸的场景，回调与按钮都不给）。`reportActive` 单独上报程序坞全屏态，默认跟随 `active`，业务自管铺满时用 |

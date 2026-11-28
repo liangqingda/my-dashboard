@@ -16,6 +16,7 @@ import {
 } from '../constants';
 import {
   dismissWindow,
+  findDockRoot,
   findDockSurface,
   growWindowFromDock,
   shrinkWindowToDock,
@@ -24,7 +25,7 @@ import {
   waitForFrames,
 } from '../utils/dock-motion';
 import type { DockSlideDirection } from '../utils/dock-motion';
-import { fadeDockOverlay, findDockOverlay, findDockRoot } from '../utils/dock-overlay';
+import { fadeDockOverlay, findDockOverlay } from '../utils/dock-overlay';
 import type { DockEntry, DockWindowProps } from '../types';
 
 /** 已加载好的窗口渲染器 + 它的编排状态 */

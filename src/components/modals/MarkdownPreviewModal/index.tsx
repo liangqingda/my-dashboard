@@ -288,6 +288,7 @@ const MarkdownPreviewModal = ({
         }
         opened={opened}
         shortcutsEnabled={!loading && !interactions.subPreviewOpen && !removal.confirming}
+        surfaceId={dockOrigin === 'dock' ? dockId : undefined}
         title={title}
         trapFocus={!interactions.subPreviewOpen && !removal.confirming}
       >

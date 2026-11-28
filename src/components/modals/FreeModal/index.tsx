@@ -79,6 +79,7 @@ const FreeModal = ({
   overlayTone = 'light',
   shortcutsEnabled = true,
   size = 'min(980px, 92vw)',
+  surfaceId,
   title,
   tipDark = false,
   trapFocus = true,
@@ -118,11 +119,17 @@ const FreeModal = ({
   const { arrowNav, headerNav } = useDockNav(dock, nav);
   const effectiveZIndex =
     zIndex ?? (dock?.origin === 'dock' ? DOCK_WINDOW_Z_INDEX : undefined);
+  /*
+   * 程序坞动画按这个属性找框体；只有开着的窗才挂——关掉的弹窗组件库会留下空壳根节点，
+   * 空壳也带标记的话，下一次开窗会先量到空壳、整段动画被跳过。
+   * id 先按描述符算，描述符还不能给（正文加载中）时由 `surfaceId` 单独交代窗的身份。
+   */
+  const resolvedSurfaceId = dock?.surfaceId ?? dock?.id ?? surfaceId;
   const dockSurfaceProps =
-    dock === undefined
+    resolvedSurfaceId === undefined || !opened
       ? {}
       : ({
-          'data-dock-surface': dock.surfaceId ?? dock.id,
+          'data-dock-surface': resolvedSurfaceId,
         } as Record<string, string>);
 
   const escapeOverridden = Boolean(onRequestEscape);
