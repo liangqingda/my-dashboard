@@ -9,10 +9,15 @@
  * - 同文档锚点指向的一节：能前后切到哪几节按 `all` / `section` 口径算；
  * - 折叠块里的正文：能前后切到全文所有折叠块。
  * 两份的当前下标互不相干，同一时刻只会开着一个（上层盖住主预览时点不到正文）。
+ *
+ * 子预览可单独收进程序坞：快照只留区块定位，后备路径按笔记名取回整篇再解析定位。
  */
+
+import type { FreeModalDock } from '@/components/modals/FreeModal/types';
 
 import DeleteConfirm from '../DeleteConfirm';
 import SectionPreview from '../SectionPreview';
+import { sectionHeading } from '../utils/section-heading';
 import { listAnchorBlockPeers } from '../utils/anchor-blocks';
 import { listDetailBlockPeers } from '../utils/details-blocks';
 
@@ -37,12 +42,49 @@ const PreviewOverlays = ({
   const anchorPeers = anchorSection
     ? listAnchorBlockPeers(anchorBlocks, anchorSection.anchor, anchorScope)
     : [];
+  /** 当前打开的那一块折叠块；关着时为 null */
+  const detailSection =
+    detailBlock.index === null ? null : detailBlocks[detailBlock.index];
   /** 按「全文 / 同一小节」口径算能切到的那几块折叠块 */
   const detailPeers = listDetailBlockPeers(
     detailBlocks,
     detailBlock.index,
     detailsScope,
   );
+
+  const anchorDock: FreeModalDock | undefined = anchorSection
+    ? {
+        id: `markdown-section:anchor:${storageScope}:${title}:${anchorSection.anchor}`,
+        kind: 'markdown-section',
+        origin: 'page',
+        snapshot: {
+          noteTitle: title,
+          storageScope,
+          variant: 'anchor',
+          blockKey: anchorSection.anchor,
+          scope: anchorScope,
+          sectionTitle: sectionHeading(anchorSection),
+        },
+        title: sectionHeading(anchorSection),
+      }
+    : undefined;
+
+  const detailDock: FreeModalDock | undefined = detailSection
+    ? {
+        id: `markdown-section:details:${storageScope}:${title}:${detailSection.key}`,
+        kind: 'markdown-section',
+        origin: 'page',
+        snapshot: {
+          noteTitle: title,
+          storageScope,
+          variant: 'details',
+          blockKey: detailSection.key,
+          scope: detailsScope,
+          sectionTitle: sectionHeading(detailSection),
+        },
+        title: sectionHeading(detailSection),
+      }
+    : undefined;
 
   return (
     <>
@@ -61,6 +103,7 @@ const PreviewOverlays = ({
 
       {/* 子区域预览：开在主预览上面，只看一段内容；Esc 只关它，底下这一篇留着 */}
       <SectionPreview
+        dock={anchorDock}
         index={anchorBlock.index}
         nextLabel="下一个锚点区块"
         onClose={anchorBlock.close}
@@ -74,6 +117,7 @@ const PreviewOverlays = ({
 
       {/* 折叠块预览：summary 点出来的那一段，样式 / 键位与上一份同一套，阅读偏好各记一套 */}
       <SectionPreview
+        dock={detailDock}
         index={detailBlock.index}
         nextLabel="下一个折叠块"
         onClose={detailBlock.close}

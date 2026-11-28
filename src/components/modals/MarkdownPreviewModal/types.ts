@@ -4,6 +4,7 @@
 
 import type { ComponentType, MouseEvent } from 'react';
 
+import type { FreeModalDock } from '@/components/modals/FreeModal/types';
 import type {
   MarkdownOutlineHeading,
   MarkdownOutlineNode,
@@ -354,6 +355,15 @@ export type SectionPreviewProps = {
   onClose: () => void;
   /** 换到第 index 段 */
   onIndexChange: (index: number) => void;
+  /**
+   * 程序坞描述：给了它 header 才出现收坞按钮；不传则这一层不可收起。
+   * 快照与稳定 id 由调用方按当前区块派生。
+   */
+  dock?: FreeModalDock;
+  /** 这一窗是谁：页面弹窗（默认）收起时要关掉页面状态；程序坞恢复窗再收起只回坞 */
+  dockOrigin?: 'page' | 'dock';
+  /** 程序坞窗口根节点 id：恢复窗传收坞条目 id，窗内换段不换根节点 */
+  dockId?: string;
 };
 
 /**

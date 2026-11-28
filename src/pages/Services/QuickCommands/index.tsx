@@ -5,122 +5,32 @@
  * 每行左右布局（命令 | 说明），点击命令可复制；单行组件在 CommandRow 里。
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@mantine/core';
 import { IconRefresh, IconTerminal2 } from '@tabler/icons-react';
 
 import FreeIconAction from '@/components/buttons/FreeIconAction';
 import FreeModal from '@/components/modals/FreeModal';
-import { fetchCliCommands } from '@/services/api';
-import { useServices } from '@/services/hooks/useServices';
-import type { CliCommand } from '@/services/types';
-import { getErrorMessage } from '@/utils/error';
+import type { FreeModalDock } from '@/components/modals/FreeModal/types';
 
-import CommandRow from './CommandRow';
-import { GROUP_LABELS, GROUP_ORDER } from './constants';
+import CommandsBody from './CommandsBody';
+import { useCliCommands } from './hooks/useCliCommands';
 
-import styles from './index.scss';
+/** 这扇窗全站只有一份：稳定 id 固定，重复收起只替换同一条 */
+const DOCK_ID = 'cli-commands:global';
 
-/** 按分组名把命令归堆：一次遍历建 Map，避免每个分组各扫一遍全量命令 */
-const groupCommands = (
-  commands: CliCommand[],
-): Array<{ key: string; label: string; items: CliCommand[] }> => {
-  const byGroup = new Map<string, CliCommand[]>();
-
-  for (const command of commands) {
-    const bucket = byGroup.get(command.group) ?? [];
-
-    bucket[bucket.length] = command;
-    byGroup.set(command.group, bucket);
-  }
-
-  return GROUP_ORDER.map((key) => ({
-    key,
-    label: GROUP_LABELS[key],
-    items: byGroup.get(key) ?? [],
-  })).filter((group) => group.items.length > 0);
+const QUICK_COMMANDS_DOCK: FreeModalDock = {
+  id: DOCK_ID,
+  kind: 'cli-commands',
+  origin: 'page',
+  snapshot: {},
+  title: '全局快捷命令',
 };
 
 /** 全局快捷命令弹窗（动态读取 ~/.zshrc） */
 const QuickCommands = () => {
-  const { agentOnline } = useServices();
   const [opened, setOpened] = useState(false);
-  const [revision, setRevision] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [commands, setCommands] = useState<CliCommand[]>([]);
-  /** 读取失败的原因；null 表示没失败 */
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!opened || !agentOnline) {
-      return undefined;
-    }
-
-    let alive = true;
-
-    const load = async () => {
-      setLoading(true);
-
-      try {
-        const result = await fetchCliCommands();
-
-        if (!alive) {
-          return;
-        }
-
-        setCommands(result.commands);
-        setError(null);
-      } catch (err) {
-        if (alive) {
-          setError(getErrorMessage(err, '读取 ~/.zshrc 失败'));
-        }
-      } finally {
-        if (alive) {
-          setLoading(false);
-        }
-      }
-    };
-
-    const timerId = window.setTimeout(() => void load(), 0);
-
-    return () => {
-      alive = false;
-      window.clearTimeout(timerId);
-    };
-  }, [opened, agentOnline, revision]);
-
-  const groups = useMemo(() => groupCommands(commands), [commands]);
-
-  const renderBody = () => {
-    if (!agentOnline) {
-      return <div className={styles.empty}>连接恢复后显示快捷命令。</div>;
-    }
-
-    if (loading) {
-      return <div className={styles.empty}>正在读取快捷命令…</div>;
-    }
-
-    if (error) {
-      return <div className={styles.empty}>读取失败：{error}</div>;
-    }
-
-    if (groups.length === 0) {
-      return <div className={styles.empty}>未发现别名或函数</div>;
-    }
-
-    return (
-      <div className={styles.body}>
-        {groups.map((group) => (
-          <div className={styles.group} key={group.key}>
-            <div className={styles.groupName}>{group.label}</div>
-            {group.items.map((item) => (
-              <CommandRow desc={item.desc} key={item.name} name={item.name} />
-            ))}
-          </div>
-        ))}
-      </div>
-    );
-  };
+  const cli = useCliCommands(opened);
 
   return (
     <>
@@ -135,11 +45,12 @@ const QuickCommands = () => {
       </Button>
       <FreeModal
         closeLabel="关闭全局快捷命令"
+        dock={QUICK_COMMANDS_DOCK}
         headerActions={
           <FreeIconAction
-            disabled={!agentOnline || loading}
+            disabled={!cli.agentOnline || cli.loading}
             label="刷新快捷命令"
-            onClick={() => setRevision((current) => current + 1)}
+            onClick={cli.refresh}
           >
             <IconRefresh aria-hidden="true" size={18} />
           </FreeIconAction>
@@ -150,7 +61,7 @@ const QuickCommands = () => {
         size="min(820px, 92vw)"
         title="全局快捷命令"
       >
-        {renderBody()}
+        <CommandsBody {...cli} />
       </FreeModal>
     </>
   );

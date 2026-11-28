@@ -143,6 +143,10 @@
   background: linear-gradient(145deg, #7cc4ff 0%, #2f6bff 62%, #1f4fd8 100%);
 }
 
+.dockItem[data-kind='markdown-section'] {
+  background: linear-gradient(145deg, #8fb8d9 0%, #3f7ba6 58%, #27587f 100%);
+}
+
 .dockItem[data-kind='record-detail'] {
   background: linear-gradient(145deg, #ffc46b 0%, #ff8a3d 58%, #e45b2c 100%);
 }
@@ -153,6 +157,10 @@
 
 .dockItem[data-kind='video-preview'] {
   background: linear-gradient(145deg, #72e4d8 0%, #12a597 58%, #067a71 100%);
+}
+
+.dockItem[data-kind='cli-commands'] {
+  background: linear-gradient(145deg, #b8c2cc 0%, #6b7a89 58%, #45525f 100%);
 }
 
 .dockItem[data-active='true'] {

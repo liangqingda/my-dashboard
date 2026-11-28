@@ -7,12 +7,14 @@
 
 import type { DockEntry, DockWindowKind } from '../types';
 
-/** 分组顺序：图片、视频在前，文档与记录在后；同一组内按收起时间正序 */
+/** 分组顺序：图片、视频在前，文档 / 子区块与记录在后，工具列表收尾；同一组内按收起时间正序 */
 const KIND_ORDER: readonly DockWindowKind[] = [
   'image-preview',
   'video-preview',
   'markdown-preview',
+  'markdown-section',
   'record-detail',
+  'cli-commands',
 ];
 
 const kindRank = (kind: DockWindowKind): number => KIND_ORDER.indexOf(kind);

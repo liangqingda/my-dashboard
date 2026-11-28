@@ -7,6 +7,8 @@ import {
   IconFileText,
   IconNotes,
   IconPhoto,
+  IconSection,
+  IconTerminal2,
   IconVideo,
 } from '@tabler/icons-react';
 
@@ -14,7 +16,9 @@ import type { DockWindowKind } from '../types';
 
 export const DOCK_KIND_ICON: Record<DockWindowKind, typeof IconFileText> = {
   'markdown-preview': IconFileText,
+  'markdown-section': IconSection,
   'record-detail': IconNotes,
   'image-preview': IconPhoto,
   'video-preview': IconVideo,
+  'cli-commands': IconTerminal2,
 };

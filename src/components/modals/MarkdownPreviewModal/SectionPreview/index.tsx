@@ -39,6 +39,7 @@ import {
   scrollToAnchor,
   scrollToHeading,
 } from '../utils/prose-navigation';
+import { sectionHeading } from '../utils/section-heading';
 
 import previewStyles from '../index.scss';
 
@@ -61,6 +62,9 @@ const FULLSCREEN_CONTENT_STYLE: CSSProperties = {
 
 /** 两个入口各记一套阅读偏好：锚点预览与折叠块预览互不影响 */
 const SectionPreview = ({
+  dock,
+  dockId,
+  dockOrigin = 'page',
   nextLabel = '下一个区块',
   onClose,
   onIndexChange,
@@ -106,9 +110,7 @@ const SectionPreview = ({
    * 如「本轮习题 · 2026-11-15 12:05 · 复习」——同一篇里好几轮复习时靠它分清这一段是哪一轮的。
    * 折叠块的 `parentTitle` 是空串，只显示 summary 那句话。
    */
-  const heading = section
-    ? [section.title || section.key, section.parentTitle].filter(Boolean).join(' · ')
-    : '';
+  const heading = section ? sectionHeading(section) : '';
 
   /** 面板说的永远是「当前这一段」的字号：换段后按归属算作收起 */
   const fontOpened =
@@ -187,6 +189,7 @@ const SectionPreview = ({
       closeOnEscape={!fontOpened}
       contentClassName={previewStyles.glassChrome}
       contentStyle={fullscreen ? FULLSCREEN_CONTENT_STYLE : CONTENT_STYLE}
+      dock={dock}
       fullscreen={{ active: fullscreen, onToggle: toggle }}
       headerActions={
         <ProseFontControl
@@ -212,6 +215,7 @@ const SectionPreview = ({
       onClose={onClose}
       opened={section !== null}
       size="min(880px, 88vw)"
+      surfaceId={dockOrigin === 'dock' ? dockId : undefined}
       title={heading}
     >
       {/* 工作区与主预览同一套：左侧目录占一列、右侧正文各自滚动 */}

@@ -49,12 +49,39 @@ export type VideoDockSnapshot = {
   storageScope: string;
 };
 
+/**
+ * 快捷命令窗口快照：命令清单打开时重新拉取，快照不存内容——
+ * 别名 / 函数清单来自本机 shell 配置，收坞期间可能已经改过，重拉才是最新。
+ */
+export type CliCommandsDockSnapshot = Record<string, never>;
+
+/**
+ * Markdown 子区块预览窗口的快照：只留定位信息，整篇正文按 `noteTitle` 从仓库重读，
+ * 再用与页面同一套纯解析函数切出这一段。正文不进 localStorage。
+ */
+export type MarkdownSectionDockSnapshot = {
+  /** 来源笔记标题：后备路径按它取回整篇 */
+  noteTitle: string;
+  /** 页面偏好命名空间（路由标识）：子预览的全屏 / 字号 / 目录宽度按它分组 */
+  storageScope: string;
+  /** 子预览入口：锚点区块 / 折叠块正文 */
+  variant: 'anchor' | 'details';
+  /** 区块定位：锚点 id（anchor）或折叠块 key（`details-<下标>`） */
+  blockKey: string;
+  /** 前后切换口径（anchor：`all` / `section`；details：`all` / `kind` / `section`） */
+  scope: string;
+  /** 区块标题：正文还没取回时 header 先用 */
+  sectionTitle: string;
+};
+
 /** 按窗口种类分派的载荷（kind 与快照一一对应，渲染器靠它收窄类型） */
 export type DockWindowPayload =
   | { kind: 'markdown-preview'; snapshot: MarkdownDockSnapshot }
   | { kind: 'record-detail'; snapshot: RecordDockSnapshot }
   | { kind: 'image-preview'; snapshot: ImageDockSnapshot }
-  | { kind: 'video-preview'; snapshot: VideoDockSnapshot };
+  | { kind: 'video-preview'; snapshot: VideoDockSnapshot }
+  | { kind: 'cli-commands'; snapshot: CliCommandsDockSnapshot }
+  | { kind: 'markdown-section'; snapshot: MarkdownSectionDockSnapshot };
 
 /** 可收起的窗口种类 */
 export type DockWindowKind = DockWindowPayload['kind'];

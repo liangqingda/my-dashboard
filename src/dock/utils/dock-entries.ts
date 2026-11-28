@@ -116,6 +116,36 @@ const decodeEntry = (value: unknown): DockEntry | null => {
         : null;
     }
 
+    case 'cli-commands':
+      return { ...base, kind: 'cli-commands', snapshot: {} };
+
+    case 'markdown-section': {
+      const variant =
+        snapshot.variant === 'anchor' || snapshot.variant === 'details'
+          ? snapshot.variant
+          : null;
+
+      return variant &&
+        isText(snapshot.noteTitle) &&
+        isText(snapshot.storageScope) &&
+        isText(snapshot.blockKey) &&
+        isText(snapshot.scope) &&
+        isText(snapshot.sectionTitle)
+        ? {
+            ...base,
+            kind: 'markdown-section',
+            snapshot: {
+              noteTitle: snapshot.noteTitle,
+              storageScope: snapshot.storageScope,
+              variant,
+              blockKey: snapshot.blockKey,
+              scope: snapshot.scope,
+              sectionTitle: snapshot.sectionTitle,
+            },
+          }
+        : null;
+    }
+
     default:
       return null;
   }
@@ -231,6 +261,10 @@ export const toDockEntry = (
       return { ...base, kind: 'image-preview', snapshot: descriptor.snapshot };
     case 'video-preview':
       return { ...base, kind: 'video-preview', snapshot: descriptor.snapshot };
+    case 'cli-commands':
+      return { ...base, kind: 'cli-commands', snapshot: descriptor.snapshot };
+    case 'markdown-section':
+      return { ...base, kind: 'markdown-section', snapshot: descriptor.snapshot };
   }
 };
 
