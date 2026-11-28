@@ -5,7 +5,7 @@
  */
 
 import { Loader, UnstyledButton } from '@mantine/core';
-import { IconFolderFilled } from '@tabler/icons-react';
+import { IconCloudDownload, IconFolderFilled } from '@tabler/icons-react';
 
 import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
 import { cx } from '@/utils/cx';
@@ -63,6 +63,7 @@ const TableNameCell = ({
   };
 
   const entry = entryOf(row);
+  const cloudPlaceholder = row.kind === 'file' && row.file.cloudPlaceholder;
   const content = (
     <>
       {renderIcon()}
@@ -73,6 +74,14 @@ const TableNameCell = ({
         lines={1}
         text={entry.name}
       />
+      {cloudPlaceholder ? (
+        <IconCloudDownload
+          aria-label="iCloud 云端文件，点开时下载到本机"
+          className={styles.cloudIcon}
+          size={15}
+          stroke={1.6}
+        />
+      ) : null}
     </>
   );
 

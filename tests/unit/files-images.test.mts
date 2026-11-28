@@ -44,4 +44,13 @@ describe('files-images 的路径校验与 MIME', () => {
       /图片不存在/,
     );
   });
+
+  it('已落地的本地文件不触发下载，占位识别按块占用判定', async () => {
+    const { isCloudPlaceholder } = await import(
+      '../../scripts/vite/files-cloud.ts'
+    );
+
+    assert.equal(await isCloudPlaceholder(join(root, 'poster.PNG')), false);
+    assert.equal(await isCloudPlaceholder(join(root, 'nope.png')), false);
+  });
 });

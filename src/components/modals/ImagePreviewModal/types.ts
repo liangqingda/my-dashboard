@@ -11,6 +11,8 @@ import type { PreviewItem } from '@/components/modals/PreviewItemList/types';
 export type ImagePreviewItem = PreviewItem & {
   /** 图片地址（中间件整份返回字节） */
   src: string;
+  /** iCloud 云端占位：取图前要先下载到本机，舞台按下载中提示 */
+  cloudPlaceholder?: boolean;
 };
 
 /** 裁剪的保存方式：覆盖源文件 / 另存到同级的「- 裁剪」目录 */

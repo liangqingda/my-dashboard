@@ -41,3 +41,9 @@
 .mediaIcon {
   color: var(--mantine-color-blue-5);
 }
+
+/* iCloud 云端占位：名称右侧一枚下载图标，提示点开时才落地 */
+.cloudIcon {
+  flex: 0 0 auto;
+  color: var(--app-ink-faint);
+}

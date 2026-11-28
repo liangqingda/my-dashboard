@@ -112,6 +112,7 @@ const normalizeFile = (raw: unknown): FileEntry | null => {
     path,
     size: asNumber(raw.size),
     updatedAt: asString(raw.updatedAt),
+    cloudPlaceholder: raw.cloudPlaceholder === true,
   };
 };
 

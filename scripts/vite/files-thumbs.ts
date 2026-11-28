@@ -18,6 +18,7 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 
 // 显式 `.ts`：单测用 Node 原生类型剥离直接跑这一层，不经过 Vite 的 `.js → .ts` 解析
+import { ensureLocalDownloaded } from './files-cloud.ts';
 import { isImageFileName, isVideoFileName } from './files-store.ts';
 
 const execFileAsync = promisify(execFile);
@@ -164,7 +165,10 @@ export const fileThumb = async (input: string): Promise<FileThumb | null> => {
 
   await mkdir(THUMB_CACHE_DIR, { recursive: true });
 
-  return withSlot(() =>
-    kind === 'image' ? thumbForImage(input, out) : thumbForVideo(input, out),
-  );
+  return withSlot(async () => {
+    // iCloud 占位文件：先落地再转码，否则 sips / qlmanage 拿到空壳转不出帧
+    await ensureLocalDownloaded(input);
+
+    return kind === 'image' ? thumbForImage(input, out) : thumbForVideo(input, out);
+  });
 };

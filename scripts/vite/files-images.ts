@@ -10,6 +10,7 @@ import { stat } from 'node:fs/promises';
 import path from 'node:path';
 
 // 显式 `.ts`：单测用 Node 原生类型剥离直接跑这一层，不经过 Vite 的 `.js → .ts` 解析
+import { ensureLocalDownloaded } from './files-cloud.ts';
 import { isImageFileName } from './files-store.ts';
 
 /** 图片扩展名 → MIME；认不出的一律 `application/octet-stream`，让浏览器按嗅探处理 */
@@ -90,11 +91,16 @@ export const openImageFile = async (input: string): Promise<ImageFile> => {
     throw withCode('图片路径不是常规文件', 'EINVAL');
   }
 
+  // iCloud 占位文件：先把字节拉回本地再读，否则拿到的是空壳、浏览器解不出图
+  await ensureLocalDownloaded(filePath);
+
+  const refreshed = await stat(filePath);
+
   return {
     mime:
       IMAGE_MIME_BY_EXTENSION[path.extname(filePath).toLowerCase()] ??
       'application/octet-stream',
     path: filePath,
-    size: info.size,
+    size: refreshed.size,
   };
 };

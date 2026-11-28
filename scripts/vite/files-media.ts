@@ -13,6 +13,7 @@ import path from 'node:path';
 import type { ReadStream } from 'node:fs';
 
 // 显式 `.ts`：单测用 Node 原生类型剥离直接跑这一层，不经过 Vite 的 `.js → .ts` 解析
+import { ensureLocalDownloaded } from './files-cloud.ts';
 import { openTrackedStream } from './files-handles.ts';
 import { isVideoFileName } from './files-store.ts';
 
@@ -106,13 +107,18 @@ export const openVideoFile = async (input: string): Promise<VideoFile> => {
     throw withCode('视频路径不是常规文件', 'EINVAL');
   }
 
+  // iCloud 占位文件：先把字节拉回本地再开流，否则 Range 读到的是空壳
+  await ensureLocalDownloaded(filePath);
+
+  const refreshed = await stat(filePath);
+
   return {
     mime:
       VIDEO_MIME_BY_EXTENSION[path.extname(filePath).toLowerCase()] ??
       'application/octet-stream',
-    mtimeMs: info.mtimeMs,
+    mtimeMs: refreshed.mtimeMs,
     path: filePath,
-    size: info.size,
+    size: refreshed.size,
   };
 };
 

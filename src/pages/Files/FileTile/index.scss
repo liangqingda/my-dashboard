@@ -159,6 +159,12 @@
   color: var(--mantine-color-blue-5);
 }
 
+/* iCloud 云端占位徽标：真实字节在云端，点开预览时才下载到本机 */
+.cloudBadge {
+  flex: 0 0 auto;
+  color: var(--app-ink-faint);
+}
+
 /* 已在待拖拽区里：与文件夹瓦片同一圈内描边，两种瓦片看起来是一批被选中的东西 */
 .pending {
   border-radius: 10px;

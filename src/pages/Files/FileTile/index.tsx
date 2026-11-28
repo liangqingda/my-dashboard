@@ -1,6 +1,7 @@
 import { memo, useState } from 'react';
 import { Tooltip, UnstyledButton } from '@mantine/core';
 import { useInViewport } from '@mantine/hooks';
+import { IconCloudDownload } from '@tabler/icons-react';
 
 import FreeTruncatedText from '@/components/texts/FreeTruncatedText';
 import { cx } from '@/utils/cx';
@@ -80,7 +81,13 @@ const FileTile = memo(
     /** 图源随设置变化：视频改到外部模式时立刻换成播放器图标 */
     let thumbSrc: string | null = null;
 
-    if (isMedia && !thumbFailed) {
+    /*
+     * iCloud 占位文件字节还在云端：缩略图接口拉不下来，瓦片不挂图源，
+     * 直接摆分类图标 + 下载徽标，点开预览时由后端触发下载。
+     */
+    const { cloudPlaceholder } = file;
+
+    if (isMedia && !thumbFailed && !cloudPlaceholder) {
       thumbSrc = usesAppIcon ? videoAppIconUrl(videoApp) : fileThumbUrl(file.path);
     }
 
@@ -145,6 +152,16 @@ const FileTile = memo(
           />
           <span className={styles.meta}>
             {formatFileSize(file.size)}
+            {cloudPlaceholder ? (
+              <Tooltip label="iCloud 云端文件，点开时下载到本机" withArrow>
+                <IconCloudDownload
+                  aria-hidden="true"
+                  className={styles.cloudBadge}
+                  size={18}
+                  stroke={1.4}
+                />
+              </Tooltip>
+            ) : null}
             {showsImageBadge ? (
               <Icon
                 aria-hidden="true"

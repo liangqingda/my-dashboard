@@ -172,7 +172,8 @@
 | 文件 | 职责 |
 | --- | --- |
 | `scripts/vite/files.ts` | 路由壳：`GET /api/files`（未带 `dir` 回落主目录）、`GET /api/files?dir=…`、`GET /api/files/content?path=…`（视频按 Range 流式读）、`GET /api/files/image?path=…`（图片字节）、`GET /api/files/thumb?path=…`（图片 / 视频缩略图，网格用）、`GET /api/files/video-apps`（能播视频的本机应用）、`GET /api/files/app-icon?path=…`（应用图标 PNG）、`GET /api/files/app-residue?path=…`（卸载残留清单）、`POST /api/files/open-app`（打开应用包）、`POST /api/files/pick-dir`（系统目录选择框）、`POST /api/files/new-folder`、`POST /api/files/rename`、`POST /api/files/move`、`POST /api/files/delete`、`POST /api/files/open`（交给外部播放器）、`POST /api/files/uninstall-app`、`POST /api/files/eject`（body `{ dir, killPids? }`：推出当前目录所在的外接盘，返回 `{ result }`）、`POST /api/files/capture`（视频帧截图写目录，缺省桌面）、`POST /api/files/crop`（body `{ path, dataUrl, mode }`：保存图片裁剪结果）、`POST /api/files/wallpaper`（body `{ path }`：把一张本机图片设为桌面墙纸），错误归类成 HTTP 状态码 |
-| `scripts/vite/files-store.ts` | 路径校验、条目归类、应用包从文件夹里分出来单独成列、文件夹直属条目计数、内含分类摘要与「直属是否含应用包」，供类型筛选过滤文件夹、文件归类（视频 / PDF / Markdown / App / 其它）标记、选择器脚本拼装，以及新建 / 重命名 / 移动 / 删除的写盘与冲突拒绝、错误文案与错误码收口 |
+| `scripts/vite/files-store.ts` | 路径校验、条目归类、应用包从文件夹里分出来单独成列、文件夹直属条目计数、内含分类摘要与「直属是否含应用包」，供类型筛选过滤文件夹、文件归类（视频 / PDF / Markdown / App / 其它）标记、选择器脚本拼装，以及新建 / 重命名 / 移动 / 删除的写盘与冲突拒绝、错误文案与错误码收口；文件摘要带 `cloudPlaceholder`（iCloud 云端占位） |
+| `scripts/vite/files-cloud.ts` | iCloud 云端占位识别（按 `stat.blocks === 0` 判定）与按需下载：`brctl download` 触发 CloudDocs 拉取后轮询块占用直到落地，超时抛错；图片预览与缩略图取数前先确保本地已落地 |
 | `scripts/vite/files-handles.ts` | 本进程的读流登记表：`openTrackedStream` 打开即登记、`close` 自动销号，`releaseStreamsUnder` 在推出外接盘前把这一卷下的读流全部销毁并等它们真的关掉。读流生命周期只跟一次响应走，**不在模块里缓存句柄**——缓存一条流等于把整块盘的寿命绑在页面停留时长上 |
 | `scripts/vite/files-picker.ts` | 原生目录选择框：首次把一段 Swift `NSOpenPanel` 源码编进 `node_modules/.cache`，服务启动时后台预热，之后每次选择只起小二进制；编译 / 运行不可用时回落 `osascript` |
 | `scripts/vite/files-apps.ts` | 应用包识别（`.app` 目录与指向它的符号链接）、Info.plist 解析（`plutil`）、残留推导（用户级与系统级）、打开（校验 `.app` 后交给系统 `open`）、卸载（先退应用再删整包与残留，权限不足时弹一次授权窗补删） |
@@ -208,7 +209,7 @@
 - **筛选**：前端在已取到本页的摘要上做两档过滤——名称关键词（大小写不敏感子串匹配，过滤文件与应用）与分类勾选（视频 / 图片 / PDF / Markdown / App / 其它，默认全选）：勾了哪类就显示哪类，文件按自身分类、应用按「App」这一档、文件夹按内含分类，空文件夹（直属条目数为 0）不含分类、不参与分类筛选，始终展示；勾了 App 时另列**直属含应用包**的文件夹（`hasApps`，如 `/` 下的 `Applications`、`System` 能点进去），`/Applications` 与 `/System/Applications` 即使扫描没标出 `hasApps` 也按应用目录露出（兜住权限 / 缓存异常）；只有包里深层才有的 app 不算；「全部」与分类列表用一条分割线隔开：多选模式下它是复选框（全勾选中、部分勾选半选、一个没勾未选，点它全选 / 全清），单选模式下是单选框。只勾「App」时会自动切到收藏里的「系统应用程序」目录（已在 `/Applications` 不重复打开）。操作方式可在设置面板切「多选 / 单选」：多选可同时勾几类，单选一次只能留一类（「全部」表示不筛选），从多选切到单选时选择不是「恰好一类」就收敛成全部。勾选与操作方式都持久化（键 `type-filter-selected` / `type-filter-mode`）；关键词为会话内状态不持久化；
 - **文件夹分类摘要**：`listing.folders[].categories` 给出文件夹内出现过的分类（含深层），中间件按「先浅后深、找齐各档即停」扫描，累计 2000 个条目或 6 层为止，超出预算的深层内容不保证计入；应用包按一条 `app` 分类计入、不再往包里扫；另有 `hasApps` 只表示**直属子项**里有应用包。两者只服务于筛选时决定文件夹露不露出，不是精确的全树统计；
 - **类型图标**：后端按扩展名归类，前端按分类换图标（视频与图片上蓝色，其余弱色）；视频帧封面抽取是单独任务。
-- **视频预览与截图**：`content` 接口只认视频扩展名（分类表与列表共用同一份），并按 `Range` 回 206
+- **视频预览与截图**：`content` 接口只认视频扩展名（分类表与列表共用同一份），占位视频同样先触发下载到本机再开流，并按 `Range` 回 206
   （浏览器靠它跳转与续播），没有 `Range` 时整份返回；响应带 `Cache-Control: private, max-age=600`
   与 `ETag` / `Last-Modified`（由体积与修改时间算出，文件一变即失效），同一片子重复打开、
   来回 seek 与翻篇回看都能命中浏览器缓存；不带 `Range` 的请求命中 `If-None-Match` 时回 304；`capture` 只接受 PNG data URL，写到 body 里的
@@ -219,6 +220,8 @@
 - **图片预览**：`GET /api/files/image?path=` 整份返回图片字节（不做 Range），只认图片扩展名
   （分类表里 `image` 那一档，不收 `.svg`），`Cache-Control: no-store`、支持 `HEAD`；
   浏览器直接把它塞进 `<img src>`，前端通过 `ImagePreviewModal` 消费。
+  iCloud 云端占位文件先由后端触发下载到本机再读字节；预览期间舞台显示「正在从 iCloud 下载…」，
+  真正解码失败才回落「这张图片无法显示」。
   `content` / `image` / `capture` / `audio` / `crop` 五个接口都只在开发模式存在。
 - **图片裁剪**：图片预览 header 的裁剪图标进入裁剪态，前端按选框从已加载的 `<img>` 重新编码成
   PNG / JPEG / WebP（与源扩展名一致），再调 `POST /api/files/crop`（body `{ path, dataUrl, mode }`，
@@ -252,6 +255,8 @@
   512 是按「瓦片最宽 248px × 2 倍图」定的：缩略图比这再小，瓦片放大后就会糊。
   按「路径 + 体积 + 修改时间 + 尺寸」缓存在临时目录，`Cache-Control: private, max-age=600`；转不出来返回 404，
   前端（`utils/media-thumbs.ts` 拼 URL、`FileTile` 的 `onError`）回落分类图标。
+  占位文件先落地再转码；列表摘要里 `cloudPlaceholder` 为真时瓦片 / 表格不挂缩略图，
+  改摆分类图标 + 下载徽标（Tooltip 提示点开时下载）。
   网格里视频在「外部应用」模式下由设置 `video-thumb-style` 决定大图：默认摆所选播放器的图标
   （`GET /api/files/app-icon?app=<应用名>`，应用名由 `files-video-apps.ts` 的
   `videoAppBundlePath` 映射成包路径，名字为空回落 IINA）；选「视频帧」时大图仍走缩略图，

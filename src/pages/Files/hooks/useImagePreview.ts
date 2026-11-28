@@ -69,6 +69,7 @@ export const useImagePreview = (
       list.items.map((file) => ({
         id: file.path,
         name: file.name,
+        cloudPlaceholder: file.cloudPlaceholder,
         src: `${imageContentUrl(file.path)}${version > 0 ? `&v=${version}` : ''}`,
       })),
     [list.items, version],

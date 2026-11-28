@@ -15,6 +15,7 @@ import { promisify } from 'node:util';
 import type { Dirent } from 'node:fs';
 
 import { describeAppEntry, isAppBundleName } from './files-apps.ts';
+import { isCloudPlaceholder } from './files-cloud.ts';
 import { pickNativeDirectory } from './files-picker.ts';
 import type { AppEntry } from './files-apps.ts';
 
@@ -128,6 +129,8 @@ export type FileEntry = {
   updatedMs: number;
   /** 文件归类，用于区分图标与类型筛选 */
   category: FileCategory;
+  /** iCloud 云端占位：真实字节未落地，缩略图 / 预览要先触发下载再读 */
+  cloudPlaceholder: boolean;
 };
 
 /** 一次目录扫描的结果 */
@@ -516,6 +519,7 @@ export const listDirectory = async (input: string): Promise<DirListing> => {
           updatedAt: info.mtime.toISOString(),
           updatedMs: info.mtimeMs,
           category: categoryForName(entry.name),
+          cloudPlaceholder: await isCloudPlaceholder(entryPath),
         });
       } catch {
         // 单文件 stat 失败就跳过这一条，目录里其它条目照常展示。

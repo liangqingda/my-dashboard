@@ -270,6 +270,7 @@ const ImagePreviewModal = ({
         onDoubleClick={handleStageDoubleClick}
       >
         <ImageStage
+          cloudPlaceholder={activeItem.cloudPlaceholder}
           cropRect={crop.rect}
           cropping={cropping}
           fullscreen={fullscreen && !cropping}

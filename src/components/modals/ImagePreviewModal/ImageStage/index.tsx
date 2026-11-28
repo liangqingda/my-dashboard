@@ -33,6 +33,8 @@ export type ImageStageProps = {
   name: string;
   /** 图片地址 */
   src: string;
+  /** iCloud 云端占位：取图前要先下载到本机，加载提示按「正在下载」文案给 */
+  cloudPlaceholder?: boolean;
   /** 外部要拿这张图去裁剪时传进来；不传则舞台自己持有图片节点 */
   imageRef?: RefObject<HTMLImageElement | null>;
   /** 正在裁剪：缩放 / 平移让位，选框叠在图上 */
@@ -50,6 +52,7 @@ export type ImageStageProps = {
 const IMAGE_ICON_SIZE = 28;
 
 const ImageStage = ({
+  cloudPlaceholder = false,
   cropping = false,
   cropRect,
   fullscreen = false,
@@ -77,6 +80,9 @@ const ImageStage = ({
       {status === 'loading' ? (
         <div className={styles.hint}>
           <Loader color="gray" size="sm" />
+          {cloudPlaceholder ? (
+            <span className={styles.hintText}>正在从 iCloud 下载…</span>
+          ) : null}
         </div>
       ) : null}
       {status === 'error' ? (

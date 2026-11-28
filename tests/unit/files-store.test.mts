@@ -184,6 +184,8 @@ describe('files-store', () => {
     assert.equal(file.category, 'video');
     assert.match(file.updatedAt, /^\d{4}-\d{2}-\d{2}T/);
     assert.equal(file.path, path.join(root, 'clip.webm'));
+    // 本地临时目录里的文件都已落地，不是 iCloud 占位
+    assert.equal(file.cloudPlaceholder, false);
   });
 
   it('子文件夹可以再打开一层', async () => {

@@ -71,6 +71,8 @@ export type FileEntry = {
   updatedMs: number;
   /** 文件归类，用于区分图标与类型筛选 */
   category: FileCategory;
+  /** iCloud 云端占位：真实字节未落地，预览 / 缩略图会先触发下载 */
+  cloudPlaceholder: boolean;
 };
 
 /** 能被拖拽移动的条目：文件夹与文件（应用包不参与移动） */
