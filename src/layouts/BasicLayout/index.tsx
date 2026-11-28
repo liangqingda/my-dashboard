@@ -4,6 +4,7 @@ import { AppShell } from '@mantine/core';
 import { useDock } from '@/dock/hooks/useDock';
 import Header from '@/layouts/Header';
 import Sidebar from '@/layouts/Sidebar';
+import { isTypingTarget } from '@/utils/typing-target';
 
 import type { BasicLayoutProps } from './types';
 
@@ -19,7 +20,10 @@ const BasicLayout = ({ children }: BasicLayoutProps) => {
     dockRef.current = dock;
   }, [dock]);
 
-  // Esc 收起移动端侧栏；⌘M 收起当前最上层可收起的弹窗（键位统一挂在外壳上）
+  /*
+   * Esc 收起移动端侧栏；⌘M 收起当前最上层可收起的弹窗；
+   * ⌘← / ⌘→ 按程序坞顺序切上一条 / 下一条（键位统一挂在外壳上）。
+   */
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -27,12 +31,25 @@ const BasicLayout = ({ children }: BasicLayoutProps) => {
         return;
       }
 
-      if (!event.metaKey || event.repeat || event.key.toLowerCase() !== 'm') {
+      if (!event.metaKey || event.repeat) {
         return;
       }
 
-      if (dockRef.current.minimizeTop()) {
-        event.preventDefault();
+      if (event.key.toLowerCase() === 'm') {
+        if (dockRef.current.minimizeTop()) {
+          event.preventDefault();
+        }
+
+        return;
+      }
+
+      if (
+        (event.key === 'ArrowLeft' || event.key === 'ArrowRight') &&
+        !isTypingTarget(event.target)
+      ) {
+        if (dockRef.current.stepWindow(event.key === 'ArrowLeft' ? -1 : 1)) {
+          event.preventDefault();
+        }
       }
     };
 

@@ -223,7 +223,9 @@ const FileTile = memo(
             kind="file"
             onEdit={() => onEdit?.()}
             onMinimizeToDock={
-              isMedia && onMinimizeToDock ? () => onMinimizeToDock() : undefined
+              isMedia && onMinimizeToDock
+                ? (sourceEl) => onMinimizeToDock(sourceEl)
+                : undefined
             }
             onRequestDelete={() => onRequestDelete?.()}
             onSetWallpaper={onSetWallpaper ? () => onSetWallpaper() : undefined}

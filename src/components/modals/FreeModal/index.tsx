@@ -24,6 +24,7 @@ import { DOCK_WINDOW_Z_INDEX } from '@/dock/constants';
 import { cx } from '@/utils/cx';
 
 import { useAutoHideHeader } from './hooks/useAutoHideHeader';
+import { useDockNav } from './hooks/useDockNav';
 import { useDockMinimize } from './hooks/useDockMinimize';
 import { useOverlayFocusGuard } from './hooks/useOverlayFocusGuard';
 import { useModalShortcuts } from './hooks/useModalShortcuts';
@@ -107,6 +108,7 @@ const FreeModal = ({
     opened,
   });
   const canDismissToDock = canMinimize && dock?.disabled !== true;
+  const headerNav = useDockNav(dock, nav);
   /** 程序坞恢复出来的窗口默认抬到「压过所有页面弹窗」那一档 */
   const effectiveZIndex =
     zIndex ?? (dock?.origin === 'dock' ? DOCK_WINDOW_Z_INDEX : undefined);
@@ -180,7 +182,7 @@ const FreeModal = ({
   };
 
   /** 翻页 tooltip 的快捷键提示：业务侧没给就用这套统一的键位 */
-  const navHint = nav?.shortcutHint ?? NAV_SHORTCUT_HINT;
+  const navHint = headerNav?.shortcutHint ?? NAV_SHORTCUT_HINT;
 
   /** tooltip 文案：带快捷键时括在文案后面，aria-label 仍是纯动作名 */
   const tip = (label: string): string => `${label}（${navHint}）`;
@@ -244,28 +246,28 @@ const FreeModal = ({
             closeButton && styles.titleRowBeforeClose,
           )}
         >
-          {nav ? (
+          {headerNav ? (
             <>
               <FreeIconAction
-                disabled={nav.disabled === true || nav.onPrevious === null}
-                label={nav.previousLabel ?? '上一个'}
-                onClick={nav.onPrevious ?? undefined}
+                disabled={headerNav.disabled === true || headerNav.onPrevious === null}
+                label={headerNav.previousLabel ?? '上一个'}
+                onClick={headerNav.onPrevious ?? undefined}
                 tipDark={tipDark}
-                tooltipLabel={tip(nav.previousLabel ?? '上一个')}
+                tooltipLabel={tip(headerNav.previousLabel ?? '上一个')}
               >
                 <IconChevronLeft size={STEP_ICON_SIZE} stroke={ICON_STROKE} />
               </FreeIconAction>
               <FreeIconAction
-                disabled={nav.disabled === true || nav.onNext === null}
-                label={nav.nextLabel ?? '下一个'}
-                onClick={nav.onNext ?? undefined}
+                disabled={headerNav.disabled === true || headerNav.onNext === null}
+                label={headerNav.nextLabel ?? '下一个'}
+                onClick={headerNav.onNext ?? undefined}
                 tipDark={tipDark}
-                tooltipLabel={tip(nav.nextLabel ?? '下一个')}
+                tooltipLabel={tip(headerNav.nextLabel ?? '下一个')}
               >
                 <IconChevronRight size={STEP_ICON_SIZE} stroke={ICON_STROKE} />
               </FreeIconAction>
               <span className={styles.position}>
-                {nav.index} / {nav.total}
+                {headerNav.index} / {headerNav.total}
               </span>
             </>
           ) : null}

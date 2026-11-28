@@ -1,10 +1,7 @@
 /**
- * 程序坞的常量：存储键、层级、尺寸与动画时长。
+ * 程序坞的常量：存储键、层级、固定尺寸与动画时长。
  * 层级按「页面 < 弹窗 < 通知 < 程序坞窗口 < 程序坞」排，业务侧不再各自写 z-index。
  */
-
-/** 一本设置对象的存储键：应用级偏好，不带页面标识 */
-export const DOCK_SETTINGS_STORAGE_KEY = 'app:dock-settings';
 
 /** 收起窗口列表的存储键 */
 export const DOCK_ENTRIES_STORAGE_KEY = 'app:dock';
@@ -21,17 +18,23 @@ export const DOCK_FLY_Z_INDEX = 1150;
 /** 程序坞最多留几条：超出按收起时间淘汰最旧的，避免 localStorage 被快照撑爆 */
 export const MAX_DOCK_ENTRIES = 8;
 
-/** 收起（窗口 → 程序坞）动画时长（毫秒） */
-export const DOCK_MINIMIZE_DURATION = 420;
+/** 图标边长（px）：固定不跟设置走 */
+export const DOCK_ITEM_SIZE = 36;
 
-/** 展开（程序坞 → 窗口）动画时长（毫秒） */
-export const DOCK_RESTORE_DURATION = 440;
+/** 指针悬停时的最大放大倍数：110% */
+export const DOCK_MAGNIFICATION = 1.1;
 
-/** 程序坞里换窗的原位淡入时长（毫秒） */
-export const DOCK_SWAP_DURATION = 200;
+/** 程序坞与屏幕底边的间距 */
+export const DOCK_EDGE_GAP = 10;
 
-/** 程序坞与屏幕边缘的间距 */
-export const DOCK_EDGE_GAP = 12;
+/** 从图标中心展开 / 收回到图标中心的时长（毫秒） */
+export const DOCK_TRANSFORM_DURATION = 420;
 
-/** 刚收进程序坞时给落点打一下的属性：图标收一下再回弹 */
-export const DOCK_RECEIVE_ATTRIBUTE = 'data-receiving';
+/** 程序坞里换窗：左右整屏滑动的时长（毫秒） */
+export const DOCK_SLIDE_DURATION = 360;
+
+/** 关闭（X / Esc）走弹窗默认淡出：时长与 FreeModal 的一致 */
+export const DOCK_DISMISS_DURATION = 140;
+
+/** 页面弹窗 / 瓦片收进程序坞时，飞行克隆的时长（毫秒） */
+export const DOCK_FLY_DURATION = 520;

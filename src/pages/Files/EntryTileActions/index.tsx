@@ -46,7 +46,9 @@ const EntryTileActions = memo(
             label="收起到程序坞"
             onClick={(event) => {
               event.stopPropagation();
-              onMinimizeToDock();
+              onMinimizeToDock(
+                event.currentTarget.closest<HTMLElement>('[data-entry-path]'),
+              );
             }}
             size="sm"
             tooltip="none"

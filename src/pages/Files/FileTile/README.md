@@ -17,7 +17,7 @@
 | --- | --- | --- |
 | 选中态 | `dragging` / `pending` / `hideActions` / `tipOff` | 正在拖、已在待拖拽区、待拖拽模式不浮按钮、拖拽中不弹名称 tooltip |
 | 打开 | `onOpen` / `onOpenExternal` | 整点开预览；小图标走外部播放器 |
-| 条目动作 | `onEdit` / `onRequestDelete` / `onSetWallpaper` / `onMinimizeToDock` | 改名、删除、设墙纸（仅图片传）、直接收进程序坞（仅图片 / 视频传） |
+| 条目动作 | `onEdit` / `onRequestDelete` / `onSetWallpaper` / `onMinimizeToDock` | 改名、删除、设墙纸（仅图片传）、直接收进程序坞（仅图片 / 视频传，回调收到整张瓦片作为飞入动画源） |
 | 设置 | `veilOpacity` / `videoApp` / `videoOpenMode` / `videoThumbStyle` | 遮罩透明度；外部模式下视频大图摆播放器图标还是帧 |
 
 ## 坑

@@ -7,23 +7,6 @@
  * 所以切到别的页面、刷新之后仍能点开程序坞里的项目。
  */
 
-/** 程序坞停靠的屏幕边 */
-export type DockPlacement = 'top' | 'right' | 'bottom' | 'left';
-
-/** 程序坞的全局设置（用户偏好，持久化在 localStorage） */
-export type DockSettings = {
-  /** 停靠边 */
-  placement: DockPlacement;
-  /** 悬停时图标的放大倍数（1 = 不放大） */
-  magnification: number;
-  /** 图标边长（px） */
-  itemSize: number;
-  /** 自动隐藏：隐藏后由顶栏的图标按钮唤出 / 收起 */
-  autoHide: boolean;
-  /** 全局毛玻璃浓度（40–100，100 = 现有配方原样） */
-  glassOpacity: number;
-};
-
 /** Markdown 预览窗口恢复所需的最小快照：正文随条目一起存，恢复时不再依赖页面数据 */
 export type MarkdownDockSnapshot = {
   markdown: string;
@@ -104,24 +87,16 @@ export type DockDescriptor = DockWindowPayload & {
 
 /** 顶栏与布局要读的程序坞状态 */
 export type DockContextValue = {
-  /** 当前设置 */
-  settings: DockSettings;
-  /** 改一项或几项设置（立即持久化并生效） */
-  updateSettings: (patch: Partial<DockSettings>) => void;
   /** 程序坞里当前收着的窗口 */
   entries: readonly DockEntry[];
-  /** 程序坞是否可见（自动隐藏关闭时恒为 true） */
-  revealed: boolean;
+  /** 正在飞入、还没有长出图标的条目 id：程序坞里先画虚位 */
+  receivingIds: readonly string[];
   /** 当前真正展开着的条目 id（程序坞里画运行小点用） */
   activeEntryId: string | null;
-  /** 唤出 / 收起（自动隐藏关闭时收起无效） */
-  showDock: () => void;
-  hideDock: () => void;
-  toggleDock: () => void;
-  /** 把一扇窗收进程序坞；`sourceEl` 是窗口框体，用来做飞入动画 */
+  /** 把一扇窗收进程序坞；`sourceEl` 是窗口框体或整张瓦片，用来做飞入动画 */
   minimize: (descriptor: DockDescriptor, sourceEl: HTMLElement | null) => void;
-  /** 不经弹窗，直接把一条窗口快照收进程序坞（文件瓦片上的「收起到程序坞」） */
-  collect: (draft: DockEntryDraft) => void;
+  /** 不经弹窗，直接把一条快照收进程序坞；`sourceEl` 是整张瓦片，用来做飞入动画 */
+  collect: (draft: DockEntryDraft, sourceEl?: HTMLElement | null) => void;
   /**
    * `⌘M`：收起当前最上层、可收起的弹窗。返回是否真的收到了一扇——
    * 布局层据此决定要不要 `preventDefault`，没有弹窗时别抢浏览器的键。
@@ -129,11 +104,13 @@ export type DockContextValue = {
   minimizeTop: () => boolean;
   /**
    * 点程序坞里的项目：没打开就恢复这扇窗，已经打开着就收回程序坞；
-   * 同一时刻只留一扇，切到另一扇时原地淡入，不再回坞绕一圈。
+   * 同一时刻只留一扇，切到另一扇时整屏左右滑动，不再回坞绕一圈。
    */
   restore: (id: string) => void;
-  /** 关闭当前恢复出来的窗口（从程序坞里移除这一条） */
+  /** 关闭当前恢复出来的窗口：走弹窗默认淡出，结束后移除这一条 */
   requestCloseWindow: () => void;
+  /** 按程序坞顺序切上一个 / 下一个（`-1` / `1`）；返回是否真的切了 */
+  stepWindow: (delta: -1 | 1) => boolean;
   /**
    * 弹窗把自己登记进「当前打开着的窗口栈」：`⌘M` 收起最后登记且可收起的那一扇。
    * 返回注销函数，弹窗关闭时调用。
@@ -159,6 +136,6 @@ export type DockEntryDraft = DockWindowPayload & {
 export type DockWindowProps = {
   /** 要恢复的那一条 */
   entry: DockEntry;
-  /** 用户关掉这扇窗（Esc / 关闭按钮 / 空格等） */
+  /** 用户关掉这扇窗（X / Esc；空格与遮罩走收起，不经过这里） */
   onRequestClose: () => void;
 };

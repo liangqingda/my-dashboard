@@ -206,7 +206,7 @@ const DirectoryGrid = ({
       onEdit={() => onEditEntry(file)}
       onMinimizeToDock={
         file.category === 'video' || file.category === 'image'
-          ? () => onMinimizeFileToDock(file)
+          ? (sourceEl) => onMinimizeFileToDock(file, sourceEl)
           : undefined
       }
       onOpen={previewHandler(file, onOpenVideo, onOpenImage)}

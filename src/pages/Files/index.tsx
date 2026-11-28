@@ -117,7 +117,7 @@ const Files = () => {
    * 瓦片上的「收起到程序坞」：不打开预览，直接把当前目录的同类列表与这一条的快照
    * 交给程序坞；恢复出来仍是完整预览，能继续翻篇。
    */
-  const sendFileToDock = (file: FileEntry) => {
+  const sendFileToDock = (file: FileEntry, sourceEl: HTMLElement | null) => {
     if (file.category === 'image') {
       dock.collect({
         id: `image-preview:${FILES_STORAGE_SCOPE}:${file.path}`,
@@ -128,7 +128,7 @@ const Files = () => {
           storageScope: FILES_STORAGE_SCOPE,
         },
         title: file.name,
-      });
+      }, sourceEl);
       return;
     }
 
@@ -142,7 +142,7 @@ const Files = () => {
           storageScope: FILES_STORAGE_SCOPE,
         },
         title: file.name,
-      });
+      }, sourceEl);
     }
   };
 

@@ -1,20 +1,17 @@
 /**
- * 「窗口 ↔ 程序坞」的神奇效果动画。
+ * 程序坞窗口的几何动画：从图标中心展开 / 收回到图标中心、左右滑动换窗、关闭淡出。
  *
- * 收起：把窗口框体的克隆固定在原位，再向程序坞那一格收拢——位移 + 非等比缩放，
- * 同时用 clip-path 把远端边缘比近端收得更快，做出被吸进图标里的漏斗感。
- * 展开：同一组关键帧反着播，作用在真正的窗口框体上。
- *
- * 落点由程序坞项目自己的 `getBoundingClientRect()` 提供，所以鼠标把图标放大时，
- * 窗口也是往放大后的那一格收；减少动态偏好（reduce motion）下直接跳过。
+ * 收放用「中心缩放 + 平移」：起点 / 终点是图标中心，窗口只是在那里由小长到大，
+ * 不再做贴边漏斗，避免视觉上落到程序坞外面。
  */
 
+/* eslint-disable no-param-reassign -- 动画函数收到的参数就是待改写的 DOM 框体，直接写它的 style 是这套工具的唯一职责 */
 import {
-  DOCK_MINIMIZE_DURATION,
-  DOCK_RESTORE_DURATION,
-  DOCK_SWAP_DURATION,
+  DOCK_DISMISS_DURATION,
+  DOCK_FLY_Z_INDEX,
+  DOCK_SLIDE_DURATION,
+  DOCK_TRANSFORM_DURATION,
 } from '../constants';
-import type { DockPlacement } from '../types';
 
 /** 动画用的矩形（`DOMRect` 的超集） */
 export type RectLike = {
@@ -24,38 +21,8 @@ export type RectLike = {
   width: number;
 };
 
-export const FULL_CLIP = 'polygon(0 0, 100% 0, 100% 100%, 0 100%)';
-
-/** 漏斗形：越靠近程序坞的那条边越完整，远端先收 */
-export const CLIP_BY_PLACEMENT: Record<
-  DockPlacement,
-  { mid: string; late: string; end: string; origin: string }
-> = {
-  right: {
-    mid: 'polygon(8% 0, 100% 0, 100% 100%, 30% 100%)',
-    late: 'polygon(56% 0, 100% 0, 100% 100%, 76% 100%)',
-    end: 'polygon(46% 46%, 54% 46%, 54% 54%, 46% 54%)',
-    origin: '100% 50%',
-  },
-  left: {
-    mid: 'polygon(0 0, 92% 0, 70% 100%, 0 100%)',
-    late: 'polygon(0 0, 44% 0, 24% 100%, 0 100%)',
-    end: 'polygon(46% 46%, 54% 46%, 54% 54%, 46% 54%)',
-    origin: '0% 50%',
-  },
-  top: {
-    mid: 'polygon(0 0, 100% 0, 80% 100%, 20% 100%)',
-    late: 'polygon(0 0, 100% 0, 56% 100%, 44% 100%)',
-    end: 'polygon(46% 46%, 54% 46%, 54% 54%, 46% 54%)',
-    origin: '50% 0%',
-  },
-  bottom: {
-    mid: 'polygon(20% 0, 80% 0, 100% 100%, 0 100%)',
-    late: 'polygon(44% 0, 56% 0, 100% 100%, 0 100%)',
-    end: 'polygon(46% 46%, 54% 46%, 54% 54%, 46% 54%)',
-    origin: '50% 100%',
-  },
-};
+/** 换窗方向：`next` 往程序坞后面翻（旧窗向左、新窗从右进），`prev` 反过来 */
+export type DockSlideDirection = 'next' | 'prev';
 
 export const prefersReducedMotion = () =>
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -89,7 +56,7 @@ export const waitForFrames = async <T>(
 
 /**
  * 窗口框体：入口是弹窗根节点上的 `data-dock-surface`；
- * Mantine 把内容框渲染成 `<section role="dialog">`（`Paper` 的 dialog 语义），按它取动画对象。
+ * Mantine 把内容框渲染成 `<section role="dialog">`，按它取动画对象。
  */
 export const findDockSurface = (id: string): HTMLElement | null => {
   const roots = document.querySelectorAll<HTMLElement>('[data-dock-surface]');
@@ -106,112 +73,24 @@ export const findDockItem = (id: string): HTMLElement | null => {
   return item ?? null;
 };
 
-/** 把 `100% 50%` 这类 transform-origin 换算成原窗口里的绝对点 */
-const originPoint = (rect: RectLike, origin: string) => {
-  const [xToken = '50%', yToken = '50%'] = origin.split(' ');
-  const xRatio = Number.parseFloat(xToken) / 100;
-  const yRatio = Number.parseFloat(yToken) / 100;
+const shiftToItem = (from: RectLike, to: RectLike) => {
+  const fromCenter = centerOf(from);
+  const toCenter = centerOf(to);
 
   return {
-    x: rect.left + rect.width * xRatio,
-    y: rect.top + rect.height * yRatio,
+    dx: toCenter.x - fromCenter.x,
+    dy: toCenter.y - fromCenter.y,
+    scale: Math.min(to.width / from.width, to.height / from.height),
   };
 };
 
 /**
- * 从原窗口向程序坞落点收放的一帧。
- * 缩放以贴程序坞那条边为原点，所以平移量要按原点算：
- * `T - O - s * (C - O)`，这样终点仍精确落在图标上，中途则贴着屏幕边往里收。
- */
-export const transformKeyframe = (
-  from: RectLike,
-  to: RectLike,
-  progress: number,
-  origin: string,
-) => {
-  const fromCenter = centerOf(from);
-  const toCenter = centerOf(to);
-  const anchor = originPoint(from, origin);
-  const scaleX = 1 + (to.width / from.width - 1) * progress;
-  const scaleY = 1 + (to.height / from.height - 1) * progress;
-  const translateX =
-    toCenter.x - anchor.x - (fromCenter.x - anchor.x) * scaleX;
-  const translateY =
-    toCenter.y - anchor.y - (fromCenter.y - anchor.y) * scaleY;
-
-  return `translate3d(${translateX}px, ${translateY}px, 0) scale(${scaleX}, ${scaleY})`;
-};
-
-/**
- * 窗口 → 程序坞：真正的窗口框体自己收回去（程序坞窗口关闭 / 再收起时用）。
- * 与 `flyWindowToDock` 的区别是不克隆：窗口还要继续存在到动画结束，交给调用方在
- * `finished` 之后卸载；页面弹窗立即卸载的那条路径仍然走克隆版。
- */
-export const shrinkWindowToDock = async (
-  content: HTMLElement,
-  id: string,
-  placement: DockPlacement,
-): Promise<void> => {
-  const item = findDockItem(id);
-
-  if (prefersReducedMotion() || item === null) {
-    return;
-  }
-
-  const contentRect = content.getBoundingClientRect();
-  const itemRect = item.getBoundingClientRect();
-  const clip = CLIP_BY_PLACEMENT[placement];
-  const frame = content;
-
-  frame.style.transformOrigin = clip.origin;
-  frame.style.willChange = 'transform, clip-path';
-
-  const animation = content.animate(
-    [
-      {
-        clipPath: FULL_CLIP,
-        offset: 0,
-        opacity: 1,
-        transform: 'translate3d(0px, 0px, 0) scale(1, 1)',
-      },
-      {
-        clipPath: clip.mid,
-        offset: 0.42,
-        opacity: 0.96,
-        transform: transformKeyframe(contentRect, itemRect, 0.46, clip.origin),
-      },
-      {
-        clipPath: clip.late,
-        offset: 0.72,
-        opacity: 0.88,
-        transform: transformKeyframe(contentRect, itemRect, 0.76, clip.origin),
-      },
-      {
-        clipPath: clip.end,
-        offset: 1,
-        opacity: 0.62,
-        transform: transformKeyframe(contentRect, itemRect, 1, clip.origin),
-      },
-    ],
-    {
-      duration: DOCK_MINIMIZE_DURATION,
-      easing: 'cubic-bezier(0.5, 0.02, 0.72, 0.38)',
-      fill: 'both',
-    },
-  );
-
-  await animation.finished.catch(() => undefined);
-};
-
-/**
- * 程序坞 → 窗口：真正的窗口框体从落点长回自己的位置。
- * 调用方要在布局阶段先把框体隐藏（`opacity: 0`），避免动画起来前闪一帧；
- * 这里结束后会把内联隐藏值清掉。
+ * 程序坞 → 窗口：真实框体从图标中心由小长到大。
+ * 调用方在布局阶段先把框体隐藏，避免动画起来前闪一帧终态。
  */
 export const growWindowFromDock = async (
   content: HTMLElement,
   id: string,
-  placement: DockPlacement,
 ): Promise<void> => {
   const item = findDockItem(id);
 
@@ -222,43 +101,24 @@ export const growWindowFromDock = async (
 
   const contentRect = content.getBoundingClientRect();
   const itemRect = item.getBoundingClientRect();
-  const clip = CLIP_BY_PLACEMENT[placement];
-  const frame = content;
+  const { dx, dy, scale } = shiftToItem(contentRect, itemRect);
 
-  frame.style.opacity = '0';
-  frame.style.transformOrigin = clip.origin;
-  frame.style.willChange = 'transform, clip-path';
+  content.style.opacity = '0';
+  content.style.transformOrigin = 'center';
+  content.style.willChange = 'transform, opacity';
 
   const animation = content.animate(
     [
       {
-        clipPath: clip.end,
-        offset: 0,
-        opacity: 0.15,
-        transform: transformKeyframe(contentRect, itemRect, 1, clip.origin),
+        opacity: 0.2,
+        transform: `translate3d(${dx}px, ${dy}px, 0) scale(${scale})`,
       },
-      {
-        clipPath: clip.late,
-        offset: 0.2,
-        opacity: 0.58,
-        transform: transformKeyframe(contentRect, itemRect, 0.8, clip.origin),
-      },
-      {
-        clipPath: clip.mid,
-        offset: 0.5,
-        opacity: 0.94,
-        transform: transformKeyframe(contentRect, itemRect, 0.48, clip.origin),
-      },
-      {
-        clipPath: FULL_CLIP,
-        offset: 1,
-        opacity: 1,
-        transform: 'translate3d(0px, 0px, 0) scale(1, 1)',
-      },
+      { offset: 0.68, opacity: 0.92, transform: 'translate3d(0, 0, 0) scale(1.012)' },
+      { opacity: 1, transform: 'translate3d(0, 0, 0) scale(1)' },
     ],
     {
-      duration: DOCK_RESTORE_DURATION,
-      easing: 'cubic-bezier(0.18, 0.88, 0.24, 1)',
+      duration: DOCK_TRANSFORM_DURATION,
+      easing: 'cubic-bezier(0.2, 0.86, 0.22, 1)',
       fill: 'both',
     },
   );
@@ -266,37 +126,163 @@ export const growWindowFromDock = async (
   await animation.finished.catch(() => undefined);
   content.style.removeProperty('opacity');
   content.style.removeProperty('will-change');
+  content.style.removeProperty('transform-origin');
   animation.cancel();
 };
 
 /**
- * 程序坞里从一扇窗换到另一扇：不回坞、不飞行，只在原位淡入 + 轻微放大。
- * 旧窗口已经被新窗口替换，这里只负责把新框体平滑接上。
+ * 窗口 → 程序坞：真实框体由大缩到图标正中心。
+ * 只作用于框体；遮罩由调用方同时淡出。
  */
-export const swapWindowInPlace = async (content: HTMLElement): Promise<void> => {
-  const { style } = content;
+export const shrinkWindowToDock = async (
+  content: HTMLElement,
+  id: string,
+): Promise<void> => {
+  const item = findDockItem(id);
 
-  if (prefersReducedMotion()) {
-    style.removeProperty('opacity');
+  if (prefersReducedMotion() || item === null) {
     return;
   }
 
-  style.opacity = '0';
-  style.transformOrigin = 'center';
+  const contentRect = content.getBoundingClientRect();
+  const itemRect = item.getBoundingClientRect();
+  const { dx, dy, scale } = shiftToItem(contentRect, itemRect);
+
+  content.style.transformOrigin = 'center';
+  content.style.willChange = 'transform, opacity';
 
   const animation = content.animate(
     [
-      { opacity: 0.32, transform: 'scale(0.985, 0.985)' },
-      { opacity: 1, transform: 'scale(1, 1)' },
+      { opacity: 1, transform: 'translate3d(0, 0, 0) scale(1)' },
+      {
+        offset: 0.72,
+        opacity: 0.82,
+        transform: `translate3d(${dx * 0.9}px, ${dy * 0.9}px, 0) scale(${scale * 1.12})`,
+      },
+      {
+        opacity: 0.28,
+        transform: `translate3d(${dx}px, ${dy}px, 0) scale(${scale})`,
+      },
     ],
     {
-      duration: DOCK_SWAP_DURATION,
-      easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
+      duration: DOCK_TRANSFORM_DURATION,
+      easing: 'cubic-bezier(0.55, 0.02, 0.72, 0.36)',
       fill: 'both',
     },
   );
 
   await animation.finished.catch(() => undefined);
-  style.removeProperty('opacity');
+};
+
+/** 关闭（X / Esc）：按弹窗默认的淡出，不做收坞位移 */
+export const dismissWindow = async (content: HTMLElement): Promise<void> => {
+  if (prefersReducedMotion()) {
+    return;
+  }
+
+  const animation = content.animate(
+    [
+      { opacity: 1, transform: 'scale(1)' },
+      { opacity: 0, transform: 'scale(0.98)' },
+    ],
+    {
+      duration: DOCK_DISMISS_DURATION,
+      easing: 'ease-out',
+      fill: 'both',
+    },
+  );
+
+  await animation.finished.catch(() => undefined);
+};
+
+/** 滑动起点：`next` 的新窗从右边进，`prev` 从左边进 */
+export const slideOffset = (direction: DockSlideDirection): number =>
+  direction === 'next' ? window.innerWidth : -window.innerWidth;
+
+/** 新窗从屏幕外侧滑到原位；不带淡入淡出 */
+export const slideWindowIn = async (
+  content: HTMLElement,
+  direction: DockSlideDirection,
+): Promise<void> => {
+  if (prefersReducedMotion()) {
+    content.style.removeProperty('transform');
+    return;
+  }
+
+  const start = slideOffset(direction);
+
+  content.style.transformOrigin = 'center';
+  content.style.willChange = 'transform';
+
+  const animation = content.animate(
+    [
+      { transform: `translate3d(${start}px, 0, 0)` },
+      { transform: 'translate3d(0, 0, 0)' },
+    ],
+    {
+      duration: DOCK_SLIDE_DURATION,
+      easing: 'cubic-bezier(0.2, 0.88, 0.24, 1)',
+      fill: 'both',
+    },
+  );
+
+  await animation.finished.catch(() => undefined);
+  content.style.removeProperty('transform');
+  content.style.removeProperty('will-change');
+  content.style.removeProperty('transform-origin');
   animation.cancel();
 };
+
+/**
+ * 旧窗整块向左 / 向右滑出屏幕。
+ *
+ * 旧窗在换窗后会被立即卸载，所以这里先克隆它的内容框、固定到原位置再滑走，
+ * 新旧两扇同时在屏幕上完成「旧的出去、新的进来」。
+ */
+export const slideWindowOut = (
+  source: HTMLElement | null,
+  direction: DockSlideDirection,
+): void => {
+  if (source === null || prefersReducedMotion()) {
+    return;
+  }
+
+  const rect = source.getBoundingClientRect();
+  const clone = source.cloneNode(true) as HTMLElement;
+
+  clone.querySelectorAll('[id]').forEach((node) => node.removeAttribute('id'));
+  clone.removeAttribute('data-dock-surface');
+  clone.setAttribute('aria-hidden', 'true');
+  clone.setAttribute('inert', '');
+  clone.style.position = 'fixed';
+  clone.style.left = `${rect.left}px`;
+  clone.style.top = `${rect.top}px`;
+  clone.style.width = `${rect.width}px`;
+  clone.style.height = `${rect.height}px`;
+  clone.style.maxWidth = 'none';
+  clone.style.maxHeight = 'none';
+  clone.style.margin = '0';
+  clone.style.pointerEvents = 'none';
+  clone.style.transformOrigin = 'center';
+  clone.style.zIndex = String(DOCK_FLY_Z_INDEX);
+  clone.style.willChange = 'transform';
+  document.body.appendChild(clone);
+
+  const target = -slideOffset(direction);
+  const animation = clone.animate(
+    [
+      { transform: 'translate3d(0, 0, 0)' },
+      { transform: `translate3d(${target}px, 0, 0)` },
+    ],
+    {
+      duration: DOCK_SLIDE_DURATION,
+      easing: 'cubic-bezier(0.55, 0, 0.75, 0.2)',
+      fill: 'both',
+    },
+  );
+
+  void animation.finished
+    .catch(() => undefined)
+    .then(() => clone.remove());
+};
+/* eslint-enable no-param-reassign -- 文件结束，恢复默认规则 */
