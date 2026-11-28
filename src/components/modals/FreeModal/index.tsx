@@ -115,13 +115,15 @@ const FreeModal = ({
 
   const systemCloseAction = docked ? closeAndRemoveFromDock : onClose;
   const systemCloseLabel = docked ? '关闭并从程序坞移除' : closeLabel;
-  const headerNav = useDockNav(dock, nav);
+  const { arrowNav, headerNav } = useDockNav(dock, nav);
   const effectiveZIndex =
     zIndex ?? (dock?.origin === 'dock' ? DOCK_WINDOW_Z_INDEX : undefined);
   const dockSurfaceProps =
     dock === undefined
       ? {}
-      : ({ 'data-dock-surface': dock.id } as Record<string, string>);
+      : ({
+          'data-dock-surface': dock.surfaceId ?? dock.id,
+        } as Record<string, string>);
 
   const escapeOverridden = Boolean(onRequestEscape);
 
@@ -149,7 +151,7 @@ const FreeModal = ({
     copyMessage: copy?.message,
     disabled: shortcutsEnabled === false || backgroundDockWindow,
     enabled: opened,
-    arrowNav: dock?.origin === 'dock' ? headerNav : undefined,
+    arrowNav,
     extraKeys,
     nav,
     onCapture,

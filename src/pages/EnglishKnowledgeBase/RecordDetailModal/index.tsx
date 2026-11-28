@@ -48,16 +48,20 @@ const RecordDetailModal = ({
   /**
    * 程序坞描述：只存 ID 与标题，正文由恢复窗口按 ID 自取（列表摘要里的标题够撑起 header）；
    * 删除确认开着时不让收。
+   *
+   * `id` 按当前这条记录算（图标激活、X 口径、header 计数都跟它走），
+   * 程序坞窗口另外给 `surfaceId` 让开合动画认窗。
    */
   const dock: FreeModalDock | undefined =
     recordId === null
       ? undefined
       : {
           disabled: confirming,
-          id: dockId ?? `record-detail:${recordId}`,
+          id: `record-detail:${recordId}`,
           kind: 'record-detail',
           origin: dockOrigin,
           snapshot: { recordId, title: title ?? '记录详情' },
+          surfaceId: dockOrigin === 'dock' ? dockId : undefined,
           title: title ?? '记录详情',
         };
 

@@ -77,7 +77,11 @@ export const useDockMinimize = ({
     }
 
     const proceed = () => {
-      context.minimize(descriptor, findDockSurface(descriptor.id));
+      // 程序坞窗口的根节点按 surfaceId 找（翻篇后它与当前内容的条目 id 已经不同）
+      context.minimize(
+        descriptor,
+        findDockSurface(descriptor.surfaceId ?? descriptor.id),
+      );
 
       if (descriptor.origin !== 'dock') {
         (onMinimizeRef.current ?? onCloseRef.current)();

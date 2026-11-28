@@ -30,7 +30,12 @@ import type { DockEntry, DockWindowProps } from '../types';
 /** 已加载好的窗口渲染器 + 它的编排状态 */
 export type DockWindowSlot = {
   Component: ComponentType<DockWindowProps>;
+  /** 窗自身的身份：打开 / 换窗时定下，翻篇后不变（React key、根节点 id、开合动画都按它） */
   entry: DockEntry;
+  /** 当前显示内容对应的条目：翻篇后更新，收起时缩回它的图标 */
+  contentEntry: DockEntry;
+  /** 移除时要从程序坞删掉的条目 id（关闭窗口顺手删当前这条） */
+  removeId?: string;
   /** 第一次打开从图标中心长大（`genie`），换窗整屏滑动（`slide`） */
   animate: 'genie' | 'slide';
   /** 换窗方向：`next` 旧窗向左、新窗从右进，`prev` 反过来 */
@@ -53,7 +58,15 @@ type DockWindowHostProps = {
 };
 
 const DockWindowHost = ({ onExited, onRequestClose, slot }: DockWindowHostProps) => {
-  const { Component, animate, direction = 'next', entry, exit = 'minimize', phase } = slot;
+  const {
+    Component,
+    animate,
+    contentEntry,
+    direction = 'next',
+    entry,
+    exit = 'minimize',
+    phase,
+  } = slot;
   const onExitedRef = useRef(onExited);
 
   useEffect(() => {
@@ -122,7 +135,7 @@ const DockWindowHost = ({ onExited, onRequestClose, slot }: DockWindowHostProps)
         await dismissWindow(content);
       } else {
         fadeDockOverlay(root, 'out', DOCK_SHRINK_DURATION);
-        await shrinkWindowToDock(content, entryId);
+        await shrinkWindowToDock(content, contentEntry.id);
       }
 
       if (!isCancelled()) {
@@ -135,7 +148,7 @@ const DockWindowHost = ({ onExited, onRequestClose, slot }: DockWindowHostProps)
     return () => {
       controller.abort();
     };
-  }, [animate, direction, entry.id, exit, phase]);
+  }, [animate, contentEntry.id, direction, entry.id, exit, phase]);
 
   return (
     <Component entry={entry} key={entry.id} onRequestClose={onRequestClose} />

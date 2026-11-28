@@ -22,6 +22,6 @@ export type RecordDetailModalProps = {
    * 程序坞自己恢复出来的窗口传 `dock`，再收起只是回到图标。
    */
   dockOrigin?: 'page' | 'dock';
-  /** 程序坞条目 id：恢复窗传稳定 id，窗内翻篇不换根节点，收坞与图标定位都按它 */
+  /** 程序坞窗口根节点 id：恢复窗传收坞条目 id，窗内换记录不换根节点，收坞动画按它认框体 */
   dockId?: string;
 };

@@ -41,8 +41,10 @@
   `disabled` 时置灰但保留位置。
   `useDockMinimize` 负责「量框体 → 交给 Provider 编排动画」、`⌘M` 登记与移除；`origin: 'dock'`
   再收起只回坞、不执行 `onClose`，否则页面状态会留一半。
-  **只有 `origin === 'dock'` 或程序坞里已有同 id 条目的页面弹窗**，横线最小化 / Esc / 遮罩 / 空格
-  才收起回坞；未收录的普通弹窗照常 `onClose`。描述符契约与哪些弹窗不接见 `docs/dock.md`。
+  **只有程序坞里已有同 id 条目**（口径按描述符 `id`，也就是当前显示的内容），
+  横线最小化 / Esc / 遮罩 / 空格才收起回坞；未收录的弹窗照常 `onClose`。
+  `origin: 'dock'` 的窗口另外用 `surfaceId` 标窗自身的根节点：窗内翻篇后 `id` 跟着内容换，
+  根节点与开合动画仍按 `surfaceId`。描述符契约与哪些弹窗不接见 `docs/dock.md`。
 
 - **键盘口径统一在这里**（`hooks/useModalShortcuts`），业务弹窗不各自补快捷键：
   - `Esc`：与最小化图标同一口径——已收录的弹窗先收回程序坞，未收录的 X / `onClose`；传了 `onRequestEscape`
@@ -89,7 +91,7 @@
 
 | prop | 说明 |
 | --- | --- |
-| `opened` / `onClose` | 开合。已收录的弹窗 **横线最小化 / Esc / 遮罩 / 空格先收回程序坞**，条目保留；行尾 `IconX`「关闭并从程序坞移除」才删。未收录的普通弹窗 X / Esc / 遮罩走 `onClose` |
+| `opened` / `onClose` | 开合。已收录（程序坞里有当前内容的条目）的弹窗 **横线最小化 / Esc / 遮罩 / 空格先收回程序坞**，条目保留；行尾 `IconX`「关闭并从程序坞移除」才删。未收录的弹窗 X / Esc / 遮罩走 `onClose` |
 | `beforeMinimize` | 收起前先做的动作（可异步）：全屏 / 网页全屏先退出，完成后再量落点；程序坞恢复窗因此总能回到普通尺寸 |
 | `title` | header 标题（`ReactNode`），通常是文件名 / 条目名 |
 | `nav` | `FreeModalNav`：`index`（从 1 起）、`total`、`onPrevious` / `onNext`（到头传 `null` 置灰）、`previousLabel` / `nextLabel`、`shortcutHint`（只进 tooltip）、`disabled`（整组禁用，如编辑中） |
@@ -102,7 +104,7 @@
 | `tipDark` | 可选。header 内按钮、标题与计数固定取媒体浮层浅字档（连同 tip 深底浅字），不随主题反转；媒体预览压在画面上的提示与控件用 |
 | `zIndex` | 层级，默认走组件库的弹窗档；要压在另一扇已打开的弹窗之上时显式抬高（二次确认层由 `ConfirmModal` 默认给 `1040`） |
 | `onCapture` | `Enter` 的动作（视频预览截当前帧）；不传则该键不动作 |
-| `onSeek` | `(direction: 'backward' \| 'forward') => void`；传了之后 `←` / `→` 交给它（视频快进 / 后退），翻篇只剩 `[` / `]`。程序坞恢复窗口有多个条目时方向键先切程序坞，单条目才让回给媒体 |
+| `onSeek` | `(direction: 'backward' \| 'forward') => void`；传了之后 `←` / `→` 交给它（视频快进 / 后退），翻篇只剩 `[` / `]`。`origin: 'dock'` 的窗口有两条以上条目时方向键切程序坞条目（与当前内容是否已收录无关），单条目才让回给媒体；内容翻篇只留 `[` / `]` |
 | `fullscreen` | `{ active, onToggle?, showToggle?, reportActive? }`；不传则没有全屏外观与按钮。`showToggle` 默认 `true`，传 `false` 只收掉 header 按钮；`onToggle` 给了的话 `F` 键照常生效（进编辑这类不该换尺寸的场景，回调与按钮都不给）。`reportActive` 单独上报程序坞全屏态，默认跟随 `active`，业务自管铺满时用 |
 | `copy` | `{ text, message }`；传了就有 `C` 复制键（`text` 进剪贴板，`message` 是成功提示），与 header 的复制按钮同一口径 |
 | `onRequestDelete` | 传了就有 `Delete` / `Backspace` 删除键；只应打开二次确认层，不直接删 |

@@ -94,10 +94,12 @@ export const useDockWindowController = ({
     }
 
     if (closing.removeOnExit) {
-      writeEntries(removeDockEntry(entriesRef.current, closing.entry.id));
+      writeEntries(
+        removeDockEntry(entriesRef.current, closing.removeId ?? closing.entry.id),
+      );
     }
 
-    clearReceiving(closing.entry.id);
+    clearReceiving(closing.contentEntry.id);
     setWindow(null);
   };
 
@@ -119,7 +121,7 @@ export const useDockWindowController = ({
 
     // 缩回图标前先占住虚位：程序坞收起时也会立即弹出，收坞动画才量得到最终落点
     if (exit === 'minimize') {
-      markReceiving(slot.entry.id);
+      markReceiving(slot.contentEntry.id);
     }
 
     setWindow({ ...slot, exit, phase: 'closing', removeOnExit });
@@ -149,6 +151,7 @@ export const useDockWindowController = ({
       setWindow({
         Component,
         animate: 'slide',
+        contentEntry: entry,
         direction,
         entry,
         phase: 'opening',
@@ -160,6 +163,7 @@ export const useDockWindowController = ({
     setWindow({
       Component,
       animate: 'genie',
+      contentEntry: entry,
       entry,
       phase: 'opening',
       removeOnExit: false,
@@ -186,7 +190,15 @@ export const useDockWindowController = ({
   const stepWindow = (delta: -1 | 1): boolean => {
     const { current } = windowRef;
     const list = entriesRef.current;
-    const id = windowEntryIdRef.current ?? current?.entry.id;
+    const reported = windowEntryIdRef.current;
+    /*
+     * 位置按当前内容找；窗内翻到一条没收录的内容时它不在列表里，
+     * 退回这一窗自己的条目位置，`←` / `→` 才不会在这扇窗里失灵。
+     */
+    const id =
+      reported !== null && list.some((entry) => entry.id === reported)
+        ? reported
+        : current?.entry.id;
     const index =
       id === undefined ? -1 : list.findIndex((entry) => entry.id === id);
 
@@ -222,7 +234,7 @@ export const useDockWindowController = ({
       return;
     }
 
-    beginClosing({ ...current, entry }, false, 'minimize');
+    beginClosing({ ...current, contentEntry: entry }, false, 'minimize');
   };
 
   const remove = (id: string) => {
@@ -236,11 +248,7 @@ export const useDockWindowController = ({
         return;
       }
 
-      const entry =
-        entriesRef.current.find((candidate) => candidate.id === id) ??
-        current.entry;
-
-      beginClosing({ ...current, entry }, true, 'dismiss');
+      beginClosing({ ...current, removeId: id }, true, 'dismiss');
 
       return;
     }

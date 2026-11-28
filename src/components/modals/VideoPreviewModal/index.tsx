@@ -214,7 +214,8 @@ const VideoPreviewModal = ({
    */
   const dock = createVideoDock({
     activeId: activeItem.id, disabled: blocked || settingsOpen || episodeOpen,
-    externalApp, id: dockId, items, origin: dockOrigin, storageScope, title: activeItem.name,
+    externalApp, items, origin: dockOrigin, storageScope, surfaceId: dockId,
+    title: activeItem.name,
   });
 
   /*

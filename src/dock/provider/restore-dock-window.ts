@@ -65,7 +65,8 @@ export const restoreDockWindow = ({
       return;
     }
 
-    if (current.entry.id === id) {
+    // 点的是「这一窗当前显示的内容」：收回程序坞，不再新装一扇窗
+    if (current.entry.id === id || current.contentEntry.id === id) {
       // 走登记的收起动作：翻篇后的最新快照只有这一窗的描述符知道
       const registration = modalStack.current.find(
         (candidate) => candidate.id === id,

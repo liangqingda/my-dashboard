@@ -44,6 +44,7 @@ export const minimizeDockWindow = ({
    * 同一扇程序坞窗口里翻篇 / 换图后，当前内容可能对应另一条条目：
    * 有就更新它的快照，没有就新收一条。窗口收起时缩回的是**当前内容**的图标，
    * 不再沿用最初打开那一条的 id，否则原图标会继续亮着、还替新内容兜底。
+   * 窗自身的身份（根节点 / React key）不跟着换，只换 `contentEntry`。
    */
   const target: DockEntry =
     existing === undefined
@@ -55,7 +56,7 @@ export const minimizeDockWindow = ({
     (descriptor.origin === 'dock' || current.entry.id === descriptor.id)
   ) {
     writeEntries(upsertDockEntry(entries, target));
-    beginClosing({ ...current, entry: target }, false, 'minimize');
+    beginClosing({ ...current, contentEntry: target }, false, 'minimize');
 
     return;
   }

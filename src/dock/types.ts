@@ -76,7 +76,16 @@ export type DockEntry = DockWindowPayload & {
  * `createdAt` 与 `page` 由程序坞补，业务侧不用关心。
  */
 export type DockDescriptor = DockWindowPayload & {
+  /**
+   * 当前内容的条目 id：决定「是否已收录」（图标激活、X / Esc 口径、header 计数与 ⌘M），
+   * 收起时也按它找图标 / 更新条目。页面弹窗与程序坞窗口都按当前内容给。
+   */
   id: string;
+  /**
+   * 程序坞窗口根节点的 id（只有 `origin: 'dock'` 的窗才传）：开关窗的几何动画按它找框体，
+   * 窗内翻篇后仍是同一个节点；不传就沿用 `id`（页面弹窗的根节点就是自己）。
+   */
+  surfaceId?: string;
   title: string;
   /**
    * 这扇窗是谁：`page` 是页面里的业务弹窗（收起后要关掉页面状态）；

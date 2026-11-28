@@ -157,9 +157,7 @@ const MarkdownPreviewModal = ({
     ? undefined
     : {
         disabled: editing.editing || removal.confirming,
-        id: dockOrigin === 'dock' && dockId !== undefined
-          ? dockId
-          : `markdown-preview:${storageScope}:${relativePath ?? title}`,
+        id: `markdown-preview:${storageScope}:${relativePath ?? title}`,
         kind: 'markdown-preview',
         origin: dockOrigin,
         snapshot: {
@@ -168,6 +166,7 @@ const MarkdownPreviewModal = ({
           title,
           ...(relativePath === undefined ? {} : { relativePath }),
         },
+        surfaceId: dockOrigin === 'dock' ? dockId : undefined,
         title,
       };
 

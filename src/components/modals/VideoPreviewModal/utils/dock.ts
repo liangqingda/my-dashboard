@@ -13,8 +13,8 @@ type VideoDockParams = {
   activeId: string;
   /** 当前不可收起（全屏 / 弹层 / 确认层开着） */
   disabled: boolean;
-  /** 指定条目 id（程序坞恢复的窗口用稳定 id）；不传按当前条目生成 */
-  id?: string;
+  /** 程序坞窗口根节点 id（只有坞窗传）：开合动画按它认窗，不参与「是否已收录」 */
+  surfaceId?: string;
   /** 整个目录（顺序即翻篇顺序） */
   items: readonly VideoPreviewItem[];
   /** 这扇窗是谁：页面弹窗还是程序坞恢复出来的 */
@@ -31,14 +31,14 @@ export const createVideoDock = ({
   activeId,
   disabled,
   externalApp,
-  id,
   items,
   origin,
   storageScope,
+  surfaceId,
   title,
 }: VideoDockParams): FreeModalDock => ({
   disabled,
-  id: id ?? `video-preview:${storageScope}:${activeId}`,
+  id: `video-preview:${storageScope}:${activeId}`,
   kind: 'video-preview',
   origin,
   snapshot: {
@@ -52,5 +52,6 @@ export const createVideoDock = ({
     })),
     storageScope,
   },
+  surfaceId: origin === 'dock' ? surfaceId : undefined,
   title,
 });
