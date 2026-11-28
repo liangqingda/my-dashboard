@@ -33,9 +33,9 @@ export const useModalDockState = ({
   const modalFullscreenId = dock?.id ?? fallbackModalId;
 
   /*
-   * 只有程序坞里确实存在当前这条时才算「已收录」：
-   * 程序坞窗口翻篇到一条没收录的内容后，X 要恢复成普通关闭，
-   * 原来的图标也不能继续亮着。程序坞窗口在每次换条时上报当前 id。
+   * 页面弹窗只有程序坞里确实存在当前这条时才算「已收录」。
+   * 程序坞窗口（`origin: 'dock'`）永远算收录：它是某颗图标的窗，窗内翻篇只换内容，
+   * 关闭动作与 header 都不该跟着内容退回普通关闭口径（`canRemove` 按 `surfaceId` 算）。
    */
   const docked =
     dock !== undefined && dock.disabled !== true && canRemove;

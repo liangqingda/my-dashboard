@@ -1,9 +1,9 @@
 /**
- * 程序坞恢复出来的窗口，header 计数改报程序坞条目，而不是窗内内容的翻篇计数。
- * 内容自己的方括号翻篇仍由 `useModalShortcuts` 管；左右方向键在这个窗口里归程序坞条目。
+ * 程序坞恢复出来的窗口：header 计数与 `←` / `→` 一律报程序坞条目，而不是窗内内容的翻篇。
+ * 内容自己的方括号翻篇仍由 `useModalShortcuts` 管。
  *
- * 窗内翻到一条没收录的内容时（图标已经不亮），header 只能报内容自己的翻篇，
- * 但这一窗还是程序坞的窗，方向键照样切程序坞条目——提示里只留方括号，免得 tip 说谎。
+ * 位置取值优先「窗里正在显示的那一条」，它没收录时退回「这扇窗自己的条目」——
+ * 窗内翻篇是这扇窗临时换了内容，计数仍要报它是从哪颗图标开的。
  */
 
 import { useDockOptional } from '@/dock/hooks/useDock';
@@ -11,7 +11,7 @@ import { useDockOptional } from '@/dock/hooks/useDock';
 import type { FreeModalDock, FreeModalNav } from '../types';
 
 type DockNav = {
-  /** ← / → 的去向：程序坞窗口永远切程序坞条目 */
+  /** `←` / `→` 的去向：程序坞窗口永远切程序坞条目 */
   arrowNav: FreeModalNav | undefined;
   /** header 上的计数与箭头 */
   headerNav: FreeModalNav | undefined;
@@ -28,11 +28,15 @@ export const useDockNav = (
   }
 
   const { entries } = context;
-  const index = entries.findIndex((entry) => entry.id === dock.id);
+  const shownIndex = entries.findIndex((entry) => entry.id === dock.id);
+  const ownIndex = entries.findIndex(
+    (entry) => entry.id === (dock.surfaceId ?? dock.id),
+  );
+  const index = shownIndex !== -1 ? shownIndex : ownIndex;
   const stepNav: FreeModalNav = {
+    /* 两条都找不到时的占位：`arrowNav` 不显示计数，只有 `headerNav` 读它 */
+    index: index === -1 ? 1 : index + 1,
     disabled: entries.length < 2,
-    /* 位置未知时的占位：`arrowNav` 不显示计数，只有 `headerNav` 读它 */
-    index: 1,
     nextLabel: '下一个程序坞窗口',
     onNext: () => {
       context.stepWindow(1);
@@ -45,14 +49,9 @@ export const useDockNav = (
     total: entries.length,
   };
 
-  // 窗内翻到未收录的内容：这一窗已经和程序坞条目脱钩，计数回到内容自己的翻篇
-  if (index === -1) {
-    return {
-      arrowNav: stepNav,
-      headerNav:
-        nav === undefined ? undefined : { ...nav, shortcutHint: '[ · ]' },
-    };
-  }
-
-  return { arrowNav: stepNav, headerNav: { ...stepNav, index: index + 1 } };
+  return {
+    arrowNav: stepNav,
+    /* 两条都不在程序坞里（正在关窗）：没有可靠的格子可报，退回内容自己的翻篇 */
+    headerNav: index === -1 ? nav : stepNav,
+  };
 };

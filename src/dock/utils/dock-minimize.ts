@@ -1,8 +1,10 @@
 /**
  * 把一扇窗收进程序坞：页面弹窗、瓦片、`⌘M` 与 X / Esc 都走这一条。
  *
- * 窗内翻篇后快照换了、窗口还是同一扇：按当前内容的 id 找条目，有就更新快照，
- * 没有就新收一条；图标跟当前内容走，不再固定沿用最初打开那一条。
+ * 两套口径：
+ * - 页面弹窗：按当前内容的 id 找条目，有就更新快照，没有就新收一条（下次打开停在这一条）；
+ * - 程序坞窗口：窗是某颗图标的窗，窗内翻篇只是临时换内容，收起就回到那颗图标，
+ *   条目的快照不动——图标对应的始终是它自己那份内容。
  */
 
 import type { DockWindowSlot } from '../dock-window';
@@ -37,30 +39,39 @@ export const minimizeDockWindow = ({
     return;
   }
 
+  /*
+   * 程序坞窗口收起只回它自己的图标：翻篇换来的内容不写回条目，
+   * 下次点这颗图标仍然装出它自己那份内容（点它也是「装回」而不是「收起」）。
+   */
+  if (current !== null && descriptor.origin === 'dock') {
+    beginClosing(
+      { ...current, contentEntry: current.entry },
+      false,
+      'minimize',
+    );
+
+    return;
+  }
+
   const created = toDockEntry(descriptor, window.location.pathname, Date.now());
   const existing = entries.find((entry) => entry.id === descriptor.id);
-
-  /*
-   * 同一扇程序坞窗口里翻篇 / 换图后，当前内容可能对应另一条条目：
-   * 有就更新它的快照，没有就新收一条。窗口收起时缩回的是**当前内容**的图标，
-   * 不再沿用最初打开那一条的 id，否则原图标会继续亮着、还替新内容兜底。
-   * 窗自身的身份（根节点 / React key）不跟着换，只换 `contentEntry`。
-   */
   const target: DockEntry =
     existing === undefined
       ? created
       : { ...created, createdAt: existing.createdAt, page: existing.page };
 
-  if (
-    current !== null &&
-    (descriptor.origin === 'dock' || current.entry.id === descriptor.id)
-  ) {
-    writeEntries(upsertDockEntry(entries, target));
-    beginClosing({ ...current, contentEntry: target }, false, 'minimize');
+  writeEntries(upsertDockEntry(entries, target));
+
+  // 同一扇窗还开着（页面弹窗与它同一条）：复用窗实例收回去
+  if (current !== null && current.entry.id === descriptor.id) {
+    beginClosing(
+      { ...current, contentEntry: current.entry },
+      false,
+      'minimize',
+    );
 
     return;
   }
 
-  writeEntries(upsertDockEntry(entries, target));
   receiveEntry(target, sourceEl);
 };

@@ -116,12 +116,18 @@ export const useDockMinimize = ({
     return context.registerModal({ id: dockId, minimize });
   }, [dockDisabled, dockId, minimize, opened]);
 
-  /** 程序坞里已经有同 id 条目：header 那颗按钮改成「移除」，不再重复收录 */
+  /*
+   * 已收录：页面弹窗看内容那条，程序坞窗口看它自己的那条——窗内翻到别的内容也仍算收录，
+   * 否则 header 会退回「关闭」口径，和图标状态对不上。
+   */
   const canRemove =
     dock !== undefined &&
     dockContext !== null &&
-    dockContext.entries.some((entry) => entry.id === dock.id);
+    dockContext.entries.some(
+      (entry) => entry.id === (dock.origin === 'dock' ? dock.surfaceId ?? dock.id : dock.id),
+    );
 
+  /** X 移除的是这一窗自己的条目（程序坞窗口），页面弹窗移除当前内容那条 */
   const remove = useCallback(() => {
     const descriptor = dockRef.current;
     const context = dockContextRef.current;
@@ -130,7 +136,11 @@ export const useDockMinimize = ({
       return;
     }
 
-    context.remove(descriptor.id);
+    context.remove(
+      descriptor.origin === 'dock'
+        ? descriptor.surfaceId ?? descriptor.id
+        : descriptor.id,
+    );
   }, []);
 
   return {

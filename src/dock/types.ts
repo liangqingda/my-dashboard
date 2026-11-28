@@ -77,13 +77,14 @@ export type DockEntry = DockWindowPayload & {
  */
 export type DockDescriptor = DockWindowPayload & {
   /**
-   * 当前内容的条目 id：决定「是否已收录」（图标激活、X / Esc 口径、header 计数与 ⌘M），
-   * 收起时也按它找图标 / 更新条目。页面弹窗与程序坞窗口都按当前内容给。
+   * 当前显示内容对应的条目 id（由内容派生）：决定程序坞里哪颗图标算「正在显示」、
+   * X / Esc / 空格在未收录时退回普通关闭、header 计数报哪一格、`⌘M` 登记在谁身上。
    */
   id: string;
   /**
-   * 程序坞窗口根节点的 id（只有 `origin: 'dock'` 的窗才传）：开关窗的几何动画按它找框体，
-   * 窗内翻篇后仍是同一个节点；不传就沿用 `id`（页面弹窗的根节点就是自己）。
+   * 这扇窗自己的条目 id（只有 `origin: 'dock'` 的窗才传，等于打开它的那颗图标）：
+   * 窗内翻篇后不再变。开合 / 收起动画按它认框体，图标弱激活、X 移除哪一条、
+   * 收起缩回哪颗图标都按它；不传就沿用 `id`（页面弹窗的图标就是自己）。
    */
   surfaceId?: string;
   title: string;
@@ -102,15 +103,21 @@ export type DockContextValue = {
   entries: readonly DockEntry[];
   /** 正在飞入、还没有长出图标的条目 id：程序坞里先画虚位 */
   receivingIds: readonly string[];
-  /** 当前真正展开着的条目 id（程序坞里画运行小点用） */
+  /** 窗里正在显示的那条内容的条目 id（程序坞里画实心运行点用）；内容没收录时为 null */
   activeEntryId: string | null;
+  /**
+   * 「窗是我开的，但窗内已经翻到别的内容」的那条条目 id：图标仍算打开、只是画空心点，
+   * 提示它自己的内容在等着被装回来。点这颗图标会装回它的弹窗，而不是收起。
+   */
+  pendingEntryId: string | null;
   /** 当前打开的全屏弹窗数量：CSS 全屏与浏览器全屏都算 */
   fullscreenCount: number;
   /** 浏览器是否处于原生全屏：程序坞条与右下角控件整个让开 */
   nativeFullscreen: boolean;
   /**
    * 程序坞窗口上报「当前正在展示哪一条」：
-   * 翻篇 / 列表切换后，激活点与 header 的收录动作都要跟着当前条目走。
+   * 翻篇 / 列表切换后，激活的是哪颗图标（实心点 / 空心点）跟着它走；
+   * 窗的收录口径与 header 动作不跟它变，仍按 `surfaceId` 那条。
    */
   reportWindowEntry: (id: string | null) => void;
   /** 弹窗上报自己的全屏态；`id` 必须稳定，卸载 / 退出时传 false */
@@ -125,8 +132,9 @@ export type DockContextValue = {
    */
   minimizeTop: () => boolean;
   /**
-   * 点程序坞里的项目：没打开就恢复这扇窗，已经打开着就收回程序坞；
-   * 同一时刻只留一扇，切到另一扇时整屏左右滑动，不再回坞绕一圈。
+   * 点程序坞里的项目：正显示这一条就收回程序坞；窗是这颗图标开的内容却翻走了，
+   * 就把这一条装回那扇窗；其它条目则切过去。同一时刻只留一扇，
+   * 切窗整屏左右滑动，不再回坞绕一圈。
    */
   restore: (id: string) => void;
   /** 关闭当前恢复出来的窗口：按统一口径收回到程序坞，条目保留 */

@@ -170,6 +170,30 @@ export const useDockWindowController = ({
     });
   };
 
+  /**
+   * 窗内翻到别的内容后点回它自己的图标：把这一条的快照重新装进这扇窗，不收起。
+   * 换一个 `revision` 让宿主重挂窗口体，窗本身与根节点都不动。
+   */
+  const resetContent = () => {
+    const { current } = windowRef;
+
+    if (current === null || current.phase === 'closing') {
+      return;
+    }
+
+    // 先把「当前显示」改回它自己：图标那圈弱激活当场消掉，等窗里重新上报同一条
+    writeWindowEntry(current.entry.id);
+
+    setWindow({
+      ...current,
+      animate: 'none',
+      contentEntry: current.entry,
+      phase: 'opening',
+      removeOnExit: false,
+      revision: (current.revision ?? 0) + 1,
+    });
+  };
+
   const restore = (id: string) => {
     const seq = restoreSeq.current + 1;
 
@@ -178,10 +202,12 @@ export const useDockWindowController = ({
     restoreDockWindow({
       activateEntry,
       beginClosing,
+      contentIdRef: windowEntryIdRef,
       entriesRef,
       id,
       currentSeq: () => restoreSeq.current,
       modalStack,
+      resetContent,
       seq,
       windowRef,
     });
@@ -221,20 +247,10 @@ export const useDockWindowController = ({
     }
 
     /*
-     * 窗内翻到一条不在程序坞里的内容时，这一窗已经和原图标脱钩：
-     * 关闭只淡出窗口，不改动任何条目；已收录的窗才会缩回它当前对应的图标。
+     * 坞窗永远只回它自己的图标：窗内翻篇是临时状态，不碰任何条目。
+     * 条目真的被删掉时走 `remove`，那条路径会直接把窗淡出。
      */
-    const entry = entriesRef.current.find(
-      (candidate) => candidate.id === windowEntryIdRef.current,
-    );
-
-    if (entry === undefined) {
-      beginClosing(current, false, 'dismiss');
-
-      return;
-    }
-
-    beginClosing({ ...current, contentEntry: entry }, false, 'minimize');
+    beginClosing({ ...current, contentEntry: current.entry }, false, 'minimize');
   };
 
   const remove = (id: string) => {

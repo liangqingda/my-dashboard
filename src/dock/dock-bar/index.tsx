@@ -35,6 +35,7 @@ const DockBar = () => {
     entries,
     fullscreenCount,
     nativeFullscreen,
+    pendingEntryId,
     receivingIds,
     remove,
     restore,
@@ -188,6 +189,11 @@ const DockBar = () => {
               {group.entries.map((entry) => {
                 const Icon = DOCK_KIND_ICON[entry.kind];
                 const active = activeEntryId === entry.id;
+                /*
+                 * 窗是这颗图标开的、内容已经翻走：图标仍算打开着，只是画空心点，
+                 * 提示它自己的内容在等着被装回来（点它会装回，而不是收起）。
+                 */
+                const pending = !active && pendingEntryId === entry.id;
                 const receiving = receivingIds.includes(entry.id);
 
                 return (
@@ -211,6 +217,7 @@ const DockBar = () => {
                       data-dock-item={entry.id}
                       data-editing={editActive ? 'true' : undefined}
                       data-kind={entry.kind}
+                      data-pending={pending ? 'true' : undefined}
                       data-receiving={receiving ? 'true' : undefined}
                       disabled={receiving}
                       onClick={() => handleItemClick(entry.id)}
@@ -225,8 +232,12 @@ const DockBar = () => {
                           </span>
                         </span>
                       ) : null}
-                      {active && !receiving && !editActive ? (
-                        <span aria-hidden="true" className={styles.dockDot} />
+                      {(active || pending) && !receiving && !editActive ? (
+                        <span
+                          aria-hidden="true"
+                          className={styles.dockDot}
+                          data-hollow={pending ? 'true' : undefined}
+                        />
                       ) : null}
                     </UnstyledButton>
                   </Tooltip>

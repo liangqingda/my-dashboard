@@ -66,6 +66,14 @@ const DockProvider = ({ children }: { children: ReactNode }) => {
    */
   const activeEntryId =
     windowSlot === null ? modalEntryId : windowActiveEntryId;
+  /*
+   * 窗还是那颗图标开的，内容已经翻到别处：那颗图标算「打开着、但内容不是我的」，
+   * 画成空心点，点它装回自己的弹窗而不是收起。
+   */
+  const pendingEntryId =
+    windowSlot !== null && windowSlot.entry.id !== windowActiveEntryId
+      ? windowSlot.entry.id
+      : null;
 
   const contextValue: DockContextValue = {
     activeEntryId,
@@ -75,6 +83,7 @@ const DockProvider = ({ children }: { children: ReactNode }) => {
     minimize,
     minimizeTop,
     nativeFullscreen,
+    pendingEntryId,
     receivingIds,
     registerModal,
     remove,

@@ -37,12 +37,14 @@ export type DockWindowSlot = {
   contentEntry: DockEntry;
   /** 移除时要从程序坞删掉的条目 id（关闭窗口顺手删当前这条） */
   removeId?: string;
-  /** 第一次打开从图标中心长大（`genie`），换窗整屏滑动（`slide`） */
-  animate: 'genie' | 'slide';
+  /** 第一次打开从图标中心长大（`genie`），换窗整屏滑动（`slide`），原地换内容不跑动画（`none`） */
+  animate: 'genie' | 'slide' | 'none';
   /** 换窗方向：`next` 旧窗向左、新窗从右进，`prev` 反过来 */
   direction?: DockSlideDirection;
   /** 当前阶段；`closing` 时动画结束才卸载 */
   phase: 'opening' | 'closing';
+  /** 重装次数：点回自己那颗图标时 +1，让窗口体按条目快照重新挂一次（窗本身不动） */
+  revision?: number;
   /** 收起结束后是否把条目从程序坞删掉（关闭为 true，最小化为 false） */
   removeOnExit: boolean;
   /** 退出方式：缩回图标，或按弹窗默认淡出 */
@@ -67,6 +69,7 @@ const DockWindowHost = ({ onExited, onRequestClose, slot }: DockWindowHostProps)
     entry,
     exit = 'minimize',
     phase,
+    revision = 0,
   } = slot;
   const onExitedRef = useRef(onExited);
 
@@ -80,7 +83,7 @@ const DockWindowHost = ({ onExited, onRequestClose, slot }: DockWindowHostProps)
     const entryId = entry.id;
 
     // 展开前先接管第一帧：genie 隐藏等动画，slide 直接摆到屏幕外，避免闪终态
-    if (phase === 'opening') {
+    if (phase === 'opening' && animate !== 'none') {
       const immediate = findDockSurface(entryId);
       const root = findDockRoot(entryId);
       const overlay = findDockOverlay(root);
@@ -100,6 +103,11 @@ const DockWindowHost = ({ onExited, onRequestClose, slot }: DockWindowHostProps)
     }
 
     const run = async () => {
+      // 窗已经开着、只是把内容换回它自己那条：不动几何，直接结束
+      if (phase === 'opening' && animate === 'none') {
+        return;
+      }
+
       const content = await waitForFrames(() => findDockSurface(entryId));
 
       if (content === null) {
@@ -149,10 +157,15 @@ const DockWindowHost = ({ onExited, onRequestClose, slot }: DockWindowHostProps)
     return () => {
       controller.abort();
     };
-  }, [animate, contentEntry.id, direction, entry.id, exit, phase]);
+  }, [animate, contentEntry.id, direction, entry.id, exit, phase, revision]);
 
+  // `revision` 变一次就重挂一次窗口体：点回自己那颗图标时把内容装回条目快照
   return (
-    <Component entry={entry} key={entry.id} onRequestClose={onRequestClose} />
+    <Component
+      entry={entry}
+      key={`${entry.id}#${revision}`}
+      onRequestClose={onRequestClose}
+    />
   );
 };
 

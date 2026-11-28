@@ -1,4 +1,9 @@
-/** 从程序坞图标恢复一扇窗口：同 id 的页面弹窗先收起，已有窗口按顺序整屏切换。 */
+/**
+ * 从程序坞图标恢复（或切回）一扇窗口：
+ * - 窗里正显示这一条内容：再点它的图标就是收回程序坞；
+ * - 窗是这颗图标开的、只是内容被翻走了：装回这条的快照，不收起；
+ * - 其它条目：不先回坞再出来，按程序坞顺序整屏滑动切过去。
+ */
 
 import type { MutableRefObject } from 'react';
 
@@ -17,9 +22,13 @@ type RestoreDockWindowParams = {
     removeOnExit: boolean,
     exit: 'minimize' | 'dismiss',
   ) => void;
+  /** 窗里正在显示的那条内容 id（翻篇后会变，没有就是 null） */
+  contentIdRef: MutableRefObject<string | null>;
   entriesRef: MutableRefObject<DockEntry[]>;
   id: string;
   modalStack: UseDockModalStackResult['modalStack'];
+  /** 把窗重新装回它自己那条的快照（不收起） */
+  resetContent: () => void;
   /** 本次恢复的序号：后续恢复会把旧序号顶掉 */
   seq: number;
   currentSeq: () => number;
@@ -29,9 +38,11 @@ type RestoreDockWindowParams = {
 export const restoreDockWindow = ({
   activateEntry,
   beginClosing,
+  contentIdRef,
   entriesRef,
   id,
   modalStack,
+  resetContent,
   currentSeq,
   seq,
   windowRef,
@@ -65,8 +76,8 @@ export const restoreDockWindow = ({
       return;
     }
 
-    // 点的是「这一窗当前显示的内容」：收回程序坞，不再新装一扇窗
-    if (current.entry.id === id || current.contentEntry.id === id) {
+    // 窗里正显示这一条：点它的图标就是把这一窗收回程序坞
+    if (contentIdRef.current === id) {
       // 走登记的收起动作：翻篇后的最新快照只有这一窗的描述符知道
       const registration = modalStack.current.find(
         (candidate) => candidate.id === id,
@@ -77,6 +88,16 @@ export const restoreDockWindow = ({
       } else {
         beginClosing(current, false, 'minimize');
       }
+
+      return;
+    }
+
+    /*
+     * 窗是这颗图标开的、内容已经翻到别处：点它就是「装回我的弹窗」，
+     * 不能收起——收起会让它看起来像这一条自己开着。
+     */
+    if (current.entry.id === id) {
+      resetContent();
 
       return;
     }
