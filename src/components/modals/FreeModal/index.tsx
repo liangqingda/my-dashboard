@@ -149,6 +149,7 @@ const FreeModal = ({
     copyMessage: copy?.message,
     disabled: shortcutsEnabled === false || backgroundDockWindow,
     enabled: opened,
+    arrowNav: dock?.origin === 'dock' ? headerNav : undefined,
     extraKeys,
     nav,
     onCapture,

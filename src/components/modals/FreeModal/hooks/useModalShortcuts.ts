@@ -8,9 +8,9 @@
  *   「空格 = 点击当前焦点按钮」的默认行为——焦点常留在 header 图标上，不拦的话按空格会莫名
  *   翻到下一条 / 切了全屏；
  * - **`[` / `【`、`]` / `】` 上一篇 / 下一篇**（有 `nav` 且没被禁用时）；
- * - **`←` / `→`**：默认同 `[` / `]` 翻篇；调用方给了 `onSeek` 时改为交给它快进 / 后退
- *   （视频里方向键要留给播放进度，翻篇只剩方括号）。程序坞窗口与页面弹窗同口径，
- *   切程序坞条目走 `⌘←` / `⌘→`（`layouts/BasicLayout`）与 header 两侧箭头，不抢内容的方向键；
+ * - **`←` / `→`**：默认同 `[` / `]` 翻篇；程序坞窗口给了 `arrowNav` 时切程序坞条目；
+ *   调用方给了 `onSeek` 时改为交给它快进 / 后退
+ *   （视频里方向键要留给播放进度，翻篇只剩方括号）；
  * - **`F` 全屏开关**（有全屏按钮时）；
  * - **`M` 静音开关**、**`S` 显隐面板**（视频预览的目录列）、**`Enter` 截图**：都是调用方给了动作才生效；
  * - **`C` 复制**（调用方给了复制文本时）：与 header 的复制按钮同一口径，写进剪贴板并给一条提示；
@@ -77,6 +77,11 @@ type ModalShortcutsParams = {
   onDismiss?: () => void;
   /** 翻页配置；不传表示这扇窗没有翻页 */
   nav?: FreeModalNav;
+  /**
+   * 左右方向键的去向：程序坞恢复出来的窗口用它切程序坞条目，
+   * 方括号仍走 `nav` 翻内容；给了 `onSeek` 时方向键归媒体，这里不生效。
+   */
+  arrowNav?: FreeModalNav;
   /** 切换全屏；不传表示没有全屏按钮 */
   onToggleFullscreen?: () => void;
   /** 切换播放 / 暂停；传了之后空格归媒体，不再关窗 */
@@ -110,6 +115,7 @@ export const useModalShortcuts = ({
   disabled,
   enabled,
   extraKeys,
+  arrowNav,
   nav,
   onClose,
   onDismiss,
@@ -233,6 +239,31 @@ export const useModalShortcuts = ({
         return;
       }
 
+      /*
+       * 程序坞窗口：← / → 先切程序坞条目，压过视频快进；只有一个条目时才让回给媒体，
+       * 否则单窗视频里方向键会彻底失灵。方括号仍留给窗内内容翻篇。
+       */
+      if (
+        arrowNav !== undefined &&
+        (event.key === 'ArrowLeft' || event.key === 'ArrowRight')
+      ) {
+        if (arrowNav.disabled !== true) {
+          const arrowHandler =
+            event.key === 'ArrowLeft' ? arrowNav.onPrevious : arrowNav.onNext;
+
+          if (arrowHandler) {
+            event.preventDefault();
+            arrowHandler();
+          }
+
+          return;
+        }
+
+        if (onSeek === undefined) {
+          return;
+        }
+      }
+
       // 方向键交给了媒体（视频快进 / 后退）就不再翻篇，翻篇只剩方括号
       const seekDirection = onSeek ? ARROW_SEEK_DIRECTION[event.key] : undefined;
 
@@ -274,6 +305,7 @@ export const useModalShortcuts = ({
 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [
+    arrowNav,
     closeOnSpace,
     copy,
     copyMessage,
