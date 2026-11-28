@@ -65,6 +65,7 @@ const MarkdownPreviewModal = ({
   remove,
   storageScope,
   dockOrigin = 'page',
+  dockId,
 }: MarkdownPreviewModalProps) => {
   /* header 就近弹层：同一时刻只开一块，换篇 / 刷新 / 进编辑 / 关窗时统一收起。 */
   const [panel, setPanel] = useState<PreviewPanel | null>(null);
@@ -156,7 +157,9 @@ const MarkdownPreviewModal = ({
     ? undefined
     : {
         disabled: editing.editing || removal.confirming,
-        id: `markdown-preview:${storageScope}:${relativePath ?? title}`,
+        id: dockOrigin === 'dock' && dockId !== undefined
+          ? dockId
+          : `markdown-preview:${storageScope}:${relativePath ?? title}`,
         kind: 'markdown-preview',
         origin: dockOrigin,
         snapshot: {

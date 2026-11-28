@@ -6,6 +6,8 @@ import type { RecordSummary } from '../types';
 
 /** `/Review` 详情导航的入参：当前筛选结果 */
 type Params = {
+  /** 初始打开的记录 ID；程序坞从快照恢复时用，页面默认不传 */
+  initialId?: string | null;
   /** 当前筛选结果，顺序与列表一致 */
   records: RecordSummary[];
 };
@@ -34,8 +36,11 @@ type Result = {
  * 知识库详情的开合与翻页：位置按筛选结果算。列表是整份渲染的，
  * 翻页不需要再补渲染任何行。
  */
-export const useRecordDetailNav = ({ records }: Params): Result => {
-  const [activeId, setActiveId] = useState<string | null>(null);
+export const useRecordDetailNav = ({
+  initialId = null,
+  records,
+}: Params): Result => {
+  const [activeId, setActiveId] = useState<string | null>(initialId);
 
   /** 打开第 N 条：越界的索引直接忽略 */
   const openAt = useCallback(

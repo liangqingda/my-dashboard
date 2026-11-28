@@ -51,6 +51,7 @@ const ImageWindowBody = ({
         activeId={activeId}
         batched={pageActions?.isBatched(activeId) ?? fallback.isBatched(activeId)}
         blocked={blocked}
+        dockId={entry.id}
         dockOrigin="dock"
         items={fallback.displayItems}
         onClose={onRequestClose}

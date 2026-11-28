@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ScrollArea } from '@mantine/core';
 import { IconTrash } from '@tabler/icons-react';
 
@@ -25,6 +26,7 @@ const ICON_STROKE = 1.9;
  */
 const RecordDetailModal = ({
   confirming = false,
+  dockId,
   dockOrigin = 'page',
   nav,
   onClose,
@@ -32,11 +34,16 @@ const RecordDetailModal = ({
   recordId,
   title,
 }: RecordDetailModalProps) => {
-  /** 全屏是记住的阅读偏好：关掉重开、换一条记录都不重置；程序坞窗口不继承 */
-  const { fullscreen: storedFullscreen, toggle } = useModalFullscreen(
-    RECORD_DETAIL_STORAGE_KEY,
-  );
-  const fullscreen = dockOrigin === 'dock' ? false : storedFullscreen;
+  /** 页面弹窗的全屏是记住的阅读偏好：关掉重开、换一条记录都不重置 */
+  const { fullscreen: storedFullscreen, toggle: toggleStored } =
+    useModalFullscreen(RECORD_DETAIL_STORAGE_KEY);
+  /** 程序坞恢复窗从普通尺寸出来，不继承页面偏好；但窗口里照样可以切全屏 */
+  const [dockFullscreen, setDockFullscreen] = useState(false);
+  const fullscreen = dockOrigin === 'dock' ? dockFullscreen : storedFullscreen;
+  const toggleFullscreen =
+    dockOrigin === 'dock'
+      ? () => setDockFullscreen((current) => !current)
+      : toggleStored;
 
   /**
    * 程序坞描述：只存 ID 与标题，正文由恢复窗口按 ID 自取（列表摘要里的标题够撑起 header）；
@@ -47,7 +54,7 @@ const RecordDetailModal = ({
       ? undefined
       : {
           disabled: confirming,
-          id: `record-detail:${recordId}`,
+          id: dockId ?? `record-detail:${recordId}`,
           kind: 'record-detail',
           origin: dockOrigin,
           snapshot: { recordId, title: title ?? '记录详情' },
@@ -56,7 +63,7 @@ const RecordDetailModal = ({
 
   return (
     <FreeModal
-      beforeMinimize={fullscreen ? toggle : undefined}
+      beforeMinimize={fullscreen ? toggleFullscreen : undefined}
       closeButton
       closeLabel="关闭记录详情"
       closeOnEscape={!confirming}
@@ -69,8 +76,8 @@ const RecordDetailModal = ({
       dock={dock}
       fullscreen={{
         active: fullscreen,
-        onToggle: dockOrigin === 'dock' ? undefined : toggle,
-        showToggle: dockOrigin !== 'dock',
+        onToggle: toggleFullscreen,
+        showToggle: true,
       }}
       headerTail={
         recordId === null || !onRequestDelete ? undefined : (

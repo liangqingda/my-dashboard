@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Button, Group, ScrollArea, Skeleton, Stack, Text } from '@mantine/core';
-import { notifications } from '@mantine/notifications';
 
 import MenuContentLayout from '@/layouts/MenuContentLayout';
-import { getErrorMessage } from '@/utils/error';
 import { onPageRefresh } from '@/utils/page-refresh';
 
 import {
@@ -13,21 +11,19 @@ import {
 } from './constants';
 import type { StatusFilter } from './constants';
 import DeleteRecordConfirm from './DeleteRecordConfirm';
+import { useRecordDelete } from './hooks/useRecordDelete';
 import { useRecordDetailNav } from './hooks/useRecordDetailNav';
 import { useReviewRecords } from './hooks/useReviewRecords';
 import RecordDetailModal from './RecordDetailModal';
 import RecordsTable from './RecordsTable';
 import RecordsToolbar from './RecordsToolbar';
-import type { RecordSummary } from './types';
 import {
   buildCategoryLabels,
   categoryLabel,
   countLabel,
-  describeDelete,
   filterRecords,
   searchRecords,
 } from './utils/records';
-import { deleteReviewRecord } from './utils/records-api';
 
 import styles from './index.scss';
 
@@ -47,10 +43,6 @@ const Review = () => {
   const [categoryFilter, setCategoryFilter] = useState(ALL_CATEGORIES);
   /** 关键词：只在列表已有的摘要字段里过滤，敲一个字符就即时生效 */
   const [keyword, setKeyword] = useState('');
-  /** 等待确认删除的记录 */
-  const [pendingDelete, setPendingDelete] = useState<RecordSummary | null>(null);
-  /** 删除请求进行中 */
-  const [deleting, setDeleting] = useState(false);
 
   // 页面标题栏的「刷新当前页面」：重新读取两个记录目录
   useEffect(() => onPageRefresh(reload), [reload]);
@@ -122,48 +114,13 @@ const Review = () => {
   /** 计数文案：筛选命中数与总数 */
   const countText = countLabel(visibleRecords.length, records.length);
 
-  /** 点删除图标：先弹确认框，不直接删 */
-  const requestDelete = useCallback((record: RecordSummary) => {
-    setPendingDelete(record);
-  }, []);
-
-  /** 取消删除：请求进行中时不允许关，避免用户以为取消了、实际正在删 */
-  const cancelDelete = useCallback(() => {
-    setDeleting(false);
-    setPendingDelete(null);
-  }, []);
-
-  /** 确认删除：删记录 → 挪走列表那一条 → 关掉可能开着的详情 */
-  const confirmDelete = async () => {
-    if (pendingDelete === null) {
-      return;
-    }
-
-    setDeleting(true);
-
-    try {
-      const { commit } = await deleteReviewRecord(pendingDelete.id);
-
-      removeRecord(pendingDelete.id);
-
-      detail.closeIfDeleted(pendingDelete.id);
-
-      const message = describeDelete(commit);
-
-      notifications.show({
-        color: commit.error ? 'yellow' : 'teal',
-        message,
-      });
-      setPendingDelete(null);
-    } catch (caught) {
-      notifications.show({
-        color: 'red',
-        message: getErrorMessage(caught, '删除记录失败'),
-      });
-    } finally {
-      setDeleting(false);
-    }
-  };
+  /** 删除编排：确认框、请求态与提交提示与程序坞详情窗共用 */
+  const deletion = useRecordDelete({
+    onDeleted: (id) => {
+      removeRecord(id);
+      detail.closeIfDeleted(id);
+    },
+  });
 
   return (
     <MenuContentLayout fill title="知识库">
@@ -225,7 +182,7 @@ const Review = () => {
           >
             <RecordsTable
               categoryLabels={categoryLabels}
-              onDelete={requestDelete}
+              onDelete={deletion.requestDelete}
               onOpen={detail.openRecord}
               records={visibleRecords}
             />
@@ -234,20 +191,20 @@ const Review = () => {
       </Stack>
 
       <RecordDetailModal
-        confirming={pendingDelete !== null}
+        confirming={deletion.pendingDelete !== null}
         nav={detail.nav}
         onClose={detail.closeDetail}
         onRequestDelete={
-          activeRecord === null ? null : () => requestDelete(activeRecord)
+          activeRecord === null ? null : () => deletion.requestDelete(activeRecord)
         }
         recordId={detail.activeId}
         title={detail.activeTitle}
       />
       <DeleteRecordConfirm
-        loading={deleting}
-        onCancel={cancelDelete}
-        onConfirm={confirmDelete}
-        record={pendingDelete}
+        loading={deletion.deleting}
+        onCancel={deletion.cancelDelete}
+        onConfirm={deletion.confirmDelete}
+        record={deletion.pendingDelete}
       />
     </MenuContentLayout>
   );

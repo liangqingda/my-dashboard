@@ -50,6 +50,7 @@ const VideoWindowBody = ({
         activeId={activeId}
         batched={pageActions?.isBatched(activeId) ?? fallback.isBatched(activeId)}
         blocked={blocked}
+        dockId={entry.id}
         dockOrigin="dock"
         externalApp={externalApp}
         items={fallback.items}

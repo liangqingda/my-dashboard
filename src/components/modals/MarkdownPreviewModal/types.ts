@@ -125,6 +125,8 @@ export type MarkdownPreviewModalProps = {
    * 程序坞自己恢复出来的窗口传 `dock`，再收起只是回到图标、不关掉条目。
    */
   dockOrigin?: 'page' | 'dock';
+  /** 程序坞条目 id：恢复窗传稳定 id，窗内换篇不换根节点，收坞与图标定位都按它 */
+  dockId?: string;
 };
 
 /**
