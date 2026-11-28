@@ -11,6 +11,7 @@ import { DatesProvider } from '@mantine/dates';
 import { Notifications } from '@mantine/notifications';
 
 import App from '@/App';
+import { NOTIFICATION_Z_INDEX } from '@/dock/constants';
 import ServicesProvider from '@/services/provider';
 import '@/styles/global.scss';
 
@@ -62,8 +63,13 @@ createRoot(document.getElementById('root')!).render(
     <MantineProvider defaultColorScheme="light" theme={theme}>
       {/* 全站日历统一口径：中文、周一为每周第一天 */}
       <DatesProvider settings={{ firstDayOfWeek: 1, locale: 'zh-cn' }}>
-        {/* 层级压在全屏拖拽弹窗（700）、搬家全屏遮罩（645）与飞行块（720）之上：搬完的提示要在关窗之后看得见 */}
-        <Notifications limit={5} position="bottom-right" zIndex={800} />
+        {/* 层级压在全屏拖拽弹窗（700）、搬家全屏遮罩（645）与飞行块（720）之上，
+            也压过程序坞恢复窗口（1000）与程序坞条（1010）：程序坞窗口里截图的提示要看得见 */}
+        <Notifications
+          limit={5}
+          position="bottom-right"
+          zIndex={NOTIFICATION_Z_INDEX}
+        />
         <ServicesProvider>
           <App />
         </ServicesProvider>

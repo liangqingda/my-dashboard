@@ -77,7 +77,7 @@ const dragMove = useDragMove({
 
 **提示只弹一条、且在关窗之后**：`moveEntry` 不再逐条弹「已移动」，搬完的总结交给
 `notify.ts` 的 `notifyMoveDone`（`已移动 N 个项目`，有被剔出来的就补一句），
-顺序固定为「进度走完 → 决定是否关窗 → 关了才提示」。通知层级压在全屏弹窗之上（`main.tsx` 里 `zIndex={800}`）。
+顺序固定为「进度走完 → 决定是否关窗 → 关了才提示」。通知层级压在全屏弹窗、程序坞窗口与程序坞条之上（`src/dock/constants.ts` 的 `NOTIFICATION_Z_INDEX`）。
 
 ## 刚搬进这个文件夹的那几条（`use-landed.ts`）
 
