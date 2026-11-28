@@ -546,6 +546,9 @@ disabled 时会落到第一个图标按钮上，把复制按钮那类 focus 型 
 **程序坞内外同一套 header 操作**：页面侧通过 `useDockPreviewActions` 把复制路径 / 筛选 / 字号 /
 刷新 / 编辑 / 删除 / 全屏等能力按 dock id 登记到 `DockActions/Registry`（模块级 store，用
 `useSyncExternalStore` 订阅）；`MarkdownWindow` 按同一个 id 取回整套 props，所以两边的按钮顺序、
-可用态与动作一致，唯一差异是页面弹窗可能走 `onMinimize`、坞窗只回坞。页面已经卸载、登记表没有这一条时，
-坞窗退回快照只读（正文与标题还在，编辑 / 筛选 / 删除这类依赖页面数据与回调的按钮不画）。
+可用态与动作一致，唯一差异是页面弹窗可能走 `onMinimize`、坞窗只回坞。
+
+页面卸载时登记**不删除**，只标成 `live: false` 并保留最后一次正文；`MarkdownWindow` 发现页面不在后，
+刷新与保存改走笔记 API，筛选改用窗口自己的本地筛选状态，编辑沿用同一套 `Editor`，删除仍由窗口内的确认层完成。
+所以换页、刷新后打开坞窗，header 不会退回只读、少掉编辑 / 筛选 / 刷新 / 删除这些入口。
 `⌘M` 与层级见 `docs/dock.md`。

@@ -593,6 +593,8 @@ export type HeaderActionShortcutParams = {
 
 /** 页面登记给程序坞窗口的一整套 Markdown 预览能力（快照只是兜底） */
 export type MarkdownDockActions = {
+  /** 页面这一侧是否还挂载：为 false 时窗口改用自己读写的后备能力 */
+  live?: boolean;
   /** 正文最新内容 */
   markdown: string;
   /** 正文是否还在取 */
